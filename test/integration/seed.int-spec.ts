@@ -1,0 +1,122 @@
+import { PERMISSIONS } from '@modules/iam/permissions.catalog';
+import { ROLES } from '@modules/iam/roles.catalog';
+import { PrismaPg } from '@prisma/adapter-pg';
+
+import { APPROVAL_POLICIES } from '../../prisma/seed/data/approval-policies';
+import { SETTINGS } from '../../prisma/seed/data/settings';
+import { seedDev } from '../../prisma/seed/dev-seed';
+import { seedReference } from '../../prisma/seed/reference-seed';
+import { PrismaClient } from '../../src/generated/prisma/client';
+import { type MigratedDatabase, startMigratedDatabase, stopMigratedDatabase } from '../support/database';
+
+describe('seeds (PostgreSQL 18)', () => {
+  let db: MigratedDatabase;
+  let prisma: PrismaClient;
+
+  beforeAll(async () => {
+    db = await startMigratedDatabase();
+    prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: db.url }) });
+  });
+
+  afterAll(async () => {
+    await prisma?.$disconnect();
+    await stopMigratedDatabase(db);
+  });
+
+  const count = async (table: string) =>
+    Number((await db.client.query<{ n: string }>(`SELECT count(*) AS n FROM ${table}`)).rows[0]!.n);
+
+  it('seeds the dev data once and changes nothing on the second run', async () => {
+    const first = await seedDev(prisma);
+    expect(first).toMatchObject({
+      entities: 1,
+      roles: ROLES.length,
+      permissions: PERMISSIONS.length,
+      settings: SETTINGS.length + 4,
+      approval_policies: APPROVAL_POLICIES.length,
+      dev_staff_users: 14,
+      dev_customer_users: 1,
+    });
+
+    const snapshot = await db.client.query(
+      "SELECT md5(string_agg(t::text, '|' ORDER BY t::text)) AS h FROM (SELECT * FROM permissions) t",
+    );
+    await expect(seedDev(prisma)).resolves.toEqual({});
+    const again = await db.client.query(
+      "SELECT md5(string_agg(t::text, '|' ORDER BY t::text)) AS h FROM (SELECT * FROM permissions) t",
+    );
+    expect(again.rows[0]).toEqual(snapshot.rows[0]);
+    expect(await count("audit_logs WHERE action = 'seed.reference_applied'")).toBe(1);
+  });
+
+  it('seeds one approved v1 per setting, effective before any business activity, citing its decisions', async () => {
+    const { rows } = await db.client.query<{
+      key: string;
+      versions: string;
+      status: string;
+      refs: string[];
+    }>(`
+      SELECT s.key, count(v.id) AS versions, min(v.status::text) AS status, s.decision_refs AS refs
+        FROM settings s JOIN setting_versions v ON v.setting_id = s.id
+       GROUP BY s.id`);
+    expect(rows).toHaveLength(SETTINGS.length + 4);
+    for (const row of rows) {
+      expect([row.key, row.versions, row.status]).toEqual([row.key, '1', 'approved']);
+      expect(row.refs.every((ref) => /^D-\d{3}$/.test(ref))).toBe(true);
+    }
+  });
+
+  it('keeps the issuing entity data in entity-scoped settings, not in code (D-092)', async () => {
+    const { rows } = await db.client.query<{ key: string }>(
+      "SELECT key FROM settings WHERE scope_type = 'entity' ORDER BY key",
+    );
+    expect(rows.map((r) => r.key)).toEqual([
+      'entity.branch_code',
+      'entity.legal_name_en',
+      'entity.legal_name_th',
+      'entity.tax_id',
+    ]);
+  });
+
+  it('approves every policy version with its steps; discount memos have one step per tier (D-162)', async () => {
+    const { rows } = await db.client.query<{ key: string; status: string; steps: string }>(`
+      SELECT p.key, v.status::text AS status, count(s.id) AS steps
+        FROM approval_policies p
+        JOIN approval_policy_versions v ON v.policy_id = p.id
+        JOIN approval_steps s ON s.policy_version_id = v.id
+       GROUP BY p.key, v.status`);
+    expect(rows).toHaveLength(APPROVAL_POLICIES.length);
+    expect(rows.every((r) => r.status === 'approved')).toBe(true);
+    expect(rows.find((r) => r.key === 'discount_memo')?.steps).toBe('3');
+  });
+
+  it('grants each fake staff user its role, on the platform scope', async () => {
+    const { rows } = await db.client.query<{ email: string; role: string; scope: string }>(`
+      SELECT u.email, r.key AS role, ur.scope_type::text AS scope
+        FROM users u JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id
+       WHERE u.kind = 'staff'`);
+    expect(rows).toHaveLength(14);
+    for (const row of rows) {
+      expect(row.email).toBe(`${row.role.replaceAll('_', '-')}@example.invalid`);
+      expect(row.scope).toBe('platform');
+    }
+  });
+
+  it('seeds the empty national calendar and consent purposes without texts (D-161, D-005)', async () => {
+    expect(await count("business_calendars WHERE code = 'th_public'")).toBe(1);
+    expect(await count('business_calendar_days')).toBe(0);
+    expect(await count('consent_purposes')).toBe(7);
+    expect(await count('consent_purpose_versions')).toBe(0);
+  });
+
+  it('adds a second entity without taking over the default', async () => {
+    await seedReference(prisma, { code: 'OTHER', displayName: 'Other entity (fake)' });
+    const { rows } = await db.client.query<{ code: string; is_default: boolean }>(
+      'SELECT code, is_default FROM entities ORDER BY code',
+    );
+    expect(rows).toEqual([
+      { code: 'DEV', is_default: true },
+      { code: 'OTHER', is_default: false },
+    ]);
+  });
+});

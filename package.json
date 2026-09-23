@@ -28,7 +28,8 @@
     "prisma:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
-    "db:seed:dev": "node -e \"console.log(\\\"db:seed:dev: no seed yet — seeds arrive in B1.2\\\")\"",
+    "db:seed": "nest build && node dist/prisma/seed/run.js reference",
+    "db:seed:dev": "nest build && node dist/prisma/seed/run.js dev",
     "contract:lint": "spectral lint contract/openapi.json --ruleset contract/spectral/.spectral.yaml --fail-severity warn"
   },
   "dependencies": {

@@ -55,7 +55,8 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.ts'],
+    // CLI entry points report to the terminal.
+    files: ['scripts/**/*.ts', 'prisma/seed/run.ts'],
     rules: { 'no-console': 'off' },
   },
   {
