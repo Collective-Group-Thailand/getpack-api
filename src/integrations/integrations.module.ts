@@ -21,6 +21,9 @@ import { ThaiBulkSmsSender } from './sms/thaibulksms-sender';
 import { FakeTeamsWebhook } from './teams/fake-teams';
 import { TEAMS_WEBHOOK } from './teams/teams.port';
 import { TeamsWebhookClient } from './teams/teams-webhook';
+import { ExternalScanPending } from './virus-scan/external-scan-pending';
+import { FakeVirusScanner } from './virus-scan/fake-virus-scanner';
+import { VIRUS_SCANNER } from './virus-scan/virus-scanner.port';
 import { FakeWebPush } from './web-push/fake-web-push';
 import { VapidWebPush } from './web-push/vapid-web-push';
 import { WEB_PUSH } from './web-push/web-push.port';
@@ -116,8 +119,15 @@ import { WEB_PUSH } from './web-push/web-push.port';
               }),
             ),
     },
+    {
+      provide: VIRUS_SCANNER,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes ? new FakeVirusScanner() : new ExternalScanPending(),
+    },
   ],
   exports: [
+    VIRUS_SCANNER,
     OBJECT_STORAGE,
     SMS_SENDER,
     FIREBASE_VERIFIER,

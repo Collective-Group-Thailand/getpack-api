@@ -1,5 +1,6 @@
 import { StoreMeController } from '@modules/auth/controllers/me.controllers';
 import { Module } from '@nestjs/common';
+import { StoreFilesController } from '@platform/files/files.controllers';
 import {
   StoreInboxController,
   StoreMyNotificationSettingsController,
@@ -11,6 +12,8 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
 @Module({
   imports: [RealtimeModule],
   controllers: [
+    StoreFilesController,
+
     StoreRealtimeController,
     StoreWebPushController,
     StoreMeController,

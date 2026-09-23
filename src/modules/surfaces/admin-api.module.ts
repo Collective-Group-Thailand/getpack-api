@@ -5,6 +5,7 @@ import { Module } from '@nestjs/common';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
 import { OutboxAdminController } from '@platform/domain-events/outbox-admin.controller';
 import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.controller';
+import { AdminFilesController } from '@platform/files/files.controllers';
 import { AdminInboxController } from '@platform/notifications/my-notifications.controller';
 import {
   ConsentPurposesController,
@@ -21,6 +22,8 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
   imports: [RealtimeModule, SettingsAdminModule],
   providers: [UsersAdminService],
   controllers: [
+    AdminFilesController,
+
     AdminRealtimeController,
     AdminWebPushController,
 

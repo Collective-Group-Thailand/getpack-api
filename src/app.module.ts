@@ -18,6 +18,7 @@ import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ApprovalsModule } from '@platform/approvals/approvals.module';
+import { FilesModule } from '@platform/files/files.module';
 import { HealthModule } from '@platform/health/health.module';
 import { NotificationsModule } from '@platform/notifications/notifications.module';
 import { PlatformCoreModule } from '@platform/platform-core.module';
@@ -62,6 +63,7 @@ import { LoggerModule } from 'nestjs-pino';
     AuthModule,
     ApprovalsModule,
     NotificationsModule,
+    FilesModule,
     SettingsAdminModule,
     HealthModule,
     SurfacesModule,

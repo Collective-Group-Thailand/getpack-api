@@ -31,6 +31,9 @@ export const API_TAGS: Record<string, string> = {
   'store.webPush': 'Web push subscriptions of the signed-in customer (D-143).',
   'admin.webPush': 'Web push subscriptions of the signed-in staff member (D-143).',
   'partner.webPush': 'Web push subscriptions of the signed-in factory user (D-143).',
+  'store.files': 'Customer uploads (artwork, slips…): presign → PUT → complete → signed download.',
+  'admin.files': 'Staff uploads and downloads (presign → PUT → complete → signed download).',
+  'partner.files': 'Factory uploads (evidence, documents): presign → PUT → complete → signed download.',
   'admin.outbox': 'Domain-event outbox: dead-letter list and replay.',
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
 };

@@ -250,5 +250,27 @@
       "title": "Channel not testable",
       "detail": "Test sends work for e-mail, SMS, LINE and web push to your own address only."
     }
+  },
+  "file": {
+    "type_not_allowed": {
+      "title": "File type not allowed",
+      "detail": "This file type is not accepted for {purpose} uploads."
+    },
+    "too_large": {
+      "title": "File too large",
+      "detail": "The file must not exceed {maxMb} MB."
+    },
+    "upload_incomplete": {
+      "title": "Upload incomplete",
+      "detail": "The uploaded object is missing or its size differs from the declared size."
+    },
+    "not_ready": {
+      "title": "File not ready",
+      "detail": "The file is still uploading or being scanned. Try again later."
+    },
+    "infected": {
+      "title": "File blocked",
+      "detail": "The file was found to be malicious and was removed."
+    }
   }
 }

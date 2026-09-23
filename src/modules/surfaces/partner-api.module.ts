@@ -1,5 +1,6 @@
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { Module } from '@nestjs/common';
+import { PartnerFilesController } from '@platform/files/files.controllers';
 import { PartnerInboxController } from '@platform/notifications/my-notifications.controller';
 import { PartnerRealtimeController, PartnerWebPushController } from '@platform/realtime/realtime.controllers';
 import { RealtimeModule } from '@platform/realtime/realtime.module';
@@ -8,6 +9,8 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
 @Module({
   imports: [RealtimeModule],
   controllers: [
+    PartnerFilesController,
+
     PartnerRealtimeController,
     PartnerWebPushController,
     PartnerMeController,

@@ -9,6 +9,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ApprovalsModule } from '@platform/approvals/approvals.module';
 import { DomainEventsWorkerModule } from '@platform/domain-events/domain-events-worker.module';
+import { FilesModule } from '@platform/files/files.module';
 import { NotificationsModule } from '@platform/notifications/notifications.module';
 import { PlatformCoreModule } from '@platform/platform-core.module';
 import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
@@ -44,6 +45,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     IamModule,
     ApprovalsModule,
     NotificationsModule,
+    FilesModule,
     SettingsAdminModule,
     DomainEventsWorkerModule,
   ],
