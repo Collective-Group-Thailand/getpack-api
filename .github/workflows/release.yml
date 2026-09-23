@@ -14,9 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - name: Contract at this tag matches the code
+      - name: Contract at this tag matches the code and passes contract:lint
         run: |
           pnpm contract:build
+          pnpm contract:lint
           git diff --exit-code -- contract/openapi.json
       - name: Tag matches package.json version
         run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"

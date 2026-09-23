@@ -53,7 +53,7 @@ jobs:
       - run: pnpm test:e2e
 
   contract:
-    name: contract drift · oasdiff breaking
+    name: contract lint · drift · oasdiff breaking
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +62,8 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Regenerate contract
         run: pnpm contract:build
+      - name: Contract lint (Spectral, api-conventions §5)
+        run: pnpm contract:lint
       - name: Contract drift (commit the regenerated contract/openapi.json)
         run: git diff --exit-code -- contract/openapi.json
       - name: Breaking changes vs main
