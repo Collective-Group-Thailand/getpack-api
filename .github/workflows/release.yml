@@ -1,0 +1,26 @@
+name: Release
+
+# Tag vX.Y.Z → GitHub release with contract/openapi.json attached (api-conventions §1).
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Contract at this tag matches the code
+        run: |
+          pnpm contract:build
+          git diff --exit-code -- contract/openapi.json
+      - name: Tag matches package.json version
+        run: test "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}"
+      - name: Publish release with the contract
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" contract/openapi.json --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
