@@ -13,25 +13,32 @@ export enum HealthIndicatorStatus {
 }
 
 export class HealthIndicatorState {
-  @ApiProperty({ enum: HealthIndicatorStatus, enumName: 'HealthIndicatorStatus' })
+  @ApiProperty({
+    enum: HealthIndicatorStatus,
+    enumName: 'HealthIndicatorStatus',
+    example: HealthIndicatorStatus.Up,
+  })
   status!: HealthIndicatorStatus;
 }
 
-const indicatorMap = {
-  type: 'object',
-  additionalProperties: { $ref: getSchemaPath(HealthIndicatorState) },
-} as const;
+const indicatorMap = (description: string) =>
+  ({
+    type: 'object',
+    description,
+    additionalProperties: { $ref: getSchemaPath(HealthIndicatorState) },
+    example: { database: { status: 'up' }, redis: { status: 'up' }, storage: { status: 'up' } },
+  }) as const;
 
 export class HealthResponse {
-  @ApiProperty({ enum: HealthStatus, enumName: 'HealthStatus' })
+  @ApiProperty({ enum: HealthStatus, enumName: 'HealthStatus', example: HealthStatus.Ok })
   status!: HealthStatus;
 
-  @ApiPropertyOptional(indicatorMap)
+  @ApiPropertyOptional(indicatorMap('Dependencies that are up, by name'))
   info?: Record<string, HealthIndicatorState>;
 
-  @ApiPropertyOptional(indicatorMap)
+  @ApiPropertyOptional({ ...indicatorMap('Dependencies that are down, by name'), example: {} })
   error?: Record<string, HealthIndicatorState>;
 
-  @ApiProperty(indicatorMap)
+  @ApiProperty(indicatorMap('Every dependency, by name'))
   details!: Record<string, HealthIndicatorState>;
 }

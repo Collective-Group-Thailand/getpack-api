@@ -55,6 +55,13 @@ describe('validateEnv', () => {
     }
   });
 
+  it('validates DOCS_ALLOWED_CIDRS and TRUST_PROXY', () => {
+    const env = validateEnv({ ...valid, DOCS_ALLOWED_CIDRS: '10.0.0.0/8, 203.0.113.7', TRUST_PROXY: '1' });
+    expect(env.DOCS_ALLOWED_CIDRS).toBe('10.0.0.0/8, 203.0.113.7');
+    expect(env.TRUST_PROXY).toBe(1);
+    expect(() => validateEnv({ ...valid, DOCS_ALLOWED_CIDRS: '10.0.0.0/99' })).toThrow(/DOCS_ALLOWED_CIDRS/);
+  });
+
   it('refuses fake integrations in production', () => {
     expect(() => validateEnv({ ...valid, NODE_ENV: 'production', INTEGRATIONS_MODE: 'fake' })).toThrow(
       /INTEGRATIONS_MODE: must be "real"/,

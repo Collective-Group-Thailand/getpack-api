@@ -18,13 +18,16 @@ async function bootstrap(): Promise<void> {
   });
   const logger = app.get(Logger);
   app.useLogger(logger);
+  const config = app.get(AppConfig);
+  // Client IP behind load balancers (rate limiting, docs allow-list).
+  app.set('trust proxy', config.get('TRUST_PROXY'));
   configureApp(app);
   setupDocs(app);
 
   if (secrets.loadedKeys.length > 0)
     logger.log(`Loaded ${secrets.loadedKeys.length} variables from Secrets Manager`);
 
-  const port = app.get(AppConfig).get('PORT');
+  const port = config.get('PORT');
   await app.listen(port);
   logger.log(`packio-api listening on :${port}`);
 }

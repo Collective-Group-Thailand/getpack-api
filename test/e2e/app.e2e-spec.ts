@@ -45,8 +45,31 @@ describe('packio-api (e2e: AppModule + PostgreSQL 18 + Redis, fake integrations)
     ]);
   });
 
-  it('GET /docs serves Swagger UI', async () => {
-    const res = await request(server).get('/docs').redirects(1).expect(200);
+  it('GET /docs.yaml serves the same document as YAML', async () => {
+    const res = await request(server).get('/docs.yaml').expect(200);
+    expect(res.text).toMatch(/^openapi: 3\.1\.0/m);
+  });
+
+  it('GET /docs renders the Scalar reference with a self-hosted bundle and a nonce CSP', async () => {
+    const res = await request(server).get('/docs').expect(200);
+    expect(res.headers['content-type']).toMatch(/text\/html/);
+    expect(res.text).toContain('src="/docs/assets/scalar.js"');
+    expect(res.text).not.toMatch(/cdn\.jsdelivr|fonts\.scalar\.com/);
+    const nonce = /'nonce-([^']+)'/.exec(String(res.headers['content-security-policy']))?.[1];
+    expect(nonce).toBeDefined();
+    expect(res.text).toContain(`nonce="${nonce}"`);
+    const again = await request(server).get('/docs');
+    expect(again.headers['content-security-policy']).not.toBe(res.headers['content-security-policy']);
+  });
+
+  it('GET /docs/assets/scalar.js serves the pinned bundle', async () => {
+    const res = await request(server).get('/docs/assets/scalar.js').expect(200);
+    expect(res.headers['content-type']).toMatch(/javascript/);
+    expect(Number(res.headers['content-length'])).toBeGreaterThan(1_000_000);
+  });
+
+  it('GET /docs/swagger serves Swagger UI', async () => {
+    const res = await request(server).get('/docs/swagger').redirects(1).expect(200);
     expect(res.text).toContain('swagger');
   });
 

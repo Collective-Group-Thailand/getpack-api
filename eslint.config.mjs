@@ -58,5 +58,11 @@ export default tseslint.config(
     files: ['scripts/**/*.ts'],
     rules: { 'no-console': 'off' },
   },
+  {
+    // Spectral custom functions: plain ES modules loaded by the Spectral CLI, not part of the TS build.
+    files: ['contract/spectral/functions/**/*.js'],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: { sourceType: 'module', parserOptions: { projectService: false } },
+  },
   prettier,
 );

@@ -1,3 +1,4 @@
+import { parseCidrList } from '@common/http/cidr';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
@@ -11,6 +12,9 @@ import {
   Matches,
   Max,
   Min,
+  Validate,
+  ValidatorConstraint,
+  type ValidatorConstraintInterface,
 } from 'class-validator';
 
 export enum NodeEnv {
@@ -34,6 +38,19 @@ const toBoolean = ({ value }: { value: unknown }): unknown => {
   if (['false', '0', 'no', ''].includes(value.toLowerCase())) return false;
   return value;
 };
+
+@ValidatorConstraint({ name: 'isCidrList' })
+class IsCidrList implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    try {
+      parseCidrList(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
 
 const toNumber = ({ value }: { value: unknown }): unknown =>
   typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value)) ? Number(value) : value;
@@ -91,6 +108,22 @@ export class EnvironmentVariables {
   @Transform(toBoolean)
   @IsBoolean()
   DOCS_ENABLED = false;
+
+  /**
+   * Who may open /docs* outside development/test (contract §5): comma-separated IPs/CIDRs.
+   * Empty = nobody. Staff-token access is added in B1.3.
+   */
+  @IsOptional()
+  @IsString()
+  @Validate(IsCidrList)
+  DOCS_ALLOWED_CIDRS?: string;
+
+  /** Number of trusted reverse-proxy hops in front of the API (Express `trust proxy`); 0 = none. */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(0)
+  @Max(5)
+  TRUST_PROXY = 0;
 
   @Transform(toNumber)
   @IsInt()

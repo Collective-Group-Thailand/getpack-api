@@ -8,29 +8,22 @@ import {
   SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ApiHeader, ApiResponse } from '@nestjs/swagger';
 import { type Request, type Response } from 'express';
 import { map, type Observable } from 'rxjs';
+
+import { ApiEtag } from '../openapi/decorators';
 
 const ETAG_METADATA = 'packio:etag';
 
 type EtagExtractor = (body: unknown) => string | undefined;
 
-/** Sets the `ETag` response header from the handler result, e.g. `@UseEtag((o: Order) => etagOf(o.id, o.version))`. */
+/**
+ * Sets the `ETag` response header from the handler result, e.g.
+ * `@UseEtag((o: Order) => etagOf(o.id, o.version))`, and documents it. Updates also use
+ * `@ApiConcurrency()` (If-Match, 412/428).
+ */
 export function UseEtag<T>(extract: (body: T) => string | undefined) {
-  return applyDecorators(
-    SetMetadata(ETAG_METADATA, extract),
-    ApiResponse({ status: 200, description: 'OK', headers: { ETag: { schema: { type: 'string' } } } }),
-  );
-}
-
-/** Documents the `If-Match` request header and the 412/428 problems on an update endpoint. */
-export function RequiresIfMatch() {
-  return applyDecorators(
-    ApiHeader({ name: 'If-Match', required: true, description: 'ETag of the version being updated' }),
-    ApiResponse({ status: 412, description: 'concurrency.stale' }),
-    ApiResponse({ status: 428, description: 'concurrency.precondition_required' }),
-  );
+  return applyDecorators(SetMetadata(ETAG_METADATA, extract), ApiEtag());
 }
 
 /** Injects the raw `If-Match` header; pass it to `assertIfMatch` inside the transaction. */

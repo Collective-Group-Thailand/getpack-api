@@ -1,3 +1,4 @@
+import { ApiAuthErrors, ApiPublic } from '@common/openapi/decorators';
 import { applyDecorators } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
@@ -21,10 +22,15 @@ const SURFACE_AUDIENCE: Partial<Record<Surface, Audience>> = {
   partner: 'partner',
 };
 
-/** Tags prefixed by surface (`store.orders`, `admin.orders`) plus the surface's bearer scheme. */
+/**
+ * Controller-level: tag prefixed by surface (`store.orders`), the surface's bearer scheme and its
+ * 401/403 problems. `auth` and `webhooks` are public (`security: []`; webhooks verify signatures).
+ * The tag must be registered in `src/common/openapi/tags.ts`.
+ */
 export function ApiSurface(surface: Surface, resource: string) {
   const audience = SURFACE_AUDIENCE[surface];
   const decorators = [ApiTags(`${surface}.${resource}`)];
-  if (audience) decorators.push(ApiBearerAuth(audience));
+  if (audience) decorators.push(ApiBearerAuth(audience), ApiAuthErrors());
+  else decorators.push(ApiPublic());
   return applyDecorators(...decorators);
 }

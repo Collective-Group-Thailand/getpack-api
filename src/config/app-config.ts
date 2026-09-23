@@ -23,8 +23,12 @@ export class AppConfig {
     return this.env.INTEGRATIONS_MODE === IntegrationsMode.Fake;
   }
 
-  /** `/docs` is on everywhere except production, where it needs `DOCS_ENABLED=true` (contract §2). */
-  get docsEnabled(): boolean {
-    return !this.isProduction || this.env.DOCS_ENABLED;
+  /**
+   * Who may open `/docs*` (contract §5): everyone in development/test; in production nobody unless
+   * `DOCS_ENABLED=true`, and then only callers inside `DOCS_ALLOWED_CIDRS` (staff tokens: B1.3).
+   */
+  get docsAccess(): 'open' | 'allow-list' | 'off' {
+    if (!this.isProduction) return 'open';
+    return this.env.DOCS_ENABLED ? 'allow-list' : 'off';
   }
 }

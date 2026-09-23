@@ -1,9 +1,7 @@
 import { jsonBodyParser } from '@common/http/json-body-parser';
-import { buildOpenApiDocument } from '@common/openapi/openapi.document';
+import { setupDocs as setupDocsRoutes } from '@common/openapi/docs';
 import { createValidationPipe } from '@common/validation/validation';
-import { AppConfig } from '@config/app-config';
 import { type INestApplication, VersioningType } from '@nestjs/common';
-import { SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 
 import { version } from '../package.json';
@@ -22,9 +20,7 @@ export function configureApp(app: INestApplication): void {
   app.enableShutdownHooks();
 }
 
-/** Serves `/docs` (Swagger UI) and `/docs-json` when enabled (contract §2). */
+/** `/docs` (Scalar), `/docs/swagger`, `/docs-json`, `/docs.yaml` — gated per contract §5. */
 export function setupDocs(app: INestApplication): void {
-  if (!app.get(AppConfig).docsEnabled) return;
-  const document = buildOpenApiDocument(app, APP_VERSION);
-  SwaggerModule.setup('docs', app, document, { jsonDocumentUrl: 'docs-json', raw: ['json'] });
+  setupDocsRoutes(app, APP_VERSION);
 }

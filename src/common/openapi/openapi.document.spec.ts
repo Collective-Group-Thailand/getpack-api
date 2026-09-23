@@ -1,6 +1,7 @@
 import { type OpenAPIObject } from '@nestjs/swagger';
 
 import { contractViolations, normaliseDocument } from './openapi.document';
+import { API_TAGS } from './tags';
 
 const doc = (paths: OpenAPIObject['paths'], schemas: Record<string, unknown> = {}): OpenAPIObject =>
   ({ openapi: '3.1.0', info: { title: 't', version: '1' }, paths, components: { schemas } }) as OpenAPIObject;
@@ -11,7 +12,14 @@ describe('openapi document', () => {
     expect(output).toBe('{"a":{"c":2,"d":[3,1]},"b":1}');
   });
 
-  it('accepts named enum components and surface-prefixed tags', () => {
+  beforeAll(() => {
+    API_TAGS['store.orders'] = 'Orders (test)';
+  });
+  afterAll(() => {
+    delete API_TAGS['store.orders'];
+  });
+
+  it('accepts named enum components and registered surface-prefixed tags', () => {
     const document = doc(
       {
         '/v1/store/orders': {
@@ -42,8 +50,9 @@ describe('openapi document', () => {
       },
     });
     const problems = contractViolations(document);
-    expect(problems).toHaveLength(2);
+    expect(problems).toHaveLength(3);
     expect(problems[0]).toMatch(/inline enum/);
     expect(problems[1]).toMatch(/GET \/v1\/admin\/orders: tags must be prefixed/);
+    expect(problems[2]).toMatch(/tag "orders" is not in API_TAGS/);
   });
 });
