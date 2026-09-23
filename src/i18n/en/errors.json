@@ -162,5 +162,33 @@
       "title": "Provider unavailable",
       "detail": "An external provider did not respond. Try again later."
     }
+  },
+  "iam": {
+    "sod_conflict": {
+      "title": "Segregation-of-duties conflict",
+      "detail": "This action conflicts with a segregation-of-duties rule ({rule})."
+    },
+    "role_escalation": {
+      "title": "Cannot grant beyond own access",
+      "detail": "You cannot grant a role with permissions you do not hold."
+    },
+    "self_grant": {
+      "title": "Cannot change own roles",
+      "detail": "Users cannot grant or revoke their own roles."
+    },
+    "role_scope_mismatch": {
+      "title": "Role scope mismatch",
+      "detail": "This role needs a {scopeType} scope and a user of the matching kind."
+    },
+    "user_exists": {
+      "title": "User already exists",
+      "detail": "A user of this kind already has this e-mail."
+    }
+  },
+  "outbox": {
+    "not_replayable": {
+      "title": "Event not replayable",
+      "detail": "Only failed or dead-lettered events can be replayed."
+    }
   }
 }

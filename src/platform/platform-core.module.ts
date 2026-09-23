@@ -5,6 +5,7 @@ import { ActivityLogService } from './activity/activity-log.service';
 import { AuditService } from './audit/audit.service';
 import { BusinessCalendarService } from './calendar/business-calendar.service';
 import { DomainEvents } from './domain-events/domain-events.service';
+import { OutboxAdminService } from './domain-events/outbox-admin.service';
 import { EntitiesService } from './entities/entities.service';
 import { FeatureFlagsService } from './feature-flags/feature-flags.service';
 import { SettingsService } from './settings/settings.service';
@@ -21,6 +22,7 @@ import { SettingsService } from './settings/settings.service';
     BusinessCalendarService,
     SettingsService,
     FeatureFlagsService,
+    OutboxAdminService,
   ],
   exports: [
     InvalidationBus,
@@ -31,6 +33,7 @@ import { SettingsService } from './settings/settings.service';
     BusinessCalendarService,
     SettingsService,
     FeatureFlagsService,
+    OutboxAdminService,
   ],
 })
 export class PlatformCoreModule {}

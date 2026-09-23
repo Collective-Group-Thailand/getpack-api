@@ -1,3 +1,4 @@
+import { PermissionGuard } from '@modules/iam/permission.guard';
 import { Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 
@@ -30,7 +31,12 @@ const SERVICES = [
 /** Authentication (ADR-0004). Controllers live in the surface modules; the guard is global. */
 @Global()
 @Module({
-  providers: [...SERVICES, { provide: APP_GUARD, useExisting: AuthGuard }],
+  // Order matters: authenticate first, then check `@Can()` permissions.
+  providers: [
+    ...SERVICES,
+    { provide: APP_GUARD, useExisting: AuthGuard },
+    { provide: APP_GUARD, useExisting: PermissionGuard },
+  ],
   exports: SERVICES,
 })
 export class AuthModule {}

@@ -210,6 +210,17 @@
           "type": "https://errors.packio/http.bad_request"
         }
       },
+      "problem.http.conflict": {
+        "summary": "http.conflict",
+        "value": {
+          "code": "http.conflict",
+          "detail": "คำขอขัดแย้งกับสถานะปัจจุบันของข้อมูล",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ข้อมูลขัดแย้ง",
+          "type": "https://errors.packio/http.conflict"
+        }
+      },
       "problem.http.malformed_json": {
         "summary": "http.malformed_json",
         "value": {
@@ -243,6 +254,61 @@
           "type": "https://errors.packio/http.too_many_requests"
         }
       },
+      "problem.iam.role_escalation": {
+        "summary": "iam.role_escalation",
+        "value": {
+          "code": "iam.role_escalation",
+          "detail": "คุณให้บทบาทที่มีสิทธิ์มากกว่าสิทธิ์ของตนเองไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "ให้สิทธิ์เกินสิทธิ์ของตนเองไม่ได้",
+          "type": "https://errors.packio/iam.role_escalation"
+        }
+      },
+      "problem.iam.role_scope_mismatch": {
+        "summary": "iam.role_scope_mismatch",
+        "value": {
+          "code": "iam.role_scope_mismatch",
+          "detail": "บทบาทนี้ต้องใช้ขอบเขต {scopeType} และต้องตรงกับประเภทผู้ใช้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ขอบเขตบทบาทไม่ถูกต้อง",
+          "type": "https://errors.packio/iam.role_scope_mismatch"
+        }
+      },
+      "problem.iam.self_grant": {
+        "summary": "iam.self_grant",
+        "value": {
+          "code": "iam.self_grant",
+          "detail": "ผู้ใช้ไม่สามารถให้หรือถอนบทบาทของตนเองได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "เปลี่ยนสิทธิ์ของตนเองไม่ได้",
+          "type": "https://errors.packio/iam.self_grant"
+        }
+      },
+      "problem.iam.sod_conflict": {
+        "summary": "iam.sod_conflict",
+        "value": {
+          "code": "iam.sod_conflict",
+          "detail": "การดำเนินการนี้ขัดกับกฎการแบ่งแยกหน้าที่ ({rule})",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ขัดกับการแบ่งแยกหน้าที่",
+          "type": "https://errors.packio/iam.sod_conflict"
+        }
+      },
+      "problem.iam.user_exists": {
+        "summary": "iam.user_exists",
+        "value": {
+          "code": "iam.user_exists",
+          "detail": "มีผู้ใช้ประเภทนี้ที่ใช้อีเมลนี้อยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีผู้ใช้นี้อยู่แล้ว",
+          "type": "https://errors.packio/iam.user_exists"
+        }
+      },
       "problem.internal.unexpected": {
         "summary": "internal.unexpected",
         "value": {
@@ -252,6 +318,17 @@
           "status": 500,
           "title": "เกิดข้อผิดพลาดในระบบ",
           "type": "https://errors.packio/internal.unexpected"
+        }
+      },
+      "problem.outbox.not_replayable": {
+        "summary": "outbox.not_replayable",
+        "value": {
+          "code": "outbox.not_replayable",
+          "detail": "ส่งซ้ำได้เฉพาะเหตุการณ์ที่ล้มเหลวหรือค้างอยู่ใน dead-letter",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ส่งเหตุการณ์ซ้ำไม่ได้",
+          "type": "https://errors.packio/outbox.not_replayable"
         }
       },
       "problem.provider.unavailable": {
@@ -481,6 +558,45 @@
         ],
         "type": "object"
       },
+      "CreateUserDto": {
+        "properties": {
+          "displayName": {
+            "example": "พนักงาน ทดสอบ",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "email": {
+            "example": "new.staff@example.com",
+            "format": "email",
+            "maxLength": 254,
+            "type": "string"
+          },
+          "initialPassword": {
+            "description": "Initial password; the user changes it",
+            "example": "temporary-passphrase-1",
+            "format": "password",
+            "maxLength": 256,
+            "minLength": 12,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManagedUserKind"
+              }
+            ],
+            "example": "staff"
+          }
+        },
+        "required": [
+          "kind",
+          "email",
+          "displayName",
+          "initialPassword"
+        ],
+        "type": "object"
+      },
       "DevicePinDto": {
         "properties": {
           "deviceId": {
@@ -536,6 +652,40 @@
         },
         "required": [
           "idToken"
+        ],
+        "type": "object"
+      },
+      "GrantRoleDto": {
+        "properties": {
+          "reason": {
+            "example": "Left the company",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "role": {
+            "example": "finance",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoleScopeDto"
+              }
+            ],
+            "description": "Required for factory and company roles"
+          },
+          "validTo": {
+            "description": "End of a time-boxed grant",
+            "example": "2026-12-31T23:59:59+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "role"
         ],
         "type": "object"
       },
@@ -749,6 +899,13 @@
         ],
         "type": "string"
       },
+      "ManagedUserKind": {
+        "enum": [
+          "staff",
+          "partner"
+        ],
+        "type": "string"
+      },
       "MenuEntryDto": {
         "properties": {
           "key": {
@@ -853,6 +1010,95 @@
         "required": [
           "challengeId",
           "code"
+        ],
+        "type": "object"
+      },
+      "OutboxMessageDto": {
+        "properties": {
+          "aggregateId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a0a0",
+            "format": "uuid",
+            "type": "string"
+          },
+          "aggregateType": {
+            "example": "approval_request",
+            "type": "string"
+          },
+          "attempts": {
+            "example": 3,
+            "type": "integer"
+          },
+          "eventId": {
+            "description": "Domain event id",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastError": {
+            "example": "notifications.router: Error: provider down",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurredAt": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OutboxStatus"
+              }
+            ],
+            "example": "dead"
+          },
+          "type": {
+            "example": "approval.approved",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventId",
+          "type",
+          "aggregateType",
+          "aggregateId",
+          "status",
+          "attempts",
+          "lastError",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "OutboxStatus": {
+        "enum": [
+          "pending",
+          "dispatched",
+          "failed",
+          "dead"
+        ],
+        "type": "string"
+      },
+      "PageMeta": {
+        "properties": {
+          "page": {
+            "example": 1,
+            "type": "integer"
+          },
+          "perPage": {
+            "example": 25,
+            "type": "integer"
+          },
+          "total": {
+            "example": 1234,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page",
+          "perPage",
+          "total"
         ],
         "type": "object"
       },
@@ -1018,6 +1264,20 @@
         ],
         "type": "object"
       },
+      "ReasonDto": {
+        "properties": {
+          "reason": {
+            "example": "Left the company",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "RefreshDto": {
         "properties": {
           "refreshToken": {
@@ -1031,6 +1291,162 @@
           "refreshToken"
         ],
         "type": "object"
+      },
+      "RoleDto": {
+        "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TokenAudience"
+              }
+            ],
+            "description": "Audience of users who may hold it",
+            "example": "staff"
+          },
+          "key": {
+            "example": "finance",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Finance",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "การเงิน",
+            "type": "string"
+          },
+          "permissions": {
+            "example": [
+              "approvals.act",
+              "factory_cost.read"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scopeType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoleScopeType"
+              }
+            ],
+            "example": "platform"
+          }
+        },
+        "required": [
+          "key",
+          "audience",
+          "scopeType",
+          "nameTh",
+          "nameEn",
+          "permissions"
+        ],
+        "type": "object"
+      },
+      "RoleGrantDto": {
+        "properties": {
+          "id": {
+            "description": "Grant id",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "example": "Joined the finance team",
+            "type": "string"
+          },
+          "role": {
+            "example": "finance",
+            "type": "string"
+          },
+          "scopeId": {
+            "description": "Factory/company id; null for platform roles",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scopeType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoleScopeType"
+              }
+            ],
+            "example": "platform"
+          },
+          "validFrom": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "validTo": {
+            "description": "Time-boxed grants (Auditor, §8)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "scopeType",
+          "scopeId",
+          "validFrom",
+          "validTo",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "RoleScopeDto": {
+        "properties": {
+          "id": {
+            "description": "Factory or company id",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000000f01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScopedType"
+              }
+            ],
+            "example": "factory"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "type": "object"
+      },
+      "RoleScopeType": {
+        "enum": [
+          "platform",
+          "factory",
+          "company"
+        ],
+        "type": "string"
+      },
+      "ScopedType": {
+        "enum": [
+          "factory",
+          "company"
+        ],
+        "type": "string"
+      },
+      "SortOrder": {
+        "enum": [
+          "asc",
+          "desc"
+        ],
+        "type": "string"
       },
       "StaffLoginDto": {
         "properties": {
@@ -1228,6 +1644,89 @@
           "scopes"
         ],
         "type": "object"
+      },
+      "UserAdminDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-09-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "displayName": {
+            "example": "การเงิน ทดสอบ",
+            "type": "string"
+          },
+          "email": {
+            "example": "finance.one@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TokenAudience"
+              }
+            ],
+            "example": "staff"
+          },
+          "lastLoginAt": {
+            "example": "2026-09-23T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66810001234",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/RoleGrantDto"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserStatus"
+              }
+            ],
+            "example": "active"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "email",
+          "phone",
+          "displayName",
+          "lastLoginAt",
+          "createdAt",
+          "roles"
+        ],
+        "type": "object"
+      },
+      "UserStatus": {
+        "enum": [
+          "pending_verification",
+          "active",
+          "suspended",
+          "inactive"
+        ],
+        "type": "string"
       }
     },
     "securitySchemes": {
@@ -1522,6 +2021,2503 @@
         "summary": "The signed-in staff member with menu entitlements",
         "tags": [
           "admin.me"
+        ]
+      }
+    },
+    "/v1/admin/outbox": {
+      "get": {
+        "description": "Domain events and their relay status; `status=dead` lists events a subscriber could not process after all retries.\n\nImplements: ADR-0006, ADR-0005.",
+        "operationId": "admin.outbox.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OutboxStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "aggregateId": "0192f3a0-7c1e-7d2a-9b1f-00000000a0a0",
+                      "aggregateType": "approval_request",
+                      "attempts": 3,
+                      "eventId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                      "lastError": "notifications.router: Error: provider down",
+                      "occurredAt": "2026-09-23T14:05:00+07:00",
+                      "status": "dead",
+                      "type": "approval.approved"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/OutboxMessageDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List outbox messages (dead-letter list)",
+        "tags": [
+          "admin.outbox"
+        ],
+        "x-required-permissions": [
+          "outbox.manage"
+        ]
+      }
+    },
+    "/v1/admin/outbox/{eventId}/actions/replay": {
+      "post": {
+        "description": "Queues the event again. Subscribers that already processed it skip it (idempotent consumers), so only the failed ones run. Audited.\n\nImplements: ADR-0006.",
+        "operationId": "admin.outbox.replay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "eventId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "aggregateId": "0192f3a0-7c1e-7d2a-9b1f-00000000a0a0",
+                  "aggregateType": "approval_request",
+                  "attempts": 3,
+                  "eventId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "lastError": null,
+                  "occurredAt": "2026-09-23T14:05:00+07:00",
+                  "status": "pending",
+                  "type": "approval.approved"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OutboxMessageDto"
+                }
+              }
+            },
+            "description": "Queued again",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "outbox.not_replayable": {
+                    "$ref": "#/components/examples/problem.outbox.not_replayable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `outbox.not_replayable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replay a failed or dead event",
+        "tags": [
+          "admin.outbox"
+        ],
+        "x-required-permissions": [
+          "outbox.manage"
+        ]
+      }
+    },
+    "/v1/admin/roles": {
+      "get": {
+        "description": "Roles of D-140 for every audience with their permissions (`docs/rbac.md` is generated from the same catalogue).\n\nImplements: D-140, D-141.",
+        "operationId": "admin.roles.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "audience": "staff",
+                    "key": "finance",
+                    "nameEn": "Finance",
+                    "nameTh": "การเงิน",
+                    "permissions": [
+                      "approvals.act",
+                      "factory_cost.read"
+                    ],
+                    "scopeType": "platform"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RoleDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Roles",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "The role catalogue with permissions",
+        "tags": [
+          "admin.roles"
+        ],
+        "x-required-permissions": [
+          "users.read"
+        ]
+      }
+    },
+    "/v1/admin/users": {
+      "get": {
+        "description": "Filter by kind and status; `q` searches e-mail and display name. Anonymised accounts are hidden.\n\nImplements: D-140.",
+        "operationId": "admin.users.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TokenAudience"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/UserStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "createdAt": "2026-09-01T09:00:00+07:00",
+                      "displayName": "การเงิน ทดสอบ",
+                      "email": "finance.one@example.com",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                      "kind": "staff",
+                      "lastLoginAt": "2026-09-23T09:00:00+07:00",
+                      "phone": null,
+                      "roles": [
+                        {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+                          "reason": "Joined the finance team",
+                          "role": "finance",
+                          "scopeId": null,
+                          "scopeType": "platform",
+                          "validFrom": "2026-09-01T09:00:00+07:00",
+                          "validTo": null
+                        }
+                      ],
+                      "status": "active"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/UserAdminDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List staff, partner and customer accounts",
+        "tags": [
+          "admin.users"
+        ],
+        "x-required-permissions": [
+          "users.read"
+        ]
+      },
+      "post": {
+        "description": "With an initial password (argon2id). Roles are granted separately. Customers sign up themselves (OTP, LINE, Google/Apple).\n\nImplements: D-140, ADR-0004.",
+        "operationId": "admin.users.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "displayName": "พนักงาน ทดสอบ",
+                    "email": "new.staff@example.com",
+                    "initialPassword": "temporary-passphrase-1",
+                    "kind": "staff"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-09-01T09:00:00+07:00",
+                  "displayName": "การเงิน ทดสอบ",
+                  "email": "finance.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "kind": "staff",
+                  "lastLoginAt": "2026-09-23T09:00:00+07:00",
+                  "phone": null,
+                  "roles": [],
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/UserAdminDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "iam.user_exists": {
+                    "$ref": "#/components/examples/problem.iam.user_exists"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `iam.user_exists`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a staff or partner account",
+        "tags": [
+          "admin.users"
+        ],
+        "x-required-permissions": [
+          "users.manage"
+        ]
+      }
+    },
+    "/v1/admin/users/{userId}": {
+      "get": {
+        "description": "Active grants only.\n\nImplements: D-140.",
+        "operationId": "admin.users.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-09-01T09:00:00+07:00",
+                  "displayName": "การเงิน ทดสอบ",
+                  "email": "finance.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "kind": "staff",
+                  "lastLoginAt": "2026-09-23T09:00:00+07:00",
+                  "phone": null,
+                  "roles": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+                      "reason": "Joined the finance team",
+                      "role": "finance",
+                      "scopeId": null,
+                      "scopeType": "platform",
+                      "validFrom": "2026-09-01T09:00:00+07:00",
+                      "validTo": null
+                    }
+                  ],
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/UserAdminDto"
+                }
+              }
+            },
+            "description": "The account",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get one account with its role grants",
+        "tags": [
+          "admin.users"
+        ],
+        "x-required-permissions": [
+          "users.read"
+        ]
+      }
+    },
+    "/v1/admin/users/{userId}/actions/deactivate": {
+      "post": {
+        "description": "Sign-in stops and every open session ends at once. Nobody can deactivate themselves.\n\nImplements: D-140, ADR-0004.",
+        "operationId": "admin.users.deactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "Left the company"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-09-01T09:00:00+07:00",
+                  "displayName": "การเงิน ทดสอบ",
+                  "email": "finance.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "kind": "staff",
+                  "lastLoginAt": "2026-09-23T09:00:00+07:00",
+                  "phone": null,
+                  "roles": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+                      "reason": "Joined the finance team",
+                      "role": "finance",
+                      "scopeId": null,
+                      "scopeType": "platform",
+                      "validFrom": "2026-09-01T09:00:00+07:00",
+                      "validTo": null
+                    }
+                  ],
+                  "status": "inactive"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/UserAdminDto"
+                }
+              }
+            },
+            "description": "Deactivated",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "iam.self_grant": {
+                    "$ref": "#/components/examples/problem.iam.self_grant"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `iam.self_grant`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Deactivate an account",
+        "tags": [
+          "admin.users"
+        ],
+        "x-required-permissions": [
+          "users.manage"
+        ]
+      }
+    },
+    "/v1/admin/users/{userId}/actions/reactivate": {
+      "post": {
+        "description": "The user can sign in again.\n\nImplements: D-140.",
+        "operationId": "admin.users.reactivate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "Returned from leave"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-09-01T09:00:00+07:00",
+                  "displayName": "การเงิน ทดสอบ",
+                  "email": "finance.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "kind": "staff",
+                  "lastLoginAt": "2026-09-23T09:00:00+07:00",
+                  "phone": null,
+                  "roles": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+                      "reason": "Joined the finance team",
+                      "role": "finance",
+                      "scopeId": null,
+                      "scopeType": "platform",
+                      "validFrom": "2026-09-01T09:00:00+07:00",
+                      "validTo": null
+                    }
+                  ],
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/UserAdminDto"
+                }
+              }
+            },
+            "description": "Reactivated",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "iam.self_grant": {
+                    "$ref": "#/components/examples/problem.iam.self_grant"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `iam.self_grant`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Reactivate an account",
+        "tags": [
+          "admin.users"
+        ],
+        "x-required-permissions": [
+          "users.manage"
+        ]
+      }
+    },
+    "/v1/admin/users/{userId}/actions/revoke-sessions": {
+      "post": {
+        "description": "Revokes every refresh session and the access tokens issued for them.\n\nImplements: ADR-0004.",
+        "operationId": "admin.users.revokeSessions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessions revoked",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Sign an account out everywhere",
+        "tags": [
+          "admin.users"
+        ],
+        "x-required-permissions": [
+          "users.manage"
+        ]
+      }
+    },
+    "/v1/admin/users/{userId}/roles": {
+      "post": {
+        "description": "Factory and company roles need a scope. Nobody grants their own roles; staff roles can be granted only by someone who holds all of the role's permissions; segregation-of-duties role pairs are refused (D-168).\n\nImplements: D-140, D-168.",
+        "operationId": "admin.users.grantRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "auditor": {
+                  "value": {
+                    "reason": "Year-end audit",
+                    "role": "auditor",
+                    "validTo": "2026-12-31T23:59:59+07:00"
+                  }
+                },
+                "default": {
+                  "value": {
+                    "reason": "Joined the finance team",
+                    "role": "finance"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/GrantRoleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-09-01T09:00:00+07:00",
+                  "displayName": "การเงิน ทดสอบ",
+                  "email": "finance.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "kind": "staff",
+                  "lastLoginAt": "2026-09-23T09:00:00+07:00",
+                  "phone": null,
+                  "roles": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+                      "reason": "Joined the finance team",
+                      "role": "finance",
+                      "scopeId": null,
+                      "scopeType": "platform",
+                      "validFrom": "2026-09-01T09:00:00+07:00",
+                      "validTo": null
+                    }
+                  ],
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/UserAdminDto"
+                }
+              }
+            },
+            "description": "Granted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "iam.role_escalation": {
+                    "$ref": "#/components/examples/problem.iam.role_escalation"
+                  },
+                  "iam.self_grant": {
+                    "$ref": "#/components/examples/problem.iam.self_grant"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `iam.role_escalation`, `iam.self_grant`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.conflict": {
+                    "$ref": "#/components/examples/problem.http.conflict"
+                  },
+                  "iam.sod_conflict": {
+                    "$ref": "#/components/examples/problem.iam.sod_conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.conflict`, `iam.sod_conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "iam.role_scope_mismatch": {
+                    "$ref": "#/components/examples/problem.iam.role_scope_mismatch"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `iam.role_scope_mismatch`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Grant a role (optionally scoped and time-boxed)",
+        "tags": [
+          "admin.users"
+        ],
+        "x-required-permissions": [
+          "roles.assign"
+        ]
+      }
+    },
+    "/v1/admin/users/{userId}/roles/{grantId}/actions/revoke": {
+      "post": {
+        "description": "Takes effect at once for new requests.\n\nImplements: D-140.",
+        "operationId": "admin.users.revokeRole",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "grantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "Moved to another team"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-09-01T09:00:00+07:00",
+                  "displayName": "การเงิน ทดสอบ",
+                  "email": "finance.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "kind": "staff",
+                  "lastLoginAt": "2026-09-23T09:00:00+07:00",
+                  "phone": null,
+                  "roles": [],
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/UserAdminDto"
+                }
+              }
+            },
+            "description": "Revoked",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "iam.role_escalation": {
+                    "$ref": "#/components/examples/problem.iam.role_escalation"
+                  },
+                  "iam.self_grant": {
+                    "$ref": "#/components/examples/problem.iam.self_grant"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `iam.role_escalation`, `iam.self_grant`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Revoke a role grant",
+        "tags": [
+          "admin.users"
+        ],
+        "x-required-permissions": [
+          "roles.assign"
         ]
       }
     },
@@ -4192,6 +7188,18 @@
     {
       "description": "The signed-in staff member, permissions and menu entitlements.",
       "name": "admin.me"
+    },
+    {
+      "description": "Domain-event outbox: dead-letter list and replay.",
+      "name": "admin.outbox"
+    },
+    {
+      "description": "The role and permission catalogue (D-140, D-141).",
+      "name": "admin.roles"
+    },
+    {
+      "description": "Staff, partner and customer accounts, role grants and sessions (D-140, D-168).",
+      "name": "admin.users"
     },
     {
       "description": "Customer sign-in: phone OTP, Google/Apple (Firebase) and LINE with account linking. ADR-0004.",

@@ -12,5 +12,8 @@ export const API_TAGS: Record<string, string> = {
     'Refresh-token rotation, logout, OAuth2 client credentials for factory systems, JWKS. ADR-0004.',
   'store.me': 'The signed-in customer.',
   'admin.me': 'The signed-in staff member, permissions and menu entitlements.',
+  'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',
+  'admin.roles': 'The role and permission catalogue (D-140, D-141).',
+  'admin.outbox': 'Domain-event outbox: dead-letter list and replay.',
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
 };
