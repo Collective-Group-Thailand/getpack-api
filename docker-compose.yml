@@ -1,0 +1,60 @@
+# Local infrastructure for packio-api. `docker compose up -d`, then `pnpm dev` / `pnpm dev:worker`.
+# Images match Testcontainers and production (ADR-0001). Data is dev-only and obviously fake.
+name: packio-api
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg18
+    environment:
+      POSTGRES_USER: packio
+      POSTGRES_PASSWORD: packio
+      POSTGRES_DB: packio
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init-shadow-db.sql:/docker-entrypoint-initdb.d/10-shadow-db.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U packio -d packio']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  localstack:
+    image: localstack/localstack:4
+    environment:
+      SERVICES: s3,ses,sqs,secretsmanager
+      AWS_DEFAULT_REGION: ap-southeast-1
+    ports:
+      - '4566:4566'
+    volumes:
+      - ./docker/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'awslocal s3api head-bucket --bucket packio-dev']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # web UI
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-data:
