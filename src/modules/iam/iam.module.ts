@@ -9,19 +9,7 @@ import { SodService } from './sod.service';
 /** Roles, permissions, scopes and SoD (D-140, `accounting-design.md` §8), shared by every module. */
 @Global()
 @Module({
-  providers: [
-    PermissionResolver,
-    ScopeDirectory,
-    ScopingService,
-    SodService,
-    PermissionGuard,
-  ],
-  exports: [
-    PermissionResolver,
-    ScopeDirectory,
-    ScopingService,
-    SodService,
-    PermissionGuard,
-  ],
+  providers: [PermissionResolver, ScopeDirectory, ScopingService, SodService, PermissionGuard],
+  exports: [PermissionResolver, ScopeDirectory, ScopingService, SodService, PermissionGuard],
 })
 export class IamModule {}

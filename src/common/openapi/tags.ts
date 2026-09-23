@@ -16,6 +16,8 @@ export const API_TAGS: Record<string, string> = {
   'admin.roles': 'The role and permission catalogue (D-140, D-141).',
   'admin.approvals': 'Generic approval engine: inbox, approve, reject, withdraw (ADR-0006).',
   'admin.approvalDelegations': "Time-boxed delegation of one's approvals (ADR-0006).",
+  'admin.settings': 'Effective-dated business settings: history and dated changes (ADR-0005, D-063).',
+  'admin.featureFlags': 'Operational feature flags (not business values).',
   'admin.outbox': 'Domain-event outbox: dead-letter list and replay.',
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
 };

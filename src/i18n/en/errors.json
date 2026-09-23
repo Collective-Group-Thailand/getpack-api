@@ -224,5 +224,19 @@
       "title": "Invalid delegation",
       "detail": "The delegate must be another active staff member and the period must be valid."
     }
+  },
+  "settings": {
+    "not_owner": {
+      "title": "Not the owner of this setting",
+      "detail": "Only the {role} role may change this setting (D-063)."
+    },
+    "backdated": {
+      "title": "Cannot take effect in the past",
+      "detail": "A new setting version must take effect now or later; history is never rewritten."
+    },
+    "pending_exists": {
+      "title": "Change already pending",
+      "detail": "This setting already has a change waiting for approval."
+    }
   }
 }

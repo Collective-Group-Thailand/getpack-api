@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -17,4 +17,19 @@ export function uuidv7(now: number = Date.now()): string {
 
 export function isUuid(value: unknown): value is string {
   return typeof value === 'string' && UUID_PATTERN.test(value);
+}
+
+/** Packio namespace for name-based ids (random, fixed forever). */
+const PACKIO_NAMESPACE = Buffer.from('8f0c1f7e4b2a4c6d9e3f5a7b1c2d3e4f', 'hex');
+
+/**
+ * RFC 9562 UUID version 5 (SHA-1, name-based) in the Packio namespace: a stable uuid for rows that
+ * have a natural key but no public id (e.g. `feature_flags.key` as a domain-event aggregate id).
+ */
+export function nameUuid(name: string): string {
+  const hash = createHash('sha1').update(PACKIO_NAMESPACE).update(name, 'utf8').digest();
+  hash[6] = (hash[6]! & 0x0f) | 0x50;
+  hash[8] = (hash[8]! & 0x3f) | 0x80;
+  const hex = hash.subarray(0, 16).toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }

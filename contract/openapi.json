@@ -34,6 +34,17 @@
           "type": "https://errors.packio/approval.expired"
         }
       },
+      "problem.approval.no_matching_step": {
+        "summary": "approval.no_matching_step",
+        "value": {
+          "code": "approval.no_matching_step",
+          "detail": "ไม่มีขั้นตอนการอนุมัติใดตรงกับคำขอนี้ จึงดำเนินการต่อไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่พบผู้อนุมัติที่ตรงเงื่อนไข",
+          "type": "https://errors.packio/approval.no_matching_step"
+        }
+      },
       "problem.approval.not_authorised": {
         "summary": "approval.not_authorised",
         "value": {
@@ -417,6 +428,39 @@
           "status": 503,
           "title": "ระบบไม่พร้อมให้บริการ",
           "type": "https://errors.packio/service.unavailable"
+        }
+      },
+      "problem.settings.backdated": {
+        "summary": "settings.backdated",
+        "value": {
+          "code": "settings.backdated",
+          "detail": "ค่าตั้งใหม่ต้องมีผลตั้งแต่ตอนนี้หรืออนาคต ประวัติเดิมเปลี่ยนไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ย้อนวันที่มีผลไม่ได้",
+          "type": "https://errors.packio/settings.backdated"
+        }
+      },
+      "problem.settings.not_owner": {
+        "summary": "settings.not_owner",
+        "value": {
+          "code": "settings.not_owner",
+          "detail": "ค่าตั้งนี้เปลี่ยนได้เฉพาะบทบาท {role} (D-063)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "ไม่ใช่ผู้รับผิดชอบค่าตั้งนี้",
+          "type": "https://errors.packio/settings.not_owner"
+        }
+      },
+      "problem.settings.pending_exists": {
+        "summary": "settings.pending_exists",
+        "value": {
+          "code": "settings.pending_exists",
+          "detail": "ค่าตั้งนี้มีการขอเปลี่ยนที่รออนุมัติอยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีการขอเปลี่ยนที่รออนุมัติอยู่",
+          "type": "https://errors.packio/settings.pending_exists"
         }
       },
       "problem.validation.failed": {
@@ -838,6 +882,61 @@
         },
         "type": "object"
       },
+      "ChangeSettingDto": {
+        "properties": {
+          "effectiveFrom": {
+            "description": "Now or later; never in the past",
+            "example": "2027-01-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "example": "Raise the floor for the new fiscal year",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Typed per `valueType`; money and percent as decimal strings",
+            "example": "12"
+          }
+        },
+        "required": [
+          "value",
+          "effectiveFrom",
+          "reason"
+        ],
+        "type": "object"
+      },
       "ClientCredentialsDto": {
         "properties": {
           "client_id": {
@@ -905,6 +1004,17 @@
           "scope"
         ],
         "type": "object"
+      },
+      "ConfigVersionStatus": {
+        "enum": [
+          "draft",
+          "proposed",
+          "pending_acceptance",
+          "approved",
+          "rejected",
+          "withdrawn"
+        ],
+        "type": "string"
       },
       "CreateDelegationDto": {
         "properties": {
@@ -1088,6 +1198,68 @@
           "factoryId",
           "roles"
         ],
+        "type": "object"
+      },
+      "FeatureFlagDto": {
+        "properties": {
+          "description": {
+            "example": "Deliveree carrier adapter (D-114)",
+            "type": "string"
+          },
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "key": {
+            "example": "carriers.deliveree",
+            "type": "string"
+          },
+          "rules": {
+            "$ref": "#/components/schemas/FeatureFlagRulesDto"
+          },
+          "updatedAt": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "description",
+          "enabled",
+          "rules",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "FeatureFlagRulesDto": {
+        "properties": {
+          "audiences": {
+            "example": [
+              "staff"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/TokenAudience"
+            },
+            "type": "array"
+          },
+          "percentage": {
+            "description": "Stable share of principals",
+            "example": 100,
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "userIds": {
+            "description": "Users always included",
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
         "type": "object"
       },
       "FirebaseLoginDto": {
@@ -1905,6 +2077,440 @@
         ],
         "type": "string"
       },
+      "SettingConfirmation": {
+        "enum": [
+          "confirmed",
+          "proposed",
+          "pending_cpa",
+          "pending_business"
+        ],
+        "type": "string"
+      },
+      "SettingDetailDto": {
+        "properties": {
+          "approvalPolicy": {
+            "description": "Approval policy a change goes through",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confirmationStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettingConfirmation"
+              }
+            ],
+            "example": "confirmed"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SettingValueVersionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version in force now"
+          },
+          "decisionRefs": {
+            "example": [
+              "D-012",
+              "D-063"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": {
+            "example": "D-012 margin floor for automatic reassignment and discounts (percent)",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e0e0",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "pricing.margin_floor_pct",
+            "type": "string"
+          },
+          "masked": {
+            "description": "True when values below are hidden for this user",
+            "example": false,
+            "type": "boolean"
+          },
+          "ownerRole": {
+            "description": "Role allowed to change it (D-063)",
+            "example": "superadmin",
+            "type": "string"
+          },
+          "pending": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SettingValueVersionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Version waiting for approval"
+          },
+          "scheduled": {
+            "description": "Approved versions that take effect later",
+            "items": {
+              "$ref": "#/components/schemas/SettingValueVersionDto"
+            },
+            "type": "array"
+          },
+          "scopeId": {
+            "description": "Entity id for entity settings",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scopeType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettingScope"
+              }
+            ],
+            "example": "platform"
+          },
+          "sensitive": {
+            "description": "Values hidden without `settings.read_sensitive`",
+            "example": false,
+            "type": "boolean"
+          },
+          "valueType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettingValueType"
+              }
+            ],
+            "example": "percent"
+          },
+          "versions": {
+            "description": "Full history, newest first (immutable)",
+            "items": {
+              "$ref": "#/components/schemas/SettingVersionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "scopeType",
+          "scopeId",
+          "valueType",
+          "description",
+          "decisionRefs",
+          "ownerRole",
+          "approvalPolicy",
+          "confirmationStatus",
+          "sensitive",
+          "masked",
+          "current",
+          "scheduled",
+          "pending",
+          "versions"
+        ],
+        "type": "object"
+      },
+      "SettingDto": {
+        "properties": {
+          "approvalPolicy": {
+            "description": "Approval policy a change goes through",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confirmationStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettingConfirmation"
+              }
+            ],
+            "example": "confirmed"
+          },
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SettingValueVersionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version in force now"
+          },
+          "decisionRefs": {
+            "example": [
+              "D-012",
+              "D-063"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": {
+            "example": "D-012 margin floor for automatic reassignment and discounts (percent)",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e0e0",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "pricing.margin_floor_pct",
+            "type": "string"
+          },
+          "masked": {
+            "description": "True when values below are hidden for this user",
+            "example": false,
+            "type": "boolean"
+          },
+          "ownerRole": {
+            "description": "Role allowed to change it (D-063)",
+            "example": "superadmin",
+            "type": "string"
+          },
+          "pending": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SettingValueVersionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Version waiting for approval"
+          },
+          "scheduled": {
+            "description": "Approved versions that take effect later",
+            "items": {
+              "$ref": "#/components/schemas/SettingValueVersionDto"
+            },
+            "type": "array"
+          },
+          "scopeId": {
+            "description": "Entity id for entity settings",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scopeType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettingScope"
+              }
+            ],
+            "example": "platform"
+          },
+          "sensitive": {
+            "description": "Values hidden without `settings.read_sensitive`",
+            "example": false,
+            "type": "boolean"
+          },
+          "valueType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettingValueType"
+              }
+            ],
+            "example": "percent"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "scopeType",
+          "scopeId",
+          "valueType",
+          "description",
+          "decisionRefs",
+          "ownerRole",
+          "approvalPolicy",
+          "confirmationStatus",
+          "sensitive",
+          "masked",
+          "current",
+          "scheduled",
+          "pending"
+        ],
+        "type": "object"
+      },
+      "SettingScope": {
+        "enum": [
+          "platform",
+          "entity",
+          "product_type"
+        ],
+        "type": "string"
+      },
+      "SettingValueType": {
+        "enum": [
+          "string",
+          "integer",
+          "decimal",
+          "money",
+          "percent",
+          "boolean",
+          "duration",
+          "time_of_day_window",
+          "date",
+          "enum",
+          "json"
+        ],
+        "type": "string"
+      },
+      "SettingValueVersionDto": {
+        "properties": {
+          "effectiveFrom": {
+            "example": "2027-01-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when masked (sensitive setting)",
+            "example": "12"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versionNo",
+          "effectiveFrom",
+          "value"
+        ],
+        "type": "object"
+      },
+      "SettingVersionDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "example": "2027-01-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "example": "Raise the floor for the new fiscal year",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigVersionStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null when masked (sensitive setting)",
+            "example": "12"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versionNo",
+          "effectiveFrom",
+          "value",
+          "status",
+          "reason",
+          "createdAt",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
       "SortOrder": {
         "enum": [
           "asc",
@@ -2106,6 +2712,26 @@
           "roles",
           "permissions",
           "scopes"
+        ],
+        "type": "object"
+      },
+      "UpdateFeatureFlagDto": {
+        "properties": {
+          "description": {
+            "example": "Deliveree carrier adapter (D-114)",
+            "maxLength": 300,
+            "type": "string"
+          },
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "rules": {
+            "$ref": "#/components/schemas/FeatureFlagRulesDto"
+          }
+        },
+        "required": [
+          "enabled"
         ],
         "type": "object"
       },
@@ -4616,6 +5242,392 @@
         ]
       }
     },
+    "/v1/admin/feature-flags": {
+      "get": {
+        "description": "Operational toggles (e.g. R2 adapters off, D-111). Business values are settings, not flags (ADR-0005).\n\nImplements: ADR-0005, D-111.",
+        "operationId": "admin.featureFlags.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "description": "Deliveree carrier adapter (D-114)",
+                    "enabled": true,
+                    "key": "carriers.deliveree",
+                    "rules": {
+                      "audiences": [
+                        "staff"
+                      ],
+                      "percentage": 100
+                    },
+                    "updatedAt": "2026-09-23T14:05:00+07:00"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FeatureFlagDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Flags",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List feature flags",
+        "tags": [
+          "admin.featureFlags"
+        ],
+        "x-required-permissions": [
+          "feature_flags.read"
+        ]
+      }
+    },
+    "/v1/admin/feature-flags/{key}": {
+      "put": {
+        "description": "Audited; takes effect on every process within seconds.\n\nImplements: ADR-0005, D-063.",
+        "operationId": "admin.featureFlags.set",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "enabled": true,
+                    "rules": {
+                      "audiences": [
+                        "staff"
+                      ]
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFeatureFlagDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "description": "Deliveree carrier adapter (D-114)",
+                  "enabled": true,
+                  "key": "carriers.deliveree",
+                  "rules": {
+                    "audiences": [
+                      "staff"
+                    ],
+                    "percentage": 100
+                  },
+                  "updatedAt": "2026-09-23T14:05:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureFlagDto"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create or change a feature flag",
+        "tags": [
+          "admin.featureFlags"
+        ],
+        "x-required-permissions": [
+          "feature_flags.manage"
+        ]
+      }
+    },
     "/v1/admin/me": {
       "get": {
         "description": "Roles (D-140), effective permissions, the admin-zone menu entries those permissions open, and the feature flags enabled for this user. Cost and margin permissions follow D-141.\n\nImplements: ADR-0004, D-140, D-141.",
@@ -5402,6 +6414,724 @@
         ],
         "x-required-permissions": [
           "users.read"
+        ]
+      }
+    },
+    "/v1/admin/settings": {
+      "get": {
+        "description": "Every configurable business value with the version in force, scheduled versions and any pending change (ADR-0005). Sensitive values are masked without `settings.read_sensitive`.\n\nImplements: ADR-0005, D-063.",
+        "operationId": "admin.settings.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "approvalPolicy": null,
+                    "confirmationStatus": "confirmed",
+                    "current": {
+                      "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                      "value": "10",
+                      "versionNo": 1
+                    },
+                    "decisionRefs": [
+                      "D-012",
+                      "D-063"
+                    ],
+                    "description": "D-012 margin floor for automatic reassignment and discounts (percent)",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e0e0",
+                    "key": "pricing.margin_floor_pct",
+                    "masked": false,
+                    "ownerRole": "superadmin",
+                    "pending": null,
+                    "scheduled": [
+                      {
+                        "effectiveFrom": "2027-01-01T00:00:00+07:00",
+                        "value": "12",
+                        "versionNo": 2
+                      }
+                    ],
+                    "scopeId": null,
+                    "scopeType": "platform",
+                    "sensitive": false,
+                    "valueType": "percent"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SettingDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Settings",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List effective-dated settings",
+        "tags": [
+          "admin.settings"
+        ],
+        "x-required-permissions": [
+          "settings.read"
+        ]
+      }
+    },
+    "/v1/admin/settings/{settingId}": {
+      "get": {
+        "description": "Versions are immutable; history is never rewritten (ADR-0005).\n\nImplements: ADR-0005.",
+        "operationId": "admin.settings.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "settingId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalPolicy": null,
+                  "confirmationStatus": "confirmed",
+                  "current": {
+                    "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                    "value": "10",
+                    "versionNo": 1
+                  },
+                  "decisionRefs": [
+                    "D-012",
+                    "D-063"
+                  ],
+                  "description": "D-012 margin floor for automatic reassignment and discounts (percent)",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e0e0",
+                  "key": "pricing.margin_floor_pct",
+                  "masked": false,
+                  "ownerRole": "superadmin",
+                  "pending": null,
+                  "scheduled": [
+                    {
+                      "effectiveFrom": "2027-01-01T00:00:00+07:00",
+                      "value": "12",
+                      "versionNo": 2
+                    }
+                  ],
+                  "scopeId": null,
+                  "scopeType": "platform",
+                  "sensitive": false,
+                  "valueType": "percent",
+                  "versions": [
+                    {
+                      "createdAt": "2026-09-23T14:05:00+07:00",
+                      "decidedAt": "2026-09-23T14:05:00+07:00",
+                      "effectiveFrom": "2027-01-01T00:00:00+07:00",
+                      "reason": "Raise the floor for the new fiscal year",
+                      "status": "approved",
+                      "value": "12",
+                      "versionNo": 2
+                    },
+                    {
+                      "createdAt": "2026-09-22T09:00:00+07:00",
+                      "decidedAt": "2026-09-22T09:00:00+07:00",
+                      "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                      "reason": "Seed default from D-012",
+                      "status": "approved",
+                      "value": "10",
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SettingDetailDto"
+                }
+              }
+            },
+            "description": "The setting",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get one setting with its full history",
+        "tags": [
+          "admin.settings"
+        ],
+        "x-required-permissions": [
+          "settings.read"
+        ]
+      }
+    },
+    "/v1/admin/settings/{settingId}/versions": {
+      "post": {
+        "description": "Adds a version effective from `effectiveFrom` (now or later). Only the setting's owner role may change it (Superadmin for platform thresholds, D-063). When the setting names an approval policy the version waits for approval (ADR-0006); otherwise it is approved at once. Audited; emits `setting.changed`.\n\nImplements: ADR-0005, D-063.",
+        "operationId": "admin.settings.changeValue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "settingId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2027-01-01T00:00:00+07:00",
+                    "reason": "Raise the floor for the new fiscal year",
+                    "value": "12"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ChangeSettingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalPolicy": null,
+                  "confirmationStatus": "confirmed",
+                  "current": {
+                    "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                    "value": "10",
+                    "versionNo": 1
+                  },
+                  "decisionRefs": [
+                    "D-012",
+                    "D-063"
+                  ],
+                  "description": "D-012 margin floor for automatic reassignment and discounts (percent)",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e0e0",
+                  "key": "pricing.margin_floor_pct",
+                  "masked": false,
+                  "ownerRole": "superadmin",
+                  "pending": null,
+                  "scheduled": [
+                    {
+                      "effectiveFrom": "2027-01-01T00:00:00+07:00",
+                      "value": "12",
+                      "versionNo": 2
+                    }
+                  ],
+                  "scopeId": null,
+                  "scopeType": "platform",
+                  "sensitive": false,
+                  "valueType": "percent",
+                  "versions": [
+                    {
+                      "createdAt": "2026-09-23T14:05:00+07:00",
+                      "decidedAt": "2026-09-23T14:05:00+07:00",
+                      "effectiveFrom": "2027-01-01T00:00:00+07:00",
+                      "reason": "Raise the floor for the new fiscal year",
+                      "status": "approved",
+                      "value": "12",
+                      "versionNo": 2
+                    },
+                    {
+                      "createdAt": "2026-09-22T09:00:00+07:00",
+                      "decidedAt": "2026-09-22T09:00:00+07:00",
+                      "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                      "reason": "Seed default from D-012",
+                      "status": "approved",
+                      "value": "10",
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SettingDetailDto"
+                }
+              }
+            },
+            "description": "Version added",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "settings.not_owner": {
+                    "$ref": "#/components/examples/problem.settings.not_owner"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `settings.not_owner`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "settings.pending_exists": {
+                    "$ref": "#/components/examples/problem.settings.pending_exists"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `settings.pending_exists`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "approval.no_matching_step": {
+                    "$ref": "#/components/examples/problem.approval.no_matching_step"
+                  },
+                  "settings.backdated": {
+                    "$ref": "#/components/examples/problem.settings.backdated"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `approval.no_matching_step`, `settings.backdated`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Change a setting from a date (new version)",
+        "tags": [
+          "admin.settings"
+        ],
+        "x-required-permissions": [
+          "settings.change"
         ]
       }
     },
@@ -9953,6 +11683,10 @@
       "name": "admin.approvals"
     },
     {
+      "description": "Operational feature flags (not business values).",
+      "name": "admin.featureFlags"
+    },
+    {
       "description": "The signed-in staff member, permissions and menu entitlements.",
       "name": "admin.me"
     },
@@ -9963,6 +11697,10 @@
     {
       "description": "The role and permission catalogue (D-140, D-141).",
       "name": "admin.roles"
+    },
+    {
+      "description": "Effective-dated business settings: history and dated changes (ADR-0005, D-063).",
+      "name": "admin.settings"
     },
     {
       "description": "Staff, partner and customer accounts, role grants and sessions (D-140, D-168).",

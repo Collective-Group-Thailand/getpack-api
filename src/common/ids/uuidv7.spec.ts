@@ -1,4 +1,4 @@
-import { isUuid, uuidv7 } from './uuidv7';
+import { isUuid, nameUuid, uuidv7 } from './uuidv7';
 
 describe('uuidv7', () => {
   it('produces RFC 9562 version-7 uuids whose prefix is the millisecond timestamp', () => {
@@ -19,5 +19,14 @@ describe('uuidv7', () => {
   it('rejects non-uuids', () => {
     expect(isUuid('not-a-uuid')).toBe(false);
     expect(isUuid(42)).toBe(false);
+  });
+});
+
+describe('nameUuid', () => {
+  it('is a stable version-5 uuid per name', () => {
+    expect(nameUuid('feature_flag:x')).toBe(nameUuid('feature_flag:x'));
+    expect(nameUuid('feature_flag:x')).not.toBe(nameUuid('feature_flag:y'));
+    expect(isUuid(nameUuid('a'))).toBe(true);
+    expect(nameUuid('a')[14]).toBe('5');
   });
 });
