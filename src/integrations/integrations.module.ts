@@ -1,16 +1,29 @@
 import { AppConfig } from '@config/app-config';
 import { Global, Module } from '@nestjs/common';
 
+import { EMAIL_SENDER } from './email/email-sender.port';
+import { FakeEmailSender } from './email/fake-email-sender';
+import { SesEmailSender } from './email/ses-email-sender';
 import { FakeFirebaseVerifier, FakeLineVerifier } from './identity/fake-identity-verifiers';
 import { JoseFirebaseVerifier } from './identity/firebase-verifier';
 import { FIREBASE_VERIFIER, LINE_VERIFIER } from './identity/identity-verifier.port';
 import { LineLoginVerifier } from './identity/line-verifier';
+import { FakeLineMessaging } from './line-messaging/fake-line-messaging';
+import { LINE_MESSAGING } from './line-messaging/line-messaging.port';
+import { LineMessagingClient } from './line-messaging/line-messaging-client';
 import { FakeObjectStorage } from './s3/fake-object-storage';
 import { OBJECT_STORAGE, type ObjectStorage } from './s3/object-storage.port';
 import { S3ObjectStorage } from './s3/s3-object-storage';
+import { AwsSecretsProvider } from './secrets/aws-secrets.provider';
 import { FakeSmsSender } from './sms/fake-sms-sender';
 import { SMS_SENDER } from './sms/sms-sender.port';
 import { ThaiBulkSmsSender } from './sms/thaibulksms-sender';
+import { FakeTeamsWebhook } from './teams/fake-teams';
+import { TEAMS_WEBHOOK } from './teams/teams.port';
+import { TeamsWebhookClient } from './teams/teams-webhook';
+import { FakeWebPush } from './web-push/fake-web-push';
+import { VapidWebPush } from './web-push/vapid-web-push';
+import { WEB_PUSH } from './web-push/web-push.port';
 
 /**
  * Binds each provider port to its real adapter or its fake (`INTEGRATIONS_MODE`).
@@ -58,7 +71,61 @@ import { ThaiBulkSmsSender } from './sms/thaibulksms-sender';
       useFactory: (config: AppConfig) =>
         config.useFakes ? new FakeLineVerifier() : new LineLoginVerifier(config.get('LINE_LOGIN_CHANNEL_ID')),
     },
+    {
+      provide: EMAIL_SENDER,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes
+          ? new FakeEmailSender()
+          : new SesEmailSender({
+              region: config.get('AWS_REGION'),
+              endpoint: config.get('AWS_ENDPOINT_URL'),
+              from: config.get('SES_FROM_ADDRESS'),
+            }),
+    },
+    {
+      provide: LINE_MESSAGING,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes
+          ? new FakeLineMessaging()
+          : new LineMessagingClient(config.get('LINE_MESSAGING_CHANNEL_ACCESS_TOKEN')),
+    },
+    {
+      provide: WEB_PUSH,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes
+          ? new FakeWebPush()
+          : new VapidWebPush({
+              publicKey: config.get('VAPID_PUBLIC_KEY'),
+              privateKey: config.get('VAPID_PRIVATE_KEY'),
+              subject: config.get('VAPID_SUBJECT'),
+            }),
+    },
+    {
+      provide: TEAMS_WEBHOOK,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes
+          ? new FakeTeamsWebhook()
+          : new TeamsWebhookClient(
+              new AwsSecretsProvider({
+                region: config.get('AWS_REGION'),
+                endpoint: config.get('AWS_ENDPOINT_URL'),
+              }),
+            ),
+    },
   ],
-  exports: [OBJECT_STORAGE, SMS_SENDER, FIREBASE_VERIFIER, LINE_VERIFIER],
+  exports: [
+    OBJECT_STORAGE,
+    SMS_SENDER,
+    FIREBASE_VERIFIER,
+    LINE_VERIFIER,
+    EMAIL_SENDER,
+    LINE_MESSAGING,
+    WEB_PUSH,
+    TEAMS_WEBHOOK,
+  ],
 })
 export class IntegrationsModule {}

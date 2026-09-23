@@ -16,6 +16,7 @@ const PRODUCTION_ENV: Record<string, string> = {
   AWS_ACCESS_KEY_ID: 'test',
   AWS_SECRET_ACCESS_KEY: 'test',
   OTP_HMAC_SECRET: 'docs-gating-test-secret-0123456789abcdef',
+  FIELD_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
 };
 
 beforeAll(async () => {

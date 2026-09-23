@@ -238,5 +238,17 @@
       "title": "Change already pending",
       "detail": "This setting already has a change waiting for approval."
     }
+  },
+  "consent": {
+    "purpose_unavailable": {
+      "title": "Consent text not available",
+      "detail": "This purpose has no text in force yet, so consent cannot be recorded."
+    }
+  },
+  "notification": {
+    "channel_unsupported": {
+      "title": "Channel not testable",
+      "detail": "Test sends work for e-mail, SMS, LINE and web push to your own address only."
+    }
   }
 }

@@ -193,6 +193,39 @@ export class EnvironmentVariables {
   @IsString()
   THAIBULKSMS_API_SECRET?: string;
 
+  // --- Notifications (D-143)
+
+  /** Verified SES sender, e.g. `Packio <no-reply@packio.example>`. */
+  @IsOptional()
+  @IsString()
+  SES_FROM_ADDRESS?: string;
+
+  /** LINE Messaging API channel access token (customer and staff pushes). */
+  @IsOptional()
+  @IsString()
+  LINE_MESSAGING_CHANNEL_ACCESS_TOKEN?: string;
+
+  /** Web push VAPID key pair (base64url) and contact (`mailto:` or URL). */
+  @IsOptional()
+  @IsString()
+  VAPID_PUBLIC_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  VAPID_PRIVATE_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  VAPID_SUBJECT?: string;
+
+  /**
+   * AES-256-GCM key (base64, 32 bytes) for secrets stored in the database (web-push auth secrets).
+   * Required in production; development and tests derive a per-process key.
+   */
+  @IsOptional()
+  @IsString()
+  FIELD_ENCRYPTION_KEY?: string;
+
   /** Registered sender name shown on SMS. */
   @IsOptional()
   @IsString()

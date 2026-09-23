@@ -83,4 +83,8 @@ describe('validateEnv', () => {
   });
 });
 
-const productionSecrets = { JWT_SIGNING_KEYS: '[]', OTP_HMAC_SECRET: 'x'.repeat(32) };
+const productionSecrets = {
+  JWT_SIGNING_KEYS: '[]',
+  OTP_HMAC_SECRET: 'x'.repeat(32),
+  FIELD_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
+};

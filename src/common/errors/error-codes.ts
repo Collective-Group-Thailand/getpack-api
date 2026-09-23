@@ -44,6 +44,8 @@ export const ERROR_CODES = {
   'settings.not_owner': HttpStatus.FORBIDDEN,
   'settings.backdated': HttpStatus.UNPROCESSABLE_ENTITY,
   'settings.pending_exists': HttpStatus.CONFLICT,
+  'consent.purpose_unavailable': HttpStatus.CONFLICT,
+  'notification.channel_unsupported': HttpStatus.UNPROCESSABLE_ENTITY,
   'approval.no_matching_step': HttpStatus.UNPROCESSABLE_ENTITY,
   'approval.already_pending': HttpStatus.CONFLICT,
   'approval.not_pending': HttpStatus.CONFLICT,

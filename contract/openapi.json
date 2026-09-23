@@ -276,6 +276,17 @@
           "type": "https://errors.packio/auth.wrong_audience"
         }
       },
+      "problem.consent.purpose_unavailable": {
+        "summary": "consent.purpose_unavailable",
+        "value": {
+          "code": "consent.purpose_unavailable",
+          "detail": "วัตถุประสงค์นี้ยังไม่มีข้อความที่มีผลบังคับใช้ จึงบันทึกความยินยอมไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่มีข้อความความยินยอม",
+          "type": "https://errors.packio/consent.purpose_unavailable"
+        }
+      },
       "problem.http.bad_request": {
         "summary": "http.bad_request",
         "value": {
@@ -395,6 +406,17 @@
           "status": 500,
           "title": "เกิดข้อผิดพลาดในระบบ",
           "type": "https://errors.packio/internal.unexpected"
+        }
+      },
+      "problem.notification.channel_unsupported": {
+        "summary": "notification.channel_unsupported",
+        "value": {
+          "code": "notification.channel_unsupported",
+          "detail": "ทดสอบส่งได้เฉพาะอีเมล SMS LINE และ web push ไปยังที่อยู่ของคุณเอง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ช่องทางนี้ทดสอบส่งไม่ได้",
+          "type": "https://errors.packio/notification.channel_unsupported"
         }
       },
       "problem.outbox.not_replayable": {
@@ -532,6 +554,35 @@
       }
     },
     "schemas": {
+      "AddTemplateVersionDto": {
+        "properties": {
+          "body": {
+            "example": "คำขอ {{payload.policyKey}} รอการอนุมัติของคุณ",
+            "maxLength": 100000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocaleCode"
+              }
+            ],
+            "example": "th"
+          },
+          "subject": {
+            "description": "Required for e-mail",
+            "example": "มีคำขออนุมัติรอคุณ",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "locale",
+          "body"
+        ],
+        "type": "object"
+      },
       "AdminMeDto": {
         "properties": {
           "displayName": {
@@ -1016,6 +1067,125 @@
         ],
         "type": "string"
       },
+      "ConsentDto": {
+        "properties": {
+          "granted": {
+            "description": "Latest decision; null = never asked",
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "outdated": {
+            "description": "The latest decision was for an older text version",
+            "example": false,
+            "type": "boolean"
+          },
+          "purpose": {
+            "example": "marketing_line",
+            "type": "string"
+          },
+          "required": {
+            "description": "Required purposes (terms, privacy notice) are needed to use Packio",
+            "example": false,
+            "type": "boolean"
+          },
+          "summary": {
+            "example": "รับข่าวสารและโปรโมชันทาง LINE",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text": {
+            "example": "ข้าพเจ้ายินยอมรับข่าวสาร…",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionNo": {
+            "description": "Text version in force; null = not published yet",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "purpose",
+          "required",
+          "versionNo",
+          "summary",
+          "text",
+          "granted",
+          "outdated"
+        ],
+        "type": "object"
+      },
+      "ConsentPurposeDto": {
+        "properties": {
+          "key": {
+            "example": "marketing_line",
+            "type": "string"
+          },
+          "required": {
+            "example": false,
+            "type": "boolean"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ConsentPurposeVersionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "required",
+          "versions"
+        ],
+        "type": "object"
+      },
+      "ConsentPurposeVersionDto": {
+        "properties": {
+          "effectiveFrom": {
+            "example": "2026-10-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "textEn": {
+            "example": "I agree to receive news…",
+            "type": "string"
+          },
+          "textTh": {
+            "example": "ข้าพเจ้ายินยอมรับข่าวสาร…",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versionNo",
+          "effectiveFrom",
+          "textTh",
+          "textEn"
+        ],
+        "type": "object"
+      },
+      "ConsentSource": {
+        "enum": [
+          "web",
+          "line_liff",
+          "cs",
+          "partner_zone"
+        ],
+        "type": "string"
+      },
       "CreateDelegationDto": {
         "properties": {
           "delegateId": {
@@ -1052,6 +1222,98 @@
           "validFrom",
           "validTo",
           "reason"
+        ],
+        "type": "object"
+      },
+      "CreateRouteDto": {
+        "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationAudience"
+              }
+            ],
+            "example": "assignee"
+          },
+          "conditions": {
+            "additionalProperties": true,
+            "description": "Equality filters on the event payload",
+            "example": {
+              "payload.policyKey": "discount_memo"
+            },
+            "type": "object"
+          },
+          "eventType": {
+            "example": "approval.requested",
+            "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$",
+            "type": "string"
+          },
+          "isCritical": {
+            "example": false,
+            "type": "boolean"
+          },
+          "isMarketing": {
+            "example": false,
+            "type": "boolean"
+          },
+          "staffTeam": {
+            "description": "Team code, only for staff_team",
+            "example": "finance",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "templateId": {
+            "description": "Template (its channel is the route channel)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f00d",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "eventType",
+          "audience",
+          "templateId",
+          "isCritical",
+          "isMarketing"
+        ],
+        "type": "object"
+      },
+      "CreateTemplateDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationCategory"
+              }
+            ],
+            "example": "transactional"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationChannel"
+              }
+            ],
+            "example": "in_app"
+          },
+          "description": {
+            "example": "Approvers: a request waits for your decision",
+            "maxLength": 300,
+            "minLength": 3,
+            "type": "string"
+          },
+          "key": {
+            "example": "approval.requested:assignee",
+            "maxLength": 120,
+            "pattern": "^[a-z][a-z0-9_.]*(:[a-z_]+)?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "channel",
+          "category",
+          "description"
         ],
         "type": "object"
       },
@@ -1100,6 +1362,21 @@
           "THB"
         ],
         "type": "string"
+      },
+      "CursorMeta": {
+        "properties": {
+          "nextCursor": {
+            "example": "eyJpZCI6IjEyMyJ9",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "nextCursor"
+        ],
+        "type": "object"
       },
       "DelegationDto": {
         "properties": {
@@ -1413,6 +1690,53 @@
         ],
         "type": "string"
       },
+      "InboxItemDto": {
+        "properties": {
+          "body": {
+            "example": "คำขอ discount_memo รอการอนุมัติของคุณ",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "eventType": {
+            "example": "approval.requested",
+            "type": "string"
+          },
+          "id": {
+            "description": "Event id; also the item id",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "readAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "example": "มีคำขออนุมัติรอคุณ",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "title",
+          "body",
+          "createdAt",
+          "readAt"
+        ],
+        "type": "object"
+      },
       "JwkDto": {
         "properties": {
           "alg": {
@@ -1543,6 +1867,180 @@
         "required": [
           "key",
           "path"
+        ],
+        "type": "object"
+      },
+      "NotificationAudience": {
+        "enum": [
+          "customer",
+          "company_member",
+          "staff_team",
+          "factory",
+          "assignee"
+        ],
+        "type": "string"
+      },
+      "NotificationCategory": {
+        "enum": [
+          "transactional",
+          "marketing",
+          "security"
+        ],
+        "type": "string"
+      },
+      "NotificationChannel": {
+        "enum": [
+          "email",
+          "sms",
+          "line",
+          "web_push",
+          "in_app",
+          "teams"
+        ],
+        "type": "string"
+      },
+      "NotificationPreferenceDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationCategory"
+              }
+            ],
+            "example": "marketing"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationChannel"
+              }
+            ],
+            "example": "line"
+          },
+          "enabled": {
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "channel",
+          "category",
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "NotificationRouteDto": {
+        "properties": {
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationAudience"
+              }
+            ],
+            "example": "assignee"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationChannel"
+              }
+            ],
+            "example": "in_app"
+          },
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "eventType": {
+            "example": "approval.requested",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f0f0",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isCritical": {
+            "description": "SMS is sent only for critical events (D-143)",
+            "example": false,
+            "type": "boolean"
+          },
+          "isMarketing": {
+            "description": "Consent + 09:00–20:00 window apply (D-144)",
+            "example": false,
+            "type": "boolean"
+          },
+          "staffTeam": {
+            "description": "Team code for staff_team routes",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "template": {
+            "example": "approval.requested:assignee",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "eventType",
+          "audience",
+          "staffTeam",
+          "channel",
+          "template",
+          "isCritical",
+          "isMarketing",
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "NotificationTemplateDto": {
+        "properties": {
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationCategory"
+              }
+            ],
+            "example": "transactional"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationChannel"
+              }
+            ],
+            "example": "in_app"
+          },
+          "description": {
+            "example": "Approvers: a request waits for your decision",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f00d",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "approval.requested:assignee",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateVersionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "channel",
+          "category",
+          "description",
+          "versions"
         ],
         "type": "object"
       },
@@ -1817,6 +2315,37 @@
         ],
         "type": "object"
       },
+      "PreviewTemplateDto": {
+        "properties": {
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocaleCode"
+              }
+            ],
+            "example": "th"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "description": "Sample event payload",
+            "example": {
+              "policyKey": "discount_memo"
+            },
+            "type": "object"
+          },
+          "versionNo": {
+            "description": "A draft to preview; default = published",
+            "example": 2,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "locale",
+          "payload"
+        ],
+        "type": "object"
+      },
       "ProblemDetails": {
         "properties": {
           "code": {
@@ -1886,6 +2415,50 @@
         ],
         "type": "object"
       },
+      "PublishConsentTextDto": {
+        "properties": {
+          "effectiveFrom": {
+            "example": "2026-10-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "example": "Text approved by legal counsel",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "summaryEn": {
+            "example": "News on LINE",
+            "maxLength": 300,
+            "type": "string"
+          },
+          "summaryTh": {
+            "example": "รับข่าวสารทาง LINE",
+            "maxLength": 300,
+            "type": "string"
+          },
+          "textEn": {
+            "example": "I agree to receive news…",
+            "maxLength": 20000,
+            "minLength": 10,
+            "type": "string"
+          },
+          "textTh": {
+            "example": "ข้าพเจ้ายินยอมรับข่าวสาร…",
+            "maxLength": 20000,
+            "minLength": 10,
+            "type": "string"
+          }
+        },
+        "required": [
+          "textTh",
+          "textEn",
+          "effectiveFrom",
+          "reason"
+        ],
+        "type": "object"
+      },
       "ReasonDto": {
         "properties": {
           "reason": {
@@ -1897,6 +2470,33 @@
         },
         "required": [
           "reason"
+        ],
+        "type": "object"
+      },
+      "RecordConsentDto": {
+        "properties": {
+          "granted": {
+            "example": true,
+            "type": "boolean"
+          },
+          "purpose": {
+            "example": "marketing_line",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConsentSource"
+              }
+            ],
+            "default": "web",
+            "example": "web"
+          }
+        },
+        "required": [
+          "purpose",
+          "granted"
         ],
         "type": "object"
       },
@@ -1925,6 +2525,27 @@
         },
         "required": [
           "comment"
+        ],
+        "type": "object"
+      },
+      "RenderedMessageDto": {
+        "properties": {
+          "body": {
+            "description": "HTML for e-mail, text otherwise",
+            "example": "คำขอ discount_memo รอการอนุมัติของคุณ",
+            "type": "string"
+          },
+          "subject": {
+            "example": "มีคำขออนุมัติรอคุณ",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "subject",
+          "body"
         ],
         "type": "object"
       },
@@ -2076,6 +2697,33 @@
           "company"
         ],
         "type": "string"
+      },
+      "SetPreferencesDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationPreferenceDto"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
+      "SetRouteEnabledDto": {
+        "properties": {
+          "enabled": {
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
       },
       "SettingConfirmation": {
         "enum": [
@@ -2613,6 +3261,83 @@
           "phone",
           "scopes",
           "identities"
+        ],
+        "type": "object"
+      },
+      "TemplateVersionDto": {
+        "properties": {
+          "body": {
+            "description": "Handlebars; MJML allowed for e-mail",
+            "example": "คำขอ {{payload.policyKey}} รอการอนุมัติของคุณ",
+            "type": "string"
+          },
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocaleCode"
+              }
+            ],
+            "example": "th"
+          },
+          "publishedAt": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TemplateVersionStatus"
+              }
+            ],
+            "example": "published"
+          },
+          "subject": {
+            "example": "มีคำขออนุมัติรอคุณ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionNo": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versionNo",
+          "locale",
+          "subject",
+          "body",
+          "status",
+          "publishedAt"
+        ],
+        "type": "object"
+      },
+      "TemplateVersionStatus": {
+        "enum": [
+          "draft",
+          "published",
+          "retired"
+        ],
+        "type": "string"
+      },
+      "TestSendResultDto": {
+        "properties": {
+          "sentTo": {
+            "description": "Where it went (masked)",
+            "example": "f***@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "sentTo"
         ],
         "type": "object"
       },
@@ -5242,6 +5967,413 @@
         ]
       }
     },
+    "/v1/admin/consent-purposes": {
+      "get": {
+        "description": "Packio's own PDPA consent management (D-005, D-144).\n\nImplements: D-005, D-144.",
+        "operationId": "admin.consentPurposes.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "key": "marketing_line",
+                    "required": false,
+                    "versions": [
+                      {
+                        "effectiveFrom": "2026-10-01T00:00:00+07:00",
+                        "textEn": "I agree to receive news…",
+                        "textTh": "ข้าพเจ้ายินยอมรับข่าวสาร…",
+                        "versionNo": 1
+                      }
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentPurposeDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Purposes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Consent purposes and their texts",
+        "tags": [
+          "admin.consentPurposes"
+        ],
+        "x-required-permissions": [
+          "consent_purposes.manage"
+        ]
+      }
+    },
+    "/v1/admin/consent-purposes/{key}/versions": {
+      "post": {
+        "description": "Versioned and effective-dated; earlier consents stay tied to the text they accepted (ADR-0005).\n\nImplements: D-144, ADR-0005.",
+        "operationId": "admin.consentPurposes.publishText",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2026-10-01T00:00:00+07:00",
+                    "reason": "Text approved by legal counsel",
+                    "textEn": "I agree to receive news…",
+                    "textTh": "ข้าพเจ้ายินยอมรับข่าวสาร…"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PublishConsentTextDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "key": "marketing_line",
+                  "required": false,
+                  "versions": [
+                    {
+                      "effectiveFrom": "2026-10-01T00:00:00+07:00",
+                      "textEn": "I agree to receive news…",
+                      "textTh": "ข้าพเจ้ายินยอมรับข่าวสาร…",
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConsentPurposeDto"
+                }
+              }
+            },
+            "description": "Published",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "settings.backdated": {
+                    "$ref": "#/components/examples/problem.settings.backdated"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `settings.backdated`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Publish a new consent text from a date",
+        "tags": [
+          "admin.consentPurposes"
+        ],
+        "x-required-permissions": [
+          "consent_purposes.manage"
+        ]
+      }
+    },
     "/v1/admin/feature-flags": {
       "get": {
         "description": "Operational toggles (e.g. R2 adapters off, D-111). Business values are settings, not flags (ADR-0005).\n\nImplements: ADR-0005, D-111.",
@@ -5792,6 +6924,2362 @@
         "summary": "The signed-in staff member with menu entitlements",
         "tags": [
           "admin.me"
+        ]
+      }
+    },
+    "/v1/admin/notification-routes": {
+      "get": {
+        "description": "Event × audience × channel → template (D-143).\n\nImplements: D-143, D-144.",
+        "operationId": "admin.notificationRoutes.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "audience": "assignee",
+                    "channel": "in_app",
+                    "enabled": true,
+                    "eventType": "approval.requested",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f0f0",
+                    "isCritical": false,
+                    "isMarketing": false,
+                    "staffTeam": null,
+                    "template": "approval.requested:assignee"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationRouteDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Routes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "The routing matrix",
+        "tags": [
+          "admin.notificationRoutes"
+        ],
+        "x-required-permissions": [
+          "notification_routes.manage"
+        ]
+      },
+      "post": {
+        "description": "SMS routes must be critical (D-143); marketing routes get consent and quiet-hour handling (D-144).\n\nImplements: D-143, D-144.",
+        "operationId": "admin.notificationRoutes.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "audience": "assignee",
+                    "eventType": "approval.requested",
+                    "isCritical": false,
+                    "isMarketing": false,
+                    "templateId": "0192f3a0-7c1e-7d2a-9b1f-00000000f00d"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateRouteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "audience": "assignee",
+                  "channel": "in_app",
+                  "enabled": true,
+                  "eventType": "approval.requested",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f0f0",
+                  "isCritical": false,
+                  "isMarketing": false,
+                  "staffTeam": null,
+                  "template": "approval.requested:assignee"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationRouteDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.conflict": {
+                    "$ref": "#/components/examples/problem.http.conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add a route to the matrix",
+        "tags": [
+          "admin.notificationRoutes"
+        ],
+        "x-required-permissions": [
+          "notification_routes.manage"
+        ]
+      }
+    },
+    "/v1/admin/notification-routes/{routeId}/actions/set-enabled": {
+      "post": {
+        "description": "Audited.\n\nImplements: D-143.",
+        "operationId": "admin.notificationRoutes.setEnabled",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "routeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "enabled": false
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetRouteEnabledDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "audience": "assignee",
+                  "channel": "in_app",
+                  "enabled": false,
+                  "eventType": "approval.requested",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f0f0",
+                  "isCritical": false,
+                  "isMarketing": false,
+                  "staffTeam": null,
+                  "template": "approval.requested:assignee"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationRouteDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Switch a route on or off",
+        "tags": [
+          "admin.notificationRoutes"
+        ],
+        "x-required-permissions": [
+          "notification_routes.manage"
+        ]
+      }
+    },
+    "/v1/admin/notification-templates": {
+      "get": {
+        "description": "Templates per event key and channel, with their th/en versions.\n\nImplements: D-143.",
+        "operationId": "admin.notificationTemplates.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "category": "transactional",
+                    "channel": "in_app",
+                    "description": "Approvers: a request waits for your decision",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f00d",
+                    "key": "approval.requested:assignee",
+                    "versions": [
+                      {
+                        "body": "คำขอ {{payload.policyKey}} รอการอนุมัติของคุณ",
+                        "locale": "th",
+                        "publishedAt": "2026-09-23T14:05:00+07:00",
+                        "status": "published",
+                        "subject": "มีคำขออนุมัติรอคุณ",
+                        "versionNo": 1
+                      }
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationTemplateDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Templates",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List notification templates",
+        "tags": [
+          "admin.notificationTemplates"
+        ],
+        "x-required-permissions": [
+          "notification_templates.manage"
+        ]
+      },
+      "post": {
+        "description": "One template per key and channel; add versions per locale, then publish.\n\nImplements: D-143.",
+        "operationId": "admin.notificationTemplates.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "category": "transactional",
+                    "channel": "in_app",
+                    "description": "Approvers: a request waits for your decision",
+                    "key": "approval.requested:assignee"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "category": "transactional",
+                  "channel": "in_app",
+                  "description": "Approvers: a request waits for your decision",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f00d",
+                  "key": "approval.requested:assignee",
+                  "versions": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplateDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.conflict": {
+                    "$ref": "#/components/examples/problem.http.conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a template",
+        "tags": [
+          "admin.notificationTemplates"
+        ],
+        "x-required-permissions": [
+          "notification_templates.manage"
+        ]
+      }
+    },
+    "/v1/admin/notification-templates/{templateId}/actions/preview": {
+      "post": {
+        "description": "Nothing is sent.\n\nImplements: D-143.",
+        "operationId": "admin.notificationTemplates.preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "locale": "th",
+                    "payload": {
+                      "policyKey": "discount_memo"
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PreviewTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "body": "คำขอ discount_memo รอการอนุมัติของคุณ",
+                  "subject": "มีคำขออนุมัติรอคุณ"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RenderedMessageDto"
+                }
+              }
+            },
+            "description": "Rendered",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Render a template with a sample payload",
+        "tags": [
+          "admin.notificationTemplates"
+        ],
+        "x-required-permissions": [
+          "notification_templates.manage"
+        ]
+      }
+    },
+    "/v1/admin/notification-templates/{templateId}/actions/test-send": {
+      "post": {
+        "description": "E-mail, SMS or LINE to the signed-in staff member only (never to others). Audited; not logged as a notification.\n\nImplements: D-143.",
+        "operationId": "admin.notificationTemplates.testSend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "locale": "th",
+                    "payload": {
+                      "policyKey": "discount_memo"
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PreviewTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "sentTo": "f***@example.com"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TestSendResultDto"
+                }
+              }
+            },
+            "description": "Sent",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "notification.channel_unsupported": {
+                    "$ref": "#/components/examples/problem.notification.channel_unsupported"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `notification.channel_unsupported`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "provider.unavailable": {
+                    "$ref": "#/components/examples/problem.provider.unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `provider.unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Send a test to my own address",
+        "tags": [
+          "admin.notificationTemplates"
+        ],
+        "x-required-permissions": [
+          "notification_templates.manage"
+        ]
+      }
+    },
+    "/v1/admin/notification-templates/{templateId}/versions": {
+      "post": {
+        "description": "The template must compile (Handlebars; MJML for e-mail). E-mail needs a subject.\n\nImplements: D-143.",
+        "operationId": "admin.notificationTemplates.addVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "คำขอ {{payload.policyKey}} รอการอนุมัติของคุณ",
+                    "locale": "th",
+                    "subject": "มีคำขออนุมัติรอคุณ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddTemplateVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "category": "transactional",
+                  "channel": "in_app",
+                  "description": "Approvers: a request waits for your decision",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f00d",
+                  "key": "approval.requested:assignee",
+                  "versions": [
+                    {
+                      "body": "คำขอ {{payload.policyKey}} รอการอนุมัติของคุณ",
+                      "locale": "th",
+                      "publishedAt": "2026-09-23T14:05:00+07:00",
+                      "status": "published",
+                      "subject": "มีคำขออนุมัติรอคุณ",
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplateDto"
+                }
+              }
+            },
+            "description": "Draft added",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add a draft version for a locale",
+        "tags": [
+          "admin.notificationTemplates"
+        ],
+        "x-required-permissions": [
+          "notification_templates.manage"
+        ]
+      }
+    },
+    "/v1/admin/notification-templates/{templateId}/versions/{locale}/{versionNo}/actions/publish": {
+      "post": {
+        "description": "The previously published version of that locale is retired. Audited.\n\nImplements: D-143.",
+        "operationId": "admin.notificationTemplates.publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "templateId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "locale",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionNo",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "category": "transactional",
+                  "channel": "in_app",
+                  "description": "Approvers: a request waits for your decision",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f00d",
+                  "key": "approval.requested:assignee",
+                  "versions": [
+                    {
+                      "body": "คำขอ {{payload.policyKey}} รอการอนุมัติของคุณ",
+                      "locale": "th",
+                      "publishedAt": "2026-09-23T14:05:00+07:00",
+                      "status": "published",
+                      "subject": "มีคำขออนุมัติรอคุณ",
+                      "versionNo": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationTemplateDto"
+                }
+              }
+            },
+            "description": "Published",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.conflict": {
+                    "$ref": "#/components/examples/problem.http.conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Publish a draft version",
+        "tags": [
+          "admin.notificationTemplates"
+        ],
+        "x-required-permissions": [
+          "notification_templates.manage"
+        ]
+      }
+    },
+    "/v1/admin/notifications": {
+      "get": {
+        "description": "Newest first, cursor-paginated. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
+        "operationId": "admin.notifications.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "body": "คำขอ discount_memo รอการอนุมัติของคุณ",
+                      "createdAt": "2026-09-23T14:05:00+07:00",
+                      "eventType": "approval.requested",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                      "readAt": null,
+                      "title": "มีคำขออนุมัติรอคุณ"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/InboxItemDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "My in-app notifications",
+        "tags": [
+          "admin.notifications"
+        ]
+      }
+    },
+    "/v1/admin/notifications/{notificationId}/actions/read": {
+      "post": {
+        "description": "Idempotent.\n\nImplements: D-143.",
+        "operationId": "admin.notifications.markRead",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notificationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marked read",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Mark an in-app notification read",
+        "tags": [
+          "admin.notifications"
         ]
       }
     },
@@ -11482,6 +14970,375 @@
         ]
       }
     },
+    "/v1/partner/notifications": {
+      "get": {
+        "description": "Newest first, cursor-paginated. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
+        "operationId": "partner.notifications.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "body": "คำขอ discount_memo รอการอนุมัติของคุณ",
+                      "createdAt": "2026-09-23T14:05:00+07:00",
+                      "eventType": "approval.requested",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                      "readAt": null,
+                      "title": "มีคำขออนุมัติรอคุณ"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/InboxItemDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My in-app notifications",
+        "tags": [
+          "partner.notifications"
+        ]
+      }
+    },
+    "/v1/partner/notifications/{notificationId}/actions/read": {
+      "post": {
+        "description": "Idempotent.\n\nImplements: D-143.",
+        "operationId": "partner.notifications.markRead",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notificationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marked read",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Mark an in-app notification read",
+        "tags": [
+          "partner.notifications"
+        ]
+      }
+    },
     "/v1/store/me": {
       "get": {
         "description": "Profile, linked sign-in methods and company scopes of the signed-in customer.\n\nImplements: ADR-0004, D-140.",
@@ -11635,6 +15492,1143 @@
           "store.me"
         ]
       }
+    },
+    "/v1/store/me/consents": {
+      "get": {
+        "description": "Each purpose with the text in force and my latest decision.\n\nImplements: D-005, D-144.",
+        "operationId": "store.me.consents",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "granted": true,
+                    "outdated": false,
+                    "purpose": "marketing_line",
+                    "required": false,
+                    "summary": "รับข่าวสารและโปรโมชันทาง LINE",
+                    "text": "ข้าพเจ้ายินยอมรับข่าวสาร…",
+                    "versionNo": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Consents",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My PDPA consents",
+        "tags": [
+          "store.me"
+        ]
+      },
+      "post": {
+        "description": "Recorded against the text version in force (append-only evidence, PDPA). Marketing messages need it (D-144).\n\nImplements: D-144, D-005.",
+        "operationId": "store.me.recordConsent",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "granted": true,
+                    "purpose": "marketing_line",
+                    "source": "web"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RecordConsentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "granted": true,
+                    "outdated": false,
+                    "purpose": "marketing_line",
+                    "required": false,
+                    "summary": "รับข่าวสารและโปรโมชันทาง LINE",
+                    "text": "ข้าพเจ้ายินยอมรับข่าวสาร…",
+                    "versionNo": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Recorded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "consent.purpose_unavailable": {
+                    "$ref": "#/components/examples/problem.consent.purpose_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `consent.purpose_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Give or withdraw a consent",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
+    "/v1/store/me/notification-preferences": {
+      "get": {
+        "description": "Unset = default on. Order and finance e-mails cannot be switched off (D-144).\n\nImplements: D-143, D-144.",
+        "operationId": "store.me.notificationPreferences",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "category": "marketing",
+                    "channel": "line",
+                    "enabled": false
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationPreferenceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Preferences",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My notification channel choices",
+        "tags": [
+          "store.me"
+        ]
+      },
+      "put": {
+        "description": "Marketing can be switched off on every channel; transactional e-mail cannot (D-144).\n\nImplements: D-143, D-144.",
+        "operationId": "store.me.setNotificationPreferences",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "items": [
+                      {
+                        "category": "marketing",
+                        "channel": "line",
+                        "enabled": false
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetPreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "category": "marketing",
+                    "channel": "line",
+                    "enabled": false
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationPreferenceDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Change my notification channel choices",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
+    "/v1/store/notifications": {
+      "get": {
+        "description": "Newest first, cursor-paginated. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
+        "operationId": "store.notifications.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "body": "คำขอ discount_memo รอการอนุมัติของคุณ",
+                      "createdAt": "2026-09-23T14:05:00+07:00",
+                      "eventType": "approval.requested",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                      "readAt": null,
+                      "title": "มีคำขออนุมัติรอคุณ"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/InboxItemDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My in-app notifications",
+        "tags": [
+          "store.notifications"
+        ]
+      }
+    },
+    "/v1/store/notifications/{notificationId}/actions/read": {
+      "post": {
+        "description": "Idempotent.\n\nImplements: D-143.",
+        "operationId": "store.notifications.markRead",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notificationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Marked read",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Mark an in-app notification read",
+        "tags": [
+          "store.notifications"
+        ]
+      }
     }
   },
   "servers": [
@@ -11683,12 +16677,28 @@
       "name": "admin.approvals"
     },
     {
+      "description": "PDPA consent purposes and their versioned texts (D-005, D-144).",
+      "name": "admin.consentPurposes"
+    },
+    {
       "description": "Operational feature flags (not business values).",
       "name": "admin.featureFlags"
     },
     {
       "description": "The signed-in staff member, permissions and menu entitlements.",
       "name": "admin.me"
+    },
+    {
+      "description": "The notification routing matrix: event × audience × channel (D-143, D-144).",
+      "name": "admin.notificationRoutes"
+    },
+    {
+      "description": "Notification templates per event and channel, th/en versions, preview, test send (D-143).",
+      "name": "admin.notificationTemplates"
+    },
+    {
+      "description": "The signed-in staff member's in-app notifications.",
+      "name": "admin.notifications"
     },
     {
       "description": "Domain-event outbox: dead-letter list and replay.",
@@ -11731,8 +16741,16 @@
       "name": "partner.me"
     },
     {
+      "description": "The signed-in factory user's in-app notifications.",
+      "name": "partner.notifications"
+    },
+    {
       "description": "The signed-in customer.",
       "name": "store.me"
+    },
+    {
+      "description": "The signed-in customer's in-app notifications.",
+      "name": "store.notifications"
     }
   ]
 }

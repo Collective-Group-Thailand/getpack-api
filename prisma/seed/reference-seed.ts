@@ -3,6 +3,7 @@ import { PERMISSIONS } from '../../src/modules/iam/permissions.catalog';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { APPROVAL_POLICIES } from './data/approval-policies';
+import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
 
@@ -51,6 +52,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       for (const seed of SETTINGS) await ensureSetting(tx, seed, 'platform', null, count);
       await ensureApprovalPolicies(tx, count);
       await ensureTeamsConsentCalendar(tx, count);
+      await ensureNotifications(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -285,5 +287,53 @@ async function ensureTeamsConsentCalendar(tx: Tx, count: (what: string) => void)
       },
     });
     count('business_calendars');
+  }
+}
+
+/** Platform notification templates (published) and routes; existing ones are never changed. */
+async function ensureNotifications(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const seed of NOTIFICATION_TEMPLATES) {
+    const existing = await tx.notificationTemplate.findUnique({
+      where: { key_channel: { key: seed.key, channel: seed.channel } },
+    });
+    if (existing) continue;
+    await tx.notificationTemplate.create({
+      data: {
+        key: seed.key,
+        channel: seed.channel,
+        category: seed.category,
+        description: seed.description,
+        versions: {
+          create: (['th', 'en'] as const).map((locale) => ({
+            versionNo: 1,
+            locale,
+            subject: seed.versions[locale].subject ?? null,
+            body: seed.versions[locale].body,
+            status: 'published' as const,
+            publishedAt: new Date(),
+          })),
+        },
+      },
+    });
+    count('notification_templates');
+  }
+  for (const seed of NOTIFICATION_ROUTES) {
+    const template = await tx.notificationTemplate.findUniqueOrThrow({
+      where: { key_channel: { key: seed.templateKey, channel: seed.channel } },
+    });
+    const exists = await tx.notificationRoute.count({
+      where: { eventType: seed.eventType, audience: seed.audience, staffTeamId: null, channel: seed.channel },
+    });
+    if (exists) continue;
+    await tx.notificationRoute.create({
+      data: {
+        eventType: seed.eventType,
+        audience: seed.audience,
+        channel: seed.channel,
+        templateId: template.id,
+        isCritical: seed.isCritical ?? false,
+      },
+    });
+    count('notification_routes');
   }
 }

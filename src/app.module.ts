@@ -19,6 +19,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ApprovalsModule } from '@platform/approvals/approvals.module';
 import { HealthModule } from '@platform/health/health.module';
+import { NotificationsModule } from '@platform/notifications/notifications.module';
 import { PlatformCoreModule } from '@platform/platform-core.module';
 import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
 import { SentryModule } from '@sentry/nestjs/setup';
@@ -60,6 +61,7 @@ import { LoggerModule } from 'nestjs-pino';
     IamModule,
     AuthModule,
     ApprovalsModule,
+    NotificationsModule,
     SettingsAdminModule,
     HealthModule,
     SurfacesModule,

@@ -5,6 +5,12 @@ import { Module } from '@nestjs/common';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
 import { OutboxAdminController } from '@platform/domain-events/outbox-admin.controller';
 import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.controller';
+import { AdminInboxController } from '@platform/notifications/my-notifications.controller';
+import {
+  ConsentPurposesController,
+  NotificationRoutesController,
+  NotificationTemplatesController,
+} from '@platform/notifications/notifications-admin.controller';
 import { SettingsController } from '@platform/settings/settings.controller';
 import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
 
@@ -21,6 +27,10 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ApprovalDelegationsController,
     SettingsController,
     FeatureFlagsController,
+    NotificationTemplatesController,
+    NotificationRoutesController,
+    ConsentPurposesController,
+    AdminInboxController,
   ],
 })
 export class AdminApiModule {}

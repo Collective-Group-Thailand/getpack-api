@@ -31,6 +31,9 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
   if (env.NODE_ENV === NodeEnv.Production) {
     if (!env.JWT_SIGNING_KEYS) problems.push('JWT_SIGNING_KEYS: required when NODE_ENV=production');
     if (!env.OTP_HMAC_SECRET) problems.push('OTP_HMAC_SECRET: required when NODE_ENV=production');
+    if (!env.FIELD_ENCRYPTION_KEY || Buffer.from(env.FIELD_ENCRYPTION_KEY, 'base64').length !== 32) {
+      problems.push('FIELD_ENCRYPTION_KEY: 32 bytes base64 required when NODE_ENV=production');
+    }
   }
 
   if (problems.length > 0) throw new InvalidEnvironmentError(problems);
