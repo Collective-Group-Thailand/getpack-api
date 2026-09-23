@@ -71,16 +71,16 @@ export const SOD_RULES: readonly SodRuleSeed[] = [
   {
     key: 'auditor_independent_of_finance',
     description:
-      'Proposed: the time-boxed Auditor role is not combined with Finance (auditor independence, §8)',
-    decisions: ['D-140', 'D-033'],
+      'D-168 the time-boxed Auditor role is never combined with Finance (auditor independence, §8)',
+    decisions: ['D-168', 'D-140'],
     kind: 'role_pair',
     roles: ['auditor', 'finance'],
   },
   {
     key: 'auditor_independent_of_finance_manager',
     description:
-      'Proposed: the time-boxed Auditor role is not combined with Finance Manager (auditor independence, §8)',
-    decisions: ['D-140', 'D-033'],
+      'D-168 the time-boxed Auditor role is never combined with Finance Manager (auditor independence, §8)',
+    decisions: ['D-168', 'D-140'],
     kind: 'role_pair',
     roles: ['auditor', 'finance_manager'],
   },

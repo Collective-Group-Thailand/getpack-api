@@ -1,8 +1,7 @@
 /**
  * Approval policies (ADR-0006) seeded as version 1. Step conditions use the engine's condition shape
  * (implemented in B1.3): `{ all: [...] } | { any: [...] } | { field, op, value } | { field, op, ref }`.
- * Where no decision names the approver, the default is Finance Manager and the version reason says
- * "Proposed default" (agreed with the business 2026-09-23, docs/PROGRESS.md).
+ * Where no other decision names the approver, the approver is Finance Manager (D-169).
  */
 export interface StepSeed {
   name: string;
@@ -23,8 +22,7 @@ export interface PolicySeed {
 
 const pct = (op: string, value: string) => ({ field: 'pct', op, value });
 const notBelowFloor = { field: 'flags', op: 'excludes', value: 'below_margin_floor' };
-const proposedDefault =
-  'Proposed default — approver not named by a decision (Finance Manager), confirm with the business';
+const financeManagerDefault = 'Seed from D-169 — Finance Manager approves';
 
 const financeManagerOnly = (
   key: string,
@@ -35,8 +33,8 @@ const financeManagerOnly = (
   key,
   subjectType,
   description,
-  decisions,
-  reason: proposedDefault,
+  decisions: [...decisions, 'D-169'],
+  reason: financeManagerDefault,
   steps: [{ name: 'Finance Manager approval', role: 'finance_manager' }],
 });
 
@@ -91,8 +89,8 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     key: 'payout_run',
     subjectType: 'payout_run',
     description: 'Factory payout runs: Finance proposes (requester), executive approves (D-022)',
-    decisions: ['D-022'],
-    reason: 'Seed from D-022 — "executive" taken as C-Level (assumption, confirm)',
+    decisions: ['D-022', 'D-166'],
+    reason: 'Seed from D-022 / D-166 — the executive approver is C-Level',
     steps: [{ name: 'Executive approval', role: 'c_level' }],
   },
   {
@@ -116,8 +114,8 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     key: 'partner_pricing_mode_change',
     subjectType: 'factory',
     description: 'Change of a factory pricing-ownership mode (D-042)',
-    decisions: ['D-042'],
-    reason: 'Seed from D-042 — Partner team (assumption, confirm)',
+    decisions: ['D-042', 'D-167'],
+    reason: 'Seed from D-042 / D-167 — Partner Manager approves',
     steps: [{ name: 'Partner Manager approval', role: 'partner_manager' }],
   },
   {
@@ -125,8 +123,8 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     subjectType: 'vendor_bank_account',
     description:
       'Factory / vendor bank-account changes: dual approval + logged verification call (accounting-design.md §8)',
-    decisions: ['D-033'],
-    reason: `${proposedDefault}; dual approval by two different people`,
+    decisions: ['D-033', 'D-169'],
+    reason: `${financeManagerDefault}; dual approval by two different people`,
     steps: [
       { name: 'Finance verification', role: 'finance' },
       { name: 'Finance Manager approval', role: 'finance_manager' },
@@ -136,8 +134,8 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     key: 'company_bank_account_change',
     subjectType: 'company_bank_account',
     description: 'Changes to company (entity) bank accounts: maker-checker (accounting-design.md §8, D-093)',
-    decisions: ['D-093', 'D-033'],
-    reason: `${proposedDefault}; dual approval by two different people`,
+    decisions: ['D-093', 'D-033', 'D-169'],
+    reason: `${financeManagerDefault}; dual approval by two different people`,
     steps: [
       { name: 'Finance verification', role: 'finance' },
       { name: 'Finance Manager approval', role: 'finance_manager' },

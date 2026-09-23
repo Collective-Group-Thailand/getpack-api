@@ -1377,12 +1377,14 @@ Every decision with a data implication, and where it lives. "—" = no data impl
 | D-153 Reorder | `orders.reorder_of_order_id`, `cart_items.reorder_of_order_id`, `reuse_artwork_proof_id`, `order_lines.is_reusable_tooling`, `waived_reason` |
 | D-154 Campaign budget & 80 % alert | `campaigns.budget_amount`, `spent_amount`, `alert_threshold_pct`, `alerted_at`, `status = exhausted` |
 | D-155 Scorecard monthly, visible to factory | `factory_scorecards` |
+| D-166 Payout run approved by C-Level · D-167 pricing-mode change by Partner Manager · D-169 Finance Manager default approver | `approval_steps` of policies `payout_run`, `partner_pricing_mode_change` and the §8 maker-checker list |
+| D-168 Auditor independent of Finance | `sod_rules` role pairs `auditor` × `finance` / `finance_manager` |
 | D-160 Prospectus k ≥ 3 | setting `analytics.prospectus_min_group_size`; `prospectus_exports.k_threshold` |
 | D-161 Admin-maintained holidays & geography | `business_calendars`, `business_calendar_days`, `geo_*` (no seed data) |
 | D-162 Discount memo: matching tier only | `approval_steps.condition` per band on policy `discount_memo` |
-| D-163 Default tolerance ± 5 % (Proposed) | setting `fulfilment.tolerance_default_pct`; `factory_tolerance_policies` |
+| D-163 Default tolerance ± 5 % | setting `fulfilment.tolerance_default_pct`; `factory_tolerance_policies` |
 | D-165 Overage within tolerance not paid to factory | `goods_receipts.payable_quantity`; `delivery_reconciliations.outcome` |
-| D-164 Retention release 30 days after claim window (Proposed) | setting `payouts.retention_release_days`; `factory_payout_policies.retention_release_days`; `payable_items.eligible_at` (source `retention`) |
+| D-164 Retention release 30 days after claim window | setting `payouts.retention_release_days`; `factory_payout_policies.retention_release_days`; `payable_items.eligible_at` (source `retention`) |
 | `accounting-design.md` §1 principles | immutability triggers, `journal_entries.domain_event_id`/`posting_rule_version_id`/`approved_by`, `fiscal_periods.status`, `entity_id` |
 | §2 tax model ⚖ | `tax_rates`, `tax_nature_rules`, `tax_code` on lines, `input_vat_status`, `customer_wht_certificates`, `credit_note_reasons`, retention class `financial_record` |
 | §3 CoA & dimensions | `accounts` (`is_control`, allowed/required dimensions), journal line dimension columns, `cost_centres` |
@@ -1443,8 +1445,8 @@ Recorded here and in `docs/PROGRESS.md`. Conservative choices were made where th
 **Open questions (values not decided — settings designed, values not seeded or flagged)**
 - **Q-1** Unpaid-order expiry rule (D-060) — extracted from legacy in B3.1.
 - **Q-2** Customer/order/job/claim code formats (human keys) — proposal: prefixes per type + year/month + running number from `document_series` (non-gapless); needs business confirmation.
-- **Q-3** Default quantity tolerance → **D-163 (Proposed): ± 5 %** shortage and overage; seeded as `fulfilment.tolerance_default_pct` = 5 with `confirmation_status = proposed`. Factories/product types override it through `factory_tolerance_policies`. Overage within tolerance is not paid to the factory: payable quantity = min(delivered, ordered) (D-165).
-- **Q-4** Retention release → **D-164 (Proposed): 30 days after the order's claim window closes**; seeded as the platform default of `retention_release_days` = 30 with `confirmation_status = proposed`, overridable per factory payout policy.
+- **Q-3** Default quantity tolerance → **D-163 (Accepted): ± 5 %** shortage and overage; seeded as `fulfilment.tolerance_default_pct` = 5 (confirmed). Factories/product types override it through `factory_tolerance_policies`. Overage within tolerance is not paid to the factory: payable quantity = min(delivered, ordered) (D-165).
+- **Q-4** Retention release → **D-164 (Accepted): 30 days after the order's claim window closes**; seeded as `payouts.retention_release_days` = 30 (confirmed), overridable per factory payout policy.
 - **Q-5** k-anonymity threshold → **k ≥ 3** (D-160, see C-3).
 - **Q-6** Capacity unit per product type (pieces vs sheets vs m²) — decided with the launch factory in B2.2; the column supports all.
 - **Q-7** Geography and holidays → **admin-maintained, no external dataset** (D-161). Holidays: admins key them into `business_calendar_days`. Geography: admin-maintained; entry method (form vs Excel import) open, decided in B2.1. Consequence: SLA/lead-time maths (D-061, D-071, D-074) counts only weekends until admins enter the year's holidays — B1.3 adds an admin alert when the next year's national calendar is empty.

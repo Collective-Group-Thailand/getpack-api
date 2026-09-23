@@ -29,15 +29,11 @@ describe('seed data (B1.2 step 3)', () => {
     }
   });
 
-  it('flags the Proposed / ⚖ values instead of seeding them as confirmed', () => {
+  it('flags the ⚖ values still pending the CPA instead of seeding them as confirmed', () => {
     const flagged = Object.fromEntries(
       SETTINGS.filter((s) => s.confirmation).map((s) => [s.key, s.confirmation]),
     );
-    expect(flagged).toEqual({
-      'payouts.retention_release_days': 'proposed',
-      'fulfilment.tolerance_default_pct': 'proposed',
-      'loyalty.expected_redemption_rate_pct': 'pending_cpa',
-    });
+    expect(flagged).toEqual({ 'loyalty.expected_redemption_rate_pct': 'pending_cpa' });
   });
 
   it('does not seed values a decision leaves open', () => {

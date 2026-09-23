@@ -102,7 +102,6 @@ export const SETTINGS: readonly SettingSeed[] = [
     value: 30,
     description: 'D-164 days after the claim window closes until the retention is released',
     decisions: ['D-164', 'D-022'],
-    confirmation: 'proposed',
   },
 
   // --- Production, delivery, claims
@@ -119,7 +118,6 @@ export const SETTINGS: readonly SettingSeed[] = [
     value: '5',
     description: 'D-163 default quantity tolerance ± % (shortage and overage) until a factory sets its own',
     decisions: ['D-163', 'D-021'],
-    confirmation: 'proposed',
   },
   {
     key: 'orders.auto_complete_days',
