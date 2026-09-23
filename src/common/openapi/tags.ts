@@ -25,6 +25,12 @@ export const API_TAGS: Record<string, string> = {
   'admin.notifications': "The signed-in staff member's in-app notifications.",
   'store.notifications': "The signed-in customer's in-app notifications.",
   'partner.notifications': "The signed-in factory user's in-app notifications.",
+  'store.realtime': 'Realtime signals over SSE for customers (ids + type only, contract §6).',
+  'admin.realtime': 'Realtime signals over SSE for staff (ids + type only, contract §6).',
+  'partner.realtime': 'Realtime signals over SSE for factory users (ids + type only, contract §6).',
+  'store.webPush': 'Web push subscriptions of the signed-in customer (D-143).',
+  'admin.webPush': 'Web push subscriptions of the signed-in staff member (D-143).',
+  'partner.webPush': 'Web push subscriptions of the signed-in factory user (D-143).',
   'admin.outbox': 'Domain-event outbox: dead-letter list and replay.',
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
 };

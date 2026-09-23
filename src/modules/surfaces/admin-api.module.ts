@@ -11,14 +11,19 @@ import {
   NotificationRoutesController,
   NotificationTemplatesController,
 } from '@platform/notifications/notifications-admin.controller';
+import { AdminRealtimeController, AdminWebPushController } from '@platform/realtime/realtime.controllers';
+import { RealtimeModule } from '@platform/realtime/realtime.module';
 import { SettingsController } from '@platform/settings/settings.controller';
 import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
 
 /** `/v1/admin/*` — each deliverable adds the controllers it owns. */
 @Module({
-  imports: [SettingsAdminModule],
+  imports: [RealtimeModule, SettingsAdminModule],
   providers: [UsersAdminService],
   controllers: [
+    AdminRealtimeController,
+    AdminWebPushController,
+
     AdminMeController,
     UsersAdminController,
     RolesAdminController,

@@ -4,9 +4,18 @@ import {
   StoreInboxController,
   StoreMyNotificationSettingsController,
 } from '@platform/notifications/my-notifications.controller';
+import { StoreRealtimeController, StoreWebPushController } from '@platform/realtime/realtime.controllers';
+import { RealtimeModule } from '@platform/realtime/realtime.module';
 
 /** `/v1/store/*` — each deliverable adds the controllers it owns. */
 @Module({
-  controllers: [StoreMeController, StoreMyNotificationSettingsController, StoreInboxController],
+  imports: [RealtimeModule],
+  controllers: [
+    StoreRealtimeController,
+    StoreWebPushController,
+    StoreMeController,
+    StoreMyNotificationSettingsController,
+    StoreInboxController,
+  ],
 })
 export class StoreApiModule {}
