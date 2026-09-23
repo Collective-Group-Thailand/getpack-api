@@ -28,6 +28,11 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
     problems.push('INTEGRATIONS_MODE: must be "real" when NODE_ENV=production');
   }
 
+  if (env.NODE_ENV === NodeEnv.Production) {
+    if (!env.JWT_SIGNING_KEYS) problems.push('JWT_SIGNING_KEYS: required when NODE_ENV=production');
+    if (!env.OTP_HMAC_SECRET) problems.push('OTP_HMAC_SECRET: required when NODE_ENV=production');
+  }
+
   if (problems.length > 0) throw new InvalidEnvironmentError(problems);
   return env;
 }

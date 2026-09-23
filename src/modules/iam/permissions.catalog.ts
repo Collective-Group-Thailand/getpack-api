@@ -89,6 +89,12 @@ export const PERMISSIONS = [
     decisionRefs: ['D-143'],
   },
 
+  {
+    key: 'outbox.manage',
+    audience: 'staff',
+    description: 'List dead-lettered domain events and replay them',
+  },
+
   // --- Cost & margin visibility (D-141)
   {
     key: 'factory_cost.read',

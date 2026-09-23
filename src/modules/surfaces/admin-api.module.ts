@@ -1,5 +1,8 @@
+import { AdminMeController } from '@modules/auth/controllers/me.controllers';
 import { Module } from '@nestjs/common';
 
-/** `/v1/admin/*` — controllers are added by the deliverables that own them. */
-@Module({})
+/** `/v1/admin/*` — each deliverable adds the controllers it owns. */
+@Module({
+  controllers: [AdminMeController],
+})
 export class AdminApiModule {}

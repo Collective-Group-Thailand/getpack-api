@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { dirname, join } from 'node:path';
 
 import { AppConfig } from '@config/app-config';
+import { AuthGuard, bearerOf } from '@modules/auth/guards/auth.guard';
 import { type INestApplication } from '@nestjs/common';
 import { SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
@@ -11,6 +12,9 @@ import helmet from 'helmet';
 import { DomainException } from '../errors/domain.exception';
 import { ipAllowed, parseCidrList } from '../http/cidr';
 import { buildOpenApiDocument } from './openapi.document';
+
+/** Staff who may read the docs outside the allow-list (production, contract §5). */
+const DOCS_PERMISSION = 'settings.read';
 
 export const DOCS_PATHS = {
   scalar: '/docs',
@@ -36,10 +40,15 @@ export function setupDocs(app: INestApplication, version: string): void {
   const gated = [DOCS_PATHS.scalar, DOCS_PATHS.json, DOCS_PATHS.yaml];
   if (access === 'allow-list') {
     const allowList = parseCidrList(config.get('DOCS_ALLOWED_CIDRS'));
-    // Unknown to callers outside the list: answer exactly like a missing route.
-    app.use(gated, (req: Request, _res: Response, next: NextFunction) =>
-      ipAllowed(allowList, req.ip) ? next() : next(new DomainException('http.not_found')),
-    );
+    const guard = app.get(AuthGuard, { strict: false });
+    // Allow-listed networks, or a staff token with `settings.read` (forwarded by the BFF).
+    // Everyone else gets exactly the answer of a missing route.
+    app.use(gated, (req: Request, _res: Response, next: NextFunction) => {
+      if (ipAllowed(allowList, req.ip)) return next();
+      void guard
+        .staffHasPermission(bearerOf(req), DOCS_PERMISSION)
+        .then((ok) => (ok ? next() : next(new DomainException('http.not_found'))));
+    });
   }
   app.use(gated, docsSecurityHeaders());
 

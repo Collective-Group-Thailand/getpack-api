@@ -1,4 +1,5 @@
 import { type PrismaClient } from '../../src/generated/prisma/client';
+import { PasswordService } from '../../src/modules/auth/password.service';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { type EntitySeedInput, seedReference, type SeedReport } from './reference-seed';
 
@@ -30,18 +31,30 @@ const TEAM_OF: Record<string, string> = {
 
 /**
  * `pnpm db:seed:dev` — the reference seed plus one fake staff user per staff role
- * (`<role>@example.invalid`) and one fake customer. Passwords are set once staff login exists (B1.3).
+ * (`<role>@example.invalid`) and one fake customer. Staff users get `devPassword`
+ * (`DEV_SEED_PASSWORD`, argon2id) when given; users that already have a password keep it.
  * Partner and company users need factories/companies (B2.2 / B3.5) and are added there.
  */
-export async function seedDev(prisma: PrismaClient): Promise<SeedReport> {
+export async function seedDev(prisma: PrismaClient, devPassword?: string): Promise<SeedReport> {
   const report = await seedReference(prisma, DEV_ENTITY);
   const count = (what: string) => (report[what] = (report[what] ?? 0) + 1);
+  const passwordHash = devPassword ? await new PasswordService().hash(devPassword) : undefined;
 
   await prisma.$transaction(async (tx) => {
     const teams = new Map((await tx.team.findMany()).map((t) => [t.code, t.id]));
     for (const role of ROLES.filter((r) => r.audience === 'staff')) {
       const email = `${role.key.replaceAll('_', '-')}@example.invalid`;
-      if (await tx.user.findFirst({ where: { kind: 'staff', email } })) continue;
+      const existing = await tx.user.findFirst({ where: { kind: 'staff', email } });
+      if (existing) {
+        if (passwordHash && !existing.passwordHash) {
+          await tx.user.update({
+            where: { id: existing.id },
+            data: { passwordHash, passwordChangedAt: new Date() },
+          });
+          count('dev_staff_passwords');
+        }
+        continue;
+      }
       const roleRow = await tx.role.findUniqueOrThrow({ where: { key: role.key } });
       const teamCode = TEAM_OF[role.key];
       await tx.user.create({
@@ -51,6 +64,7 @@ export async function seedDev(prisma: PrismaClient): Promise<SeedReport> {
           email,
           emailVerifiedAt: new Date(),
           displayName: `Dev ${role.nameEn}`,
+          ...(passwordHash && { passwordHash, passwordChangedAt: new Date() }),
           staffProfile: { create: { teamId: teamCode ? (teams.get(teamCode) ?? null) : null } },
           roles: { create: { roleId: roleRow.id, scopeType: 'platform', reason: 'dev seed (fake user)' } },
         },

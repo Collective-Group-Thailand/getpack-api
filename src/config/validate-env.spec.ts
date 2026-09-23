@@ -67,7 +67,20 @@ describe('validateEnv', () => {
       /INTEGRATIONS_MODE: must be "real"/,
     );
     expect(
-      validateEnv({ ...valid, NODE_ENV: 'production', INTEGRATIONS_MODE: 'real' }).INTEGRATIONS_MODE,
+      validateEnv({ ...valid, ...productionSecrets, NODE_ENV: 'production', INTEGRATIONS_MODE: 'real' })
+        .INTEGRATIONS_MODE,
     ).toBe(IntegrationsMode.Real);
   });
+
+  it('requires the signing keys and the OTP secret in production (ADR-0004)', () => {
+    const production = { ...valid, NODE_ENV: 'production', INTEGRATIONS_MODE: 'real' };
+    expect(() => validateEnv(production)).toThrow(
+      /JWT_SIGNING_KEYS: required[\s\S]*OTP_HMAC_SECRET: required/,
+    );
+    expect(() => validateEnv({ ...production, ...productionSecrets, OTP_HMAC_SECRET: 'short' })).toThrow(
+      /OTP_HMAC_SECRET: failed "minLength"/,
+    );
+  });
 });
+
+const productionSecrets = { JWT_SIGNING_KEYS: '[]', OTP_HMAC_SECRET: 'x'.repeat(32) };

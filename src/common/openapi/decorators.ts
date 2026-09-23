@@ -15,6 +15,7 @@ export const EXT = {
   parameters: 'x-packio-parameters',
   successHeaders: 'x-packio-success-headers',
   public: 'x-packio-public',
+  optionalAuth: 'x-packio-optional-auth',
   unthrottled: 'x-packio-unthrottled',
 } as const;
 
@@ -125,6 +126,11 @@ export function ApiEtag() {
 /** Operation without authentication: documented explicitly as `security: []`. */
 export function ApiPublic() {
   return ApiExtension(EXT.public, true);
+}
+
+/** Anonymous or with a bearer token of `audience` (`security: [{}, { audience: [] }]`). */
+export function ApiOptionalAuth(audience: 'customer' | 'staff' | 'partner') {
+  return ApiExtension(EXT.optionalAuth, audience);
 }
 
 /** Operation excluded from rate limiting (pair with `@SkipThrottle()`): no 429 / rate-limit headers. */

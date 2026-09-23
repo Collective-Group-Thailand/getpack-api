@@ -1,6 +1,248 @@
 {
   "components": {
     "examples": {
+      "problem.auth.account_inactive": {
+        "summary": "auth.account_inactive",
+        "value": {
+          "code": "auth.account_inactive",
+          "detail": "บัญชีนี้ถูกระงับหรือปิดการใช้งาน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "บัญชีไม่พร้อมใช้งาน",
+          "type": "https://errors.packio/auth.account_inactive"
+        }
+      },
+      "problem.auth.account_locked": {
+        "summary": "auth.account_locked",
+        "value": {
+          "code": "auth.account_locked",
+          "detail": "เข้าสู่ระบบผิดหลายครั้ง กรุณาลองใหม่ภายหลัง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "บัญชีถูกล็อกชั่วคราว",
+          "type": "https://errors.packio/auth.account_locked"
+        }
+      },
+      "problem.auth.forbidden": {
+        "summary": "auth.forbidden",
+        "value": {
+          "code": "auth.forbidden",
+          "detail": "คุณไม่มีสิทธิ์ดำเนินการนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "ไม่มีสิทธิ์",
+          "type": "https://errors.packio/auth.forbidden"
+        }
+      },
+      "problem.auth.identity_linked_elsewhere": {
+        "summary": "auth.identity_linked_elsewhere",
+        "value": {
+          "code": "auth.identity_linked_elsewhere",
+          "detail": "บัญชีภายนอกนี้ผูกกับผู้ใช้รายอื่นอยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "บัญชีนี้ผูกกับผู้ใช้อื่นแล้ว",
+          "type": "https://errors.packio/auth.identity_linked_elsewhere"
+        }
+      },
+      "problem.auth.identity_token_invalid": {
+        "summary": "auth.identity_token_invalid",
+        "value": {
+          "code": "auth.identity_token_invalid",
+          "detail": "โทเค็นจากผู้ให้บริการเข้าสู่ระบบไม่ถูกต้องหรือหมดอายุ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "ยืนยันตัวตนไม่สำเร็จ",
+          "type": "https://errors.packio/auth.identity_token_invalid"
+        }
+      },
+      "problem.auth.invalid_client": {
+        "summary": "auth.invalid_client",
+        "value": {
+          "code": "auth.invalid_client",
+          "detail": "client id หรือ client secret ไม่ถูกต้อง หรือไคลเอนต์ถูกระงับ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "ข้อมูลไคลเอนต์ไม่ถูกต้อง",
+          "type": "https://errors.packio/auth.invalid_client"
+        }
+      },
+      "problem.auth.invalid_credentials": {
+        "summary": "auth.invalid_credentials",
+        "value": {
+          "code": "auth.invalid_credentials",
+          "detail": "อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+          "type": "https://errors.packio/auth.invalid_credentials"
+        }
+      },
+      "problem.auth.otp_expired": {
+        "summary": "auth.otp_expired",
+        "value": {
+          "code": "auth.otp_expired",
+          "detail": "รหัส OTP หมดอายุหรือถูกใช้ไปแล้ว กรุณาขอรหัสใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "รหัส OTP หมดอายุ",
+          "type": "https://errors.packio/auth.otp_expired"
+        }
+      },
+      "problem.auth.otp_invalid": {
+        "summary": "auth.otp_invalid",
+        "value": {
+          "code": "auth.otp_invalid",
+          "detail": "รหัส OTP ไม่ถูกต้อง เหลือโอกาสอีก {remaining} ครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "รหัส OTP ไม่ถูกต้อง",
+          "type": "https://errors.packio/auth.otp_invalid"
+        }
+      },
+      "problem.auth.otp_rate_limited": {
+        "summary": "auth.otp_rate_limited",
+        "value": {
+          "code": "auth.otp_rate_limited",
+          "detail": "ขอรหัส OTP บ่อยเกินไป กรุณารอ {retryAfter} วินาที",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 429,
+          "title": "ขอรหัส OTP บ่อยเกินไป",
+          "type": "https://errors.packio/auth.otp_rate_limited"
+        }
+      },
+      "problem.auth.pin_invalid": {
+        "summary": "auth.pin_invalid",
+        "value": {
+          "code": "auth.pin_invalid",
+          "detail": "PIN ของอุปกรณ์ไม่ถูกต้อง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "PIN ไม่ถูกต้อง",
+          "type": "https://errors.packio/auth.pin_invalid"
+        }
+      },
+      "problem.auth.refresh_invalid": {
+        "summary": "auth.refresh_invalid",
+        "value": {
+          "code": "auth.refresh_invalid",
+          "detail": "refresh token ไม่ถูกต้องหรือหมดอายุ กรุณาเข้าสู่ระบบใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "refresh token ไม่ถูกต้อง",
+          "type": "https://errors.packio/auth.refresh_invalid"
+        }
+      },
+      "problem.auth.refresh_reused": {
+        "summary": "auth.refresh_reused",
+        "value": {
+          "code": "auth.refresh_reused",
+          "detail": "ตรวจพบการใช้ refresh token ซ้ำ เซสชันทั้งหมดในชุดนี้ถูกยกเลิก กรุณาเข้าสู่ระบบใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "ตรวจพบการใช้ refresh token ซ้ำ",
+          "type": "https://errors.packio/auth.refresh_reused"
+        }
+      },
+      "problem.auth.scope_unavailable": {
+        "summary": "auth.scope_unavailable",
+        "value": {
+          "code": "auth.scope_unavailable",
+          "detail": "บัญชีนี้ยังไม่ผูกกับโรงงานหรือบริษัทที่ใช้งานได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "ไม่พบขอบเขตการใช้งาน",
+          "type": "https://errors.packio/auth.scope_unavailable"
+        }
+      },
+      "problem.auth.session_revoked": {
+        "summary": "auth.session_revoked",
+        "value": {
+          "code": "auth.session_revoked",
+          "detail": "เซสชันนี้ถูกยกเลิกแล้ว กรุณาเข้าสู่ระบบใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "เซสชันถูกยกเลิก",
+          "type": "https://errors.packio/auth.session_revoked"
+        }
+      },
+      "problem.auth.token_expired": {
+        "summary": "auth.token_expired",
+        "value": {
+          "code": "auth.token_expired",
+          "detail": "โทเค็นเข้าถึงหมดอายุ กรุณาต่ออายุด้วย refresh token",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "โทเค็นหมดอายุ",
+          "type": "https://errors.packio/auth.token_expired"
+        }
+      },
+      "problem.auth.unauthenticated": {
+        "summary": "auth.unauthenticated",
+        "value": {
+          "code": "auth.unauthenticated",
+          "detail": "กรุณาเข้าสู่ระบบก่อนดำเนินการ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "ต้องเข้าสู่ระบบ",
+          "type": "https://errors.packio/auth.unauthenticated"
+        }
+      },
+      "problem.auth.wrong_audience": {
+        "summary": "auth.wrong_audience",
+        "value": {
+          "code": "auth.wrong_audience",
+          "detail": "โทเค็นนี้ออกให้ส่วนอื่นของระบบ จึงใช้กับเส้นทางนี้ไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "โทเค็นใช้กับส่วนนี้ไม่ได้",
+          "type": "https://errors.packio/auth.wrong_audience"
+        }
+      },
+      "problem.http.bad_request": {
+        "summary": "http.bad_request",
+        "value": {
+          "code": "http.bad_request",
+          "detail": "คำขอไม่ถูกต้อง กรุณาตรวจสอบข้อมูลแล้วลองใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 400,
+          "title": "คำขอไม่ถูกต้อง",
+          "type": "https://errors.packio/http.bad_request"
+        }
+      },
+      "problem.http.malformed_json": {
+        "summary": "http.malformed_json",
+        "value": {
+          "code": "http.malformed_json",
+          "detail": "ข้อมูลที่ส่งมาไม่ใช่ JSON ที่ถูกต้อง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 400,
+          "title": "รูปแบบข้อมูลไม่ถูกต้อง",
+          "type": "https://errors.packio/http.malformed_json"
+        }
+      },
+      "problem.http.not_found": {
+        "summary": "http.not_found",
+        "value": {
+          "code": "http.not_found",
+          "detail": "ไม่พบข้อมูลหรือเส้นทางที่ร้องขอ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 404,
+          "title": "ไม่พบข้อมูล",
+          "type": "https://errors.packio/http.not_found"
+        }
+      },
+      "problem.http.too_many_requests": {
+        "summary": "http.too_many_requests",
+        "value": {
+          "code": "http.too_many_requests",
+          "detail": "มีคำขอมากเกินไป กรุณารอสักครู่แล้วลองใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 429,
+          "title": "คำขอมากเกินไป",
+          "type": "https://errors.packio/http.too_many_requests"
+        }
+      },
       "problem.internal.unexpected": {
         "summary": "internal.unexpected",
         "value": {
@@ -10,6 +252,17 @@
           "status": 500,
           "title": "เกิดข้อผิดพลาดในระบบ",
           "type": "https://errors.packio/internal.unexpected"
+        }
+      },
+      "problem.provider.unavailable": {
+        "summary": "provider.unavailable",
+        "value": {
+          "code": "provider.unavailable",
+          "detail": "ผู้ให้บริการภายนอกไม่ตอบสนอง กรุณาลองใหม่ภายหลัง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 503,
+          "title": "ผู้ให้บริการภายนอกไม่พร้อมใช้งาน",
+          "type": "https://errors.packio/provider.unavailable"
         }
       },
       "problem.service.unavailable": {
@@ -22,9 +275,55 @@
           "title": "ระบบไม่พร้อมให้บริการ",
           "type": "https://errors.packio/service.unavailable"
         }
+      },
+      "problem.validation.failed": {
+        "summary": "validation.failed",
+        "value": {
+          "code": "validation.failed",
+          "detail": "ข้อมูลบางรายการไม่ถูกต้อง กรุณาตรวจสอบแล้วลองใหม่",
+          "errors": [
+            {
+              "code": "min",
+              "message": "quantity must not be less than 1",
+              "path": "items[0].quantity"
+            }
+          ],
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ข้อมูลไม่ถูกต้อง",
+          "type": "https://errors.packio/validation.failed"
+        }
       }
     },
     "headers": {
+      "RateLimitLimit": {
+        "description": "Requests allowed in the current window.",
+        "schema": {
+          "example": 300,
+          "type": "integer"
+        }
+      },
+      "RateLimitRemaining": {
+        "description": "Requests left in the current window.",
+        "schema": {
+          "example": 299,
+          "type": "integer"
+        }
+      },
+      "RateLimitReset": {
+        "description": "Seconds until the window resets.",
+        "schema": {
+          "example": 60,
+          "type": "integer"
+        }
+      },
+      "RetryAfter": {
+        "description": "Seconds to wait before retrying.",
+        "schema": {
+          "example": 30,
+          "type": "integer"
+        }
+      },
       "XRequestId": {
         "description": "Request id (echoes a valid incoming `X-Request-Id`); also in every problem as `requestId`.",
         "schema": {
@@ -46,6 +345,200 @@
       }
     },
     "schemas": {
+      "AdminMeDto": {
+        "properties": {
+          "displayName": {
+            "example": "ผู้ใช้ ทดสอบ",
+            "type": "string"
+          },
+          "email": {
+            "example": "user.one@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "featureFlags": {
+            "description": "Feature flags enabled for this user",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocaleCode"
+              }
+            ],
+            "example": "th"
+          },
+          "menu": {
+            "description": "Admin-zone menu entries this user may open",
+            "items": {
+              "$ref": "#/components/schemas/MenuEntryDto"
+            },
+            "type": "array"
+          },
+          "permissions": {
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "roles": {
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "email",
+          "locale",
+          "roles",
+          "permissions",
+          "menu",
+          "featureFlags"
+        ],
+        "type": "object"
+      },
+      "ClientCredentialsDto": {
+        "properties": {
+          "client_id": {
+            "description": "Or send it in HTTP Basic auth",
+            "example": "pc_example_factory_erp",
+            "maxLength": 128,
+            "type": "string"
+          },
+          "client_secret": {
+            "description": "Or send it in HTTP Basic auth",
+            "example": "example-client-secret",
+            "format": "password",
+            "maxLength": 256,
+            "type": "string"
+          },
+          "grant_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OAuthGrantType"
+              }
+            ],
+            "example": "client_credentials"
+          },
+          "scope": {
+            "description": "Ignored: the token always carries the client’s configured scopes",
+            "example": "jobs.read",
+            "maxLength": 512,
+            "type": "string"
+          }
+        },
+        "required": [
+          "grant_type"
+        ],
+        "type": "object"
+      },
+      "ClientCredentialsTokenDto": {
+        "properties": {
+          "access_token": {
+            "example": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Seconds",
+            "example": 600,
+            "type": "integer"
+          },
+          "scope": {
+            "description": "Space-separated scopes",
+            "example": "factory:0192f3a0-7c1e-7d2a-9b1f-000000000f01",
+            "type": "string"
+          },
+          "token_type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OAuthTokenType"
+              }
+            ],
+            "example": "Bearer"
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "scope"
+        ],
+        "type": "object"
+      },
+      "DevicePinDto": {
+        "properties": {
+          "deviceId": {
+            "example": "tablet-line-2",
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "pin": {
+            "example": "123456",
+            "pattern": "^\\d{4,8}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "deviceId",
+          "pin"
+        ],
+        "type": "object"
+      },
+      "FactoryAccessDto": {
+        "properties": {
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000000f01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "roles": {
+            "example": [
+              "factory_owner"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "factoryId",
+          "roles"
+        ],
+        "type": "object"
+      },
+      "FirebaseLoginDto": {
+        "properties": {
+          "idToken": {
+            "description": "Firebase Auth ID token (Google or Apple)",
+            "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImV4YW1wbGUifQ.eyJzdWIiOiJleGFtcGxlIn0.c2ln",
+            "maxLength": 8192,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "idToken"
+        ],
+        "type": "object"
+      },
       "HealthIndicatorState": {
         "properties": {
           "status": {
@@ -139,6 +632,323 @@
         ],
         "type": "string"
       },
+      "IdentityProvider": {
+        "enum": [
+          "phone_otp",
+          "firebase_google",
+          "firebase_apple",
+          "line"
+        ],
+        "type": "string"
+      },
+      "JwkDto": {
+        "properties": {
+          "alg": {
+            "example": "EdDSA",
+            "type": "string"
+          },
+          "crv": {
+            "example": "Ed25519",
+            "type": "string"
+          },
+          "kid": {
+            "example": "packio-2026-09",
+            "type": "string"
+          },
+          "kty": {
+            "example": "OKP",
+            "type": "string"
+          },
+          "use": {
+            "example": "sig",
+            "type": "string"
+          },
+          "x": {
+            "example": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kty",
+          "crv",
+          "x",
+          "kid",
+          "alg",
+          "use"
+        ],
+        "type": "object"
+      },
+      "JwksDto": {
+        "properties": {
+          "keys": {
+            "items": {
+              "$ref": "#/components/schemas/JwkDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "keys"
+        ],
+        "type": "object"
+      },
+      "LineLoginDto": {
+        "properties": {
+          "idToken": {
+            "description": "LINE Login ID token (web)",
+            "example": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJleGFtcGxlIn0.c2ln",
+            "maxLength": 8192,
+            "type": "string"
+          },
+          "liffAccessToken": {
+            "description": "LIFF access token (inside LINE, D-151)",
+            "example": "liff-access-token-example",
+            "maxLength": 8192,
+            "type": "string"
+          },
+          "otpChallengeId": {
+            "description": "Verified `link_phone` challenge to link to that phone",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+            "format": "uuid",
+            "type": "string"
+          },
+          "otpCode": {
+            "example": "123456",
+            "pattern": "^\\d{4,8}$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "LinkedIdentityDto": {
+        "properties": {
+          "linkedAt": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdentityProvider"
+              }
+            ],
+            "example": "line"
+          }
+        },
+        "required": [
+          "provider",
+          "linkedAt"
+        ],
+        "type": "object"
+      },
+      "LocaleCode": {
+        "enum": [
+          "th",
+          "en"
+        ],
+        "type": "string"
+      },
+      "MenuEntryDto": {
+        "properties": {
+          "key": {
+            "description": "Stable key; the frontend owns the label",
+            "example": "approvals",
+            "type": "string"
+          },
+          "path": {
+            "example": "/admin/approvals",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "path"
+        ],
+        "type": "object"
+      },
+      "OAuthGrantType": {
+        "enum": [
+          "client_credentials"
+        ],
+        "type": "string"
+      },
+      "OAuthTokenType": {
+        "enum": [
+          "Bearer"
+        ],
+        "type": "string"
+      },
+      "OtpChallengeDto": {
+        "properties": {
+          "challengeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+            "format": "uuid",
+            "type": "string"
+          },
+          "expiresAt": {
+            "example": "2026-09-23T14:10:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "resendAvailableAt": {
+            "description": "When a new code may be requested",
+            "example": "2026-09-23T14:06:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeId",
+          "expiresAt",
+          "resendAvailableAt"
+        ],
+        "type": "object"
+      },
+      "OtpRequestDto": {
+        "properties": {
+          "phone": {
+            "description": "Thai mobile or E.164 number",
+            "example": "081-000-1234",
+            "maxLength": 32,
+            "type": "string"
+          },
+          "purpose": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OtpRequestPurpose"
+              }
+            ],
+            "default": "login",
+            "description": "`link_phone` = verify a phone to link a LINE account to it",
+            "example": "login"
+          }
+        },
+        "required": [
+          "phone"
+        ],
+        "type": "object"
+      },
+      "OtpRequestPurpose": {
+        "description": "`link_phone` = verify a phone to link a LINE account to it",
+        "enum": [
+          "login",
+          "link_phone"
+        ],
+        "type": "string"
+      },
+      "OtpVerifyDto": {
+        "properties": {
+          "challengeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "example": "123456",
+            "pattern": "^\\d{4,8}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeId",
+          "code"
+        ],
+        "type": "object"
+      },
+      "PartnerLoginDto": {
+        "properties": {
+          "deviceId": {
+            "description": "Device-PIN login: the registered device id",
+            "example": "tablet-line-2",
+            "maxLength": 128,
+            "type": "string"
+          },
+          "email": {
+            "example": "planner@factory.example",
+            "format": "email",
+            "maxLength": 254,
+            "type": "string"
+          },
+          "password": {
+            "description": "Password login",
+            "example": "correct horse battery staple",
+            "format": "password",
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "pin": {
+            "description": "Device-PIN login: the PIN (`auth.device_pin_policy`)",
+            "example": "123456",
+            "pattern": "^\\d{4,8}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "PartnerMeDto": {
+        "properties": {
+          "displayName": {
+            "example": "ผู้ใช้ ทดสอบ",
+            "type": "string"
+          },
+          "email": {
+            "example": "user.one@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "factories": {
+            "description": "Factories this user acts for (token scopes)",
+            "items": {
+              "$ref": "#/components/schemas/FactoryAccessDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocaleCode"
+              }
+            ],
+            "example": "th"
+          },
+          "permissions": {
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "roles": {
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "email",
+          "locale",
+          "roles",
+          "permissions",
+          "factories"
+        ],
+        "type": "object"
+      },
       "ProblemDetails": {
         "properties": {
           "code": {
@@ -205,6 +1015,217 @@
           "path",
           "code",
           "message"
+        ],
+        "type": "object"
+      },
+      "RefreshDto": {
+        "properties": {
+          "refreshToken": {
+            "example": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+            "maxLength": 512,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ],
+        "type": "object"
+      },
+      "StaffLoginDto": {
+        "properties": {
+          "email": {
+            "example": "finance.one@example.com",
+            "format": "email",
+            "maxLength": 254,
+            "type": "string"
+          },
+          "password": {
+            "example": "correct horse battery staple",
+            "format": "password",
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "StoreMeDto": {
+        "properties": {
+          "displayName": {
+            "example": "ผู้ใช้ ทดสอบ",
+            "type": "string"
+          },
+          "email": {
+            "example": "user.one@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "identities": {
+            "items": {
+              "$ref": "#/components/schemas/LinkedIdentityDto"
+            },
+            "type": "array"
+          },
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocaleCode"
+              }
+            ],
+            "example": "th"
+          },
+          "permissions": {
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "phone": {
+            "description": "E.164",
+            "example": "+66810001234",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "roles": {
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scopes": {
+            "description": "Company scopes (`company:<uuid>`) of B2B members",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "email",
+          "locale",
+          "roles",
+          "permissions",
+          "phone",
+          "scopes",
+          "identities"
+        ],
+        "type": "object"
+      },
+      "TokenAudience": {
+        "enum": [
+          "customer",
+          "staff",
+          "partner"
+        ],
+        "type": "string"
+      },
+      "TokenPairDto": {
+        "properties": {
+          "accessToken": {
+            "description": "EdDSA JWT, 10–15 minutes (ADR-0004)",
+            "example": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+            "type": "string"
+          },
+          "accessTokenExpiresAt": {
+            "example": "2026-09-23T14:15:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "refreshToken": {
+            "description": "Opaque, single use; rotate with `POST /v1/auth/refresh`",
+            "example": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+            "type": "string"
+          },
+          "refreshTokenExpiresAt": {
+            "description": "Idle expiry; each refresh extends it up to the absolute session lifetime",
+            "example": "2026-09-23T16:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/TokenSubjectDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "accessTokenExpiresAt",
+          "refreshToken",
+          "refreshTokenExpiresAt",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "TokenSubjectDto": {
+        "properties": {
+          "id": {
+            "description": "Public id of the user (JWT `sub`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "permissions": {
+            "description": "Permission keys `resource.action`",
+            "example": [
+              "approvals.act",
+              "approvals.read"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "roles": {
+            "description": "Role keys (D-140)",
+            "example": [
+              "finance"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scopes": {
+            "description": "Scopes such as `factory:<uuid>` or `company:<uuid>`",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TokenAudience"
+              }
+            ],
+            "example": "staff"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "roles",
+          "permissions",
+          "scopes"
         ],
         "type": "object"
       }
@@ -336,6 +1357,2799 @@
           "ops.health"
         ]
       }
+    },
+    "/v1/admin/me": {
+      "get": {
+        "description": "Roles (D-140), effective permissions, the admin-zone menu entries those permissions open, and the feature flags enabled for this user. Cost and margin permissions follow D-141.\n\nImplements: ADR-0004, D-140, D-141.",
+        "operationId": "admin.me.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "displayName": "การเงิน ทดสอบ",
+                  "email": "finance.one@example.com",
+                  "featureFlags": [],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "locale": "th",
+                  "menu": [
+                    {
+                      "key": "dashboard",
+                      "path": "/admin"
+                    },
+                    {
+                      "key": "approvals",
+                      "path": "/admin/approvals"
+                    },
+                    {
+                      "key": "audit_logs",
+                      "path": "/admin/audit-logs"
+                    }
+                  ],
+                  "permissions": [
+                    "approvals.act",
+                    "approvals.read",
+                    "audit_logs.read"
+                  ],
+                  "roles": [
+                    "finance"
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMeDto"
+                }
+              }
+            },
+            "description": "The staff member",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.session_revoked": {
+                    "$ref": "#/components/examples/problem.auth.session_revoked"
+                  },
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.session_revoked`, `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "The signed-in staff member with menu entitlements",
+        "tags": [
+          "admin.me"
+        ]
+      }
+    },
+    "/v1/auth/.well-known/jwks.json": {
+      "get": {
+        "description": "JWKS of the Ed25519 keys (EdDSA) that sign access tokens; during rotation it lists old and new keys.\n\nImplements: ADR-0004.",
+        "operationId": "auth.tokens.jwks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "keys": [
+                    {
+                      "alg": "EdDSA",
+                      "crv": "Ed25519",
+                      "kid": "packio-2026-09",
+                      "kty": "OKP",
+                      "use": "sig",
+                      "x": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/JwksDto"
+                }
+              }
+            },
+            "description": "Key set",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Public keys that verify access tokens",
+        "tags": [
+          "auth.tokens"
+        ]
+      }
+    },
+    "/v1/auth/customer/firebase": {
+      "post": {
+        "description": "Exchanges a Firebase Auth ID token. A known identity signs in its customer; a new one is linked to the signed-in customer when a customer bearer token is sent, otherwise a new customer is created. Accounts are never linked by e-mail alone.\n\nImplements: ADR-0004.",
+        "operationId": "auth.customer.firebase",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImV4YW1wbGUifQ.eyJzdWIiOiJleGFtcGxlIn0.c2ln"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/FirebaseLoginDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accessToken": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+                  "accessTokenExpiresAt": "2026-09-23T14:15:00+07:00",
+                  "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+                  "refreshTokenExpiresAt": "2026-09-23T16:05:00+07:00",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                    "permissions": [],
+                    "roles": [],
+                    "scopes": [],
+                    "type": "customer"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairDto"
+                }
+              }
+            },
+            "description": "Signed in",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.identity_token_invalid": {
+                    "$ref": "#/components/examples/problem.auth.identity_token_invalid"
+                  },
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.identity_token_invalid`, `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.account_inactive": {
+                    "$ref": "#/components/examples/problem.auth.account_inactive"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.account_inactive`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.identity_linked_elsewhere": {
+                    "$ref": "#/components/examples/problem.auth.identity_linked_elsewhere"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.identity_linked_elsewhere`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "provider.unavailable": {
+                    "$ref": "#/components/examples/problem.provider.unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `provider.unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {},
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Sign in with Google or Apple (Firebase ID token)",
+        "tags": [
+          "auth.customer"
+        ]
+      }
+    },
+    "/v1/auth/customer/line": {
+      "post": {
+        "description": "Send a LINE Login `idToken` (web) or a `liffAccessToken` (inside LINE, D-151). A known LINE account signs in its customer. A new one is linked: to the signed-in customer (bearer token), else to the customer of a verified `link_phone` OTP (`otpChallengeId` + `otpCode`, account created if new), else a new customer is created.\n\nImplements: ADR-0004, D-151.",
+        "operationId": "auth.customer.line",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "liff": {
+                  "value": {
+                    "liffAccessToken": "liff-access-token-example"
+                  }
+                },
+                "linkPhone": {
+                  "value": {
+                    "idToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJleGFtcGxlIn0.c2ln",
+                    "otpChallengeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+                    "otpCode": "123456"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/LineLoginDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accessToken": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+                  "accessTokenExpiresAt": "2026-09-23T14:15:00+07:00",
+                  "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+                  "refreshTokenExpiresAt": "2026-09-23T16:05:00+07:00",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                    "permissions": [],
+                    "roles": [],
+                    "scopes": [],
+                    "type": "customer"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairDto"
+                }
+              }
+            },
+            "description": "Signed in",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.identity_token_invalid": {
+                    "$ref": "#/components/examples/problem.auth.identity_token_invalid"
+                  },
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.identity_token_invalid`, `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.account_inactive": {
+                    "$ref": "#/components/examples/problem.auth.account_inactive"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.account_inactive`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.identity_linked_elsewhere": {
+                    "$ref": "#/components/examples/problem.auth.identity_linked_elsewhere"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.identity_linked_elsewhere`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.otp_expired": {
+                    "$ref": "#/components/examples/problem.auth.otp_expired"
+                  },
+                  "auth.otp_invalid": {
+                    "$ref": "#/components/examples/problem.auth.otp_invalid"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.otp_expired`, `auth.otp_invalid`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "provider.unavailable": {
+                    "$ref": "#/components/examples/problem.provider.unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `provider.unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {},
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Sign in with LINE (LINE Login or LIFF)",
+        "tags": [
+          "auth.customer"
+        ]
+      }
+    },
+    "/v1/auth/customer/otp/request": {
+      "post": {
+        "description": "Sends a 6-digit code to the phone (ThaiBulkSMS; SMS is used for OTP per D-143). Limits from `auth.otp_policy`: resend cool-down, requests per phone and per IP per hour → 429 `auth.otp_rate_limited` with `Retry-After`. `purpose: link_phone` verifies a phone to link a LINE account.\n\nImplements: ADR-0004, D-143.",
+        "operationId": "auth.customer.requestOtp",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "phone": "081-000-1234",
+                    "purpose": "login"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OtpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "challengeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+                  "expiresAt": "2026-09-23T14:10:00+07:00",
+                  "resendAvailableAt": "2026-09-23T14:06:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallengeDto"
+                }
+              }
+            },
+            "description": "Code sent",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.otp_rate_limited": {
+                    "$ref": "#/components/examples/problem.auth.otp_rate_limited"
+                  },
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.otp_rate_limited`, `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "provider.unavailable": {
+                    "$ref": "#/components/examples/problem.provider.unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `provider.unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Send a one-time code by SMS",
+        "tags": [
+          "auth.customer"
+        ]
+      }
+    },
+    "/v1/auth/customer/otp/verify": {
+      "post": {
+        "description": "Checks the code (limited attempts per challenge; a code works once). Signs in the customer with that phone, creating the account on first use (`customer.registered` event).\n\nImplements: ADR-0004.",
+        "operationId": "auth.customer.verifyOtp",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "challengeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+                    "code": "123456"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OtpVerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accessToken": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+                  "accessTokenExpiresAt": "2026-09-23T14:15:00+07:00",
+                  "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+                  "refreshTokenExpiresAt": "2026-09-23T16:05:00+07:00",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                    "permissions": [],
+                    "roles": [],
+                    "scopes": [],
+                    "type": "customer"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairDto"
+                }
+              }
+            },
+            "description": "Signed in",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.account_inactive": {
+                    "$ref": "#/components/examples/problem.auth.account_inactive"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.account_inactive`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.otp_expired": {
+                    "$ref": "#/components/examples/problem.auth.otp_expired"
+                  },
+                  "auth.otp_invalid": {
+                    "$ref": "#/components/examples/problem.auth.otp_invalid"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.otp_expired`, `auth.otp_invalid`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Sign in with the SMS code",
+        "tags": [
+          "auth.customer"
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "description": "Revokes the session of the refresh token, including access tokens already issued for it. Unknown or already revoked tokens also return 204.\n\nImplements: ADR-0004.",
+        "operationId": "auth.tokens.logout",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Signed out",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Sign out (revoke the session)",
+        "tags": [
+          "auth.tokens"
+        ]
+      }
+    },
+    "/v1/auth/partner/login": {
+      "post": {
+        "description": "Either e-mail + password, or e-mail + `deviceId` + `pin` on a device whose PIN the user registered (`POST /v1/partner/me/device-pins`). The token carries the factory scopes of the user's roles (`factory:<uuid>`); a user without an available factory scope is refused with `auth.scope_unavailable`.\n\nImplements: ADR-0004, D-140, D-011.",
+        "operationId": "auth.partner.login",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "devicePin": {
+                  "value": {
+                    "deviceId": "tablet-line-2",
+                    "email": "planner@factory.example",
+                    "pin": "123456"
+                  }
+                },
+                "password": {
+                  "value": {
+                    "email": "planner@factory.example",
+                    "password": "correct horse battery staple"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PartnerLoginDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accessToken": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+                  "accessTokenExpiresAt": "2026-09-23T14:15:00+07:00",
+                  "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+                  "refreshTokenExpiresAt": "2026-09-23T16:05:00+07:00",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                    "permissions": [
+                      "factory_profile.read",
+                      "factory_users.manage"
+                    ],
+                    "roles": [
+                      "factory_owner"
+                    ],
+                    "scopes": [
+                      "factory:0192f3a0-7c1e-7d2a-9b1f-000000000f01"
+                    ],
+                    "type": "partner"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairDto"
+                }
+              }
+            },
+            "description": "Signed in",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.account_locked": {
+                    "$ref": "#/components/examples/problem.auth.account_locked"
+                  },
+                  "auth.invalid_credentials": {
+                    "$ref": "#/components/examples/problem.auth.invalid_credentials"
+                  },
+                  "auth.pin_invalid": {
+                    "$ref": "#/components/examples/problem.auth.pin_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.account_locked`, `auth.invalid_credentials`, `auth.pin_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.account_inactive": {
+                    "$ref": "#/components/examples/problem.auth.account_inactive"
+                  },
+                  "auth.scope_unavailable": {
+                    "$ref": "#/components/examples/problem.auth.scope_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.account_inactive`, `auth.scope_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Sign in a partner-factory user",
+        "tags": [
+          "auth.partner"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "description": "Exchanges a refresh token for a new token pair; the old refresh token stops working. Presenting a refresh token that was already used revokes the whole session (`auth.refresh_reused`, theft detection).\n\nImplements: ADR-0004.",
+        "operationId": "auth.tokens.refresh",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accessToken": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+                  "accessTokenExpiresAt": "2026-09-23T14:15:00+07:00",
+                  "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+                  "refreshTokenExpiresAt": "2026-09-23T16:05:00+07:00",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                    "permissions": [
+                      "approvals.act",
+                      "approvals.read"
+                    ],
+                    "roles": [
+                      "finance"
+                    ],
+                    "scopes": [],
+                    "type": "staff"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairDto"
+                }
+              }
+            },
+            "description": "New token pair",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.refresh_invalid": {
+                    "$ref": "#/components/examples/problem.auth.refresh_invalid"
+                  },
+                  "auth.refresh_reused": {
+                    "$ref": "#/components/examples/problem.auth.refresh_reused"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.refresh_invalid`, `auth.refresh_reused`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.scope_unavailable": {
+                    "$ref": "#/components/examples/problem.auth.scope_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.scope_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Rotate a refresh token",
+        "tags": [
+          "auth.tokens"
+        ]
+      }
+    },
+    "/v1/auth/staff/login": {
+      "post": {
+        "description": "E-mail + password (argon2id). Returns a staff-audience token pair (contract §4). Repeated failures lock the account for a while (`auth.password_lockout`); unknown e-mails and wrong passwords return the same problem.\n\nImplements: ADR-0004, D-140.",
+        "operationId": "auth.staff.login",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "email": "finance.one@example.com",
+                    "password": "correct horse battery staple"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StaffLoginDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accessToken": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+                  "accessTokenExpiresAt": "2026-09-23T14:15:00+07:00",
+                  "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+                  "refreshTokenExpiresAt": "2026-09-23T16:05:00+07:00",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                    "permissions": [
+                      "approvals.act",
+                      "approvals.read"
+                    ],
+                    "roles": [
+                      "finance"
+                    ],
+                    "scopes": [],
+                    "type": "staff"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairDto"
+                }
+              }
+            },
+            "description": "Signed in",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.account_locked": {
+                    "$ref": "#/components/examples/problem.auth.account_locked"
+                  },
+                  "auth.invalid_credentials": {
+                    "$ref": "#/components/examples/problem.auth.invalid_credentials"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.account_locked`, `auth.invalid_credentials`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.account_inactive": {
+                    "$ref": "#/components/examples/problem.auth.account_inactive"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.account_inactive`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Sign in a Packio staff member",
+        "tags": [
+          "auth.staff"
+        ]
+      }
+    },
+    "/v1/auth/token": {
+      "post": {
+        "description": "RFC 6749 §4.4 for factory systems. Client id and secret in HTTP Basic auth or in the body. The response follows RFC 6749 (snake_case fields); errors are problem details like every other endpoint. The partner-audience token carries the client's factory scope; there is no refresh token.\n\nImplements: ADR-0004.",
+        "operationId": "auth.tokens.clientCredentials",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "client_id": "pc_example_factory_erp",
+                    "client_secret": "example-client-secret",
+                    "grant_type": "client_credentials"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ClientCredentialsDto"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "client_id": "pc_example_factory_erp",
+                    "client_secret": "example-client-secret",
+                    "grant_type": "client_credentials"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ClientCredentialsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "access_token": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+                  "expires_in": 600,
+                  "scope": "factory:0192f3a0-7c1e-7d2a-9b1f-000000000f01",
+                  "token_type": "Bearer"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ClientCredentialsTokenDto"
+                }
+              }
+            },
+            "description": "Access token",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.invalid_client": {
+                    "$ref": "#/components/examples/problem.auth.invalid_client"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.invalid_client`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.scope_unavailable": {
+                    "$ref": "#/components/examples/problem.auth.scope_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.scope_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get a token for a partner machine client (OAuth2 client credentials)",
+        "tags": [
+          "auth.tokens"
+        ]
+      }
+    },
+    "/v1/partner/me": {
+      "get": {
+        "description": "Roles per factory (D-140). Only the factories in the token scope are listed.\n\nImplements: ADR-0004, D-140.",
+        "operationId": "partner.me.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "displayName": "โรงงาน ทดสอบ",
+                  "email": "planner@factory.example",
+                  "factories": [
+                    {
+                      "factoryId": "0192f3a0-7c1e-7d2a-9b1f-000000000f01",
+                      "roles": [
+                        "factory_planner"
+                      ]
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "locale": "th",
+                  "permissions": [
+                    "factory_profile.read"
+                  ],
+                  "roles": [
+                    "factory_planner"
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerMeDto"
+                }
+              }
+            },
+            "description": "The factory user",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.session_revoked": {
+                    "$ref": "#/components/examples/problem.auth.session_revoked"
+                  },
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.session_revoked`, `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "The signed-in factory user and their factories",
+        "tags": [
+          "partner.me"
+        ]
+      }
+    },
+    "/v1/partner/me/device-pins": {
+      "post": {
+        "description": "Lets a factory user sign in on a shared shop-floor device with e-mail + PIN (`auth.device_pin_policy`). Replaces any earlier PIN of the same device.\n\nImplements: ADR-0004.",
+        "operationId": "partner.me.setDevicePin",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "deviceId": "tablet-line-2",
+                    "pin": "123456"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DevicePinDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "PIN registered",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Register a PIN for this device",
+        "tags": [
+          "partner.me"
+        ]
+      }
+    },
+    "/v1/partner/me/device-pins/{deviceId}": {
+      "delete": {
+        "description": "PIN sign-in stops working on that device.\n\nImplements: ADR-0004.",
+        "operationId": "partner.me.removeDevicePin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "deviceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "PIN removed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Remove the PIN of a device",
+        "tags": [
+          "partner.me"
+        ]
+      }
+    },
+    "/v1/store/me": {
+      "get": {
+        "description": "Profile, linked sign-in methods and company scopes of the signed-in customer.\n\nImplements: ADR-0004, D-140.",
+        "operationId": "store.me.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "displayName": "ลูกค้า ทดสอบ",
+                  "email": "customer.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "identities": [
+                    {
+                      "linkedAt": "2026-09-23T14:05:00+07:00",
+                      "provider": "phone_otp"
+                    }
+                  ],
+                  "locale": "th",
+                  "permissions": [],
+                  "phone": "+66810001234",
+                  "roles": [],
+                  "scopes": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreMeDto"
+                }
+              }
+            },
+            "description": "The customer",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.session_revoked": {
+                    "$ref": "#/components/examples/problem.auth.session_revoked"
+                  },
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.session_revoked`, `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "The signed-in customer",
+        "tags": [
+          "store.me"
+        ]
+      }
     }
   },
   "servers": [
@@ -376,8 +4190,36 @@
   ],
   "tags": [
     {
+      "description": "The signed-in staff member, permissions and menu entitlements.",
+      "name": "admin.me"
+    },
+    {
+      "description": "Customer sign-in: phone OTP, Google/Apple (Firebase) and LINE with account linking. ADR-0004.",
+      "name": "auth.customer"
+    },
+    {
+      "description": "Sign-in for partner-factory users (password or device PIN). ADR-0004.",
+      "name": "auth.partner"
+    },
+    {
+      "description": "Sign-in for Packio staff (e-mail + password). ADR-0004.",
+      "name": "auth.staff"
+    },
+    {
+      "description": "Refresh-token rotation, logout, OAuth2 client credentials for factory systems, JWKS. ADR-0004.",
+      "name": "auth.tokens"
+    },
+    {
       "description": "Liveness and readiness of the API and its dependencies (database, Redis, object storage).",
       "name": "ops.health"
+    },
+    {
+      "description": "The signed-in factory user, their factories and device PINs.",
+      "name": "partner.me"
+    },
+    {
+      "description": "The signed-in customer.",
+      "name": "store.me"
     }
   ]
 }

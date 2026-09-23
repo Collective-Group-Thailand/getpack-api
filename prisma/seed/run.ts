@@ -42,7 +42,10 @@ async function main(): Promise<void> {
 
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: required('DATABASE_URL') }) });
   try {
-    const report = mode === 'dev' ? await seedDev(prisma) : await seedReference(prisma, entityFromEnv());
+    const report =
+      mode === 'dev'
+        ? await seedDev(prisma, optional('DEV_SEED_PASSWORD'))
+        : await seedReference(prisma, entityFromEnv());
     const created = Object.entries(report)
       .map(([what, n]) => `${what}=${n}`)
       .join(' ');

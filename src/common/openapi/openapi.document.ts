@@ -124,10 +124,12 @@ export function enrichDocument(document: OpenAPIObject): OpenAPIObject {
       const parameters = new Set(collect<ParameterName>(operation, EXT.parameters).flatMap((c) => c.values));
       const successHeaders = collect<HeaderName>(operation, EXT.successHeaders);
       const isPublic = operation[EXT.public] === true;
+      const optionalAudience = operation[EXT.optionalAuth] as string | undefined;
       const throttled = operation[EXT.unthrottled] !== true;
       for (const key of Object.keys(operation)) if (key.startsWith('x-packio-')) delete operation[key];
 
       if (isPublic) operation.security = [];
+      if (optionalAudience) operation.security = [{}, { [optionalAudience]: [] }];
       if (throttled) errors.add('http.too_many_requests');
 
       operation.parameters = [

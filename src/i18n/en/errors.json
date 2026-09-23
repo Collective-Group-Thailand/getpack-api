@@ -45,6 +45,70 @@
     "forbidden": {
       "title": "Forbidden",
       "detail": "You do not have permission to perform this action."
+    },
+    "invalid_credentials": {
+      "title": "Invalid credentials",
+      "detail": "The email or password is incorrect."
+    },
+    "account_locked": {
+      "title": "Account temporarily locked",
+      "detail": "Too many failed sign-in attempts. Try again later."
+    },
+    "account_inactive": {
+      "title": "Account inactive",
+      "detail": "This account is suspended or deactivated."
+    },
+    "token_expired": {
+      "title": "Token expired",
+      "detail": "The access token has expired; refresh it."
+    },
+    "session_revoked": {
+      "title": "Session revoked",
+      "detail": "This session was revoked. Sign in again."
+    },
+    "wrong_audience": {
+      "title": "Token not valid here",
+      "detail": "This token was issued for another part of the platform."
+    },
+    "refresh_invalid": {
+      "title": "Invalid refresh token",
+      "detail": "The refresh token is invalid or expired. Sign in again."
+    },
+    "refresh_reused": {
+      "title": "Refresh token reused",
+      "detail": "A refresh token was used twice; the whole session was revoked. Sign in again."
+    },
+    "scope_unavailable": {
+      "title": "Scope unavailable",
+      "detail": "This account is not linked to an available factory or company."
+    },
+    "otp_invalid": {
+      "title": "Invalid OTP",
+      "detail": "The code is incorrect; {remaining} attempts left."
+    },
+    "otp_expired": {
+      "title": "OTP expired",
+      "detail": "The code has expired or was already used. Request a new one."
+    },
+    "otp_rate_limited": {
+      "title": "Too many OTP requests",
+      "detail": "Too many code requests. Wait {retryAfter} seconds."
+    },
+    "identity_token_invalid": {
+      "title": "Identity token invalid",
+      "detail": "The sign-in provider token is invalid or expired."
+    },
+    "identity_linked_elsewhere": {
+      "title": "Identity already linked",
+      "detail": "This external account is already linked to another user."
+    },
+    "invalid_client": {
+      "title": "Invalid client",
+      "detail": "The client id or secret is wrong, or the client is not active."
+    },
+    "pin_invalid": {
+      "title": "Invalid PIN",
+      "detail": "The device PIN is incorrect."
     }
   },
   "validation": {
@@ -91,6 +155,12 @@
     "unexpected": {
       "title": "Unexpected error",
       "detail": "An unexpected error occurred. Please try again; contact support if it persists."
+    }
+  },
+  "provider": {
+    "unavailable": {
+      "title": "Provider unavailable",
+      "detail": "An external provider did not respond. Try again later."
     }
   }
 }

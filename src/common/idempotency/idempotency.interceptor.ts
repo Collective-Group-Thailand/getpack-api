@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 
+import { actorKey } from '@common/context/actor';
+import { RequestContext } from '@common/context/request-context';
 import {
   type CallHandler,
   type ExecutionContext,
@@ -120,9 +122,7 @@ function replayableHeaders(res: Response): Record<string, string> {
   return headers;
 }
 
-/** The authenticated subject once auth lands (B1.3); anonymous callers share one scope. */
-function actorKeyOf(req: Request): string {
-  const user = (req as Request & { user?: { id?: unknown; sub?: unknown } }).user;
-  const id = user?.id ?? user?.sub;
-  return typeof id === 'string' ? id : 'anonymous';
+/** Keys are scoped to the authenticated principal; anonymous callers share one scope. */
+function actorKeyOf(_req: Request): string {
+  return actorKey(RequestContext.actor());
 }

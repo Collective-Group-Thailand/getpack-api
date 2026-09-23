@@ -44,6 +44,8 @@ export async function startTestInfra(): Promise<TestInfra> {
       DATABASE_URL: postgres.getConnectionUri(),
       REDIS_URL: redis.getConnectionUrl(),
       S3_BUCKET: 'packio-test',
+      // Every test request comes from one IP.
+      AUTH_LOGIN_THROTTLE_LIMIT: '10000',
     },
   };
 }

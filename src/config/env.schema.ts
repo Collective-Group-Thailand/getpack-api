@@ -12,6 +12,7 @@ import {
   Matches,
   Max,
   Min,
+  MinLength,
   Validate,
   ValidatorConstraint,
   type ValidatorConstraintInterface,
@@ -111,7 +112,7 @@ export class EnvironmentVariables {
 
   /**
    * Who may open /docs* outside development/test (contract §5): comma-separated IPs/CIDRs.
-   * Empty = nobody. Staff-token access is added in B1.3.
+   * Empty = nobody on IP alone; staff tokens with `settings.read` are always accepted (B1.3).
    */
   @IsOptional()
   @IsString()
@@ -135,6 +136,12 @@ export class EnvironmentVariables {
   @Min(1)
   THROTTLE_LIMIT = 300;
 
+  /** Sign-in attempts per IP per minute on password/OTP/client-credential endpoints (brute-force guard). */
+  @Transform(toNumber)
+  @IsInt()
+  @Min(1)
+  AUTH_LOGIN_THROTTLE_LIMIT = 10;
+
   @IsOptional()
   @IsUrl({ require_tld: false, require_protocol: true })
   SENTRY_DSN?: string;
@@ -151,4 +158,43 @@ export class EnvironmentVariables {
 
   @IsString()
   OTEL_SERVICE_NAME = 'packio-api';
+
+  // --- Auth (ADR-0004). Secrets: from Secrets Manager in real environments, never committed.
+
+  /**
+   * JSON array of Ed25519 private JWKs, each with a `kid`; the first signs, the others still verify
+   * (rotation). Required in production; development and tests generate an ephemeral key.
+   */
+  @IsOptional()
+  @IsString()
+  JWT_SIGNING_KEYS?: string;
+
+  /** HMAC key for OTP codes (≥ 32 chars). Required in production. */
+  @IsOptional()
+  @IsString()
+  @MinLength(32)
+  OTP_HMAC_SECRET?: string;
+
+  /** Firebase project whose Google/Apple ID tokens customers exchange. */
+  @IsOptional()
+  @IsString()
+  FIREBASE_PROJECT_ID?: string;
+
+  /** LINE Login channel id (also the LIFF app's channel); ID tokens must carry it as `aud`. */
+  @IsOptional()
+  @IsString()
+  LINE_LOGIN_CHANNEL_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  THAIBULKSMS_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  THAIBULKSMS_API_SECRET?: string;
+
+  /** Registered sender name shown on SMS. */
+  @IsOptional()
+  @IsString()
+  THAIBULKSMS_SENDER?: string;
 }

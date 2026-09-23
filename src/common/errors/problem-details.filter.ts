@@ -1,3 +1,4 @@
+import { ProviderUnavailableError } from '@integrations/http/resilient-http';
 import { type ArgumentsHost, Catch, type ExceptionFilter, HttpException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/nestjs';
 import { type Request, type Response } from 'express';
@@ -75,6 +76,9 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       return { code: codeForStatus(status), status, params: {}, headers: {} };
+    }
+    if (exception instanceof ProviderUnavailableError) {
+      return { code: 'provider.unavailable', status: 503, params: {}, headers: { 'Retry-After': '30' } };
     }
     // Other Express/body-parser errors carry a 4xx `status`.
     const status = (exception as { status?: unknown } | null)?.status;

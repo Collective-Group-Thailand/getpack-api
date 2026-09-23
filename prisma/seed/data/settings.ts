@@ -277,6 +277,62 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-144'],
   },
 
+  // --- Authentication (ADR-0004). No D-### sets these values; the platform-threshold rule D-063
+  // makes them superadmin settings. Chosen by the user on 2026-09-23 (conservative option),
+  // seeded as `proposed` until the security review confirms them.
+  {
+    key: 'auth.access_token_ttl_seconds',
+    valueType: 'integer',
+    value: 600,
+    valueSchema: { minimum: 600, maximum: 900 },
+    description: 'D-063 / ADR-0004 access-token lifetime in seconds (contract §4: 10–15 minutes)',
+    decisions: ['D-063'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'auth.refresh_token_lifetimes',
+    valueType: 'json',
+    value: {
+      staff: { absoluteHours: 12, idleHours: 2 },
+      partner: { absoluteHours: 168, idleHours: 24 },
+      customer: { absoluteHours: 720, idleHours: 168 },
+    },
+    description: 'D-063 / ADR-0004 refresh-token absolute and idle lifetimes per audience (hours)',
+    decisions: ['D-063'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'auth.otp_policy',
+    valueType: 'json',
+    value: {
+      codeLength: 6,
+      expirySeconds: 300,
+      maxAttempts: 5,
+      resendCooldownSeconds: 60,
+      maxPerPhonePerHour: 5,
+      maxPerIpPerHour: 20,
+    },
+    description: 'D-063 / ADR-0004 customer phone OTP: expiry, attempts and rate limits',
+    decisions: ['D-063'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'auth.password_lockout',
+    valueType: 'json',
+    value: { maxFailedAttempts: 5, lockMinutes: 15 },
+    description: 'D-063 / ADR-0004 staff and partner password lockout after failed logins',
+    decisions: ['D-063'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'auth.device_pin_policy',
+    valueType: 'json',
+    value: { length: 6, maxAttempts: 5, lockMinutes: 15 },
+    description: 'D-063 / ADR-0004 optional partner device PIN: length and attempt limit',
+    decisions: ['D-063'],
+    confirmation: 'proposed',
+  },
+
   // --- Multi-factory activation & analytics (D-101, D-044, D-160)
   {
     key: 'partners.auto_selection_min_factories',

@@ -25,7 +25,8 @@ export class AppConfig {
 
   /**
    * Who may open `/docs*` (contract §5): everyone in development/test; in production nobody unless
-   * `DOCS_ENABLED=true`, and then only callers inside `DOCS_ALLOWED_CIDRS` (staff tokens: B1.3).
+   * `DOCS_ENABLED=true`, and then only callers inside `DOCS_ALLOWED_CIDRS` or with a staff token
+   * holding `settings.read` (B1.3).
    */
   get docsAccess(): 'open' | 'allow-list' | 'off' {
     if (!this.isProduction) return 'open';

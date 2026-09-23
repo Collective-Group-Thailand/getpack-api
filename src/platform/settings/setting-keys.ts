@@ -1,0 +1,28 @@
+/**
+ * Typed view of the settings the code reads (ADR-0005). Keys absent here can still be read as
+ * `unknown`; add a key when a module starts using it. Values are what `setting_versions.value`
+ * holds: money and percentages are decimal strings.
+ */
+export interface RefreshLifetime {
+  absoluteHours: number;
+  idleHours: number;
+}
+
+export interface SettingValues {
+  'auth.access_token_ttl_seconds': number;
+  'auth.refresh_token_lifetimes': Record<'staff' | 'partner' | 'customer', RefreshLifetime>;
+  'auth.otp_policy': {
+    codeLength: number;
+    expirySeconds: number;
+    maxAttempts: number;
+    resendCooldownSeconds: number;
+    maxPerPhonePerHour: number;
+    maxPerIpPerHour: number;
+  };
+  'auth.password_lockout': { maxFailedAttempts: number; lockMinutes: number };
+  'auth.device_pin_policy': { length: number; maxAttempts: number; lockMinutes: number };
+  'notifications.marketing_window': { from: string; to: string; timezone?: string };
+  'pricing.margin_floor_pct': string;
+}
+
+export type SettingKey = keyof SettingValues;

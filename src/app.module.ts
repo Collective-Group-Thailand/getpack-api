@@ -11,6 +11,8 @@ import { AppConfigModule } from '@config/app-config.module';
 import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
+import { AuthModule } from '@modules/auth/auth.module';
+import { IamModule } from '@modules/iam/iam.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -53,6 +55,8 @@ import { LoggerModule } from 'nestjs-pino';
     IntegrationsModule,
     IdempotencyModule,
     PlatformCoreModule,
+    IamModule,
+    AuthModule,
     HealthModule,
     SurfacesModule,
   ],

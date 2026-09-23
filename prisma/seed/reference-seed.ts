@@ -1,6 +1,7 @@
 import { type Prisma, type PrismaClient } from '../../src/generated/prisma/client';
 import { PERMISSIONS } from '../../src/modules/iam/permissions.catalog';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
+import { settingValueError } from '../../src/platform/settings/setting-value';
 import { APPROVAL_POLICIES } from './data/approval-policies';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
@@ -21,37 +22,15 @@ export interface EntitySeedInput {
 
 export type SeedReport = Record<string, number>;
 
-const DECIMAL = /^-?\d+(\.\d+)?$/;
-
 /** Rejects a seed whose value does not match its declared type (fails the whole transaction). */
 export function assertSettingValue(
   seed: Pick<SettingSeed, 'key' | 'valueType' | 'value' | 'valueSchema'>,
 ): void {
-  const { key, valueType, value } = seed;
-  const ok = (() => {
-    switch (valueType) {
-      case 'string':
-        return typeof value === 'string' && value.trim() !== '';
-      case 'integer':
-        return Number.isInteger(value);
-      case 'boolean':
-        return typeof value === 'boolean';
-      case 'decimal':
-      case 'money':
-      case 'percent':
-        return typeof value === 'string' && DECIMAL.test(value);
-      case 'enum':
-        return (
-          typeof value === 'string' &&
-          Array.isArray(seed.valueSchema?.['enum']) &&
-          (seed.valueSchema['enum'] as unknown[]).includes(value)
-        );
-      case 'json':
-      case 'time_of_day_window':
-        return value !== null && typeof value === 'object';
-    }
-  })();
-  if (!ok) throw new Error(`setting ${key}: value ${JSON.stringify(value)} is not a valid ${valueType}`);
+  const error = settingValueError(seed.valueType, seed.value, seed.valueSchema);
+  if (error)
+    throw new Error(
+      `setting ${seed.key}: value ${JSON.stringify(seed.value)} is not a valid ${seed.valueType} (${error})`,
+    );
 }
 
 /**
