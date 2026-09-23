@@ -41,3 +41,24 @@ function pathFor(field: string, depth: number): string {
 export const REDACT_PATHS: string[] = REDACTED_FIELDS.flatMap((field) =>
   Array.from({ length: REDACT_DEPTH + 1 }, (_, depth) => pathFor(field, depth)),
 );
+
+const REDACTED_LOWER = new Set<string>(REDACTED_FIELDS.map((f) => f.toLowerCase()));
+
+/**
+ * Deep copy of `value` with every redacted field replaced by the censor, at any depth. Used for
+ * data that is persisted (audit diffs, webhook payloads), where pino's path redaction does not apply.
+ */
+export function redactDeep<T>(value: T): T {
+  return redactValue(value, 0) as T;
+}
+
+function redactValue(value: unknown, depth: number): unknown {
+  if (depth > 20 || value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map((item) => redactValue(item, depth + 1));
+  if (value instanceof Date) return value;
+  const out: Record<string, unknown> = {};
+  for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
+    out[key] = REDACTED_LOWER.has(key.toLowerCase()) ? REDACT_CENSOR : redactValue(inner, depth + 1);
+  }
+  return out;
+}

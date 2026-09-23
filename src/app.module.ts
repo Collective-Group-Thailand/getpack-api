@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 
+import { RequestContextMiddleware } from '@common/context/request-context.middleware';
 import { ProblemDetailsFilter } from '@common/errors/problem-details.filter';
 import { EtagInterceptor } from '@common/etag/etag.interceptor';
 import { DEFAULT_LANGUAGE } from '@common/i18n/language';
@@ -11,10 +12,11 @@ import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
-import { Module } from '@nestjs/common';
+import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from '@platform/health/health.module';
+import { PlatformCoreModule } from '@platform/platform-core.module';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { AcceptLanguageResolver, I18nModule } from 'nestjs-i18n';
 import { LoggerModule } from 'nestjs-pino';
@@ -50,6 +52,7 @@ import { LoggerModule } from 'nestjs-pino';
     RedisModule,
     IntegrationsModule,
     IdempotencyModule,
+    PlatformCoreModule,
     HealthModule,
     SurfacesModule,
   ],
@@ -59,4 +62,8 @@ import { LoggerModule } from 'nestjs-pino';
     { provide: APP_INTERCEPTOR, useClass: EtagInterceptor },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestContextMiddleware).forRoutes('*path');
+  }
+}

@@ -2,7 +2,7 @@ import { Writable } from 'node:stream';
 
 import pino from 'pino';
 
-import { REDACT_CENSOR, REDACT_PATHS, REDACTED_FIELDS } from './redaction';
+import { REDACT_CENSOR, REDACT_PATHS, redactDeep, REDACTED_FIELDS } from './redaction';
 
 function capture(): { logger: pino.Logger; lines: () => string } {
   let output = '';
@@ -34,5 +34,25 @@ describe('log redaction (PDPA)', () => {
     expect(lines()).not.toContain('abc.def');
     expect(lines()).not.toContain('sid=xyz');
     expect(lines()).toContain('"accept":"json"');
+  });
+});
+
+describe('redactDeep', () => {
+  it('censors redacted fields at any depth, case-insensitively, without mutating the input', () => {
+    const input = {
+      user: { Password: 'x', profile: { otp: '123456', name: 'ok' } },
+      list: [{ refreshToken: 't' }],
+    };
+    const out = redactDeep(input);
+    expect(out).toEqual({
+      user: { Password: REDACT_CENSOR, profile: { otp: REDACT_CENSOR, name: 'ok' } },
+      list: [{ refreshToken: REDACT_CENSOR }],
+    });
+    expect(input.user.Password).toBe('x');
+  });
+
+  it('leaves primitives untouched', () => {
+    expect(redactDeep('secret')).toBe('secret');
+    expect(redactDeep(null)).toBeNull();
   });
 });
