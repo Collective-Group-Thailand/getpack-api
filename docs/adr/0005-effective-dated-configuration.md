@@ -13,6 +13,7 @@ Almost every commercial and financial rule in Packio is a number the business wi
 - **Governance:** changes go through the admin endpoints with permission checks; where a policy requires it the change is a proposal routed through the approval engine (ADR-0006) and only becomes a version when approved. Every change writes an audit row and emits a domain event (`setting.changed`) in the same transaction; caches invalidate on that event.
 - **Snapshots:** documents that price or commit money copy the values they used (quote → order → PO, including the configuration version ids) so later changes never alter them (D-040: "orders already priced keep the snapshot of their quote").
 - **Seeds:** defaults come from `docs/decisions.md` with the decision id in the description (B1.2); items marked Proposed/⚖ are seeded as defaults and flagged for confirmation.
+  *Implemented in B1.2:* `pnpm db:seed` writes each default as version 1 (`approved`, effective 2026-01-01 Bangkok) with `settings.decision_refs` (a check constraint requires at least one) and `settings.confirmation_status` = `proposed` / `pending_cpa` for Proposed / ⚖ values. The seed only creates what is missing and never overwrites a setting that exists, so values changed by a superadmin survive re-seeding. Values a decision leaves open are not seeded. Approval-policy versions carry the same flag in their `reason`.
 
 ## Consequences
 - Reads need a timestamp (default *now*); reports and re-pricing pass the relevant date explicitly.
