@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+pnpm-lock.yaml
+src/generated
+contract/openapi.json
+# Documentation is hand-formatted; decisions.md and api-conventions.md must stay identical to packio-web.
+*.md
+docs
+legacy

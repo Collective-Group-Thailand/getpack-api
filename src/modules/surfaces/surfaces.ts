@@ -1,0 +1,30 @@
+import { applyDecorators } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+/** API surfaces and their URL prefixes (contract §2). `webhooks` is unversioned; the rest live under `/v1`. */
+export const SURFACES = {
+  auth: 'auth',
+  store: 'store',
+  admin: 'admin',
+  partner: 'partner',
+  webhooks: 'webhooks',
+} as const;
+export type Surface = keyof typeof SURFACES;
+
+/** Token audiences and their OpenAPI security schemes (ADR-0004). */
+export const AUDIENCES = ['customer', 'staff', 'partner'] as const;
+export type Audience = (typeof AUDIENCES)[number];
+
+const SURFACE_AUDIENCE: Partial<Record<Surface, Audience>> = {
+  store: 'customer',
+  admin: 'staff',
+  partner: 'partner',
+};
+
+/** Tags prefixed by surface (`store.orders`, `admin.orders`) plus the surface's bearer scheme. */
+export function ApiSurface(surface: Surface, resource: string) {
+  const audience = SURFACE_AUDIENCE[surface];
+  const decorators = [ApiTags(`${surface}.${resource}`)];
+  if (audience) decorators.push(ApiBearerAuth(audience));
+  return applyDecorators(...decorators);
+}

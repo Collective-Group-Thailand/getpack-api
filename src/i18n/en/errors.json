@@ -1,0 +1,96 @@
+{
+  "http": {
+    "bad_request": {
+      "title": "Bad request",
+      "detail": "The request is invalid. Check the data and try again."
+    },
+    "malformed_json": {
+      "title": "Malformed JSON",
+      "detail": "The request body is not valid JSON."
+    },
+    "not_found": {
+      "title": "Not found",
+      "detail": "The requested resource or route was not found."
+    },
+    "method_not_allowed": {
+      "title": "Method not allowed",
+      "detail": "This route does not support the requested method."
+    },
+    "conflict": {
+      "title": "Conflict",
+      "detail": "The request conflicts with the current state of the resource."
+    },
+    "payload_too_large": {
+      "title": "Payload too large",
+      "detail": "The request body exceeds the allowed size."
+    },
+    "unsupported_media_type": {
+      "title": "Unsupported media type",
+      "detail": "The request content type is not supported."
+    },
+    "too_many_requests": {
+      "title": "Too many requests",
+      "detail": "Too many requests. Please wait a moment and try again."
+    },
+    "error": {
+      "title": "Request failed",
+      "detail": "The request could not be completed."
+    }
+  },
+  "auth": {
+    "unauthenticated": {
+      "title": "Authentication required",
+      "detail": "Please sign in to continue."
+    },
+    "forbidden": {
+      "title": "Forbidden",
+      "detail": "You do not have permission to perform this action."
+    }
+  },
+  "validation": {
+    "failed": {
+      "title": "Validation failed",
+      "detail": "Some fields are invalid. Check them and try again."
+    }
+  },
+  "idempotency": {
+    "key_required": {
+      "title": "Idempotency-Key required",
+      "detail": "This request requires an Idempotency-Key header (uuid)."
+    },
+    "key_invalid": {
+      "title": "Invalid Idempotency-Key",
+      "detail": "Idempotency-Key must be a uuid."
+    },
+    "key_reused": {
+      "title": "Idempotency-Key reused",
+      "detail": "This Idempotency-Key was already used with a different request body."
+    },
+    "in_progress": {
+      "title": "Request in progress",
+      "detail": "The same request is still being processed. Please wait and retry."
+    }
+  },
+  "concurrency": {
+    "stale": {
+      "title": "Stale data",
+      "detail": "The resource was changed by someone else. Reload the latest version and try again."
+    },
+    "precondition_required": {
+      "title": "If-Match required",
+      "detail": "This request requires an If-Match header from the latest version."
+    }
+  },
+  "service": {
+    "unavailable": {
+      "title": "Service unavailable",
+      "detail": "The service is temporarily unavailable. Please try again later."
+    }
+  },
+  "internal": {
+    "unexpected": {
+      "title": "Unexpected error",
+      "detail": "An unexpected error occurred. Please try again; contact support if it persists."
+    }
+  }
+}

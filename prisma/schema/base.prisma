@@ -1,0 +1,14 @@
+// Datasource and generator only. Models arrive per bounded context (B1.2 onwards),
+// one file per context, following docs/schema-design.md.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../../src/generated/prisma"
+  moduleFormat        = "cjs"
+  runtime             = "nodejs"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
