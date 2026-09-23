@@ -1,0 +1,1096 @@
+// Platform context — docs/schema-design.md §3.1 (B1.2).
+// Prisma cannot express identity columns, check constraints, expression indexes, triggers or
+// partitions: the migration SQL adds them by hand and test/integration/schema-catalog.int-spec.ts
+// proves they exist. Every foreign key is declared here (the drift check would drop the others).
+
+// ---------------------------------------------------------------------------------------------
+// Enums (values: schema-design §4; values are only ever added)
+// ---------------------------------------------------------------------------------------------
+
+enum EntityStatus {
+  active
+  inactive
+
+  @@map("entity_status")
+}
+
+enum SettingScope {
+  platform
+  entity
+  product_type
+
+  @@map("setting_scope")
+}
+
+enum SettingValueType {
+  string
+  integer
+  decimal
+  money
+  percent
+  boolean
+  duration
+  time_of_day_window
+  date
+  enum
+  json
+
+  @@map("setting_value_type")
+}
+
+/// Seeds from Proposed or ⚖ decisions are flagged until the business / CPA confirms them (ADR-0005).
+enum SettingConfirmation {
+  confirmed
+  proposed
+  pending_cpa
+  pending_business
+
+  @@map("setting_confirmation")
+}
+
+enum ConfigVersionStatus {
+  draft
+  proposed
+  pending_acceptance
+  approved
+  rejected
+  withdrawn
+
+  @@map("config_version_status")
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+  withdrawn
+  expired
+
+  @@map("approval_status")
+}
+
+enum ApprovalStepStatus {
+  pending
+  approved
+  rejected
+  skipped
+  expired
+
+  @@map("approval_step_status")
+}
+
+enum ApprovalActionKind {
+  approve
+  reject
+  withdraw
+  delegate
+  comment
+  escalate
+
+  @@map("approval_action_kind")
+}
+
+enum ApprovalScopeRule {
+  platform
+  subject_factory
+  subject_company
+  subject_entity
+
+  @@map("approval_scope_rule")
+}
+
+enum ApprovalNoMatch {
+  fail_closed
+
+  @@map("approval_no_match")
+}
+
+enum CalendarBasis {
+  business
+  calendar
+
+  @@map("calendar_basis")
+}
+
+enum FileUploadStatus {
+  pending
+  uploaded
+  failed
+
+  @@map("file_upload_status")
+}
+
+enum FileScanStatus {
+  pending
+  clean
+  infected
+  failed
+  skipped
+
+  @@map("file_scan_status")
+}
+
+enum FileRetentionClass {
+  transient
+  standard
+  customer_content
+  financial_record
+
+  @@map("file_retention_class")
+}
+
+enum AttachmentSubject {
+  factory
+  company
+  site_visit
+  discount_memo
+  rfq
+  rfq_message
+  claim
+  job_milestone
+  qc_check
+  inspection
+  proof_of_delivery
+  close_task
+  price_proposal
+  vendor_invoice
+  other
+
+  @@map("attachment_subject")
+}
+
+enum ActorType {
+  user
+  api_client
+  system
+  webhook
+
+  @@map("actor_type")
+}
+
+enum AuditCategory {
+  security
+  finance
+  config
+  data_access
+  export
+  approval
+  iam
+
+  @@map("audit_category")
+}
+
+enum AuditOutcome {
+  success
+  denied
+  failure
+
+  @@map("audit_outcome")
+}
+
+enum ActivityVisibility {
+  internal
+  customer
+  partner
+
+  @@map("activity_visibility")
+}
+
+enum OutboxStatus {
+  pending
+  dispatched
+  failed
+  dead
+
+  @@map("outbox_status")
+}
+
+enum WebhookProvider {
+  scb
+  twoc2p
+  slip_verify
+  flash_express
+  deliveree
+  line_messaging
+  line_login
+
+  @@map("webhook_provider")
+}
+
+enum WebhookStatus {
+  received
+  processed
+  ignored
+  failed
+
+  @@map("webhook_status")
+}
+
+enum IdempotencyStatus {
+  in_progress
+  completed
+
+  @@map("idempotency_status")
+}
+
+enum NotificationChannel {
+  email
+  sms
+  line
+  web_push
+  in_app
+  teams
+
+  @@map("notification_channel")
+}
+
+enum NotificationCategory {
+  transactional
+  marketing
+  security
+
+  @@map("notification_category")
+}
+
+enum NotificationAudience {
+  customer
+  company_member
+  staff_team
+  factory
+  assignee
+
+  @@map("notification_audience")
+}
+
+enum NotificationStatus {
+  queued
+  deferred_quiet_hours
+  suppressed_no_consent
+  sent
+  delivered
+  failed
+  bounced
+  read
+
+  @@map("notification_status")
+}
+
+enum TemplateVersionStatus {
+  draft
+  published
+  retired
+
+  @@map("template_version_status")
+}
+
+enum LocaleCode {
+  th
+  en
+
+  @@map("locale_code")
+}
+
+enum CalendarKind {
+  national
+  factory
+  company
+
+  @@map("calendar_kind")
+}
+
+enum CalendarDayKind {
+  holiday
+  closure
+  extra_working_day
+
+  @@map("calendar_day_kind")
+}
+
+/// Only `all` makes a day non-working for factory business-day maths (D-161).
+enum HolidayObservance {
+  all
+  government_only
+  financial_institutions
+
+  @@map("holiday_observance")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Entities & settings (ADR-0005)
+// ---------------------------------------------------------------------------------------------
+
+/// Legal entities (schema-design §2.3). Legal name, tax id, branch and logo are entity-scoped settings (D-092).
+model Entity {
+  id                   BigInt       @id(map: "pk_entities") @default(autoincrement())
+  publicId             String       @unique(map: "ux_entities__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code                 String       @unique(map: "ux_entities__code")
+  displayName          String       @map("display_name")
+  status               EntityStatus @default(active)
+  isDefault            Boolean      @default(false) @map("is_default")
+  baseCurrency         String       @default("THB") @map("base_currency") @db.Char(3)
+  timezone             String       @default("Asia/Bangkok")
+  fiscalYearStartMonth Int          @default(1) @map("fiscal_year_start_month") @db.SmallInt
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?      @map("created_by")
+  updatedAt            DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById          BigInt?      @map("updated_by")
+  rowVersion           Int          @default(1) @map("row_version")
+
+  createdBy        User?             @relation("EntityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_entities__created_by")
+  updatedBy        User?             @relation("EntityUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_entities__updated_by")
+  approvalRequests ApprovalRequest[]
+  auditLogs        AuditLog[]
+  activityLogs     ActivityLog[]
+  domainEvents     DomainEvent[]
+
+  @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
+  @@map("entities")
+}
+
+/// Identity of a configurable value; values live in versions (ADR-0005, schema-design §2.1).
+model Setting {
+  id                 BigInt              @id(map: "pk_settings") @default(autoincrement())
+  publicId           String              @unique(map: "ux_settings__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key                String
+  scopeType          SettingScope        @default(platform) @map("scope_type")
+  scopeId            BigInt?             @map("scope_id")
+  valueType          SettingValueType    @map("value_type")
+  valueSchema        Json?               @map("value_schema")
+  description        String
+  decisionRefs       String[]            @default([]) @map("decision_refs")
+  ownerRoleKey       String              @map("owner_role_key")
+  approvalPolicyKey  String?             @map("approval_policy_key")
+  confirmationStatus SettingConfirmation @default(confirmed) @map("confirmation_status")
+  isSensitive        Boolean             @default(false) @map("is_sensitive")
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt?             @map("created_by")
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById        BigInt?             @map("updated_by")
+  rowVersion         Int                 @default(1) @map("row_version")
+
+  createdBy User?            @relation("SettingCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_settings__created_by")
+  updatedBy User?            @relation("SettingUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_settings__updated_by")
+  versions  SettingVersion[]
+
+  // ux (key, scope_type, coalesce(scope_id, 0)) is an expression index in the migration SQL.
+  @@index([key], map: "ix_settings__key")
+  @@map("settings")
+}
+
+model SettingVersion {
+  id                BigInt              @id(map: "pk_setting_versions") @default(autoincrement())
+  settingId         BigInt              @map("setting_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  value             Json
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  setting         Setting          @relation(fields: [settingId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_setting_versions__setting_id")
+  approvalRequest ApprovalRequest? @relation(fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_setting_versions__approval_request_id")
+  createdBy       User?            @relation("SettingVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_setting_versions__created_by")
+  decidedBy       User?            @relation("SettingVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_setting_versions__decided_by")
+
+  @@unique([settingId, versionNo], map: "ux_setting_versions__setting_id__version_no")
+  @@index([settingId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_setting_versions__resolution", where: raw("status = 'approved'"))
+  @@index([approvalRequestId], map: "ix_setting_versions__approval_request_id")
+  @@map("setting_versions")
+}
+
+/// Operational toggles (e.g. R2 adapters, D-111) — not business values; changes are audited.
+model FeatureFlag {
+  id           BigInt   @id(map: "pk_feature_flags") @default(autoincrement())
+  key          String   @unique(map: "ux_feature_flags__key")
+  description  String
+  enabled      Boolean  @default(false)
+  rules        Json     @default("{}")
+  ownerRoleKey String   @map("owner_role_key")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById  BigInt?  @map("updated_by")
+  rowVersion   Int      @default(1) @map("row_version")
+
+  createdBy User? @relation("FeatureFlagCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_feature_flags__created_by")
+  updatedBy User? @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_feature_flags__updated_by")
+
+  @@map("feature_flags")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Approval-matrix engine (ADR-0006)
+// ---------------------------------------------------------------------------------------------
+
+model ApprovalPolicy {
+  id           BigInt   @id(map: "pk_approval_policies") @default(autoincrement())
+  publicId     String   @unique(map: "ux_approval_policies__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key          String   @unique(map: "ux_approval_policies__key")
+  subjectType  String   @map("subject_type")
+  description  String
+  decisionRefs String[] @default([]) @map("decision_refs")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById  BigInt?  @map("updated_by")
+  rowVersion   Int      @default(1) @map("row_version")
+
+  createdBy   User?                   @relation("ApprovalPolicyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policies__created_by")
+  updatedBy   User?                   @relation("ApprovalPolicyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policies__updated_by")
+  versions    ApprovalPolicyVersion[]
+  requests    ApprovalRequest[]
+  delegations ApprovalDelegation[]
+
+  @@map("approval_policies")
+}
+
+/// Versioned policy (schema-design §2.1); steps belong to a version.
+model ApprovalPolicyVersion {
+  id                BigInt              @id(map: "pk_approval_policy_versions") @default(autoincrement())
+  policyId          BigInt              @map("policy_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  expiryRule        Json?               @map("expiry_rule")
+  onNoMatch         ApprovalNoMatch     @default(fail_closed) @map("on_no_match")
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  policy          ApprovalPolicy    @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__policy_id")
+  approvalRequest ApprovalRequest?  @relation("ApprovalPolicyVersionApproval", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__approval_request_id")
+  createdBy       User?             @relation("ApprovalPolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__created_by")
+  decidedBy       User?             @relation("ApprovalPolicyVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__decided_by")
+  steps           ApprovalStep[]
+  requests        ApprovalRequest[] @relation("ApprovalRequestPolicyVersion")
+
+  @@unique([policyId, versionNo], map: "ux_approval_policy_versions__policy_id__version_no")
+  @@index([policyId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_approval_policy_versions__resolution", where: raw("status = 'approved'"))
+  @@index([approvalRequestId], map: "ix_approval_policy_versions__approval_request_id")
+  @@map("approval_policy_versions")
+}
+
+model ApprovalStep {
+  id               BigInt            @id(map: "pk_approval_steps") @default(autoincrement())
+  policyVersionId  BigInt            @map("policy_version_id")
+  stepNo           Int               @map("step_no") @db.SmallInt
+  name             String
+  approverRoleId   BigInt            @map("approver_role_id")
+  approverScope    ApprovalScopeRule @default(platform) @map("approver_scope")
+  /// Engine-evaluated condition on amount / pct / entity / flags; null = always (ADR-0006).
+  condition        Json?
+  quorum           Int               @default(1) @db.SmallInt
+  slaMinutes       Int?              @map("sla_minutes")
+  slaCalendar      CalendarBasis     @default(business) @map("sla_calendar")
+  escalateToRoleId BigInt?           @map("escalate_to_role_id")
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  policyVersion  ApprovalPolicyVersion @relation(fields: [policyVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_steps__policy_version_id")
+  approverRole   Role                  @relation("ApprovalStepApproverRole", fields: [approverRoleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_steps__approver_role_id")
+  escalateToRole Role?                 @relation("ApprovalStepEscalateRole", fields: [escalateToRoleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_steps__escalate_to_role_id")
+
+  @@unique([policyVersionId, stepNo], map: "ux_approval_steps__policy_version_id__step_no")
+  @@index([approverRoleId], map: "ix_approval_steps__approver_role_id")
+  @@index([escalateToRoleId], map: "ix_approval_steps__escalate_to_role_id")
+  @@map("approval_steps")
+}
+
+model ApprovalRequest {
+  id              BigInt         @id(map: "pk_approval_requests") @default(autoincrement())
+  publicId        String         @unique(map: "ux_approval_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId        BigInt         @map("entity_id")
+  policyId        BigInt         @map("policy_id")
+  policyVersionId BigInt         @map("policy_version_id")
+  subjectType     String         @map("subject_type")
+  subjectId       BigInt         @map("subject_id")
+  subjectPublicId String         @map("subject_public_id") @db.Uuid
+  requesterUserId BigInt         @map("requester_user_id")
+  payloadSnapshot Json           @map("payload_snapshot")
+  amount          Decimal?       @db.Decimal(14, 2)
+  pct             Decimal?       @db.Decimal(7, 4)
+  flags           String[]       @default([])
+  status          ApprovalStatus @default(pending)
+  currentStepNo   Int?           @map("current_step_no") @db.SmallInt
+  expiresAt       DateTime?      @map("expires_at") @db.Timestamptz(6)
+  decidedAt       DateTime?      @map("decided_at") @db.Timestamptz(6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int            @default(1) @map("row_version")
+
+  entity                 Entity                  @relation(fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_requests__entity_id")
+  policy                 ApprovalPolicy          @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_requests__policy_id")
+  policyVersion          ApprovalPolicyVersion   @relation("ApprovalRequestPolicyVersion", fields: [policyVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_requests__policy_version_id")
+  requester              User                    @relation("ApprovalRequestRequester", fields: [requesterUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_requests__requester_user_id")
+  steps                  ApprovalRequestStep[]
+  actions                ApprovalAction[]
+  settingVersions        SettingVersion[]
+  policyVersionApprovals ApprovalPolicyVersion[] @relation("ApprovalPolicyVersionApproval")
+  consentPurposeVersions ConsentPurposeVersion[]
+
+  @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
+  @@index([subjectType, subjectId], map: "ix_approval_requests__subject")
+  @@index([status, expiresAt], map: "ix_approval_requests__status__expires_at")
+  @@index([entityId], map: "ix_approval_requests__entity_id")
+  @@index([policyVersionId], map: "ix_approval_requests__policy_version_id")
+  @@index([requesterUserId], map: "ix_approval_requests__requester_user_id")
+  @@map("approval_requests")
+}
+
+/// Steps materialised from the policy version when the request is created (ADR-0006).
+model ApprovalRequestStep {
+  id              BigInt             @id(map: "pk_approval_request_steps") @default(autoincrement())
+  requestId       BigInt             @map("request_id")
+  stepNo          Int                @map("step_no") @db.SmallInt
+  approverRoleId  BigInt             @map("approver_role_id")
+  approverScopeId BigInt?            @map("approver_scope_id")
+  quorum          Int                @default(1) @db.SmallInt
+  dueAt           DateTime?          @map("due_at") @db.Timestamptz(6)
+  status          ApprovalStepStatus @default(pending)
+  completedAt     DateTime?          @map("completed_at") @db.Timestamptz(6)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  request      ApprovalRequest  @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_request_steps__request_id")
+  approverRole Role             @relation(fields: [approverRoleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_request_steps__approver_role_id")
+  actions      ApprovalAction[]
+
+  @@unique([requestId, stepNo], map: "ux_approval_request_steps__request_id__step_no")
+  @@index([approverRoleId, status], map: "ix_approval_request_steps__approver_role_id__status")
+  @@index([status, dueAt], map: "ix_approval_request_steps__status__due_at")
+  @@map("approval_request_steps")
+}
+
+/// Append-only (trigger). The requester can never approve; one person approves at most one step.
+model ApprovalAction {
+  id               BigInt             @id(map: "pk_approval_actions") @default(autoincrement())
+  requestId        BigInt             @map("request_id")
+  requestStepId    BigInt?            @map("request_step_id")
+  action           ApprovalActionKind
+  actorUserId      BigInt             @map("actor_user_id")
+  onBehalfOfUserId BigInt?            @map("on_behalf_of_user_id")
+  comment          String?
+  ip               String?            @db.Inet
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  request     ApprovalRequest      @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_actions__request_id")
+  requestStep ApprovalRequestStep? @relation(fields: [requestStepId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_actions__request_step_id")
+  actor       User                 @relation("ApprovalActionActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_actions__actor_user_id")
+  onBehalfOf  User?                @relation("ApprovalActionOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_actions__on_behalf_of_user_id")
+
+  @@unique([requestId, actorUserId], map: "ux_approval_actions__one_approval_per_person", where: raw("action = 'approve'"))
+  @@index([requestId], map: "ix_approval_actions__request_id")
+  @@index([requestStepId], map: "ix_approval_actions__request_step_id")
+  @@index([actorUserId], map: "ix_approval_actions__actor_user_id")
+  @@index([onBehalfOfUserId], map: "ix_approval_actions__on_behalf_of_user_id")
+  @@map("approval_actions")
+}
+
+model ApprovalDelegation {
+  id              BigInt    @id(map: "pk_approval_delegations") @default(autoincrement())
+  publicId        String    @unique(map: "ux_approval_delegations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  delegatorUserId BigInt    @map("delegator_user_id")
+  delegateUserId  BigInt    @map("delegate_user_id")
+  policyId        BigInt?   @map("policy_id")
+  validFrom       DateTime  @map("valid_from") @db.Timestamptz(6)
+  validTo         DateTime  @map("valid_to") @db.Timestamptz(6)
+  reason          String
+  revokedAt       DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokedById     BigInt?   @map("revoked_by")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt?   @map("created_by")
+
+  delegator User            @relation("ApprovalDelegationDelegator", fields: [delegatorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_delegations__delegator_user_id")
+  delegate  User            @relation("ApprovalDelegationDelegate", fields: [delegateUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_delegations__delegate_user_id")
+  policy    ApprovalPolicy? @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_delegations__policy_id")
+  revokedBy User?           @relation("ApprovalDelegationRevokedBy", fields: [revokedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_delegations__revoked_by")
+  createdBy User?           @relation("ApprovalDelegationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_delegations__created_by")
+
+  @@index([delegateUserId, validFrom], map: "ix_approval_delegations__delegate_user_id__valid_from")
+  @@index([delegatorUserId], map: "ix_approval_delegations__delegator_user_id")
+  @@index([policyId], map: "ix_approval_delegations__policy_id")
+  @@map("approval_delegations")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Files
+// ---------------------------------------------------------------------------------------------
+
+model FileObject {
+  id                BigInt             @id(map: "pk_file_objects") @default(autoincrement())
+  publicId          String             @unique(map: "ux_file_objects__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  bucket            String
+  storageKey        String             @unique(map: "ux_file_objects__storage_key") @map("storage_key")
+  originalName      String             @map("original_name")
+  mimeType          String             @map("mime_type")
+  sizeBytes         BigInt             @map("size_bytes")
+  sha256            Bytes?
+  widthPx           Int?               @map("width_px")
+  heightPx          Int?               @map("height_px")
+  pageCount         Int?               @map("page_count")
+  uploadStatus      FileUploadStatus   @default(pending) @map("upload_status")
+  multipartUploadId String?            @map("multipart_upload_id")
+  scanStatus        FileScanStatus     @default(pending) @map("scan_status")
+  scannedAt         DateTime?          @map("scanned_at") @db.Timestamptz(6)
+  /// financial_record = ≥ 10 years (accounting-design.md §2).
+  retentionClass    FileRetentionClass @default(standard) @map("retention_class")
+  legalHold         Boolean            @default(false) @map("legal_hold")
+  ownerUserId       BigInt?            @map("owner_user_id")
+  /// FK to factories is added in B2.2.
+  ownerFactoryId    BigInt?            @map("owner_factory_id")
+  /// FK to companies is added in B3.5.
+  ownerCompanyId    BigInt?            @map("owner_company_id")
+  thumbnailOfFileId BigInt?            @map("thumbnail_of_file_id")
+  expiresAt         DateTime?          @map("expires_at") @db.Timestamptz(6)
+  purgedAt          DateTime?          @map("purged_at") @db.Timestamptz(6)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?            @map("created_by")
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion        Int                @default(1) @map("row_version")
+
+  owner       User?        @relation("FileObjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_user_id")
+  createdBy   User?        @relation("FileObjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__created_by")
+  thumbnailOf FileObject?  @relation("FileObjectThumbnail", fields: [thumbnailOfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__thumbnail_of_file_id")
+  thumbnails  FileObject[] @relation("FileObjectThumbnail")
+  attachments Attachment[]
+
+  @@index([sha256], map: "ix_file_objects__sha256")
+  @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
+  @@index([ownerUserId], map: "ix_file_objects__owner_user_id")
+  @@index([ownerFactoryId], map: "ix_file_objects__owner_factory_id")
+  @@index([ownerCompanyId], map: "ix_file_objects__owner_company_id")
+  @@index([thumbnailOfFileId], map: "ix_file_objects__thumbnail_of_file_id")
+  @@map("file_objects")
+}
+
+model Attachment {
+  id                BigInt            @id(map: "pk_attachments") @default(autoincrement())
+  fileObjectId      BigInt            @map("file_object_id")
+  subjectType       AttachmentSubject @map("subject_type")
+  subjectId         BigInt            @map("subject_id")
+  role              String
+  sort              Int               @default(0) @db.SmallInt
+  customerShareable Boolean           @default(false) @map("customer_shareable")
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?           @map("created_by")
+
+  fileObject FileObject @relation(fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_attachments__file_object_id")
+  createdBy  User?      @relation("AttachmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_attachments__created_by")
+
+  @@unique([subjectType, subjectId, fileObjectId, role], map: "ux_attachments__subject__file__role")
+  @@index([subjectType, subjectId], map: "ix_attachments__subject")
+  @@index([fileObjectId], map: "ix_attachments__file_object_id")
+  @@map("attachments")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Logs, domain events, outbox, inboxes
+// ---------------------------------------------------------------------------------------------
+
+/// Partitioned monthly by occurred_at (children in schema `partitions`); append-only (trigger).
+model AuditLog {
+  id               BigInt        @default(autoincrement())
+  occurredAt       DateTime      @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  entityId         BigInt?       @map("entity_id")
+  actorType        ActorType     @map("actor_type")
+  actorUserId      BigInt?       @map("actor_user_id")
+  actorApiClientId BigInt?       @map("actor_api_client_id")
+  onBehalfOfUserId BigInt?       @map("on_behalf_of_user_id")
+  category         AuditCategory
+  action           String
+  outcome          AuditOutcome
+  resourceType     String?       @map("resource_type")
+  resourcePublicId String?       @map("resource_public_id") @db.Uuid
+  requestId        String?       @map("request_id")
+  ip               String?       @db.Inet
+  userAgent        String?       @map("user_agent")
+  /// Redacted before/after diff — never secrets, tokens or bank data (PDPA).
+  data             Json          @default("{}")
+
+  entity         Entity?    @relation(fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_audit_logs__entity_id")
+  actorUser      User?      @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_audit_logs__actor_user_id")
+  actorApiClient ApiClient? @relation(fields: [actorApiClientId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_audit_logs__actor_api_client_id")
+  onBehalfOf     User?      @relation("AuditLogOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_audit_logs__on_behalf_of_user_id")
+
+  @@id([id, occurredAt], map: "pk_audit_logs")
+  @@index([resourceType, resourcePublicId], map: "ix_audit_logs__resource")
+  @@index([actorUserId, occurredAt], map: "ix_audit_logs__actor_user_id__occurred_at")
+  @@index([category, occurredAt], map: "ix_audit_logs__category__occurred_at")
+  @@map("audit_logs")
+}
+
+/// Human-readable timeline (CLAUDE.md "audit/activity row"). Partitioned monthly; append-only.
+model ActivityLog {
+  id                BigInt               @default(autoincrement())
+  occurredAt        DateTime             @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  entityId          BigInt?              @map("entity_id")
+  aggregateType     String               @map("aggregate_type")
+  aggregatePublicId String               @map("aggregate_public_id") @db.Uuid
+  action            String
+  actorType         ActorType            @map("actor_type")
+  actorUserId       BigInt?              @map("actor_user_id")
+  actorApiClientId  BigInt?              @map("actor_api_client_id")
+  onBehalfOfUserId  BigInt?              @map("on_behalf_of_user_id")
+  visibility        ActivityVisibility[] @default([internal])
+  messageKey        String               @map("message_key")
+  messageParams     Json                 @default("{}") @map("message_params")
+  domainEventId     String?              @map("domain_event_id") @db.Uuid
+  data              Json                 @default("{}")
+
+  entity         Entity?      @relation(fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_activity_logs__entity_id")
+  actorUser      User?        @relation("ActivityLogActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_activity_logs__actor_user_id")
+  actorApiClient ApiClient?   @relation(fields: [actorApiClientId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_activity_logs__actor_api_client_id")
+  onBehalfOf     User?        @relation("ActivityLogOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_activity_logs__on_behalf_of_user_id")
+  domainEvent    DomainEvent? @relation(fields: [domainEventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_activity_logs__domain_event_id")
+
+  @@id([id, occurredAt], map: "pk_activity_logs")
+  @@index([aggregateType, aggregatePublicId, occurredAt], map: "ix_activity_logs__aggregate")
+  @@index([actorUserId, occurredAt], map: "ix_activity_logs__actor_user_id__occurred_at")
+  @@index([domainEventId], map: "ix_activity_logs__domain_event_id")
+  @@map("activity_logs")
+}
+
+/// Event envelope (B1 prompt). Not partitioned: the ledger references it by FK (schema-design A-10). Append-only.
+model DomainEvent {
+  id                   String    @id(map: "pk_domain_events") @default(dbgenerated("uuidv7()")) @db.Uuid
+  type                 String
+  aggregateType        String    @map("aggregate_type")
+  aggregateId          String    @map("aggregate_id") @db.Uuid
+  entityId             BigInt?   @map("entity_id")
+  actorType            ActorType @map("actor_type")
+  actorUserId          BigInt?   @map("actor_user_id")
+  actorApiClientId     BigInt?   @map("actor_api_client_id")
+  occurredAt           DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  correlationId        String    @map("correlation_id") @db.Uuid
+  causationId          String?   @map("causation_id") @db.Uuid
+  payload              Json
+  payloadSchemaVersion Int       @default(1) @map("payload_schema_version") @db.SmallInt
+  recordedAt           DateTime  @default(now()) @map("recorded_at") @db.Timestamptz(6)
+
+  entity         Entity?            @relation(fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_domain_events__entity_id")
+  actorUser      User?              @relation("DomainEventActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_domain_events__actor_user_id")
+  actorApiClient ApiClient?         @relation(fields: [actorApiClientId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_domain_events__actor_api_client_id")
+  outbox         OutboxMessage[]
+  consumptions   EventConsumption[]
+  activityLogs   ActivityLog[]
+  webhooks       WebhookInbox[]
+  notifications  Notification[]
+
+  @@index([aggregateType, aggregateId, occurredAt], map: "ix_domain_events__aggregate")
+  @@index([type, occurredAt], map: "ix_domain_events__type__occurred_at")
+  @@index([correlationId], map: "ix_domain_events__correlation_id")
+  @@index([entityId], map: "ix_domain_events__entity_id")
+  @@index([actorUserId], map: "ix_domain_events__actor_user_id")
+  @@index([actorApiClientId], map: "ix_domain_events__actor_api_client_id")
+  @@map("domain_events")
+}
+
+model OutboxMessage {
+  id            BigInt       @id(map: "pk_outbox_messages") @default(autoincrement())
+  eventId       String       @map("event_id") @db.Uuid
+  topic         String
+  status        OutboxStatus @default(pending)
+  attempts      Int          @default(0) @db.SmallInt
+  nextAttemptAt DateTime     @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError     String?      @map("last_error")
+  dispatchedAt  DateTime?    @map("dispatched_at") @db.Timestamptz(6)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  event DomainEvent @relation(fields: [eventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_outbox_messages__event_id")
+
+  @@unique([eventId, topic], map: "ux_outbox_messages__event_id__topic")
+  @@index([nextAttemptAt], map: "ix_outbox_messages__due", where: raw("status = ANY (ARRAY['pending'::outbox_status, 'failed'::outbox_status])"))
+  @@map("outbox_messages")
+}
+
+/// Inbox for idempotent subscribers (notifications, ledger, analytics).
+model EventConsumption {
+  consumer    String
+  eventId     String   @map("event_id") @db.Uuid
+  processedAt DateTime @default(now()) @map("processed_at") @db.Timestamptz(6)
+  outcome     String
+
+  event DomainEvent @relation(fields: [eventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_event_consumptions__event_id")
+
+  @@id([consumer, eventId], map: "pk_event_consumptions")
+  @@index([eventId], map: "ix_event_consumptions__event_id")
+  @@map("event_consumptions")
+}
+
+/// Every inbound provider callback; (provider, provider_event_id) makes replays no-ops.
+model WebhookInbox {
+  id              BigInt          @id(map: "pk_webhook_inbox") @default(autoincrement())
+  provider        WebhookProvider
+  providerEventId String          @map("provider_event_id")
+  receivedAt      DateTime        @default(now()) @map("received_at") @db.Timestamptz(6)
+  signatureValid  Boolean         @map("signature_valid")
+  /// Allow-listed headers only.
+  headers         Json            @default("{}")
+  /// Redacted per provider (PDPA).
+  payload         Json
+  status          WebhookStatus   @default(received)
+  processedAt     DateTime?       @map("processed_at") @db.Timestamptz(6)
+  error           String?
+  domainEventId   String?         @map("domain_event_id") @db.Uuid
+
+  domainEvent DomainEvent? @relation(fields: [domainEventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_webhook_inbox__domain_event_id")
+
+  @@unique([provider, providerEventId], map: "ux_webhook_inbox__provider__provider_event_id")
+  @@index([status, receivedAt], map: "ix_webhook_inbox__status__received_at")
+  @@index([domainEventId], map: "ix_webhook_inbox__domain_event_id")
+  @@map("webhook_inbox")
+}
+
+/// Durable idempotency store (contract §3); scope = actor|method|path of the request.
+model IdempotencyKey {
+  scope           String
+  key             String            @db.Uuid
+  requestSha256   Bytes             @map("request_sha256")
+  status          IdempotencyStatus @default(in_progress)
+  responseStatus  Int?              @map("response_status") @db.SmallInt
+  responseHeaders Json?             @map("response_headers")
+  responseBody    Json?             @map("response_body")
+  lockedUntil     DateTime?         @map("locked_until") @db.Timestamptz(6)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  expiresAt       DateTime          @map("expires_at") @db.Timestamptz(6)
+
+  @@id([scope, key], map: "pk_idempotency_keys")
+  @@index([expiresAt], map: "ix_idempotency_keys__expires_at")
+  @@map("idempotency_keys")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Notifications (D-143, D-144) & web push
+// ---------------------------------------------------------------------------------------------
+
+model NotificationTemplate {
+  id          BigInt               @id(map: "pk_notification_templates") @default(autoincrement())
+  publicId    String               @unique(map: "ux_notification_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key         String
+  channel     NotificationChannel
+  category    NotificationCategory
+  description String
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?              @map("created_by")
+  updatedAt   DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?              @map("updated_by")
+  rowVersion  Int                  @default(1) @map("row_version")
+
+  createdBy User?                         @relation("NotificationTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_templates__created_by")
+  updatedBy User?                         @relation("NotificationTemplateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_templates__updated_by")
+  versions  NotificationTemplateVersion[]
+  routes    NotificationRoute[]
+
+  @@unique([key, channel], map: "ux_notification_templates__key__channel")
+  @@map("notification_templates")
+}
+
+model NotificationTemplateVersion {
+  id            BigInt                @id(map: "pk_notification_template_versions") @default(autoincrement())
+  templateId    BigInt                @map("template_id")
+  versionNo     Int                   @map("version_no")
+  locale        LocaleCode
+  subject       String?
+  /// MJML / Handlebars (email) or plain text.
+  body          String
+  status        TemplateVersionStatus @default(draft)
+  publishedAt   DateTime?             @map("published_at") @db.Timestamptz(6)
+  publishedById BigInt?               @map("published_by")
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?               @map("created_by")
+
+  template      NotificationTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_template_versions__template_id")
+  publishedBy   User?                @relation("NotificationTemplateVersionPublishedBy", fields: [publishedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_template_versions__published_by")
+  createdBy     User?                @relation("NotificationTemplateVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_template_versions__created_by")
+  notifications Notification[]
+
+  @@unique([templateId, locale, versionNo], map: "ux_notification_template_versions__template__locale__version")
+  @@unique([templateId, locale], map: "ux_notification_template_versions__one_published", where: raw("status = 'published'"))
+  @@map("notification_template_versions")
+}
+
+/// Routing matrix event × audience × channel (D-143). ux with coalesce(staff_team_id, 0) is in the migration SQL.
+model NotificationRoute {
+  id          BigInt               @id(map: "pk_notification_routes") @default(autoincrement())
+  publicId    String               @unique(map: "ux_notification_routes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  eventType   String               @map("event_type")
+  audience    NotificationAudience
+  staffTeamId BigInt?              @map("staff_team_id")
+  channel     NotificationChannel
+  templateId  BigInt               @map("template_id")
+  /// SMS only for critical events (D-143).
+  isCritical  Boolean              @default(false) @map("is_critical")
+  /// Quiet hours + consent apply (D-144).
+  isMarketing Boolean              @default(false) @map("is_marketing")
+  enabled     Boolean              @default(true)
+  conditions  Json?
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?              @map("created_by")
+  updatedAt   DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?              @map("updated_by")
+  rowVersion  Int                  @default(1) @map("row_version")
+
+  staffTeam     Team?                @relation(fields: [staffTeamId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_routes__staff_team_id")
+  template      NotificationTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_routes__template_id")
+  createdBy     User?                @relation("NotificationRouteCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_routes__created_by")
+  updatedBy     User?                @relation("NotificationRouteUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_routes__updated_by")
+  notifications Notification[]
+
+  @@index([eventType], map: "ix_notification_routes__event_type")
+  @@index([staffTeamId], map: "ix_notification_routes__staff_team_id")
+  @@index([templateId], map: "ix_notification_routes__template_id")
+  @@map("notification_routes")
+}
+
+model NotificationPreference {
+  id        BigInt               @id(map: "pk_notification_preferences") @default(autoincrement())
+  userId    BigInt               @map("user_id")
+  channel   NotificationChannel
+  category  NotificationCategory
+  enabled   Boolean
+  createdAt DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notification_preferences__user_id")
+
+  @@unique([userId, channel, category], map: "ux_notification_preferences__user__channel__category")
+  @@map("notification_preferences")
+}
+
+/// Send log and in-app inbox. Idempotent per (event, recipient, channel) — expression index in the migration SQL.
+model Notification {
+  id                     BigInt              @id(map: "pk_notifications") @default(autoincrement())
+  eventId                String              @map("event_id") @db.Uuid
+  routeId                BigInt?             @map("route_id")
+  recipientUserId        BigInt?             @map("recipient_user_id")
+  recipientAddressMasked String?             @map("recipient_address_masked")
+  recipientAddressHash   Bytes?              @map("recipient_address_hash")
+  channel                NotificationChannel
+  templateVersionId      BigInt?             @map("template_version_id")
+  status                 NotificationStatus  @default(queued)
+  scheduledFor           DateTime?           @map("scheduled_for") @db.Timestamptz(6)
+  sentAt                 DateTime?           @map("sent_at") @db.Timestamptz(6)
+  deliveredAt            DateTime?           @map("delivered_at") @db.Timestamptz(6)
+  readAt                 DateTime?           @map("read_at") @db.Timestamptz(6)
+  providerMessageId      String?             @map("provider_message_id")
+  error                  String?
+  createdAt              DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  event           DomainEvent                  @relation(fields: [eventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notifications__event_id")
+  route           NotificationRoute?           @relation(fields: [routeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notifications__route_id")
+  recipient       User?                        @relation(fields: [recipientUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notifications__recipient_user_id")
+  templateVersion NotificationTemplateVersion? @relation(fields: [templateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_notifications__template_version_id")
+
+  @@index([recipientUserId, channel, createdAt(sort: Desc)], map: "ix_notifications__recipient__channel__created_at")
+  @@index([status, scheduledFor], map: "ix_notifications__status__scheduled_for")
+  @@index([routeId], map: "ix_notifications__route_id")
+  @@index([templateVersionId], map: "ix_notifications__template_version_id")
+  @@map("notifications")
+}
+
+model WebPushSubscription {
+  id            BigInt    @id(map: "pk_web_push_subscriptions") @default(autoincrement())
+  publicId      String    @unique(map: "ux_web_push_subscriptions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId        BigInt    @map("user_id")
+  endpoint      String    @unique(map: "ux_web_push_subscriptions__endpoint")
+  p256dh        String
+  authSecretEnc Bytes     @map("auth_secret_enc")
+  userAgent     String?   @map("user_agent")
+  lastUsedAt    DateTime? @map("last_used_at") @db.Timestamptz(6)
+  revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_web_push_subscriptions__user_id")
+
+  @@index([userId], map: "ix_web_push_subscriptions__user_id")
+  @@map("web_push_subscriptions")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Business calendars (D-161) & embeddings (ADR-0001)
+// ---------------------------------------------------------------------------------------------
+
+/// `th_public` = the one national calendar every factory shares; factory calendars add closures (D-161).
+model BusinessCalendar {
+  id             BigInt       @id(map: "pk_business_calendars") @default(autoincrement())
+  publicId       String       @unique(map: "ux_business_calendars__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code           String       @unique(map: "ux_business_calendars__code")
+  name           String
+  kind           CalendarKind
+  /// FK to factories is added in B2.2.
+  factoryId      BigInt?      @map("factory_id")
+  /// Day-of-week numbers (0 = Sunday) in Asia/Bangkok; always set explicitly (no DB default).
+  weekendDays    Int[]        @map("weekend_days") @db.SmallInt
+  baseCalendarId BigInt?      @map("base_calendar_id")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt?      @map("created_by")
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById    BigInt?      @map("updated_by")
+  rowVersion     Int          @default(1) @map("row_version")
+
+  baseCalendar     BusinessCalendar?     @relation("BusinessCalendarBase", fields: [baseCalendarId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendars__base_calendar_id")
+  derivedCalendars BusinessCalendar[]    @relation("BusinessCalendarBase")
+  createdBy        User?                 @relation("BusinessCalendarCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendars__created_by")
+  updatedBy        User?                 @relation("BusinessCalendarUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendars__updated_by")
+  days             BusinessCalendarDay[]
+
+  @@index([factoryId], map: "ix_business_calendars__factory_id")
+  @@index([baseCalendarId], map: "ix_business_calendars__base_calendar_id")
+  @@map("business_calendars")
+}
+
+model BusinessCalendarDay {
+  id          BigInt            @id(map: "pk_business_calendar_days") @default(autoincrement())
+  calendarId  BigInt            @map("calendar_id")
+  day         DateTime          @db.Date
+  kind        CalendarDayKind
+  observance  HolidayObservance @default(all)
+  nameTh      String            @map("name_th")
+  nameEn      String?           @map("name_en")
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?           @map("created_by")
+  updatedAt   DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?           @map("updated_by")
+
+  calendar  BusinessCalendar @relation(fields: [calendarId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendar_days__calendar_id")
+  createdBy User?            @relation("BusinessCalendarDayCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendar_days__created_by")
+  updatedBy User?            @relation("BusinessCalendarDayUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendar_days__updated_by")
+
+  @@unique([calendarId, day], map: "ux_business_calendar_days__calendar_id__day")
+  @@map("business_calendar_days")
+}
+
+/// Empty until an AI feature ships (ADR-0001); its HNSW index ships with that feature. subject_id FK is added with the catalogue (B2.1).
+model ProductEmbedding {
+  id           BigInt                      @id(map: "pk_product_embeddings") @default(autoincrement())
+  subjectId    BigInt                      @map("subject_id")
+  model        String
+  modelVersion String                      @map("model_version")
+  embedding    Unsupported("vector(1536)")
+  createdAt    DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([subjectId, model, modelVersion], map: "ux_product_embeddings__subject__model__version")
+  @@map("product_embeddings")
+}
+
+/// Empty until an AI feature ships (ADR-0001); its HNSW index ships with that feature. subject_id FK is added with design documents (B4.1).
+model DesignEmbedding {
+  id           BigInt                      @id(map: "pk_design_embeddings") @default(autoincrement())
+  subjectId    BigInt                      @map("subject_id")
+  model        String
+  modelVersion String                      @map("model_version")
+  embedding    Unsupported("vector(1536)")
+  createdAt    DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([subjectId, model, modelVersion], map: "ux_design_embeddings__subject__model__version")
+  @@map("design_embeddings")
+}

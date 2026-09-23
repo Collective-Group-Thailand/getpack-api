@@ -1,0 +1,609 @@
+// IAM & auth context — docs/schema-design.md §3.2 (B1.2), ADR-0004.
+// Secrets are stored hashed (refresh tokens, OTP codes, reset tokens) or with argon2id (passwords,
+// PINs, client secrets); they are never logged (PDPA).
+
+// ---------------------------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------------------------
+
+enum UserKind {
+  customer
+  staff
+  partner
+
+  @@map("user_kind")
+}
+
+enum UserStatus {
+  pending_verification
+  active
+  suspended
+  inactive
+
+  @@map("user_status")
+}
+
+enum IdentityProvider {
+  phone_otp
+  firebase_google
+  firebase_apple
+  line
+
+  @@map("identity_provider")
+}
+
+enum LoginMethod {
+  password
+  phone_otp
+  firebase_google
+  firebase_apple
+  line
+  line_liff
+  device_pin
+
+  @@map("login_method")
+}
+
+enum TokenAudience {
+  customer
+  staff
+  partner
+
+  @@map("token_audience")
+}
+
+enum SessionRevokeReason {
+  logout
+  reuse_detected
+  admin
+  password_changed
+  user_suspended
+  expired
+
+  @@map("session_revoke_reason")
+}
+
+enum OtpPurpose {
+  login
+  verify_phone
+  liff_login
+  link_phone
+
+  @@map("otp_purpose")
+}
+
+enum ApiClientStatus {
+  active
+  suspended
+  revoked
+
+  @@map("api_client_status")
+}
+
+enum RoleScopeType {
+  platform
+  factory
+  company
+
+  @@map("role_scope_type")
+}
+
+enum SodRuleKind {
+  role_pair
+  action_pair
+
+  @@map("sod_rule_kind")
+}
+
+enum SodSubjectMatch {
+  same_subject
+  same_vendor
+  same_customer
+
+  @@map("sod_subject_match")
+}
+
+enum SodEnforcement {
+  block
+  warn
+
+  @@map("sod_enforcement")
+}
+
+enum ConsentSource {
+  web
+  line_liff
+  cs
+  partner_zone
+
+  @@map("consent_source")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Users & identities
+// ---------------------------------------------------------------------------------------------
+
+/// Every human principal; the audience is `kind` (ADR-0004). PDPA erasure = anonymise in place.
+model User {
+  id                BigInt     @id(map: "pk_users") @default(autoincrement())
+  publicId          String     @unique(map: "ux_users__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  kind              UserKind
+  status            UserStatus @default(pending_verification)
+  email             String?    @db.Citext
+  emailVerifiedAt   DateTime?  @map("email_verified_at") @db.Timestamptz(6)
+  /// E.164 (+66…).
+  phone             String?
+  phoneVerifiedAt   DateTime?  @map("phone_verified_at") @db.Timestamptz(6)
+  displayName       String     @map("display_name")
+  firstName         String?    @map("first_name")
+  lastName          String?    @map("last_name")
+  locale            LocaleCode @default(th)
+  /// argon2id; never set for customers (passwordless).
+  passwordHash      String?    @map("password_hash")
+  passwordChangedAt DateTime?  @map("password_changed_at") @db.Timestamptz(6)
+  failedLoginCount  Int        @default(0) @map("failed_login_count") @db.SmallInt
+  lockedUntil       DateTime?  @map("locked_until") @db.Timestamptz(6)
+  lastLoginAt       DateTime?  @map("last_login_at") @db.Timestamptz(6)
+  anonymisedAt      DateTime?  @map("anonymised_at") @db.Timestamptz(6)
+  deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?    @map("created_by")
+  updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById       BigInt?    @map("updated_by")
+  rowVersion        Int        @default(1) @map("row_version")
+
+  createdBy User? @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_users__created_by")
+  updatedBy User? @relation("UserUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_users__updated_by")
+
+  // --- IAM
+  usersCreated                  User[]                  @relation("UserCreatedBy")
+  usersUpdated                  User[]                  @relation("UserUpdatedBy")
+  identities                    UserIdentity[]
+  staffProfile                  StaffProfile?
+  sessions                      AuthSession[]
+  devicePins                    DevicePin[]
+  passwordResetTokens           PasswordResetToken[]
+  roles                         UserRole[]              @relation("UserRoleUser")
+  rolesGranted                  UserRole[]              @relation("UserRoleGrantedBy")
+  rolesRevoked                  UserRole[]              @relation("UserRoleRevokedBy")
+  consentRecords                ConsentRecord[]
+  teamsCreated                  Team[]                  @relation("TeamCreatedBy")
+  teamsUpdated                  Team[]                  @relation("TeamUpdatedBy")
+  apiClientsCreated             ApiClient[]             @relation("ApiClientCreatedBy")
+  apiClientsUpdated             ApiClient[]             @relation("ApiClientUpdatedBy")
+  rolesCreated                  Role[]                  @relation("RoleCreatedBy")
+  rolesUpdated                  Role[]                  @relation("RoleUpdatedBy")
+  rolePermissionGrants          RolePermission[]
+  sodRulesCreated               SodRule[]               @relation("SodRuleCreatedBy")
+  sodRulesUpdated               SodRule[]               @relation("SodRuleUpdatedBy")
+  consentPurposesCreated        ConsentPurpose[]        @relation("ConsentPurposeCreatedBy")
+  consentPurposesUpdated        ConsentPurpose[]        @relation("ConsentPurposeUpdatedBy")
+  consentPurposeVersionsCreated ConsentPurposeVersion[] @relation("ConsentPurposeVersionCreatedBy")
+  consentPurposeVersionsDecided ConsentPurposeVersion[] @relation("ConsentPurposeVersionDecidedBy")
+
+  // --- Platform
+  entitiesCreated                       Entity[]                      @relation("EntityCreatedBy")
+  entitiesUpdated                       Entity[]                      @relation("EntityUpdatedBy")
+  settingsCreated                       Setting[]                     @relation("SettingCreatedBy")
+  settingsUpdated                       Setting[]                     @relation("SettingUpdatedBy")
+  settingVersionsCreated                SettingVersion[]              @relation("SettingVersionCreatedBy")
+  settingVersionsDecided                SettingVersion[]              @relation("SettingVersionDecidedBy")
+  featureFlagsCreated                   FeatureFlag[]                 @relation("FeatureFlagCreatedBy")
+  featureFlagsUpdated                   FeatureFlag[]                 @relation("FeatureFlagUpdatedBy")
+  approvalPoliciesCreated               ApprovalPolicy[]              @relation("ApprovalPolicyCreatedBy")
+  approvalPoliciesUpdated               ApprovalPolicy[]              @relation("ApprovalPolicyUpdatedBy")
+  approvalPolicyVersionsCreated         ApprovalPolicyVersion[]       @relation("ApprovalPolicyVersionCreatedBy")
+  approvalPolicyVersionsDecided         ApprovalPolicyVersion[]       @relation("ApprovalPolicyVersionDecidedBy")
+  approvalRequests                      ApprovalRequest[]             @relation("ApprovalRequestRequester")
+  approvalActions                       ApprovalAction[]              @relation("ApprovalActionActor")
+  approvalActionsOnBehalf               ApprovalAction[]              @relation("ApprovalActionOnBehalfOf")
+  delegationsGiven                      ApprovalDelegation[]          @relation("ApprovalDelegationDelegator")
+  delegationsReceived                   ApprovalDelegation[]          @relation("ApprovalDelegationDelegate")
+  delegationsRevoked                    ApprovalDelegation[]          @relation("ApprovalDelegationRevokedBy")
+  delegationsCreated                    ApprovalDelegation[]          @relation("ApprovalDelegationCreatedBy")
+  filesOwned                            FileObject[]                  @relation("FileObjectOwner")
+  filesCreated                          FileObject[]                  @relation("FileObjectCreatedBy")
+  attachmentsCreated                    Attachment[]                  @relation("AttachmentCreatedBy")
+  auditLogs                             AuditLog[]                    @relation("AuditLogActor")
+  auditLogsOnBehalf                     AuditLog[]                    @relation("AuditLogOnBehalfOf")
+  activityLogs                          ActivityLog[]                 @relation("ActivityLogActor")
+  activityLogsOnBehalf                  ActivityLog[]                 @relation("ActivityLogOnBehalfOf")
+  domainEvents                          DomainEvent[]                 @relation("DomainEventActor")
+  notificationTemplatesCreated          NotificationTemplate[]        @relation("NotificationTemplateCreatedBy")
+  notificationTemplatesUpdated          NotificationTemplate[]        @relation("NotificationTemplateUpdatedBy")
+  notificationTemplateVersionsPublished NotificationTemplateVersion[] @relation("NotificationTemplateVersionPublishedBy")
+  notificationTemplateVersionsCreated   NotificationTemplateVersion[] @relation("NotificationTemplateVersionCreatedBy")
+  notificationRoutesCreated             NotificationRoute[]           @relation("NotificationRouteCreatedBy")
+  notificationRoutesUpdated             NotificationRoute[]           @relation("NotificationRouteUpdatedBy")
+  notificationPreferences               NotificationPreference[]
+  notifications                         Notification[]
+  webPushSubscriptions                  WebPushSubscription[]
+  businessCalendarsCreated              BusinessCalendar[]            @relation("BusinessCalendarCreatedBy")
+  businessCalendarsUpdated              BusinessCalendar[]            @relation("BusinessCalendarUpdatedBy")
+  businessCalendarDaysCreated           BusinessCalendarDay[]         @relation("BusinessCalendarDayCreatedBy")
+  businessCalendarDaysUpdated           BusinessCalendarDay[]         @relation("BusinessCalendarDayUpdatedBy")
+
+  // ux (kind, email) / (kind, phone) while not anonymised — partial unique indexes.
+  @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
+  @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
+  @@index([createdById], map: "ix_users__created_by")
+  @@index([updatedById], map: "ix_users__updated_by")
+  @@map("users")
+}
+
+model UserIdentity {
+  id              BigInt           @id(map: "pk_user_identities") @default(autoincrement())
+  userId          BigInt           @map("user_id")
+  provider        IdentityProvider
+  /// Phone (E.164), Firebase uid or LINE userId — personal data.
+  providerSubject String           @map("provider_subject")
+  linkedAt        DateTime         @default(now()) @map("linked_at") @db.Timestamptz(6)
+  lastUsedAt      DateTime?        @map("last_used_at") @db.Timestamptz(6)
+  unlinkedAt      DateTime?        @map("unlinked_at") @db.Timestamptz(6)
+  profile         Json?
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_user_identities__user_id")
+
+  @@unique([provider, providerSubject], map: "ux_user_identities__provider__subject", where: raw("(unlinked_at IS NULL)"))
+  @@index([userId], map: "ix_user_identities__user_id")
+  @@map("user_identities")
+}
+
+/// Staff teams for notification routing (D-143 LINE group per team).
+model Team {
+  id                    BigInt   @id(map: "pk_teams") @default(autoincrement())
+  publicId              String   @unique(map: "ux_teams__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code                  String   @unique(map: "ux_teams__code")
+  nameTh                String   @map("name_th")
+  nameEn                String   @map("name_en")
+  lineGroupId           String?  @map("line_group_id")
+  /// Secrets Manager reference, never the webhook URL itself.
+  teamsWebhookSecretRef String?  @map("teams_webhook_secret_ref")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById           BigInt?  @map("created_by")
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById           BigInt?  @map("updated_by")
+  rowVersion            Int      @default(1) @map("row_version")
+
+  createdBy          User?               @relation("TeamCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_teams__created_by")
+  updatedBy          User?               @relation("TeamUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_teams__updated_by")
+  staff              StaffProfile[]
+  notificationRoutes NotificationRoute[]
+
+  @@map("teams")
+}
+
+model StaffProfile {
+  userId       BigInt   @id(map: "pk_staff_profiles") @map("user_id")
+  employeeCode String?  @unique(map: "ux_staff_profiles__employee_code") @map("employee_code")
+  teamId       BigInt?  @map("team_id")
+  title        String?
+  lineUserId   String?  @map("line_user_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_staff_profiles__user_id")
+  team Team? @relation(fields: [teamId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_staff_profiles__team_id")
+
+  @@index([teamId], map: "ix_staff_profiles__team_id")
+  @@map("staff_profiles")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Sessions & credentials (ADR-0004)
+// ---------------------------------------------------------------------------------------------
+
+/// Rotating refresh tokens; `family_id` is the JWT `sid`. Reuse of a rotated row revokes the family.
+model AuthSession {
+  id               BigInt               @id(map: "pk_auth_sessions") @default(autoincrement())
+  publicId         String               @unique(map: "ux_auth_sessions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId           BigInt               @map("user_id")
+  audience         TokenAudience
+  familyId         String               @map("family_id") @db.Uuid
+  refreshTokenHash Bytes                @unique(map: "ux_auth_sessions__refresh_token_hash") @map("refresh_token_hash")
+  parentSessionId  BigInt?              @map("parent_session_id")
+  loginMethod      LoginMethod          @map("login_method")
+  issuedAt         DateTime             @default(now()) @map("issued_at") @db.Timestamptz(6)
+  expiresAt        DateTime             @map("expires_at") @db.Timestamptz(6)
+  idleExpiresAt    DateTime             @map("idle_expires_at") @db.Timestamptz(6)
+  rotatedAt        DateTime?            @map("rotated_at") @db.Timestamptz(6)
+  revokedAt        DateTime?            @map("revoked_at") @db.Timestamptz(6)
+  revokeReason     SessionRevokeReason? @map("revoke_reason")
+  ip               String?              @db.Inet
+  userAgent        String?              @map("user_agent")
+  deviceId         String?              @map("device_id")
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_auth_sessions__user_id")
+  parentSession AuthSession?  @relation("AuthSessionRotation", fields: [parentSessionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_auth_sessions__parent_session_id")
+  children      AuthSession[] @relation("AuthSessionRotation")
+
+  @@index([familyId], map: "ix_auth_sessions__family_id")
+  @@index([userId, revokedAt], map: "ix_auth_sessions__user_id__revoked_at")
+  @@index([parentSessionId], map: "ix_auth_sessions__parent_session_id")
+  @@map("auth_sessions")
+}
+
+/// The OTP code is never stored or logged — only its HMAC. Rows are deleted after expiry + 24 h.
+model OtpChallenge {
+  id                BigInt     @id(map: "pk_otp_challenges") @default(autoincrement())
+  publicId          String     @unique(map: "ux_otp_challenges__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  phone             String
+  purpose           OtpPurpose
+  codeHash          Bytes      @map("code_hash")
+  expiresAt         DateTime   @map("expires_at") @db.Timestamptz(6)
+  attempts          Int        @default(0) @db.SmallInt
+  maxAttempts       Int        @map("max_attempts") @db.SmallInt
+  consumedAt        DateTime?  @map("consumed_at") @db.Timestamptz(6)
+  requestIp         String?    @map("request_ip") @db.Inet
+  providerMessageId String?    @map("provider_message_id")
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([phone, createdAt(sort: Desc)], map: "ix_otp_challenges__phone__created_at")
+  @@index([expiresAt], map: "ix_otp_challenges__expires_at")
+  @@map("otp_challenges")
+}
+
+/// Optional partner device PIN (ADR-0004).
+model DevicePin {
+  id             BigInt    @id(map: "pk_device_pins") @default(autoincrement())
+  userId         BigInt    @map("user_id")
+  deviceId       String    @map("device_id")
+  pinHash        String    @map("pin_hash")
+  failedAttempts Int       @default(0) @map("failed_attempts") @db.SmallInt
+  lockedUntil    DateTime? @map("locked_until") @db.Timestamptz(6)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_device_pins__user_id")
+
+  @@unique([userId, deviceId], map: "ux_device_pins__user_id__device_id", where: raw("(revoked_at IS NULL)"))
+  @@map("device_pins")
+}
+
+model PasswordResetToken {
+  id        BigInt    @id(map: "pk_password_reset_tokens") @default(autoincrement())
+  userId    BigInt    @map("user_id")
+  tokenHash Bytes     @unique(map: "ux_password_reset_tokens__token_hash") @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_password_reset_tokens__user_id")
+
+  @@index([userId], map: "ix_password_reset_tokens__user_id")
+  @@map("password_reset_tokens")
+}
+
+/// OAuth2 client-credentials for partner machine clients (factory-scoped). factory_id FK arrives in B2.2.
+model ApiClient {
+  id              BigInt          @id(map: "pk_api_clients") @default(autoincrement())
+  publicId        String          @unique(map: "ux_api_clients__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  clientId        String          @unique(map: "ux_api_clients__client_id") @map("client_id")
+  /// argon2id.
+  secretHash      String          @map("secret_hash")
+  name            String
+  factoryId       BigInt?         @map("factory_id")
+  scopes          String[]        @default([])
+  status          ApiClientStatus @default(active)
+  secretRotatedAt DateTime?       @map("secret_rotated_at") @db.Timestamptz(6)
+  expiresAt       DateTime?       @map("expires_at") @db.Timestamptz(6)
+  lastUsedAt      DateTime?       @map("last_used_at") @db.Timestamptz(6)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt?         @map("created_by")
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById     BigInt?         @map("updated_by")
+  rowVersion      Int             @default(1) @map("row_version")
+
+  createdBy    User?         @relation("ApiClientCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__created_by")
+  updatedBy    User?         @relation("ApiClientUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__updated_by")
+  auditLogs    AuditLog[]
+  activityLogs ActivityLog[]
+  domainEvents DomainEvent[]
+
+  @@index([factoryId], map: "ix_api_clients__factory_id")
+  @@map("api_clients")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Roles, permissions, SoD (D-140, D-141, accounting-design.md §8)
+// ---------------------------------------------------------------------------------------------
+
+model Role {
+  id          BigInt        @id(map: "pk_roles") @default(autoincrement())
+  publicId    String        @unique(map: "ux_roles__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key         String        @unique(map: "ux_roles__key")
+  audience    TokenAudience
+  scopeType   RoleScopeType @map("scope_type")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  /// Seeded roles (D-140) cannot be deleted.
+  isSystem    Boolean       @default(false) @map("is_system")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  createdBy               User?                 @relation("RoleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_roles__created_by")
+  updatedBy               User?                 @relation("RoleUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_roles__updated_by")
+  permissions             RolePermission[]
+  userRoles               UserRole[]
+  sodRulesA               SodRule[]             @relation("SodRuleRoleA")
+  sodRulesB               SodRule[]             @relation("SodRuleRoleB")
+  approvalSteps           ApprovalStep[]        @relation("ApprovalStepApproverRole")
+  approvalStepEscalations ApprovalStep[]        @relation("ApprovalStepEscalateRole")
+  approvalRequestSteps    ApprovalRequestStep[]
+
+  @@map("roles")
+}
+
+/// Catalogue from code (`resource.action`), seeded (B1.2) and extended by each module.
+model Permission {
+  id           BigInt        @id(map: "pk_permissions") @default(autoincrement())
+  key          String        @unique(map: "ux_permissions__key")
+  audience     TokenAudience
+  description  String
+  /// Cost / margin data (D-141) and similar.
+  isSensitive  Boolean       @default(false) @map("is_sensitive")
+  decisionRefs String[]      @default([]) @map("decision_refs")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       BigInt   @map("role_id")
+  permissionId BigInt   @map("permission_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_role_permissions__role_id")
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_role_permissions__permission_id")
+  createdBy  User?      @relation(fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_role_permissions__created_by")
+
+  @@id([roleId, permissionId], map: "pk_role_permissions")
+  @@index([permissionId], map: "ix_role_permissions__permission_id")
+  @@map("role_permissions")
+}
+
+/// Role grants with scope (`platform | factory:{id} | company:{id}`). Active ux is an expression index
+/// in the migration SQL; a trigger checks the scope and the user's audience against the role.
+model UserRole {
+  id          BigInt        @id(map: "pk_user_roles") @default(autoincrement())
+  publicId    String        @unique(map: "ux_user_roles__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId      BigInt        @map("user_id")
+  roleId      BigInt        @map("role_id")
+  scopeType   RoleScopeType @map("scope_type")
+  scopeId     BigInt?       @map("scope_id")
+  validFrom   DateTime      @default(now()) @map("valid_from") @db.Timestamptz(6)
+  /// Time-boxed access, e.g. Auditor (accounting-design.md §8).
+  validTo     DateTime?     @map("valid_to") @db.Timestamptz(6)
+  grantedById BigInt?       @map("granted_by")
+  revokedAt   DateTime?     @map("revoked_at") @db.Timestamptz(6)
+  revokedById BigInt?       @map("revoked_by")
+  reason      String
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user      User  @relation("UserRoleUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_user_roles__user_id")
+  role      Role  @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_user_roles__role_id")
+  grantedBy User? @relation("UserRoleGrantedBy", fields: [grantedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_user_roles__granted_by")
+  revokedBy User? @relation("UserRoleRevokedBy", fields: [revokedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_user_roles__revoked_by")
+
+  @@index([userId], map: "ix_user_roles__user_id")
+  @@index([roleId], map: "ix_user_roles__role_id")
+  @@index([scopeType, scopeId], map: "ix_user_roles__scope")
+  @@map("user_roles")
+}
+
+model SodRule {
+  id           BigInt           @id(map: "pk_sod_rules") @default(autoincrement())
+  publicId     String           @unique(map: "ux_sod_rules__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key          String           @unique(map: "ux_sod_rules__key")
+  kind         SodRuleKind
+  roleAId      BigInt?          @map("role_a_id")
+  roleBId      BigInt?          @map("role_b_id")
+  /// Permission keys, e.g. payout_run.create / payout_run.approve.
+  actionA      String?          @map("action_a")
+  actionB      String?          @map("action_b")
+  subjectMatch SodSubjectMatch? @map("subject_match")
+  enforcement  SodEnforcement   @default(block)
+  description  String
+  decisionRefs String[]         @default([]) @map("decision_refs")
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?          @map("created_by")
+  updatedAt    DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById  BigInt?          @map("updated_by")
+  rowVersion   Int              @default(1) @map("row_version")
+
+  roleA     Role? @relation("SodRuleRoleA", fields: [roleAId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sod_rules__role_a_id")
+  roleB     Role? @relation("SodRuleRoleB", fields: [roleBId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sod_rules__role_b_id")
+  createdBy User? @relation("SodRuleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sod_rules__created_by")
+  updatedBy User? @relation("SodRuleUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sod_rules__updated_by")
+
+  @@index([roleAId], map: "ix_sod_rules__role_a_id")
+  @@index([roleBId], map: "ix_sod_rules__role_b_id")
+  @@map("sod_rules")
+}
+
+// ---------------------------------------------------------------------------------------------
+// Consent (D-005 own consent management, D-144)
+// ---------------------------------------------------------------------------------------------
+
+model ConsentPurpose {
+  id          BigInt   @id(map: "pk_consent_purposes") @default(autoincrement())
+  publicId    String   @unique(map: "ux_consent_purposes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key         String   @unique(map: "ux_consent_purposes__key")
+  required    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  createdBy User?                   @relation("ConsentPurposeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_purposes__created_by")
+  updatedBy User?                   @relation("ConsentPurposeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_purposes__updated_by")
+  versions  ConsentPurposeVersion[]
+  records   ConsentRecord[]
+
+  @@map("consent_purposes")
+}
+
+model ConsentPurposeVersion {
+  id                BigInt              @id(map: "pk_consent_purpose_versions") @default(autoincrement())
+  purposeId         BigInt              @map("purpose_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  textTh            String              @map("text_th")
+  textEn            String              @map("text_en")
+  summaryTh         String?             @map("summary_th")
+  summaryEn         String?             @map("summary_en")
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  purpose         ConsentPurpose   @relation(fields: [purposeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_purpose_versions__purpose_id")
+  approvalRequest ApprovalRequest? @relation(fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_purpose_versions__approval_request_id")
+  createdBy       User?            @relation("ConsentPurposeVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_purpose_versions__created_by")
+  decidedBy       User?            @relation("ConsentPurposeVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_purpose_versions__decided_by")
+  records         ConsentRecord[]
+
+  @@unique([purposeId, versionNo], map: "ux_consent_purpose_versions__purpose_id__version_no")
+  @@index([purposeId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_consent_purpose_versions__resolution", where: raw("status = 'approved'"))
+  @@index([approvalRequestId], map: "ix_consent_purpose_versions__approval_request_id")
+  @@map("consent_purpose_versions")
+}
+
+/// Append-only; the latest record per (user, purpose) wins.
+model ConsentRecord {
+  id               BigInt        @id(map: "pk_consent_records") @default(autoincrement())
+  userId           BigInt?       @map("user_id")
+  anonymousId      String?       @map("anonymous_id")
+  purposeId        BigInt        @map("purpose_id")
+  purposeVersionId BigInt        @map("purpose_version_id")
+  granted          Boolean
+  source           ConsentSource
+  ip               String?       @db.Inet
+  userAgent        String?       @map("user_agent")
+  recordedAt       DateTime      @default(now()) @map("recorded_at") @db.Timestamptz(6)
+
+  user           User?                 @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__user_id")
+  purpose        ConsentPurpose        @relation(fields: [purposeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__purpose_id")
+  purposeVersion ConsentPurposeVersion @relation(fields: [purposeVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__purpose_version_id")
+
+  @@index([userId, purposeId, recordedAt(sort: Desc)], map: "ix_consent_records__user__purpose__recorded_at")
+  @@index([anonymousId, purposeId, recordedAt(sort: Desc)], map: "ix_consent_records__anonymous__purpose__recorded_at")
+  @@index([purposeVersionId], map: "ix_consent_records__purpose_version_id")
+  @@map("consent_records")
+}

@@ -1,5 +1,5 @@
-// Datasource and generator only. Models arrive per bounded context (B1.2 onwards),
-// one file per context, following docs/schema-design.md.
+// Datasource and generator only. Models live in one file per bounded context, following
+// docs/schema-design.md (platform.prisma and iam.prisma from B1.2).
 
 generator client {
   provider            = "prisma-client"
@@ -7,6 +7,8 @@ generator client {
   moduleFormat        = "cjs"
   runtime             = "nodejs"
   importFileExtension = ""
+  // Partial unique indexes (schema-design §1.5).
+  previewFeatures     = ["partialIndexes"]
 }
 
 datasource db {
