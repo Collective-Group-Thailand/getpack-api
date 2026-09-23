@@ -18,8 +18,8 @@ export type IdempotencyRecord =
 export type BeginResult = { acquired: true } | { acquired: false; existing: IdempotencyRecord };
 
 /**
- * Storage for idempotency keys. The Redis store is the fast path; the durable `idempotency_keys`
- * table joins in B1.2 once the schema is approved (see docs/PROGRESS.md).
+ * Storage for idempotency keys. In the app this is `TieredIdempotencyStore`: Redis as the fast path,
+ * the `idempotency_keys` table as the durable source of truth.
  */
 export interface IdempotencyStore {
   /** Atomically claims `key` for this fingerprint, or returns what is already stored. */
