@@ -1,0 +1,641 @@
+# Legacy routes (extracted from routes/web.php and routes/api.php)
+
+## routes/web.php (backoffice, session + token cookie)
+48: Route::group(['middleware' => ['web', 'auth:web', 'adminOnly']], function () {
+98:     Route::get('/test-teams', function () {
+237:     Route::get('/test-chat', function () {
+241:     Route::get('/test-cookie', function () {
+299:     Route::get('/test-user-orders/{userId}', function ($userId) {
+450:     Route::get('/test-log', function () {
+475:     Route::get('/test-sqs', function () {
+480:     Route::get('/test-mail-sqs', function () {
+497: Route::get('/', 'HomeController@index')->name('home')->middleware(['auth.login']);
+499: Route::post('scb-payment-confirmation', [SCBWebhookController::class, 'paymentConfirmation']);
+501: Route::any('2c2p-redirect', 'OrderAPIController@payment2C2PRedirect');
+524: Route::post('postlogin', 'LoginController@postLogin')->middleware(['auth.login']);
+527: Route::post('clearLogin', 'LoginController@clearLogin');
+535: Route::group(['middleware' => ['auth:web', 'checkApiAuth']], function () {
+537:     Route::get('getMain', 'MainController@index');
+538:     Route::get('getMenuFoldingBox', 'MenuFoldingBoxController@index');
+540:     Route::get('my/profile', 'UsersController@myProfile')->name('myprofile');
+541:     Route::patch('my/profile', 'UsersController@updateProfile')->name('updateProfile');
+545:     Route::group(['middleware' => ['web.admin']], function () {
+547:         Route::get('customers/lists', 'CustomerController@lists');
+548:         Route::get('customers/{id}/get-orders', 'CustomerController@getOrders');
+549:         Route::post('customers/{id}/verified-phone', 'CustomerController@verifiedPhone');
+550:         Route::resource('customers', 'CustomerController');
+552:         Route::post('paper-types', 'PaperTypeController@store');
+554:         Route::get('event-logs/report', 'EventLogController@report');
+555:         Route::get('event-logs/report/lists', 'EventLogController@reportLists');
+556:         Route::get('event-logs/lists', 'EventLogController@lists');
+557:         Route::resource('event-logs', 'EventLogController');
+559:         Route::get('users/GetUsers', 'UsersController@GetUsers');
+560:         Route::get('users/lists', 'UsersController@lists');
+561:         Route::post('users/{user_id}/send-term', 'UsersController@sendTerm');
+562:         Route::resource('users', 'UsersController');
+565:         Route::get('patterns/{pattern_id}/default/type/{type}', 'PatternController@setDefault');
+566:         Route::resource('articles', 'ArticleController');
+567:         Route::resource('sampleProducts', 'SampleProductController');
+568:         Route::resource('sampleProductCategories', 'SampleProductCategoryController');
+569:         Route::get('sampleProducts/detail/{sample_product_id}', 'SampleProductRelProductController@index');
+570:         Route::get('sampleProducts/detail/{sample_product_id}/create/{mapping_input_id}', 'SampleProductRelProductController@create');
+571:         Route::resource('sampleProductRelProducts', 'SampleProductRelProductController');
+572:         Route::get('sampleProducts/create/{category_id}', 'SampleProductController@create');
+573:         Route::get('sampleProductCategories/{sample_product_category_id}/sampleProducts', 'SampleProductController@index');
+577:         Route::get('productGroups/lists', 'ProductGroupController@lists');
+578:         Route::get('productGroups/{sample_product_id}/setPrice/{mapping_input_id}', 'ProductGroupController@setPrice');
+579:         Route::resource('productGroups', 'ProductGroupController');
+582:         Route::resource('locopack/api', 'LocopackApiController');
+583:         Route::resource('products', 'ProductController');
+584:         Route::resource('productAssemblies', 'ProductAssemblyController');
+585:         Route::resource('productColors', 'ProductColorController');
+586:         Route::resource('productFinishes', 'ProductFinishController');
+587:         Route::resource('patterns', 'PatternController');
+588:         Route::resource('mappingInputs', 'MappingInputController');
+589:         Route::get('mappingInputs/{mapping_input_id}/imageset', 'MappingInputController@imageset');
+590:         Route::post('mappingInputs/imageset', 'MappingInputController@addImageset')->name('addImageset');
+591:         Route::delete('mappingInputs/imageset/{id}', 'MappingInputController@deleteImageset');
+592:         Route::get('mappingInputs/imageset/{id}', 'MappingInputController@getImageset');
+593:         Route::post('mappingInputs/imageset/image', 'MappingInputController@addImage');
+594:         Route::delete('mappingInputs/imageset/image/{id}', 'MappingInputController@deleteImage');
+598:         Route::resource('stepPrices', 'StepPriceController');
+599:         Route::get('factories/lists', 'FactoryController@lists');
+600:         Route::resource('factories', 'FactoryController');
+601:         Route::get('manage-factories', 'FactoryMatchPrintTypeController@index')->name('manage-factories');
+602:         Route::post('manage-factories', 'FactoryMatchPrintTypeController@update');
+603:         Route::patch('factories/{factory_id}/update-packaging', [\App\Http\Controllers\FactoryController::class, 'updatePackaging'])->name('factories.update-packaging');
+609:         Route::get('tool-shippingcost-by-gsm-folding', 'ShippingController@foldingShippingCostByGsmIndex');
+610:         Route::post('tool-shippingcost-by-gsm-folding/calculate', 'ShippingController@foldingShippingCostByGsmIndex');
+612:         Route::get('tool-shippingcost-by-gsm-label', 'ShippingController@labelShippingCostByGsmIndex');
+613:         Route::post('tool-shippingcost-by-gsm-label/calculate', 'ShippingController@labelShippingCostByGsmIndex');
+615:         Route::get('tool-shippingcost-by-gsm-corrugate', 'ShippingController@corrugateShippingCostByGsmIndex');
+616:         Route::post('tool-shippingcost-by-gsm-corrugate/calculate', 'ShippingController@corrugateShippingCostByGsmIndex');
+618:         Route::get('search-logs/lists', 'SearchLogController@lists');
+619:         Route::get('search-logs', 'SearchLogController@index');
+621:         Route::get('amazons3', 'AmazonS3Controller@index');
+622:         Route::post('amazons3/upload', 'AmazonS3Controller@upload');
+624:         Route::get('banners', 'BannerController@index');
+625:         Route::get('homepageFeature', 'BannerController@homepageFeature');
+626:         Route::post('banners/upload', 'BannerController@upload');
+627:         Route::post('banners/delete', 'BannerController@delete');
+630:         Route::get('page/homesection', 'HomeSectionController@index');
+631:         Route::get('page/homesection/list', 'HomeSectionController@list');
+632:         Route::put('page/homesection/move/{direction}/{id}', 'HomeSectionController@move');
+634:         Route::get('test-api', 'TestController@testApi');
+635:         Route::get('shipping-getmax', 'ShippingController@maxWeightFromShipingName');
+637:         Route::resource('articleCategories', 'ArticleCategoryController');
+640:         Route::resource('orderProducts', 'OrderProductController');
+641:         Route::resource('mappingInputTypes', 'MappingInputTypeController');
+642:         Route::resource('faqCategories', 'FaqCategoriesController');
+643:         Route::resource('faqs', 'FaqsController');
+644:         Route::get('get-provinces-with-zipcode', 'ProvinceController@getProvincesWithZipcode');
+645:         Route::get('get-provinces', 'ProvinceController@getProvinces');
+646:         Route::resource('provinces', 'ProvinceController');
+649:         Route::get('stocks/lists', 'StockHistoryController@lists');
+650:         Route::get('stocks/{id}/create', 'StockHistoryController@create')->name('stocks.create');
+651:         Route::post('stocks', 'StockHistoryController@store');
+653:         Route::get('paper-grades/lists', 'PaperGradeController@lists');
+654:         Route::get('paper-grades/update-prices', 'PaperGradeMatchFluteController@index');
+655:         Route::post('paper-grades/update-prices', 'PaperGradeMatchFluteController@update');
+656:         Route::post('paper-grades/excel-preview', 'PaperGradeMatchFluteController@excelPreview');
+657:         Route::post('paper-grades/excel-update-price', 'PaperGradeMatchFluteController@excelUpdatePrice');
+658:         Route::post('paper-grades/excel-export-price', 'PaperGradeMatchFluteController@excelExportPrice');
+659:         Route::resource('paper-grades', 'PaperGradeController');
+661:         Route::get('paper-groups/get-from-flute-type/{flute_type_id}', 'PaperGroupController@getFromFluteType');
+663:         Route::get('rigids/update-min-price', 'RigidController@updateMinPrice');
+664:         Route::post('rigids/updatePrice', 'RigidController@updatePrice');
+665:         Route::post('rigids/excel-preview', 'RigidController@excelPreview');
+666:         Route::post('rigids/excel-update-price', 'RigidController@excelUpdatePrice');
+667:         Route::post('rigids/excel-export-price', 'RigidController@excelExportPrice');
+668:         Route::post('rigids/import', 'RigidController@import');
+669:         Route::get('rigids/lists', 'RigidController@lists');
+670:         Route::post('rigids/CreateOrderFromCS', 'RigidController@CreateOrderFromCS');
+671:         Route::resource('rigids', 'RigidController');
+672:         Route::resource('materials', 'MaterialController');
+673:         Route::resource('types', 'TypeController');
+674:         Route::resource('shapes', 'ShapeController');
+675:         Route::resource('shoulders', 'ShoulderController');
+676:         Route::resource('necks', 'NeckController');
+677:         Route::resource('standardProductColors', 'StandardProductColorController');
+678:         Route::resource('sizeTexts', 'SizeTextController');
+679:         Route::resource('subTypes', 'SubTypeController');
+680:         Route::resource('rigidSubTypes', 'RigidSubTypeController');
+681:         Route::resource('rigidPrices', 'RigidPriceController');
+682:         Route::resource('capTypes', 'CapTypeController');
+685:         Route::get('cs/standard-products', 'StandardProductController@cs');
+687:         Route::get('cs/standard-products/get-data', 'StandardProductController@getCSData');
+688:         Route::get('cs/standard-products/{id}/get-prices', 'StandardProductController@getPrices');
+690:         Route::post('cs/standard-products/get-order-hierarchy', 'StandardProductController@getOrderHierarchy');
+692:         Route::get('cs/standard-products/get-products', 'StandardProductController@getProducts');
+693:         Route::get('standard-products/setup-img', 'RigidController@setupImg');
+696:         Route::get('cs/service', 'ServiceOrderController@cs');
+697:         Route::get('cs/service/get-input-data', 'ServiceOrderController@getInputData');
+698:         Route::post('cs/service/get-order-hierarchy', 'ServiceOrderController@getOrderHierarchy');
+700:         Route::post('orders/{id}/edit', 'OrderController@editOrder');
+701:         Route::get('orders/{order_id}/change-user-to/{user_id}', 'OrderController@changeUser');
+702:         Route::post('orders/{order_id}/send-mail-form', 'OrderController@sendMailForm');
+703:         Route::post('orders/{order_id}/send-mail', 'OrderController@sendMail');
+704:         Route::post('orders/{order_id}/save-remark', 'OrderController@saveRemark');
+705:         Route::patch('orders/{order}/update-factory', 'OrderController@updateFactory');
+706:         Route::post('orders/{id}/update-address', 'OrderController@updateAddress');
+707:         Route::post('orders/{id}/update-user-data', 'OrderController@updateUserData');
+708:         Route::patch('orders/{id}/update-vendor-billing', 'OrderController@updateVendorBilling');
+709:         Route::patch('orders/{order}/save-lot-of-production', 'OrderController@updateLotOfProduction');
+710:         Route::patch('orders/{order}/update-product-desc', 'OrderController@updateProductDescription');
+711:         Route::get('orders/{id}/send-tracking-noti', 'OrderController@SendTrackingNoti');
+713:         Route::post('orders/{order}/update-order-status', 'OrderController@updateOrderStatus')->middleware('adminOnly');
+714:         Route::post('orders/{order_id}/update-order-credit-note', 'OrderController@updateOrderCreditNote');
+716:         Route::get('datatable-orders', 'OrderController@datatable');
+719:         Route::get('download-drawing-logs/lists', 'DownloadDrawingController@lists');
+720:         Route::get('download-drawing-logs', 'DownloadDrawingController@logs');
+722:         Route::get('promotion-logs/lists', 'PromotionLogController@lists');
+723:         Route::resource('promotion-logs', 'PromotionLogController');
+725:         Route::get('user-designs/lists', 'UserDesignController@lists');
+726:         Route::get('user-designs', 'UserDesignController@index');
+728:         Route::get('calculate-logs/lists', 'CalculateLogController@lists');
+729:         Route::get('calculate-logs', 'CalculateLogController@index');
+731:         Route::resource('designers', 'DesignerController');
+733:         Route::get('tools/decode-hierarchy', 'HomeController@decodeHierarchyCode');
+734:         Route::get('tools/incoming-gr-list', 'HomeController@incomingGRList');
+736:         Route::get('master/', 'MasterController@index')->name('master.index');
+737:         Route::get('master/add', 'MasterController@add')->name('master.add');
+738:         Route::get('master/download-template', 'MasterController@downloadTemplate')->name('master.download-template');
+739:         Route::post('master/import', 'MasterController@import')->name('master.import');
+740:         Route::post('master/export', 'MasterController@export')->name('master.export');
+741:         Route::post('master/export-all', 'MasterController@exportAll')->name('master.export-all');
+742:         Route::get('master/datatable', 'MasterController@datatable')->name('master.datatable');
+743:         Route::post('master/save', 'MasterController@save')->name('master.save');
+746:         Route::get('order-logs', 'OrderLogController@index');
+747:         Route::get('order-logs/lists', 'OrderLogController@lists');
+748:         Route::get('order-logs/{id}', 'OrderLogController@show');
+749:         Route::post('order-logs/retry', 'OrderLogController@retry')->name('order-logs.retry');
+751:         Route::get('user/generate-code/{id}', 'UserController@updateUserCode')->name('user.generate.code');
+753:         Route::get('orders/{id}/manual-gr', 'OrderController@manualGR')->name('orders.manual-gr');
+757:     Route::group(['middleware' => ['web.cs']], function () {});
+760:     Route::group(['middleware' => ['web.factory']], function () {
+761:         Route::post('event-logs', 'EventLogController@store');
+762:         Route::get('calculate/corrugated_box', 'Corrugated\CorrugatedController@index'); //Corrugated Box
+763:         Route::get('calculate/label', 'Label\LabelController@index'); //Label
+764:         Route::get('calculate/folding_box', 'FoldingBoxController@calculateFoldingBox'); //Folding Box
+766:         Route::post('calculate-folding-box-ajax', 'FoldingBoxController@calculateFoldingBoxAjax')->name('calculateFoldingBoxAjax');
+767:         Route::get('paper-cannot-do-process', 'FoldingBoxController@getPaperCannotDoProcess')->name('paperCannotDoProcess');
+769:         Route::post('quotations/export-from-cs', 'QuotationController@exportFromCS');
+770:         Route::get('quotations/{id}/getCSData', 'QuotationController@getCSData');
+771:         Route::get('quotations/{id}/get-cs-input', 'QuotationController@getCSInput');
+772:         Route::get('quotations/{id}/getDetail', 'QuotationController@getDetail');
+773:         Route::get('quotations/lists', 'QuotationController@lists');
+774:         Route::resource('quotations', 'QuotationController');
+776:         Route::get('report/orders', 'ReportController@orders')->name('report.orders');
+777:         Route::get('report/new-orders', 'ReportOrderController@index');
+778:         Route::post('report/new-orders', 'ReportOrderController@index')->name('report.newOrders');
+780:         Route::get('report/quotations', 'ReportController@quotations');
+781:         Route::get('report/non-payment-orders', 'ReportController@nonPaymentOrder');
+782:         Route::get('report/non-payment-orders/lists', 'ReportController@nonPaymentOrderLists');
+784:         Route::get('report/sales', 'ReportController@sales');
+785:         Route::post('report/sales/lists', 'ReportController@salesList')->name('report.sales');
+786:         Route::post('report/sales/export', 'ReportController@salesExport')->name('report.salesExport');
+788:         Route::get('report/sales-tax', 'ReportController@salesTax');
+789:         Route::post('report/sales-tax/lists', 'ReportController@salesTaxList')->name('report.salesTax');
+790:         Route::post('report/sales-tax/export', 'ReportController@salesTaxExport')->name('report.salesTaxExport');
+791:         Route::get('report/payments', 'ReportPaymentController@payments')->name('report.payment');
+792:         Route::get('report/payments/export', [ReportPaymentController::class, 'export'])->name('reportPayment.export');
+793:         Route::get('report/payments/export-with-revenue', [ReportPaymentController::class, 'exportWithRevenue'])->name('reportPayment.exportWithRevenue');
+794:         Route::post('report/payments/sendemail', [ReportPaymentController::class, 'sendEmail'])->name('reportPayment.sendEmail');
+798:         Route::get('orders/{order_id}/approve-slip', 'OrderController@showSlip');
+799:         Route::get('orders/{id}/getCSData', 'OrderController@getCSData');
+800:         Route::get('orders/{id}/get-cs-input', 'OrderController@getCSInput');
+801:         Route::get('orders/link-stats', 'OrderController@linkStat');
+802:         Route::post('orders/{order_id}/approve-slip', 'OrderController@update');
+803:         Route::patch('orders/{order_id}/order-status', 'OrderController@update')->name('orders.changeStatus');
+804:         Route::patch('orders/{order_id}/order-manaul-update', 'OrderController@updateManual');
+805:         Route::post('orders/{order_id}/update-cc-email', 'OrderController@updateCcEmail');
+806:         Route::post('orders/{order}/update-optional', 'OrderController@updateOptional');
+807:         Route::post('orders/{order}/update-invoice', 'OrderController@updateInvoice');
+808:         Route::get('orders/lists', 'OrderController@lists');
+809:         Route::get('orders/{id}/get-data', 'OrderController@getData');
+810:         Route::resource('orders-activity', 'OrderActivityController');
+811:         Route::resource('orders', 'OrderController');
+813:         Route::get('invoices/lists', 'InvoiceController@lists');
+814:         Route::resource('invoices', 'InvoiceController');
+816:         Route::post('factory/folding-box', 'FoldingBoxController@factoryCalculate');
+818:         Route::get('cs/folding/hierarchy/{heirarchy_code}/get-mat-data', 'FoldingBoxController@getHierarchyMatData');
+819:         Route::get('cs/folding', 'FoldingBoxController@cs');
+820:         Route::get('cs/folding/get-input-data', 'FoldingBoxController@getCSInputData');
+822:         Route::get('cs/folding_box', 'FoldingBoxController@customerService')->name('cs/folding');
+823:         Route::post('cs/folding_box', 'FoldingBoxController@customerService');
+824:         Route::get('cs/label', 'Label\LabelController@customerService');
+825:         Route::get('cs/label/get-input-data', 'Label\LabelController@getCSInputData');
+826:         Route::get('cs/label-v2', 'Label\LabelController@CSv2');
+827:         Route::get('cs/corrugated_box', 'Corrugated\CorrugatedController@customerService')->name('cs/corrugated');
+828:         Route::post('cs/corrugated_box', 'Corrugated\CorrugatedController@customerService');
+830:         Route::get('cs/corrugate', 'Corrugated\CorrugatedController@cs');
+831:         Route::get('cs/corrugate/get-input-data', 'Corrugated\CorrugatedController@getCSInputData');
+832:         Route::post('cs/corrugate', 'Corrugated\CorrugatedController@calculateCS');
+834:         Route::get('cs/tagAndSleeve', 'TagAndSleeveController@index');
+835:         Route::get('cs/tag', 'TagAndSleeveController@cs');
+836:         Route::get('cs/tag/get-input-data', 'TagAndSleeveController@getCSInputData');
+838:         Route::get('cs/pouch', 'PouchController@cs');
+839:         Route::get('cs/pouch/get-input-data', 'PouchController@getInputData');
+840:         Route::get('cs/pouch/get-microns', 'PouchController@getMicrons');
+841:         Route::get('cs/pouch/get-active-assemblies', 'PouchController@getActiveAssemblies');
+842:         Route::post('cs/pouch', 'PouchController@calculate');
+844:         Route::get('cs/service', 'ServiceOrderController@cs');
+845:         Route::get('cs/service/get-input-data', 'ServiceOrderController@getInputData');
+846:         Route::post('cs/service/get-order-hierarchy', 'ServiceOrderController@getOrderHierarchy');
+849:         Route::get('promotions/priority', 'PromotionController@priority')->name('promotions.priority');
+850:         Route::post('promotions/priority', 'PromotionController@updatePriority');
+851:         Route::get('promotions/usage-report', 'PromotionController@usageReport');
+852:         Route::get('promotions/usage-report/lists', 'PromotionController@usageReportLists');
+853:         Route::resource('promotions', 'PromotionController');
+856:         Route::get('tracking-product-logs/lists', 'TrackingProductLogController@lists');
+857:         Route::resource('tracking-product-logs', 'TrackingProductLogController');
+859:         Route::post('order/graphic', 'OrderController@graphicStatus');
+860:         Route::post('order/change-production-lead-time', 'OrderController@changeProductionLeadTime');
+861:         Route::post('order/change-confirm-production-date', 'OrderController@changeConfirmProductionDate');
+862:         Route::post('order/upload-graphic', 'OrderController@uploadGraphic');
+863:         Route::post('order/upload-graphic-for-user', 'OrderController@uploadGraphicForUser');
+864:         Route::post('order/upload-graphic-template', 'OrderController@uploadGraphicTemplate');
+865:         Route::post('order/update-template-status', 'OrderController@updateTemplateStatus');
+866:         Route::post('order/upload-slip', 'OrderController@uploadSlip');
+867:         Route::put('order/delete-slip/{order_id}/{id}', 'OrderController@deleteSlip');
+868:         Route::put('order/reject-slip/{id}', 'OrderController@rejectSlip');
+869:         Route::post('order/update-design-online', 'OrderController@updateDesignOnlineStatus');
+870:         Route::post('order/reconfirm-graphic', 'OrderController@reconfirmGraphic');
+871:         Route::post('order/update-designer', 'OrderController@updateDesigner');
+873:         Route::resource('orderActivities', 'OrderActivityController');
+874:         Route::resource('designs', 'DesignsController');
+875:         Route::resource('designsAssets', 'DesignsAssetsController');
+877:         Route::get('download-drawing/from-order', 'DownloadDrawingController@downloadFromOrder');
+878:         Route::get('download-drawing', 'DownloadDrawingController@index');
+879:         Route::post('download-drawing', 'DownloadDrawingController@download');
+881:         Route::get('standardSizes/getStandardSizeByMappingInputId/{product_id}', 'StandardSizeController@getStandardSizeByMappingInputId');
+882:         Route::get('mappingInputs/{mapping_input_id}/standardSizes', 'StandardSizeController@index');
+883:         Route::get('standardSizes/create/{mapping_input_id}', 'StandardSizeController@create');
+884:         Route::resource('standardSizes', 'StandardSizeController');
+893:         Route::get('cs/change-factory/folding/{order}', [ChangeFactoryController::class, 'index']);
+894:         Route::get('cs/change-factory/label-v2/{order}', [ChangeFactoryController::class, 'index']);
+895:         Route::get('cs/change-factory/corrugate/{order}', [ChangeFactoryController::class, 'index']);
+896:         Route::get('cs/change-factory/tag/{order}', [ChangeFactoryController::class, 'index']);
+897:         Route::get('cs/change-factory/standard-products/{order}', [ChangeFactoryController::class, 'index']);
+898:         Route::get('cs/change-factory/pouch/{order}', [ChangeFactoryController::class, 'index']);
+899:         Route::post('cs/change-factory/{order}', [ChangeFactoryController::class, 'changeData']);
+912:     Route::group(['middleware' => ['web.seo']], function () {
+913:         Route::resource('sitemaps', 'SitemapsController');
+914:         Route::resource('articles', 'ArticleController');
+915:         Route::resource('articleCategories', 'ArticleCategoryController');
+919: Route::post('postMain', 'MainController@index');
+920: Route::post('postMain/getddlPattern', 'MainController@getddlPattern')->name('getddlPattern');
+921: Route::post('postMain/getddlPaper', 'MainController@getddlPaper')->name('getddlPaper');
+922: Route::post('postMain/getInkDetail', 'MainController@getInkDetail')->name('getInkDetail');
+923: Route::post('postMain/getInkCoverage', 'MainController@getInkCoverage')->name('getInkCoverage');
+924: Route::post('postMain/getBInkDetail', 'MainController@getBInkDetail')->name('getBInkDetail');
+925: Route::post('postMain/getBInkCoverage', 'MainController@getBInkCoverage')->name('getBInkCoverage');
+926: Route::post('postMain/getFinishing2', 'MainController@getFinishing2')->name('getFinishing2');
+927: Route::post('postMain/getAssembly1', 'MainController@getAssembly1')->name('getAssembly1');
+928: Route::post('postMain/getAssembly2', 'MainController@getAssembly2')->name('getAssembly2');
+929: Route::post('postMain/getCalculate', 'MainController@getCalculate')->name('getCalculate');
+930: Route::get('getFoldingColor', 'FoldingColorController@index');
+931: Route::post('getFoldingColor/getFactory', 'FoldingColorController@GetFactory')->name('GetFactory');
+932: Route::post('getFoldingColor/GetPrintPrice', 'FoldingColorController@GetPrintPrice')->name('GetPrintPrice');
+933: Route::post('getFoldingColor/DeletePrintPrice', 'FoldingColorController@DeletePrintPrice')->name('DeletePrintPrice');
+934: Route::post('getFoldingColor/SavePrintPrice', 'FoldingColorController@SavePrintPrice')->name('SavePrintPrice');
+935: Route::get('getFoldingDC', 'FoldingDCController@index');
+936: Route::post('getFoldingDC/getShow', 'FoldingDCController@store')->name('getShow');
+937: Route::get('getAddFoldingDC', 'FoldingDCController@create');
+938: Route::get('editFoldingDC/{id}/{fac}/{w}/{l}/{min}/{max}/{price}', 'FoldingDCController@edit');
+939: Route::post('postFoldingDC', 'FoldingDCController@update');
+940: Route::get('deleteFoldingDC/{id}', 'FoldingDCController@destroy');
+941: Route::get('custom-logout', 'LogoutController@index')->name('customLogout');
+946: Route::get('manageUserData', 'ManageUserController@index')->name('manageUserData');
+947: Route::get('editUserData', 'ManageUserController@editUserData')->name('editUserData');
+948: Route::get('deleteUser/{id}/{userAct}', 'ManageUserController@deleteUser')->name('deleteUser');
+950: Route::post('createUser', 'ManageUserController@createUser')->name('createUser');
+951: Route::post('editUser', 'ManageUserController@editUser')->name('editUser');
+952: Route::post('adminEditUser', 'ManageUserController@adminEditUser')->name('adminEditUser');
+953: Route::get('manageUserData/getUserData', 'ManageUserController@getUserData')->name('getUserData');
+954: Route::get('company', 'CompanyController@index')->name('company');
+955: Route::match(['get', 'post'], 'create-company', 'CompanyController@createCompany')->name('createCompany');
+956: Route::match(['get', 'post'], 'create-factory', 'FactoryController@createFactory')->name('createFactory');
+957: Route::get('ajaxGetUserData', 'ManageUserController@ajaxGetUserData')->name('ajaxGetUserData');
+958: Route::get('ajaxGetFactoryData', 'FactoryController@ajaxGetFactoryData')->name('ajaxGetFactoryData');
+959: Route::get('ajaxGetUserDataAll', 'ManageUserController@ajaxGetUserDataAll')->name('ajaxGetUserDataAll');
+960: Route::get('delete-factory/{id}', 'FactoryController@deleteFactory')->name('deleteFactory');
+961: Route::get('delete-company/{id}', 'CompanyController@deleteCompany')->name('deleteCompany');
+962: Route::match(['get', 'post'], 'edit-company', 'CompanyController@editCompany')->name('editCompany');
+963: Route::match(['get', 'post'], 'edit-factory', 'FactoryController@editFactory')->name('editFactory');
+964: Route::get('paper-sheets', 'PaperSheetController@ajaxSelect2GetPaperSheets')->name('ajaxSelect2.getPaperSheets');
+965: Route::post('paper-sheets/create', 'PaperSheetController@add')->name('add.paperSheet');
+966: Route::get('ajaxGetCompanyData', 'CompanyController@ajaxGetCompanyData')->name('ajaxGetCompanyData');
+969: Route::get('/test-excel', 'API\ExportExcelController@exportOrder')->name('exportOrder');
+971: Route::get('/download-report-order', [ExportExcelController::class, 'downloadReportOrder'])->name('download.report-order');
+972: Route::get('/download-excel-order', [ExportExcelController::class, 'exportOrderExcel'])->name('export-order');
+1003: Route::group(['prefix' => 'admin'], function () {
+1004:     Route::group(['middleware' => ['admin']], function () {
+1005:         Route::get('/dashboard', 'admin\AdminController@index');
+1012: Route::get('page-test', function () {
+1016: Route::get('test-point', 'TestController@testRegtangle');
+1018: Route::get('test-api', 'TestController@connectApi');
+1020: Route::get('test-cal-layout', 'FoldingBoxController@testCalLayout');
+1022: Route::get('test-sort-and-groupby', 'TestController@testSortingAndGroupBy');
+1030: Route::resource('specTitles', 'SpecTitleController');
+1032: Route::resource('specDetails', 'SpecDetailController');
+1034: Route::resource('google-merchants', 'GoogleMerchantController');
+1039: Route::group(['middleware' => ['auth:web', 'checkApiAuth']], function () {
+1040:     Route::resource('rewards', 'RewardController');
+1041:     Route::resource('point-users', 'PointUserController');
+1042:     Route::resource('campaign-points', 'CampaignPointController');
+1044:     Route::get('report/point-user', 'PointUserController@pointReport');
+1045:     Route::post('report/point-user/export', 'PointUserController@pointReportExport');
+1046:     Route::post('report/point-user/preview', 'PointUserController@getPreview')->name('report.point-user.preview');
+1048:     Route::post('point-users/refund/{order_id}', 'PointUserController@redeemRefund')->name('refund.point');
+1050:     Route::post('standardProducts/upload', 'StandardProductController@storeUpload')->name('standardProducts.storeUpload');
+1051:     Route::post('standardProducts/images/delete/{id}', 'StandardProductController@deleteImage')->name('standardProducts.deleteImage');
+1052:     Route::get('standardProducts/excel-export-template-standard-product', 'StandardProductController@excelExportTemplateStandardProduct')->name('standardProducts.excel-export-template-standard-product');
+1053:     Route::post('standardProducts/excel-export', 'StandardProductController@excelExportStandardProduct')->name('standardProducts.excel-export');
+1055:     Route::delete('standardProducts/image/{id}', 'StandardProductController@deleteImage');
+1056:     Route::post('standardProducts/excel-preview', 'StandardProductController@excelPreview');
+1057:     Route::post('standardProducts/excel-upload-standard-product', 'StandardProductController@excelUploadStandardProduct');
+1058:     Route::get('standardProduct/update-min-price-per-pcs-with-delivery', 'StandardProductController@updateMinPricePerPcsWithDelivery');
+1059:     Route::resource('standardProducts', 'StandardProductController');
+1061:     Route::get('standardProductPrices/excel-export-template-standard-product-price', 'StandardProductPriceController@excelExportTemplateStandardProductPrice')->name('standardProductsPrice.excel-export-template-standard-product-price');
+1062:     Route::post('standardProductPrices/excel-preview', 'StandardProductPriceController@excelPreview');
+1063:     Route::post('standardProductPrices/excel-upload-standard-product-price', 'StandardProductPriceController@excelUploadStandardProductPrice');
+1064:     Route::post('standardProductPrices/excel-export', 'StandardProductPriceController@excelExportStandardProductPrice')->name('standardProductsPrice.excel-export');
+1065:     Route::resource('standardProductPrices', 'StandardProductPriceController');
+1067:     Route::resource('ph6', 'Ph6Controller');
+1068:     Route::post('ph6/excel-export', 'Ph6Controller@excelExportPH6')->name('ph6.excel-export');
+1069:     Route::post('ph6/excel-preview', 'Ph6Controller@excelPreview');
+1070:     Route::post('ph6/excel-upload-ph6', 'Ph6Controller@excelUploadPH6');
+1073: Route::resource('redeemtions', 'RedeemtionController');
+1075: Route::resource('slips', 'SlipController');
+1077: Route::resource('semiDesigns', 'SemiDesignController');
+1078: Route::delete('semiDesigns/template/{template_id}/font/{font_id}', 'SemiDesignController@deleteTemplateFontSvg');
+1079: Route::delete('semiDesigns/template/{template_id}', 'SemiDesignController@deleteTemplateStandardSize');
+1081: Route::resource('semiDesignTemplateFonts', 'SemiDesignTemplateFontController');
+1083: Route::get('check-payment-status-scb/{order}', [PaymentStatusController::class, 'scbInquiry']);
+1084: Route::get('check-payment-status-2c2p/{order}', [PaymentStatusController::class, 'inquiryOf2c2p']);
+1085: Route::post('qrcode-reader/{order}', [PaymentStatusController::class, 'qrReader']);
+1086: Route::post('check-payment-status-by-qr/{order}', [PaymentStatusController::class, 'qrScan']);
+1087: Route::post('refund/{order}', [RefundPaymentController::class, 'refund']);
+1088: Route::get('refund-status/{order}', [RefundPaymentController::class, 'refundStatus']);
+1093: Route::group(['middleware' => ['auth:web']], function () {
+1094:     Route::get('/cs/s3-image', 'S3Controller@getImage');
+1099: Route::get('cs/standard-products/{id}/get-prices', 'StandardProductController@getPrices');
+1101: Route::get('genPdfFullPaymentTax/{id}', 'OrderController@genPdfFullPaymentTax')->name('pdf.gen.fulltax');
+1102: Route::get('genPdfNormalPaymentTax/{id}', 'OrderController@genPdfNormalPaymentTax')->name('pdf.gen.normaltax');
+1103: Route::get('getTaxNumberApi', 'OrderController@getTaxNumberApi')->name('orders.getTaxNumberApi');
+1104: Route::post('getTaxById', 'OrderController@getTaxById')->name('orders.getTaxById');
+1105: Route::post('setTaxData', 'OrderController@setTaxData')->name('orders.setTaxData');
+1106: Route::post('setTaxReciept', 'OrderController@setTaxReciept')->name('orders.setTaxReciept');
+1107: Route::get('getProductName/{id}', 'OrderController@getProductName')->name('orders.getProductName');
+1108: Route::get('getOrder/{id}', 'OrderController@getOrderDetail')->name('orders.getOrderDetail');
+1110: Route::get('genPdfCreditNote/{id}', 'OrderController@genPdfCreditNote')->name('pdf.gen.creditnote');
+1112: Route::get('home', function () {
+1116: Route::get('move-standard-product-images', 'StandardProductController@moveImages')->name('StandardProduct.moveImages');
+
+## routes/api.php (prefix /api)
+36: Route::get('documents/full-tax-invoice/{orderId}', 'DocumentController@getFullTaxInvoice');
+37: Route::get('documents/credit-note/{orderId}', 'DocumentController@getCreditNote');
+38: Route::get('documents/replacement-full-tax-invoice/{orderId}', 'DocumentController@getReplacementFullTaxInvoice');
+42: Route::get('customize-product', 'ProductAPIController@customizeProduct');
+45: Route::post('login', 'PassportController@login');
+47: Route::post('register', 'PassportController@register');
+55: Route::post('/auth', 'LoginAction');
+56: Route::post('/check/phone', 'LoginAction@checkPhone');
+57: Route::post('/check/email', 'LoginAction@checkEmail');
+59: Route::middleware('auth:api')->post('signout', 'LoginAction@signoutApi');
+61: Route::middleware('auth:api')->get('user/auth', function () {
+65: Route::middleware('auth:api')->get('test-queue', function () {
+223: Route::resource('patterns', 'PatternAPIController');
+224: Route::resource('packaging-types', 'PackagingTypeController');
+225: Route::resource('mapping_inputs', 'MappingInputAPIController');
+226: Route::get('mapping_inputs/product_imagesets/{mapping_input_id}', 'MappingInputAPIController@getProductImageset');
+229: Route::get('pouch/get-input-data', 'PouchController@getInputData');
+230: Route::get('pouch/{id}', 'PouchController@show');
+231: Route::post('pouch/calculate', 'PouchController@calculate');
+233: Route::resource('articles', 'ArticleAPIController');
+234: Route::get('articles_promotion', 'ArticleAPIController@promotions');
+235: Route::resource('article_categories', 'ArticleCategoryAPIController');
+237: Route::resource('product_assemblies', 'ProductAssemblyAPIController');
+238: Route::resource('product_colors', 'ProductColorAPIController');
+239: Route::resource('product_finishes', 'ProductFinishAPIController');
+241: Route::resource('sample_products', 'SampleProductAPIController');
+242: Route::get('sample_product/{id}', 'SampleProductAPIController@getSampleProductById');
+243: Route::resource('sample_product_categories', 'SampleProductCategoryAPIController');
+244: Route::get('sample_product_category/{category_id}/sample_products', 'SampleProductAPIController@index');
+245: Route::get('product_group_category/{category_id}/product_group', 'SampleProductAPIController@productGroupIndex');
+246: Route::resource('sample_product_rel_products', 'SampleProductRelProductAPIController');
+249: Route::get('product-group-categories', 'SampleProductCategoryAPIController@getProductGroupCategory');
+250: Route::get('product-groups', 'SampleProductAPIController@getProductGroups');
+252: Route::get('sample-product-tracking/{id}', 'SampleProductAPIController@tracking');
+254: Route::resource('calculate', 'CalculateAPIController');
+256: Route::get('/designs/get-products', 'DesignsAPIController@getProducts');
+259: Route::get('banners', 'BannerAPIController@index');
+262: Route::get('factory/corrugate', 'Corrugate\CorrugateController@getFactoryData');
+263: Route::get('cs/corrugate', 'Corrugate\CorrugateController@getCSData');
+264: Route::get('corrugate/get-flute', 'Corrugate\CorrugateController@getFlute');
+265: Route::get('corrugate/get-flute-from-paper/{paper_id}', 'Corrugate\CorrugateController@getFluteFromPaper');
+266: Route::get('corrugate/get-paper-grade', 'Corrugate\CorrugateController@getPaperGrade');
+267: Route::get('corrugate/calculate', 'Corrugate\CorrugateController@calculate');
+268: Route::get('corrugate/calculate_cs', 'Corrugate\CorrugateController@calculate_cs');
+270: Route::get('products-with-sample_product/{id}/{mapping_input_id}', 'ProductAPIController@showWithSample');
+271: Route::get('product-categories', 'ProductAPIController@productCategory');
+272: Route::resource('products', 'ProductAPIController');
+273: Route::post('validate-input', 'ProductAPIController@validateInput');
+274: Route::get('categories', 'ProductAPIController@getCategories');
+275: Route::get('v2/products', 'ProductAPIController@allProducts');
+276: Route::get('v2/sample-products', 'SampleProductAPIController@allSampleProducts');
+278: Route::post('create-order-from-cs', 'OrderAPIController@createOrderFromCS');
+280: Route::get('zipcode/get/province', 'OrderAPIController@get_province');
+285: Route::middleware('auth:api')->get('test', 'testApiController@example');
+286: Route::get('testses', 'OrderAPIController@testPaymentEmailViaSES');
+289: Route::get('get-promo-codes', 'PromotionAPIController@index');
+290: Route::get('get-last-promocode-active', 'PromotionAPIController@lastPromocodeActive');
+291: Route::get('promotions/calculate', 'PromotionAPIController@calculate');
+294: Route::post('me-as-admin', 'UserController@meAsAdmin');
+295: Route::group(['middleware' => 'client', 'throttle:rate_limit,50'], function () {
+296:     Route::get('me-as-client', 'UserController@meAsClient');
+297:     Route::post('client-download-drawing-log', 'DownloadDrawingController@clientLog');
+299: Route::group(['middleware' => 'auth:api', 'throttle:rate_limit,50'], function () {
+300:     Route::get('me', 'UserController@me');
+302: Route::group(['middleware' => 'auth:api', 'throttle:rate_limit,50'], function () {
+303:     Route::resource('rewards', 'RewardAPIController');
+304:     Route::get('rewards/packaging_type_id/{packaging_type_id}', 'RewardAPIController@getActiveRewardByPackagingTypeID');
+305:     Route::resource('campaign-points', 'CampaignPointAPIController');
+308:     Route::resource('point-users', 'PointUserAPIController');
+309:     Route::get('point-users/user_id/{user_id}', 'PointUserAPIController@getExpirePoint');
+310:     Route::get('point-users/{uid}/point', 'PointUserAPIController@getPointCanUse');
+311:     Route::get('get-points', 'PointUserAPIController@getPoints');
+312:     Route::post('give-points/new-customer-popup', 'PointUserAPIController@givePointsNewCustomerPopup');
+313:     Route::post('redeem', 'PointUserAPIController@redeem');
+315:     Route::get('redeem/calculate', 'PointUserAPIController@calculate');
+317:     Route::post('point-users/refund/{order_id}', 'PointUserAPIController@redeemRefund');
+319:     Route::post('point-user/logs', 'PointUserAPIController@getLogs')->name('point-user.logs');
+322:     Route::post('download-drawing-log', 'DownloadDrawingController@log');
+323:     Route::put('clear-new-alert/{order_id}', 'OrderAPIController@clearNewAlert');
+324:     Route::put('clear-new-alert-design', 'UserController@clearNewAlertDesign');
+325:     Route::get('new-alert/{order_id}', 'OrderAPIController@getNewAlert');
+326:     Route::resource('orders', 'OrderAPIController');
+327:     Route::post('orders-v2', 'OrderAPIController@storev2');
+328:     Route::get('my-orders', 'OrderAPIController@myCart');
+329:     Route::get('new-my-orders', 'OrderAPIController@myOrders');
+330:     Route::put('orders/{order_id}/uuid/{design_uuid}', 'OrderAPIController@updateDesingUuid');
+332:     Route::post('save-promo-code', 'UserPromotionAPIController@store');
+333:     Route::get('check-use-promo-code/{code}', 'UserPromotionAPIController@checkCanUse');
+334:     Route::get('get-user-promo-codes', 'UserPromotionAPIController@index');
+336:     Route::post('updateProfile', 'UserController@updateProfile');
+338:     Route::get('swagger/{doc}', 'Swagger\SwaggerController@index');
+342:     Route::get('product/create', 'ProductAPIController@index');
+343:     Route::get('folding/getFactoryData', 'FoldingBoxController@getFactoryData');
+347:     Route::post('/export/orders', 'ExportExcelController@exportOrderExcel')->name('exportOrder');
+349:     Route::resource('folding', 'FoldingBoxController')->only([
+353:     Route::resource('papers', 'PaperController')->only([
+357:     Route::resource('print-types', 'PrintTypeController')->only([
+361:     Route::resource('print-wastes', 'PrintWastesController')->only([
+365:     Route::resource('finish-wastes', 'FinishWastesController')->only([
+369:     Route::resource('diecut-wastes', 'DiecutWastesController')->only([
+373:     Route::resource('diecut-prices', 'DiecutPriceController')->only([
+377:     Route::resource('diecut-block-prices', 'DiecutBlockPriceController')->only([
+381:     Route::resource('assembly-wastes', 'AssemblyWastesController')->only([
+385:     Route::resource('assembly-prices', 'AssemblyPricesController')->only([
+389:     Route::resource('factories', 'FactoryController')->only([
+393:     Route::resource('finishs', 'FinishController')->only([
+397:     Route::resource('assemblies', 'AssemblyController')->only([
+401:     Route::resource('calculateconditions', 'CalculateConditionsController')->only([
+405:     Route::resource('conditions', 'ConditionsController')->only([
+409:     Route::resource('paper-trims', 'PaperTrimController')->only([
+413:     Route::resource('paper-sheets', 'PaperSheetsController')->only([
+417:     Route::resource('paper-sizes', 'PaperSizesController')->only([
+421:     Route::resource('difficult-levels', 'DifficultLevelController')->only([
+425:     Route::resource('finishs', 'FinishController')->only([
+429:     Route::resource('colors', 'ColorController')->only([
+433:     Route::resource('diecuts', 'DiecutController')->only([
+437:     Route::resource('print-plates', 'PrintPlateController')->only([
+441:     Route::resource('print-prices', 'PrintPriceController')->only([
+445:     Route::resource('finish-prices', 'FinishPriceController')->only([
+449:     Route::resource('finish-plates', 'FinishPlateController')->only([
+453:     Route::resource('sortings', 'SortingController')->only([
+457:     Route::resource('semi-plate-wastes', 'SemiPlateWasteController')->only([
+461:     Route::resource('delivery-costs', 'DeliveryCostController')->only([
+465:     Route::resource('packing-types', 'PackingTypeController')->only([
+469:     Route::resource('packing-prices', 'PackingPriceController')->only([
+473:     Route::resource('code-margins', 'CodeMarginController')->only([
+477:     Route::resource('assembly-sheets', 'AssemblySheetsController')->only([
+481:     Route::resource('paper-cannot-do-process', 'PaperCannotDoProcess', [
+494:     Route::get('order/{order}', 'OrderAPIController@getOrderData')->name('order.show');
+495:     Route::post('order/{order_id}/save-brief-design', 'OrderAPIController@saveBreifDesign');
+496:     Route::post('order/{order_id}/save-payment-slip', 'OrderAPIController@savePaymentSlip');
+497:     Route::post('order/{order_id}/remove-payment-slip', 'OrderAPIController@removePaymentSlip');
+498:     Route::post('order/{order}/update-ccemail', 'OrderAPIController@updateCcEmail')->name('order.updateCCEmail');
+502:     Route::post('calculate-folding-box-ajax', 'Folding\FoldingBoxController@calculateFoldingBoxAjax');
+505:     Route::post('order/{order_id}/save-invoice-address', 'OrderAPIController@saveInvoiceAddress');
+506:     Route::post('order/{order}/save-tax-address', 'OrderAPIController@customerSaveTaxAddress');
+507:     Route::post('order/{order_id}/save-address', 'OrderAPIController@saveAddress');
+508:     Route::post('order/{order_id}/save-optional', 'OrderAPIController@saveOptional');
+509:     Route::post('order/{order}/order-email/{paymentId}', 'OrderAPIController@orderEmail');
+510:     Route::post('order/{order}/update-ccemail', 'OrderAPIController@updateCCEmail');
+512:     Route::post('order/{id}/re-production', 'OrderAPIController@reProduction')->where('id', '[0-9]+');
+515:     Route::get('order/{order}/quotation-pdf', 'OrderAPIController@quotation');
+516:     Route::get('order/{order_id}/get-drawing', 'OrderAPIController@getDrawing');
+517:     Route::post('order/{order_id}/set-uuid', 'OrderAPIController@setUUID');
+518:     Route::post('order/{order_id}/approve-design', 'OrderAPIController@approveDrawing');
+519:     Route::post('order/{order_id}/approve-template-status', 'OrderAPIController@approveTemplateStatus');
+520:     Route::post('order/{order_id}/approve-start-production', 'OrderAPIController@approveProduction');
+521:     Route::post('order/{order_id}/user-reject-graphic', 'OrderAPIController@userRejectGraphic');
+522:     Route::post('order/{order_id}/user-reject-template', 'OrderAPIController@userRejectTemplate');
+524:     Route::post('rigids', 'RigidAPIController@store');
+526:     Route::post('order/{order_id}/activity', 'OrderActivityAPIController@activityByUser');
+527:     Route::resource('order-activities', 'OrderActivityAPIController');
+529:     Route::get('/designs/get-template', 'DesignsAPIController@getTemplate');
+530:     Route::get('/designs/get-designs', 'DesignsAPIController@getMyDesigns');
+531:     Route::get('/designs/get-designs-with-size', 'DesignsAPIController@getMyDesignsWithSize');
+532:     Route::post('/designs/create-designs', 'DesignsAPIController@createMyDesigns');
+533:     Route::put('/designs/save-designs/{uuid}', 'DesignsAPIController@saveMyDesigns');
+534:     Route::get('/designs/get-design/{uuid}', 'DesignsAPIController@getDesignByUuid');
+535:     Route::delete('/designs/delete-design/{design_id}', 'DesignsAPIController@deleteMyDesigns');
+536:     Route::post('/designs/save-thumbnail/{design_id}', 'DesignsAPIController@saveThumbnail');
+537:     Route::resource('designs', 'DesignsAPIController');
+540:     Route::post('otp', 'SMSController@sendSMS');
+541:     Route::post('verify-otp', 'SMSController@verifyOTP');
+543:     Route::post('email-update', 'OrderAPIController@emailUpdate');
+545:     Route::post('2c2p-ipp-getlink/{order}', 'OrderAPIController@genToken2c2p');
+548:     Route::get('scgppdpa-get-active-purposes', [SCGPController::class, 'getActivePurposes']);
+549:     Route::post('scgppdpa-submit-purposes', [SCGPController::class, 'submitPurposes']);
+551:     Route::post('standard-products/create-order', 'StandardProductAPIController@createOrder');
+554: Route::post('otp-login', 'SMSController@sendSMSLogin');
+555: Route::post('verify-otp-login', 'SMSController@verifyOTPLogin');
+558: Route::get('convert-svg/{url}', 'OrderApiController@convertSvg');
+559: Route::get('order/{order}/quotation', 'OrderAPIController@quotation');
+560: Route::post('folding/calculate', 'FoldingBoxController@submitForm');
+562: Route::post('order/pay/creditcard', 'OrderAPIController@payment2C2PCreditcard');
+563: Route::post('order/pay/onlinepayment', 'OrderAPIController@payment2C2POnline');
+564: Route::get('order/lineNoti', 'OrderAPIController@sendLineNotifyApi');
+565: Route::any('2c2p/callback', 'OrderAPIController@payment2C2PCallback');
+566: Route::any('2c2p/redirect', 'OrderAPIController@payment2C2PRedirect');
+569: Route::get('cs/folding', 'FoldingBoxController@customerServiceData');
+571: Route::post('cs/folding', 'FoldingBoxController@customerServiceCalculate');
+574: Route::get('cs/tagAndSleeve', 'TagAndSleeveAPIController@getCSData');
+575: Route::post('cs/tagAndSleeve', 'TagAndSleeveAPIController@CScalculate');
+579: Route::get('cs/label', 'Label\LabelController@customerServiceData');
+580: Route::post('cs/label', 'Label\LabelController@customerServiceCalculate');
+581: Route::resource('label', 'Label\LabelController');
+582: Route::post('calculate/label', 'Label\LabelController@submitForm');
+588: Route::get('master-print-type', 'Master\PrintTypeController@show');
+589: Route::get('master-pattern', 'Master\PatternController@show');
+590: Route::get('master-paper', 'Master\PaperController@show');
+591: Route::get('master-difficult-level', 'Master\DifficultLevelController@show');
+592: Route::get('master-difficult-level-group', 'Master\DifficultLevelController@showgroup');
+593: Route::get('master-color', 'Master\ColorController@show');
+594: Route::get('master-color-group', 'Master\ColorController@showgroup');
+595: Route::get('master-finishing', 'Master\FinishingController@show');
+596: Route::get('master-diecut', 'Master\DietCutController@show');
+597: Route::get('master-assembly', 'Master\AssemblyController@show');
+598: Route::get('master-factory', 'Master\FactoryController@show');
+603: Route::resource('order_products', 'OrderProductAPIController');
+605: Route::resource('faq_categories', 'FaqCategoriesAPIController');
+607: Route::resource('faqs', 'FaqsAPIController');
+609: Route::resource('provinces', 'ProvinceAPIController');
+611: Route::resource('standard_sizes', 'StandardSizeAPIController');
+613: Route::post('share-products', 'ProductAPIController@saveShareProduct');
+614: Route::get('share-products/{url_slug}', 'ProductAPIController@getShareProduct');
+616: Route::get('rigids/calculate-delivery', 'RigidAPIController@calculateDelivery');
+617: Route::get('rigids', 'RigidAPIController@index');
+618: Route::get('rigids/filter-data', 'RigidAPIController@getFilterData');
+619: Route::get('rigids/{id}/calculate', 'RigidAPIController@calculate');
+620: Route::get('rigids/{id}/customize', 'RigidAPIController@customize');
+621: Route::get('rigids/{id}/getPrices', 'RigidAPIController@getPrices');
+622: Route::get('rigids/{id}', 'RigidAPIController@show');
+624: Route::resource('sitemaps', 'SitemapsAPIController');
+626: Route::resource('step_prices', 'StepPriceAPIController');
+628: Route::get('cronjob/update-delivery-status', 'OrderAPIController@updateDeliveryStatus');
+629: Route::get('cronjob/sendout-nps-final', 'OrderAPIController@sendOutNPS');
+630: Route::get('cronjob/notify-miss-checkout', 'OrderAPIController@followUpOrder');
+632: Route::get('search', 'MappingInputAPIController@search');
+634: Route::post('designs_assets/get-image-dpi', 'DesignsAssetsAPIController@checkGetImageResolution');
+635: Route::resource('designs_assets', 'DesignsAssetsAPIController');
+636: Route::resource('semi-designs', 'SemiDesignAPIController');
+637: Route::get('semi-designs/{id}/templates', 'SemiDesignAPIController@getSemiDesignTempaltes');
+638: Route::get('semi-designs/{id}/colors', 'SemiDesignAPIController@getSemiDesignColor');
+639: Route::resource('semi_design_template_fonts', 'SemiDesignTemplateFontAPIController');
+641: Route::post('users/accept-term', 'UserController@acceptTerm');
+643: Route::get('standard-products/{id}', 'StandardProductAPIController@show');
+644: Route::get('standard-products/{id}/zipcode/{zipcode}/step-prices', 'StandardProductAPIController@getStepPrices')->where(['zipcode' => '[0-9]{5}']);
+645: Route::get('standard-products/{id}/checkout', 'StandardProductAPIController@checkout');
+646: Route::get('standard-products/product-type/{standard_product_type_id}', 'StandardProductAPIController@getProductByType');
+648: Route::get('users/web-hook-line-api', 'UsersController@webhook');
+649: Route::post('users/web-hook-line-api', 'UsersController@webhookPost');
+650: Route::post('users/connect-line-to-user', 'UsersController@connectLineToUser');
+651: Route::post('liff-otp', 'SMSController@sendSMSLiff');
+652: Route::post('liff-verify-otp', 'SMSController@verifyOTPLiff');
+653: Route::post('update-liff/{user}', 'SMSController@updateLineAccount');
+655: Route::get('line/user/token', [UsersController::class, 'getUserTokenByLine']);
+657: Route::delete('users/{user}', 'UsersController@deleteFirebaseAuthUser');
+659: Route::get('order/{order}/paid-qrcode', [OrderPaidController::class, 'generateQrCode']);
+660: Route::get('order/{order}/paid-qrcs', [OrderPaidController::class, 'generateQrCS']);
+661: Route::get('order/{order}/paid-debit-direct', [OrderPaidController::class, 'generateDirectDebit']);
+662: Route::get('users/verify-email/{order}', [UserController::class, 'verifyEmail']);
+664: Route::get('test-pdf', function() {
+688: Route::get('quotations/{quotation}', [QuotationController::class, 'getQuotationData']);
+690: Route::post('/line-webhook', [LineMessageController::class, 'handleWebhook']);
+694: Route::get('/facebook-webhook', [FacebookMessengerController::class, 'verifyWebhook']);
+695: Route::post('/facebook-webhook', [FacebookMessengerController::class, 'handle']);
