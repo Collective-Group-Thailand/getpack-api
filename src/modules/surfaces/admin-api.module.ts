@@ -3,6 +3,8 @@ import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/u
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
 import { Module } from '@nestjs/common';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
+import { AuditLogsController } from '@platform/audit/audit.controller';
+import { AuditQueryService } from '@platform/audit/audit-query.service';
 import { OutboxAdminController } from '@platform/domain-events/outbox-admin.controller';
 import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.controller';
 import { AdminFilesController } from '@platform/files/files.controllers';
@@ -20,7 +22,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
 /** `/v1/admin/*` — each deliverable adds the controllers it owns. */
 @Module({
   imports: [RealtimeModule, SettingsAdminModule],
-  providers: [UsersAdminService],
+  providers: [UsersAdminService, AuditQueryService],
   controllers: [
     AdminFilesController,
 
@@ -39,6 +41,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     NotificationRoutesController,
     ConsentPurposesController,
     AdminInboxController,
+    AuditLogsController,
   ],
 })
 export class AdminApiModule {}

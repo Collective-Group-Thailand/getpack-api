@@ -609,6 +609,15 @@
       }
     },
     "schemas": {
+      "ActorType": {
+        "enum": [
+          "user",
+          "api_client",
+          "system",
+          "webhook"
+        ],
+        "type": "string"
+      },
       "AddTemplateVersionDto": {
         "properties": {
           "body": {
@@ -987,6 +996,230 @@
           }
         },
         "type": "object"
+      },
+      "AuditActorDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "แอดมิน ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActorType"
+              }
+            ],
+            "example": "user"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "AuditCategory": {
+        "enum": [
+          "security",
+          "finance",
+          "config",
+          "data_access",
+          "export",
+          "approval",
+          "iam"
+        ],
+        "type": "string"
+      },
+      "AuditEntryDto": {
+        "properties": {
+          "action": {
+            "example": "iam.role_granted",
+            "type": "string"
+          },
+          "actor": {
+            "$ref": "#/components/schemas/AuditActorDto"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditCategory"
+              }
+            ],
+            "example": "iam"
+          },
+          "data": {
+            "additionalProperties": true,
+            "description": "Redacted before storage (PDPA)",
+            "example": {
+              "reason": "Joined the finance team",
+              "role": "finance"
+            },
+            "type": "object"
+          },
+          "occurredAt": {
+            "example": "2026-09-23T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "onBehalfOf": {
+            "description": "CS acting for a customer",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditOutcome"
+              }
+            ],
+            "example": "success"
+          },
+          "requestId": {
+            "example": "req-3f2a9c1d",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resourceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resourceType": {
+            "example": "user",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "occurredAt",
+          "category",
+          "action",
+          "outcome",
+          "actor",
+          "onBehalfOf",
+          "resourceType",
+          "resourceId",
+          "requestId",
+          "data"
+        ],
+        "type": "object"
+      },
+      "AuditExportDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-09-23T14:10:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f11e",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rows": {
+            "example": 1250,
+            "type": "integer"
+          },
+          "truncated": {
+            "description": "True when more than 50000 rows matched; narrow the period",
+            "example": false,
+            "type": "boolean"
+          },
+          "url": {
+            "example": "https://packio-files.s3.example.com/…&X-Amz-Expires=300",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "url",
+          "rows",
+          "truncated",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "AuditFilterDto": {
+        "properties": {
+          "action": {
+            "example": "auth.login_failed",
+            "type": "string"
+          },
+          "actorId": {
+            "description": "Acting user",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditCategory"
+              }
+            ],
+            "example": "security"
+          },
+          "from": {
+            "example": "2026-09-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditOutcome"
+              }
+            ],
+            "example": "denied"
+          },
+          "resourceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": "string"
+          },
+          "resourceType": {
+            "example": "user",
+            "type": "string"
+          },
+          "to": {
+            "description": "Exclusive",
+            "example": "2026-10-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AuditOutcome": {
+        "enum": [
+          "success",
+          "denied",
+          "failure"
+        ],
+        "type": "string"
       },
       "ChangeSettingDto": {
         "properties": {
@@ -6474,6 +6707,490 @@
         ],
         "x-required-permissions": [
           "approvals.read"
+        ]
+      }
+    },
+    "/v1/admin/audit-logs": {
+      "get": {
+        "description": "Security- and finance-relevant actions (logins, role changes, permission denials, setting changes, exports, approvals), newest first. Data is redacted before storage (PDPA). Read-only for the time-boxed Auditor (§8).\n\nImplements: D-140, D-033.",
+        "operationId": "admin.auditLogs.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AuditCategory"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AuditOutcome"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "example": "auth.login_failed",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceType",
+            "required": false,
+            "schema": {
+              "example": "user",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resourceId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actorId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "action": "iam.role_granted",
+                      "actor": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                        "name": "แอดมิน ทดสอบ",
+                        "type": "user"
+                      },
+                      "category": "iam",
+                      "data": {
+                        "reason": "Joined the finance team",
+                        "role": "finance"
+                      },
+                      "occurredAt": "2026-09-23T14:05:00+07:00",
+                      "onBehalfOf": null,
+                      "outcome": "success",
+                      "requestId": "req-3f2a9c1d",
+                      "resourceId": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0",
+                      "resourceType": "user"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AuditEntryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Search the audit log",
+        "tags": [
+          "admin.auditLogs"
+        ],
+        "x-required-permissions": [
+          "audit_logs.read"
+        ]
+      }
+    },
+    "/v1/admin/audit-logs/exports": {
+      "post": {
+        "description": "Up to 50000 rows per export as UTF-8 CSV (formula-safe), served by a 5-minute signed URL. The export itself is audited (`export.generated`).\n\nImplements: D-033.",
+        "operationId": "admin.auditLogs.export",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "category": "security",
+                    "from": "2026-09-01T00:00:00+07:00",
+                    "to": "2026-10-01T00:00:00+07:00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AuditFilterDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-09-23T14:10:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f11e",
+                  "rows": 1250,
+                  "truncated": false,
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuditExportDto"
+                }
+              }
+            },
+            "description": "Export ready",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export the audit log as CSV",
+        "tags": [
+          "admin.auditLogs"
+        ],
+        "x-required-permissions": [
+          "audit_logs.export"
         ]
       }
     },
@@ -22819,6 +23536,10 @@
     {
       "description": "Generic approval engine: inbox, approve, reject, withdraw (ADR-0006).",
       "name": "admin.approvals"
+    },
+    {
+      "description": "The audit log: search and CSV export (itself audited).",
+      "name": "admin.auditLogs"
     },
     {
       "description": "PDPA consent purposes and their versioned texts (D-005, D-144).",

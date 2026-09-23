@@ -36,7 +36,8 @@ Then run `pnpm contract:build && pnpm contract:lint` and commit `contract/openap
 | `pnpm contract:build` | regenerates `contract/openapi.json` — commit it with every endpoint change |
 | `pnpm contract:lint` | Spectral with the Packio ruleset (`contract/spectral/`): operationId, summary, decision id, security, full status-code set, examples, fake data only |
 | `pnpm build` · `pnpm start` · `pnpm start:worker` | compile and run the API / worker from `dist/` |
-| `pnpm db:migrate` | apply Prisma migrations (first migration arrives in B1.2) |
+| `pnpm db:migrate` · `pnpm db:seed` · `pnpm db:seed:dev` | apply migrations; reference data from decisions; fake dev users (`<role>@example.invalid`, password `DEV_SEED_PASSWORD`) |
+| `pnpm rbac:build` | regenerates `docs/rbac.md` from the IAM catalogues (a unit test fails on drift) |
 
 Testcontainers needs a running Docker. With Docker Desktop on macOS the tests find
 `~/.docker/run/docker.sock` automatically when `DOCKER_HOST` is not set.
@@ -46,9 +47,13 @@ Testcontainers needs a running Docker. With Docker Desktop on macOS the tests fi
 src/main.ts            HTTP process          src/worker.ts   worker process
 src/bootstrap.ts       HTTP pipeline shared by main, contract build and tests
 src/config/            validated environment (fail fast), Secrets Manager loader
-src/common/            problem details (RFC 9457, th/en), validation, pagination, idempotency, ETag, logging, OpenAPI
+src/common/            problem details (RFC 9457, th/en), validation, pagination, idempotency, ETag, logging, OpenAPI,
+                       request context (actor), auth decorators (@Public, @Can), money, Bangkok time & working days
 src/database/          PrismaService (withTx), Redis
-src/platform/          health (settings, approvals, outbox, notifications… arrive in B1.3)
+src/platform/          audit, activity, domain events + outbox relay, settings, feature flags, approvals,
+                       notifications, realtime (SSE, web push), files, calendars, health
+src/modules/auth/      sign-in (staff, partner, customer OTP/Firebase/LINE, client credentials), sessions, JWKS
+src/modules/iam/       permissions, @Can guard, scoping (factory/company), SoD, user & role admin
 src/modules/surfaces/  /v1/auth · /v1/store · /v1/admin · /v1/partner · /webhooks
 src/integrations/      one folder per provider, each with a fake (INTEGRATIONS_MODE=fake|real)
 prisma/                prisma.config.ts, multi-file schema, migrations, seeds

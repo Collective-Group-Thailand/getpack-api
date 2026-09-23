@@ -1,6 +1,6 @@
 # ADR-0006 — Approval-matrix engine
 
-**Status:** Accepted (2026-09-23) — implemented in B1.3, used by B2–B5
+**Status:** Accepted (2026-09-23) — implemented in B1.3 (2026-09-24), used by B2–B5
 **Decision ids:** D-022, D-040, D-052, D-063, D-121, D-124 · controls: `accounting-design.md` §8
 
 ## Context
@@ -26,3 +26,4 @@ Hard-coding each flow would duplicate logic and make the thresholds constants.
 - B2–B5 modules create requests and subscribe to outcome events instead of writing their own approval logic.
 - Every approval is reproducible: request snapshot + policy version + actions.
 - Money-moving approvals combine with `Idempotency-Key` and permissions on the executing endpoint (CLAUDE.md hard rules).
+- **Implementation notes (B1.3):** the requesting module passes `expiresAt` when the policy version has an `expiry_rule` (it knows its subject, e.g. the quote's validity); the engine refuses to create such a request without it. SLA clocks on `business` calendars count whole working days of the national calendar (D-161) — no decision defines a working-hours window yet. SLA breaches emit one `approval.sla_breached` event per overdue step; approvers (holders of the step role and their active delegates, never the requester) are notified through the notification matrix (`assignee` audience). Setting changes can go through the engine when a setting names an approval policy with subject type `setting_version`; no seeded setting does (D-063: Superadmin changes thresholds directly).

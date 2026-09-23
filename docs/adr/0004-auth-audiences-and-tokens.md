@@ -1,6 +1,6 @@
 # ADR-0004 — Auth audiences & tokens
 
-**Status:** Accepted (2026-09-23) — implemented in B1.3
+**Status:** Accepted (2026-09-23) — implemented in B1.3 (2026-09-24)
 **Decision ids:** D-002, D-140, D-141, D-142 · contract: `docs/contract/api-conventions.md` §2, §4 · controls: `accounting-design.md` §8
 
 ## Context
@@ -18,4 +18,12 @@ Three kinds of principals use one API: customers (web, CS-assisted, LINE LIFF; B
 ## Consequences
 - Every protected controller declares its surface via `ApiSurface()` so the contract shows the right bearer scheme.
 - Session and client tables (`auth_sessions`, `api_clients`) are part of the B1.2 schema design.
-- **Open for B1.3** (recorded in `docs/PROGRESS.md` when chosen, not guessed here): exact access-token lifetime within 10–15 min, refresh-token lifetime and idle timeout per audience, OTP expiry and attempt limits, device-PIN policy.
+- **Chosen in B1.3 (2026-09-23, conservative option picked by the user)** — superadmin settings, effective-dated (ADR-0005), seeded as `proposed` until the security review confirms them:
+  | Setting | Value |
+  |---|---|
+  | `auth.access_token_ttl_seconds` | 600 (10 min; schema bounds 600–900) |
+  | `auth.refresh_token_lifetimes` | staff 12 h absolute / 2 h idle · partner 7 d / 1 d · customer 30 d / 7 d |
+  | `auth.otp_policy` | 6 digits, 5 min expiry, 5 attempts per code, 60 s between resends (per purpose), 5 per phone and 20 per IP per hour |
+  | `auth.password_lockout` | 5 failures → 15 min lock (staff and partner) |
+  | `auth.device_pin_policy` | 6 digits, 5 attempts → 15 min lock |
+- **Implementation notes (B1.3):** revoked session families are also marked in Redis for 16 minutes so their access tokens stop at once; when Redis is unreachable the guard fails closed (503). Concurrent use of one refresh token is treated as reuse. Firebase ID tokens are verified locally with Google's published keys (no firebase-admin). Accounts are never linked by e-mail alone. The OAuth2 token endpoint answers with RFC 6749 field names (`access_token`, snake_case) — the one exception to the camelCase rule of the contract; its errors are problem details. Partner tokens need a resolvable factory scope: until the factory module registers its scope resolver (B2.2) partner sign-in is refused with `auth.scope_unavailable`.
