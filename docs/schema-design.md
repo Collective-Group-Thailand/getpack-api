@@ -220,7 +220,7 @@ ix `sha256`, `(upload_status, expires_at)`.
 **`web_push_subscriptions`** — `user_id` · `endpoint text` ux · `p256dh text` · `auth_secret_enc bytea` · `user_agent text?` · `last_used_at?` · `revoked_at?`.
 
 **`business_calendars`** — `code text` ux (`th_public`, `factory:<public_id>`) · `name` · `kind calendar_kind` (`national|factory|company`) · `factory_id?` · `weekend_days smallint[] = '{0,6}'` (ISO dow in `Asia/Bangkok`) · `base_calendar_id? → business_calendars` (factory calendar = national + closures).
-**`business_calendar_days`** — `calendar_id` · `day date` · `kind calendar_day_kind` (`holiday|closure|extra_working_day`) · `name_th`, `name_en`. ux `(calendar_id, day)`. Used for SLAs (D-061 4 business hours, D-071, D-074) and lead times.
+**`business_calendar_days`** — `calendar_id` · `day date` · `kind calendar_day_kind` (`holiday|closure|extra_working_day`) · `observance holiday_observance = 'all'` (`all|government_only|financial_institutions`; only `all` makes a day non-working for factory business-day maths, D-161) · `name_th`, `name_en`. ux `(calendar_id, day)`. The national calendar `th_public` is keyed in by admins once a year; factory calendars inherit it via `base_calendar_id` and add closures only. Used for SLAs (D-061 4 business hours, D-071, D-074) and lead times.
 
 **`document_series`** (migrated in B2.5) — `entity_id` · `doc_type document_type` · `factory_id?` (BS is per factory) · `prefix text` · `format text` (e.g. `{prefix}{yyyy}{mm}-{seq:5}`; Buddhist-era option) · `reset_period sequence_reset` (`never|year|month`) · `is_gapless boolean` · `status` · format changes go through the `document_series_change` approval policy (§8 of accounting design). ux `(entity_id, doc_type, coalesce(factory_id,0))`.
 **`document_sequences`** — `series_id` · `period_key text` (`2026`, `2026-10`, `all`) · `next_value bigint`. ux `(series_id, period_key)`; row-locked in the issuing transaction.
@@ -228,7 +228,7 @@ ix `sha256`, `(upload_status, expires_at)`.
 **`product_embeddings`**, **`design_embeddings`** (ADR-0001) — `subject_id bigint` (FK added with catalogue/design tables) · `model text` · `model_version text` · `embedding vector(1536)` · `created_at`. ux `(subject_id, model, model_version)`; HNSW index `vector_cosine_ops`. Empty until an AI feature ships.
 
 #### Enums (values in §4)
-`entity_status`, `setting_scope`, `setting_value_type`, `setting_confirmation`, `config_version_status`, `approval_status`, `approval_step_status`, `approval_action_kind`, `approval_scope_rule`, `approval_no_match`, `calendar_basis`, `file_upload_status`, `file_scan_status`, `file_retention_class`, `attachment_subject`, `actor_type`, `audit_category`, `audit_outcome`, `activity_visibility`, `outbox_status`, `webhook_provider`, `webhook_status`, `idempotency_status`, `notification_channel`, `notification_category`, `notification_audience`, `notification_status`, `template_version_status`, `locale_code`, `calendar_kind`, `calendar_day_kind`, `document_type`, `sequence_reset`.
+`entity_status`, `setting_scope`, `setting_value_type`, `setting_confirmation`, `config_version_status`, `approval_status`, `approval_step_status`, `approval_action_kind`, `approval_scope_rule`, `approval_no_match`, `calendar_basis`, `file_upload_status`, `file_scan_status`, `file_retention_class`, `attachment_subject`, `actor_type`, `audit_category`, `audit_outcome`, `activity_visibility`, `outbox_status`, `webhook_provider`, `webhook_status`, `idempotency_status`, `notification_channel`, `notification_category`, `notification_audience`, `notification_status`, `template_version_status`, `locale_code`, `calendar_kind`, `calendar_day_kind`, `holiday_observance`, `document_type`, `sequence_reset`.
 
 ```mermaid
 erDiagram
@@ -916,7 +916,7 @@ Rounding mode (line vs document) and expected points redemption rate (P10) are s
 **`vendor_bank_accounts`** — `public_id` · `vendor_id` · `bank_code text` · `branch_name?` · `account_name` · `account_no_enc bytea` · `account_no_last4 char(4)` · `account_no_hash bytea` (ix — duplicate vendor bank accounts exception report, §8) · `status bank_account_status` (`pending_approval|active|superseded|rejected`) · `approval_request_id` (dual approval, `vendor_bank_account_change`) · `verification_call jsonb` (who called, number called (masked), when, outcome — logged, §8) · `effective_from`. Never updated in place; partial ux `(vendor_id) where status = 'active'`.
 **`purchase_orders`** — `public_id` · `entity_id` · `po_number` (PO series) · `vendor_id` · `factory_id` · `production_job_id` ux · `order_id` · `status po_status` (`issued|accepted|cancelled|received|closed`) · `issued_at` · `price_list_version_id` · `price_snapshot jsonb` · §2.9 totals. Event → P13 memo commitment.
 **`purchase_order_lines`** — `po_id` · `line_no` · `line_type po_line_type` (`production|shipping|mockup|design|reproduction`) (production and shipping separated for WHT, §2) · `quantity` · `unit_price numeric(18,6)` · §2.9 amounts · `wht_category`.
-**`goods_receipts`** — GR from POD + reported quantity: `public_id` · `entity_id` · `gr_number` · `po_id` · `proof_of_delivery_id?` · `received_quantity` · `received_at` · §2.9 amounts (actual qty × unit cost) · `journal_entry_id?` (P15). **`goods_receipt_lines`** — per PO line.
+**`goods_receipts`** — GR from POD + reported quantity: `public_id` · `entity_id` · `gr_number` · `po_id` · `proof_of_delivery_id?` · `received_quantity` · `payable_quantity` (= min(received, ordered), D-165; ck `payable_quantity <= received_quantity`) · `received_at` · §2.9 amounts (payable qty × unit cost) · `journal_entry_id?` (P15). **`goods_receipt_lines`** — per PO line.
 **`billing_statements`** — BS generated by the system (D-090): `public_id` · `entity_id` · `bs_number` (series per factory) · `vendor_id` · `factory_id` · `period_from`, `period_to` · `status billing_statement_status` (`generated|sent|confirmed|disputed|superseded`) · `generated_at` · `confirmed_by_user_id?`, `confirmed_at?` · `dispute_note?` · totals. **`billing_statement_lines`** — `statement_id` · `goods_receipt_id?` · `vendor_deduction_id?` · `advance_payable_item_id?` · `description` · amounts.
 **`vendor_invoices`** — the vendor's own tax invoice/bill (factories and other vendors, P25/P26): `public_id` · `entity_id` · `vendor_id` · `billing_statement_id?` · `vendor_invoice_no` · `invoice_date` · `seller_tax_id`, `seller_branch_code` · `is_tax_invoice boolean` · `source vendor_invoice_source` (`e_tax|pdf_upload|manual`) · `file_object_id?` · §2.9 amounts · `input_vat_status input_vat_status` (`claimable|pending_document|not_claimable`) · `validated_by?`, `validated_at?` · `recorded_by` (SoD with bank-account changes, §8) · `journal_entry_id?`. ux `(vendor_id, vendor_invoice_no)`.
 **`vendor_invoice_lines`** — per line with `wht_category`, expense `account_id?`.
@@ -1085,6 +1085,7 @@ SQL name → values. Each becomes a named OpenAPI component (PascalCase) when it
 | `locale_code` | th, en |
 | `calendar_kind` | national, factory, company |
 | `calendar_day_kind` | holiday, closure, extra_working_day |
+| `holiday_observance` | all, government_only, financial_institutions |
 | `document_type` | qt, iv, tr, rc, cn, dn, po, gr, bs, pv, wt, jv, order_group, order, job, shipment, claim, rfq |
 | `sequence_reset` | never, year, month |
 | `user_kind` | customer, staff, partner |
@@ -1380,6 +1381,7 @@ Every decision with a data implication, and where it lives. "—" = no data impl
 | D-161 Admin-maintained holidays & geography | `business_calendars`, `business_calendar_days`, `geo_*` (no seed data) |
 | D-162 Discount memo: matching tier only | `approval_steps.condition` per band on policy `discount_memo` |
 | D-163 Default tolerance ± 5 % (Proposed) | setting `fulfilment.tolerance_default_pct`; `factory_tolerance_policies` |
+| D-165 Overage within tolerance not paid to factory | `goods_receipts.payable_quantity`; `delivery_reconciliations.outcome` |
 | D-164 Retention release 30 days after claim window (Proposed) | setting `payouts.retention_release_days`; `factory_payout_policies.retention_release_days`; `payable_items.eligible_at` (source `retention`) |
 | `accounting-design.md` §1 principles | immutability triggers, `journal_entries.domain_event_id`/`posting_rule_version_id`/`approved_by`, `fiscal_periods.status`, `entity_id` |
 | §2 tax model ⚖ | `tax_rates`, `tax_nature_rules`, `tax_code` on lines, `input_vat_status`, `customer_wht_certificates`, `credit_note_reasons`, retention class `financial_record` |
@@ -1440,7 +1442,7 @@ Recorded here and in `docs/PROGRESS.md`. Conservative choices were made where th
 **Open questions (values not decided — settings designed, values not seeded or flagged)**
 - **Q-1** Unpaid-order expiry rule (D-060) — extracted from legacy in B3.1.
 - **Q-2** Customer/order/job/claim code formats (human keys) — proposal: prefixes per type + year/month + running number from `document_series` (non-gapless); needs business confirmation.
-- **Q-3** Default quantity tolerance → **D-163 (Proposed): ± 5 %** shortage and overage; seeded as `fulfilment.tolerance_default_pct` = 5 with `confirmation_status = proposed`. Factories/product types override it through `factory_tolerance_policies`. Open sub-question: overage within tolerance is not charged to the customer (D-080) while the factory payable uses actual quantity (P15) — whether Packio pays the factory for those extra pieces (the schema supports either: payout on `min(delivered, ordered)` or on `delivered`).
+- **Q-3** Default quantity tolerance → **D-163 (Proposed): ± 5 %** shortage and overage; seeded as `fulfilment.tolerance_default_pct` = 5 with `confirmation_status = proposed`. Factories/product types override it through `factory_tolerance_policies`. Overage within tolerance is not paid to the factory: payable quantity = min(delivered, ordered) (D-165).
 - **Q-4** Retention release → **D-164 (Proposed): 30 days after the order's claim window closes**; seeded as the platform default of `retention_release_days` = 30 with `confirmation_status = proposed`, overridable per factory payout policy.
 - **Q-5** k-anonymity threshold → **k ≥ 3** (D-160, see C-3).
 - **Q-6** Capacity unit per product type (pieces vs sheets vs m²) — decided with the launch factory in B2.2; the column supports all.

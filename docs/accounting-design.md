@@ -76,7 +76,7 @@ Notation: Dr / Cr, amounts incl. VAT where stated. Nature = hire of work unless 
 | P12 | Points expired | Dr 2330 · Cr 4990 |
 | P13 | Factory job accepted — PO committed | memo only (commitment, no GL) |
 | P14 | Advance payout to factory (30 % default) | Dr 1250 net · Dr 1241/1242 VAT per factory tax invoice · Cr 112x cash · Cr 2231 WHT |
-| P15 | Delivery confirmed (GR from POD + reported quantity) | Dr 5110 production cost (actual qty × unit cost) · Dr 5120 shipping payout · Cr 2110 |
+| P15 | Delivery confirmed (GR from POD + reported quantity) | Dr 5110 production cost (min(actual, ordered) qty × unit cost — overage within tolerance is not paid, D-165) · Dr 5120 shipping payout · Cr 2110 |
 | P16 | Apply advance to payable | Dr 2110 · Cr 1250 |
 | P17 | Final payout after claim window | Dr 2110 · Dr 1241 VAT (if not already) · Cr 112x · Cr 2231 WHT · Cr 2130 retention (5 % default) |
 | P18 | Retention released | Dr 2130 · Cr 112x |
