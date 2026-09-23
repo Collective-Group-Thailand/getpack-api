@@ -1,6 +1,5 @@
 import { Global, Module } from '@nestjs/common';
 
-import { UsersAdminService } from './admin/users-admin.service';
 import { PermissionGuard } from './permission.guard';
 import { PermissionResolver } from './permission-resolver.service';
 import { ScopeDirectory } from './scope-directory';
@@ -16,7 +15,6 @@ import { SodService } from './sod.service';
     ScopingService,
     SodService,
     PermissionGuard,
-    UsersAdminService,
   ],
   exports: [
     PermissionResolver,
@@ -24,7 +22,6 @@ import { SodService } from './sod.service';
     ScopingService,
     SodService,
     PermissionGuard,
-    UsersAdminService,
   ],
 })
 export class IamModule {}

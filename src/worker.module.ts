@@ -4,8 +4,10 @@ import { AppConfigModule } from '@config/app-config.module';
 import { DatabaseModule } from '@database/database.module';
 import { BULLMQ_REDIS, RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
+import { IamModule } from '@modules/iam/iam.module';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { ApprovalsModule } from '@platform/approvals/approvals.module';
 import { DomainEventsWorkerModule } from '@platform/domain-events/domain-events-worker.module';
 import { PlatformCoreModule } from '@platform/platform-core.module';
 import { type Redis } from 'ioredis';
@@ -37,6 +39,8 @@ import { WorkerLifecycle } from './worker.lifecycle';
     DatabaseModule,
     IntegrationsModule,
     PlatformCoreModule,
+    IamModule,
+    ApprovalsModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

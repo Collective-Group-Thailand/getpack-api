@@ -17,6 +17,7 @@ import { SurfacesModule } from '@modules/surfaces/surfaces.module';
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ApprovalsModule } from '@platform/approvals/approvals.module';
 import { HealthModule } from '@platform/health/health.module';
 import { PlatformCoreModule } from '@platform/platform-core.module';
 import { SentryModule } from '@sentry/nestjs/setup';
@@ -57,6 +58,7 @@ import { LoggerModule } from 'nestjs-pino';
     PlatformCoreModule,
     IamModule,
     AuthModule,
+    ApprovalsModule,
     HealthModule,
     SurfacesModule,
   ],
