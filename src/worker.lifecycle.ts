@@ -19,7 +19,7 @@ export class WorkerLifecycle implements OnApplicationBootstrap, OnApplicationShu
       probe.disconnect();
     }
     this.keepAlive = setInterval(() => undefined, 60_000);
-    this.logger.log('worker ready (no queues registered yet)');
+    this.logger.log('worker ready');
   }
 
   onApplicationShutdown(signal?: string): void {

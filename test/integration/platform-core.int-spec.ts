@@ -119,7 +119,7 @@ describe('platform core writers (PostgreSQL 18)', () => {
       resourceType: 'thing',
       resourcePublicId: id,
     });
-    expect((await counts(id)).audit).toBe('1');
+    expect((await counts(id))?.audit).toBe('1');
   });
 
   it('resolves factory calendars from national holidays (observance all only) plus closures (D-161)', async () => {

@@ -1,17 +1,21 @@
 import { buildLoggerParams } from '@common/logging/logger.options';
 import { AppConfig } from '@config/app-config';
 import { AppConfigModule } from '@config/app-config.module';
-import { redisOptions } from '@database/redis.module';
+import { DatabaseModule } from '@database/database.module';
+import { BULLMQ_REDIS, RedisModule } from '@database/redis.module';
+import { IntegrationsModule } from '@integrations/integrations.module';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { Redis } from 'ioredis';
+import { DomainEventsWorkerModule } from '@platform/domain-events/domain-events-worker.module';
+import { PlatformCoreModule } from '@platform/platform-core.module';
+import { type Redis } from 'ioredis';
 import { LoggerModule } from 'nestjs-pino';
 
 import { WorkerLifecycle } from './worker.lifecycle';
 
 /**
  * Worker process (`src/worker.ts`): outbox relay, BullMQ consumers and repeatable jobs.
- * Queues and processors are registered by the deliverables that own them (outbox relay: B1.3).
+ * Business modules add subscribers (`@OnDomainEvent`) and jobs (`@ScheduledJob`) by being imported here.
  */
 @Module({
   imports: [
@@ -25,14 +29,15 @@ import { WorkerLifecycle } from './worker.lifecycle';
           service: `${config.get('OTEL_SERVICE_NAME')}-worker`,
         }),
     }),
+    RedisModule,
     BullModule.forRootAsync({
-      inject: [AppConfig],
-      useFactory: (config: AppConfig) => ({
-        prefix: 'packio',
-        // BullMQ workers need `maxRetriesPerRequest: null` (blocking commands).
-        connection: new Redis(config.get('REDIS_URL'), redisOptions({ maxRetriesPerRequest: null })),
-      }),
+      inject: [BULLMQ_REDIS],
+      useFactory: (connection: Redis) => ({ prefix: 'packio', connection }),
     }),
+    DatabaseModule,
+    IntegrationsModule,
+    PlatformCoreModule,
+    DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],
 })
