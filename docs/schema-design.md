@@ -418,7 +418,7 @@ Buy prices of stock products are price-list lines (`pl_stock_product_prices`, §
 Google Merchant feed: generated view over active `stock_products` and `showcase_products` (no table).
 
 #### Geography (reference data)
-**`geo_provinces`** (`code` ux, `name_th/en`, `region`), **`geo_districts`** (`province_id`, `code`, `name_th/en`), **`geo_subdistricts`** (`district_id`, `code`, `name_th/en`, `postcode char(5)`); ix `postcode`. Seeded in B2.1 from an official public dataset (source to confirm, §7 Q-7) — reference data, not business data.
+**`geo_provinces`** (`code` ux, `name_th/en`, `region`), **`geo_districts`** (`province_id`, `code`, `name_th/en`), **`geo_subdistricts`** (`district_id`, `code`, `name_th/en`, `postcode char(5)`); ix `postcode`. Admin-maintained, not seeded from an outside dataset (D-161); entry method (form vs Excel import with preview → confirm) settled in B2.1.
 
 ```mermaid
 erDiagram
@@ -493,8 +493,8 @@ Trigger: `trial → active` requires ≥ 1 `site_visits.result = 'pass'` and an 
 **`capacity_bookings`** — booked load per week: `factory_id` · `product_type_id` · `week_start` · `production_job_id` ux · `load numeric(14,3)` · `released_at?`. ix `(factory_id, product_type_id, week_start)`; lead-time engine refuses promises beyond capacity (D-101).
 
 #### Tolerance & payout policies (D-021, D-022)
-**`factory_tolerance_policies`** — identity per `(factory_id, product_type_id?)` (null = factory default; a row with a product type is the override, D-021); **versions**: `shortage_pct`, `overage_pct numeric(7,4)` ck 0..100. Platform default = setting `fulfilment.tolerance_default_pct` (value open, §7 Q-3).
-**`factory_payout_policies`** — identity per `factory_id`; **versions** (D-022): `advance_pct` (default 30) · `advance_trigger payout_trigger` (`job_accepted|immediate|none`) · `balance_trigger payout_trigger` (`after_pod_and_claim_window|after_pod|immediate`) · `claim_window_days smallint` (7, D-082) · `retention_pct` (5) · `retention_release_days smallint?` (open, §7 Q-4) · `payment_terms_days smallint = 0`. Platform defaults are settings; a factory override is a version with approval.
+**`factory_tolerance_policies`** — identity per `(factory_id, product_type_id?)` (null = factory default; a row with a product type is the override, D-021); **versions**: `shortage_pct`, `overage_pct numeric(7,4)` ck 0..100. Platform default = setting `fulfilment.tolerance_default_pct` = 5 (D-163, Proposed).
+**`factory_payout_policies`** — identity per `factory_id`; **versions** (D-022): `advance_pct` (default 30) · `advance_trigger payout_trigger` (`job_accepted|immediate|none`) · `balance_trigger payout_trigger` (`after_pod_and_claim_window|after_pod|immediate`) · `claim_window_days smallint` (7, D-082) · `retention_pct` (5) · `retention_release_days smallint` (platform default 30 days after the claim window, D-164, Proposed) · `payment_terms_days smallint = 0`. Platform defaults are settings; a factory override is a version with approval.
 
 #### Price lists (D-040, D-042, D-043, D-044)
 **Model: one price list per factory × product type; each approved version is a complete, immutable set of component rows** (copy-on-write). Resolution uses §2.1; quotes snapshot the version id. Per-line negotiation lives in proposals, not in the version tables.
@@ -1376,6 +1376,11 @@ Every decision with a data implication, and where it lives. "—" = no data impl
 | D-153 Reorder | `orders.reorder_of_order_id`, `cart_items.reorder_of_order_id`, `reuse_artwork_proof_id`, `order_lines.is_reusable_tooling`, `waived_reason` |
 | D-154 Campaign budget & 80 % alert | `campaigns.budget_amount`, `spent_amount`, `alert_threshold_pct`, `alerted_at`, `status = exhausted` |
 | D-155 Scorecard monthly, visible to factory | `factory_scorecards` |
+| D-160 Prospectus k ≥ 3 | setting `analytics.prospectus_min_group_size`; `prospectus_exports.k_threshold` |
+| D-161 Admin-maintained holidays & geography | `business_calendars`, `business_calendar_days`, `geo_*` (no seed data) |
+| D-162 Discount memo: matching tier only | `approval_steps.condition` per band on policy `discount_memo` |
+| D-163 Default tolerance ± 5 % (Proposed) | setting `fulfilment.tolerance_default_pct`; `factory_tolerance_policies` |
+| D-164 Retention release 30 days after claim window (Proposed) | setting `payouts.retention_release_days`; `factory_payout_policies.retention_release_days`; `payable_items.eligible_at` (source `retention`) |
 | `accounting-design.md` §1 principles | immutability triggers, `journal_entries.domain_event_id`/`posting_rule_version_id`/`approved_by`, `fiscal_periods.status`, `entity_id` |
 | §2 tax model ⚖ | `tax_rates`, `tax_nature_rules`, `tax_code` on lines, `input_vat_status`, `customer_wht_certificates`, `credit_note_reasons`, retention class `financial_record` |
 | §3 CoA & dimensions | `accounts` (`is_control`, allowed/required dimensions), journal line dimension columns, `cost_centres` |
@@ -1395,7 +1400,7 @@ One Prisma file per context; each deliverable migrates only its tables, followin
 | **B1.2 step 2** | `0001_extensions` | `vector`, `pgcrypto`, `pg_trgm`, `citext` |
 | | `0002_platform` | `entities`, `settings`, `setting_versions`, `feature_flags`, `approval_policies`, `approval_policy_versions`, `approval_steps`, `approval_requests`, `approval_request_steps`, `approval_actions`, `approval_delegations`, `file_objects`, `attachments`, `audit_logs` (partitioned), `activity_logs` (partitioned), `domain_events`, `outbox_messages`, `event_consumptions`, `webhook_inbox`, `idempotency_keys`, `notification_templates`, `notification_template_versions`, `notification_routes`, `notification_preferences`, `notifications`, `web_push_subscriptions`, `business_calendars`, `business_calendar_days`, `product_embeddings`, `design_embeddings` |
 | | `0003_iam` | `users`, `user_identities`, `teams`, `staff_profiles`, `auth_sessions`, `otp_challenges`, `device_pins`, `password_reset_tokens`, `api_clients` (without the `factory_id` FK), `roles`, `permissions`, `role_permissions`, `user_roles`, `sod_rules`, `consent_purposes`, `consent_purpose_versions`, `consent_records` |
-| | seeds | roles & permissions (D-140), SoD rules (§8), settings defaults from decisions (with decision id and `confirmation_status`), approval policies (discount memo D-052, credit limit D-121, payout run D-022, price proposals D-040, vendor bank-account change §8, plus the §8 maker-checker list), Thai public holidays (source to confirm, §7 Q-7), entity from env; dev seed with obviously fake users |
+| | seeds | roles & permissions (D-140), SoD rules (§8), settings defaults from decisions (with decision id and `confirmation_status`), approval policies (discount memo D-052, credit limit D-121, payout run D-022, price proposals D-040, vendor bank-account change §8, plus the §8 maker-checker list), no holidays (admins key them in, D-161), entity from env; dev seed with obviously fake users |
 | B2.1 | `catalog` | §3.3 (+ `geo_*`; FKs from embeddings) |
 | B2.2 | `partners` + `vendors`, `vendor_bank_accounts` | §3.4; `api_clients.factory_id` FK; `file_objects.owner_factory_id` FK; `business_calendars.factory_id` FK; `pl_*` created empty as each calculator is ported (B2.3) |
 | B2.3 | per calculator | its `pl_*` component tables (columns finalised), `sell_margin_*`, `calculate_logs`, `search_logs` |
@@ -1415,7 +1420,7 @@ Recorded here and in `docs/PROGRESS.md`. Conservative choices were made where th
 **Conflicts between sources (resolved by precedence, flagged for confirmation)**
 - **C-1** D-030 says "legacy SAP data is migrated as read-only history on the order"; D-005 (later, explicit) says nothing is migrated. **Design follows D-005**: no SAP or PH columns.
 - **C-2** `accounting-design.md` §3/§9 place fixed assets in R2; D-110 and D-150 put the fixed-asset register in R1. **Design follows the decisions** (§3.8 fixed assets, migrated in B5.5). The seeded CoA has no accumulated-depreciation / depreciation-expense / disposal accounts — codes needed from the CPA (⚖ §10 "chart-of-accounts codes").
-- **C-3** D-044 says anonymised breakdowns need **k ≥ 3** factories; B6.1 says **k ≥ 5**. Modelled as setting `analytics.prospectus_min_group_size`, seeded with **3** per the decision and `confirmation_status = pending_business`. Please confirm.
+- **C-3** D-044 says k ≥ 3, B6.1 said k ≥ 5. **Resolved by D-160: k ≥ 3**; setting `analytics.prospectus_min_group_size` = 3, `confirmation_status = confirmed`.
 - **C-4** Wrong ids in sources (noted only, shared docs not edited): B1 prompt "D-057" for payout-run approval = D-022; `accounting-design.md` §2 "(D-041)" for e-Tax = D-091; §6 "(D-044)" for slip verification = D-061.
 - **C-5** `accounting-design.md` §2 says legacy credit-note reasons "migrate to this list": treated as *reference for building* `credit_note_reasons`, not a data migration (D-005).
 - **C-6** `api-conventions.md` §2 lists "SEO" among admin users; D-140 has no SEO role. **No SEO role is seeded**; CMS/SEO permissions go to Marketing (and Admin). Please confirm or add a role by decision.
@@ -1435,10 +1440,10 @@ Recorded here and in `docs/PROGRESS.md`. Conservative choices were made where th
 **Open questions (values not decided — settings designed, values not seeded or flagged)**
 - **Q-1** Unpaid-order expiry rule (D-060) — extracted from legacy in B3.1.
 - **Q-2** Customer/order/job/claim code formats (human keys) — proposal: prefixes per type + year/month + running number from `document_series` (non-gapless); needs business confirmation.
-- **Q-3** Default quantity tolerance % (D-021 gives no number) — setting `fulfilment.tolerance_default_pct` left **unseeded**; each factory must have its own value before activation (onboarding step `tolerance`).
-- **Q-4** Retention release period after the balance payout (D-022 names 5 % retention but no release period) — `retention_release_days` required on the payout policy; no default seeded.
-- **Q-5** k-anonymity threshold (C-3).
+- **Q-3** Default quantity tolerance → **D-163 (Proposed): ± 5 %** shortage and overage; seeded as `fulfilment.tolerance_default_pct` = 5 with `confirmation_status = proposed`. Factories/product types override it through `factory_tolerance_policies`. Open sub-question: overage within tolerance is not charged to the customer (D-080) while the factory payable uses actual quantity (P15) — whether Packio pays the factory for those extra pieces (the schema supports either: payout on `min(delivered, ordered)` or on `delivered`).
+- **Q-4** Retention release → **D-164 (Proposed): 30 days after the order's claim window closes**; seeded as the platform default of `retention_release_days` = 30 with `confirmation_status = proposed`, overridable per factory payout policy.
+- **Q-5** k-anonymity threshold → **k ≥ 3** (D-160, see C-3).
 - **Q-6** Capacity unit per product type (pieces vs sheets vs m²) — decided with the launch factory in B2.2; the column supports all.
-- **Q-7** Source datasets for Thai geography (provinces/districts/subdistricts/postcodes) and public holidays — proposal: official public datasets (DOPA / Bank of Thailand holiday list), imported by script with the source recorded.
+- **Q-7** Geography and holidays → **admin-maintained, no external dataset** (D-161). Holidays: admins key them into `business_calendar_days`. Geography: admin-maintained; entry method (form vs Excel import) open, decided in B2.1. Consequence: SLA/lead-time maths (D-061, D-071, D-074) counts only weekends until admins enter the year's holidays — B1.3 adds an admin alert when the next year's national calendar is empty.
 - **Q-8** Embedding dimension `vector(1536)` per ADR-0001 — revisit when the model is chosen.
-- **Q-9** Whether discount-memo approval requires *all tiers up to* the matching tier or *only* the matching tier (D-052 lists approvers per band). The engine supports both via step conditions; seed proposes **only the matching tier** (plus C-Level for below-floor) — please confirm.
+- **Q-9** Discount-memo routing → **only the matching tier** (D-162); below-floor discounts always route to C-Level. Seeded as one conditional step per band.

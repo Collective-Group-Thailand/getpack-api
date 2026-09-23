@@ -183,5 +183,15 @@ Consequences: all 7 calculators are ported with golden tests before launch; the 
 | D-154 | Campaign budget in THB; auto-stop when exhausted; Marketing alerted at 80 %. | Accepted |
 | D-155 | Factory scorecard monthly: on-time acceptance, on-time shipping, QC first-pass, claim rate, on-time status updates; visible to the factory. | Accepted |
 
+
+## Schema review answers (2026-09-23)
+| ID | Decision | Status |
+|---|---|---|
+| D-160 | **Prospectus anonymity k ≥ 3** factories per breakdown, as in D-044; the "k ≥ 5" in the B6.1 prompt is superseded. Setting `analytics.prospectus_min_group_size` = 3, configurable by superadmin (D-063). | Accepted |
+| D-161 | **Reference data is admin-maintained, not imported from an external source**: Thai public holidays and factory closures are keyed in by admins (business calendars); geography (provinces, districts, subdistricts, postcodes) is admin-maintained through the catalogue admin tools. Nothing is seeded from an outside dataset. | Accepted (geography entry method: see Still open) |
+| D-162 | **Discount-memo routing: only the matching tier approves** (one approver step per band, D-052); a discount below the margin floor always routes to C-Level. | Accepted |
+| D-163 | **Default quantity tolerance ± 5 %** (shortage and overage), platform default for D-021; each factory and product type may override it at onboarding (effective-dated, superadmin D-063). | Proposed — value 5 % from business; per-type overrides to confirm with the launch factory |
+| D-164 | **Retention release (D-022): the 5 % retention is released 30 days after the order's claim window closes**, paid in the next payout run; configurable per factory (payout policy) with the platform default as a superadmin setting. | Proposed — awaiting business confirmation |
+
 ## Still open
-Approval tier boundaries in D-052 (proposed 5–10 % Director, 10–15 % VP, > 15 % C-Level) · carrier choice in D-114 (proposed Flash Express + Deliveree) · all ⚖ items in `accounting-design.md` §10 (CPA review; defaults are in place).
+Approval tier boundaries in D-052 (proposed 5–10 % Director, 10–15 % VP, > 15 % C-Level) · carrier choice in D-114 (proposed Flash Express + Deliveree) · all ⚖ items in `accounting-design.md` §10 (CPA review; defaults are in place). · D-163 tolerance default 5 % (confirm; per-type overrides with the launch factory) · D-164 retention release 30 days after the claim window (confirm) · D-161 geography entry method (manual keying vs admin Excel import of ~7,400 subdistricts) · overage within tolerance: whether the factory is paid for the extra pieces the customer is not charged for (D-080 × P15).
