@@ -17,7 +17,7 @@ NestJS backend of Packio: a new, one-stop, self-service, fully traceable packagi
 - Port pricing formulas exactly with golden tests; never invent formulas, prices, supplier or customer data. Seed/dev data is obviously fake.
 - Every business value that a decision marks as configurable is a **setting with effective dates, audited, editable by the role named in the decision** — never a constant in code.
 - Money: `numeric(14,2)` in DB, `decimal.js` in code, decimal **strings** in JSON. Time: `timestamptz` (UTC), business rules in `Asia/Bangkok`.
-- Every endpoint change → `pnpm contract:build` and commit `contract/openapi.json` in the same commit.
+- Every endpoint change → `pnpm contract:build` **and** `pnpm contract:lint`, then commit `contract/openapi.json` in the same commit. Every operation needs operationId, summary, description with its decision id, security, full status-code set and examples (`docs/contract/api-conventions.md` §5).
 - Every state change: one DB transaction + audit/activity row + domain event via the outbox. Notifications and ledger postings are **event subscribers**, never inline.
 - Money-moving and irreversible operations require `Idempotency-Key`, explicit permissions and maker-checker where `accounting-design.md` §8 says so.
 - No secrets, OTPs, tokens, bank or card data in logs (PDPA). Company data (Collective Group legal name, tax id, branch, logo) comes from `settings`.

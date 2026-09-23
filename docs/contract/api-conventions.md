@@ -44,5 +44,26 @@ A token issued for one audience is rejected on every other prefix (guard checks 
 - `POST /v1/auth/refresh`, `POST /v1/auth/logout`, `GET /v1/{store|admin|partner}/me`.
 - The frontend stores tokens in httpOnly cookies and forwards them as `Authorization: Bearer` from its server (BFF). Browsers never hold tokens in JS-readable storage.
 
-## 5. Realtime
+## 5. Documentation requirements (Swagger + Scalar)
+The generated OpenAPI document is the product, not a by-product: `packio-web`, partner integrations and QA all read it. Documentation completeness is enforced in CI, not by review.
+
+**Served UIs** (from the same document, in every environment except production unless `DOCS_ENABLED=true`, and then behind staff auth or an IP allow-list):
+- `/docs` — **Scalar API reference** (`@scalar/nestjs-api-reference`), the primary developer UI: search, per-surface grouping, request/response examples, client snippets, "try it" pointed at the sandbox server.
+- `/docs/swagger` — Swagger UI, kept for teams that expect it.
+- `/docs-json` and `/docs.yaml` — the raw document; `contract/openapi.json` in the repo is the same file, committed.
+
+**Every operation must carry**: a stable `operationId` (`<surface>.<resource>.<action>`, e.g. `admin.orders.approveSlip`), a one-line `summary` and a `description` that states the business rule and links the decision id (`D-###`) it implements, its surface tag, the security scheme for its audience, and `@ApiProperty` on every DTO field (type, format, nullable, enum as a named component, `example`, unit in the description, `deprecated` where relevant).
+
+**Every operation must document all of its responses**, each with a schema **and at least one example**:
+- success: `200` / `201` (+ `Location`) / `202` (async jobs, with the polling endpoint in the description) / `204`;
+- errors as `application/problem+json` with the `code` values that operation can actually return — `400` malformed, `401` unauthenticated, `403` permission or audience/scope, `404` not found or not visible to this actor, `409` state conflict (e.g. `order.invalid_transition`), `412` `concurrency.stale`, `422` validation (with a field-level `errors[]` example), `429` rate limited (+ `Retry-After`), `500`, `503`;
+- the shared error components are defined once and referenced, never re-declared per endpoint.
+
+**Headers and parameters are documented too**: `Idempotency-Key` (required where §3 says so, with the replay behaviour described), `If-Match` / `ETag`, `Accept-Language`, `X-Request-Id`, rate-limit headers, pagination and filter/sort query parameters with their allowed values.
+
+**Also in the document**: `servers` (local, integration, sandbox, production), a description per tag, OpenAPI 3.1 `webhooks` for every inbound provider callback (payload + signature header + expected response), file-upload flows (presign → PUT → reference) shown with examples, and money/date formats restated in the info description.
+
+**CI gates** (`pnpm contract:lint`): Spectral with a Packio ruleset — fail when an operation lacks `operationId`, `summary`, tag, security, a documented `4xx`/`5xx` set, or an example on any request/response body; fail on inline enums, on `type: object` without properties, on duplicated schema shapes, and on any `example` containing real-looking personal data. `pnpm contract:build` writes the document deterministically; drift and breaking-change checks run as in §1.
+
+## 6. Realtime
 - Server-sent events or Pusher channels are authorised by the API (`POST /v1/{surface}/realtime/auth`). Event payloads carry ids + type only; the client refetches through the normal API (no business data in realtime payloads).

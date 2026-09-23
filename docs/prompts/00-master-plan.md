@@ -27,7 +27,7 @@ packio-web (Next.js 16, one app: customer / admin / partner zones, BFF with http
         │ Bearer JWT (audiences customer | staff | partner)
         ▼
 packio-api (this repo, NestJS 12)
-  HTTP process  src/main.ts     /v1/auth /v1/store /v1/admin /v1/partner /webhooks /health /docs
+  HTTP process  src/main.ts     /v1/auth /v1/store /v1/admin /v1/partner /webhooks /health /docs (Scalar) /docs/swagger /docs-json
   Worker process src/worker.ts  outbox relay, BullMQ consumers, repeatable jobs, PDFs, preflight, bank files, analytics rollups
         │
 PostgreSQL 18 + pgvector · Redis · S3 · SES · SQS (optional) · SCB · 2C2P · slip-verification provider · Flash Express · Deliveree
@@ -38,7 +38,7 @@ LINE Messaging API + LIFF + LINE Login · ThaiBulkSMS · Firebase Auth · Web Pu
 - The only artefact shared with the frontend is `contract/openapi.json`. Exception: `@packio/dieline` (published by `packio-web`) is consumed by the drawing service (B4).
 
 ## 3. Platform baseline
-Node 24 LTS · pnpm · TypeScript 6 strict · **NestJS 12** (follow its current official guidance for new projects) · ESLint flat + Prettier · **PostgreSQL 18 + pgvector** (ADR-0001) · Prisma (current major; `prisma.config.ts`, explicit client output, multi-file schema `prisma/schema/*.prisma`) · BullMQ + Redis · AWS SDK v3 · Puppeteer (PDF, embedded Thai fonts) · exceljs · sharp · class-validator + `@nestjs/swagger` DTOs (single validation approach) · pino + OpenTelemetry + Sentry · Terminus health · helmet + throttler · nestjs-i18n (th default, en) · Testcontainers (`pgvector/pgvector:pg18`) · supertest.
+Node 24 LTS · pnpm · TypeScript 6 strict · **NestJS 12** (follow its current official guidance for new projects) · ESLint flat + Prettier · **PostgreSQL 18 + pgvector** (ADR-0001) · Prisma (current major; `prisma.config.ts`, explicit client output, multi-file schema `prisma/schema/*.prisma`) · BullMQ + Redis · AWS SDK v3 · Puppeteer (PDF, embedded Thai fonts) · exceljs · sharp · class-validator + `@nestjs/swagger` DTOs (single validation approach) · `@scalar/nestjs-api-reference` for the API reference UI · pino + OpenTelemetry + Sentry · Terminus health · helmet + throttler · nestjs-i18n (th default, en) · Testcontainers (`pgvector/pgvector:pg18`) · supertest.
 
 ## 4. Module map (`src/modules/*`)
 | Context | Modules | Prompt |
@@ -72,7 +72,7 @@ B5.1 (ledger core) may start in parallel with B3 once B1 is done; every B3/B4 mo
 
 ## 7. Definition of Done (every deliverable)
 - Lint, typecheck, unit, integration (Testcontainers), e2e green; ≥ 80 % coverage on services with business rules; golden tests for ported maths; property tests for money/tax rounding and ledger balance.
-- Contract regenerated and committed; no unintended breaking diff.
+- Contract regenerated and committed; `pnpm contract:lint` green (every operation documented with examples and its full status-code set — `docs/contract/api-conventions.md` §5); no unintended breaking diff.
 - Every configurable value is a setting with effective date + audit + permission (decision id in a code comment).
 - Events recorded for every state change; subscribers idempotent; ledger postings balanced (test).
 - `docs/PROGRESS.md` entry: done, decisions implemented (D-###), deviations, open questions.
