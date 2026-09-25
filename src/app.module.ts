@@ -14,6 +14,7 @@ import { IntegrationsModule } from '@integrations/integrations.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
 import { IamModule } from '@modules/iam/iam.module';
+import { PartnersModule } from '@modules/partners/partners.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -67,6 +68,7 @@ import { LoggerModule } from 'nestjs-pino';
     FilesModule,
     SettingsAdminModule,
     CatalogModule,
+    PartnersModule,
     HealthModule,
     SurfacesModule,
   ],

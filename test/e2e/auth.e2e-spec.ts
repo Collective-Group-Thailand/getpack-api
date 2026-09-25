@@ -4,7 +4,6 @@ import { PrismaService } from '@database/prisma.service';
 import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
 import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { PasswordService } from '@modules/auth/password.service';
-import { ScopeDirectory } from '@modules/iam/scope-directory';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { createLocalJWKSet, jwtVerify } from 'jose';
@@ -249,9 +248,36 @@ describe('auth (e2e, ADR-0004)', () => {
   describe('partners', () => {
     let partnerId: bigint;
 
+    /** A factory (with its vendor) to scope partner users to; offboarded factories never resolve. */
+    async function factory(code: string, status: 'applied' | 'offboarded', publicId?: string) {
+      const vendor = await prisma.vendor.create({
+        data: {
+          kind: 'factory',
+          legalName: `Factory ${code} (fake)`,
+          juristicType: 'company',
+          taxId: '0000000000019',
+        },
+      });
+      return prisma.factory.create({
+        data: {
+          ...(publicId ? { publicId } : {}),
+          code,
+          vendorId: vendor.id,
+          legalName: `Factory ${code} (fake)`,
+          juristicType: 'company',
+          taxId: '0000000000019',
+          branchCode: code === 'E2EOFF' ? '00001' : '00002',
+          status,
+          ...(status === 'offboarded' ? { offboardedAt: new Date() } : {}),
+        },
+      });
+    }
+
     beforeAll(async () => {
       const passwordHash = await new PasswordService().hash(DEV_PASSWORD);
       const role = await prisma.role.findUniqueOrThrow({ where: { key: 'factory_owner' } });
+      const active = await factory('E2EAUTH', 'applied', FACTORY_PUBLIC_ID);
+      const gone = await factory('E2EOFF', 'offboarded');
       const user = await prisma.user.create({
         data: {
           kind: 'partner',
@@ -259,35 +285,39 @@ describe('auth (e2e, ADR-0004)', () => {
           email: 'owner@factory.invalid',
           displayName: 'Factory owner (fake)',
           passwordHash,
-          roles: { create: { roleId: role.id, scopeType: 'factory', scopeId: 1n, reason: 'e2e' } },
+          roles: { create: { roleId: role.id, scopeType: 'factory', scopeId: active.id, reason: 'e2e' } },
         },
       });
       partnerId = user.id;
+      await prisma.user.create({
+        data: {
+          kind: 'partner',
+          status: 'active',
+          email: 'former-owner@factory.invalid',
+          displayName: 'Former owner (fake)',
+          passwordHash,
+          roles: { create: { roleId: role.id, scopeType: 'factory', scopeId: gone.id, reason: 'e2e' } },
+        },
+      });
       await prisma.apiClient.create({
         data: {
           clientId: 'e2e-erp',
           secretHash: await new PasswordService().hash('e2e-secret'),
           name: 'ERP (fake)',
-          factoryId: 1n,
+          factoryId: active.id,
         },
       });
     });
 
-    it('refuses partner sign-in while no factory directory can resolve the scope', async () => {
+    it('refuses partner sign-in when the factory scope cannot be resolved (offboarded factory)', async () => {
       const res = await request(server)
         .post('/v1/auth/partner/login')
-        .send({ email: 'owner@factory.invalid', password: DEV_PASSWORD });
+        .send({ email: 'former-owner@factory.invalid', password: DEV_PASSWORD });
       expect(res.status).toBe(403);
       expect(res.body.code).toBe('auth.scope_unavailable');
     });
 
     it('signs in with password and device PIN once the factory scope resolves', async () => {
-      app.get(ScopeDirectory).register('factory', {
-        publicIds: (ids) =>
-          Promise.resolve(new Map(ids.filter((id) => id === 1n).map((id) => [id, FACTORY_PUBLIC_ID]))),
-        internalIds: (ids) =>
-          Promise.resolve(new Map(ids.filter((id) => id === FACTORY_PUBLIC_ID).map((id) => [id, 1n]))),
-      });
       const login = await request(server)
         .post('/v1/auth/partner/login')
         .send({ email: 'owner@factory.invalid', password: DEV_PASSWORD })

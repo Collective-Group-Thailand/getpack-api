@@ -19,6 +19,7 @@ const PRODUCTION_ENV: Record<string, string> = {
   FIELD_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
   PUBLIC_API_BASE_URL: 'https://api.packio.example',
   MERCHANT_FEED_LINK_TEMPLATE: 'https://www.packio.example/th/products/{sku}',
+  LOOKUP_HMAC_SECRET: 'docs-gating-lookup-secret-0123456789abcdef',
 };
 
 beforeAll(async () => {

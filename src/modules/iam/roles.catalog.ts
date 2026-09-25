@@ -43,7 +43,14 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
-    permissions: [...APPROVER, ...COST_AND_MARGIN, 'settings.read_sensitive', 'audit_logs.read'],
+    permissions: [
+      ...APPROVER,
+      ...COST_AND_MARGIN,
+      'settings.read_sensitive',
+      'audit_logs.read',
+      'partners.read',
+      'price_suggestions.read',
+    ],
   },
   {
     key: 'vp',
@@ -51,7 +58,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'รองประธาน',
     nameEn: 'VP',
-    permissions: [...APPROVER, ...COST_AND_MARGIN],
+    permissions: [...APPROVER, ...COST_AND_MARGIN, 'partners.read'],
   },
   {
     key: 'director',
@@ -82,6 +89,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'cms.manage',
       'seo.manage',
       'geography.manage',
+      'partners.read',
     ],
   },
   {
@@ -115,7 +123,13 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ฝ่ายการเงิน',
     nameEn: 'Finance',
-    permissions: [...APPROVER, ...COST_AND_MARGIN, 'audit_logs.read'],
+    permissions: [
+      ...APPROVER,
+      ...COST_AND_MARGIN,
+      'audit_logs.read',
+      'partners.read',
+      'vendor_bank_accounts.verify',
+    ],
   },
   {
     key: 'finance_manager',
@@ -129,6 +143,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'settings.read_sensitive',
       'audit_logs.read',
       'audit_logs.export',
+      'partners.read',
     ],
   },
   {
@@ -154,7 +169,19 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ผู้จัดการพันธมิตร',
     nameEn: 'Partner Manager',
-    permissions: [...APPROVER, ...COST_AND_MARGIN, 'catalog.read'],
+    permissions: [
+      ...APPROVER,
+      ...COST_AND_MARGIN,
+      'catalog.read',
+      'partners.read',
+      'partners.manage',
+      'partners.site_visits.record',
+      'price_proposals.review',
+      'price_suggestions.read',
+      'index_series.manage',
+      'agreements.manage',
+      'zones.manage',
+    ],
   },
   {
     key: 'auditor',
@@ -169,6 +196,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'audit_logs.export',
       'users.read',
       'files.read',
+      'partners.read',
     ],
   },
 
@@ -179,7 +207,18 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'เจ้าของโรงงาน',
     nameEn: 'Factory Owner',
-    permissions: ['factory_profile.read', 'factory_users.manage'],
+    permissions: [
+      'factory_profile.read',
+      'factory_users.manage',
+      'factory_profile.manage',
+      'factory_onboarding.sign_off',
+      'factory_prices.read',
+      'factory_prices.propose',
+      'factory_rate_card.accept',
+      'factory_agreements.accept',
+      'factory_bank_account.propose',
+      'factory_capacity.read',
+    ],
   },
   {
     key: 'factory_planner',
@@ -187,7 +226,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'ผู้วางแผนการผลิต',
     nameEn: 'Planner',
-    permissions: ['factory_profile.read'],
+    permissions: ['factory_profile.read', 'factory_capacity.read'],
   },
   {
     key: 'factory_operator',
@@ -219,7 +258,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'ฝ่ายบัญชีโรงงาน',
     nameEn: 'Factory Accountant',
-    permissions: ['factory_profile.read'],
+    permissions: ['factory_profile.read', 'factory_prices.read', 'factory_bank_account.propose'],
   },
 
   // --- B2B company (company scope)

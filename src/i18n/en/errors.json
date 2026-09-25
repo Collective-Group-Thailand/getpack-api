@@ -302,5 +302,59 @@
       "title": "Import file unreadable",
       "detail": "The file must be an Excel workbook (.xlsx) in the exported template layout."
     }
+  },
+  "partners": {
+    "factory_exists": {
+      "title": "Factory already registered",
+      "detail": "A factory with this tax id and branch already exists."
+    },
+    "profile_locked": {
+      "title": "Profile locked",
+      "detail": "Once the trial has started, legal data is changed only by the Packio Partner team."
+    },
+    "invalid_transition": {
+      "title": "Invalid status change",
+      "detail": "A factory cannot move from {from} to {to}."
+    },
+    "activation_needs_approval": {
+      "title": "Activation needs approval",
+      "detail": "Moving from trial to active needs the partner_activation approval (D-041)."
+    },
+    "site_visit_required": {
+      "title": "Site visit required",
+      "detail": "A passed site visit is required before activation (D-041)."
+    },
+    "nothing_to_sign_off": {
+      "title": "Nothing to sign off",
+      "detail": "This step was not entered by Packio staff on the factory's behalf."
+    },
+    "bank_account_pending": {
+      "title": "Bank account change pending",
+      "detail": "Wait for the pending bank-account change to be decided before proposing another."
+    },
+    "bank_account_not_pending": {
+      "title": "Bank account not pending",
+      "detail": "A verification call can be recorded only for a pending account."
+    },
+    "agreement_not_published": {
+      "title": "Agreement not published",
+      "detail": "This agreement has no published version in force."
+    },
+    "agreement_already_accepted": {
+      "title": "Agreement already accepted",
+      "detail": "The factory has already accepted this version."
+    },
+    "backdated": {
+      "title": "Cannot take effect in the past",
+      "detail": "A new version must take effect now or later; history is never rewritten (ADR-0005)."
+    },
+    "version_pending": {
+      "title": "Version pending",
+      "detail": "Wait for the pending version to be decided before proposing another."
+    },
+    "not_capable": {
+      "title": "Factory not capable",
+      "detail": "Record the factory's capability for this product type first."
+    }
   }
 }

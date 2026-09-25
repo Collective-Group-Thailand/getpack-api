@@ -42,6 +42,15 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `cms.manage` — Edit banners, home sections, articles, FAQs and videos | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
 | `seo.manage` — Edit SEO meta per page | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
 | `geography.manage` — Maintain provinces, districts, subdistricts and postcodes (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
+| `partners.read` — Read partner factories and their onboarding | ● | ● | ● |  | ● |  |  |  | ● | ● |  |  | ● | ● |
+| `partners.manage` — Create factories, run onboarding, capability, tiers, capacity and status changes (D-011, D-041, D-171) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `partners.site_visits.record` — Record site visits of partner factories (D-041) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `price_proposals.review` — Review price proposals, draft platform rate cards and decide lines (D-040, D-042) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `price_suggestions.read` — See staff-only price suggestions, benchmarks and impact simulations (D-040, D-044) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  | ◆ |  |
+| `index_series.manage` — Maintain material and cost-driver index series (D-040) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `agreements.manage` — Publish partner agreement texts (D-011) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `zones.manage` — Maintain zone schemes, zones and postcodes (D-013) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `vendor_bank_accounts.verify` — Record the verification call of a vendor bank-account change (D-033) | ● |  |  |  |  |  |  |  | ● |  |  |  |  |  |
 | `factory_cost.read` — See full factory buy prices and costs (D-141, D-044) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |
 | `margin.read` — See margins in amounts and percent (D-141) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |
 | `margin.read_pct_when_discounting` — See the resulting margin % while applying a discount (D-141, D-052) | ◆ |  |  |  |  | ◆ | ◆ |  |  |  |  |  |  |  |
@@ -69,6 +78,14 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
 | `factory_profile.read` — Read the own factory profile | ● | ● | ● | ● | ● | ● |
 | `factory_users.manage` — Manage users of the own factory | ● |  |  |  |  |  |
+| `factory_profile.manage` — Edit the own factory profile, addresses, contacts and KYC documents | ● |  |  |  |  |  |
+| `factory_onboarding.sign_off` — Sign off data Packio entered on the factory’s behalf (D-100) | ● |  |  |  |  |  |
+| `factory_prices.read` — Read the own factory price lists (D-044) | ● |  |  |  |  | ● |
+| `factory_prices.propose` — Propose price-list changes (factory price list mode) (D-040, D-042) | ● |  |  |  |  |  |
+| `factory_rate_card.accept` — Accept, counter or refuse a platform rate card (D-042) | ● |  |  |  |  |  |
+| `factory_agreements.accept` — Accept the partner agreement on behalf of the factory (D-011) | ● |  |  |  |  |  |
+| `factory_bank_account.propose` — Propose a new bank account for payouts (dual approval by Packio Finance) (D-033) | ● |  |  |  |  | ● |
+| `factory_capacity.read` — Read the own capacity and bookings (D-101) | ● | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

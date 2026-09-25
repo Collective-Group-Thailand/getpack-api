@@ -2,6 +2,8 @@ import { AdminMeController } from '@modules/auth/controllers/me.controllers';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
+import { FactoryOwnersService } from '@modules/partners/factories/factory-owners.service';
+import { PARTNERS_ADMIN_CONTROLLERS } from '@modules/partners/partners.registry';
 import { Module } from '@nestjs/common';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
 import { AuditLogsController } from '@platform/audit/audit.controller';
@@ -23,7 +25,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
 /** `/v1/admin/*` — each deliverable adds the controllers it owns. */
 @Module({
   imports: [RealtimeModule, SettingsAdminModule],
-  providers: [UsersAdminService, AuditQueryService],
+  providers: [UsersAdminService, AuditQueryService, FactoryOwnersService],
   controllers: [
     AdminFilesController,
 
@@ -45,6 +47,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     AuditLogsController,
 
     ...CATALOG_ADMIN_CONTROLLERS,
+    ...PARTNERS_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

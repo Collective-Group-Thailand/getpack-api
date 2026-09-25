@@ -133,10 +133,18 @@ describe('platform core writers (PostgreSQL 18)', () => {
          ($1, '2026-10-14', 'holiday', 'government_only', 'fake gov day')`,
       [nationalId],
     );
+    const { rows: vendor } = await db.client.query<{ id: string }>(
+      `INSERT INTO vendors (kind, legal_name, juristic_type, tax_id) VALUES ('factory', 'Factory (fake)', 'company', '0000000000019') RETURNING id`,
+    );
+    const { rows: owner } = await db.client.query<{ id: string }>(
+      `INSERT INTO factories (code, vendor_id, legal_name, juristic_type, tax_id)
+         VALUES ('FCAL', $1, 'Factory (fake)', 'company', '0000000000019') RETURNING id`,
+      [vendor[0]!.id],
+    );
     const { rows: factory } = await db.client.query<{ id: string }>(
       `INSERT INTO business_calendars (code, name, kind, factory_id, weekend_days, base_calendar_id)
-         VALUES ('factory:test', 'Factory', 'factory', 1, '{0}', $1) RETURNING id`,
-      [nationalId],
+         VALUES ('factory:test', 'Factory', 'factory', $2, '{0}', $1) RETURNING id`,
+      [nationalId, owner[0]!.id],
     );
     await db.client.query(
       `INSERT INTO business_calendar_days (calendar_id, day, kind, name_th) VALUES ($1, '2026-10-15', 'closure', 'fake closure')`,

@@ -231,6 +231,16 @@ export class EnvironmentVariables {
   @IsString()
   THAIBULKSMS_SENDER?: string;
 
+  /**
+   * HMAC key (≥ 32 characters) for lookup hashes of sensitive numbers, e.g. vendor bank accounts for
+   * duplicate detection (accounting-design.md §8). Required in production; development and tests
+   * derive a fixed key.
+   */
+  @IsOptional()
+  @IsString()
+  @MinLength(32)
+  LOOKUP_HMAC_SECRET?: string;
+
   // --- Catalogue (B2.1)
 
   /** Public base URL of this API, for absolute links in feeds (e.g. catalogue images in the Merchant feed). */

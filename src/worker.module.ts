@@ -5,6 +5,7 @@ import { DatabaseModule } from '@database/database.module';
 import { BULLMQ_REDIS, RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
 import { IamModule } from '@modules/iam/iam.module';
+import { PartnersModule } from '@modules/partners/partners.module';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ApprovalsModule } from '@platform/approvals/approvals.module';
@@ -47,6 +48,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     NotificationsModule,
     FilesModule,
     SettingsAdminModule,
+    PartnersModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

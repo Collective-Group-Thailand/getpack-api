@@ -35,6 +35,9 @@ const MODELS = {
   faqCategory: (tx: Tx) => tx.faqCategory,
   geoProvince: (tx: Tx) => tx.geoProvince,
   geoDistrict: (tx: Tx) => tx.geoDistrict,
+  geoSubdistrict: (tx: Tx) => tx.geoSubdistrict,
+  zone: (tx: Tx) => tx.zone,
+  zoneScheme: (tx: Tx) => tx.zoneScheme,
   fileObject: (tx: Tx) => tx.fileObject,
 } as const;
 

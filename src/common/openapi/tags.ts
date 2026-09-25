@@ -38,6 +38,14 @@ export const API_TAGS: Record<string, string> = {
   'admin.outbox': 'Domain-event outbox: dead-letter list and replay.',
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
 
+  // --- B2.2 partners & price governance
+  'admin.factories':
+    'Partner factories: registration, onboarding steps, KYC, addresses, contacts, bank accounts and lifecycle (D-011, D-041, D-171).',
+  'partner.factories':
+    'My factory: application data, onboarding sign-off, documents and bank accounts (own factory only, D-044).',
+  'admin.vendorBankAccounts':
+    'Verification calls of vendor bank-account changes (accounting-design.md §8, D-169).',
+
   // --- B2.1 catalogue & CMS
   'store.catalog':
     'Public catalogue and CMS reads for the storefront: products, stock products, showcase, articles, FAQs, SEO, geography, search, images and the Merchant feed — no prices or factory data (D-100, D-050).',

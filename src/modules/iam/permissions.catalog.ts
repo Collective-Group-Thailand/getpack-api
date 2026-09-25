@@ -122,6 +122,58 @@ export const PERMISSIONS = [
     decisionRefs: ['D-161', 'D-170'],
   },
 
+  // --- Partners & price governance (B2.2, D-011, D-040…D-044, D-101)
+  { key: 'partners.read', audience: 'staff', description: 'Read partner factories and their onboarding' },
+  {
+    key: 'partners.manage',
+    audience: 'staff',
+    description: 'Create factories, run onboarding, capability, tiers, capacity and status changes',
+    decisionRefs: ['D-011', 'D-041', 'D-171'],
+  },
+  {
+    key: 'partners.site_visits.record',
+    audience: 'staff',
+    description: 'Record site visits of partner factories',
+    decisionRefs: ['D-041'],
+  },
+  {
+    key: 'price_proposals.review',
+    audience: 'staff',
+    description: 'Review price proposals, draft platform rate cards and decide lines',
+    decisionRefs: ['D-040', 'D-042'],
+  },
+  {
+    key: 'price_suggestions.read',
+    audience: 'staff',
+    description: 'See staff-only price suggestions, benchmarks and impact simulations',
+    sensitive: true,
+    decisionRefs: ['D-040', 'D-044'],
+  },
+  {
+    key: 'index_series.manage',
+    audience: 'staff',
+    description: 'Maintain material and cost-driver index series',
+    decisionRefs: ['D-040'],
+  },
+  {
+    key: 'agreements.manage',
+    audience: 'staff',
+    description: 'Publish partner agreement texts',
+    decisionRefs: ['D-011'],
+  },
+  {
+    key: 'zones.manage',
+    audience: 'staff',
+    description: 'Maintain zone schemes, zones and postcodes',
+    decisionRefs: ['D-013'],
+  },
+  {
+    key: 'vendor_bank_accounts.verify',
+    audience: 'staff',
+    description: 'Record the verification call of a vendor bank-account change',
+    decisionRefs: ['D-033'],
+  },
+
   // --- Cost & margin visibility (D-141)
   {
     key: 'factory_cost.read',
@@ -148,6 +200,54 @@ export const PERMISSIONS = [
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },
+
+  {
+    key: 'factory_profile.manage',
+    audience: 'partner',
+    description: 'Edit the own factory profile, addresses, contacts and KYC documents',
+  },
+  {
+    key: 'factory_onboarding.sign_off',
+    audience: 'partner',
+    description: 'Sign off data Packio entered on the factory’s behalf',
+    decisionRefs: ['D-100'],
+  },
+  {
+    key: 'factory_prices.read',
+    audience: 'partner',
+    description: 'Read the own factory price lists',
+    decisionRefs: ['D-044'],
+  },
+  {
+    key: 'factory_prices.propose',
+    audience: 'partner',
+    description: 'Propose price-list changes (factory price list mode)',
+    decisionRefs: ['D-040', 'D-042'],
+  },
+  {
+    key: 'factory_rate_card.accept',
+    audience: 'partner',
+    description: 'Accept, counter or refuse a platform rate card',
+    decisionRefs: ['D-042'],
+  },
+  {
+    key: 'factory_agreements.accept',
+    audience: 'partner',
+    description: 'Accept the partner agreement on behalf of the factory',
+    decisionRefs: ['D-011'],
+  },
+  {
+    key: 'factory_bank_account.propose',
+    audience: 'partner',
+    description: 'Propose a new bank account for payouts (dual approval by Packio Finance)',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'factory_capacity.read',
+    audience: 'partner',
+    description: 'Read the own capacity and bookings',
+    decisionRefs: ['D-101'],
+  },
 
   // --- B2B company (company-scoped)
   { key: 'company_profile.read', audience: 'customer', description: 'Read the own company profile' },

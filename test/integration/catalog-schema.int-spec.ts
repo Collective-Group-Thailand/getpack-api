@@ -127,9 +127,16 @@ describe('catalogue schema behaviour (PostgreSQL 18)', () => {
         "INSERT INTO stock_products (product_type_id, sku, name_th, name_en, unit) VALUES ($1, 'DEV-0002', 'ขวดทดสอบ', 'Test bottle', 'piece')",
         [await productType('standard_product')],
       );
+      const vendor = await id(
+        "INSERT INTO vendors (kind, legal_name, juristic_type, tax_id) VALUES ('factory', 'Factory (fake)', 'company', '0000000000019')",
+      );
+      const factory = await id(
+        "INSERT INTO factories (code, vendor_id, legal_name, juristic_type, tax_id) VALUES ('FSTOCK', $1, 'Factory (fake)', 'company', '0000000000019')",
+        [vendor],
+      );
       const movement = await id(
-        "INSERT INTO stock_movements (stock_product_id, factory_id, kind, quantity, balance_after) VALUES ($1, 1, 'receipt', 10, 10)",
-        [stock],
+        "INSERT INTO stock_movements (stock_product_id, factory_id, kind, quantity, balance_after) VALUES ($1, $2, 'receipt', 10, 10)",
+        [stock, factory],
       );
       expect(
         await sqlState(db.client, 'UPDATE stock_movements SET quantity = 5 WHERE id = $1', [movement]),

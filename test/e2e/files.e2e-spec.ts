@@ -5,7 +5,6 @@ import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
 import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { EICAR_TEST_STRING } from '@integrations/virus-scan/fake-virus-scanner';
 import { PasswordService } from '@modules/auth/password.service';
-import { ScopeDirectory } from '@modules/iam/scope-directory';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { FileProcessingJobs } from '@platform/files/file-processing.jobs';
@@ -40,21 +39,41 @@ describe('files (e2e, contract §3 Files)', () => {
     storage = app.get<FakeObjectStorage>(OBJECT_STORAGE);
     await seedDev(prisma, E2E_DEV_PASSWORD);
 
-    const ids = new Map([
-      [11n, FACTORY_A],
-      [12n, FACTORY_B],
-    ]);
-    app.get(ScopeDirectory).register('factory', {
-      publicIds: (internal) =>
-        Promise.resolve(new Map(internal.filter((i) => ids.has(i)).map((i) => [i, ids.get(i)!]))),
-      internalIds: (publics) =>
-        Promise.resolve(new Map([...ids].filter(([, p]) => publics.includes(p)).map(([i, p]) => [p, i]))),
-    });
+    // Real factories (B2.2): the factory scope resolver of the partners module maps their ids.
+    const ids = new Map<string, bigint>();
+    for (const [publicId, code, branchCode] of [
+      [FACTORY_A, 'E2EFILESA', '00011'],
+      [FACTORY_B, 'E2EFILESB', '00012'],
+    ] as const) {
+      const existing = await prisma.factory.findUnique({ where: { publicId } });
+      const factory =
+        existing ??
+        (await prisma.factory.create({
+          data: {
+            publicId,
+            code,
+            legalName: `${code} (fake)`,
+            juristicType: 'company',
+            taxId: '0000000000019',
+            branchCode,
+            vendor: {
+              create: {
+                kind: 'factory',
+                legalName: `${code} (fake)`,
+                juristicType: 'company',
+                taxId: '0000000000019',
+                branchCode,
+              },
+            },
+          },
+        }));
+      ids.set(publicId, factory.id);
+    }
     const owner = await prisma.role.findUniqueOrThrow({ where: { key: 'factory_owner' } });
     const passwordHash = await new PasswordService().hash(E2E_DEV_PASSWORD);
     for (const [name, scopeId] of [
-      ['files-a', 11n],
-      ['files-b', 12n],
+      ['files-a', ids.get(FACTORY_A)!],
+      ['files-b', ids.get(FACTORY_B)!],
     ] as const) {
       if (!(await prisma.user.findFirst({ where: { email: `${name}@factory.invalid` } }))) {
         await prisma.user.create({
@@ -180,7 +199,9 @@ describe('files (e2e, contract §3 Files)', () => {
       mimeType: 'application/pdf',
     });
     const row = await prisma.fileObject.findUniqueOrThrow({ where: { publicId: file.id } });
-    expect(row.ownerFactoryId).toBe(11n);
+    expect(row.ownerFactoryId).toBe(
+      (await prisma.factory.findUniqueOrThrow({ where: { publicId: FACTORY_A } })).id,
+    );
     await get('files-a', file.id).expect(200);
     await get('files-b', file.id).expect(404);
     await request(server)
