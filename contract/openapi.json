@@ -298,6 +298,50 @@
           "type": "https://errors.packio/catalog.code_taken"
         }
       },
+      "problem.catalog.import_invalid": {
+        "summary": "catalog.import_invalid",
+        "value": {
+          "code": "catalog.import_invalid",
+          "detail": "แก้ไขแถวที่ผิดพลาดในไฟล์แล้วตรวจสอบตัวอย่างอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไฟล์นำเข้ามีข้อผิดพลาด",
+          "type": "https://errors.packio/catalog.import_invalid"
+        }
+      },
+      "problem.catalog.import_stale": {
+        "summary": "catalog.import_stale",
+        "value": {
+          "code": "catalog.import_stale",
+          "detail": "ข้อมูลที่จะนำเข้าไม่ตรงกับตัวอย่างที่ตรวจสอบแล้ว กรุณาตรวจสอบตัวอย่างอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไฟล์นำเข้าเปลี่ยนไปจากที่ตรวจสอบ",
+          "type": "https://errors.packio/catalog.import_stale"
+        }
+      },
+      "problem.catalog.import_too_large": {
+        "summary": "catalog.import_too_large",
+        "value": {
+          "code": "catalog.import_too_large",
+          "detail": "ไฟล์หนึ่งนำเข้าได้ไม่เกิน {max} แถว กรุณาแบ่งไฟล์",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไฟล์นำเข้ามีจำนวนแถวมากเกินไป",
+          "type": "https://errors.packio/catalog.import_too_large"
+        }
+      },
+      "problem.catalog.import_unreadable": {
+        "summary": "catalog.import_unreadable",
+        "value": {
+          "code": "catalog.import_unreadable",
+          "detail": "ไฟล์ต้องเป็น Excel (.xlsx) ตามแม่แบบที่ส่งออกจากระบบ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "อ่านไฟล์นำเข้าไม่ได้",
+          "type": "https://errors.packio/catalog.import_unreadable"
+        }
+      },
       "problem.catalog.slug_taken": {
         "summary": "catalog.slug_taken",
         "value": {
@@ -507,6 +551,50 @@
           "type": "https://errors.packio/iam.user_exists"
         }
       },
+      "problem.idempotency.in_progress": {
+        "summary": "idempotency.in_progress",
+        "value": {
+          "code": "idempotency.in_progress",
+          "detail": "คำขอเดียวกันกำลังดำเนินการอยู่ กรุณารอแล้วลองใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "คำขอกำลังดำเนินการ",
+          "type": "https://errors.packio/idempotency.in_progress"
+        }
+      },
+      "problem.idempotency.key_invalid": {
+        "summary": "idempotency.key_invalid",
+        "value": {
+          "code": "idempotency.key_invalid",
+          "detail": "Idempotency-Key ต้องเป็น uuid",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 400,
+          "title": "Idempotency-Key ไม่ถูกต้อง",
+          "type": "https://errors.packio/idempotency.key_invalid"
+        }
+      },
+      "problem.idempotency.key_required": {
+        "summary": "idempotency.key_required",
+        "value": {
+          "code": "idempotency.key_required",
+          "detail": "คำขอนี้ต้องมี header Idempotency-Key (uuid)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 400,
+          "title": "ต้องระบุ Idempotency-Key",
+          "type": "https://errors.packio/idempotency.key_required"
+        }
+      },
+      "problem.idempotency.key_reused": {
+        "summary": "idempotency.key_reused",
+        "value": {
+          "code": "idempotency.key_reused",
+          "detail": "Idempotency-Key นี้ถูกใช้กับคำขอที่มีข้อมูลต่างกันแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "Idempotency-Key ถูกใช้แล้ว",
+          "type": "https://errors.packio/idempotency.key_reused"
+        }
+      },
       "problem.internal.unexpected": {
         "summary": "internal.unexpected",
         "value": {
@@ -622,6 +710,13 @@
           "type": "string"
         }
       },
+      "IdempotentReplayed": {
+        "description": "`true` when this response is a replay of an earlier request with the same Idempotency-Key.",
+        "schema": {
+          "example": "true",
+          "type": "string"
+        }
+      },
       "Location": {
         "description": "URL of the created resource.",
         "schema": {
@@ -673,6 +768,17 @@
         "required": false,
         "schema": {
           "example": "th",
+          "type": "string"
+        }
+      },
+      "IdempotencyKey": {
+        "description": "Client-generated uuid for this operation. A replay with the same key and body within 24 h returns the original response with `Idempotent-Replayed: true`; the same key with a different body → 422 `idempotency.key_reused`; while the first request is still running → 409 `idempotency.in_progress`. A failed attempt releases the key.",
+        "in": "header",
+        "name": "Idempotency-Key",
+        "required": true,
+        "schema": {
+          "example": "3b241101-e2bb-4255-8caf-4136c566a962",
+          "format": "uuid",
           "type": "string"
         }
       },
@@ -1447,6 +1553,35 @@
         ],
         "type": "string"
       },
+      "CatalogExportDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-09-25T10:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rows": {
+            "example": 7408,
+            "type": "integer"
+          },
+          "url": {
+            "example": "https://packio-files.s3.example.com/…&X-Amz-Expires=300",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "url",
+          "rows",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "CatalogGroupDto": {
         "properties": {
           "code": {
@@ -1494,6 +1629,19 @@
           "updatedAt"
         ],
         "type": "object"
+      },
+      "CatalogImportKind": {
+        "enum": [
+          "geography",
+          "materials",
+          "finishes",
+          "ink_colours",
+          "patterns",
+          "standard_sizes",
+          "stock_attribute_values",
+          "stock_products"
+        ],
+        "type": "string"
       },
       "CatalogOptionKind": {
         "enum": [
@@ -1946,6 +2094,27 @@
           "withdrawn"
         ],
         "type": "string"
+      },
+      "ConfirmImportDto": {
+        "properties": {
+          "fileId": {
+            "description": "Uploaded `.xlsx` file (purpose `import`), scanned clean",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "previewSha256": {
+            "description": "`previewSha256` of the preview being confirmed",
+            "example": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "previewSha256"
+        ],
+        "type": "object"
       },
       "ConsentDto": {
         "properties": {
@@ -4417,6 +4586,268 @@
           "line"
         ],
         "type": "string"
+      },
+      "ImportColumnDto": {
+        "properties": {
+          "header": {
+            "example": "postcode",
+            "type": "string"
+          },
+          "required": {
+            "example": true,
+            "type": "boolean"
+          },
+          "type": {
+            "description": "`text`, `int`, `decimal`, `bool`, `enum`, `json`, `ref`",
+            "example": "text",
+            "type": "string"
+          },
+          "values": {
+            "description": "Allowed values of an `enum` column",
+            "example": null,
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "header",
+          "type",
+          "required",
+          "values"
+        ],
+        "type": "object"
+      },
+      "ImportCountsDto": {
+        "properties": {
+          "create": {
+            "example": 120,
+            "type": "integer"
+          },
+          "invalid": {
+            "description": "Rows with at least one error",
+            "example": 0,
+            "type": "integer"
+          },
+          "unchanged": {
+            "example": 7280,
+            "type": "integer"
+          },
+          "update": {
+            "example": 8,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "create",
+          "update",
+          "unchanged",
+          "invalid"
+        ],
+        "type": "object"
+      },
+      "ImportFileDto": {
+        "properties": {
+          "fileId": {
+            "description": "Uploaded `.xlsx` file (purpose `import`), scanned clean",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
+      "ImportKindDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogImportKind"
+              }
+            ],
+            "example": "geography"
+          },
+          "label": {
+            "example": "Provinces, districts and subdistricts with postcodes",
+            "type": "string"
+          },
+          "sheets": {
+            "items": {
+              "$ref": "#/components/schemas/ImportKindSheetDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "sheets"
+        ],
+        "type": "object"
+      },
+      "ImportKindSheetDto": {
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ImportColumnDto"
+            },
+            "type": "array"
+          },
+          "key": {
+            "description": "Headers forming the natural key",
+            "example": [
+              "code"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "example": "subdistricts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "key",
+          "columns"
+        ],
+        "type": "object"
+      },
+      "ImportPreviewDto": {
+        "properties": {
+          "canConfirm": {
+            "description": "No invalid rows and at least one create or update",
+            "example": true,
+            "type": "boolean"
+          },
+          "errors": {
+            "description": "First 200 row errors",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowErrorDto"
+            },
+            "type": "array"
+          },
+          "errorsTruncated": {
+            "example": false,
+            "type": "boolean"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogImportKind"
+              }
+            ],
+            "example": "geography"
+          },
+          "previewSha256": {
+            "description": "Send back to confirm exactly this plan",
+            "example": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+            "type": "string"
+          },
+          "sheets": {
+            "items": {
+              "$ref": "#/components/schemas/ImportSheetDto"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/ImportCountsDto"
+          }
+        },
+        "required": [
+          "kind",
+          "fileId",
+          "previewSha256",
+          "canConfirm",
+          "totals",
+          "sheets",
+          "errors",
+          "errorsTruncated"
+        ],
+        "type": "object"
+      },
+      "ImportRowErrorDto": {
+        "properties": {
+          "code": {
+            "description": "`required`, `max`, `pattern`, `enum`, `int`, `decimal`, `bool`, `json`, `ref`, `duplicate`, `header`, `sheet`",
+            "example": "pattern",
+            "type": "string"
+          },
+          "column": {
+            "example": "postcode",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "example": "postcode has an invalid format",
+            "type": "string"
+          },
+          "row": {
+            "description": "Excel row number (1 = header)",
+            "example": 17,
+            "type": "integer"
+          },
+          "sheet": {
+            "example": "subdistricts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sheet",
+          "row",
+          "column",
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "ImportSheetDto": {
+        "properties": {
+          "create": {
+            "example": 120,
+            "type": "integer"
+          },
+          "invalid": {
+            "example": 0,
+            "type": "integer"
+          },
+          "name": {
+            "example": "subdistricts",
+            "type": "string"
+          },
+          "unchanged": {
+            "example": 7280,
+            "type": "integer"
+          },
+          "update": {
+            "example": 8,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "create",
+          "update",
+          "unchanged",
+          "invalid"
+        ],
+        "type": "object"
       },
       "InboxItemDto": {
         "properties": {
@@ -20109,6 +20540,193 @@
         ]
       }
     },
+    "/v1/admin/catalog/exports/{kind}": {
+      "post": {
+        "description": "Current rows in the import layout (an empty table gives the template), served by a 5-minute signed URL. The export is audited (`catalog.exported`).\n\nImplements: D-005, D-170.",
+        "operationId": "admin.catalogImports.export",
+        "parameters": [
+          {
+            "description": "Which table(s) the workbook holds",
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CatalogImportKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-09-25T10:05:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f002",
+                  "rows": 7408,
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogExportDto"
+                }
+              }
+            },
+            "description": "Export ready",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export a catalogue table to Excel",
+        "tags": [
+          "admin.catalogImports"
+        ],
+        "x-required-permissions": [
+          "catalog.import"
+        ]
+      }
+    },
     "/v1/admin/catalog/finish-groups": {
       "get": {
         "description": "Filters, sort and `q` (free text over code, nameTh, nameEn). Groups organise definitions in the admin zone and the configurator.\n\nImplements: D-005, D-040.",
@@ -23992,6 +24610,790 @@
         ],
         "x-required-permissions": [
           "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/catalog/imports": {
+      "get": {
+        "description": "Each kind is a workbook with one sheet per table (row 1 = headers). References use natural keys (codes, slugs, SKUs) — never internal ids. Export a kind to get a filled template.\n\nImplements: D-005, D-170.",
+        "operationId": "admin.catalogImports.listKinds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "kind": "geography",
+                    "label": "Provinces, districts and subdistricts with postcodes",
+                    "sheets": [
+                      {
+                        "columns": [
+                          {
+                            "header": "postcode",
+                            "required": true,
+                            "type": "text",
+                            "values": null
+                          }
+                        ],
+                        "key": [
+                          "code"
+                        ],
+                        "name": "subdistricts"
+                      }
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ImportKindDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Import kinds",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the Excel import kinds and their columns",
+        "tags": [
+          "admin.catalogImports"
+        ],
+        "x-required-permissions": [
+          "catalog.import"
+        ]
+      }
+    },
+    "/v1/admin/catalog/imports/{kind}/actions/confirm": {
+      "post": {
+        "description": "Re-plans the same file inside one transaction and writes it only if the plan is exactly the one previewed (`previewSha256`) and has no invalid rows; otherwise 409 `catalog.import_stale` or 422 `catalog.import_invalid`. Audited and published as `catalog.import_applied`.\n\nImplements: D-005, D-170, D-161.",
+        "operationId": "admin.catalogImports.confirm",
+        "parameters": [
+          {
+            "description": "Which table(s) the workbook holds",
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CatalogImportKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                    "previewSha256": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "canConfirm": true,
+                  "errors": [],
+                  "errorsTruncated": false,
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                  "kind": "geography",
+                  "previewSha256": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+                  "sheets": [
+                    {
+                      "create": 0,
+                      "invalid": 0,
+                      "name": "provinces",
+                      "unchanged": 77,
+                      "update": 0
+                    },
+                    {
+                      "create": 0,
+                      "invalid": 0,
+                      "name": "districts",
+                      "unchanged": 927,
+                      "update": 1
+                    },
+                    {
+                      "create": 120,
+                      "invalid": 1,
+                      "name": "subdistricts",
+                      "unchanged": 6276,
+                      "update": 7
+                    }
+                  ],
+                  "totals": {
+                    "create": 120,
+                    "invalid": 0,
+                    "unchanged": 7280,
+                    "update": 8
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewDto"
+                }
+              }
+            },
+            "description": "Imported",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.import_stale": {
+                    "$ref": "#/components/examples/problem.catalog.import_stale"
+                  },
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.import_stale`, `file.infected`, `file.not_ready`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.import_invalid": {
+                    "$ref": "#/components/examples/problem.catalog.import_invalid"
+                  },
+                  "catalog.import_too_large": {
+                    "$ref": "#/components/examples/problem.catalog.import_too_large"
+                  },
+                  "catalog.import_unreadable": {
+                    "$ref": "#/components/examples/problem.catalog.import_unreadable"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.import_invalid`, `catalog.import_too_large`, `catalog.import_unreadable`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Confirm a previewed Excel import",
+        "tags": [
+          "admin.catalogImports"
+        ],
+        "x-required-permissions": [
+          "catalog.import"
+        ]
+      }
+    },
+    "/v1/admin/catalog/imports/{kind}/actions/preview": {
+      "post": {
+        "description": "Parses and validates the workbook and compares it with the database: counts of rows to create, update or leave unchanged, and row-level errors. Nothing is written. Geography also needs `geography.manage` (D-161, D-170).\n\nImplements: D-005, D-170, D-161.",
+        "operationId": "admin.catalogImports.preview",
+        "parameters": [
+          {
+            "description": "Which table(s) the workbook holds",
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CatalogImportKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ImportFileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "canConfirm": false,
+                  "errors": [
+                    {
+                      "code": "pattern",
+                      "column": "postcode",
+                      "message": "postcode has an invalid format",
+                      "row": 17,
+                      "sheet": "subdistricts"
+                    }
+                  ],
+                  "errorsTruncated": false,
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                  "kind": "geography",
+                  "previewSha256": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+                  "sheets": [
+                    {
+                      "create": 0,
+                      "invalid": 0,
+                      "name": "provinces",
+                      "unchanged": 77,
+                      "update": 0
+                    },
+                    {
+                      "create": 0,
+                      "invalid": 0,
+                      "name": "districts",
+                      "unchanged": 927,
+                      "update": 1
+                    },
+                    {
+                      "create": 120,
+                      "invalid": 1,
+                      "name": "subdistricts",
+                      "unchanged": 6276,
+                      "update": 7
+                    }
+                  ],
+                  "totals": {
+                    "create": 120,
+                    "invalid": 1,
+                    "unchanged": 7280,
+                    "update": 8
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreviewDto"
+                }
+              }
+            },
+            "description": "The plan",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.infected`, `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.import_too_large": {
+                    "$ref": "#/components/examples/problem.catalog.import_too_large"
+                  },
+                  "catalog.import_unreadable": {
+                    "$ref": "#/components/examples/problem.catalog.import_unreadable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.import_too_large`, `catalog.import_unreadable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Preview an Excel import (dry run)",
+        "tags": [
+          "admin.catalogImports"
+        ],
+        "x-required-permissions": [
+          "catalog.import"
         ]
       }
     },
@@ -55625,6 +57027,10 @@
     {
       "description": "Foil types (platform definitions, D-005).",
       "name": "admin.catalogFoilTypes"
+    },
+    {
+      "description": "Excel import (preview → confirm) and export of the large catalogue tables and geography (D-005, D-170).",
+      "name": "admin.catalogImports"
     },
     {
       "description": "Groups of ink colours (D-005).",

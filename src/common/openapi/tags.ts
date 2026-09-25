@@ -39,6 +39,8 @@ export const API_TAGS: Record<string, string> = {
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
 
   // --- B2.1 catalogue & CMS
+  'admin.catalogImports':
+    'Excel import (preview → confirm) and export of the large catalogue tables and geography (D-005, D-170).',
   'admin.catalogProductCategories': 'Packio reporting product categories (replace legacy PH1–PH6, D-030).',
   'admin.catalogProductTypes':
     'Product types: the 7 instant types and the RFQ categories, quote mode per type (D-100, D-043).',

@@ -19,10 +19,11 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
   /**
    * Runs `work` in one database transaction. Every state change goes through here together with
    * its audit row and outbox event (CLAUDE.md hard rules; the outbox arrives in B1.3).
+   * `timeout` (ms, Prisma default 5 000) is raised only by bulk operations such as catalogue imports.
    */
   withTx<T>(
     work: (tx: Tx) => Promise<T>,
-    options?: { isolationLevel?: Prisma.TransactionIsolationLevel },
+    options?: { isolationLevel?: Prisma.TransactionIsolationLevel; timeout?: number },
   ): Promise<T> {
     return this.$transaction(work, options);
   }

@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
-import { type Actor } from '@common/context/actor';
+import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
-import { type AttachmentSubject, type FileObject } from '@generated/prisma/client';
+import { type AttachmentSubject, type FileObject, type FileRetentionClass } from '@generated/prisma/client';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { parseScopeClaim, ScopeDirectory } from '@modules/iam/scope-directory';
@@ -184,6 +184,45 @@ export class FilesService {
       where: { id: file.id },
       data: { uploadStatus: 'failed', multipartUploadId: null },
     });
+  }
+
+  /**
+   * Stores a file the system generated from its own data (exports, templates) for `actor` and
+   * returns a short-lived signed download URL. Nothing to scan: the content is ours.
+   */
+  async storeGenerated(
+    actor: UserActor,
+    input: { body: Buffer; fileName: string; mimeType: string; retentionClass: FileRetentionClass },
+  ): Promise<{ fileId: string; url: string; expiresAt: Date }> {
+    const now = new Date();
+    const file = await this.prisma.fileObject.create({
+      data: {
+        bucket: this.config.get('S3_BUCKET'),
+        storageKey: `pending/${randomUUID()}`,
+        originalName: input.fileName,
+        mimeType: input.mimeType,
+        sizeBytes: BigInt(input.body.length),
+        uploadStatus: 'uploaded',
+        scanStatus: 'clean',
+        scannedAt: now,
+        retentionClass: input.retentionClass,
+        ownerUserId: actor.userId,
+        createdById: actor.userId,
+      },
+    });
+    const storageKey = `${input.retentionClass}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${file.publicId}`;
+    await this.storage.put(storageKey, input.body, input.mimeType);
+    await this.prisma.fileObject.update({ where: { id: file.id }, data: { storageKey } });
+    const url = await this.storage.presignGet(storageKey, {
+      expiresInSeconds: DOWNLOAD_URL_TTL_SECONDS,
+      fileName: input.fileName,
+      contentType: input.mimeType,
+    });
+    return {
+      fileId: file.publicId,
+      url,
+      expiresAt: new Date(now.getTime() + DOWNLOAD_URL_TTL_SECONDS * 1000),
+    };
   }
 
   /** Metadata, after the same access check as downloads. */

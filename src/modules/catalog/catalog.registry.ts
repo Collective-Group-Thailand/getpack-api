@@ -2,6 +2,7 @@ import { type Type } from '@nestjs/common';
 
 import { catalogCrudController } from './crud/catalog-crud.controller';
 import { type AnyCatalogResource } from './crud/catalog-resource';
+import { CatalogImportsController } from './imports/imports.controller';
 import {
   assemblies,
   assemblyGroups,
@@ -71,6 +72,7 @@ export const CATALOG_RESOURCES: readonly AnyCatalogResource[] = [
  * segments (`actions/…`, `patterns`, `options`) are matched before the generic `:id` routes.
  */
 export const CATALOG_ADMIN_CONTROLLERS: Type<unknown>[] = [
+  CatalogImportsController,
   ProductTypeActionsController,
   CatalogProductRelationsController,
   PatternRelationsController,
