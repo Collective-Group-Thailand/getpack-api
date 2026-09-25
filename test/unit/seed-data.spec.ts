@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { ROLES } from '@modules/iam/roles.catalog';
 
 import { APPROVAL_POLICIES } from '../../prisma/seed/data/approval-policies';
+import { PRODUCT_TYPES } from '../../prisma/seed/data/catalog';
 import { SOD_RULES } from '../../prisma/seed/data/reference';
 import { SETTINGS } from '../../prisma/seed/data/settings';
 import { assertSettingValue } from '../../prisma/seed/reference-seed';
@@ -78,5 +79,26 @@ describe('seed data (B1.2 step 3)', () => {
     for (const rule of SOD_RULES.filter((r) => r.kind === 'role_pair')) {
       for (const role of rule.roles!) expect(ROLE_KEYS.has(role)).toBe(true);
     }
+  });
+
+  it('seeds the D-100 product types: 7 calculators once each, the rest RFQ-only (B2.1)', () => {
+    const codes = PRODUCT_TYPES.map((t) => t.code);
+    expect(new Set(codes).size).toBe(14);
+    for (const code of codes) expect(code).toMatch(/^[a-z][a-z0-9_]*$/);
+    const calculators = PRODUCT_TYPES.flatMap((t) => (t.calculatorKey ? [t.calculatorKey] : []));
+    expect(calculators.sort()).toEqual(
+      ['corrugate', 'folding', 'label', 'pouch', 'service', 'standard_product', 'tag_sleeve'].sort(),
+    );
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        'rigid_box',
+        'paper_bag',
+        'food_packaging',
+        'tube',
+        'custom_tape',
+        'pop_display',
+        'other',
+      ]),
+    );
   });
 });

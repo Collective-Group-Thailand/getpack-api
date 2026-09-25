@@ -17,6 +17,8 @@ const PRODUCTION_ENV: Record<string, string> = {
   AWS_SECRET_ACCESS_KEY: 'test',
   OTP_HMAC_SECRET: 'docs-gating-test-secret-0123456789abcdef',
   FIELD_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
+  PUBLIC_API_BASE_URL: 'https://api.packio.example',
+  MERCHANT_FEED_LINK_TEMPLATE: 'https://www.packio.example/th/products/{sku}',
 };
 
 beforeAll(async () => {

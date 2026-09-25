@@ -3,6 +3,7 @@ import { PERMISSIONS } from '../../src/modules/iam/permissions.catalog';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { APPROVAL_POLICIES } from './data/approval-policies';
+import { PRODUCT_TYPES } from './data/catalog';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
@@ -53,6 +54,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureApprovalPolicies(tx, count);
       await ensureTeamsConsentCalendar(tx, count);
       await ensureNotifications(tx, count);
+      await ensureProductTypes(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -335,5 +337,37 @@ async function ensureNotifications(tx: Tx, count: (what: string) => void): Promi
       },
     });
     count('notification_routes');
+  }
+}
+
+/** D-100 product types, one reporting category each; existing rows are left to the admins. */
+async function ensureProductTypes(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const [index, type] of PRODUCT_TYPES.entries()) {
+    if (await tx.productType.findUnique({ where: { code: type.code } })) continue;
+    const category =
+      (await tx.productCategory.findUnique({ where: { code: type.code } })) ??
+      (await tx.productCategory.create({
+        data: {
+          code: type.code,
+          nameTh: type.nameTh,
+          nameEn: type.nameEn,
+          sort: (index + 1) * 10,
+          status: 'active',
+        },
+      }));
+    await tx.productType.create({
+      data: {
+        code: type.code,
+        categoryId: category.id,
+        nameTh: type.nameTh,
+        nameEn: type.nameEn,
+        quoteMode: 'rfq',
+        calculatorKey: type.calculatorKey,
+        isFoodContactDefault: type.isFoodContactDefault ?? false,
+        sort: (index + 1) * 10,
+        status: 'active',
+      },
+    });
+    count('product_types');
   }
 }

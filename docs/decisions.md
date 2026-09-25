@@ -198,5 +198,13 @@ Consequences: all 7 calculators are ported with golden tests before launch; the 
 | D-168 | **Auditor independence:** the time-boxed Auditor role (`accounting-design.md` §8) can never be held together with Finance or Finance Manager (SoD role pairs, blocked). | Accepted (2026-09-23) |
 | D-169 | **Approvals no decision names default to Finance Manager**: manual journals, credit notes, refunds, write-offs, changes to posting rules, chart of accounts, tax settings and document series (one Finance Manager step); vendor and company bank-account changes need two different approvers (Finance, then Finance Manager). Changeable by superadmin as new policy versions (D-063). | Accepted (2026-09-23) |
 
+## Catalogue & partner answers (2026-09-25)
+| ID | Decision | Status |
+|---|---|---|
+| D-170 | **Geography entry (closes the D-161 open item): Excel import with preview → confirm for bulk loading, plus single-row admin forms for corrections.** Admins with `geography.manage` maintain provinces, districts, subdistricts and postcodes; nothing is seeded from an outside dataset (D-161). | Accepted (2026-09-25) |
+| D-171 | **Factories enter Packio through the Partner team at launch**: staff create the factory (self-service or assisted onboarding mode) and invite its owner, who completes the onboarding steps in the partner zone. There is no public application form in R1; one can be added later. | Accepted (2026-09-25) |
+| D-172 | **No default deviation band for price suggestions** (D-040 "flag when the proposal deviates more than a configurable band"): suggestions always show the value, basis and deviation %, but raise the `above_band` flag only once a superadmin sets `partners.suggestion_deviation_band_pct` (D-063). | Accepted (2026-09-25) |
+| D-173 | **Factory-specific tolerance (D-021/D-163) and payout-policy (D-022/D-164) overrides are approved by a Superadmin** (policies `factory_tolerance_change`, `factory_payout_policy_change`; requester Partner Manager, or Finance for payout). Seeded as a proposed default, changeable as new policy versions (D-063). | Accepted (2026-09-25) — approver Proposed |
+
 ## Still open
-Approval tier boundaries in D-052 (proposed 5–10 % Director, 10–15 % VP, > 15 % C-Level) · carrier choice in D-114 (proposed Flash Express + Deliveree) · all ⚖ items in `accounting-design.md` §10 (CPA review; defaults are in place). · D-161 geography entry method (manual keying vs admin Excel import of ~7,400 subdistricts)
+Approval tier boundaries in D-052 (proposed 5–10 % Director, 10–15 % VP, > 15 % C-Level) · carrier choice in D-114 (proposed Flash Express + Deliveree) · all ⚖ items in `accounting-design.md` §10 (CPA review; defaults are in place). · ~~D-161 geography entry method~~ → D-170

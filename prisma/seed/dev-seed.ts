@@ -1,4 +1,4 @@
-import { type PrismaClient } from '../../src/generated/prisma/client';
+import { type Prisma, type PrismaClient } from '../../src/generated/prisma/client';
 import { PasswordService } from '../../src/modules/auth/password.service';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { type EntitySeedInput, seedReference, type SeedReport } from './reference-seed';
@@ -72,6 +72,8 @@ export async function seedDev(prisma: PrismaClient, devPassword?: string): Promi
       count('dev_staff_users');
     }
 
+    if (await seedDevCatalog(tx)) count('dev_catalog');
+
     const customerEmail = 'customer@example.invalid';
     if (!(await tx.user.findFirst({ where: { kind: 'customer', email: customerEmail } }))) {
       await tx.user.create({
@@ -87,4 +89,155 @@ export async function seedDev(prisma: PrismaClient, devPassword?: string): Promi
     }
   });
   return report;
+}
+
+/**
+ * A small, obviously fake catalogue for `pnpm dev` (D-005: real catalogue data is created by admins):
+ * every name starts with `[DEV]`, codes with `dev`. Created once; skipped when present.
+ */
+async function seedDevCatalog(tx: Prisma.TransactionClient): Promise<boolean> {
+  if (await tx.material.findUnique({ where: { code: 'dev-art-350' } })) return false;
+  const folding = await tx.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } });
+  const standard = await tx.productType.findUniqueOrThrow({ where: { code: 'standard_product' } });
+
+  const family = await tx.materialFamily.create({
+    data: {
+      code: 'dev_paper',
+      nameTh: '[DEV] กระดาษทดสอบ',
+      nameEn: '[DEV] Test paper',
+      indexUnit: 'THB/kg',
+      status: 'active',
+    },
+  });
+  const art = await tx.material.create({
+    data: {
+      code: 'dev-art-350',
+      kind: 'paper',
+      familyId: family.id,
+      nameTh: '[DEV] อาร์ตการ์ด 350 แกรม',
+      nameEn: '[DEV] Art card 350 gsm',
+      gsm: 350,
+      status: 'active',
+    },
+  });
+  const kraft = await tx.material.create({
+    data: {
+      code: 'dev-kraft-300',
+      kind: 'paper',
+      familyId: family.id,
+      nameTh: '[DEV] คราฟท์ 300 แกรม',
+      nameEn: '[DEV] Kraft 300 gsm',
+      gsm: 300,
+      status: 'active',
+    },
+  });
+  const group = await tx.finishGroup.create({
+    data: { code: 'dev-coatings', nameTh: '[DEV] เคลือบ', nameEn: '[DEV] Coatings', status: 'active' },
+  });
+  const matt = await tx.finish.create({
+    data: {
+      groupId: group.id,
+      code: 'dev-matt',
+      nameTh: '[DEV] เคลือบด้าน',
+      nameEn: '[DEV] Matt lamination',
+      finishKind: 'lamination',
+      status: 'active',
+    },
+  });
+  const pattern = await tx.pattern.create({
+    data: {
+      productTypeId: folding.id,
+      code: 'DEV-RTE',
+      name: '[DEV] ฝาเสียบกลับด้าน',
+      constraints: {},
+      status: 'active',
+    },
+  });
+  await tx.catalogProduct.create({
+    data: {
+      productTypeId: folding.id,
+      slug: 'dev-tuck-end-box',
+      nameTh: '[DEV] กล่องฝาเสียบทดสอบ',
+      nameEn: '[DEV] Test tuck-end box',
+      templateAvailability: 'drawing',
+      status: 'active',
+      patterns: { create: { patternId: pattern.id } },
+      options: {
+        create: [
+          { optionKind: 'material', optionId: art.id, isDefault: true },
+          { optionKind: 'material', optionId: kraft.id, sort: 1 },
+          { optionKind: 'coating', optionId: matt.id },
+        ],
+      },
+      standardSizes: {
+        create: {
+          code: 'S',
+          name: '[DEV] 10×10×5 ซม.',
+          lengthMm: 100,
+          widthMm: 100,
+          heightMm: 50,
+          status: 'active',
+        },
+      },
+    },
+  });
+  const clear = await tx.stockAttributeValue.create({
+    data: {
+      attribute: 'colour',
+      code: 'dev-clear',
+      nameTh: '[DEV] ใส',
+      nameEn: '[DEV] Clear',
+      status: 'active',
+    },
+  });
+  await tx.stockProduct.create({
+    data: {
+      productTypeId: standard.id,
+      sku: 'DEV-BTL-0001',
+      nameTh: '[DEV] ขวดทดสอบ 250 มล.',
+      nameEn: '[DEV] Test bottle 250 ml',
+      unit: 'piece',
+      capacityMl: 250,
+      minOrderQty: 100,
+      status: 'active',
+      attributes: { create: { attribute: 'colour', valueId: clear.id } },
+    },
+  });
+  const province = await tx.geoProvince.create({
+    data: { code: 'DEV1', nameTh: '[DEV] จังหวัดทดสอบ', nameEn: '[DEV] Test province' },
+  });
+  const district = await tx.geoDistrict.create({
+    data: {
+      provinceId: province.id,
+      code: 'DEV101',
+      nameTh: '[DEV] อำเภอทดสอบ',
+      nameEn: '[DEV] Test district',
+    },
+  });
+  await tx.geoSubdistrict.create({
+    data: {
+      districtId: district.id,
+      code: 'DEV10101',
+      nameTh: '[DEV] ตำบลทดสอบ',
+      nameEn: '[DEV] Test subdistrict',
+      postcode: '99999',
+    },
+  });
+  const faqCategory = await tx.faqCategory.create({
+    data: {
+      code: 'dev_ordering',
+      nameTh: '[DEV] การสั่งซื้อ',
+      nameEn: '[DEV] Ordering',
+      status: 'published',
+    },
+  });
+  await tx.faq.create({
+    data: {
+      categoryId: faqCategory.id,
+      questionTh: '[DEV] คำถามทดสอบ',
+      answerTh: '[DEV] คำตอบทดสอบ',
+      status: 'published',
+    },
+  });
+  return true;
 }
