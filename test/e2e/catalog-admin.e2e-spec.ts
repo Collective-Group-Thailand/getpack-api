@@ -1,0 +1,261 @@
+import { PrismaService } from '@database/prisma.service';
+import { type INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
+
+import { seedDev } from '../../prisma/seed/dev-seed';
+import { AppModule } from '../../src/app.module';
+import { configureApp } from '../../src/bootstrap';
+import { E2E_DEV_PASSWORD } from '../support/e2e';
+
+/** Catalogue administration (B2.1, D-005 / D-100): generic CRUD kit, collections, quote mode. */
+describe('catalogue admin (e2e, B2.1)', () => {
+  let app: INestApplication;
+  let server: ReturnType<INestApplication['getHttpServer']>;
+  let prisma: PrismaService;
+  const tokens: Record<string, string> = {};
+  const run = Date.now().toString(36);
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    app = moduleRef.createNestApplication({ logger: false });
+    configureApp(app);
+    await app.init();
+    server = app.getHttpServer();
+    prisma = app.get(PrismaService);
+    await seedDev(prisma, E2E_DEV_PASSWORD);
+    for (const role of ['admin', 'cs', 'marketing']) {
+      const res = await request(server)
+        .post('/v1/auth/staff/login')
+        .send({ email: `${role}@example.invalid`, password: E2E_DEV_PASSWORD })
+        .expect(200);
+      tokens[role] = res.body.accessToken as string;
+    }
+  });
+
+  afterAll(async () => {
+    await app?.close();
+  });
+
+  const as = (role: string) => ({
+    get: (url: string) => request(server).get(url).auth(tokens[role]!, { type: 'bearer' }),
+    post: (url: string, body: object) =>
+      request(server).post(url).auth(tokens[role]!, { type: 'bearer' }).send(body),
+    put: (url: string, body: object, etag: string) =>
+      request(server).put(url).auth(tokens[role]!, { type: 'bearer' }).set('If-Match', etag).send(body),
+    patch: (url: string, body: object, etag?: string) => {
+      const req = request(server).patch(url).auth(tokens[role]!, { type: 'bearer' });
+      return (etag ? req.set('If-Match', etag) : req).send(body);
+    },
+  });
+  const admin = as('admin');
+
+  let seq = 0;
+  async function productType(): Promise<{ id: string; etag: string }> {
+    const n = ++seq;
+    const category = await admin
+      .post('/v1/admin/catalog/product-categories', {
+        code: `e2e_cat_${run}_${n}`,
+        nameTh: 'หมวดทดสอบ',
+        nameEn: 'Test category',
+        status: 'active',
+      })
+      .expect(201);
+    const type = await admin
+      .post('/v1/admin/catalog/product-types', {
+        code: `e2e_type_${run}_${n}`,
+        categoryId: category.body.id,
+        nameTh: 'ประเภททดสอบ',
+        nameEn: 'Test type',
+        calculatorKey: 'folding',
+      })
+      .expect(201);
+    return { id: type.body.id as string, etag: type.headers['etag'] as string };
+  }
+
+  it('creates, reads, lists and updates with ETags, audit rows and events', async () => {
+    const family = await admin
+      .post('/v1/admin/catalog/material-families', {
+        code: `e2e_family_${run}`,
+        nameTh: 'กระดาษทดสอบ',
+        nameEn: 'Test paper',
+        indexUnit: 'THB/kg',
+      })
+      .expect(201);
+    expect(family.headers['location']).toBe(`/v1/admin/catalog/material-families/${family.body.id}`);
+
+    const created = await admin
+      .post('/v1/admin/catalog/materials', {
+        code: `e2e-art-${run}`,
+        kind: 'paper',
+        familyId: family.body.id,
+        nameTh: 'อาร์ตการ์ดทดสอบ 350 แกรม',
+        nameEn: 'Test art card 350',
+        gsm: 350,
+      })
+      .expect(201);
+    expect(created.body).toMatchObject({
+      kind: 'paper',
+      gsm: 350,
+      familyId: family.body.id,
+      status: 'draft',
+    });
+
+    const read = await admin.get(`/v1/admin/catalog/materials/${created.body.id}`).expect(200);
+    const etag = read.headers['etag'] as string;
+    expect(etag).toBe(created.headers['etag']);
+
+    // Missing / stale If-Match.
+    await admin.patch(`/v1/admin/catalog/materials/${created.body.id}`, { status: 'active' }).expect(428);
+    const updated = await admin
+      .patch(`/v1/admin/catalog/materials/${created.body.id}`, { status: 'active', gsm: 360 }, etag)
+      .expect(200);
+    expect(updated.body).toMatchObject({ status: 'active', gsm: 360 });
+    const stale = await admin
+      .patch(`/v1/admin/catalog/materials/${created.body.id}`, { gsm: 370 }, etag)
+      .expect(412);
+    expect(stale.body.code).toBe('concurrency.stale');
+
+    const list = await admin
+      .get(`/v1/admin/catalog/materials?q=${encodeURIComponent('ทดสอบ')}&kind=paper`)
+      .expect(200);
+    expect((list.body.data as { id: string }[]).map((m) => m.id)).toContain(created.body.id);
+    await admin.get('/v1/admin/catalog/materials?sort=nope').expect(422);
+
+    expect(
+      await prisma.auditLog.count({
+        where: {
+          resourcePublicId: created.body.id,
+          action: { in: ['catalog.material_created', 'catalog.material_updated'] },
+        },
+      }),
+    ).toBe(2);
+    expect(await prisma.domainEvent.count({ where: { aggregateId: created.body.id } })).toBe(2);
+  });
+
+  it('refuses duplicates, unknown references and staff without catalog.manage', async () => {
+    const body = { code: `e2e-dup-${run}`, name: 'ฟอยล์ทดสอบ' };
+    await admin.post('/v1/admin/catalog/foil-types', body).expect(201);
+    const conflict = await admin.post('/v1/admin/catalog/foil-types', body).expect(409);
+    expect(conflict.body.code).toBe('catalog.code_taken');
+
+    const unknown = await admin
+      .post('/v1/admin/catalog/materials', {
+        code: `e2e-unknown-${run}`,
+        kind: 'paper',
+        familyId: '0192f3a0-7c1e-7d2a-9b1f-0000000000ff',
+        nameTh: 'x',
+        nameEn: 'x',
+      })
+      .expect(422);
+    expect(unknown.body.errors).toEqual([expect.objectContaining({ path: 'familyId', code: 'exists' })]);
+
+    await as('cs').get('/v1/admin/catalog/materials').expect(200);
+    await as('cs')
+      .post('/v1/admin/catalog/foil-types', { code: `e2e-cs-${run}`, name: 'x' })
+      .expect(403);
+  });
+
+  it('keeps a new type on RFQ until its calculator ships (D-100)', async () => {
+    const type = await productType();
+    const refused = await admin
+      .post(`/v1/admin/catalog/product-types/${type.id}/actions/change-quote-mode`, {
+        quoteMode: 'instant',
+        reason: 'Trying too early',
+      })
+      .set('If-Match', type.etag)
+      .expect(422);
+    expect(refused.body.code).toBe('catalog.calculator_required');
+    // quoteMode is not an editable field: unknown properties are refused.
+    const patched = await admin
+      .patch(`/v1/admin/catalog/product-types/${type.id}`, { quoteMode: 'instant' }, type.etag)
+      .expect(422);
+    expect(patched.body.errors).toEqual([expect.objectContaining({ path: 'quoteMode' })]);
+  });
+
+  it('replaces the patterns and options of a catalogue product in one step', async () => {
+    const type = await productType();
+    const pattern = await admin
+      .post('/v1/admin/catalog/patterns', {
+        productTypeId: type.id,
+        code: `E2E-RTE-${run}`,
+        name: 'ฝาเสียบทดสอบ',
+        constraints: { minW: 30 },
+      })
+      .expect(201);
+    const coating = await admin
+      .post('/v1/admin/catalog/finishes', {
+        code: `e2e-varnish-${run}`,
+        nameTh: 'วานิช',
+        nameEn: 'Varnish',
+        finishKind: 'coating',
+      })
+      .expect(201);
+    const foil = await admin
+      .post('/v1/admin/catalog/finishes', {
+        code: `e2e-foil-${run}`,
+        nameTh: 'ฟอยล์',
+        nameEn: 'Foil',
+        finishKind: 'foil',
+        isSpecial: true,
+      })
+      .expect(201);
+    const product = await admin
+      .post('/v1/admin/catalog/catalog-products', {
+        productTypeId: type.id,
+        slug: `e2e-box-${run}`,
+        nameTh: 'กล่องทดสอบ',
+        nameEn: 'Test box',
+      })
+      .expect(201);
+    const url = `/v1/admin/catalog/catalog-products/${product.body.id}`;
+
+    const withPatterns = await admin
+      .put(
+        `${url}/patterns`,
+        { patterns: [{ patternId: pattern.body.id, factorNw: 1.5 }] },
+        product.headers['etag'] as string,
+      )
+      .expect(200);
+    expect(withPatterns.body.patterns).toEqual([
+      expect.objectContaining({ patternId: pattern.body.id, factorNw: 1.5 }),
+    ]);
+
+    // A foil offered as a coating is refused (only coatings/laminations).
+    await admin
+      .put(
+        `${url}/options`,
+        { options: [{ kind: 'coating', optionId: foil.body.id }] },
+        withPatterns.headers['etag'] as string,
+      )
+      .expect(422);
+    const withOptions = await admin
+      .put(
+        `${url}/options`,
+        {
+          options: [
+            { kind: 'coating', optionId: coating.body.id, isDefault: true },
+            { kind: 'finish', optionId: foil.body.id },
+          ],
+        },
+        withPatterns.headers['etag'] as string,
+      )
+      .expect(200);
+    expect(withOptions.body.options).toEqual([
+      expect.objectContaining({ kind: 'coating', optionId: coating.body.id, isDefault: true }),
+      expect.objectContaining({ kind: 'finish', optionId: foil.body.id }),
+    ]);
+    // The old ETag no longer matches.
+    await admin.put(`${url}/patterns`, { patterns: [] }, withPatterns.headers['etag'] as string).expect(412);
+
+    const read = await admin.get(url).expect(200);
+    expect(read.body.options).toHaveLength(2);
+  });
+
+  it('lets Marketing read the catalogue but not edit it', async () => {
+    await as('marketing').get('/v1/admin/catalog/product-types').expect(200);
+    await as('marketing')
+      .post('/v1/admin/catalog/packing-types', { code: `e2e-m-${run}`, nameTh: 'x', nameEn: 'x' })
+      .expect(403);
+  });
+});

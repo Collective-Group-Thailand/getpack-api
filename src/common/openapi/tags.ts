@@ -37,4 +37,36 @@ export const API_TAGS: Record<string, string> = {
   'admin.auditLogs': 'The audit log: search and CSV export (itself audited).',
   'admin.outbox': 'Domain-event outbox: dead-letter list and replay.',
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
+
+  // --- B2.1 catalogue & CMS
+  'admin.catalogProductCategories': 'Packio reporting product categories (replace legacy PH1–PH6, D-030).',
+  'admin.catalogProductTypes':
+    'Product types: the 7 instant types and the RFQ categories, quote mode per type (D-100, D-043).',
+  'admin.catalogPrintTypes': 'Print types per product type (platform definitions, D-100).',
+  'admin.catalogProducts':
+    'Customer-facing catalogue products with their patterns, options and images (D-100, D-005).',
+  'admin.catalogStandardSizes': 'Standard sizes offered for a catalogue product (D-005).',
+  'admin.catalogPatterns': 'Box styles (patterns), size constraints and matching flute types (D-100).',
+  'admin.catalogSubPatterns':
+    'Parts of a pattern with their geometry factors (indicative until the calculator port, B2.3).',
+  'admin.catalogMaterialFamilies': 'Material families behind the material price index (D-040 group 1).',
+  'admin.catalogFluteTypes': 'Corrugated flute types (platform definitions, D-005).',
+  'admin.catalogMaterials': 'Materials the customer picks — paper, board, film, foil (no prices, D-044).',
+  'admin.catalogFinishGroups': 'Groups of finishes (D-005).',
+  'admin.catalogFinishes': 'Finishes: coatings, laminations, foil, emboss, window (D-076 special finishes).',
+  'admin.catalogFoilTypes': 'Foil types (platform definitions, D-005).',
+  'admin.catalogInkColourGroups': 'Groups of ink colours (D-005).',
+  'admin.catalogInkColours': 'Ink colours: process, spot, white, metallic (D-005).',
+  'admin.catalogDiecutGroups': 'Groups of die-cut types (D-005).',
+  'admin.catalogDiecutTypes': 'Die-cut types (platform definitions; prices are factory price lines, D-044).',
+  'admin.catalogAssemblyGroups': 'Groups of assemblies (D-005).',
+  'admin.catalogAssemblies': 'Assembly / gluing operations (platform definitions, D-044).',
+  'admin.catalogDifficultyLevelGroups': 'Groups of difficulty levels (D-005).',
+  'admin.catalogDifficultyLevels': 'Difficulty levels (platform definitions, D-044).',
+  'admin.catalogPackingTypes': 'Packing types (platform definitions, D-044).',
+  'admin.catalogStockAttributeValues':
+    'Values of stock-product attributes: material, shape, neck, colour, size, cap type (D-005).',
+  'admin.catalogStockProducts':
+    'Ready-made stock products with attributes and photos; no prices here (D-100, D-044).',
+  'admin.catalogSpecTitles': 'Titles of factory spec lines shown to customers (D-005).',
 };

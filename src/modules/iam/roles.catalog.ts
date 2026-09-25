@@ -76,6 +76,12 @@ export const ROLES: readonly RoleDefinition[] = [
       'roles.assign',
       'calendars.manage',
       'notification_templates.manage',
+      'catalog.read',
+      'catalog.manage',
+      'catalog.import',
+      'cms.manage',
+      'seo.manage',
+      'geography.manage',
     ],
   },
   {
@@ -84,7 +90,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ฝ่ายบริการลูกค้า',
     nameEn: 'CS',
-    permissions: [...EVERY_STAFF_MEMBER, 'margin.read_pct_when_discounting'],
+    permissions: [...EVERY_STAFF_MEMBER, 'margin.read_pct_when_discounting', 'catalog.read'],
   },
   {
     key: 'cs_lead',
@@ -92,7 +98,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'หัวหน้าฝ่ายบริการลูกค้า',
     nameEn: 'CS Lead',
-    permissions: [...EVERY_STAFF_MEMBER, 'margin.read_pct_when_discounting'],
+    permissions: [...EVERY_STAFF_MEMBER, 'margin.read_pct_when_discounting', 'catalog.read'],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
   {
@@ -101,7 +107,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ฝ่ายเตรียมพิมพ์',
     nameEn: 'Prepress',
-    permissions: EVERY_STAFF_MEMBER,
+    permissions: [...EVERY_STAFF_MEMBER, 'catalog.read'],
   },
   {
     key: 'finance',
@@ -139,7 +145,8 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ฝ่ายการตลาด',
     nameEn: 'Marketing',
-    permissions: [...EVERY_STAFF_MEMBER, 'approvals.act'],
+    // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
+    permissions: [...EVERY_STAFF_MEMBER, 'approvals.act', 'catalog.read', 'cms.manage', 'seo.manage'],
   },
   {
     key: 'partner_manager',
@@ -147,7 +154,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ผู้จัดการพันธมิตร',
     nameEn: 'Partner Manager',
-    permissions: [...APPROVER, ...COST_AND_MARGIN],
+    permissions: [...APPROVER, ...COST_AND_MARGIN, 'catalog.read'],
   },
   {
     key: 'auditor',

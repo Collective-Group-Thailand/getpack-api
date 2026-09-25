@@ -1,4 +1,5 @@
 import { AdminMeController } from '@modules/auth/controllers/me.controllers';
+import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
 import { Module } from '@nestjs/common';
@@ -42,6 +43,8 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ConsentPurposesController,
     AdminInboxController,
     AuditLogsController,
+
+    ...CATALOG_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

@@ -95,6 +95,33 @@ export const PERMISSIONS = [
     description: 'List dead-lettered domain events and replay them',
   },
 
+  // --- Catalogue & CMS (B2.1, D-005: created by admins; D-100)
+  { key: 'catalog.read', audience: 'staff', description: 'Read the platform catalogue in the admin zone' },
+  {
+    key: 'catalog.manage',
+    audience: 'staff',
+    description: 'Create and edit catalogue rows (product types, patterns, materials, stock products …)',
+    decisionRefs: ['D-005', 'D-100'],
+  },
+  {
+    key: 'catalog.import',
+    audience: 'staff',
+    description: 'Import and export catalogue tables with Excel (preview → confirm)',
+    decisionRefs: ['D-005'],
+  },
+  {
+    key: 'cms.manage',
+    audience: 'staff',
+    description: 'Edit banners, home sections, articles, FAQs and videos',
+  },
+  { key: 'seo.manage', audience: 'staff', description: 'Edit SEO meta per page' },
+  {
+    key: 'geography.manage',
+    audience: 'staff',
+    description: 'Maintain provinces, districts, subdistricts and postcodes',
+    decisionRefs: ['D-161', 'D-170'],
+  },
+
   // --- Cost & margin visibility (D-141)
   {
     key: 'factory_cost.read',

@@ -65,6 +65,13 @@ export const ERROR_CODES = {
   'idempotency.in_progress': HttpStatus.CONFLICT,
   'concurrency.stale': HttpStatus.PRECONDITION_FAILED,
   'concurrency.precondition_required': HttpStatus.PRECONDITION_REQUIRED,
+  'catalog.code_taken': HttpStatus.CONFLICT,
+  'catalog.slug_taken': HttpStatus.CONFLICT,
+  'catalog.calculator_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'catalog.import_stale': HttpStatus.CONFLICT,
+  'catalog.import_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'catalog.import_too_large': HttpStatus.UNPROCESSABLE_ENTITY,
+  'catalog.import_unreadable': HttpStatus.UNPROCESSABLE_ENTITY,
   'service.unavailable': HttpStatus.SERVICE_UNAVAILABLE,
   'internal.unexpected': HttpStatus.INTERNAL_SERVER_ERROR,
 } as const satisfies Record<string, HttpStatus>;

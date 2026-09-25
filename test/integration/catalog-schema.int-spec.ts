@@ -131,9 +131,9 @@ describe('catalogue schema behaviour (PostgreSQL 18)', () => {
         "INSERT INTO stock_movements (stock_product_id, factory_id, kind, quantity, balance_after) VALUES ($1, 1, 'receipt', 10, 10)",
         [stock],
       );
-      expect(await sqlState(db.client, 'UPDATE stock_movements SET quantity = 5 WHERE id = $1', [movement])).toBe(
-        SQLSTATE.restrictViolation,
-      );
+      expect(
+        await sqlState(db.client, 'UPDATE stock_movements SET quantity = 5 WHERE id = $1', [movement]),
+      ).toBe(SQLSTATE.restrictViolation);
       expect(await sqlState(db.client, 'DELETE FROM stock_movements WHERE id = $1', [movement])).toBe(
         SQLSTATE.restrictViolation,
       );
@@ -158,17 +158,25 @@ describe('catalogue schema behaviour (PostgreSQL 18)', () => {
         "INSERT INTO articles (slug, title_th) VALUES ('how-to-choose-a-box', 'วิธีเลือกกล่อง')",
       );
       expect(
-        await sqlState(db.client, "INSERT INTO articles (slug, title_th) VALUES ('how-to-choose-a-box', 'ซ้ำ')"),
+        await sqlState(
+          db.client,
+          "INSERT INTO articles (slug, title_th) VALUES ('how-to-choose-a-box', 'ซ้ำ')",
+        ),
       ).toBe(SQLSTATE.uniqueViolation);
       await db.client.query('UPDATE articles SET deleted_at = now() WHERE id = $1', [article]);
       expect(
-        await sqlState(db.client, "INSERT INTO articles (slug, title_th) VALUES ('how-to-choose-a-box', 'ใหม่')"),
+        await sqlState(
+          db.client,
+          "INSERT INTO articles (slug, title_th) VALUES ('how-to-choose-a-box', 'ใหม่')",
+        ),
       ).toBeNull();
     }));
 
   it('validates postcodes, slugs and one price summary per product and zone', () =>
     inRollback(db.client, async () => {
-      const province = await id("INSERT INTO geo_provinces (code, name_th, name_en) VALUES ('99', 'ทดสอบ', 'Test')");
+      const province = await id(
+        "INSERT INTO geo_provinces (code, name_th, name_en) VALUES ('99', 'ทดสอบ', 'Test')",
+      );
       const district = await id(
         "INSERT INTO geo_districts (province_id, code, name_th, name_en) VALUES ($1, '9901', 'ทดสอบ', 'Test')",
         [province],

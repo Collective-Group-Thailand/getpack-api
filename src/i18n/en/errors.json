@@ -272,5 +272,35 @@
       "title": "File blocked",
       "detail": "The file was found to be malicious and was removed."
     }
+  },
+  "catalog": {
+    "code_taken": {
+      "title": "Code already in use",
+      "detail": "Another record already uses this code."
+    },
+    "slug_taken": {
+      "title": "Slug already in use",
+      "detail": "Another page already uses this slug."
+    },
+    "calculator_required": {
+      "title": "No calculator yet",
+      "detail": "A product type can be quoted instantly only once its calculator ships (D-100)."
+    },
+    "import_stale": {
+      "title": "Import changed since preview",
+      "detail": "The data to import no longer matches the preview you checked. Preview it again."
+    },
+    "import_invalid": {
+      "title": "Import has errors",
+      "detail": "Fix the rows with errors and preview the file again."
+    },
+    "import_too_large": {
+      "title": "Import too large",
+      "detail": "One file may hold at most {max} rows; split the file."
+    },
+    "import_unreadable": {
+      "title": "Import file unreadable",
+      "detail": "The file must be an Excel workbook (.xlsx) in the exported template layout."
+    }
   }
 }
