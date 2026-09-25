@@ -43,6 +43,10 @@ export const API_TAGS: Record<string, string> = {
     'Partner factories: registration, onboarding steps, KYC, addresses, contacts, bank accounts and lifecycle (D-011, D-041, D-171).',
   'partner.factories':
     'My factory: application data, onboarding sign-off, documents and bank accounts (own factory only, D-044).',
+  'admin.agreementTemplates':
+    'Versioned partner agreement texts (D-011; confidentiality both directions, D-044).',
+  'admin.shippingZoneSchemes': 'Zone schemes: customer zones and one per carrier (D-013, D-114).',
+  'admin.shippingZones': 'Zones and their postcodes (D-013, D-114).',
   'admin.vendorBankAccounts':
     'Verification calls of vendor bank-account changes (accounting-design.md §8, D-169).',
 

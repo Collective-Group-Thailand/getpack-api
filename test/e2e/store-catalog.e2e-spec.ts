@@ -126,6 +126,16 @@ describe('store catalogue (e2e, B2.1)', () => {
       data: { attribute: 'colour', code: `clear-${run}`, nameTh: 'ใส', nameEn: 'Clear', status: 'active' },
     });
     sku = `E2E-${run}`.toUpperCase();
+    const code = `E2ESTORE${run}`.slice(0, 20).toUpperCase();
+    const identity = { juristicType: 'company' as const, taxId: '0000000000019', branchCode: '00013' };
+    const factory = await prisma.factory.create({
+      data: {
+        code,
+        legalName: `${code} (fake)`,
+        ...identity,
+        vendor: { create: { kind: 'factory', legalName: `${code} (fake)`, ...identity } },
+      },
+    });
     const stock = await prisma.stockProduct.create({
       data: {
         productTypeId: type.id,
@@ -136,7 +146,7 @@ describe('store catalogue (e2e, B2.1)', () => {
         status: 'active',
         attributes: { create: { attribute: 'colour', valueId: colour.id } },
         images: { create: { fileObjectId: (await file()).id } },
-        levels: { create: { factoryId: 1n, onHand: 10, reserved: 2 } },
+        levels: { create: { factoryId: factory.id, onHand: 10, reserved: 2 } },
         priceSummary: { create: { zoneCode: null, minUnitPriceWithDelivery: 3.456, computedAt: new Date() } },
       },
     });

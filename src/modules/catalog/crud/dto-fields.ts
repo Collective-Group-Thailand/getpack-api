@@ -40,20 +40,25 @@ interface FieldOptions {
   optional?: boolean;
 }
 
-const doc = (
-  o: FieldOptions & {
-    nullable?: boolean;
-    type?: unknown;
-    format?: string;
-    enum?: unknown;
-    enumName?: string;
-    pattern?: string;
-    minimum?: number;
-    maximum?: number;
-  },
-) => {
-  const { optional, ...rest } = o;
-  return optional ? ApiPropertyOptional(rest as never) : ApiProperty(rest as never);
+/** Swagger options only (validation-only keys such as `min`, `scale` or `unit` must not leak into the contract). */
+const DOC_KEYS = [
+  'example',
+  'description',
+  'nullable',
+  'type',
+  'format',
+  'enum',
+  'enumName',
+  'pattern',
+  'minimum',
+  'maximum',
+] as const;
+const doc = (o: FieldOptions & Partial<Record<(typeof DOC_KEYS)[number], unknown>>) => {
+  const source = o as unknown as Record<string, unknown>;
+  const options = Object.fromEntries(
+    DOC_KEYS.filter((key) => source[key] !== undefined).map((key) => [key, source[key]]),
+  );
+  return o.optional ? ApiPropertyOptional(options) : ApiProperty(options);
 };
 
 const maybe = (optional: boolean | undefined) => (optional ? [IsOptional()] : []);

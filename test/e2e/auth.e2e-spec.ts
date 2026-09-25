@@ -84,14 +84,27 @@ describe('auth (e2e, ADR-0004)', () => {
   });
 
   it('refuses wrong passwords with one problem and locks after repeated failures', async () => {
-    const bad = await staffLogin('marketing@example.invalid', 'wrong').expect(401);
+    // A dedicated account: the seeded role users are shared by other suites and must not be locked.
+    const email = `lockout-${Date.now()}@example.invalid`;
+    const locking = await prisma.user.create({
+      data: {
+        kind: 'staff',
+        status: 'active',
+        email,
+        displayName: 'Lockout (fake)',
+        passwordHash: await new PasswordService().hash(DEV_PASSWORD),
+      },
+    });
+    const bad = await staffLogin(email, 'wrong').expect(401);
     expect(bad.body.code).toBe('auth.invalid_credentials');
     await staffLogin('nobody@example.invalid', 'wrong').expect(401);
-    for (let i = 0; i < 4; i++) await staffLogin('marketing@example.invalid', 'wrong');
-    const locked = await staffLogin('marketing@example.invalid').expect(401);
+    for (let i = 0; i < 4; i++) await staffLogin(email, 'wrong');
+    const locked = await staffLogin(email).expect(401);
     expect(locked.body.code).toBe('auth.account_locked');
     expect(Number(locked.headers['retry-after'])).toBeGreaterThan(0);
-    const audits = await prisma.auditLog.count({ where: { action: 'auth.account_locked' } });
+    const audits = await prisma.auditLog.count({
+      where: { action: 'auth.account_locked', resourcePublicId: locking.publicId },
+    });
     expect(audits).toBe(1);
   });
 

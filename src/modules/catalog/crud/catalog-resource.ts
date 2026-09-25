@@ -40,8 +40,8 @@ export interface CatalogResource<
   path: string;
   /** Operation-id resource, e.g. `catalogMaterials` → `admin.catalogMaterials.list`. */
   operation: string;
-  /** Prefix of the controller (`catalog`, `cms`, `geography`). */
-  area: 'catalog' | 'cms' | 'geography';
+  /** Prefix of the controller (`catalog`, `cms`, `geography`, `shipping`). */
+  area: 'catalog' | 'cms' | 'geography' | 'shipping';
   /** Human label for summaries: "material", "print type". */
   label: string;
   labelPlural: string;
