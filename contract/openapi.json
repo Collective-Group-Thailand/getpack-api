@@ -7955,7 +7955,7 @@
         "type": "object"
       },
       "QuoteMode": {
-        "description": "`instant` only once the calculator ships (D-100); whether a configuration is actually instant is resolved from factory participations (D-043).",
+        "description": "How the type is quoted today (D-100); a given configuration may still route to RFQ (D-043)",
         "enum": [
           "instant",
           "rfq"
@@ -9660,6 +9660,408 @@
         ],
         "type": "object"
       },
+      "StoreArticleCardDto": {
+        "properties": {
+          "categorySlugs": {
+            "example": [
+              "packaging-tips"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "coverUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "excerptTh": {
+            "example": "ขนาด ลอน และการพิมพ์ที่ควรรู้",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publishedAt": {
+            "example": "2026-09-25T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "slug": {
+            "example": "how-to-choose-a-mailer-box",
+            "type": "string"
+          },
+          "titleEn": {
+            "example": "How to choose a mailer box",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "เลือกกล่องไปรษณีย์อย่างไรให้เหมาะกับสินค้า",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "titleTh",
+          "titleEn",
+          "excerptTh",
+          "coverUrl",
+          "publishedAt",
+          "categorySlugs"
+        ],
+        "type": "object"
+      },
+      "StoreArticleCategoryDto": {
+        "properties": {
+          "nameEn": {
+            "example": "Packaging tips",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "เคล็ดลับบรรจุภัณฑ์",
+            "type": "string"
+          },
+          "slug": {
+            "example": "packaging-tips",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "nameTh",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "StoreArticleDto": {
+        "properties": {
+          "body": {
+            "additionalProperties": true,
+            "example": {
+              "th": {
+                "content": [],
+                "type": "doc"
+              }
+            },
+            "type": "object"
+          },
+          "bodySchemaVersion": {
+            "example": 1,
+            "type": "integer"
+          },
+          "categorySlugs": {
+            "example": [
+              "packaging-tips"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "coverUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "excerptTh": {
+            "example": "ขนาด ลอน และการพิมพ์ที่ควรรู้",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publishedAt": {
+            "example": "2026-09-25T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "seo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoreSeoDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "slug": {
+            "example": "how-to-choose-a-mailer-box",
+            "type": "string"
+          },
+          "titleEn": {
+            "example": "How to choose a mailer box",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "เลือกกล่องไปรษณีย์อย่างไรให้เหมาะกับสินค้า",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "titleTh",
+          "titleEn",
+          "excerptTh",
+          "coverUrl",
+          "publishedAt",
+          "categorySlugs",
+          "body",
+          "bodySchemaVersion",
+          "seo"
+        ],
+        "type": "object"
+      },
+      "StoreBannerDto": {
+        "properties": {
+          "desktopImageUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": "string"
+          },
+          "mobileImageUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "position": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BannerPosition"
+              }
+            ],
+            "example": "home_hero"
+          },
+          "targetUrl": {
+            "example": "/th/products/mailer-box",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "description": "Alt text",
+            "example": "แคมเปญกล่องไปรษณีย์ ตุลาคม",
+            "type": "string"
+          },
+          "videoUrl": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "position",
+          "title",
+          "desktopImageUrl",
+          "mobileImageUrl",
+          "targetUrl",
+          "videoUrl"
+        ],
+        "type": "object"
+      },
+      "StoreFaqDto": {
+        "properties": {
+          "answerEn": {
+            "example": "It depends on the product type; see each product page.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "answerTh": {
+            "example": "ขึ้นอยู่กับประเภทสินค้า ดูได้ในหน้าสินค้าแต่ละรายการ",
+            "type": "string"
+          },
+          "questionEn": {
+            "example": "What is the minimum order?",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "questionTh": {
+            "example": "สั่งขั้นต่ำกี่ชิ้น",
+            "type": "string"
+          }
+        },
+        "required": [
+          "questionTh",
+          "questionEn",
+          "answerTh",
+          "answerEn"
+        ],
+        "type": "object"
+      },
+      "StoreFaqGroupDto": {
+        "properties": {
+          "categoryCode": {
+            "example": "ordering",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "categoryNameEn": {
+            "example": "Ordering",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "categoryNameTh": {
+            "example": "การสั่งซื้อ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "faqs": {
+            "items": {
+              "$ref": "#/components/schemas/StoreFaqDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "categoryCode",
+          "categoryNameTh",
+          "categoryNameEn",
+          "faqs"
+        ],
+        "type": "object"
+      },
+      "StoreGeoAreaDto": {
+        "properties": {
+          "code": {
+            "example": "10",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Bangkok",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กรุงเทพมหานคร",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "StoreGeoSubdistrictDto": {
+        "properties": {
+          "code": {
+            "example": "10",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Bangkok",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กรุงเทพมหานคร",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10200",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "postcode"
+        ],
+        "type": "object"
+      },
+      "StoreHomeSectionDto": {
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "example": {
+              "limit": 8
+            },
+            "type": "object"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HomeSectionKind"
+              }
+            ],
+            "example": "catalog_products"
+          },
+          "slug": {
+            "example": "best-sellers",
+            "type": "string"
+          },
+          "titleEn": {
+            "example": "Best sellers",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "สินค้าขายดี",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "slug",
+          "titleTh",
+          "titleEn",
+          "kind",
+          "config"
+        ],
+        "type": "object"
+      },
+      "StoreImageDto": {
+        "properties": {
+          "url": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": "string"
+          },
+          "variant": {
+            "additionalProperties": true,
+            "example": {
+              "material": "art-card-350"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "url",
+          "variant"
+        ],
+        "type": "object"
+      },
       "StoreMeDto": {
         "properties": {
           "displayName": {
@@ -9733,6 +10135,772 @@
           "phone",
           "scopes",
           "identities"
+        ],
+        "type": "object"
+      },
+      "StoreOptionDto": {
+        "properties": {
+          "attributes": {
+            "additionalProperties": true,
+            "description": "Kind-specific attributes (gsm, micron, finish kind, colour kind …)",
+            "example": {
+              "gsm": 350,
+              "kind": "paper"
+            },
+            "type": "object"
+          },
+          "code": {
+            "description": "Code of the offered row",
+            "example": "art-card-350",
+            "type": "string"
+          },
+          "isDefault": {
+            "example": true,
+            "type": "boolean"
+          },
+          "nameEn": {
+            "example": "Art card 350 gsm",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "อาร์ตการ์ด 350 แกรม",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "isDefault",
+          "attributes"
+        ],
+        "type": "object"
+      },
+      "StoreOptionGroupDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OfferableOptionKind"
+              }
+            ],
+            "example": "material"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/StoreOptionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "options"
+        ],
+        "type": "object"
+      },
+      "StorePatternDto": {
+        "properties": {
+          "code": {
+            "example": "RTE-01",
+            "type": "string"
+          },
+          "constraints": {
+            "additionalProperties": true,
+            "description": "Size constraints the configurator enforces",
+            "example": {
+              "maxW": 500,
+              "minW": 30
+            },
+            "type": "object"
+          },
+          "dielineKey": {
+            "description": "Key for `@packio/dieline`",
+            "example": "rte",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "ฝาเสียบกลับด้าน",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "constraints",
+          "dielineKey"
+        ],
+        "type": "object"
+      },
+      "StorePostcodeAreaDto": {
+        "properties": {
+          "district": {
+            "$ref": "#/components/schemas/StoreGeoAreaDto"
+          },
+          "province": {
+            "$ref": "#/components/schemas/StoreGeoAreaDto"
+          },
+          "subdistrict": {
+            "$ref": "#/components/schemas/StoreGeoSubdistrictDto"
+          }
+        },
+        "required": [
+          "subdistrict",
+          "district",
+          "province"
+        ],
+        "type": "object"
+      },
+      "StoreProductCardDto": {
+        "properties": {
+          "imageUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameEn": {
+            "example": "Tuck-end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "slug": {
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "templateAvailability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TemplateAvailability"
+              }
+            ],
+            "example": "drawing"
+          }
+        },
+        "required": [
+          "slug",
+          "productTypeCode",
+          "nameTh",
+          "nameEn",
+          "imageUrl",
+          "templateAvailability"
+        ],
+        "type": "object"
+      },
+      "StoreProductDetailDto": {
+        "properties": {
+          "descriptionEn": {
+            "example": "Reverse tuck-end folding box",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "กล่องพับฝาเสียบบน-ล่าง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/StoreImageDto"
+            },
+            "type": "array"
+          },
+          "isCombination": {
+            "example": false,
+            "type": "boolean"
+          },
+          "nameEn": {
+            "example": "Tuck-end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          },
+          "optionGroups": {
+            "items": {
+              "$ref": "#/components/schemas/StoreOptionGroupDto"
+            },
+            "type": "array"
+          },
+          "patterns": {
+            "items": {
+              "$ref": "#/components/schemas/StorePatternDto"
+            },
+            "type": "array"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "seo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoreSeoDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "slug": {
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "standardSizes": {
+            "items": {
+              "$ref": "#/components/schemas/StoreStandardSizeDto"
+            },
+            "type": "array"
+          },
+          "templateAvailability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TemplateAvailability"
+              }
+            ],
+            "example": "drawing"
+          },
+          "videos": {
+            "items": {
+              "$ref": "#/components/schemas/StoreVideoDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "productTypeCode",
+          "nameTh",
+          "nameEn",
+          "imageUrl",
+          "templateAvailability",
+          "descriptionTh",
+          "descriptionEn",
+          "isCombination",
+          "patterns",
+          "optionGroups",
+          "standardSizes",
+          "images",
+          "videos",
+          "seo"
+        ],
+        "type": "object"
+      },
+      "StoreProductTypeDto": {
+        "properties": {
+          "categoryCode": {
+            "description": "Reporting category code",
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Folding carton",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องกระดาษแข็ง",
+            "type": "string"
+          },
+          "quoteMode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "description": "How the type is quoted today (D-100); a given configuration may still route to RFQ (D-043)",
+            "example": "rfq"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "categoryCode",
+          "quoteMode"
+        ],
+        "type": "object"
+      },
+      "StoreSearchHitDto": {
+        "properties": {
+          "imageUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "key": {
+            "description": "Slug (or SKU for stock products) to open",
+            "example": "mailer-box",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreSearchHitKind"
+              }
+            ],
+            "example": "catalog_product"
+          },
+          "score": {
+            "description": "Trigram similarity (0–1), higher is better",
+            "example": 0.62,
+            "type": "number"
+          },
+          "titleEn": {
+            "example": "Mailer box",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "กล่องไปรษณีย์",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "titleTh",
+          "titleEn",
+          "imageUrl",
+          "score"
+        ],
+        "type": "object"
+      },
+      "StoreSearchHitKind": {
+        "enum": [
+          "catalog_product",
+          "stock_product",
+          "showcase_product",
+          "article"
+        ],
+        "type": "string"
+      },
+      "StoreSearchResultDto": {
+        "properties": {
+          "hits": {
+            "items": {
+              "$ref": "#/components/schemas/StoreSearchHitDto"
+            },
+            "type": "array"
+          },
+          "q": {
+            "example": "กล่องไปรษณีย์",
+            "type": "string"
+          }
+        },
+        "required": [
+          "q",
+          "hits"
+        ],
+        "type": "object"
+      },
+      "StoreSemiDesignDto": {
+        "properties": {
+          "colours": {
+            "example": [
+              "#000000",
+              "#FFFFFF"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "มินิมอล ขาว-ดำ",
+            "type": "string"
+          },
+          "sizeCodes": {
+            "description": "Standard sizes with a template",
+            "example": [
+              "S",
+              "M"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "thumbnailUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "thumbnailUrl",
+          "colours",
+          "sizeCodes"
+        ],
+        "type": "object"
+      },
+      "StoreSeoDto": {
+        "properties": {
+          "canonicalUrl": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "example": "ออกแบบและสั่งผลิตกล่องไปรษณีย์ได้ในไม่กี่คลิก",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "h1": {
+            "example": "กล่องไปรษณีย์พิมพ์ลาย",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "h2": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "keywords": {
+            "example": "กล่องไปรษณีย์, กล่องพิมพ์ลาย",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "noindex": {
+            "example": false,
+            "type": "boolean"
+          },
+          "ogImageUrl": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "example": "กล่องไปรษณีย์พิมพ์ลาย สั่งผลิตออนไลน์ | Packio",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "keywords",
+          "h1",
+          "h2",
+          "canonicalUrl",
+          "ogImageUrl",
+          "noindex"
+        ],
+        "type": "object"
+      },
+      "StoreShowcaseProductDto": {
+        "properties": {
+          "categorySlug": {
+            "example": "cosmetics",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "กล่องฝาเสียบ อาร์ตการ์ด 350 แกรม เคลือบด้าน",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameEn": {
+            "example": "Serum box 30 ml",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องเซรั่ม 30 มล.",
+            "type": "string"
+          },
+          "preset": {
+            "additionalProperties": true,
+            "description": "Pre-filled configurator input",
+            "example": {
+              "heightMm": 120,
+              "lengthMm": 40,
+              "widthMm": 40
+            },
+            "type": "object"
+          },
+          "productSlug": {
+            "description": "Catalogue product to configure",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "slug": {
+            "example": "serum-box-30ml",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "categorySlug",
+          "productSlug",
+          "nameTh",
+          "nameEn",
+          "descriptionTh",
+          "imageUrl",
+          "preset"
+        ],
+        "type": "object"
+      },
+      "StoreStandardSizeDto": {
+        "properties": {
+          "code": {
+            "example": "S",
+            "type": "string"
+          },
+          "heightMm": {
+            "description": "Unit: mm.",
+            "example": 50,
+            "type": "number"
+          },
+          "lengthMm": {
+            "description": "Unit: mm.",
+            "example": 100,
+            "type": "number"
+          },
+          "name": {
+            "example": "ขนาดเล็ก 10×10×5 ซม.",
+            "type": "string"
+          },
+          "widthMm": {
+            "description": "Unit: mm.",
+            "example": 100,
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "lengthMm",
+          "widthMm",
+          "heightMm"
+        ],
+        "type": "object"
+      },
+      "StoreStockAttributeDto": {
+        "properties": {
+          "attribute": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StockAttribute"
+              }
+            ],
+            "example": "colour"
+          },
+          "code": {
+            "example": "clear",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Clear",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ใส",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attribute",
+          "code",
+          "nameTh",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "StoreStockProductDto": {
+        "properties": {
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/StoreStockAttributeDto"
+            },
+            "type": "array"
+          },
+          "capacityMl": {
+            "description": "Unit: ml.",
+            "example": 250,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "description": {
+            "example": "ขวดใส ฝาเกลียว 28 มม.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "heightMm": {
+            "description": "Unit: mm.",
+            "example": 150,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "imageUrls": {
+            "example": [
+              "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "inStock": {
+            "description": "Some supplying factory has stock (no factory is ever named, D-050)",
+            "example": true,
+            "type": "boolean"
+          },
+          "isFoodGrade": {
+            "example": true,
+            "type": "boolean"
+          },
+          "lengthMm": {
+            "description": "Unit: mm.",
+            "example": 60,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minOrderQty": {
+            "example": 100,
+            "type": "integer"
+          },
+          "nameEn": {
+            "example": "PET bottle 250 ml",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ขวด PET 250 มล.",
+            "type": "string"
+          },
+          "sku": {
+            "example": "PKO-BTL-0250",
+            "type": "string"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductUnit"
+              }
+            ],
+            "example": "piece"
+          },
+          "widthMm": {
+            "description": "Unit: mm.",
+            "example": 60,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "sku",
+          "nameTh",
+          "nameEn",
+          "description",
+          "unit",
+          "capacityMl",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "minOrderQty",
+          "isFoodGrade",
+          "inStock",
+          "attributes",
+          "imageUrls"
+        ],
+        "type": "object"
+      },
+      "StoreVideoDto": {
+        "properties": {
+          "provider": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VideoProvider"
+              }
+            ],
+            "example": "youtube"
+          },
+          "title": {
+            "example": "วิธีประกอบกล่องฝาเสียบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "example": "https://www.youtube.com/watch?v=example",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "url",
+          "title"
         ],
         "type": "object"
       },
@@ -74320,6 +75488,3313 @@
         ]
       }
     },
+    "/v1/store/catalog/article-categories": {
+      "get": {
+        "description": "Published categories in display order.\n\nImplements: D-005.",
+        "operationId": "store.catalog.listArticleCategories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "nameEn": "Packaging tips",
+                    "nameTh": "เคล็ดลับบรรจุภัณฑ์",
+                    "slug": "packaging-tips"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreArticleCategoryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Categories",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List article categories",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/articles": {
+      "get": {
+        "description": "Newest first; filter by category slug.\n\nImplements: D-005.",
+        "operationId": "store.catalog.listArticles",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Article category slug",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "example": "packaging-tips",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "categorySlugs": [
+                        "packaging-tips"
+                      ],
+                      "coverUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "excerptTh": "ขนาด ลอน และการพิมพ์ที่ควรรู้",
+                      "publishedAt": "2026-09-25T09:00:00+07:00",
+                      "slug": "how-to-choose-a-mailer-box",
+                      "titleEn": "How to choose a mailer box",
+                      "titleTh": "เลือกกล่องไปรษณีย์อย่างไรให้เหมาะกับสินค้า"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/StoreArticleCardDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List published articles",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/articles/{slug}": {
+      "get": {
+        "description": "Rich-text body per language and SEO meta.\n\nImplements: D-005.",
+        "operationId": "store.catalog.getArticle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "how-to-choose-a-mailer-box",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "body": {
+                    "th": {
+                      "content": [],
+                      "type": "doc"
+                    }
+                  },
+                  "bodySchemaVersion": 1,
+                  "categorySlugs": [
+                    "packaging-tips"
+                  ],
+                  "coverUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                  "excerptTh": "ขนาด ลอน และการพิมพ์ที่ควรรู้",
+                  "publishedAt": "2026-09-25T09:00:00+07:00",
+                  "seo": {
+                    "canonicalUrl": null,
+                    "description": "สั่งผลิตกล่องฝาเสียบออนไลน์",
+                    "h1": "กล่องฝาเสียบ",
+                    "h2": null,
+                    "keywords": "กล่องฝาเสียบ",
+                    "noindex": false,
+                    "ogImageUrl": null,
+                    "title": "กล่องฝาเสียบพิมพ์ลาย | Packio"
+                  },
+                  "slug": "how-to-choose-a-mailer-box",
+                  "titleEn": "How to choose a mailer box",
+                  "titleTh": "เลือกกล่องไปรษณีย์อย่างไรให้เหมาะกับสินค้า"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreArticleDto"
+                }
+              }
+            },
+            "description": "The article",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get a published article",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/banners": {
+      "get": {
+        "description": "Published banners inside their validity window, by position and order.\n\nImplements: D-005.",
+        "operationId": "store.catalog.listBanners",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "position",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/BannerPosition"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "desktopImageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                    "mobileImageUrl": null,
+                    "position": "home_hero",
+                    "targetUrl": "/th/products/mailer-box",
+                    "title": "แคมเปญกล่องไปรษณีย์ ตุลาคม",
+                    "videoUrl": null
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreBannerDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Banners",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the banners shown now",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/faqs": {
+      "get": {
+        "description": "Published questions grouped by their (published) category; uncategorised questions last.\n\nImplements: D-005.",
+        "operationId": "store.catalog.listFaqs",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "categoryCode": "ordering",
+                    "categoryNameEn": "Ordering",
+                    "categoryNameTh": "การสั่งซื้อ",
+                    "faqs": [
+                      {
+                        "answerEn": "It depends on the product type.",
+                        "answerTh": "ขึ้นอยู่กับประเภทสินค้า",
+                        "questionEn": "What is the minimum order?",
+                        "questionTh": "สั่งขั้นต่ำกี่ชิ้น"
+                      }
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreFaqGroupDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "FAQ groups",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the FAQs by category",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/geo/districts/{code}/subdistricts": {
+      "get": {
+        "description": "By district code, with postcodes (D-161).\n\nImplements: D-161.",
+        "operationId": "store.catalog.listSubdistricts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "example": "1001",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "code": "100101",
+                    "nameEn": "Phra Borom Maha Ratchawang",
+                    "nameTh": "พระบรมมหาราชวัง",
+                    "postcode": "10200"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreGeoSubdistrictDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Subdistricts",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the subdistricts of a district",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/geo/postcodes/{postcode}": {
+      "get": {
+        "description": "Every subdistrict with this postcode and its district and province (D-161); empty when unknown.\n\nImplements: D-161.",
+        "operationId": "store.catalog.lookupPostcode",
+        "parameters": [
+          {
+            "description": "5 digits",
+            "in": "path",
+            "name": "postcode",
+            "required": true,
+            "schema": {
+              "example": "10200",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "district": {
+                      "code": "1001",
+                      "nameEn": "Phra Nakhon",
+                      "nameTh": "พระนคร"
+                    },
+                    "province": {
+                      "code": "10",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
+                    "subdistrict": {
+                      "code": "100101",
+                      "nameEn": "Phra Borom Maha Ratchawang",
+                      "nameTh": "พระบรมมหาราชวัง",
+                      "postcode": "10200"
+                    }
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StorePostcodeAreaDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Areas",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Look up the areas of a postcode",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/geo/provinces": {
+      "get": {
+        "description": "Admin-maintained geography for address forms (D-161).\n\nImplements: D-161.",
+        "operationId": "store.catalog.listProvinces",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "code": "10",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreGeoAreaDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Provinces",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List provinces",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/geo/provinces/{code}/districts": {
+      "get": {
+        "description": "By province code (D-161).\n\nImplements: D-161.",
+        "operationId": "store.catalog.listDistricts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "example": "10",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "code": "1001",
+                    "nameEn": "Phra Nakhon",
+                    "nameTh": "พระนคร"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreGeoAreaDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Districts",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the districts of a province",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/home-sections": {
+      "get": {
+        "description": "Published sections in display order.\n\nImplements: D-005.",
+        "operationId": "store.catalog.listHomeSections",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "config": {
+                      "limit": 8
+                    },
+                    "kind": "catalog_products",
+                    "slug": "best-sellers",
+                    "titleEn": "Best sellers",
+                    "titleTh": "สินค้าขายดี"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreHomeSectionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Sections",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the home-page sections",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/images/{fileId}": {
+      "get": {
+        "description": "Served only while an active catalogue row or published CMS content references the file and its malware scan is clean (contract §3 \"Files\"); anything else is 404. Cacheable for a day.\n\nImplements: D-005.",
+        "operationId": "store.catalog.getImage",
+        "parameters": [
+          {
+            "description": "Image file referenced by visible catalogue content",
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {
+                "example": "(binary image)",
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/png": {
+                "example": "(binary image)",
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/webp": {
+                "example": "(binary image)",
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The image bytes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get a catalogue image",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/merchant-feed.xml": {
+      "get": {
+        "description": "RSS 2.0 with the `g:` namespace: active stock products with a nationwide price summary and a photo; brand Packio (D-001), no factory data (D-050). Items appear once the standard-product calculator fills the price summaries (B2.3).\n\nImplements: D-001, D-050.",
+        "operationId": "store.catalog.merchantFeed",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/xml": {
+                "example": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<rss version=\"2.0\" xmlns:g=\"http://base.google.com/ns/1.0\"><channel><title>Packio</title><item><g:id>PKO-BTL-0250</g:id><g:price>3.50 THB</g:price></item></channel></rss>",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Google Merchant feed",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/product-types": {
+      "get": {
+        "description": "Active types with their quote mode (D-100). A configuration may still route to RFQ when no factory price path covers it (D-043).\n\nImplements: D-100, D-043.",
+        "operationId": "store.catalog.listProductTypes",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "categoryCode": "folding_carton",
+                    "code": "folding_carton",
+                    "nameEn": "Folding carton",
+                    "nameTh": "กล่องกระดาษแข็ง",
+                    "quoteMode": "rfq"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreProductTypeDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Product types",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the product types on sale",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/products": {
+      "get": {
+        "description": "Active products of active types; filter by type code, `q` searches the names. No prices here.\n\nImplements: D-100, D-050.",
+        "operationId": "store.catalog.listProducts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Product type code",
+            "in": "query",
+            "name": "productType",
+            "required": false,
+            "schema": {
+              "example": "folding_carton",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "productTypeCode": "folding_carton",
+                      "slug": "tuck-end-box",
+                      "templateAvailability": "drawing"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/StoreProductCardDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List catalogue products",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/products/{slug}": {
+      "get": {
+        "description": "Patterns with their size constraints, the options it offers grouped by kind, standard sizes, images, videos and SEO meta.\n\nImplements: D-100, D-050.",
+        "operationId": "store.catalog.getProduct",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "tuck-end-box",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "descriptionEn": "Reverse tuck-end folding box",
+                  "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
+                  "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                  "images": [
+                    {
+                      "url": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "variant": null
+                    }
+                  ],
+                  "isCombination": false,
+                  "nameEn": "Tuck-end box",
+                  "nameTh": "กล่องฝาเสียบ",
+                  "optionGroups": [
+                    {
+                      "kind": "material",
+                      "options": [
+                        {
+                          "attributes": {
+                            "gsm": 350,
+                            "kind": "paper"
+                          },
+                          "code": "art-card-350",
+                          "isDefault": true,
+                          "nameEn": "Art card 350 gsm",
+                          "nameTh": "อาร์ตการ์ด 350 แกรม"
+                        }
+                      ]
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "code": "RTE-01",
+                      "constraints": {
+                        "maxW": 500,
+                        "minW": 30
+                      },
+                      "dielineKey": "rte",
+                      "name": "ฝาเสียบกลับด้าน"
+                    }
+                  ],
+                  "productTypeCode": "folding_carton",
+                  "seo": {
+                    "canonicalUrl": null,
+                    "description": "สั่งผลิตกล่องฝาเสียบออนไลน์",
+                    "h1": "กล่องฝาเสียบ",
+                    "h2": null,
+                    "keywords": "กล่องฝาเสียบ",
+                    "noindex": false,
+                    "ogImageUrl": null,
+                    "title": "กล่องฝาเสียบพิมพ์ลาย | Packio"
+                  },
+                  "slug": "tuck-end-box",
+                  "standardSizes": [
+                    {
+                      "code": "S",
+                      "heightMm": 50,
+                      "lengthMm": 100,
+                      "name": "ขนาดเล็ก 10×10×5 ซม.",
+                      "widthMm": 100
+                    }
+                  ],
+                  "templateAvailability": "drawing",
+                  "videos": [
+                    {
+                      "provider": "youtube",
+                      "title": "วิธีประกอบกล่อง",
+                      "url": "https://www.youtube.com/watch?v=example"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductDetailDto"
+                }
+              }
+            },
+            "description": "The product",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get a catalogue product for the configurator",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/products/{slug}/semi-designs": {
+      "get": {
+        "description": "Active semi-custom designs with their palette and the sizes that have a template.\n\nImplements: D-005.",
+        "operationId": "store.catalog.listSemiDesigns",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "tuck-end-box",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "colours": [
+                      "#000000",
+                      "#FFFFFF"
+                    ],
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b003",
+                    "name": "มินิมอล ขาว-ดำ",
+                    "sizeCodes": [
+                      "S"
+                    ],
+                    "thumbnailUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreSemiDesignDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Semi-designs",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the semi-designs of a catalogue product",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/search": {
+      "get": {
+        "description": "Trigram search (`pg_trgm`) over catalogue products, stock products, showcase products and articles, ranked by similarity (top 20).\n\nImplements: D-100, D-102.",
+        "operationId": "store.catalog.search",
+        "parameters": [
+          {
+            "description": "Free text (Thai or English), ≥ 2 characters",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "example": "กล่องไปรษณีย์",
+              "maxLength": 100,
+              "minLength": 2,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "hits": [
+                    {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "key": "mailer-box",
+                      "kind": "catalog_product",
+                      "score": 0.62,
+                      "titleEn": "Mailer box",
+                      "titleTh": "กล่องไปรษณีย์"
+                    }
+                  ],
+                  "q": "กล่องไปรษณีย์"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSearchResultDto"
+                }
+              }
+            },
+            "description": "Hits",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Search products and articles",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/seo": {
+      "get": {
+        "description": "By route or slug (`pageKey`), for server-side rendering of the storefront.\n\nImplements: D-005.",
+        "operationId": "store.catalog.getSeo",
+        "parameters": [
+          {
+            "description": "Route or slug",
+            "in": "query",
+            "name": "pageKey",
+            "required": true,
+            "schema": {
+              "example": "/th/products/mailer-box",
+              "maxLength": 300,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "canonicalUrl": null,
+                  "description": "สั่งผลิตกล่องฝาเสียบออนไลน์",
+                  "h1": "กล่องฝาเสียบ",
+                  "h2": null,
+                  "keywords": "กล่องฝาเสียบ",
+                  "noindex": false,
+                  "ogImageUrl": null,
+                  "title": "กล่องฝาเสียบพิมพ์ลาย | Packio"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSeoDto"
+                }
+              }
+            },
+            "description": "SEO meta",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the SEO meta of a page",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/showcase": {
+      "get": {
+        "description": "Pre-configured products (\"Product Groups\") by category.\n\nImplements: D-100, D-050.",
+        "operationId": "store.catalog.listShowcase",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Showcase category slug",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "example": "cosmetics",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "categorySlug": "cosmetics",
+                      "descriptionTh": "กล่องฝาเสียบ อาร์ตการ์ด 350 แกรม เคลือบด้าน",
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Serum box 30 ml",
+                      "nameTh": "กล่องเซรั่ม 30 มล.",
+                      "preset": {
+                        "heightMm": 120,
+                        "lengthMm": 40,
+                        "widthMm": 40
+                      },
+                      "productSlug": "tuck-end-box",
+                      "slug": "serum-box-30ml"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/StoreShowcaseProductDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List showcase products",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/showcase/{slug}": {
+      "get": {
+        "description": "The product to configure and its pre-filled configuration.\n\nImplements: D-100, D-050.",
+        "operationId": "store.catalog.getShowcaseProduct",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "serum-box-30ml",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "categorySlug": "cosmetics",
+                  "descriptionTh": "กล่องฝาเสียบ อาร์ตการ์ด 350 แกรม เคลือบด้าน",
+                  "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                  "nameEn": "Serum box 30 ml",
+                  "nameTh": "กล่องเซรั่ม 30 มล.",
+                  "preset": {
+                    "heightMm": 120,
+                    "lengthMm": 40,
+                    "widthMm": 40
+                  },
+                  "productSlug": "tuck-end-box",
+                  "slug": "serum-box-30ml"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreShowcaseProductDto"
+                }
+              }
+            },
+            "description": "The showcase product",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get a showcase product",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/stock-products": {
+      "get": {
+        "description": "Active stock products with attribute filters (`attributes=colour:clear,shape:round`) and `q`. `inStock` aggregates the supplying factories without naming them (D-050); prices come from quotes.\n\nImplements: D-100, D-050.",
+        "operationId": "store.catalog.listStockProducts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Product type code",
+            "in": "query",
+            "name": "productType",
+            "required": false,
+            "schema": {
+              "example": "standard_product",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Attribute filters `attribute:code`, comma-separated (all must match)",
+            "in": "query",
+            "name": "attributes",
+            "required": false,
+            "schema": {
+              "example": "colour:clear,shape:round",
+              "maxLength": 500,
+              "pattern": "^[a-z_]+:[A-Za-z0-9_.-]+(,[a-z_]+:[A-Za-z0-9_.-]+)*$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "attributes": [
+                        {
+                          "attribute": "colour",
+                          "code": "clear",
+                          "nameEn": "Clear",
+                          "nameTh": "ใส"
+                        }
+                      ],
+                      "capacityMl": 250,
+                      "description": "ขวดใส ฝาเกลียว 28 มม.",
+                      "heightMm": 150,
+                      "imageUrls": [
+                        "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009"
+                      ],
+                      "inStock": true,
+                      "isFoodGrade": true,
+                      "lengthMm": 60,
+                      "minOrderQty": 100,
+                      "nameEn": "PET bottle 250 ml",
+                      "nameTh": "ขวด PET 250 มล.",
+                      "sku": "PKO-BTL-0250",
+                      "unit": "piece",
+                      "widthMm": 60
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/StoreStockProductDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List ready-made stock products",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/stock-products/{sku}": {
+      "get": {
+        "description": "One active stock product with attributes, photos and availability (D-050: no factory named).\n\nImplements: D-100, D-050.",
+        "operationId": "store.catalog.getStockProduct",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sku",
+            "required": true,
+            "schema": {
+              "example": "PKO-BTL-0250",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "attributes": [
+                    {
+                      "attribute": "colour",
+                      "code": "clear",
+                      "nameEn": "Clear",
+                      "nameTh": "ใส"
+                    }
+                  ],
+                  "capacityMl": 250,
+                  "description": "ขวดใส ฝาเกลียว 28 มม.",
+                  "heightMm": 150,
+                  "imageUrls": [
+                    "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009"
+                  ],
+                  "inStock": true,
+                  "isFoodGrade": true,
+                  "lengthMm": 60,
+                  "minOrderQty": 100,
+                  "nameEn": "PET bottle 250 ml",
+                  "nameTh": "ขวด PET 250 มล.",
+                  "sku": "PKO-BTL-0250",
+                  "unit": "piece",
+                  "widthMm": 60
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreStockProductDto"
+                }
+              }
+            },
+            "description": "The stock product",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get a stock product",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/files/presign": {
       "post": {
         "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years).\n\nImplements: ADR-0003.",
@@ -77797,6 +82272,10 @@
     {
       "description": "Web push subscriptions of the signed-in factory user (D-143).",
       "name": "partner.webPush"
+    },
+    {
+      "description": "Public catalogue and CMS reads for the storefront: products, stock products, showcase, articles, FAQs, SEO, geography, search, images and the Merchant feed — no prices or factory data (D-100, D-050).",
+      "name": "store.catalog"
     },
     {
       "description": "Customer uploads (artwork, slips…): presign → PUT → complete → signed download.",

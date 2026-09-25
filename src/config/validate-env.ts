@@ -34,6 +34,9 @@ export function validateEnv(raw: Record<string, unknown>): EnvironmentVariables 
     if (!env.FIELD_ENCRYPTION_KEY || Buffer.from(env.FIELD_ENCRYPTION_KEY, 'base64').length !== 32) {
       problems.push('FIELD_ENCRYPTION_KEY: 32 bytes base64 required when NODE_ENV=production');
     }
+    for (const key of ['PUBLIC_API_BASE_URL', 'MERCHANT_FEED_LINK_TEMPLATE'] as const) {
+      if (env[key].includes('.invalid')) problems.push(`${key}: set the real URL when NODE_ENV=production`);
+    }
   }
 
   if (problems.length > 0) throw new InvalidEnvironmentError(problems);

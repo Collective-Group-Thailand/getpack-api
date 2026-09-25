@@ -81,10 +81,21 @@ describe('validateEnv', () => {
       /OTP_HMAC_SECRET: failed "minLength"/,
     );
   });
+
+  it('requires real public URLs for feeds in production (B2.1)', () => {
+    const production = { ...valid, ...productionSecrets, NODE_ENV: 'production', INTEGRATIONS_MODE: 'real' };
+    const { PUBLIC_API_BASE_URL: _api, MERCHANT_FEED_LINK_TEMPLATE: _link, ...withoutUrls } = production;
+    expect(() => validateEnv(withoutUrls)).toThrow(/PUBLIC_API_BASE_URL: set the real URL/);
+    expect(() =>
+      validateEnv({ ...production, MERCHANT_FEED_LINK_TEMPLATE: 'https://x.example/th/p' }),
+    ).toThrow(/MERCHANT_FEED_LINK_TEMPLATE: failed "matches"/);
+  });
 });
 
 const productionSecrets = {
   JWT_SIGNING_KEYS: '[]',
   OTP_HMAC_SECRET: 'x'.repeat(32),
   FIELD_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
+  PUBLIC_API_BASE_URL: 'https://api.packio.example',
+  MERCHANT_FEED_LINK_TEMPLATE: 'https://www.packio.example/th/products/{sku}',
 };

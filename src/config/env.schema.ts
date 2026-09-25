@@ -230,4 +230,19 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   THAIBULKSMS_SENDER?: string;
+
+  // --- Catalogue (B2.1)
+
+  /** Public base URL of this API, for absolute links in feeds (e.g. catalogue images in the Merchant feed). */
+  @Matches(/^https?:\/\/[^/]+$/, {
+    message: 'PUBLIC_API_BASE_URL must be an origin without a trailing slash',
+  })
+  PUBLIC_API_BASE_URL = 'https://api.packio.invalid';
+
+  /**
+   * Storefront URL of a stock product for the Google Merchant feed; `{sku}` is replaced. The route
+   * belongs to packio-web, so it is configuration, not code.
+   */
+  @Matches(/^https?:\/\/.+\{sku\}/, { message: 'MERCHANT_FEED_LINK_TEMPLATE must be a URL containing {sku}' })
+  MERCHANT_FEED_LINK_TEMPLATE = 'https://www.packio.invalid/th/products/{sku}';
 }

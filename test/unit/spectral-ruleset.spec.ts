@@ -107,6 +107,21 @@ describe('Packio Spectral ruleset (contract/spectral)', () => {
     );
   });
 
+  it('accepts public (`security: []`) and optional-auth store operations, but no foreign scheme', () => {
+    const surface = (security: unknown) => {
+      const doc = structuredClone(badDocument) as unknown as {
+        paths: Record<string, { post: { security: unknown } }>;
+      };
+      doc.paths['/v1/store/things']!.post.security = security;
+      return lintWithPackioRuleset(doc).filter((r) => r.code === 'packio-surface-security');
+    };
+    expect(surface([])).toEqual([]);
+    expect(surface([{}, { customer: [] }])).toEqual([]);
+    expect(surface([{ customer: [] }])).toEqual([]);
+    expect(surface([{}, { staff: [] }])).toHaveLength(1);
+    expect(surface(undefined)).toHaveLength(1);
+  });
+
   it('accepts obviously fake data', () => {
     const fake = structuredClone(badDocument);
     fake.paths['/v1/store/things'].post.responses['201'].content['application/json'].example = {

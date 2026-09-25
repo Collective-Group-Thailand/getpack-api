@@ -39,6 +39,8 @@ export const API_TAGS: Record<string, string> = {
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
 
   // --- B2.1 catalogue & CMS
+  'store.catalog':
+    'Public catalogue and CMS reads for the storefront: products, stock products, showcase, articles, FAQs, SEO, geography, search, images and the Merchant feed — no prices or factory data (D-100, D-050).',
   'admin.catalogShowcaseCategories': 'Categories of showcase products (D-005).',
   'admin.catalogShowcaseProducts': 'Pre-configured showcase products ("Product Groups", D-005, D-100).',
   'admin.catalogSemiDesigns': 'Semi-custom designs of a catalogue product with their palette (D-005).',
