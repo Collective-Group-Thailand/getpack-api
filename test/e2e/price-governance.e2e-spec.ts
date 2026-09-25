@@ -51,7 +51,8 @@ describe('price governance (e2e, B2.2)', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication({ logger: false });
     configureApp(app);
-    await app.init();
+    // Bound to IPv4 loopback so a Docker-published port can never shadow the test server.
+    await app.listen(0, '127.0.0.1');
     server = app.getHttpServer();
     prisma = app.get(PrismaService);
     await seedDev(prisma, E2E_DEV_PASSWORD);
@@ -436,6 +437,31 @@ describe('price governance (e2e, B2.2)', () => {
       .get(`${partner(own.a)}/price-lists`)
       .expect(200);
     expect(lists.body[0].current.versionNo).toBe(3);
+  });
+
+  it('routes to RFQ until the type is quoted instantly, and maps coverage for admins (D-043, D-100)', async () => {
+    const path = await request(server)
+      .post('/v1/store/catalog/quote-path')
+      .send({ productTypeCode: 'folding_carton', configuration: { quantity: 1000 } })
+      .expect(200);
+    expect(path.body).toEqual({ productTypeCode: 'folding_carton', mode: 'rfq', reason: 'type_rfq_only' });
+    expect(JSON.stringify(path.body)).not.toMatch(/factory/i);
+    await request(server)
+      .post('/v1/store/catalog/quote-path')
+      .send({ productTypeCode: 'no_such_type' })
+      .expect(404);
+
+    const coverage = await pm().get(`/v1/admin/partners/coverage?productTypeId=${productTypeId}`).expect(200);
+    const factories = (
+      coverage.body[0].factories as { factoryId: string; tier: string; priceListVersionNo: number }[]
+    )
+      .filter((f) => f.factoryId === own.a.id || f.factoryId === own.b.id)
+      .sort((x, y) => (x.factoryId === own.a.id ? -1 : y.factoryId === own.a.id ? 1 : 0));
+    expect(factories).toEqual([
+      expect.objectContaining({ factoryId: own.a.id, tier: 'A', priceListVersionNo: 3 }),
+      expect.objectContaining({ factoryId: own.b.id, tier: 'A', priceListVersionNo: 1 }),
+    ]);
+    await as(own.a.token).get('/v1/admin/partners/coverage').expect(403);
   });
 
   it('withdraws a submitted proposal together with its approval', async () => {

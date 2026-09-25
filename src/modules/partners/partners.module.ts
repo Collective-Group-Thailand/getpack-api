@@ -20,6 +20,7 @@ import { PriceSimulationsService } from './pricing/price-simulations.service';
 import { PriceSuggestionsService } from './pricing/price-suggestions.service';
 import { NoQuotesRepricer, QUOTE_REPRICER } from './pricing/quote-repricer.port';
 import { SuggestionEngine } from './pricing/suggestion-engine';
+import { QuotePathService } from './quote-path/quote-path.service';
 import { SiteVisitsService } from './site-visits/site-visits.service';
 
 const SERVICES = [
@@ -40,6 +41,7 @@ const SERVICES = [
   SuggestionEngine,
   PriceSuggestionsService,
   PriceSimulationsService,
+  QuotePathService,
   FieldEncryption,
   LookupHasher,
 ];

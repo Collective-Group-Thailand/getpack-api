@@ -20,6 +20,7 @@ import {
   PartnerPriceListsController,
   PartnerPriceProposalsController,
 } from './pricing/pricing.controller';
+import { AdminCoverageController } from './quote-path/quote-path.controller';
 import { ZonePostcodesController, zones, zoneSchemes } from './zones/zones';
 
 /** `/v1/admin/*` controllers of the partners context. */
@@ -37,6 +38,7 @@ export const PARTNERS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminPriceProposalsController,
   AdminPriceSuggestionsController,
   IndexSeriesController,
+  AdminCoverageController,
 ];
 
 /** `/v1/partner/*` controllers of the partners context (own factory only, D-044). */

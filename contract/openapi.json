@@ -3406,6 +3406,75 @@
         ],
         "type": "object"
       },
+      "CoverageFactoryDto": {
+        "properties": {
+          "capabilityStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CapabilityStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "capacityUnit": {
+            "example": "sheets",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "factoryCode": {
+            "example": "PRINTCO",
+            "type": "string"
+          },
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "factoryStatus": {
+            "example": "active",
+            "type": "string"
+          },
+          "priceListVersionNo": {
+            "description": "Price-list version in force",
+            "example": 2,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "tier": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParticipationTier"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "A"
+          },
+          "weeklyCapacity": {
+            "example": "12000.000",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "factoryId",
+          "factoryCode",
+          "factoryStatus",
+          "capabilityStatus",
+          "tier",
+          "priceListVersionNo",
+          "weeklyCapacity",
+          "capacityUnit"
+        ],
+        "type": "object"
+      },
       "CreateArticleCategoryDto": {
         "properties": {
           "nameEn": {
@@ -11224,6 +11293,51 @@
         ],
         "type": "object"
       },
+      "ProductTypeCoverageDto": {
+        "properties": {
+          "factories": {
+            "description": "Factories with a capability for the type",
+            "items": {
+              "$ref": "#/components/schemas/CoverageFactoryDto"
+            },
+            "type": "array"
+          },
+          "instantPath": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuotePathReason"
+              }
+            ],
+            "description": "Instant path for a configuration inside every envelope (tier A), else why not",
+            "example": "type_rfq_only"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "productTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteMode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "example": "rfq"
+          }
+        },
+        "required": [
+          "productTypeId",
+          "productTypeCode",
+          "quoteMode",
+          "instantPath",
+          "factories"
+        ],
+        "type": "object"
+      },
       "ProductTypeDto": {
         "properties": {
           "calculatorKey": {
@@ -11521,6 +11635,73 @@
           "rfq"
         ],
         "type": "string"
+      },
+      "QuotePathDto": {
+        "properties": {
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "description": "`instant` = a price can be calculated now; otherwise the configurator routes to RFQ",
+            "example": "rfq"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuotePathReason"
+              }
+            ],
+            "example": "type_rfq_only"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "mode",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "QuotePathReason": {
+        "enum": [
+          "instant_available",
+          "type_rfq_only",
+          "no_active_factory",
+          "no_price_list",
+          "envelope_not_covered"
+        ],
+        "type": "string"
+      },
+      "QuotePathRequestDto": {
+        "properties": {
+          "configuration": {
+            "additionalProperties": true,
+            "description": "The configurator state; tier-B coverage is matched against it (D-043)",
+            "example": {
+              "heightMm": 120,
+              "lengthMm": 40,
+              "patternCode": "tuck-end",
+              "quantity": 1000,
+              "widthMm": 60
+            },
+            "type": "object"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode"
+        ],
+        "type": "object"
       },
       "RateCardLineResponse": {
         "properties": {
@@ -83862,6 +84043,211 @@
         ]
       }
     },
+    "/v1/admin/partners/coverage": {
+      "get": {
+        "description": "Per active type: quote mode, whether an instant path exists, and every factory with a capability for it — status, tier, price-list version and weekly capacity in force (D-043, D-100, D-101).\n\nImplements: D-043, D-100, D-101.",
+        "operationId": "admin.partnerCoverage.get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "productTypeId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "factories": [
+                      {
+                        "capabilityStatus": "active",
+                        "capacityUnit": "sheets",
+                        "factoryCode": "PRINTCO",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "factoryStatus": "active",
+                        "priceListVersionNo": 2,
+                        "tier": "A",
+                        "weeklyCapacity": "12000.000"
+                      }
+                    ],
+                    "instantPath": "type_rfq_only",
+                    "productTypeCode": "folding_carton",
+                    "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                    "quoteMode": "rfq"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductTypeCoverageDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Coverage",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Coverage map: which factories cover each product type",
+        "tags": [
+          "admin.partnerCoverage"
+        ],
+        "x-required-permissions": [
+          "partners.read"
+        ]
+      }
+    },
     "/v1/admin/price-components": {
       "get": {
         "description": "Component tables registered by the calculator ports (B2.3): their D-040 group and the dimension and value columns a price line carries. Empty until the first calculator ships (schema-design §7 A-13).\n\nImplements: D-040.",
@@ -108374,6 +108760,183 @@
         ]
       }
     },
+    "/v1/store/catalog/quote-path": {
+      "post": {
+        "description": "Instant only when the type is quoted instantly and an active factory prices it: tier A, or tier B whose lines cover the configuration; otherwise the configurator routes to RFQ (D-043, D-100). Carries no factory data (D-050).\n\nImplements: D-043, D-100, D-050.",
+        "operationId": "store.catalog.resolveQuotePath",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "heightMm": 120,
+                      "lengthMm": 40,
+                      "patternCode": "tuck-end",
+                      "quantity": 1000,
+                      "widthMm": 60
+                    },
+                    "productTypeCode": "folding_carton"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/QuotePathRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "mode": "rfq",
+                  "productTypeCode": "folding_carton",
+                  "reason": "type_rfq_only"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/QuotePathDto"
+                }
+              }
+            },
+            "description": "Quote path",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Tell whether a configuration can be priced instantly",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/catalog/search": {
       "get": {
         "description": "Trigram search (`pg_trgm`) over catalogue products, stock products, showcase products and articles, ranked by similarity (top 20).\n\nImplements: D-100, D-102.",
@@ -112816,6 +113379,10 @@
     {
       "description": "Domain-event outbox: dead-letter list and replay.",
       "name": "admin.outbox"
+    },
+    {
+      "description": "Which factories cover each product type, and whether an instant price path exists (D-043).",
+      "name": "admin.partnerCoverage"
     },
     {
       "description": "Factory price lists: versions, lines (every read audited, D-044) and the supported price components (D-040).",

@@ -54,6 +54,8 @@ export const API_TAGS: Record<string, string> = {
   'admin.priceSuggestions':
     'Staff-only suggested buy prices with their basis and impact simulations — never shown to factories (D-040, D-044).',
   'admin.indexSeries': 'Material price indices and cost-driver series behind the price suggestions (D-040).',
+  'admin.partnerCoverage':
+    'Which factories cover each product type, and whether an instant price path exists (D-043).',
   'partner.priceLists':
     'My price lists: versions, lines and sign-off of assisted entry (own factory only, D-044).',
   'partner.priceProposals':

@@ -1,5 +1,6 @@
 import { StoreMeController } from '@modules/auth/controllers/me.controllers';
 import { StoreCatalogController } from '@modules/catalog/store/store-catalog.controller';
+import { StoreQuotePathController } from '@modules/partners/quote-path/quote-path.controller';
 import { Module } from '@nestjs/common';
 import { StoreFilesController } from '@platform/files/files.controllers';
 import {
@@ -22,6 +23,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     StoreInboxController,
 
     StoreCatalogController,
+    StoreQuotePathController,
   ],
 })
 export class StoreApiModule {}
