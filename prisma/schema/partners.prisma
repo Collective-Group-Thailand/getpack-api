@@ -1,0 +1,1191 @@
+// Partners & price governance context (docs/schema-design.md §3.4, B2.2): factories and their
+// onboarding (D-011, D-041, D-171), capability, participation tiers (D-043), capacity (D-101),
+// tolerance (D-021) and payout (D-022) policies, pricing arrangements (D-042), agreements, site visits,
+// price lists with versions and proposals (D-040), staff-only suggestions and simulations (D-044),
+// index series. The `pl_*` component tables are created by each calculator port (B2.3; A-13).
+// Versioned tables follow ADR-0005 (schema-design §2.1); hand-written triggers and checks are in the
+// migration SQL.
+
+// ------------------------------------------------------------------------------------------------
+// Enums
+// ------------------------------------------------------------------------------------------------
+
+enum JuristicType {
+  company
+  partnership
+  individual
+
+  @@map("juristic_type")
+}
+
+enum FactoryStatus {
+  applied
+  under_review
+  trial
+  active
+  suspended
+  offboarded
+
+  @@map("factory_status")
+}
+
+enum OnboardingMode {
+  self_service
+  assisted
+
+  @@map("onboarding_mode")
+}
+
+enum FactoryAddressKind {
+  registered
+  plant
+  pickup
+
+  @@map("factory_address_kind")
+}
+
+enum OnboardingStep {
+  application
+  kyc
+  bank_account
+  capability
+  capacity
+  delivery_zones
+  pricing_arrangement
+  tolerance
+  payout_policy
+  agreement
+  site_visit
+  trial
+  activation
+
+  @@map("onboarding_step")
+}
+
+enum OnboardingStepStatus {
+  pending
+  in_progress
+  submitted
+  approved
+  rejected
+  waived
+
+  @@map("onboarding_step_status")
+}
+
+enum KycDocType {
+  company_certificate
+  vat_registration_pp20
+  director_id
+  signatory_id
+  bank_book
+  factory_licence
+  financial_statement
+  other
+
+  @@map("kyc_doc_type")
+}
+
+enum KycStatus {
+  pending
+  verified
+  rejected
+  expired
+
+  @@map("kyc_status")
+}
+
+enum SiteVisitResult {
+  pass
+  conditional
+  fail
+
+  @@map("site_visit_result")
+}
+
+enum AcceptanceMethod {
+  e_acceptance
+  signed_upload
+
+  @@map("acceptance_method")
+}
+
+enum CapabilityStatus {
+  active
+  inactive
+
+  @@map("capability_status")
+}
+
+enum ParticipationTier {
+  A
+  B
+  C
+
+  @@map("participation_tier")
+}
+
+enum PriceOwnershipMode {
+  platform_rate_card
+  factory_price_list
+
+  @@map("price_ownership_mode")
+}
+
+enum CapacityUnit {
+  pieces
+  sheets
+  sqm
+  jobs
+
+  @@map("capacity_unit")
+}
+
+enum PayoutTrigger {
+  job_accepted
+  immediate
+  none
+  after_pod
+  after_pod_and_claim_window
+
+  @@map("payout_trigger")
+}
+
+enum PriceVersionOrigin {
+  factory_proposal
+  platform_rate_card
+  assisted_entry
+  import
+
+  @@map("price_version_origin")
+}
+
+/// One value per `pl_*` component table (§3.4); the tables themselves arrive with the calculator
+/// ports (B2.3, schema-design §7 A-13). Values are only ever added.
+enum PriceComponent {
+  material_prices
+  paper_sheets
+  paper_sizes
+  paper_roll_widths
+  film_prices
+  foil_prices
+  print_prices
+  print_plates
+  print_blocks
+  ink_colours
+  finish_prices
+  finish_plates
+  diecut_prices
+  diecut_block_prices
+  assembly_prices
+  assembly_sheets
+  sortings
+  packing_prices
+  difficulty_levels
+  print_wastes
+  finish_wastes
+  diecut_wastes
+  assembly_wastes
+  semi_plate_wastes
+  paper_trims
+  print_type_terms
+  factory_margins
+  step_prices
+  code_margins
+  difficulty_margins
+  fix_cost_pcts
+  percent_reduces
+  standard_size_prices
+  stock_product_prices
+  conditions
+  calculate_conditions
+  production_conditions
+  pattern_conditions
+  process_exclusions
+  spec_details
+
+  @@map("price_component")
+}
+
+enum ProposalDirection {
+  factory_to_packio
+  packio_to_factory
+
+  @@map("proposal_direction")
+}
+
+enum ProposalStatus {
+  draft
+  submitted
+  under_review
+  countered
+  approved
+  partially_approved
+  rejected
+  withdrawn
+  accepted_by_factory
+
+  @@map("proposal_status")
+}
+
+enum ProposalLineAction {
+  add
+  change
+  remove
+
+  @@map("proposal_line_action")
+}
+
+enum ProposalLineDecision {
+  pending
+  accepted
+  rejected
+  countered
+
+  @@map("proposal_line_decision")
+}
+
+enum SuggestionMethod {
+  material_index
+  own_history_driver
+  peer_benchmark
+  waste_actuals
+  shipping_margin
+  none
+
+  @@map("suggestion_method")
+}
+
+enum JobStatus {
+  queued
+  running
+  succeeded
+  failed
+
+  @@map("job_status")
+}
+
+enum IndexKind {
+  material
+  cost_driver
+
+  @@map("index_kind")
+}
+
+enum IndexSource {
+  manual
+  feed
+
+  @@map("index_source")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Factory & onboarding
+// ------------------------------------------------------------------------------------------------
+
+model Factory {
+  id                 BigInt         @id(map: "pk_factories") @default(autoincrement())
+  publicId           String         @unique(map: "ux_factories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  /// Staff-facing code, e.g. `F0001` (never shown to customers, D-050).
+  code               String         @unique(map: "ux_factories__code")
+  vendorId           BigInt         @unique(map: "ux_factories__vendor_id") @map("vendor_id")
+  legalName          String         @map("legal_name")
+  tradeName          String?        @map("trade_name")
+  juristicType       JuristicType   @map("juristic_type")
+  taxId              String         @map("tax_id") @db.Char(13)
+  branchCode         String         @default("00000") @map("branch_code") @db.Char(5)
+  /// Drives the effective cost to Collective Group (accounting-design.md §11).
+  isVatRegistered    Boolean        @default(false) @map("is_vat_registered")
+  vatRegisteredOn    DateTime?      @map("vat_registered_on") @db.Date
+  status             FactoryStatus  @default(applied)
+  statusChangedAt    DateTime       @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  onboardingMode     OnboardingMode @default(self_service) @map("onboarding_mode")
+  calendarId         BigInt?        @map("calendar_id")
+  lineGroupId        String?        @map("line_group_id")
+  /// Cache for D-076 "first 3 jobs of a new factory".
+  trialJobsCompleted Int            @default(0) @map("trial_jobs_completed")
+  activatedAt        DateTime?      @map("activated_at") @db.Timestamptz(6)
+  offboardedAt       DateTime?      @map("offboarded_at") @db.Timestamptz(6)
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt?        @map("created_by")
+  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById        BigInt?        @map("updated_by")
+  rowVersion         Int            @default(1) @map("row_version")
+
+  vendor               Vendor                     @relation(fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factories__vendor_id")
+  calendar             BusinessCalendar?          @relation("FactoryCalendar", fields: [calendarId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factories__calendar_id")
+  statusHistory        FactoryStatusHistory[]
+  addresses            FactoryAddress[]
+  contacts             FactoryContact[]
+  onboardingSteps      FactoryOnboardingStep[]
+  kycDocuments         FactoryKycDocument[]
+  siteVisits           SiteVisit[]
+  agreementAcceptances AgreementAcceptance[]
+  capabilities         FactoryCapability[]
+  capabilityItems      FactoryCapabilityItem[]
+  machines             FactoryMachine[]
+  deliveryZones        FactoryDeliveryZone[]
+  participations       FactoryParticipation[]
+  pricingArrangement   FactoryPricingArrangement?
+  capacities           FactoryCapacity[]
+  capacityOverrides    FactoryCapacityOverride[]
+  capacityBookings     CapacityBooking[]
+  tolerancePolicies    FactoryTolerancePolicy[]
+  payoutPolicy         FactoryPayoutPolicy?
+  priceLists           PriceList[]
+  apiClients           ApiClient[]                @relation("ApiClientFactory")
+  ownedFiles           FileObject[]               @relation("FileObjectOwnerFactory")
+  calendars            BusinessCalendar[]         @relation("BusinessCalendarFactory")
+  stockLevels          StockLevel[]               @relation("StockLevelFactory")
+  stockMovements       StockMovement[]            @relation("StockMovementFactory")
+  createdBy            User?                      @relation("FactoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factories__created_by")
+  updatedBy            User?                      @relation("FactoryUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factories__updated_by")
+
+  @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
+  @@index([status], map: "ix_factories__status")
+  @@index([calendarId], map: "ix_factories__calendar_id")
+  @@map("factories")
+}
+
+/// Append-only (trigger).
+model FactoryStatusHistory {
+  id                BigInt         @id(map: "pk_factory_status_history") @default(autoincrement())
+  factoryId         BigInt         @map("factory_id")
+  fromStatus        FactoryStatus? @map("from_status")
+  toStatus          FactoryStatus  @map("to_status")
+  reason            String
+  approvalRequestId BigInt?        @map("approval_request_id")
+  changedById       BigInt?        @map("changed_by")
+  changedAt         DateTime       @default(now()) @map("changed_at") @db.Timestamptz(6)
+
+  factory         Factory          @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_status_history__factory_id")
+  approvalRequest ApprovalRequest? @relation("FactoryStatusHistoryApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_status_history__approval_request_id")
+  changedBy       User?            @relation("FactoryStatusHistoryChangedBy", fields: [changedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_status_history__changed_by")
+
+  @@index([factoryId, changedAt], map: "ix_factory_status_history__factory_id__changed_at")
+  @@index([approvalRequestId], map: "ix_factory_status_history__approval_request_id")
+  @@map("factory_status_history")
+}
+
+model FactoryAddress {
+  id            BigInt             @id(map: "pk_factory_addresses") @default(autoincrement())
+  publicId      String             @unique(map: "ux_factory_addresses__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt             @map("factory_id")
+  kind          FactoryAddressKind
+  line1         String
+  line2         String?
+  subdistrictId BigInt?            @map("subdistrict_id")
+  postcode      String?            @db.Char(5)
+  lat           Decimal?           @db.Decimal(9, 6)
+  lng           Decimal?           @db.Decimal(9, 6)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?            @map("created_by")
+  updatedAt     DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?            @map("updated_by")
+  rowVersion    Int                @default(1) @map("row_version")
+
+  factory     Factory         @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_addresses__factory_id")
+  subdistrict GeoSubdistrict? @relation("FactoryAddressSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_addresses__subdistrict_id")
+  createdBy   User?           @relation("FactoryAddressCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_addresses__created_by")
+  updatedBy   User?           @relation("FactoryAddressUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_addresses__updated_by")
+
+  @@index([factoryId], map: "ix_factory_addresses__factory_id")
+  @@index([subdistrictId], map: "ix_factory_addresses__subdistrict_id")
+  @@map("factory_addresses")
+}
+
+/// PII (name, phone, email): excluded from logs and analytics (§2.11).
+model FactoryContact {
+  id          BigInt   @id(map: "pk_factory_contacts") @default(autoincrement())
+  publicId    String   @unique(map: "ux_factory_contacts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt   @map("factory_id")
+  name        String
+  roleTitle   String?  @map("role_title")
+  /// E.164.
+  phone       String?
+  email       String?  @db.Citext
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  factory   Factory @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_contacts__factory_id")
+  createdBy User?   @relation("FactoryContactCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_contacts__created_by")
+  updatedBy User?   @relation("FactoryContactUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_contacts__updated_by")
+
+  @@unique([factoryId], map: "ux_factory_contacts__one_primary", where: raw("is_primary"))
+  @@index([factoryId], map: "ix_factory_contacts__factory_id")
+  @@map("factory_contacts")
+}
+
+model FactoryOnboardingStep {
+  id                   BigInt               @id(map: "pk_factory_onboarding_steps") @default(autoincrement())
+  factoryId            BigInt               @map("factory_id")
+  step                 OnboardingStep
+  status               OnboardingStepStatus @default(pending)
+  completedAt          DateTime?            @map("completed_at") @db.Timestamptz(6)
+  completedById        BigInt?              @map("completed_by")
+  /// Assisted onboarding: Packio staff entered the data on the factory's behalf (D-100 note).
+  enteredByStaff       Boolean              @default(false) @map("entered_by_staff")
+  factorySignedOffById BigInt?              @map("factory_signed_off_by")
+  factorySignedOffAt   DateTime?            @map("factory_signed_off_at") @db.Timestamptz(6)
+  notes                String?
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById          BigInt?              @map("updated_by")
+  rowVersion           Int                  @default(1) @map("row_version")
+
+  factory          Factory @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_onboarding_steps__factory_id")
+  completedBy      User?   @relation("FactoryOnboardingStepCompletedBy", fields: [completedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_onboarding_steps__completed_by")
+  factorySignedOff User?   @relation("FactoryOnboardingStepSignedOffBy", fields: [factorySignedOffById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_onboarding_steps__factory_signed_off_by")
+  updatedBy        User?   @relation("FactoryOnboardingStepUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_onboarding_steps__updated_by")
+
+  @@unique([factoryId, step], map: "ux_factory_onboarding_steps__factory_id__step")
+  @@map("factory_onboarding_steps")
+}
+
+model FactoryKycDocument {
+  id           BigInt     @id(map: "pk_factory_kyc_documents") @default(autoincrement())
+  publicId     String     @unique(map: "ux_factory_kyc_documents__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId    BigInt     @map("factory_id")
+  docType      KycDocType @map("doc_type")
+  fileObjectId BigInt     @map("file_object_id")
+  issuedOn     DateTime?  @map("issued_on") @db.Date
+  expiresOn    DateTime?  @map("expires_on") @db.Date
+  status       KycStatus  @default(pending)
+  verifiedById BigInt?    @map("verified_by")
+  verifiedAt   DateTime?  @map("verified_at") @db.Timestamptz(6)
+  note         String?
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?    @map("created_by")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion   Int        @default(1) @map("row_version")
+
+  factory    Factory    @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_kyc_documents__factory_id")
+  fileObject FileObject @relation("FactoryKycDocumentFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_kyc_documents__file_object_id")
+  verifiedBy User?      @relation("FactoryKycDocumentVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_kyc_documents__verified_by")
+  createdBy  User?      @relation("FactoryKycDocumentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_kyc_documents__created_by")
+
+  @@index([factoryId, docType], map: "ix_factory_kyc_documents__factory_id__doc_type")
+  @@index([fileObjectId], map: "ix_factory_kyc_documents__file_object_id")
+  @@map("factory_kyc_documents")
+}
+
+/// D-041: at least one `pass` visit is required before `trial → active` (trigger on factories).
+model SiteVisit {
+  id               BigInt          @id(map: "pk_site_visits") @default(autoincrement())
+  publicId         String          @unique(map: "ux_site_visits__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId        BigInt          @map("factory_id")
+  visitedOn        DateTime        @map("visited_on") @db.Date
+  checklistVersion String          @map("checklist_version")
+  checklist        Json
+  result           SiteVisitResult
+  notes            String?
+  recordedById     BigInt          @map("recorded_by")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  factory    Factory              @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visits__factory_id")
+  recordedBy User                 @relation("SiteVisitRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visits__recorded_by")
+  inspectors SiteVisitInspector[]
+
+  @@index([factoryId, visitedOn], map: "ix_site_visits__factory_id__visited_on")
+  @@index([recordedById], map: "ix_site_visits__recorded_by")
+  @@map("site_visits")
+}
+
+model SiteVisitInspector {
+  siteVisitId BigInt @map("site_visit_id")
+  userId      BigInt @map("user_id")
+
+  siteVisit SiteVisit @relation(fields: [siteVisitId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visit_inspectors__site_visit_id")
+  user      User      @relation("SiteVisitInspectorUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_site_visit_inspectors__user_id")
+
+  @@id([siteVisitId, userId], map: "pk_site_visit_inspectors")
+  @@index([userId], map: "ix_site_visit_inspectors__user_id")
+  @@map("site_visit_inspectors")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Agreements (D-011, D-044 confidentiality clause both directions)
+// ------------------------------------------------------------------------------------------------
+
+model AgreementTemplate {
+  id          BigInt   @id(map: "pk_agreement_templates") @default(autoincrement())
+  publicId    String   @unique(map: "ux_agreement_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  /// e.g. `partner_agreement`, `price_data_confidentiality`.
+  key         String   @unique(map: "ux_agreement_templates__key")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  versions  AgreementTemplateVersion[]
+  createdBy User?                      @relation("AgreementTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_templates__created_by")
+  updatedBy User?                      @relation("AgreementTemplateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_templates__updated_by")
+
+  @@map("agreement_templates")
+}
+
+/// Versioned (§2.1). `text_sha256` is the evidence an e-acceptance refers to.
+model AgreementTemplateVersion {
+  id                BigInt              @id(map: "pk_agreement_template_versions") @default(autoincrement())
+  publicId          String              @unique(map: "ux_agreement_template_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  templateId        BigInt              @map("template_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  textTh            String              @map("text_th")
+  textEn            String?             @map("text_en")
+  textSha256        Bytes               @map("text_sha256")
+  pdfFileId         BigInt?             @map("pdf_file_id")
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  template        AgreementTemplate     @relation(fields: [templateId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__template_id")
+  pdfFile         FileObject?           @relation("AgreementTemplateVersionPdfFile", fields: [pdfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__pdf_file_id")
+  approvalRequest ApprovalRequest?      @relation("AgreementTemplateVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__approval_request_id")
+  acceptances     AgreementAcceptance[]
+  createdBy       User?                 @relation("AgreementTemplateVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__created_by")
+  decidedBy       User?                 @relation("AgreementTemplateVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_template_versions__decided_by")
+
+  @@unique([templateId, versionNo], map: "ux_agreement_template_versions__template_id__version_no")
+  @@index([templateId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_agreement_template_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([pdfFileId], map: "ix_agreement_template_versions__pdf_file_id")
+  @@index([approvalRequestId], map: "ix_agreement_template_versions__approval_request_id")
+  @@map("agreement_template_versions")
+}
+
+/// Append-only (trigger): the evidence of a factory's acceptance of one version.
+model AgreementAcceptance {
+  id                BigInt           @id(map: "pk_agreement_acceptances") @default(autoincrement())
+  publicId          String           @unique(map: "ux_agreement_acceptances__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId         BigInt           @map("factory_id")
+  templateVersionId BigInt           @map("template_version_id")
+  acceptedByUserId  BigInt           @map("accepted_by_user_id")
+  acceptedAt        DateTime         @default(now()) @map("accepted_at") @db.Timestamptz(6)
+  method            AcceptanceMethod
+  ip                String?          @db.Inet
+  userAgent         String?          @map("user_agent")
+  evidenceSha256    Bytes            @map("evidence_sha256")
+  signedFileId      BigInt?          @map("signed_file_id")
+
+  factory         Factory                  @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_acceptances__factory_id")
+  templateVersion AgreementTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_acceptances__template_version_id")
+  acceptedBy      User                     @relation("AgreementAcceptanceAcceptedBy", fields: [acceptedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_acceptances__accepted_by_user_id")
+  signedFile      FileObject?              @relation("AgreementAcceptanceSignedFile", fields: [signedFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_agreement_acceptances__signed_file_id")
+
+  @@unique([factoryId, templateVersionId], map: "ux_agreement_acceptances__factory_id__template_version_id")
+  @@index([templateVersionId], map: "ix_agreement_acceptances__template_version_id")
+  @@index([acceptedByUserId], map: "ix_agreement_acceptances__accepted_by_user_id")
+  @@index([signedFileId], map: "ix_agreement_acceptances__signed_file_id")
+  @@map("agreement_acceptances")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Capability, delivery zones, machines
+// ------------------------------------------------------------------------------------------------
+
+model FactoryCapability {
+  id               BigInt           @id(map: "pk_factory_capabilities") @default(autoincrement())
+  publicId         String           @unique(map: "ux_factory_capabilities__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId        BigInt           @map("factory_id")
+  productTypeId    BigInt           @map("product_type_id")
+  printTypeId      BigInt?          @map("print_type_id")
+  maxSheetWidthMm  Decimal?         @map("max_sheet_width_mm") @db.Decimal(10, 2)
+  maxSheetLengthMm Decimal?         @map("max_sheet_length_mm") @db.Decimal(10, 2)
+  minOrderQty      Int?             @map("min_order_qty")
+  maxOrderQty      Int?             @map("max_order_qty")
+  status           CapabilityStatus @default(active)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?          @map("created_by")
+  updatedAt        DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?          @map("updated_by")
+  rowVersion       Int              @default(1) @map("row_version")
+
+  factory     Factory     @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capabilities__factory_id")
+  productType ProductType @relation("FactoryCapabilityProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capabilities__product_type_id")
+  printType   PrintType?  @relation("FactoryCapabilityPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capabilities__print_type_id")
+  createdBy   User?       @relation("FactoryCapabilityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capabilities__created_by")
+  updatedBy   User?       @relation("FactoryCapabilityUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capabilities__updated_by")
+
+  // ux (factory_id, product_type_id, coalesce(print_type_id, 0)) is an expression index in the migration SQL.
+  @@index([factoryId], map: "ix_factory_capabilities__factory_id")
+  @@index([productTypeId, status], map: "ix_factory_capabilities__product_type_id__status")
+  @@index([printTypeId], map: "ix_factory_capabilities__print_type_id")
+  @@map("factory_capabilities")
+}
+
+/// Which catalogue items a factory can make per product type (replaces legacy `factory_match_*`);
+/// `item_id` is checked against the table of `item_kind` by trigger.
+model FactoryCapabilityItem {
+  id            BigInt            @id(map: "pk_factory_capability_items") @default(autoincrement())
+  factoryId     BigInt            @map("factory_id")
+  productTypeId BigInt            @map("product_type_id")
+  itemKind      CatalogOptionKind @map("item_kind")
+  itemId        BigInt            @map("item_id")
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?           @map("created_by")
+
+  factory     Factory     @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capability_items__factory_id")
+  productType ProductType @relation("FactoryCapabilityItemProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capability_items__product_type_id")
+  createdBy   User?       @relation("FactoryCapabilityItemCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capability_items__created_by")
+
+  @@unique([factoryId, productTypeId, itemKind, itemId], map: "ux_factory_capability_items__factory__type__kind__item")
+  @@index([productTypeId, itemKind, itemId], map: "ix_factory_capability_items__type__kind__item")
+  @@map("factory_capability_items")
+}
+
+model FactoryMachine {
+  id          BigInt           @id(map: "pk_factory_machines") @default(autoincrement())
+  publicId    String           @unique(map: "ux_factory_machines__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt           @map("factory_id")
+  name        String
+  printTypeId BigInt?          @map("print_type_id")
+  maxWidthMm  Decimal?         @map("max_width_mm") @db.Decimal(10, 2)
+  maxLengthMm Decimal?         @map("max_length_mm") @db.Decimal(10, 2)
+  details     String?
+  status      CapabilityStatus @default(active)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?          @map("created_by")
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?          @map("updated_by")
+  rowVersion  Int              @default(1) @map("row_version")
+
+  factory   Factory    @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_machines__factory_id")
+  printType PrintType? @relation("FactoryMachinePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_machines__print_type_id")
+  createdBy User?      @relation("FactoryMachineCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_machines__created_by")
+  updatedBy User?      @relation("FactoryMachineUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_machines__updated_by")
+
+  @@index([factoryId], map: "ix_factory_machines__factory_id")
+  @@index([printTypeId], map: "ix_factory_machines__print_type_id")
+  @@map("factory_machines")
+}
+
+/// Zones the factory's own fleet serves (D-013); others fall back to carriers (D-114).
+model FactoryDeliveryZone {
+  id            BigInt   @id(map: "pk_factory_delivery_zones") @default(autoincrement())
+  factoryId     BigInt   @map("factory_id")
+  zoneId        BigInt   @map("zone_id")
+  serves        Boolean  @default(true)
+  extraLeadDays Int      @default(0) @map("extra_lead_days") @db.SmallInt
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?  @map("updated_by")
+
+  factory   Factory @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_delivery_zones__factory_id")
+  zone      Zone    @relation("FactoryDeliveryZoneZone", fields: [zoneId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_delivery_zones__zone_id")
+  createdBy User?   @relation("FactoryDeliveryZoneCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_delivery_zones__created_by")
+  updatedBy User?   @relation("FactoryDeliveryZoneUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_delivery_zones__updated_by")
+
+  @@unique([factoryId, zoneId], map: "ux_factory_delivery_zones__factory_id__zone_id")
+  @@index([zoneId], map: "ix_factory_delivery_zones__zone_id")
+  @@map("factory_delivery_zones")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Versioned per factory (× product type): participation, pricing arrangement, capacity,
+// tolerance, payout policy (ADR-0005)
+// ------------------------------------------------------------------------------------------------
+
+model FactoryParticipation {
+  id            BigInt   @id(map: "pk_factory_participations") @default(autoincrement())
+  publicId      String   @unique(map: "ux_factory_participations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt   @map("factory_id")
+  productTypeId BigInt   @map("product_type_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+
+  factory     Factory                       @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_participations__factory_id")
+  productType ProductType                   @relation("FactoryParticipationProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_participations__product_type_id")
+  versions    FactoryParticipationVersion[]
+  createdBy   User?                         @relation("FactoryParticipationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_participations__created_by")
+
+  @@unique([factoryId, productTypeId], map: "ux_factory_participations__factory_id__product_type_id")
+  @@index([productTypeId], map: "ix_factory_participations__product_type_id")
+  @@map("factory_participations")
+}
+
+model FactoryParticipationVersion {
+  id                BigInt              @id(map: "pk_factory_participation_versions") @default(autoincrement())
+  participationId   BigInt              @map("participation_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  tier              ParticipationTier
+  /// Tier B: what the lines cover (the envelope itself is which price lines exist).
+  envelopeNote      String?             @map("envelope_note")
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  participation   FactoryParticipation @relation(fields: [participationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_participation_versions__participation_id")
+  approvalRequest ApprovalRequest?     @relation("FactoryParticipationVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_participation_versions__approval_request_id")
+  createdBy       User?                @relation("FactoryParticipationVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_participation_versions__created_by")
+  decidedBy       User?                @relation("FactoryParticipationVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_participation_versions__decided_by")
+
+  @@unique([participationId, versionNo], map: "ux_factory_participation_versions__participation_id__version_no")
+  @@index([participationId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_factory_participation_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_factory_participation_versions__approval_request_id")
+  @@map("factory_participation_versions")
+}
+
+model FactoryPricingArrangement {
+  id          BigInt   @id(map: "pk_factory_pricing_arrangements") @default(autoincrement())
+  publicId    String   @unique(map: "ux_factory_pricing_arrangements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt   @unique(map: "ux_factory_pricing_arrangements__factory_id") @map("factory_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+
+  factory   Factory                            @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_pricing_arrangements__factory_id")
+  versions  FactoryPricingArrangementVersion[]
+  createdBy User?                              @relation("FactoryPricingArrangementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_pricing_arrangements__created_by")
+
+  @@map("factory_pricing_arrangements")
+}
+
+/// D-042: a change of mode requires the `partner_pricing_mode_change` approval (D-167).
+model FactoryPricingArrangementVersion {
+  id                BigInt              @id(map: "pk_factory_pricing_arrangement_versions") @default(autoincrement())
+  arrangementId     BigInt              @map("arrangement_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  ownershipMode     PriceOwnershipMode  @map("ownership_mode")
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  arrangement     FactoryPricingArrangement @relation(fields: [arrangementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_pricing_arrangement_versions__arrangement_id")
+  approvalRequest ApprovalRequest?          @relation("FactoryPricingArrangementVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_pricing_arrangement_versions__approval_request_id")
+  createdBy       User?                     @relation("FactoryPricingArrangementVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_pricing_arrangement_versions__created_by")
+  decidedBy       User?                     @relation("FactoryPricingArrangementVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_pricing_arrangement_versions__decided_by")
+
+  @@unique([arrangementId, versionNo], map: "ux_factory_pricing_arrangement_versions__arrangement__version")
+  @@index([arrangementId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_factory_pricing_arrangement_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_factory_pricing_arrangement_versions__approval_request_id")
+  @@map("factory_pricing_arrangement_versions")
+}
+
+model FactoryCapacity {
+  id            BigInt   @id(map: "pk_factory_capacities") @default(autoincrement())
+  publicId      String   @unique(map: "ux_factory_capacities__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt   @map("factory_id")
+  productTypeId BigInt   @map("product_type_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+
+  factory     Factory                  @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacities__factory_id")
+  productType ProductType              @relation("FactoryCapacityProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacities__product_type_id")
+  versions    FactoryCapacityVersion[]
+  createdBy   User?                    @relation("FactoryCapacityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacities__created_by")
+
+  @@unique([factoryId, productTypeId], map: "ux_factory_capacities__factory_id__product_type_id")
+  @@index([productTypeId], map: "ix_factory_capacities__product_type_id")
+  @@map("factory_capacities")
+}
+
+/// D-101: weekly capacity enforced on lead-time promises.
+model FactoryCapacityVersion {
+  id                BigInt              @id(map: "pk_factory_capacity_versions") @default(autoincrement())
+  capacityId        BigInt              @map("capacity_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  capacityUnit      CapacityUnit        @map("capacity_unit")
+  weeklyCapacity    Decimal             @map("weekly_capacity") @db.Decimal(14, 3)
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  capacity        FactoryCapacity  @relation(fields: [capacityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacity_versions__capacity_id")
+  approvalRequest ApprovalRequest? @relation("FactoryCapacityVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacity_versions__approval_request_id")
+  createdBy       User?            @relation("FactoryCapacityVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacity_versions__created_by")
+  decidedBy       User?            @relation("FactoryCapacityVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacity_versions__decided_by")
+
+  @@unique([capacityId, versionNo], map: "ux_factory_capacity_versions__capacity_id__version_no")
+  @@index([capacityId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_factory_capacity_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_factory_capacity_versions__approval_request_id")
+  @@map("factory_capacity_versions")
+}
+
+/// A week's capacity differing from the version in force (holidays, maintenance…); `week_start` is a Monday (Bangkok).
+model FactoryCapacityOverride {
+  id            BigInt   @id(map: "pk_factory_capacity_overrides") @default(autoincrement())
+  publicId      String   @unique(map: "ux_factory_capacity_overrides__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt   @map("factory_id")
+  productTypeId BigInt   @map("product_type_id")
+  weekStart     DateTime @map("week_start") @db.Date
+  capacity      Decimal  @db.Decimal(14, 3)
+  reason        String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?  @map("updated_by")
+  rowVersion    Int      @default(1) @map("row_version")
+
+  factory     Factory     @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacity_overrides__factory_id")
+  productType ProductType @relation("FactoryCapacityOverrideProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacity_overrides__product_type_id")
+  createdBy   User?       @relation("FactoryCapacityOverrideCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacity_overrides__created_by")
+  updatedBy   User?       @relation("FactoryCapacityOverrideUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_capacity_overrides__updated_by")
+
+  @@unique([factoryId, productTypeId, weekStart], map: "ux_factory_capacity_overrides__factory__type__week")
+  @@index([productTypeId], map: "ix_factory_capacity_overrides__product_type_id")
+  @@map("factory_capacity_overrides")
+}
+
+/// Booked load per week from accepted jobs (written by production, B4.2; its FK arrives then).
+model CapacityBooking {
+  id              BigInt    @id(map: "pk_capacity_bookings") @default(autoincrement())
+  factoryId       BigInt    @map("factory_id")
+  productTypeId   BigInt    @map("product_type_id")
+  weekStart       DateTime  @map("week_start") @db.Date
+  productionJobId BigInt    @unique(map: "ux_capacity_bookings__production_job_id") @map("production_job_id")
+  load            Decimal   @db.Decimal(14, 3)
+  releasedAt      DateTime? @map("released_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  factory     Factory     @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_capacity_bookings__factory_id")
+  productType ProductType @relation("CapacityBookingProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_capacity_bookings__product_type_id")
+
+  @@index([factoryId, productTypeId, weekStart], map: "ix_capacity_bookings__factory__type__week")
+  @@index([productTypeId], map: "ix_capacity_bookings__product_type_id")
+  @@map("capacity_bookings")
+}
+
+/// D-021: `product_type_id` null = the factory default; a row with a type overrides it.
+model FactoryTolerancePolicy {
+  id            BigInt   @id(map: "pk_factory_tolerance_policies") @default(autoincrement())
+  publicId      String   @unique(map: "ux_factory_tolerance_policies__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt   @map("factory_id")
+  productTypeId BigInt?  @map("product_type_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+
+  factory     Factory                         @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_tolerance_policies__factory_id")
+  productType ProductType?                    @relation("FactoryTolerancePolicyProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_tolerance_policies__product_type_id")
+  versions    FactoryTolerancePolicyVersion[]
+  createdBy   User?                           @relation("FactoryTolerancePolicyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_tolerance_policies__created_by")
+
+  // ux (factory_id, coalesce(product_type_id, 0)) is an expression index in the migration SQL.
+  @@index([factoryId], map: "ix_factory_tolerance_policies__factory_id")
+  @@index([productTypeId], map: "ix_factory_tolerance_policies__product_type_id")
+  @@map("factory_tolerance_policies")
+}
+
+/// D-173: a factory override needs the `factory_tolerance_change` approval (Superadmin).
+model FactoryTolerancePolicyVersion {
+  id                BigInt              @id(map: "pk_factory_tolerance_policy_versions") @default(autoincrement())
+  policyId          BigInt              @map("policy_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  shortagePct       Decimal             @map("shortage_pct") @db.Decimal(7, 4)
+  overagePct        Decimal             @map("overage_pct") @db.Decimal(7, 4)
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  policy          FactoryTolerancePolicy @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_tolerance_policy_versions__policy_id")
+  approvalRequest ApprovalRequest?       @relation("FactoryTolerancePolicyVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_tolerance_policy_versions__approval_request_id")
+  createdBy       User?                  @relation("FactoryTolerancePolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_tolerance_policy_versions__created_by")
+  decidedBy       User?                  @relation("FactoryTolerancePolicyVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_tolerance_policy_versions__decided_by")
+
+  @@unique([policyId, versionNo], map: "ux_factory_tolerance_policy_versions__policy_id__version_no")
+  @@index([policyId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_factory_tolerance_policy_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_factory_tolerance_policy_versions__approval_request_id")
+  @@map("factory_tolerance_policy_versions")
+}
+
+model FactoryPayoutPolicy {
+  id          BigInt   @id(map: "pk_factory_payout_policies") @default(autoincrement())
+  publicId    String   @unique(map: "ux_factory_payout_policies__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt   @unique(map: "ux_factory_payout_policies__factory_id") @map("factory_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+
+  factory   Factory                      @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_payout_policies__factory_id")
+  versions  FactoryPayoutPolicyVersion[]
+  createdBy User?                        @relation("FactoryPayoutPolicyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_payout_policies__created_by")
+
+  @@map("factory_payout_policies")
+}
+
+/// D-022 / D-164; a factory override needs the `factory_payout_policy_change` approval (D-173).
+model FactoryPayoutPolicyVersion {
+  id                   BigInt              @id(map: "pk_factory_payout_policy_versions") @default(autoincrement())
+  policyId             BigInt              @map("policy_id")
+  versionNo            Int                 @map("version_no")
+  effectiveFrom        DateTime            @map("effective_from") @db.Timestamptz(6)
+  status               ConfigVersionStatus @default(draft)
+  advancePct           Decimal             @map("advance_pct") @db.Decimal(7, 4)
+  advanceTrigger       PayoutTrigger       @map("advance_trigger")
+  balanceTrigger       PayoutTrigger       @map("balance_trigger")
+  claimWindowDays      Int                 @map("claim_window_days") @db.SmallInt
+  retentionPct         Decimal             @map("retention_pct") @db.Decimal(7, 4)
+  retentionReleaseDays Int                 @map("retention_release_days") @db.SmallInt
+  paymentTermsDays     Int                 @default(0) @map("payment_terms_days") @db.SmallInt
+  reason               String
+  approvalRequestId    BigInt?             @map("approval_request_id")
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?             @map("created_by")
+  decidedAt            DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById          BigInt?             @map("decided_by")
+
+  policy          FactoryPayoutPolicy @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_payout_policy_versions__policy_id")
+  approvalRequest ApprovalRequest?    @relation("FactoryPayoutPolicyVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_payout_policy_versions__approval_request_id")
+  createdBy       User?               @relation("FactoryPayoutPolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_payout_policy_versions__created_by")
+  decidedBy       User?               @relation("FactoryPayoutPolicyVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_payout_policy_versions__decided_by")
+
+  @@unique([policyId, versionNo], map: "ux_factory_payout_policy_versions__policy_id__version_no")
+  @@index([policyId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_factory_payout_policy_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_factory_payout_policy_versions__approval_request_id")
+  @@map("factory_payout_policy_versions")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Price lists, proposals, suggestions, simulations (D-040, D-042, D-043, D-044)
+// ------------------------------------------------------------------------------------------------
+
+/// One price list per factory × product type; each approved version is a complete, immutable set of
+/// component rows (copy-on-write, schema-design §7 A-7).
+model PriceList {
+  id            BigInt   @id(map: "pk_price_lists") @default(autoincrement())
+  publicId      String   @unique(map: "ux_price_lists__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId     BigInt   @map("factory_id")
+  productTypeId BigInt   @map("product_type_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+
+  factory     Factory            @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_lists__factory_id")
+  productType ProductType        @relation("PriceListProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_lists__product_type_id")
+  versions    PriceListVersion[]
+  proposals   PriceProposal[]
+  createdBy   User?              @relation("PriceListCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_lists__created_by")
+
+  @@unique([factoryId, productTypeId], map: "ux_price_lists__factory_id__product_type_id")
+  @@index([productTypeId], map: "ix_price_lists__product_type_id")
+  @@map("price_lists")
+}
+
+/// Versioned (§2.1); `pending_acceptance` = a platform rate card awaiting the factory (D-042).
+model PriceListVersion {
+  id                   BigInt              @id(map: "pk_price_list_versions") @default(autoincrement())
+  publicId             String              @unique(map: "ux_price_list_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  priceListId          BigInt              @map("price_list_id")
+  versionNo            Int                 @map("version_no")
+  status               ConfigVersionStatus @default(draft)
+  origin               PriceVersionOrigin
+  basedOnVersionId     BigInt?             @map("based_on_version_id")
+  effectiveFrom        DateTime            @map("effective_from") @db.Timestamptz(6)
+  proposalId           BigInt?             @map("proposal_id")
+  approvalRequestId    BigInt?             @map("approval_request_id")
+  factoryAcceptedById  BigInt?             @map("factory_accepted_by")
+  factoryAcceptedAt    DateTime?           @map("factory_accepted_at") @db.Timestamptz(6)
+  factorySignedOffById BigInt?             @map("factory_signed_off_by")
+  factorySignedOffAt   DateTime?           @map("factory_signed_off_at") @db.Timestamptz(6)
+  lineCount            Int                 @default(0) @map("line_count")
+  contentSha256        Bytes?              @map("content_sha256")
+  reason               String
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?             @map("created_by")
+  decidedAt            DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById          BigInt?             @map("decided_by")
+
+  priceList        PriceList          @relation(fields: [priceListId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__price_list_id")
+  basedOn          PriceListVersion?  @relation("PriceListVersionBasedOn", fields: [basedOnVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__based_on_version_id")
+  derived          PriceListVersion[] @relation("PriceListVersionBasedOn")
+  proposal         PriceProposal?     @relation("PriceListVersionProposal", fields: [proposalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__proposal_id")
+  proposalsBasedOn PriceProposal[]    @relation("PriceProposalBaseVersion")
+  proposalsResult  PriceProposal[]    @relation("PriceProposalResultingVersion")
+  approvalRequest  ApprovalRequest?   @relation("PriceListVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__approval_request_id")
+  factoryAccepted  User?              @relation("PriceListVersionFactoryAcceptedBy", fields: [factoryAcceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__factory_accepted_by")
+  factorySignedOff User?              @relation("PriceListVersionFactorySignedOffBy", fields: [factorySignedOffById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__factory_signed_off_by")
+  createdBy        User?              @relation("PriceListVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__created_by")
+  decidedBy        User?              @relation("PriceListVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__decided_by")
+
+  @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
+  @@index([priceListId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_price_list_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([basedOnVersionId], map: "ix_price_list_versions__based_on_version_id")
+  @@index([proposalId], map: "ix_price_list_versions__proposal_id")
+  @@index([approvalRequestId], map: "ix_price_list_versions__approval_request_id")
+  @@map("price_list_versions")
+}
+
+model PriceProposal {
+  id                    BigInt            @id(map: "pk_price_proposals") @default(autoincrement())
+  publicId              String            @unique(map: "ux_price_proposals__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  priceListId           BigInt            @map("price_list_id")
+  baseVersionId         BigInt?           @map("base_version_id")
+  direction             ProposalDirection
+  status                ProposalStatus    @default(draft)
+  proposedEffectiveFrom DateTime          @map("proposed_effective_from") @db.Timestamptz(6)
+  submittedById         BigInt?           @map("submitted_by")
+  submittedAt           DateTime?         @map("submitted_at") @db.Timestamptz(6)
+  approvalRequestId     BigInt?           @map("approval_request_id")
+  resultingVersionId    BigInt?           @map("resulting_version_id")
+  comment               String?
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById           BigInt?           @map("created_by")
+  updatedAt             DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById           BigInt?           @map("updated_by")
+  rowVersion            Int               @default(1) @map("row_version")
+
+  priceList        PriceList               @relation(fields: [priceListId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__price_list_id")
+  baseVersion      PriceListVersion?       @relation("PriceProposalBaseVersion", fields: [baseVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__base_version_id")
+  resultingVersion PriceListVersion?       @relation("PriceProposalResultingVersion", fields: [resultingVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__resulting_version_id")
+  versions         PriceListVersion[]      @relation("PriceListVersionProposal")
+  approvalRequest  ApprovalRequest?        @relation("PriceProposalApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__approval_request_id")
+  lines            PriceProposalLine[]
+  simulations      PriceImpactSimulation[]
+  submittedBy      User?                   @relation("PriceProposalSubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__submitted_by")
+  createdBy        User?                   @relation("PriceProposalCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__created_by")
+  updatedBy        User?                   @relation("PriceProposalUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__updated_by")
+
+  @@index([priceListId, status], map: "ix_price_proposals__price_list_id__status")
+  @@index([status, submittedAt], map: "ix_price_proposals__status__submitted_at")
+  @@index([baseVersionId], map: "ix_price_proposals__base_version_id")
+  @@index([resultingVersionId], map: "ix_price_proposals__resulting_version_id")
+  @@index([approvalRequestId], map: "ix_price_proposals__approval_request_id")
+  @@map("price_proposals")
+}
+
+/// A line's final value once accepted = `counter_values` when the counterparty countered and the
+/// proposer accepted the counter, otherwise `proposed_values`.
+model PriceProposalLine {
+  id             BigInt               @id(map: "pk_price_proposal_lines") @default(autoincrement())
+  publicId       String               @unique(map: "ux_price_proposal_lines__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  proposalId     BigInt               @map("proposal_id")
+  component      PriceComponent
+  /// Stable across versions: canonical hash of the row's dimension columns.
+  lineKey        String               @map("line_key")
+  action         ProposalLineAction
+  currentValues  Json?                @map("current_values")
+  proposedValues Json?                @map("proposed_values")
+  decision       ProposalLineDecision @default(pending)
+  counterValues  Json?                @map("counter_values")
+  decidedById    BigInt?              @map("decided_by")
+  decidedAt      DateTime?            @map("decided_at") @db.Timestamptz(6)
+  comment        String?
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  proposal   PriceProposal        @relation(fields: [proposalId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_price_proposal_lines__proposal_id")
+  decidedBy  User?                @relation("PriceProposalLineDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposal_lines__decided_by")
+  suggestion PriceLineSuggestion?
+
+  @@unique([proposalId, component, lineKey], map: "ux_price_proposal_lines__proposal__component__line_key")
+  @@map("price_proposal_lines")
+}
+
+/// Staff-only, physically separate so no partner query can join it (D-040 note, D-044).
+model PriceLineSuggestion {
+  id              BigInt           @id(map: "pk_price_line_suggestions") @default(autoincrement())
+  proposalLineId  BigInt           @unique(map: "ux_price_line_suggestions__proposal_line_id") @map("proposal_line_id")
+  method          SuggestionMethod
+  suggestedValues Json?            @map("suggested_values")
+  /// Index series and points used, peer count, percentiles — never other factories' identities.
+  basis           Json
+  deviationPct    Decimal?         @map("deviation_pct") @db.Decimal(9, 4)
+  flags           String[]         @default([])
+  computedAt      DateTime         @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  proposalLine PriceProposalLine @relation(fields: [proposalLineId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_price_line_suggestions__proposal_line_id")
+
+  @@map("price_line_suggestions")
+}
+
+/// Staff-only: re-price the factory's quotes of the window with the proposed values (D-040 note).
+model PriceImpactSimulation {
+  id            BigInt    @id(map: "pk_price_impact_simulations") @default(autoincrement())
+  publicId      String    @unique(map: "ux_price_impact_simulations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  proposalId    BigInt    @map("proposal_id")
+  requestedById BigInt    @map("requested_by")
+  windowFrom    DateTime  @map("window_from") @db.Timestamptz(6)
+  windowTo      DateTime  @map("window_to") @db.Timestamptz(6)
+  status        JobStatus @default(queued)
+  result        Json?
+  error         String?
+  attempts      Int       @default(0) @db.SmallInt
+  lockedUntil   DateTime? @map("locked_until") @db.Timestamptz(6)
+  startedAt     DateTime? @map("started_at") @db.Timestamptz(6)
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  proposal    PriceProposal @relation(fields: [proposalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_impact_simulations__proposal_id")
+  requestedBy User          @relation("PriceImpactSimulationRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_impact_simulations__requested_by")
+
+  @@index([proposalId, createdAt(sort: Desc)], map: "ix_price_impact_simulations__proposal_id__created_at")
+  @@index([status, lockedUntil], map: "ix_price_impact_simulations__due", where: raw("(status = ANY (ARRAY['queued'::job_status, 'running'::job_status]))"))
+  @@index([requestedById], map: "ix_price_impact_simulations__requested_by")
+  @@map("price_impact_simulations")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Index series (D-040 groups 1–2)
+// ------------------------------------------------------------------------------------------------
+
+model IndexSeries {
+  id               BigInt      @id(map: "pk_index_series") @default(autoincrement())
+  publicId         String      @unique(map: "ux_index_series__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code             String      @unique(map: "ux_index_series__code")
+  kind             IndexKind
+  materialFamilyId BigInt?     @map("material_family_id")
+  nameTh           String      @map("name_th")
+  nameEn           String      @map("name_en")
+  unit             String
+  source           IndexSource @default(manual)
+  adapterKey       String?     @map("adapter_key")
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?     @map("created_by")
+  updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?     @map("updated_by")
+  rowVersion       Int         @default(1) @map("row_version")
+
+  materialFamily MaterialFamily? @relation("IndexSeriesMaterialFamily", fields: [materialFamilyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_index_series__material_family_id")
+  points         IndexPoint[]
+  createdBy      User?           @relation("IndexSeriesCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_index_series__created_by")
+  updatedBy      User?           @relation("IndexSeriesUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_index_series__updated_by")
+
+  @@index([materialFamilyId], map: "ix_index_series__material_family_id")
+  @@map("index_series")
+}
+
+/// `period` is the first day of a month.
+model IndexPoint {
+  id          BigInt   @id(map: "pk_index_points") @default(autoincrement())
+  seriesId    BigInt   @map("series_id")
+  period      DateTime @db.Date
+  value       Decimal  @db.Decimal(18, 6)
+  sourceRef   String?  @map("source_ref")
+  enteredById BigInt?  @map("entered_by")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  series    IndexSeries @relation(fields: [seriesId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_index_points__series_id")
+  enteredBy User?       @relation("IndexPointEnteredBy", fields: [enteredById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_index_points__entered_by")
+
+  @@unique([seriesId, period], map: "ux_index_points__series_id__period")
+  @@map("index_points")
+}

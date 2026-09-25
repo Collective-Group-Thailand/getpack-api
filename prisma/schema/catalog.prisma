@@ -236,6 +236,17 @@ model ProductType {
   createdBy       User?            @relation("ProductTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_types__created_by")
   updatedBy       User?            @relation("ProductTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_types__updated_by")
 
+  // --- Partners (generated back-relations)
+  factoryCapabilities      FactoryCapability[]       @relation("FactoryCapabilityProductType")
+  factoryCapabilityItems   FactoryCapabilityItem[]   @relation("FactoryCapabilityItemProductType")
+  factoryParticipations    FactoryParticipation[]    @relation("FactoryParticipationProductType")
+  factoryCapacities        FactoryCapacity[]         @relation("FactoryCapacityProductType")
+  factoryCapacityOverrides FactoryCapacityOverride[] @relation("FactoryCapacityOverrideProductType")
+  capacityBookings         CapacityBooking[]         @relation("CapacityBookingProductType")
+  factoryTolerancePolicies FactoryTolerancePolicy[]  @relation("FactoryTolerancePolicyProductType")
+  priceLists               PriceList[]               @relation("PriceListProductType")
+  // --- end Partners
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }
@@ -260,6 +271,11 @@ model PrintType {
   productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_print_types__product_type_id")
   createdBy   User?       @relation("PrintTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_print_types__created_by")
   updatedBy   User?       @relation("PrintTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_print_types__updated_by")
+
+  // --- Partners (generated back-relations)
+  factoryCapabilities FactoryCapability[] @relation("FactoryCapabilityPrintType")
+  factoryMachines     FactoryMachine[]    @relation("FactoryMachinePrintType")
+  // --- end Partners
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
   @@map("print_types")
@@ -494,6 +510,10 @@ model MaterialFamily {
   materials Material[]
   createdBy User?      @relation("MaterialFamilyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_material_families__created_by")
   updatedBy User?      @relation("MaterialFamilyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_material_families__updated_by")
+
+  // --- Partners (generated back-relations)
+  indexSerieses IndexSeries[] @relation("IndexSeriesMaterialFamily")
+  // --- end Partners
 
   @@map("material_families")
 }
@@ -958,7 +978,7 @@ model StockProductImage {
   @@map("stock_product_images")
 }
 
-/// Stock is held by the supplying factory. The factory_id FK is added with the partners context (B2.2).
+/// Stock is held by the supplying factory.
 model StockLevel {
   id             BigInt   @id(map: "pk_stock_levels") @default(autoincrement())
   stockProductId BigInt   @map("stock_product_id")
@@ -969,13 +989,14 @@ model StockLevel {
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   stockProduct StockProduct @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_levels__stock_product_id")
+  factory      Factory      @relation("StockLevelFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_levels__factory_id")
 
   @@unique([stockProductId, factoryId], map: "ux_stock_levels__stock_product_id__factory_id")
   @@index([factoryId], map: "ix_stock_levels__factory_id")
   @@map("stock_levels")
 }
 
-/// Append-only (trigger). factory_id FK: partners context (B2.2); order_id FK: commerce (B3.1).
+/// Append-only (trigger). order_id FK: commerce (B3.1).
 model StockMovement {
   id             BigInt            @id(map: "pk_stock_movements") @default(autoincrement())
   stockProductId BigInt            @map("stock_product_id")
@@ -990,6 +1011,7 @@ model StockMovement {
   createdById    BigInt?           @map("created_by")
 
   stockProduct StockProduct @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__stock_product_id")
+  factory      Factory      @relation("StockMovementFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__factory_id")
   createdBy    User?        @relation("StockMovementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__created_by")
 
   @@index([stockProductId, factoryId, createdAt], map: "ix_stock_movements__product__factory__created_at")
@@ -1483,6 +1505,14 @@ model GeoSubdistrict {
   district  GeoDistrict @relation(fields: [districtId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_subdistricts__district_id")
   createdBy User?       @relation("GeoSubdistrictCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_subdistricts__created_by")
   updatedBy User?       @relation("GeoSubdistrictUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_subdistricts__updated_by")
+
+  // --- Partners (generated back-relations)
+  factoryAddressesSubdistrict FactoryAddress[] @relation("FactoryAddressSubdistrict")
+  // --- end Partners
+
+  // --- Finance (generated back-relations)
+  vendorsSubdistrict Vendor[] @relation("VendorSubdistrict")
+  // --- end Finance
 
   @@index([districtId], map: "ix_geo_subdistricts__district_id")
   @@index([postcode], map: "ix_geo_subdistricts__postcode")

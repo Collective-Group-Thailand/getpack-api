@@ -119,6 +119,24 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     steps: [{ name: 'Partner Manager approval', role: 'partner_manager' }],
   },
   {
+    key: 'factory_tolerance_change',
+    subjectType: 'factory_tolerance_policy_version',
+    description:
+      'Factory-specific quantity-tolerance override (D-021 / D-163): Partner Manager requests, Superadmin approves (D-173)',
+    decisions: ['D-173', 'D-021', 'D-063'],
+    reason: 'Seed from D-173 — Superadmin approves (proposed default)',
+    steps: [{ name: 'Superadmin approval', role: 'superadmin' }],
+  },
+  {
+    key: 'factory_payout_policy_change',
+    subjectType: 'factory_payout_policy_version',
+    description:
+      'Factory-specific payout-policy override (D-022 / D-164): Partner Manager or Finance requests, Superadmin approves (D-173)',
+    decisions: ['D-173', 'D-022', 'D-063'],
+    reason: 'Seed from D-173 — Superadmin approves (proposed default)',
+    steps: [{ name: 'Superadmin approval', role: 'superadmin' }],
+  },
+  {
     key: 'vendor_bank_account_change',
     subjectType: 'vendor_bank_account',
     description:

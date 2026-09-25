@@ -1,0 +1,106 @@
+// Finance context (docs/schema-design.md §3.8, B5). Only `vendors` and `vendor_bank_accounts` exist
+// before B5: they migrate early with the partners context (B2.2) because every factory is a vendor
+// (the AP identity) and its bank account is verified during onboarding (accounting-design.md §8).
+
+enum VendorKind {
+  factory
+  carrier
+  freelancer
+  service
+  other
+
+  @@map("vendor_kind")
+}
+
+/// Not in the §4 catalogue (schema-design §7 A-20).
+enum VendorStatus {
+  active
+  inactive
+
+  @@map("vendor_status")
+}
+
+enum WhtCategory {
+  hire_of_work
+  transport
+  service
+  none
+
+  @@map("wht_category")
+}
+
+enum BankAccountStatus {
+  pending_approval
+  active
+  superseded
+  rejected
+
+  @@map("bank_account_status")
+}
+
+model Vendor {
+  id                 BigInt       @id(map: "pk_vendors") @default(autoincrement())
+  publicId           String       @unique(map: "ux_vendors__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  kind               VendorKind
+  legalName          String       @map("legal_name")
+  /// → ภ.ง.ด.3 (individual) vs ภ.ง.ด.53 (juristic).
+  juristicType       JuristicType @map("juristic_type")
+  taxId              String       @map("tax_id") @db.Char(13)
+  branchCode         String       @default("00000") @map("branch_code") @db.Char(5)
+  isVatRegistered    Boolean      @default(false) @map("is_vat_registered")
+  addressLine1       String?      @map("address_line1")
+  addressLine2       String?      @map("address_line2")
+  subdistrictId      BigInt?      @map("subdistrict_id")
+  postcode           String?      @db.Char(5)
+  defaultWhtCategory WhtCategory  @default(none) @map("default_wht_category")
+  paymentTermsDays   Int          @default(0) @map("payment_terms_days") @db.SmallInt
+  status             VendorStatus @default(active)
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt?      @map("created_by")
+  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById        BigInt?      @map("updated_by")
+  rowVersion         Int          @default(1) @map("row_version")
+
+  subdistrict  GeoSubdistrict?     @relation("VendorSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendors__subdistrict_id")
+  factory      Factory?
+  bankAccounts VendorBankAccount[]
+  createdBy    User?               @relation("VendorCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendors__created_by")
+  updatedBy    User?               @relation("VendorUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendors__updated_by")
+
+  @@index([taxId, branchCode], map: "ix_vendors__tax_id__branch_code")
+  @@index([subdistrictId], map: "ix_vendors__subdistrict_id")
+  @@map("vendors")
+}
+
+/// Never updated in place (trigger): a change is a new row with dual approval; the approved row
+/// supersedes the previous active one. The number is stored encrypted, with its last 4 digits and a
+/// keyed hash for duplicate detection (accounting-design.md §8; PDPA: never logged).
+model VendorBankAccount {
+  id                BigInt            @id(map: "pk_vendor_bank_accounts") @default(autoincrement())
+  publicId          String            @unique(map: "ux_vendor_bank_accounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  vendorId          BigInt            @map("vendor_id")
+  bankCode          String            @map("bank_code")
+  branchName        String?           @map("branch_name")
+  accountName       String            @map("account_name")
+  accountNoEnc      Bytes             @map("account_no_enc")
+  accountNoLast4    String            @map("account_no_last4") @db.Char(4)
+  accountNoHash     Bytes             @map("account_no_hash")
+  status            BankAccountStatus @default(pending_approval)
+  approvalRequestId BigInt?           @map("approval_request_id")
+  /// Who called, the number called (masked), when, outcome — recorded on the Finance step (§8).
+  verificationCall  Json?             @map("verification_call")
+  effectiveFrom     DateTime?         @map("effective_from") @db.Timestamptz(6)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?           @map("created_by")
+  decidedAt         DateTime?         @map("decided_at") @db.Timestamptz(6)
+
+  vendor          Vendor           @relation(fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_bank_accounts__vendor_id")
+  approvalRequest ApprovalRequest? @relation("VendorBankAccountApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_bank_accounts__approval_request_id")
+  createdBy       User?            @relation("VendorBankAccountCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_bank_accounts__created_by")
+
+  @@unique([vendorId], map: "ux_vendor_bank_accounts__one_active", where: raw("(status = 'active'::bank_account_status)"))
+  @@index([vendorId, createdAt(sort: Desc)], map: "ix_vendor_bank_accounts__vendor_id__created_at")
+  @@index([accountNoHash], map: "ix_vendor_bank_accounts__account_no_hash")
+  @@index([approvalRequestId], map: "ix_vendor_bank_accounts__approval_request_id")
+  @@map("vendor_bank_accounts")
+}

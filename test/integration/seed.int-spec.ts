@@ -49,7 +49,7 @@ describe('seeds (PostgreSQL 18)', () => {
     expect(await count("audit_logs WHERE action = 'seed.reference_applied'")).toBe(1);
   });
 
-  it('seeds one approved v1 per setting, effective before any business activity, citing its decisions', async () => {
+  it('seeds one approved v1 per valued setting, effective before any business activity, citing its decisions', async () => {
     const { rows } = await db.client.query<{
       key: string;
       versions: string;
@@ -59,7 +59,8 @@ describe('seeds (PostgreSQL 18)', () => {
       SELECT s.key, count(v.id) AS versions, min(v.status::text) AS status, s.decision_refs AS refs
         FROM settings s JOIN setting_versions v ON v.setting_id = s.id
        GROUP BY s.id`);
-    expect(rows).toHaveLength(SETTINGS.length + 4);
+    // Definition-only settings (no decided value, e.g. D-172) have no version yet.
+    expect(rows).toHaveLength(SETTINGS.filter((setting) => !setting.unset).length + 4);
     for (const row of rows) {
       expect([row.key, row.versions, row.status]).toEqual([row.key, '1', 'approved']);
       expect(row.refs.every((ref) => /^D-\d{3}$/.test(ref))).toBe(true);

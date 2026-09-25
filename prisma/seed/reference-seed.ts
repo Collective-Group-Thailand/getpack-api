@@ -5,6 +5,7 @@ import { settingValueError } from '../../src/platform/settings/setting-value';
 import { APPROVAL_POLICIES } from './data/approval-policies';
 import { PRODUCT_TYPES } from './data/catalog';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
+import { AGREEMENT_TEMPLATES } from './data/partners';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
 
@@ -55,6 +56,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureTeamsConsentCalendar(tx, count);
       await ensureNotifications(tx, count);
       await ensureProductTypes(tx, count);
+      await ensureAgreementTemplates(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -117,7 +119,7 @@ async function ensureSetting(
   scopeId: bigint | null,
   count: (what: string) => void,
 ): Promise<void> {
-  assertSettingValue(seed);
+  if (!seed.unset) assertSettingValue(seed);
   const existing = await tx.setting.findFirst({ where: { key: seed.key, scopeType, scopeId } });
   if (existing) return;
   await tx.setting.create({
@@ -131,16 +133,18 @@ async function ensureSetting(
       decisionRefs: seed.decisions,
       ownerRoleKey: seed.ownerRole ?? 'superadmin',
       confirmationStatus: seed.confirmation ?? 'confirmed',
-      versions: {
-        create: {
-          versionNo: 1,
-          effectiveFrom: SEED_EFFECTIVE_FROM,
-          status: 'approved',
-          value: seed.value as Prisma.InputJsonValue,
-          reason: `Seed default from ${seed.decisions.join(', ')}`,
-          decidedAt: new Date(),
-        },
-      },
+      versions: seed.unset
+        ? undefined
+        : {
+            create: {
+              versionNo: 1,
+              effectiveFrom: SEED_EFFECTIVE_FROM,
+              status: 'approved',
+              value: seed.value as Prisma.InputJsonValue,
+              reason: `Seed default from ${seed.decisions.join(', ')}`,
+              decidedAt: new Date(),
+            },
+          },
     },
   });
   count('settings');
@@ -369,5 +373,13 @@ async function ensureProductTypes(tx: Tx, count: (what: string) => void): Promis
       },
     });
     count('product_types');
+  }
+}
+
+async function ensureAgreementTemplates(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const template of AGREEMENT_TEMPLATES) {
+    if (await tx.agreementTemplate.findUnique({ where: { key: template.key } })) continue;
+    await tx.agreementTemplate.create({ data: { ...template } });
+    count('agreement_templates');
   }
 }

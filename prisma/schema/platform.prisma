@@ -534,6 +534,22 @@ model ApprovalRequest {
   policyVersionApprovals ApprovalPolicyVersion[] @relation("ApprovalPolicyVersionApproval")
   consentPurposeVersions ConsentPurposeVersion[]
 
+  // --- Partners (generated back-relations)
+  factoryStatusHistories            FactoryStatusHistory[]             @relation("FactoryStatusHistoryApprovalRequest")
+  agreementTemplateVersions         AgreementTemplateVersion[]         @relation("AgreementTemplateVersionApprovalRequest")
+  factoryParticipationVersions      FactoryParticipationVersion[]      @relation("FactoryParticipationVersionApprovalRequest")
+  factoryPricingArrangementVersions FactoryPricingArrangementVersion[] @relation("FactoryPricingArrangementVersionApprovalRequest")
+  factoryCapacityVersions           FactoryCapacityVersion[]           @relation("FactoryCapacityVersionApprovalRequest")
+  factoryTolerancePolicyVersions    FactoryTolerancePolicyVersion[]    @relation("FactoryTolerancePolicyVersionApprovalRequest")
+  factoryPayoutPolicyVersions       FactoryPayoutPolicyVersion[]       @relation("FactoryPayoutPolicyVersionApprovalRequest")
+  priceListVersions                 PriceListVersion[]                 @relation("PriceListVersionApprovalRequest")
+  priceProposals                    PriceProposal[]                    @relation("PriceProposalApprovalRequest")
+  // --- end Partners
+
+  // --- Finance (generated back-relations)
+  vendorBankAccounts VendorBankAccount[] @relation("VendorBankAccountApprovalRequest")
+  // --- end Finance
+
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")
   @@index([status, expiresAt], map: "ix_approval_requests__status__expires_at")
@@ -641,7 +657,6 @@ model FileObject {
   retentionClass    FileRetentionClass @default(standard) @map("retention_class")
   legalHold         Boolean            @default(false) @map("legal_hold")
   ownerUserId       BigInt?            @map("owner_user_id")
-  /// FK to factories is added in B2.2.
   ownerFactoryId    BigInt?            @map("owner_factory_id")
   /// FK to companies is added in B3.5.
   ownerCompanyId    BigInt?            @map("owner_company_id")
@@ -653,11 +668,12 @@ model FileObject {
   updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion        Int                @default(1) @map("row_version")
 
-  owner       User?        @relation("FileObjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_user_id")
-  createdBy   User?        @relation("FileObjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__created_by")
-  thumbnailOf FileObject?  @relation("FileObjectThumbnail", fields: [thumbnailOfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__thumbnail_of_file_id")
-  thumbnails  FileObject[] @relation("FileObjectThumbnail")
-  attachments Attachment[]
+  owner        User?        @relation("FileObjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_user_id")
+  ownerFactory Factory?     @relation("FileObjectOwnerFactory", fields: [ownerFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_factory_id")
+  createdBy    User?        @relation("FileObjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__created_by")
+  thumbnailOf  FileObject?  @relation("FileObjectThumbnail", fields: [thumbnailOfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__thumbnail_of_file_id")
+  thumbnails   FileObject[] @relation("FileObjectThumbnail")
+  attachments  Attachment[]
 
   // --- Catalogue (generated back-relations)
   catalogProductImages         CatalogProductImage[] @relation("CatalogProductImageFile")
@@ -671,6 +687,12 @@ model FileObject {
   articlesCover                Article[]             @relation("ArticleCoverFile")
   seoPagesOgImage              SeoPage[]             @relation("SeoPageOgImageFile")
   // --- end Catalogue
+
+  // --- Partners (generated back-relations)
+  factoryKycDocuments          FactoryKycDocument[]       @relation("FactoryKycDocumentFile")
+  agreementTemplateVersionsPdf AgreementTemplateVersion[] @relation("AgreementTemplateVersionPdfFile")
+  agreementAcceptancesSigned   AgreementAcceptance[]      @relation("AgreementAcceptanceSignedFile")
+  // --- end Partners
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
@@ -1039,7 +1061,6 @@ model BusinessCalendar {
   code           String       @unique(map: "ux_business_calendars__code")
   name           String
   kind           CalendarKind
-  /// FK to factories is added in B2.2.
   factoryId      BigInt?      @map("factory_id")
   /// Day-of-week numbers (0 = Sunday) in Asia/Bangkok; always set explicitly (no DB default).
   weekendDays    Int[]        @map("weekend_days") @db.SmallInt
@@ -1050,11 +1071,16 @@ model BusinessCalendar {
   updatedById    BigInt?      @map("updated_by")
   rowVersion     Int          @default(1) @map("row_version")
 
+  factory          Factory?              @relation("BusinessCalendarFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendars__factory_id")
   baseCalendar     BusinessCalendar?     @relation("BusinessCalendarBase", fields: [baseCalendarId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendars__base_calendar_id")
   derivedCalendars BusinessCalendar[]    @relation("BusinessCalendarBase")
   createdBy        User?                 @relation("BusinessCalendarCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendars__created_by")
   updatedBy        User?                 @relation("BusinessCalendarUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_business_calendars__updated_by")
   days             BusinessCalendarDay[]
+
+  // --- Partners (generated back-relations)
+  factoriesCalendar Factory[] @relation("FactoryCalendar")
+  // --- end Partners
 
   @@index([factoryId], map: "ix_business_calendars__factory_id")
   @@index([baseCalendarId], map: "ix_business_calendars__base_calendar_id")

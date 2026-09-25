@@ -22,7 +22,7 @@ describe('seed data (B1.2 step 3)', () => {
     const keys = SETTINGS.map((s) => s.key);
     expect(new Set(keys).size).toBe(keys.length);
     for (const setting of SETTINGS) {
-      expect(() => assertSettingValue(setting)).not.toThrow();
+      if (!setting.unset) expect(() => assertSettingValue(setting)).not.toThrow();
       expect(setting.decisions.length).toBeGreaterThan(0);
       for (const id of setting.decisions)
         expect([setting.key, id, DECISIONS.has(id)]).toEqual([setting.key, id, true]);
@@ -42,6 +42,8 @@ describe('seed data (B1.2 step 3)', () => {
       'auth.otp_policy': 'proposed',
       'auth.password_lockout': 'proposed',
       'auth.device_pin_policy': 'proposed',
+      // D-172: defined without a value until the business sets it.
+      'partners.suggestion_deviation_band_pct': 'pending_business',
     });
   });
 

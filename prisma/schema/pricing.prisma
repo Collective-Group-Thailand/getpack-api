@@ -1,0 +1,70 @@
+// Pricing, shipping rate cards, quotes & RFQ context (docs/schema-design.md §3.5, B2.3–B2.5). Zones
+// migrate early with the partners context (B2.2) because factory delivery zones reference them
+// (schema-design §7 A-12); rate cards stay in B2.4.
+
+model ZoneScheme {
+  id          BigInt   @id(map: "pk_zone_schemes") @default(autoincrement())
+  publicId    String   @unique(map: "ux_zone_schemes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  /// e.g. `customer_default`, `carrier:flash_express`.
+  code        String   @unique(map: "ux_zone_schemes__code")
+  name        String
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  zones     Zone[]
+  postcodes ZonePostcode[]
+  createdBy User?          @relation("ZoneSchemeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_schemes__created_by")
+  updatedBy User?          @relation("ZoneSchemeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_schemes__updated_by")
+
+  @@map("zone_schemes")
+}
+
+model Zone {
+  id          BigInt   @id(map: "pk_zones") @default(autoincrement())
+  publicId    String   @unique(map: "ux_zones__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  schemeId    BigInt   @map("scheme_id")
+  code        String
+  nameTh      String   @map("name_th")
+  nameEn      String   @map("name_en")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  scheme    ZoneScheme     @relation(fields: [schemeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zones__scheme_id")
+  postcodes ZonePostcode[]
+  createdBy User?          @relation("ZoneCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zones__created_by")
+  updatedBy User?          @relation("ZoneUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zones__updated_by")
+
+  // --- Partners (generated back-relations)
+  factoryDeliveryZones FactoryDeliveryZone[] @relation("FactoryDeliveryZoneZone")
+  // --- end Partners
+
+  @@unique([schemeId, code], map: "ux_zones__scheme_id__code")
+  /// Target of the composite FK from zone_postcodes (the denormalised scheme must match).
+  @@unique([id, schemeId], map: "ux_zones__id__scheme_id")
+  @@map("zones")
+}
+
+/// A postcode maps to one zone per scheme; `scheme_id` is denormalised for that unique key.
+model ZonePostcode {
+  id          BigInt   @id(map: "pk_zone_postcodes") @default(autoincrement())
+  zoneId      BigInt   @map("zone_id")
+  schemeId    BigInt   @map("scheme_id")
+  postcode    String   @db.Char(5)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+
+  zone      Zone       @relation(fields: [zoneId, schemeId], references: [id, schemeId], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_postcodes__zone_id__scheme_id")
+  scheme    ZoneScheme @relation(fields: [schemeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_postcodes__scheme_id")
+  createdBy User?      @relation("ZonePostcodeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_postcodes__created_by")
+
+  @@unique([schemeId, postcode], map: "ux_zone_postcodes__scheme_id__postcode")
+  @@index([zoneId, schemeId], map: "ix_zone_postcodes__zone_id__scheme_id")
+  @@index([postcode], map: "ix_zone_postcodes__postcode")
+  @@map("zone_postcodes")
+}

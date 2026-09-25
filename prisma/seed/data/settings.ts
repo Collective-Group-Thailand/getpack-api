@@ -25,6 +25,11 @@ export interface SettingSeed {
   decisions: string[];
   confirmation?: Confirmation;
   ownerRole?: string;
+  /**
+   * Definition only: the setting exists (so its owner can create the first version) but no value is
+   * seeded because no decision gives one; readers treat it as "not set".
+   */
+  unset?: true;
 }
 
 export const SETTINGS: readonly SettingSeed[] = [
@@ -348,6 +353,24 @@ export const SETTINGS: readonly SettingSeed[] = [
     value: 3,
     description: 'D-101 / D-044 active factories per product type before peer benchmarks are computed',
     decisions: ['D-101', 'D-044'],
+  },
+  {
+    key: 'partners.impact_simulation_window_days',
+    valueType: 'integer',
+    value: 90,
+    description: 'D-040 note: the impact simulation re-prices the factory quotes of the last 90 days',
+    decisions: ['D-040'],
+  },
+  {
+    key: 'partners.suggestion_deviation_band_pct',
+    valueType: 'percent',
+    value: null,
+    unset: true,
+    valueSchema: { minimum: 0, maximum: 100 },
+    description:
+      'D-040 / D-172 band above which a proposed buy price is flagged against its suggestion; not seeded (D-172) — no above_band flag until a superadmin sets it',
+    decisions: ['D-172', 'D-040'],
+    confirmation: 'pending_business',
   },
   {
     key: 'analytics.prospectus_min_group_size',
