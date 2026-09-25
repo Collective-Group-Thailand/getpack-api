@@ -38,7 +38,8 @@ async function startWith(env: Record<string, string | undefined>): Promise<INest
     const app = moduleRef.createNestApplication({ logger: false });
     configureApp(app);
     setupDocs(app);
-    await app.init();
+    // Bound to IPv4 loopback so a Docker-published port can never shadow the test server.
+    await app.listen(0, '127.0.0.1');
     return app;
   } finally {
     process.env = saved;

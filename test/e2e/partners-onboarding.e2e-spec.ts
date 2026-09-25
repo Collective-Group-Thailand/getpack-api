@@ -32,7 +32,8 @@ describe('partner onboarding (e2e, B2.2)', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication({ logger: false });
     configureApp(app);
-    await app.init();
+    // Bound to IPv4 loopback so a Docker-published port can never shadow the test server.
+    await app.listen(0, '127.0.0.1');
     server = app.getHttpServer();
     prisma = app.get(PrismaService);
     await seedDev(prisma, E2E_DEV_PASSWORD);

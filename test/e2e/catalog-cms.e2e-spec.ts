@@ -29,7 +29,8 @@ describe('CMS and geography admin (e2e, B2.1)', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication({ logger: false });
     configureApp(app);
-    await app.init();
+    // Bound to IPv4 loopback so a Docker-published port can never shadow the test server.
+    await app.listen(0, '127.0.0.1');
     server = app.getHttpServer();
     prisma = app.get(PrismaService);
     storage = app.get(OBJECT_STORAGE);
