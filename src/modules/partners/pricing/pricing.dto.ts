@@ -568,3 +568,163 @@ export const PRICE_COMPONENT_EXAMPLE: PriceComponentDto = {
   ],
   values: [{ key: 'rate', type: 'decimal', nullable: false, scale: 6 }],
 };
+
+// --- suggestions & simulations (staff only, D-040 note, D-044) ------------------------------------
+
+export const SUGGESTION_METHODS = [
+  'material_index',
+  'own_history_driver',
+  'peer_benchmark',
+  'waste_actuals',
+  'shipping_margin',
+  'none',
+] as const;
+export const JOB_STATUSES = ['queued', 'running', 'succeeded', 'failed'] as const;
+
+export class PriceLineSuggestionDto {
+  @ApiProperty({ format: 'uuid', example: IDS.line })
+  lineId!: string;
+
+  @ApiProperty({ enum: PRICE_COMPONENTS, enumName: 'PriceComponent', example: 'material_prices' })
+  component!: string;
+
+  @ApiProperty({ example: LINE_KEY })
+  lineKey!: string;
+
+  @ApiProperty({ enum: PRICE_GROUPS, enumName: 'PriceGroup', nullable: true, example: 'materials' })
+  group!: (typeof PRICE_GROUPS)[number] | null;
+
+  @ApiProperty({ enum: SUGGESTION_METHODS, enumName: 'SuggestionMethod', example: 'material_index' })
+  method!: (typeof SUGGESTION_METHODS)[number];
+
+  @valuesProperty('Suggested line (null when no method applies)', { ...VALUES, rate: '12.036000' }, true)
+  suggestedValues!: Record<string, unknown> | null;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    description: 'Series and points, ratios, peer count and percentiles — never another factory’s identity',
+    example: {
+      group: 'materials',
+      primaryColumn: 'rate',
+      index: {
+        series: 'paper.art_card',
+        then: { period: '2026-06', value: '100.000000' },
+        now: { period: '2026-09', value: '102.000000' },
+        ratio: '1.02',
+      },
+    },
+  })
+  basis!: Record<string, unknown>;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.8538',
+    description: '(proposed − suggested) ÷ suggested × 100 on the primary value column',
+  })
+  deviationPct!: string | null;
+
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description:
+      'e.g. `above_band` (only once the band setting exists, D-172), `peers_below_minimum`, `driver_not_configured`, ' +
+      '`index_not_configured`, `index_point_missing`, `no_approved_price`, `no_actuals`, `impact_only`',
+  })
+  flags!: string[];
+
+  @ApiProperty({ format: 'date-time', example: TS })
+  computedAt!: string;
+}
+
+export class PriceSuggestionsDto {
+  @ApiProperty({ format: 'uuid', example: IDS.proposal })
+  proposalId!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: TS })
+  computedAt!: string | null;
+
+  @ApiProperty({ type: [PriceLineSuggestionDto] })
+  lines!: PriceLineSuggestionDto[];
+}
+
+export class PriceSimulationDto {
+  @IdField('0192f3a0-7c1e-7d2a-9b1f-00000000f605')
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', example: IDS.proposal })
+  proposalId!: string;
+
+  @ApiProperty({ enum: JOB_STATUSES, enumName: 'JobStatus', example: 'succeeded' })
+  status!: (typeof JOB_STATUSES)[number];
+
+  @ApiProperty({ format: 'date-time', example: '2026-06-28T10:00:00+07:00' })
+  windowFrom!: string;
+
+  @ApiProperty({ format: 'date-time', example: TS })
+  windowTo!: string;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    description: 'Quotes re-priced, price and margin change, change in selection share (D-040 note)',
+    example: {
+      quotesInWindow: 0,
+      priceChangePct: null,
+      marginChangePct: null,
+      selectionShareChangePct: null,
+    },
+  })
+  result!: Record<string, unknown> | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  error!: string | null;
+
+  @ApiProperty({ format: 'date-time', example: TS })
+  createdAt!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: TS })
+  completedAt!: string | null;
+}
+
+export const SUGGESTIONS_EXAMPLE: PriceSuggestionsDto = {
+  proposalId: IDS.proposal,
+  computedAt: TS,
+  lines: [
+    {
+      lineId: IDS.line,
+      component: 'material_prices',
+      lineKey: LINE_KEY,
+      group: 'materials',
+      method: 'material_index',
+      suggestedValues: { ...VALUES, rate: '12.036000' },
+      basis: {
+        group: 'materials',
+        primaryColumn: 'rate',
+        index: {
+          series: 'paper.art_card',
+          then: { period: '2026-06', value: '100.000000' },
+          now: { period: '2026-09', value: '102.000000' },
+          ratio: '1.02',
+        },
+      },
+      deviationPct: '3.8538',
+      flags: [],
+      computedAt: TS,
+    },
+  ],
+};
+
+export const SIMULATION_EXAMPLE: PriceSimulationDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-00000000f605',
+  proposalId: IDS.proposal,
+  status: 'succeeded',
+  windowFrom: '2026-06-28T10:00:00+07:00',
+  windowTo: TS,
+  result: { quotesInWindow: 0, priceChangePct: null, marginChangePct: null, selectionShareChangePct: null },
+  error: null,
+  createdAt: TS,
+  completedAt: TS,
+};

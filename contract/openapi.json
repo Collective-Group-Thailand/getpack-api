@@ -4614,6 +4614,68 @@
         ],
         "type": "object"
       },
+      "CreateIndexSeriesDto": {
+        "properties": {
+          "adapterKey": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "example": "paper.art_card",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_.-]*$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IndexKind"
+              }
+            ],
+            "example": "material"
+          },
+          "materialFamilyId": {
+            "description": "Required for `material` series",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c020",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameEn": {
+            "example": "Art card price index",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ดัชนีราคากระดาษอาร์ตการ์ด",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IndexSource"
+              }
+            ],
+            "example": "manual"
+          },
+          "unit": {
+            "example": "index (2026-01 = 100)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "kind",
+          "nameTh",
+          "nameEn",
+          "unit"
+        ],
+        "type": "object"
+      },
       "CreateInkColourDto": {
         "properties": {
           "code": {
@@ -7997,6 +8059,140 @@
         ],
         "type": "object"
       },
+      "IndexKind": {
+        "description": "`material` = group 1 index per material family; `cost_driver` = wage, electricity Ft, PPI (group 2)",
+        "enum": [
+          "material",
+          "cost_driver"
+        ],
+        "type": "string"
+      },
+      "IndexPointDto": {
+        "properties": {
+          "period": {
+            "description": "Month (Asia/Bangkok)",
+            "example": "2026-09",
+            "type": "string"
+          },
+          "sourceRef": {
+            "example": "Mill price list 2026-09 (fake)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "example": "2026-09-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "value": {
+            "example": "104.250000",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "value",
+          "sourceRef",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "IndexSeriesDto": {
+        "properties": {
+          "adapterKey": {
+            "description": "Feed adapter (`feed` only)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "example": "paper.art_card",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-09-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f701",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IndexKind"
+              }
+            ],
+            "description": "`material` = group 1 index per material family; `cost_driver` = wage, electricity Ft, PPI (group 2)",
+            "example": "material"
+          },
+          "latestPoint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IndexPointDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "materialFamilyId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c020",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameEn": {
+            "example": "Art card price index",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ดัชนีราคากระดาษอาร์ตการ์ด",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IndexSource"
+              }
+            ],
+            "example": "manual"
+          },
+          "unit": {
+            "example": "index (2026-01 = 100)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "kind",
+          "materialFamilyId",
+          "nameTh",
+          "nameEn",
+          "unit",
+          "source",
+          "adapterKey",
+          "latestPoint",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "IndexSource": {
+        "enum": [
+          "manual",
+          "feed"
+        ],
+        "type": "string"
+      },
       "InkColourDto": {
         "properties": {
           "code": {
@@ -8059,6 +8255,15 @@
           "spot",
           "white",
           "metallic"
+        ],
+        "type": "string"
+      },
+      "JobStatus": {
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed"
         ],
         "type": "string"
       },
@@ -9930,6 +10135,115 @@
         ],
         "type": "string"
       },
+      "PriceLineSuggestionDto": {
+        "properties": {
+          "basis": {
+            "additionalProperties": true,
+            "description": "Series and points, ratios, peer count and percentiles — never another factory’s identity",
+            "example": {
+              "group": "materials",
+              "index": {
+                "now": {
+                  "period": "2026-09",
+                  "value": "102.000000"
+                },
+                "ratio": "1.02",
+                "series": "paper.art_card",
+                "then": {
+                  "period": "2026-06",
+                  "value": "100.000000"
+                }
+              },
+              "primaryColumn": "rate"
+            },
+            "type": "object"
+          },
+          "component": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PriceComponent"
+              }
+            ],
+            "example": "material_prices"
+          },
+          "computedAt": {
+            "example": "2026-09-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "deviationPct": {
+            "description": "(proposed − suggested) ÷ suggested × 100 on the primary value column",
+            "example": "3.8538",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "flags": {
+            "description": "e.g. `above_band` (only once the band setting exists, D-172), `peers_below_minimum`, `driver_not_configured`, `index_not_configured`, `index_point_missing`, `no_approved_price`, `no_actuals`, `impact_only`",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceGroup"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "materials"
+          },
+          "lineId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f604",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lineKey": {
+            "example": "9f2c4e1ab0d7c3e5f6a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SuggestionMethod"
+              }
+            ],
+            "example": "material_index"
+          },
+          "suggestedValues": {
+            "additionalProperties": true,
+            "description": "Suggested line (null when no method applies)",
+            "example": {
+              "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+              "qtyFrom": 1000,
+              "qtyTo": 4999,
+              "rate": "12.036000"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "lineId",
+          "component",
+          "lineKey",
+          "group",
+          "method",
+          "suggestedValues",
+          "basis",
+          "deviationPct",
+          "flags",
+          "computedAt"
+        ],
+        "type": "object"
+      },
       "PriceListDto": {
         "properties": {
           "current": {
@@ -10530,6 +10844,113 @@
           "component",
           "lineKey",
           "values"
+        ],
+        "type": "object"
+      },
+      "PriceSimulationDto": {
+        "properties": {
+          "completedAt": {
+            "example": "2026-09-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-09-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "error": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f605",
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposalId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f603",
+            "format": "uuid",
+            "type": "string"
+          },
+          "result": {
+            "additionalProperties": true,
+            "description": "Quotes re-priced, price and margin change, change in selection share (D-040 note)",
+            "example": {
+              "marginChangePct": null,
+              "priceChangePct": null,
+              "quotesInWindow": 0,
+              "selectionShareChangePct": null
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobStatus"
+              }
+            ],
+            "example": "succeeded"
+          },
+          "windowFrom": {
+            "example": "2026-06-28T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "windowTo": {
+            "example": "2026-09-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "proposalId",
+          "status",
+          "windowFrom",
+          "windowTo",
+          "result",
+          "error",
+          "createdAt",
+          "completedAt"
+        ],
+        "type": "object"
+      },
+      "PriceSuggestionsDto": {
+        "properties": {
+          "computedAt": {
+            "example": "2026-09-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PriceLineSuggestionDto"
+            },
+            "type": "array"
+          },
+          "proposalId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f603",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposalId",
+          "computedAt",
+          "lines"
         ],
         "type": "object"
       },
@@ -12085,6 +12506,27 @@
           "weekStart",
           "capacity",
           "reason"
+        ],
+        "type": "object"
+      },
+      "SetIndexPointDto": {
+        "properties": {
+          "sourceRef": {
+            "example": "Mill price list 2026-09 (fake)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "description": "Greater than 0",
+            "example": "104.25",
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
         ],
         "type": "object"
       },
@@ -14786,6 +15228,17 @@
           "keys"
         ],
         "type": "object"
+      },
+      "SuggestionMethod": {
+        "enum": [
+          "material_index",
+          "own_history_driver",
+          "peer_benchmark",
+          "waste_actuals",
+          "shipping_margin",
+          "none"
+        ],
+        "type": "string"
       },
       "TemplateAvailability": {
         "enum": [
@@ -79304,6 +79757,1134 @@
         ]
       }
     },
+    "/v1/admin/index-series": {
+      "get": {
+        "description": "Material price indices per material family (D-040 group 1) and cost-driver series (group 2) with their latest value. `q` searches code and names.\n\nImplements: D-040.",
+        "operationId": "admin.indexSeries.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/IndexKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "adapterKey": null,
+                      "code": "paper.art_card",
+                      "createdAt": "2026-09-26T10:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f701",
+                      "kind": "material",
+                      "latestPoint": {
+                        "period": "2026-09",
+                        "sourceRef": "Mill price list 2026-09 (fake)",
+                        "updatedAt": "2026-09-26T10:00:00+07:00",
+                        "value": "104.250000"
+                      },
+                      "materialFamilyId": "0192f3a0-7c1e-7d2a-9b1f-00000000c020",
+                      "nameEn": "Art card price index",
+                      "nameTh": "ดัชนีราคากระดาษอาร์ตการ์ด",
+                      "source": "manual",
+                      "unit": "index (2026-01 = 100)"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/IndexSeriesDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List index series",
+        "tags": [
+          "admin.indexSeries"
+        ],
+        "x-required-permissions": [
+          "partners.read"
+        ]
+      },
+      "post": {
+        "description": "A `material` series names its material family; `feed` series name an available adapter, `manual` series are entered by the Partner team from mill and distributor price lists (D-040 note). Audited.\n\nImplements: D-040.",
+        "operationId": "admin.indexSeries.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "code": "paper.art_card",
+                    "kind": "material",
+                    "materialFamilyId": "0192f3a0-7c1e-7d2a-9b1f-00000000c020",
+                    "nameEn": "Art card price index",
+                    "nameTh": "ดัชนีราคากระดาษอาร์ตการ์ด",
+                    "unit": "index (2026-01 = 100)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateIndexSeriesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "adapterKey": null,
+                  "code": "paper.art_card",
+                  "createdAt": "2026-09-26T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f701",
+                  "kind": "material",
+                  "latestPoint": null,
+                  "materialFamilyId": "0192f3a0-7c1e-7d2a-9b1f-00000000c020",
+                  "nameEn": "Art card price index",
+                  "nameTh": "ดัชนีราคากระดาษอาร์ตการ์ด",
+                  "source": "manual",
+                  "unit": "index (2026-01 = 100)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/IndexSeriesDto"
+                }
+              }
+            },
+            "description": "Series",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create an index series",
+        "tags": [
+          "admin.indexSeries"
+        ],
+        "x-required-permissions": [
+          "index_series.manage"
+        ]
+      }
+    },
+    "/v1/admin/index-series/{seriesId}": {
+      "get": {
+        "description": "With its latest value (D-040).\n\nImplements: D-040.",
+        "operationId": "admin.indexSeries.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seriesId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "adapterKey": null,
+                  "code": "paper.art_card",
+                  "createdAt": "2026-09-26T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f701",
+                  "kind": "material",
+                  "latestPoint": {
+                    "period": "2026-09",
+                    "sourceRef": "Mill price list 2026-09 (fake)",
+                    "updatedAt": "2026-09-26T10:00:00+07:00",
+                    "value": "104.250000"
+                  },
+                  "materialFamilyId": "0192f3a0-7c1e-7d2a-9b1f-00000000c020",
+                  "nameEn": "Art card price index",
+                  "nameTh": "ดัชนีราคากระดาษอาร์ตการ์ด",
+                  "source": "manual",
+                  "unit": "index (2026-01 = 100)"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/IndexSeriesDto"
+                }
+              }
+            },
+            "description": "Series",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get an index series",
+        "tags": [
+          "admin.indexSeries"
+        ],
+        "x-required-permissions": [
+          "partners.read"
+        ]
+      }
+    },
+    "/v1/admin/index-series/{seriesId}/points": {
+      "get": {
+        "description": "Oldest first, optionally between two months (D-040).\n\nImplements: D-040.",
+        "operationId": "admin.indexSeries.listPoints",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seriesId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-01",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-12",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "period": "2026-09",
+                    "sourceRef": "Mill price list 2026-09 (fake)",
+                    "updatedAt": "2026-09-26T10:00:00+07:00",
+                    "value": "104.250000"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IndexPointDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Values",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the monthly values of an index series",
+        "tags": [
+          "admin.indexSeries"
+        ],
+        "x-required-permissions": [
+          "partners.read"
+        ]
+      }
+    },
+    "/v1/admin/index-series/{seriesId}/points/{period}": {
+      "put": {
+        "description": "Creates or corrects the month’s value (not for months that have not started). The previous value is kept in the audit trail (`index_series.point_recorded`).\n\nImplements: D-040.",
+        "operationId": "admin.indexSeries.setPoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "seriesId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "period",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "sourceRef": "Mill price list 2026-09 (fake)",
+                    "value": "104.25"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetIndexPointDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "period": "2026-09",
+                  "sourceRef": "Mill price list 2026-09 (fake)",
+                  "updatedAt": "2026-09-26T10:00:00+07:00",
+                  "value": "104.250000"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/IndexPointDto"
+                }
+              }
+            },
+            "description": "Value",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Record the value of an index series for a month",
+        "tags": [
+          "admin.indexSeries"
+        ],
+        "x-required-permissions": [
+          "index_series.manage"
+        ]
+      }
+    },
     "/v1/admin/me": {
       "get": {
         "description": "Roles (D-140), effective permissions, the admin-zone menu entries those permissions open, and the feature flags enabled for this user. Cost and margin permissions follow D-141.\n\nImplements: ADR-0004, D-140, D-141.",
@@ -84400,6 +85981,842 @@
         ],
         "x-required-permissions": [
           "price_proposals.review"
+        ]
+      }
+    },
+    "/v1/admin/price-proposals/{proposalId}/simulations": {
+      "post": {
+        "description": "Re-prices the factory’s quotes of the last `partners.impact_simulation_window_days` with the proposed values: price, margin and selection-share change (D-040 note). Runs in the worker; poll the returned simulation.\n\nImplements: D-040, D-044.",
+        "operationId": "admin.priceSuggestions.simulate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "completedAt": null,
+                  "createdAt": "2026-09-26T10:00:00+07:00",
+                  "error": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f605",
+                  "proposalId": "0192f3a0-7c1e-7d2a-9b1f-00000000f603",
+                  "result": null,
+                  "status": "queued",
+                  "windowFrom": "2026-06-28T10:00:00+07:00",
+                  "windowTo": "2026-09-26T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PriceSimulationDto"
+                }
+              }
+            },
+            "description": "Queued",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Start an impact simulation of a proposal",
+        "tags": [
+          "admin.priceSuggestions"
+        ],
+        "x-required-permissions": [
+          "price_suggestions.read"
+        ]
+      }
+    },
+    "/v1/admin/price-proposals/{proposalId}/simulations/{simulationId}": {
+      "get": {
+        "description": "Status and, once `succeeded`, the result (D-040 note).\n\nImplements: D-040.",
+        "operationId": "admin.priceSuggestions.getSimulation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "simulationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "completedAt": "2026-09-26T10:00:00+07:00",
+                  "createdAt": "2026-09-26T10:00:00+07:00",
+                  "error": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f605",
+                  "proposalId": "0192f3a0-7c1e-7d2a-9b1f-00000000f603",
+                  "result": {
+                    "marginChangePct": null,
+                    "priceChangePct": null,
+                    "quotesInWindow": 0,
+                    "selectionShareChangePct": null
+                  },
+                  "status": "succeeded",
+                  "windowFrom": "2026-06-28T10:00:00+07:00",
+                  "windowTo": "2026-09-26T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PriceSimulationDto"
+                }
+              }
+            },
+            "description": "Simulation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get an impact simulation",
+        "tags": [
+          "admin.priceSuggestions"
+        ],
+        "x-required-permissions": [
+          "price_suggestions.read"
+        ]
+      }
+    },
+    "/v1/admin/price-proposals/{proposalId}/suggestions": {
+      "get": {
+        "description": "Per line: suggested value, method and basis, deviation and flags (D-040 note). Staff only — never on the partner surface (D-044); peer figures only with ≥ `partners.peer_benchmark_min_factories` other factories. Audited.\n\nImplements: D-040, D-044, D-101, D-172.",
+        "operationId": "admin.priceSuggestions.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "computedAt": "2026-09-26T10:00:00+07:00",
+                  "lines": [
+                    {
+                      "basis": {
+                        "group": "materials",
+                        "index": {
+                          "now": {
+                            "period": "2026-09",
+                            "value": "102.000000"
+                          },
+                          "ratio": "1.02",
+                          "series": "paper.art_card",
+                          "then": {
+                            "period": "2026-06",
+                            "value": "100.000000"
+                          }
+                        },
+                        "primaryColumn": "rate"
+                      },
+                      "component": "material_prices",
+                      "computedAt": "2026-09-26T10:00:00+07:00",
+                      "deviationPct": "3.8538",
+                      "flags": [],
+                      "group": "materials",
+                      "lineId": "0192f3a0-7c1e-7d2a-9b1f-00000000f604",
+                      "lineKey": "9f2c4e1ab0d7c3e5f6a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0",
+                      "method": "material_index",
+                      "suggestedValues": {
+                        "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+                        "qtyFrom": 1000,
+                        "qtyTo": 4999,
+                        "rate": "12.036000"
+                      }
+                    }
+                  ],
+                  "proposalId": "0192f3a0-7c1e-7d2a-9b1f-00000000f603"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PriceSuggestionsDto"
+                }
+              }
+            },
+            "description": "Suggestions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get the suggested values of a proposal",
+        "tags": [
+          "admin.priceSuggestions"
+        ],
+        "x-required-permissions": [
+          "price_suggestions.read"
+        ]
+      }
+    },
+    "/v1/admin/price-proposals/{proposalId}/suggestions/actions/recompute": {
+      "post": {
+        "description": "After new index values or peer versions. Suggestions are computed automatically when a proposal is submitted (D-040 note).\n\nImplements: D-040, D-044.",
+        "operationId": "admin.priceSuggestions.recompute",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "computedAt": "2026-09-26T10:00:00+07:00",
+                  "lines": [
+                    {
+                      "basis": {
+                        "group": "materials",
+                        "index": {
+                          "now": {
+                            "period": "2026-09",
+                            "value": "102.000000"
+                          },
+                          "ratio": "1.02",
+                          "series": "paper.art_card",
+                          "then": {
+                            "period": "2026-06",
+                            "value": "100.000000"
+                          }
+                        },
+                        "primaryColumn": "rate"
+                      },
+                      "component": "material_prices",
+                      "computedAt": "2026-09-26T10:00:00+07:00",
+                      "deviationPct": "3.8538",
+                      "flags": [],
+                      "group": "materials",
+                      "lineId": "0192f3a0-7c1e-7d2a-9b1f-00000000f604",
+                      "lineKey": "9f2c4e1ab0d7c3e5f6a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0",
+                      "method": "material_index",
+                      "suggestedValues": {
+                        "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+                        "qtyFrom": 1000,
+                        "qtyTo": 4999,
+                        "rate": "12.036000"
+                      }
+                    }
+                  ],
+                  "proposalId": "0192f3a0-7c1e-7d2a-9b1f-00000000f603"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PriceSuggestionsDto"
+                }
+              }
+            },
+            "description": "Suggestions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Recompute the suggested values of a proposal",
+        "tags": [
+          "admin.priceSuggestions"
+        ],
+        "x-required-permissions": [
+          "price_suggestions.read"
         ]
       }
     },
@@ -110377,6 +112794,10 @@
       "name": "admin.geographySubdistricts"
     },
     {
+      "description": "Material price indices and cost-driver series behind the price suggestions (D-040).",
+      "name": "admin.indexSeries"
+    },
+    {
       "description": "The signed-in staff member, permissions and menu entitlements.",
       "name": "admin.me"
     },
@@ -110403,6 +112824,10 @@
     {
       "description": "Price proposals and platform rate cards: review queue, line decisions and counters (D-040, D-042, D-043).",
       "name": "admin.priceProposals"
+    },
+    {
+      "description": "Staff-only suggested buy prices with their basis and impact simulations — never shown to factories (D-040, D-044).",
+      "name": "admin.priceSuggestions"
     },
     {
       "description": "Realtime signals over SSE for staff (ids + type only, contract §6).",

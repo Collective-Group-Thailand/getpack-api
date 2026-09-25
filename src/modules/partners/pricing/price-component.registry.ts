@@ -49,6 +49,11 @@ export interface PriceComponentDescriptor {
   values: PriceColumn[];
   /** Extra rules beyond column types (bands, cross-field checks); paths relative to `values`. */
   validate?(values: PriceValues): PriceFieldError[];
+  /**
+   * Group 2: code of the cost-driver index series (minimum wage, electricity Ft, PPI) that moves this
+   * component's rates; without it the own-history suggestion is `driver_not_configured` (D-040).
+   */
+  costDriverSeries?: string;
   /** Group 1: material family the line prices, for the index-linked suggestion (D-040). */
   materialFamilyOf?(values: PriceValues, db: Tx): Promise<bigint | null>;
   /** Tier B: whether this component's lines cover a configuration (D-043), used by quote-path. */

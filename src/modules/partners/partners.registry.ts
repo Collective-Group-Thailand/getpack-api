@@ -7,6 +7,7 @@ import {
 } from './bank-accounts/bank-accounts.controller';
 import { AdminFactoriesController, PartnerFactoriesController } from './factories/factories.controller';
 import { factorySubresourcesController } from './factories/factory-subresources.controller';
+import { IndexSeriesController } from './index-series/index-series.controller';
 import {
   AdminFactoryOperationsController,
   AgreementTemplatesController,
@@ -15,6 +16,7 @@ import {
 import {
   AdminPriceListsController,
   AdminPriceProposalsController,
+  AdminPriceSuggestionsController,
   PartnerPriceListsController,
   PartnerPriceProposalsController,
 } from './pricing/pricing.controller';
@@ -33,6 +35,8 @@ export const PARTNERS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   VendorBankAccountVerificationController,
   AdminPriceListsController,
   AdminPriceProposalsController,
+  AdminPriceSuggestionsController,
+  IndexSeriesController,
 ];
 
 /** `/v1/partner/*` controllers of the partners context (own factory only, D-044). */

@@ -14,6 +14,8 @@ import { ReasonBodyDto } from '../factories/factories.dto';
 import { staffOrPartner } from '../partner-actor';
 import { PriceListsService } from './price-lists.service';
 import { PriceProposalsService } from './price-proposals.service';
+import { PriceSimulationsService } from './price-simulations.service';
+import { PriceSuggestionsService } from './price-suggestions.service';
 import {
   AnswerCountersDto,
   CreatePriceProposalDto,
@@ -30,12 +32,16 @@ import {
   PriceProposalSummaryDto,
   PriceRowDto,
   PriceRowsQuery,
+  PriceSimulationDto,
+  PriceSuggestionsDto,
   PRICING_IDS,
   PROPOSAL_EXAMPLE,
   PROPOSAL_LINE_EXAMPLE,
   PROPOSAL_SUMMARY_EXAMPLE,
   ReplaceProposalLinesDto,
   RespondToRateCardDto,
+  SIMULATION_EXAMPLE,
+  SUGGESTIONS_EXAMPLE,
 } from './pricing.dto';
 
 const GOVERNANCE = ['D-040', 'D-042', 'D-043', 'D-044'];
@@ -696,5 +702,92 @@ export class PartnerPriceProposalsController {
     @Body() body: RespondToRateCardDto,
   ) {
     return this.proposals.respondToRateCard(staffOrPartner(actor), factoryId, proposalId, body);
+  }
+}
+
+// --- staff-only suggestions and simulations (D-040 note, D-044) -----------------------------------------
+
+@ApiSurface('admin', 'priceSuggestions')
+@Controller('price-proposals/:proposalId')
+export class AdminPriceSuggestionsController {
+  constructor(
+    private readonly suggestions: PriceSuggestionsService,
+    private readonly simulations: PriceSimulationsService,
+  ) {}
+
+  @Get('suggestions')
+  @Can('price_suggestions.read')
+  @proposalParam
+  @ApiEndpoint({
+    id: 'admin.priceSuggestions.get',
+    summary: 'Get the suggested values of a proposal',
+    description:
+      'Per line: suggested value, method and basis, deviation and flags (D-040 note). Staff only — never on the partner ' +
+      'surface (D-044); peer figures only with ≥ `partners.peer_benchmark_min_factories` other factories. Audited.',
+    implements: ['D-040', 'D-044', 'D-101', 'D-172'],
+  })
+  @ApiSuccess(200, { description: 'Suggestions', type: PriceSuggestionsDto, example: SUGGESTIONS_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  get(@CurrentActor() actor: Actor, @Param('proposalId', ParseUUIDPipe) proposalId: string) {
+    return this.suggestions.get(staffOrPartner(actor), proposalId);
+  }
+
+  @Post('suggestions/actions/recompute')
+  @HttpCode(200)
+  @Can('price_suggestions.read')
+  @proposalParam
+  @ApiEndpoint({
+    id: 'admin.priceSuggestions.recompute',
+    summary: 'Recompute the suggested values of a proposal',
+    description:
+      'After new index values or peer versions. Suggestions are computed automatically when a proposal is submitted ' +
+      '(D-040 note).',
+    implements: ['D-040', 'D-044'],
+  })
+  @ApiSuccess(200, { description: 'Suggestions', type: PriceSuggestionsDto, example: SUGGESTIONS_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  recompute(@CurrentActor() actor: Actor, @Param('proposalId', ParseUUIDPipe) proposalId: string) {
+    return this.suggestions.recompute(staffOrPartner(actor), proposalId);
+  }
+
+  @Post('simulations')
+  @HttpCode(202)
+  @Can('price_suggestions.read')
+  @proposalParam
+  @ApiEndpoint({
+    id: 'admin.priceSuggestions.simulate',
+    summary: 'Start an impact simulation of a proposal',
+    description:
+      'Re-prices the factory’s quotes of the last `partners.impact_simulation_window_days` with the proposed values: ' +
+      'price, margin and selection-share change (D-040 note). Runs in the worker; poll the returned simulation.',
+    implements: ['D-040', 'D-044'],
+  })
+  @ApiSuccess(202, {
+    description: 'Queued',
+    type: PriceSimulationDto,
+    example: { ...SIMULATION_EXAMPLE, status: 'queued', result: null, completedAt: null },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  simulate(@CurrentActor() actor: Actor, @Param('proposalId', ParseUUIDPipe) proposalId: string) {
+    return this.simulations.request(staffOrPartner(actor), proposalId);
+  }
+
+  @Get('simulations/:simulationId')
+  @Can('price_suggestions.read')
+  @proposalParam
+  @ApiParam({ name: 'simulationId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.priceSuggestions.getSimulation',
+    summary: 'Get an impact simulation',
+    description: 'Status and, once `succeeded`, the result (D-040 note).',
+    implements: ['D-040'],
+  })
+  @ApiSuccess(200, { description: 'Simulation', type: PriceSimulationDto, example: SIMULATION_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  simulation(
+    @Param('proposalId', ParseUUIDPipe) proposalId: string,
+    @Param('simulationId', ParseUUIDPipe) simulationId: string,
+  ) {
+    return this.simulations.get(proposalId, simulationId);
   }
 }

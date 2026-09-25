@@ -11,6 +11,9 @@ import { LineLoginVerifier } from './identity/line-verifier';
 import { FakeLineMessaging } from './line-messaging/fake-line-messaging';
 import { LINE_MESSAGING } from './line-messaging/line-messaging.port';
 import { LineMessagingClient } from './line-messaging/line-messaging-client';
+import { FakeIndexSource } from './material-price-index/fake-index-source';
+import { ManualIndexSource } from './material-price-index/manual-index-source';
+import { MATERIAL_PRICE_INDEX } from './material-price-index/material-price-index.port';
 import { FakeObjectStorage } from './s3/fake-object-storage';
 import { OBJECT_STORAGE, type ObjectStorage } from './s3/object-storage.port';
 import { S3ObjectStorage } from './s3/s3-object-storage';
@@ -35,6 +38,11 @@ import { WEB_PUSH } from './web-push/web-push.port';
 @Global()
 @Module({
   providers: [
+    {
+      provide: MATERIAL_PRICE_INDEX,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) => (config.useFakes ? new FakeIndexSource() : new ManualIndexSource()),
+    },
     {
       provide: OBJECT_STORAGE,
       inject: [AppConfig],
@@ -136,6 +144,7 @@ import { WEB_PUSH } from './web-push/web-push.port';
     LINE_MESSAGING,
     WEB_PUSH,
     TEAMS_WEBHOOK,
+    MATERIAL_PRICE_INDEX,
   ],
 })
 export class IntegrationsModule {}

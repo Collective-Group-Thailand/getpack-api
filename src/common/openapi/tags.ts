@@ -51,6 +51,9 @@ export const API_TAGS: Record<string, string> = {
     'Factory price lists: versions, lines (every read audited, D-044) and the supported price components (D-040).',
   'admin.priceProposals':
     'Price proposals and platform rate cards: review queue, line decisions and counters (D-040, D-042, D-043).',
+  'admin.priceSuggestions':
+    'Staff-only suggested buy prices with their basis and impact simulations — never shown to factories (D-040, D-044).',
+  'admin.indexSeries': 'Material price indices and cost-driver series behind the price suggestions (D-040).',
   'partner.priceLists':
     'My price lists: versions, lines and sign-off of assisted entry (own factory only, D-044).',
   'partner.priceProposals':
