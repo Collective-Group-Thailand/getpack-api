@@ -70,6 +70,41 @@ const CHECKS = [
   'ck_users__customer_passwordless',
   'ck_users__failed_login_count',
   'ck_users__phone_e164',
+
+  // --- B2.1 catalogue & CMS
+  'ck_article_categories__slug',
+  'ck_articles__body_object',
+  'ck_articles__published',
+  'ck_articles__slug',
+  'ck_banners__window',
+  'ck_catalog_products__slug',
+  'ck_faq_categories__code',
+  'ck_flute_types__layers',
+  'ck_geo_subdistricts__postcode',
+  'ck_home_sections__config_object',
+  'ck_home_sections__slug',
+  'ck_materials__gsm',
+  'ck_materials__micron',
+  'ck_patterns__constraints_object',
+  'ck_print_types__code',
+  'ck_product_categories__code',
+  'ck_product_categories__not_own_parent',
+  'ck_product_types__code',
+  'ck_product_types__instant_needs_calculator',
+  'ck_semi_design_colours__hex',
+  'ck_showcase_categories__slug',
+  'ck_showcase_products__preset_object',
+  'ck_showcase_products__slug',
+  'ck_standard_sizes__calc_dimensions',
+  'ck_standard_sizes__dimensions',
+  'ck_stock_levels__on_hand',
+  'ck_stock_levels__reserved',
+  'ck_stock_movements__balance_after',
+  'ck_stock_movements__quantity',
+  'ck_stock_product_price_summaries__price',
+  'ck_stock_products__measures',
+  'ck_stock_products__min_order_qty',
+  'ck_sub_patterns__seq',
 ];
 
 const TRIGGERS = [
@@ -85,6 +120,11 @@ const TRIGGERS = [
   'tg_domain_events__append_only',
   'tg_setting_versions__immutable',
   'tg_user_roles__match_role',
+
+  // --- B2.1 catalogue & CMS
+  'tg_catalog_product_options__option_fk',
+  'tg_stock_movements__append_only',
+  'tg_videos__subject_fk',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -105,14 +145,36 @@ const INDEXES = [
   'ux_user_identities__provider__subject',
   'ux_device_pins__user_id__device_id',
   'ix_consent_purpose_versions__resolution',
+
+  // --- B2.1 catalogue & CMS
+  'ux_stock_product_price_summaries__product__zone',
+  'ix_banners__position__sort',
+  'ux_home_sections__slug',
+  'ux_articles__slug',
+  'ix_videos__subject',
 ];
 
-const PARTIAL_INDEXES = INDEXES.filter(
-  (name) =>
-    !name.startsWith('ux_settings') &&
-    name !== 'ux_notification_routes__matrix' &&
-    name !== 'ux_notifications__event__recipient__channel',
-);
+const EXPRESSION_INDEXES = [
+  'ux_settings__key__scope',
+  'ux_notification_routes__matrix',
+  'ux_notifications__event__recipient__channel',
+  'ux_stock_product_price_summaries__product__zone',
+];
+
+const PARTIAL_INDEXES = INDEXES.filter((name) => !EXPRESSION_INDEXES.includes(name));
+
+/** Trigram indexes behind catalogue search (B2.1, `pg_trgm`). */
+const TRIGRAM_INDEXES = [
+  'ix_articles__title_th_trgm',
+  'ix_catalog_products__name_en_trgm',
+  'ix_catalog_products__name_th_trgm',
+  'ix_materials__name_en_trgm',
+  'ix_materials__name_th_trgm',
+  'ix_showcase_products__name_th_trgm',
+  'ix_stock_products__name_en_trgm',
+  'ix_stock_products__name_th_trgm',
+  'ix_stock_products__sku_trgm',
+];
 
 const EXTENSIONS = ['vector', 'pgcrypto', 'pg_trgm', 'citext'];
 
@@ -155,6 +217,13 @@ describe('schema catalogue after migrations (PostgreSQL 18)', () => {
       'SELECT c.relname AS name FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid WHERE i.indpred IS NOT NULL',
     );
     expect(PARTIAL_INDEXES.filter((name) => !partial.includes(name))).toEqual([]);
+  });
+
+  it('backs catalogue search with GIN trigram indexes', async () => {
+    const found = await names(
+      "SELECT indexname AS name FROM pg_indexes WHERE schemaname = 'public' AND indexdef LIKE '%USING gin%gin_trgm_ops%'",
+    );
+    expect(TRIGRAM_INDEXES.filter((name) => !found.includes(name))).toEqual([]);
   });
 
   it('uses identity columns, never serial sequences, for bigint ids', async () => {

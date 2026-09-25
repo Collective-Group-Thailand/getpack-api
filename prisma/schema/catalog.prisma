@@ -1,0 +1,1490 @@
+// Catalogue & CMS context (docs/schema-design.md §3.3, B2.1). The platform catalogue is what a
+// customer can choose: no prices and no factory_id (D-044, D-050). Factory buy prices reference these
+// rows from the partners context (§3.4). Check constraints, the option-kind trigger and the append-only
+// stock ledger are hand-written in the migration SQL.
+
+// ------------------------------------------------------------------------------------------------
+// Enums
+// ------------------------------------------------------------------------------------------------
+
+enum CatalogStatus {
+  draft
+  active
+  inactive
+  archived
+
+  @@map("catalog_status")
+}
+
+enum QuoteMode {
+  instant
+  rfq
+
+  @@map("quote_mode")
+}
+
+enum CalculatorKey {
+  folding
+  corrugate
+  label
+  tag_sleeve
+  pouch
+  standard_product
+  service
+
+  @@map("calculator_key")
+}
+
+enum TemplateAvailability {
+  none
+  online_template
+  drawing
+
+  @@map("template_availability")
+}
+
+enum CatalogOptionKind {
+  material
+  finish
+  coating
+  ink_colour
+  diecut
+  assembly
+  print_type
+  print_side
+  pattern
+  process
+
+  @@map("catalog_option_kind")
+}
+
+enum MaterialKind {
+  paper
+  board
+  corrugated_board
+  film
+  foil
+  label_stock
+  other
+
+  @@map("material_kind")
+}
+
+enum FinishKind {
+  coating
+  lamination
+  foil
+  emboss
+  deboss
+  spot_uv
+  window
+  other
+
+  @@map("finish_kind")
+}
+
+/// Not in the §4 catalogue; named in §3.3 `ink_colours.colour_kind` (schema-design §7 A-19).
+enum InkColourKind {
+  process
+  spot
+  white
+  metallic
+
+  @@map("ink_colour_kind")
+}
+
+enum StockAttribute {
+  material
+  type
+  sub_type
+  shape
+  shoulder
+  neck
+  colour
+  size_text
+  cap_type
+
+  @@map("stock_attribute")
+}
+
+enum ProductUnit {
+  piece
+  box
+  pouch
+  tube
+  set
+  job
+  round
+  trip
+
+  @@map("product_unit")
+}
+
+enum StockMovementKind {
+  receipt
+  reservation
+  release
+  shipment
+  adjustment
+
+  @@map("stock_movement_kind")
+}
+
+enum BannerPosition {
+  home_hero
+  home_strip
+  category
+  popup
+
+  @@map("banner_position")
+}
+
+enum HomeSectionKind {
+  product_types
+  catalog_products
+  showcase
+  articles
+  banner
+  custom
+
+  @@map("home_section_kind")
+}
+
+enum ContentStatus {
+  draft
+  published
+  archived
+
+  @@map("content_status")
+}
+
+enum VideoProvider {
+  youtube
+  vimeo
+  file
+
+  @@map("video_provider")
+}
+
+/// What a video belongs to (`videos.subject_type`, schema-design §7 A-19).
+enum VideoSubject {
+  catalog_product
+  showcase_product
+  stock_product
+  article
+
+  @@map("video_subject")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Product structure
+// ------------------------------------------------------------------------------------------------
+
+/// Packio reporting categories (replace legacy PH1–PH6, D-030).
+model ProductCategory {
+  id          BigInt        @id(map: "pk_product_categories") @default(autoincrement())
+  publicId    String        @unique(map: "ux_product_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_product_categories__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  parentId    BigInt?       @map("parent_id")
+  sort        Int           @default(0)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  parent       ProductCategory?  @relation("ProductCategoryParent", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_categories__parent_id")
+  children     ProductCategory[] @relation("ProductCategoryParent")
+  productTypes ProductType[]
+  createdBy    User?             @relation("ProductCategoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_categories__created_by")
+  updatedBy    User?             @relation("ProductCategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_categories__updated_by")
+
+  @@index([parentId], map: "ix_product_categories__parent_id")
+  @@map("product_categories")
+}
+
+/// D-100: the 7 instant types + RFQ categories. Whether a configuration is actually instant is
+/// resolved at runtime from factory participations (D-043), not stored.
+model ProductType {
+  id                   BigInt         @id(map: "pk_product_types") @default(autoincrement())
+  publicId             String         @unique(map: "ux_product_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code                 String         @unique(map: "ux_product_types__code")
+  categoryId           BigInt         @map("category_id")
+  nameTh               String         @map("name_th")
+  nameEn               String         @map("name_en")
+  quoteMode            QuoteMode      @default(rfq) @map("quote_mode")
+  calculatorKey        CalculatorKey? @map("calculator_key")
+  isFoodContactDefault Boolean        @default(false) @map("is_food_contact_default")
+  rfqSpecSchema        Json?          @map("rfq_spec_schema")
+  sort                 Int            @default(0)
+  status               CatalogStatus  @default(draft)
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?        @map("created_by")
+  updatedAt            DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById          BigInt?        @map("updated_by")
+  rowVersion           Int            @default(1) @map("row_version")
+
+  category        ProductCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_types__category_id")
+  printTypes      PrintType[]
+  catalogProducts CatalogProduct[]
+  patterns        Pattern[]
+  specTitles      SpecTitle[]
+  stockProducts   StockProduct[]
+  createdBy       User?            @relation("ProductTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_types__created_by")
+  updatedBy       User?            @relation("ProductTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_types__updated_by")
+
+  @@index([categoryId], map: "ix_product_types__category_id")
+  @@map("product_types")
+}
+
+model PrintType {
+  id                   BigInt        @id(map: "pk_print_types") @default(autoincrement())
+  publicId             String        @unique(map: "ux_print_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code                 String        @unique(map: "ux_print_types__code")
+  productTypeId        BigInt        @map("product_type_id")
+  nameTh               String        @map("name_th")
+  nameEn               String        @map("name_en")
+  /// Legacy "print types that can charge plate + diecut".
+  canChargePlateAndDie Boolean       @default(false) @map("can_charge_plate_and_die")
+  sort                 Int           @default(0)
+  status               CatalogStatus @default(draft)
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?       @map("created_by")
+  updatedAt            DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById          BigInt?       @map("updated_by")
+  rowVersion           Int           @default(1) @map("row_version")
+
+  productType ProductType @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_print_types__product_type_id")
+  createdBy   User?       @relation("PrintTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_print_types__created_by")
+  updatedBy   User?       @relation("PrintTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_print_types__updated_by")
+
+  @@index([productTypeId], map: "ix_print_types__product_type_id")
+  @@map("print_types")
+}
+
+/// The customer-facing product (legacy `mapping_inputs`, e.g. "กล่องฝาเสียบ").
+model CatalogProduct {
+  id                   BigInt               @id(map: "pk_catalog_products") @default(autoincrement())
+  publicId             String               @unique(map: "ux_catalog_products__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId        BigInt               @map("product_type_id")
+  slug                 String               @unique(map: "ux_catalog_products__slug")
+  nameTh               String               @map("name_th")
+  nameEn               String               @map("name_en")
+  descriptionTh        String?              @map("description_th")
+  descriptionEn        String?              @map("description_en")
+  isCombination        Boolean              @default(false) @map("is_combination")
+  templateAvailability TemplateAvailability @default(none) @map("template_availability")
+  videoUrl             String?              @map("video_url")
+  seoPageId            BigInt?              @map("seo_page_id")
+  sort                 Int                  @default(0)
+  status               CatalogStatus        @default(draft)
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?              @map("created_by")
+  updatedAt            DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById          BigInt?              @map("updated_by")
+  rowVersion           Int                  @default(1) @map("row_version")
+
+  productType       ProductType             @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__product_type_id")
+  seoPage           SeoPage?                @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__seo_page_id")
+  patterns          CatalogProductPattern[]
+  options           CatalogProductOption[]
+  images            CatalogProductImage[]
+  standardSizes     StandardSize[]
+  showcaseProducts  ShowcaseProduct[]
+  semiDesigns       SemiDesign[]
+  productEmbeddings ProductEmbedding[]
+  createdBy         User?                   @relation("CatalogProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__created_by")
+  updatedBy         User?                   @relation("CatalogProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__updated_by")
+
+  @@index([productTypeId], map: "ix_catalog_products__product_type_id")
+  @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
+  @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_th_trgm")
+  @@index([nameEn(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_en_trgm")
+  @@map("catalog_products")
+}
+
+/// Legacy `mapping_input_rel_patterns` (factors indicative, fixed by the calculator ports, B2.3).
+model CatalogProductPattern {
+  id               BigInt   @id(map: "pk_catalog_product_patterns") @default(autoincrement())
+  catalogProductId BigInt   @map("catalog_product_id")
+  patternId        BigInt   @map("pattern_id")
+  factorNw         Decimal? @map("factor_nw") @db.Decimal(10, 4)
+  factorNl         Decimal? @map("factor_nl") @db.Decimal(10, 4)
+  factorNd         Decimal? @map("factor_nd") @db.Decimal(10, 4)
+  sort             Int      @default(0)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?  @map("created_by")
+
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_patterns__catalog_product_id")
+  pattern        Pattern        @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_patterns__pattern_id")
+  createdBy      User?          @relation("CatalogProductPatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_patterns__created_by")
+
+  @@unique([catalogProductId, patternId], map: "ux_catalog_product_patterns__catalog_product_id__pattern_id")
+  @@index([patternId], map: "ix_catalog_product_patterns__pattern_id")
+  @@map("catalog_product_patterns")
+}
+
+/// Which catalogue items a product offers. `option_id` points at the table named by `option_kind`
+/// (checked by trigger `tg_catalog_product_options__option_fk`).
+model CatalogProductOption {
+  id               BigInt            @id(map: "pk_catalog_product_options") @default(autoincrement())
+  catalogProductId BigInt            @map("catalog_product_id")
+  optionKind       CatalogOptionKind @map("option_kind")
+  optionId         BigInt            @map("option_id")
+  isDefault        Boolean           @default(false) @map("is_default")
+  sort             Int               @default(0)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?           @map("created_by")
+
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_options__catalog_product_id")
+  createdBy      User?          @relation("CatalogProductOptionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_options__created_by")
+
+  @@unique([catalogProductId, optionKind, optionId], map: "ux_catalog_product_options__product__kind__option")
+  @@index([optionKind, optionId], map: "ix_catalog_product_options__kind__option")
+  @@map("catalog_product_options")
+}
+
+/// Image galleries (legacy imagesets); `variant` says which material/colour/combination the image shows.
+model CatalogProductImage {
+  id               BigInt   @id(map: "pk_catalog_product_images") @default(autoincrement())
+  publicId         String   @unique(map: "ux_catalog_product_images__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  catalogProductId BigInt   @map("catalog_product_id")
+  fileObjectId     BigInt   @map("file_object_id")
+  variant          Json?
+  sort             Int      @default(0)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?  @map("created_by")
+
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_images__catalog_product_id")
+  fileObject     FileObject     @relation("CatalogProductImageFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_images__file_object_id")
+  createdBy      User?          @relation("CatalogProductImageCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_images__created_by")
+
+  @@index([catalogProductId, sort], map: "ix_catalog_product_images__catalog_product_id__sort")
+  @@index([fileObjectId], map: "ix_catalog_product_images__file_object_id")
+  @@map("catalog_product_images")
+}
+
+model StandardSize {
+  id               BigInt        @id(map: "pk_standard_sizes") @default(autoincrement())
+  publicId         String        @unique(map: "ux_standard_sizes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  catalogProductId BigInt        @map("catalog_product_id")
+  code             String
+  name             String
+  lengthMm         Decimal       @map("length_mm") @db.Decimal(10, 2)
+  widthMm          Decimal       @map("width_mm") @db.Decimal(10, 2)
+  heightMm         Decimal       @map("height_mm") @db.Decimal(10, 2)
+  /// Legacy `*_for_calculate`.
+  calcLengthMm     Decimal?      @map("calc_length_mm") @db.Decimal(10, 2)
+  calcWidthMm      Decimal?      @map("calc_width_mm") @db.Decimal(10, 2)
+  calcHeightMm     Decimal?      @map("calc_height_mm") @db.Decimal(10, 2)
+  sort             Int           @default(0)
+  status           CatalogStatus @default(draft)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?       @map("created_by")
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?       @map("updated_by")
+  rowVersion       Int           @default(1) @map("row_version")
+
+  catalogProduct      CatalogProduct       @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__catalog_product_id")
+  semiDesignTemplates SemiDesignTemplate[]
+  createdBy           User?                @relation("StandardSizeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__created_by")
+  updatedBy           User?                @relation("StandardSizeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__updated_by")
+
+  @@unique([catalogProductId, code], map: "ux_standard_sizes__catalog_product_id__code")
+  @@map("standard_sizes")
+}
+
+/// `pattern_kind` and `constraints` are indicative (schema-design §0): validated by the calculator ports.
+model Pattern {
+  id            BigInt        @id(map: "pk_patterns") @default(autoincrement())
+  publicId      String        @unique(map: "ux_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId BigInt        @map("product_type_id")
+  code          String        @unique(map: "ux_patterns__code")
+  name          String
+  technicalName String?       @map("technical_name")
+  patternKind   Int?          @map("pattern_kind") @db.SmallInt
+  /// min/max w/l/h/b/s/cs/dl/dw, required_x/c (legacy `pattern` size constraints).
+  constraints   Json          @default("{}")
+  /// Key understood by `@packio/dieline`.
+  dielineKey    String?       @map("dieline_key")
+  status        CatalogStatus @default(draft)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?       @map("created_by")
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?       @map("updated_by")
+  rowVersion    Int           @default(1) @map("row_version")
+
+  productType     ProductType             @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__product_type_id")
+  subPatterns     SubPattern[]
+  fluteTypes      PatternFluteType[]
+  catalogProducts CatalogProductPattern[]
+  createdBy       User?                   @relation("PatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__created_by")
+  updatedBy       User?                   @relation("PatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__updated_by")
+
+  @@index([productTypeId], map: "ix_patterns__product_type_id")
+  @@map("patterns")
+}
+
+/// Geometry factors and conditions are indicative (fixed by the calculator ports, B2.3).
+model SubPattern {
+  id          BigInt   @id(map: "pk_sub_patterns") @default(autoincrement())
+  publicId    String   @unique(map: "ux_sub_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  patternId   BigInt   @map("pattern_id")
+  seq         Int      @db.SmallInt
+  name        String
+  dl          Decimal? @db.Decimal(10, 4)
+  dw          Decimal? @db.Decimal(10, 4)
+  dh          Decimal? @db.Decimal(10, 4)
+  nl          Decimal? @db.Decimal(10, 4)
+  nw          Decimal? @db.Decimal(10, 4)
+  nh          Decimal? @db.Decimal(10, 4)
+  conditions  Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  pattern   Pattern @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__pattern_id")
+  createdBy User?   @relation("SubPatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__created_by")
+  updatedBy User?   @relation("SubPatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__updated_by")
+
+  @@unique([patternId, seq], map: "ux_sub_patterns__pattern_id__seq")
+  @@map("sub_patterns")
+}
+
+model PatternFluteType {
+  patternId   BigInt   @map("pattern_id")
+  fluteTypeId BigInt   @map("flute_type_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+
+  pattern   Pattern   @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_flute_types__pattern_id")
+  fluteType FluteType @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_flute_types__flute_type_id")
+  createdBy User?     @relation("PatternFluteTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_flute_types__created_by")
+
+  @@id([patternId, fluteTypeId], map: "pk_pattern_flute_types")
+  @@index([fluteTypeId], map: "ix_pattern_flute_types__flute_type_id")
+  @@map("pattern_flute_types")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Materials & processes (platform definitions, no prices)
+// ------------------------------------------------------------------------------------------------
+
+/// Grouping used by the material price index (D-040 group 1).
+model MaterialFamily {
+  id          BigInt        @id(map: "pk_material_families") @default(autoincrement())
+  publicId    String        @unique(map: "ux_material_families__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_material_families__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  /// e.g. `THB/kg`, `THB/m2`.
+  indexUnit   String        @map("index_unit")
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  materials Material[]
+  createdBy User?      @relation("MaterialFamilyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_material_families__created_by")
+  updatedBy User?      @relation("MaterialFamilyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_material_families__updated_by")
+
+  @@map("material_families")
+}
+
+/// Take-up factors are indicative (legacy `flute_type`, fixed by the corrugate port, B2.3).
+model FluteType {
+  id          BigInt        @id(map: "pk_flute_types") @default(autoincrement())
+  publicId    String        @unique(map: "ux_flute_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_flute_types__code")
+  name        String
+  layers      Int           @db.SmallInt
+  colA        Decimal?      @map("col_a") @db.Decimal(10, 4)
+  colC        Decimal?      @map("col_c") @db.Decimal(10, 4)
+  colDd       Decimal?      @map("col_dd") @db.Decimal(10, 4)
+  colG        Decimal?      @map("col_g") @db.Decimal(10, 4)
+  colFh       Decimal?      @map("col_fh") @db.Decimal(10, 4)
+  z           Decimal?      @db.Decimal(10, 4)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  materials Material[]
+  patterns  PatternFluteType[]
+  createdBy User?              @relation("FluteTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_flute_types__created_by")
+  updatedBy User?              @relation("FluteTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_flute_types__updated_by")
+
+  @@map("flute_types")
+}
+
+/// What the customer picks. `code` is the natural key for Excel import (schema-design §7 A-19).
+model Material {
+  id            BigInt        @id(map: "pk_materials") @default(autoincrement())
+  publicId      String        @unique(map: "ux_materials__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code          String        @unique(map: "ux_materials__code")
+  kind          MaterialKind
+  familyId      BigInt?       @map("family_id")
+  nameTh        String        @map("name_th")
+  nameEn        String        @map("name_en")
+  gsm           Decimal?      @db.Decimal(8, 2)
+  micron        Decimal?      @db.Decimal(8, 2)
+  fluteTypeId   BigInt?       @map("flute_type_id")
+  paperGroup    String?       @map("paper_group")
+  insideColour  String?       @map("inside_colour")
+  outsideColour String?       @map("outside_colour")
+  strength      String?
+  isFoodGrade   Boolean       @default(false) @map("is_food_grade")
+  status        CatalogStatus @default(draft)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?       @map("created_by")
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?       @map("updated_by")
+  rowVersion    Int           @default(1) @map("row_version")
+
+  family    MaterialFamily? @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__family_id")
+  fluteType FluteType?      @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__flute_type_id")
+  createdBy User?           @relation("MaterialCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__created_by")
+  updatedBy User?           @relation("MaterialUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__updated_by")
+
+  @@index([familyId], map: "ix_materials__family_id")
+  @@index([fluteTypeId], map: "ix_materials__flute_type_id")
+  @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_materials__name_th_trgm")
+  @@index([nameEn(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_materials__name_en_trgm")
+  @@map("materials")
+}
+
+model FinishGroup {
+  id          BigInt        @id(map: "pk_finish_groups") @default(autoincrement())
+  publicId    String        @unique(map: "ux_finish_groups__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_finish_groups__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  sort        Int           @default(0)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  finishes  Finish[]
+  createdBy User?    @relation("FinishGroupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finish_groups__created_by")
+  updatedBy User?    @relation("FinishGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finish_groups__updated_by")
+
+  @@map("finish_groups")
+}
+
+model Finish {
+  id             BigInt        @id(map: "pk_finishes") @default(autoincrement())
+  publicId       String        @unique(map: "ux_finishes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupId        BigInt?       @map("group_id")
+  code           String        @unique(map: "ux_finishes__code")
+  nameTh         String        @map("name_th")
+  nameEn         String        @map("name_en")
+  finishKind     FinishKind    @map("finish_kind")
+  /// Foil / emboss / window → +20 pp inspection (D-076).
+  isSpecial      Boolean       @default(false) @map("is_special")
+  requiresAmount Boolean       @default(false) @map("requires_amount")
+  requiresWidth  Boolean       @default(false) @map("requires_width")
+  requiresLength Boolean       @default(false) @map("requires_length")
+  status         CatalogStatus @default(draft)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt?       @map("created_by")
+  updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById    BigInt?       @map("updated_by")
+  rowVersion     Int           @default(1) @map("row_version")
+
+  group     FinishGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__group_id")
+  createdBy User?        @relation("FinishCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__created_by")
+  updatedBy User?        @relation("FinishUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__updated_by")
+
+  @@index([groupId], map: "ix_finishes__group_id")
+  @@map("finishes")
+}
+
+model FoilType {
+  id          BigInt        @id(map: "pk_foil_types") @default(autoincrement())
+  publicId    String        @unique(map: "ux_foil_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_foil_types__code")
+  name        String
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  createdBy User? @relation("FoilTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_foil_types__created_by")
+  updatedBy User? @relation("FoilTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_foil_types__updated_by")
+
+  @@map("foil_types")
+}
+
+model InkColourGroup {
+  id          BigInt        @id(map: "pk_ink_colour_groups") @default(autoincrement())
+  publicId    String        @unique(map: "ux_ink_colour_groups__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_ink_colour_groups__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  sort        Int           @default(0)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  colours   InkColour[]
+  createdBy User?       @relation("InkColourGroupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colour_groups__created_by")
+  updatedBy User?       @relation("InkColourGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colour_groups__updated_by")
+
+  @@map("ink_colour_groups")
+}
+
+model InkColour {
+  id          BigInt        @id(map: "pk_ink_colours") @default(autoincrement())
+  publicId    String        @unique(map: "ux_ink_colours__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupId     BigInt?       @map("group_id")
+  code        String        @unique(map: "ux_ink_colours__code")
+  name        String
+  colourKind  InkColourKind @map("colour_kind")
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  group     InkColourGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__group_id")
+  createdBy User?           @relation("InkColourCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__created_by")
+  updatedBy User?           @relation("InkColourUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__updated_by")
+
+  @@index([groupId], map: "ix_ink_colours__group_id")
+  @@map("ink_colours")
+}
+
+model DiecutGroup {
+  id          BigInt        @id(map: "pk_diecut_groups") @default(autoincrement())
+  publicId    String        @unique(map: "ux_diecut_groups__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_diecut_groups__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  sort        Int           @default(0)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  types     DiecutType[]
+  createdBy User?        @relation("DiecutGroupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_groups__created_by")
+  updatedBy User?        @relation("DiecutGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_groups__updated_by")
+
+  @@map("diecut_groups")
+}
+
+model DiecutType {
+  id          BigInt        @id(map: "pk_diecut_types") @default(autoincrement())
+  publicId    String        @unique(map: "ux_diecut_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupId     BigInt?       @map("group_id")
+  code        String        @unique(map: "ux_diecut_types__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  group     DiecutGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__group_id")
+  createdBy User?        @relation("DiecutTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__created_by")
+  updatedBy User?        @relation("DiecutTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__updated_by")
+
+  @@index([groupId], map: "ix_diecut_types__group_id")
+  @@map("diecut_types")
+}
+
+model AssemblyGroup {
+  id          BigInt        @id(map: "pk_assembly_groups") @default(autoincrement())
+  publicId    String        @unique(map: "ux_assembly_groups__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_assembly_groups__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  sort        Int           @default(0)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  assemblies Assembly[]
+  createdBy  User?      @relation("AssemblyGroupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assembly_groups__created_by")
+  updatedBy  User?      @relation("AssemblyGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assembly_groups__updated_by")
+
+  @@map("assembly_groups")
+}
+
+/// `is_double_item` and `skip_waste` are indicative (fixed by the calculator ports, B2.3).
+model Assembly {
+  id             BigInt        @id(map: "pk_assemblies") @default(autoincrement())
+  publicId       String        @unique(map: "ux_assemblies__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupId        BigInt?       @map("group_id")
+  code           String        @unique(map: "ux_assemblies__code")
+  nameTh         String        @map("name_th")
+  nameEn         String        @map("name_en")
+  requiresAmount Boolean       @default(false) @map("requires_amount")
+  requiresWidth  Boolean       @default(false) @map("requires_width")
+  requiresLength Boolean       @default(false) @map("requires_length")
+  isDoubleItem   Boolean       @default(false) @map("is_double_item")
+  skipWaste      Boolean       @default(false) @map("skip_waste")
+  status         CatalogStatus @default(draft)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt?       @map("created_by")
+  updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById    BigInt?       @map("updated_by")
+  rowVersion     Int           @default(1) @map("row_version")
+
+  group     AssemblyGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__group_id")
+  createdBy User?          @relation("AssemblyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__created_by")
+  updatedBy User?          @relation("AssemblyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__updated_by")
+
+  @@index([groupId], map: "ix_assemblies__group_id")
+  @@map("assemblies")
+}
+
+model DifficultyLevelGroup {
+  id          BigInt        @id(map: "pk_difficulty_level_groups") @default(autoincrement())
+  publicId    String        @unique(map: "ux_difficulty_level_groups__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_difficulty_level_groups__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  sort        Int           @default(0)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  levels    DifficultyLevel[]
+  createdBy User?             @relation("DifficultyLevelGroupCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_level_groups__created_by")
+  updatedBy User?             @relation("DifficultyLevelGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_level_groups__updated_by")
+
+  @@map("difficulty_level_groups")
+}
+
+model DifficultyLevel {
+  id          BigInt        @id(map: "pk_difficulty_levels") @default(autoincrement())
+  publicId    String        @unique(map: "ux_difficulty_levels__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupId     BigInt?       @map("group_id")
+  code        String        @unique(map: "ux_difficulty_levels__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  sort        Int           @default(0)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  group     DifficultyLevelGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__group_id")
+  createdBy User?                 @relation("DifficultyLevelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__created_by")
+  updatedBy User?                 @relation("DifficultyLevelUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__updated_by")
+
+  @@index([groupId], map: "ix_difficulty_levels__group_id")
+  @@map("difficulty_levels")
+}
+
+model PackingType {
+  id          BigInt        @id(map: "pk_packing_types") @default(autoincrement())
+  publicId    String        @unique(map: "ux_packing_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_packing_types__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  createdBy User? @relation("PackingTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_packing_types__created_by")
+  updatedBy User? @relation("PackingTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_packing_types__updated_by")
+
+  @@map("packing_types")
+}
+
+/// Titles of factory spec lines shown to customers (the values are factory price-list data, §3.4).
+model SpecTitle {
+  id            BigInt        @id(map: "pk_spec_titles") @default(autoincrement())
+  publicId      String        @unique(map: "ux_spec_titles__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code          String        @unique(map: "ux_spec_titles__code")
+  productTypeId BigInt?       @map("product_type_id")
+  nameTh        String        @map("name_th")
+  nameEn        String        @map("name_en")
+  sort          Int           @default(0)
+  status        CatalogStatus @default(draft)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?       @map("created_by")
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?       @map("updated_by")
+  rowVersion    Int           @default(1) @map("row_version")
+
+  productType ProductType? @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_spec_titles__product_type_id")
+  createdBy   User?        @relation("SpecTitleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_spec_titles__created_by")
+  updatedBy   User?        @relation("SpecTitleUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_spec_titles__updated_by")
+
+  @@index([productTypeId], map: "ix_spec_titles__product_type_id")
+  @@map("spec_titles")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Standard (stock) products
+// ------------------------------------------------------------------------------------------------
+
+model StockAttributeValue {
+  id          BigInt         @id(map: "pk_stock_attribute_values") @default(autoincrement())
+  publicId    String         @unique(map: "ux_stock_attribute_values__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  attribute   StockAttribute
+  code        String
+  nameTh      String         @map("name_th")
+  nameEn      String         @map("name_en")
+  sort        Int            @default(0)
+  status      CatalogStatus  @default(draft)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?        @map("created_by")
+  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?        @map("updated_by")
+  rowVersion  Int            @default(1) @map("row_version")
+
+  productAttributes StockProductAttribute[]
+  createdBy         User?                   @relation("StockAttributeValueCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_attribute_values__created_by")
+  updatedBy         User?                   @relation("StockAttributeValueUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_attribute_values__updated_by")
+
+  @@unique([attribute, code], map: "ux_stock_attribute_values__attribute__code")
+  /// Target of the composite FK from stock_product_attributes (attribute must match the value's).
+  @@unique([id, attribute], map: "ux_stock_attribute_values__id__attribute")
+  @@map("stock_attribute_values")
+}
+
+model StockProduct {
+  id            BigInt        @id(map: "pk_stock_products") @default(autoincrement())
+  publicId      String        @unique(map: "ux_stock_products__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId BigInt        @map("product_type_id")
+  /// Packio code.
+  sku           String        @unique(map: "ux_stock_products__sku")
+  nameTh        String        @map("name_th")
+  nameEn        String        @map("name_en")
+  description   String?
+  unit          ProductUnit
+  capacityMl    Decimal?      @map("capacity_ml") @db.Decimal(10, 2)
+  lengthMm      Decimal?      @map("length_mm") @db.Decimal(10, 2)
+  widthMm       Decimal?      @map("width_mm") @db.Decimal(10, 2)
+  heightMm      Decimal?      @map("height_mm") @db.Decimal(10, 2)
+  weightG       Decimal?      @map("weight_g") @db.Decimal(12, 2)
+  minOrderQty   Int           @default(1) @map("min_order_qty")
+  isFoodGrade   Boolean       @default(false) @map("is_food_grade")
+  seoPageId     BigInt?       @map("seo_page_id")
+  status        CatalogStatus @default(draft)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?       @map("created_by")
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?       @map("updated_by")
+  rowVersion    Int           @default(1) @map("row_version")
+
+  productType  ProductType                @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__product_type_id")
+  seoPage      SeoPage?                   @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__seo_page_id")
+  attributes   StockProductAttribute[]
+  images       StockProductImage[]
+  levels       StockLevel[]
+  movements    StockMovement[]
+  priceSummary StockProductPriceSummary[]
+  createdBy    User?                      @relation("StockProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__created_by")
+  updatedBy    User?                      @relation("StockProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__updated_by")
+
+  @@index([productTypeId], map: "ix_stock_products__product_type_id")
+  @@index([seoPageId], map: "ix_stock_products__seo_page_id")
+  @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_stock_products__name_th_trgm")
+  @@index([nameEn(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_stock_products__name_en_trgm")
+  @@index([sku(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_stock_products__sku_trgm")
+  @@map("stock_products")
+}
+
+model StockProductAttribute {
+  stockProductId BigInt         @map("stock_product_id")
+  attribute      StockAttribute
+  valueId        BigInt         @map("value_id")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt?        @map("created_by")
+
+  stockProduct StockProduct        @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_product_attributes__stock_product_id")
+  value        StockAttributeValue @relation(fields: [valueId, attribute], references: [id, attribute], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_product_attributes__value_id__attribute")
+  createdBy    User?               @relation("StockProductAttributeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_product_attributes__created_by")
+
+  @@id([stockProductId, attribute], map: "pk_stock_product_attributes")
+  @@index([valueId, attribute], map: "ix_stock_product_attributes__value_id__attribute")
+  @@map("stock_product_attributes")
+}
+
+/// Product photos (the Merchant feed needs an image link; schema-design §7 A-19).
+model StockProductImage {
+  id             BigInt   @id(map: "pk_stock_product_images") @default(autoincrement())
+  publicId       String   @unique(map: "ux_stock_product_images__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  stockProductId BigInt   @map("stock_product_id")
+  fileObjectId   BigInt   @map("file_object_id")
+  sort           Int      @default(0)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt?  @map("created_by")
+
+  stockProduct StockProduct @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_product_images__stock_product_id")
+  fileObject   FileObject   @relation("StockProductImageFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_product_images__file_object_id")
+  createdBy    User?        @relation("StockProductImageCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_product_images__created_by")
+
+  @@index([stockProductId, sort], map: "ix_stock_product_images__stock_product_id__sort")
+  @@index([fileObjectId], map: "ix_stock_product_images__file_object_id")
+  @@map("stock_product_images")
+}
+
+/// Stock is held by the supplying factory. The factory_id FK is added with the partners context (B2.2).
+model StockLevel {
+  id             BigInt   @id(map: "pk_stock_levels") @default(autoincrement())
+  stockProductId BigInt   @map("stock_product_id")
+  factoryId      BigInt   @map("factory_id")
+  onHand         Int      @default(0) @map("on_hand")
+  reserved       Int      @default(0)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  stockProduct StockProduct @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_levels__stock_product_id")
+
+  @@unique([stockProductId, factoryId], map: "ux_stock_levels__stock_product_id__factory_id")
+  @@index([factoryId], map: "ix_stock_levels__factory_id")
+  @@map("stock_levels")
+}
+
+/// Append-only (trigger). factory_id FK: partners context (B2.2); order_id FK: commerce (B3.1).
+model StockMovement {
+  id             BigInt            @id(map: "pk_stock_movements") @default(autoincrement())
+  stockProductId BigInt            @map("stock_product_id")
+  factoryId      BigInt            @map("factory_id")
+  kind           StockMovementKind
+  /// Signed.
+  quantity       Int
+  balanceAfter   Int               @map("balance_after")
+  orderId        BigInt?           @map("order_id")
+  reason         String?
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt?           @map("created_by")
+
+  stockProduct StockProduct @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__stock_product_id")
+  createdBy    User?        @relation("StockMovementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__created_by")
+
+  @@index([stockProductId, factoryId, createdAt], map: "ix_stock_movements__product__factory__created_at")
+  @@index([factoryId], map: "ix_stock_movements__factory_id")
+  @@index([orderId], map: "ix_stock_movements__order_id")
+  @@map("stock_movements")
+}
+
+/// Derived read model of the legacy nightly "min price per piece with delivery" (§3.3). Filled by the
+/// standard-product calculator job (B2.3); read by the Merchant feed. `zone_code` null = nationwide.
+model StockProductPriceSummary {
+  id                       BigInt   @id(map: "pk_stock_product_price_summaries") @default(autoincrement())
+  stockProductId           BigInt   @map("stock_product_id")
+  zoneCode                 String?  @map("zone_code")
+  minUnitPriceWithDelivery Decimal  @map("min_unit_price_with_delivery") @db.Decimal(18, 6)
+  computedAt               DateTime @map("computed_at") @db.Timestamptz(6)
+
+  stockProduct StockProduct @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_product_price_summaries__stock_product_id")
+
+  // ux (stock_product_id, coalesce(zone_code, '')) is an expression index in the migration SQL.
+  @@index([stockProductId], map: "ix_stock_product_price_summaries__stock_product_id")
+  @@map("stock_product_price_summaries")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Showcase, semi-designs
+// ------------------------------------------------------------------------------------------------
+
+/// Legacy sample product categories.
+model ShowcaseCategory {
+  id          BigInt        @id(map: "pk_showcase_categories") @default(autoincrement())
+  publicId    String        @unique(map: "ux_showcase_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  slug        String        @unique(map: "ux_showcase_categories__slug")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  sort        Int           @default(0)
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  products  ShowcaseProduct[]
+  createdBy User?             @relation("ShowcaseCategoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_showcase_categories__created_by")
+  updatedBy User?             @relation("ShowcaseCategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_showcase_categories__updated_by")
+
+  @@map("showcase_categories")
+}
+
+/// Pre-configured showcase products ("Product Groups"); `preset` is a pre-filled configuration.
+model ShowcaseProduct {
+  id               BigInt        @id(map: "pk_showcase_products") @default(autoincrement())
+  publicId         String        @unique(map: "ux_showcase_products__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  categoryId       BigInt?       @map("category_id")
+  catalogProductId BigInt        @map("catalog_product_id")
+  slug             String        @unique(map: "ux_showcase_products__slug")
+  nameTh           String        @map("name_th")
+  nameEn           String        @map("name_en")
+  descriptionTh    String?       @map("description_th")
+  descriptionEn    String?       @map("description_en")
+  coverFileId      BigInt?       @map("cover_file_id")
+  preset           Json          @default("{}")
+  sort             Int           @default(0)
+  status           CatalogStatus @default(draft)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?       @map("created_by")
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?       @map("updated_by")
+  rowVersion       Int           @default(1) @map("row_version")
+
+  category       ShowcaseCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_showcase_products__category_id")
+  catalogProduct CatalogProduct    @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_showcase_products__catalog_product_id")
+  coverFile      FileObject?       @relation("ShowcaseProductCoverFile", fields: [coverFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_showcase_products__cover_file_id")
+  createdBy      User?             @relation("ShowcaseProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_showcase_products__created_by")
+  updatedBy      User?             @relation("ShowcaseProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_showcase_products__updated_by")
+
+  @@index([categoryId], map: "ix_showcase_products__category_id")
+  @@index([catalogProductId], map: "ix_showcase_products__catalog_product_id")
+  @@index([coverFileId], map: "ix_showcase_products__cover_file_id")
+  @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_showcase_products__name_th_trgm")
+  @@map("showcase_products")
+}
+
+model SemiDesign {
+  id               BigInt        @id(map: "pk_semi_designs") @default(autoincrement())
+  publicId         String        @unique(map: "ux_semi_designs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  catalogProductId BigInt        @map("catalog_product_id")
+  name             String
+  thumbnailFileId  BigInt?       @map("thumbnail_file_id")
+  status           CatalogStatus @default(draft)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?       @map("created_by")
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?       @map("updated_by")
+  rowVersion       Int           @default(1) @map("row_version")
+
+  catalogProduct CatalogProduct       @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_designs__catalog_product_id")
+  thumbnailFile  FileObject?          @relation("SemiDesignThumbnailFile", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_designs__thumbnail_file_id")
+  templates      SemiDesignTemplate[]
+  colours        SemiDesignColour[]
+  createdBy      User?                @relation("SemiDesignCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_designs__created_by")
+  updatedBy      User?                @relation("SemiDesignUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_designs__updated_by")
+
+  @@index([catalogProductId], map: "ix_semi_designs__catalog_product_id")
+  @@index([thumbnailFileId], map: "ix_semi_designs__thumbnail_file_id")
+  @@map("semi_designs")
+}
+
+/// `design_document_version_id` FK arrives with design documents (B4.1).
+model SemiDesignTemplate {
+  id                      BigInt        @id(map: "pk_semi_design_templates") @default(autoincrement())
+  publicId                String        @unique(map: "ux_semi_design_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  semiDesignId            BigInt        @map("semi_design_id")
+  standardSizeId          BigInt        @map("standard_size_id")
+  designDocumentVersionId BigInt?       @map("design_document_version_id")
+  thumbnailFileId         BigInt        @map("thumbnail_file_id")
+  status                  CatalogStatus @default(draft)
+  createdAt               DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById             BigInt?       @map("created_by")
+  updatedAt               DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById             BigInt?       @map("updated_by")
+  rowVersion              Int           @default(1) @map("row_version")
+
+  semiDesign    SemiDesign               @relation(fields: [semiDesignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__semi_design_id")
+  standardSize  StandardSize             @relation(fields: [standardSizeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__standard_size_id")
+  thumbnailFile FileObject               @relation("SemiDesignTemplateThumbnailFile", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__thumbnail_file_id")
+  fonts         SemiDesignTemplateFont[]
+  createdBy     User?                    @relation("SemiDesignTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__created_by")
+  updatedBy     User?                    @relation("SemiDesignTemplateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__updated_by")
+
+  @@index([semiDesignId], map: "ix_semi_design_templates__semi_design_id")
+  @@index([standardSizeId], map: "ix_semi_design_templates__standard_size_id")
+  @@index([thumbnailFileId], map: "ix_semi_design_templates__thumbnail_file_id")
+  @@index([designDocumentVersionId], map: "ix_semi_design_templates__design_document_version_id")
+  @@map("semi_design_templates")
+}
+
+model DesignFont {
+  id           BigInt        @id(map: "pk_design_fonts") @default(autoincrement())
+  publicId     String        @unique(map: "ux_design_fonts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  name         String
+  fileObjectId BigInt        @map("file_object_id")
+  licenceNote  String        @map("licence_note")
+  status       CatalogStatus @default(draft)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?       @map("created_by")
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById  BigInt?       @map("updated_by")
+  rowVersion   Int           @default(1) @map("row_version")
+
+  fileObject FileObject               @relation("DesignFontFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_fonts__file_object_id")
+  templates  SemiDesignTemplateFont[]
+  createdBy  User?                    @relation("DesignFontCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_fonts__created_by")
+  updatedBy  User?                    @relation("DesignFontUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_fonts__updated_by")
+
+  @@index([fileObjectId], map: "ix_design_fonts__file_object_id")
+  @@map("design_fonts")
+}
+
+model SemiDesignTemplateFont {
+  templateId  BigInt   @map("template_id")
+  fontId      BigInt   @map("font_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+
+  template  SemiDesignTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_template_fonts__template_id")
+  font      DesignFont         @relation(fields: [fontId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_template_fonts__font_id")
+  createdBy User?              @relation("SemiDesignTemplateFontCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_template_fonts__created_by")
+
+  @@id([templateId, fontId], map: "pk_semi_design_template_fonts")
+  @@index([fontId], map: "ix_semi_design_template_fonts__font_id")
+  @@map("semi_design_template_fonts")
+}
+
+model SemiDesignColour {
+  id           BigInt   @id(map: "pk_semi_design_colours") @default(autoincrement())
+  semiDesignId BigInt   @map("semi_design_id")
+  /// `#RRGGBB`.
+  hex          String   @db.Char(7)
+  sort         Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by")
+
+  semiDesign SemiDesign @relation(fields: [semiDesignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_colours__semi_design_id")
+  createdBy  User?      @relation("SemiDesignColourCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_colours__created_by")
+
+  @@unique([semiDesignId, hex], map: "ux_semi_design_colours__semi_design_id__hex")
+  @@map("semi_design_colours")
+}
+
+// ------------------------------------------------------------------------------------------------
+// CMS & SEO (soft delete on banners, home sections, articles, FAQs, videos — §1.6)
+// ------------------------------------------------------------------------------------------------
+
+model Banner {
+  id            BigInt         @id(map: "pk_banners") @default(autoincrement())
+  publicId      String         @unique(map: "ux_banners__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  position      BannerPosition
+  /// Staff-facing label and alt text.
+  title         String
+  desktopFileId BigInt         @map("desktop_file_id")
+  mobileFileId  BigInt?        @map("mobile_file_id")
+  targetUrl     String?        @map("target_url")
+  videoUrl      String?        @map("video_url")
+  validFrom     DateTime?      @map("valid_from") @db.Timestamptz(6)
+  validTo       DateTime?      @map("valid_to") @db.Timestamptz(6)
+  sort          Int            @default(0)
+  status        ContentStatus  @default(draft)
+  deletedAt     DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?        @map("created_by")
+  updatedAt     DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?        @map("updated_by")
+  rowVersion    Int            @default(1) @map("row_version")
+
+  desktopFile FileObject  @relation("BannerDesktopFile", fields: [desktopFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_banners__desktop_file_id")
+  mobileFile  FileObject? @relation("BannerMobileFile", fields: [mobileFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_banners__mobile_file_id")
+  createdBy   User?       @relation("BannerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_banners__created_by")
+  updatedBy   User?       @relation("BannerUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_banners__updated_by")
+
+  @@index([position, sort], map: "ix_banners__position__sort", where: raw("(deleted_at IS NULL)"))
+  @@index([desktopFileId], map: "ix_banners__desktop_file_id")
+  @@index([mobileFileId], map: "ix_banners__mobile_file_id")
+  @@map("banners")
+}
+
+model HomeSection {
+  id          BigInt          @id(map: "pk_home_sections") @default(autoincrement())
+  publicId    String          @unique(map: "ux_home_sections__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  slug        String
+  titleTh     String?         @map("title_th")
+  titleEn     String?         @map("title_en")
+  kind        HomeSectionKind
+  config      Json            @default("{}")
+  sort        Int             @default(0)
+  status      ContentStatus   @default(draft)
+  deletedAt   DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?         @map("created_by")
+  updatedAt   DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?         @map("updated_by")
+  rowVersion  Int             @default(1) @map("row_version")
+
+  createdBy User? @relation("HomeSectionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_sections__created_by")
+  updatedBy User? @relation("HomeSectionUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_home_sections__updated_by")
+
+  @@unique([slug], map: "ux_home_sections__slug", where: raw("(deleted_at IS NULL)"))
+  @@map("home_sections")
+}
+
+model ArticleCategory {
+  id          BigInt        @id(map: "pk_article_categories") @default(autoincrement())
+  publicId    String        @unique(map: "ux_article_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  slug        String        @unique(map: "ux_article_categories__slug")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  seoPageId   BigInt?       @map("seo_page_id")
+  sort        Int           @default(0)
+  status      ContentStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  seoPage   SeoPage?              @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_article_categories__seo_page_id")
+  articles  ArticleCategoryLink[]
+  createdBy User?                 @relation("ArticleCategoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_article_categories__created_by")
+  updatedBy User?                 @relation("ArticleCategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_article_categories__updated_by")
+
+  @@index([seoPageId], map: "ix_article_categories__seo_page_id")
+  @@map("article_categories")
+}
+
+model Article {
+  id                BigInt        @id(map: "pk_articles") @default(autoincrement())
+  publicId          String        @unique(map: "ux_articles__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  slug              String
+  titleTh           String        @map("title_th")
+  titleEn           String?       @map("title_en")
+  excerptTh         String?       @map("excerpt_th")
+  excerptEn         String?       @map("excerpt_en")
+  coverFileId       BigInt?       @map("cover_file_id")
+  /// Rich text `{ th, en }` (versioned JSON schema, §1.3).
+  body              Json          @default("{}")
+  bodySchemaVersion Int           @default(1) @map("body_schema_version") @db.SmallInt
+  status            ContentStatus @default(draft)
+  publishedAt       DateTime?     @map("published_at") @db.Timestamptz(6)
+  seoPageId         BigInt?       @map("seo_page_id")
+  deletedAt         DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?       @map("created_by")
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById       BigInt?       @map("updated_by")
+  rowVersion        Int           @default(1) @map("row_version")
+
+  coverFile  FileObject?           @relation("ArticleCoverFile", fields: [coverFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_articles__cover_file_id")
+  seoPage    SeoPage?              @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_articles__seo_page_id")
+  categories ArticleCategoryLink[]
+  createdBy  User?                 @relation("ArticleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_articles__created_by")
+  updatedBy  User?                 @relation("ArticleUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_articles__updated_by")
+
+  @@unique([slug], map: "ux_articles__slug", where: raw("(deleted_at IS NULL)"))
+  @@index([status, publishedAt(sort: Desc)], map: "ix_articles__status__published_at")
+  @@index([coverFileId], map: "ix_articles__cover_file_id")
+  @@index([seoPageId], map: "ix_articles__seo_page_id")
+  @@index([titleTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_articles__title_th_trgm")
+  @@map("articles")
+}
+
+model ArticleCategoryLink {
+  articleId   BigInt   @map("article_id")
+  categoryId  BigInt   @map("category_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+
+  article   Article         @relation(fields: [articleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_article_category_links__article_id")
+  category  ArticleCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_article_category_links__category_id")
+  createdBy User?           @relation("ArticleCategoryLinkCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_article_category_links__created_by")
+
+  @@id([articleId, categoryId], map: "pk_article_category_links")
+  @@index([categoryId], map: "ix_article_category_links__category_id")
+  @@map("article_category_links")
+}
+
+model FaqCategory {
+  id          BigInt        @id(map: "pk_faq_categories") @default(autoincrement())
+  publicId    String        @unique(map: "ux_faq_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_faq_categories__code")
+  nameTh      String        @map("name_th")
+  nameEn      String        @map("name_en")
+  sort        Int           @default(0)
+  status      ContentStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  faqs      Faq[]
+  createdBy User? @relation("FaqCategoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faq_categories__created_by")
+  updatedBy User? @relation("FaqCategoryUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faq_categories__updated_by")
+
+  @@map("faq_categories")
+}
+
+model Faq {
+  id          BigInt        @id(map: "pk_faqs") @default(autoincrement())
+  publicId    String        @unique(map: "ux_faqs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  categoryId  BigInt?       @map("category_id")
+  questionTh  String        @map("question_th")
+  questionEn  String?       @map("question_en")
+  answerTh    String        @map("answer_th")
+  answerEn    String?       @map("answer_en")
+  sort        Int           @default(0)
+  status      ContentStatus @default(draft)
+  deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  category  FaqCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__category_id")
+  createdBy User?        @relation("FaqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__created_by")
+  updatedBy User?        @relation("FaqUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__updated_by")
+
+  @@index([categoryId, sort], map: "ix_faqs__category_id__sort")
+  @@map("faqs")
+}
+
+/// SEO meta per page (legacy `sitemaps`).
+model SeoPage {
+  id            BigInt   @id(map: "pk_seo_pages") @default(autoincrement())
+  publicId      String   @unique(map: "ux_seo_pages__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  /// Route or slug.
+  pageKey       String   @unique(map: "ux_seo_pages__page_key") @map("page_key")
+  titleTh       String   @map("title_th")
+  titleEn       String?  @map("title_en")
+  descriptionTh String?  @map("description_th")
+  descriptionEn String?  @map("description_en")
+  keywords      String?
+  h1            String?
+  h2            String?
+  canonicalUrl  String?  @map("canonical_url")
+  ogImageFileId BigInt?  @map("og_image_file_id")
+  noindex       Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?  @map("updated_by")
+  rowVersion    Int      @default(1) @map("row_version")
+
+  ogImageFile       FileObject?       @relation("SeoPageOgImageFile", fields: [ogImageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_seo_pages__og_image_file_id")
+  catalogProducts   CatalogProduct[]
+  stockProducts     StockProduct[]
+  articles          Article[]
+  articleCategories ArticleCategory[]
+  createdBy         User?             @relation("SeoPageCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_seo_pages__created_by")
+  updatedBy         User?             @relation("SeoPageUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_seo_pages__updated_by")
+
+  @@index([ogImageFileId], map: "ix_seo_pages__og_image_file_id")
+  @@map("seo_pages")
+}
+
+/// Polymorphic: `subject_id` points at the table named by `subject_type` (trigger).
+model Video {
+  id          BigInt        @id(map: "pk_videos") @default(autoincrement())
+  publicId    String        @unique(map: "ux_videos__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  provider    VideoProvider
+  url         String
+  title       String?
+  subjectType VideoSubject  @map("subject_type")
+  subjectId   BigInt        @map("subject_id")
+  sort        Int           @default(0)
+  deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  createdBy User? @relation("VideoCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_videos__created_by")
+  updatedBy User? @relation("VideoUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_videos__updated_by")
+
+  @@index([subjectType, subjectId, sort], map: "ix_videos__subject", where: raw("(deleted_at IS NULL)"))
+  @@map("videos")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Geography (admin-maintained reference data, D-161 / D-170 — nothing seeded from outside)
+// ------------------------------------------------------------------------------------------------
+
+model GeoProvince {
+  id          BigInt   @id(map: "pk_geo_provinces") @default(autoincrement())
+  publicId    String   @unique(map: "ux_geo_provinces__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String   @unique(map: "ux_geo_provinces__code")
+  nameTh      String   @map("name_th")
+  nameEn      String   @map("name_en")
+  region      String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  districts GeoDistrict[]
+  createdBy User?         @relation("GeoProvinceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_provinces__created_by")
+  updatedBy User?         @relation("GeoProvinceUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_provinces__updated_by")
+
+  @@map("geo_provinces")
+}
+
+model GeoDistrict {
+  id          BigInt   @id(map: "pk_geo_districts") @default(autoincrement())
+  publicId    String   @unique(map: "ux_geo_districts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  provinceId  BigInt   @map("province_id")
+  code        String   @unique(map: "ux_geo_districts__code")
+  nameTh      String   @map("name_th")
+  nameEn      String   @map("name_en")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  province     GeoProvince      @relation(fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_districts__province_id")
+  subdistricts GeoSubdistrict[]
+  createdBy    User?            @relation("GeoDistrictCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_districts__created_by")
+  updatedBy    User?            @relation("GeoDistrictUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_districts__updated_by")
+
+  @@index([provinceId], map: "ix_geo_districts__province_id")
+  @@map("geo_districts")
+}
+
+model GeoSubdistrict {
+  id          BigInt   @id(map: "pk_geo_subdistricts") @default(autoincrement())
+  publicId    String   @unique(map: "ux_geo_subdistricts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  districtId  BigInt   @map("district_id")
+  code        String   @unique(map: "ux_geo_subdistricts__code")
+  nameTh      String   @map("name_th")
+  nameEn      String   @map("name_en")
+  postcode    String   @db.Char(5)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  district  GeoDistrict @relation(fields: [districtId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_subdistricts__district_id")
+  createdBy User?       @relation("GeoSubdistrictCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_subdistricts__created_by")
+  updatedBy User?       @relation("GeoSubdistrictUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_subdistricts__updated_by")
+
+  @@index([districtId], map: "ix_geo_subdistricts__district_id")
+  @@index([postcode], map: "ix_geo_subdistricts__postcode")
+  @@map("geo_subdistricts")
+}

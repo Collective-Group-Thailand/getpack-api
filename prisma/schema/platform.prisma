@@ -659,6 +659,19 @@ model FileObject {
   thumbnails  FileObject[] @relation("FileObjectThumbnail")
   attachments Attachment[]
 
+  // --- Catalogue (generated back-relations)
+  catalogProductImages         CatalogProductImage[] @relation("CatalogProductImageFile")
+  stockProductImages           StockProductImage[]   @relation("StockProductImageFile")
+  showcaseProductsCover        ShowcaseProduct[]     @relation("ShowcaseProductCoverFile")
+  semiDesignsThumbnail         SemiDesign[]          @relation("SemiDesignThumbnailFile")
+  semiDesignTemplatesThumbnail SemiDesignTemplate[]  @relation("SemiDesignTemplateThumbnailFile")
+  designFonts                  DesignFont[]          @relation("DesignFontFile")
+  bannersDesktop               Banner[]              @relation("BannerDesktopFile")
+  bannersMobile                Banner[]              @relation("BannerMobileFile")
+  articlesCover                Article[]             @relation("ArticleCoverFile")
+  seoPagesOgImage              SeoPage[]             @relation("SeoPageOgImageFile")
+  // --- end Catalogue
+
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
   @@index([ownerUserId], map: "ix_file_objects__owner_user_id")
@@ -1069,7 +1082,7 @@ model BusinessCalendarDay {
   @@map("business_calendar_days")
 }
 
-/// Empty until an AI feature ships (ADR-0001); its HNSW index ships with that feature. subject_id FK is added with the catalogue (B2.1).
+/// Empty until an AI feature ships (ADR-0001); its HNSW index ships with that feature. subject = catalogue product (B2.1).
 model ProductEmbedding {
   id           BigInt                      @id(map: "pk_product_embeddings") @default(autoincrement())
   subjectId    BigInt                      @map("subject_id")
@@ -1077,6 +1090,8 @@ model ProductEmbedding {
   modelVersion String                      @map("model_version")
   embedding    Unsupported("vector(1536)")
   createdAt    DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  subject CatalogProduct @relation(fields: [subjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_product_embeddings__subject_id")
 
   @@unique([subjectId, model, modelVersion], map: "ux_product_embeddings__subject__model__version")
   @@map("product_embeddings")
