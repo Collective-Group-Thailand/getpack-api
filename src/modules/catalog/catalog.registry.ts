@@ -1,7 +1,24 @@
 import { type Type } from '@nestjs/common';
 
+import {
+  ArticleActionsController,
+  HomeSectionActionsController,
+  SemiDesignActionsController,
+  SemiDesignTemplateActionsController,
+} from './cms/cms.controller';
+import {
+  articleCategories,
+  articles,
+  banners,
+  faqCategories,
+  faqs,
+  homeSections,
+  seoPages,
+  videos,
+} from './cms/cms.resources';
 import { catalogCrudController } from './crud/catalog-crud.controller';
 import { type AnyCatalogResource } from './crud/catalog-resource';
+import { geoDistricts, geoProvinces, geoSubdistricts } from './geography/geography.resources';
 import { CatalogImportsController } from './imports/imports.controller';
 import {
   assemblies,
@@ -35,6 +52,13 @@ import {
   standardSizes,
   subPatterns,
 } from './product-structure/product-structure.resources';
+import {
+  designFonts,
+  semiDesigns,
+  semiDesignTemplates,
+  showcaseCategories,
+  showcaseProducts,
+} from './showcase/showcase.resources';
 import { StockProductRelationsController } from './stock/stock.controller';
 import { stockAttributeValues, stockProducts } from './stock/stock.resources';
 
@@ -65,6 +89,22 @@ export const CATALOG_RESOURCES: readonly AnyCatalogResource[] = [
   specTitles,
   stockAttributeValues,
   stockProducts,
+  showcaseCategories,
+  showcaseProducts,
+  semiDesigns,
+  semiDesignTemplates,
+  designFonts,
+  banners,
+  homeSections,
+  articleCategories,
+  articles,
+  faqCategories,
+  faqs,
+  seoPages,
+  videos,
+  geoProvinces,
+  geoDistricts,
+  geoSubdistricts,
 ];
 
 /**
@@ -77,5 +117,9 @@ export const CATALOG_ADMIN_CONTROLLERS: Type<unknown>[] = [
   CatalogProductRelationsController,
   PatternRelationsController,
   StockProductRelationsController,
+  HomeSectionActionsController,
+  ArticleActionsController,
+  SemiDesignActionsController,
+  SemiDesignTemplateActionsController,
   ...CATALOG_RESOURCES.map(catalogCrudController),
 ];

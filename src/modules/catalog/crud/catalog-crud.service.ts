@@ -52,8 +52,8 @@ export class CatalogCrudService {
     const where = {
       AND: [
         resource.baseWhere ?? {},
-        resource.where?.(query) ?? {},
-        q
+        (await resource.where?.(query, this.prisma)) ?? {},
+        q && resource.search.length > 0
           ? {
               OR: resource.search.map((field: string) => ({ [field]: { contains: q, mode: 'insensitive' } })),
             }
@@ -110,7 +110,7 @@ export class CatalogCrudService {
     return this.write(resource, async (tx) => {
       const current = await this.get(resource, publicId, tx);
       assertIfMatch(ifMatch, rowEtag(current));
-      const data: object = await resource.updateData(input, new RefResolver(tx));
+      const data: object = await resource.updateData(input, new RefResolver(tx), current);
       const row = (await resource.delegate(tx).update({
         where: { id: current.id },
         data: { ...data, updatedById: actor.userId, rowVersion: { increment: 1 } },
@@ -118,6 +118,32 @@ export class CatalogCrudService {
       })) as CrudRow;
       await this.record(tx, resource, row, 'updated', { fields: sentKeys(input) });
       return row;
+    });
+  }
+
+  /**
+   * Changes child rows of a parent (a collection replace, an image) in one transaction: checks the
+   * parent's ETag, runs `work`, bumps the parent's `row_version`, records audit + event with the
+   * changed `fields`, and returns the reloaded parent.
+   */
+  async mutateChildren(
+    resource: AnyCatalogResource,
+    actor: UserActor,
+    publicId: string,
+    ifMatch: string | undefined,
+    fields: string[],
+    work: (tx: Tx, parent: CrudRow) => Promise<void>,
+  ): Promise<CrudRow> {
+    return this.write(resource, async (tx) => {
+      const parent = await this.get(resource, publicId, tx);
+      assertIfMatch(ifMatch, rowEtag(parent));
+      await work(tx, parent);
+      await resource.delegate(tx).update({
+        where: { id: parent.id },
+        data: { updatedById: actor.userId, rowVersion: { increment: 1 } },
+      });
+      await this.record(tx, resource, parent, 'updated', { fields });
+      return this.get(resource, publicId, tx);
     });
   }
 

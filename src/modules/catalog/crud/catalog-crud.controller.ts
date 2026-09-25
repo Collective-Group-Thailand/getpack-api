@@ -4,6 +4,7 @@ import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import {
+  ApiAuthErrors,
   ApiConcurrency,
   ApiEndpoint,
   ApiEtag,
@@ -168,7 +169,7 @@ export function catalogCrudController(r: AnyCatalogResource): Type<unknown> {
 
   let controller: Type<unknown> = CrudController;
   if (r.softDelete) {
-    @ApiSurface('admin', r.operation)
+    // Tags and security are inherited from the base class (applying @ApiSurface again would duplicate them).
     @Controller(`${r.area}/${r.path}`)
     class SoftDeleteController extends CrudController {
       @Delete(':id')
@@ -184,6 +185,7 @@ export function catalogCrudController(r: AnyCatalogResource): Type<unknown> {
         implements: decision,
       })
       @ApiConcurrency()
+      @ApiAuthErrors()
       @ApiSuccess(204, { description: 'Deleted' })
       @ApiStandardErrors('http.not_found', 'validation.failed')
       async remove(

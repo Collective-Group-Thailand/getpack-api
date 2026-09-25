@@ -39,6 +39,23 @@ export const API_TAGS: Record<string, string> = {
   'partner.me': 'The signed-in factory user, their factories and device PINs.',
 
   // --- B2.1 catalogue & CMS
+  'admin.catalogShowcaseCategories': 'Categories of showcase products (D-005).',
+  'admin.catalogShowcaseProducts': 'Pre-configured showcase products ("Product Groups", D-005, D-100).',
+  'admin.catalogSemiDesigns': 'Semi-custom designs of a catalogue product with their palette (D-005).',
+  'admin.catalogSemiDesignTemplates': 'Semi-design templates per standard size, with fonts (D-005).',
+  'admin.catalogDesignFonts': 'Fonts offered by semi-design templates, with their licence (D-005).',
+  'admin.cmsBanners': 'Storefront banners by position and validity window (D-005).',
+  'admin.cmsHomeSections': 'Home-page sections and their order (D-005).',
+  'admin.cmsArticleCategories': 'Article categories (D-005).',
+  'admin.cmsArticles': 'Articles with rich text, cover and categories (D-005).',
+  'admin.cmsFaqCategories': 'FAQ categories (D-005).',
+  'admin.cmsFaqs': 'Frequently asked questions (D-005).',
+  'admin.cmsSeoPages': 'SEO meta per route or slug (D-005).',
+  'admin.cmsVideos': 'Videos attached to products and articles (D-005).',
+  'admin.geographyProvinces': 'Provinces — admin-maintained reference data (D-161, D-170).',
+  'admin.geographyDistricts': 'Districts — admin-maintained reference data (D-161, D-170).',
+  'admin.geographySubdistricts':
+    'Subdistricts with postcodes — admin-maintained reference data (D-161, D-170).',
   'admin.catalogImports':
     'Excel import (preview → confirm) and export of the large catalogue tables and geography (D-005, D-170).',
   'admin.catalogProductCategories': 'Packio reporting product categories (replace legacy PH1–PH6, D-030).',

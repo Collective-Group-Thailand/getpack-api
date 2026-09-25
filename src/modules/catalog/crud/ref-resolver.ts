@@ -49,10 +49,10 @@ interface IdLookup {
  * a 422 on the field that carried it (contract §3: ids are uuids; internal ids never leave the API).
  */
 export class RefResolver {
-  constructor(private readonly tx: Tx) {}
+  constructor(readonly db: Tx) {}
 
   async id(model: RefModel, publicId: string, path: string): Promise<bigint> {
-    const delegate = MODELS[model](this.tx) as unknown as IdLookup;
+    const delegate = MODELS[model](this.db) as unknown as IdLookup;
     const row = await delegate.findFirst({ where: { publicId }, select: { id: true } });
     if (!row) {
       throw new DomainException('validation.failed', {
@@ -74,7 +74,7 @@ export class RefResolver {
    * scan says `clean` (B1.3 files), so a pending scan never blocks editing.
    */
   async file(publicId: string, path: string): Promise<bigint> {
-    const file = await this.tx.fileObject.findFirst({
+    const file = await this.db.fileObject.findFirst({
       where: { publicId },
       select: { id: true, uploadStatus: true, scanStatus: true },
     });

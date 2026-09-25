@@ -92,7 +92,13 @@ export function TextField(o: FieldOptions & { max?: number; nullable?: boolean }
 
 export function UrlField(o: FieldOptions & { nullable?: boolean }) {
   return applyDecorators(
-    doc({ ...o, type: String, nullable: o.nullable, format: 'uri' }),
+    doc({
+      ...o,
+      type: String,
+      nullable: o.nullable,
+      pattern: '^(https://|/)',
+      description: o.description ?? 'An https:// URL or a site path',
+    }),
     ...maybe(o.optional || o.nullable),
     IsString(),
     MaxLength(2000),

@@ -70,9 +70,10 @@ export interface CatalogResource<
   context?: (rows: Row[], db: Tx) => Promise<unknown>;
   /** Prisma `data` for create; FK public ids resolved through `refs` (422 on unknown ids). */
   createData: (input: Create, refs: RefResolver) => Promise<object> | object;
-  updateData: (input: Update, refs: RefResolver) => Promise<object> | object;
-  /** Filters of the list query (besides `q`). */
-  where?: (query: Query) => object;
+  /** Prisma `data` for update; `current` is the row being updated (e.g. first publication date). */
+  updateData: (input: Update, refs: RefResolver, current: Row) => Promise<object> | object;
+  /** Filters of the list query (besides `q`); may look ids up (e.g. a polymorphic subject). */
+  where?: (query: Query, db: Tx) => object | Promise<object>;
   /** Columns searched by `q` (ILIKE, backed by trigram indexes where the table is large). */
   search: string[];
   /** Allowed `sort` values → Prisma field. The first entry is the default. */
