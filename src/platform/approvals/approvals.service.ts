@@ -305,26 +305,29 @@ export class ApprovalsService {
 
   /** Only the requester withdraws, while the request is pending. */
   async withdraw(actor: UserActor, requestPublicId: string, reason: string): Promise<ApprovalDetail> {
-    await this.prisma.withTx(async (tx) => {
-      const request = await this.lock(tx, requestPublicId);
-      if (request.requesterUserId !== actor.userId) throw new DomainException('approval.not_authorised');
-      if (request.status !== 'pending') throw new DomainException('approval.not_pending');
-      const now = new Date();
-      await tx.approvalAction.create({
-        data: { requestId: request.id, action: 'withdraw', actorUserId: actor.userId, comment: reason },
-      });
-      await tx.approvalRequestStep.updateMany({
-        where: { requestId: request.id, status: 'pending' },
-        data: { status: 'skipped', completedAt: now },
-      });
-      const updated = await tx.approvalRequest.update({
-        where: { id: request.id },
-        data: { status: 'withdrawn', currentStepNo: null, decidedAt: now, rowVersion: { increment: 1 } },
-      });
-      const policyKey = (await tx.approvalPolicy.findUniqueOrThrow({ where: { id: request.policyId } })).key;
-      await this.recordDecision(tx, actor, updated, policyKey, 'approval.withdrawn', { reason });
-    });
+    await this.prisma.withTx((tx) => this.withdrawInTx(tx, actor, requestPublicId, reason));
     return this.get(requestPublicId);
+  }
+
+  /** `withdraw` inside the caller's transaction, when the subject is withdrawn with it. */
+  async withdrawInTx(tx: Tx, actor: UserActor, requestPublicId: string, reason: string): Promise<void> {
+    const request = await this.lock(tx, requestPublicId);
+    if (request.requesterUserId !== actor.userId) throw new DomainException('approval.not_authorised');
+    if (request.status !== 'pending') throw new DomainException('approval.not_pending');
+    const now = new Date();
+    await tx.approvalAction.create({
+      data: { requestId: request.id, action: 'withdraw', actorUserId: actor.userId, comment: reason },
+    });
+    await tx.approvalRequestStep.updateMany({
+      where: { requestId: request.id, status: 'pending' },
+      data: { status: 'skipped', completedAt: now },
+    });
+    const updated = await tx.approvalRequest.update({
+      where: { id: request.id },
+      data: { status: 'withdrawn', currentStepNo: null, decidedAt: now, rowVersion: { increment: 1 } },
+    });
+    const policyKey = (await tx.approvalPolicy.findUniqueOrThrow({ where: { id: request.policyId } })).key;
+    await this.recordDecision(tx, actor, updated, policyKey, 'approval.withdrawn', { reason });
   }
 
   async get(requestPublicId: string): Promise<ApprovalDetail> {

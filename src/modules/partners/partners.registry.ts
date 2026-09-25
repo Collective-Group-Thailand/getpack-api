@@ -12,6 +12,12 @@ import {
   AgreementTemplatesController,
   PartnerFactoryOperationsController,
 } from './operations.controller';
+import {
+  AdminPriceListsController,
+  AdminPriceProposalsController,
+  PartnerPriceListsController,
+  PartnerPriceProposalsController,
+} from './pricing/pricing.controller';
 import { ZonePostcodesController, zones, zoneSchemes } from './zones/zones';
 
 /** `/v1/admin/*` controllers of the partners context. */
@@ -25,6 +31,8 @@ export const PARTNERS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   factorySubresourcesController('admin', { read: 'partners.read', manage: 'partners.manage' }),
   bankAccountsController('admin', { read: 'partners.read', propose: 'partners.manage' }),
   VendorBankAccountVerificationController,
+  AdminPriceListsController,
+  AdminPriceProposalsController,
 ];
 
 /** `/v1/partner/*` controllers of the partners context (own factory only, D-044). */
@@ -39,4 +47,6 @@ export const PARTNERS_PARTNER_CONTROLLERS: Type<unknown>[] = [
     read: 'factory_profile.read',
     propose: 'factory_bank_account.propose',
   }),
+  PartnerPriceListsController,
+  PartnerPriceProposalsController,
 ];

@@ -355,6 +355,50 @@
     "not_capable": {
       "title": "Factory not capable",
       "detail": "Record the factory's capability for this product type first."
+    },
+    "pricing_mode_missing": {
+      "title": "No pricing mode yet",
+      "detail": "Set the factory's price-ownership mode before proposing prices (D-042)."
+    },
+    "wrong_pricing_mode": {
+      "title": "Not possible in this pricing mode",
+      "detail": "This factory works on a Packio rate card: it accepts or negotiates the card instead of proposing its own list (D-042)."
+    },
+    "no_price_list_tier": {
+      "title": "Tier holds no price list",
+      "detail": "Only tiers A and B hold price lists; tier C is quoted on request (D-043)."
+    },
+    "proposal_open": {
+      "title": "A proposal is already open",
+      "detail": "This price list already has an open proposal; finish or withdraw it first."
+    },
+    "proposal_closed": {
+      "title": "Proposal not in the right state",
+      "detail": "The proposal is no longer in a state that allows this; reload it."
+    },
+    "proposal_empty": {
+      "title": "Proposal has no lines",
+      "detail": "Add at least one price line before submitting."
+    },
+    "proposal_other_side": {
+      "title": "Proposal belongs to the other side",
+      "detail": "Only the side that drafted a proposal edits, submits or withdraws it."
+    },
+    "line_not_decidable": {
+      "title": "Line cannot be decided now",
+      "detail": "This price line is already settled or is not waiting for your answer."
+    },
+    "maker_checker": {
+      "title": "Maker cannot check",
+      "detail": "Counters on a rate card are decided by someone other than its drafter."
+    },
+    "version_not_awaiting": {
+      "title": "Version is not awaiting the factory",
+      "detail": "This version is not waiting for the factory's acceptance or sign-off."
+    },
+    "price_line_conflict": {
+      "title": "Price line conflict",
+      "detail": "A line no longer matches the version the proposal was based on; draft a new proposal."
     }
   }
 }

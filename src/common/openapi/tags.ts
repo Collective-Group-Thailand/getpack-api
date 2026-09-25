@@ -47,6 +47,14 @@ export const API_TAGS: Record<string, string> = {
     'Versioned partner agreement texts (D-011; confidentiality both directions, D-044).',
   'admin.shippingZoneSchemes': 'Zone schemes: customer zones and one per carrier (D-013, D-114).',
   'admin.shippingZones': 'Zones and their postcodes (D-013, D-114).',
+  'admin.priceLists':
+    'Factory price lists: versions, lines (every read audited, D-044) and the supported price components (D-040).',
+  'admin.priceProposals':
+    'Price proposals and platform rate cards: review queue, line decisions and counters (D-040, D-042, D-043).',
+  'partner.priceLists':
+    'My price lists: versions, lines and sign-off of assisted entry (own factory only, D-044).',
+  'partner.priceProposals':
+    'My price proposals (factory price-list mode) and Packio rate cards to accept or negotiate (D-042).',
   'admin.vendorBankAccounts':
     'Verification calls of vendor bank-account changes (accounting-design.md §8, D-169).',
 

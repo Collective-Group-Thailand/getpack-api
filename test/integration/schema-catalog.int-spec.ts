@@ -258,6 +258,7 @@ const INDEXES = [
   'ix_price_list_versions__resolution',
   'ux_factory_contacts__one_primary',
   'ux_vendor_bank_accounts__one_active',
+  'ux_price_proposals__one_open',
 ];
 
 const EXPRESSION_INDEXES = [

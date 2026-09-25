@@ -6,6 +6,7 @@ import {
   startMigratedDatabase,
   stopMigratedDatabase,
 } from '../support/database';
+import { PL_TEST_PRICES_SQL } from '../support/price-test-component';
 
 /** Database-level rules of the partners context (schema-design §3.4, D-041, D-042, §8 bank accounts). */
 describe('partners schema behaviour (PostgreSQL 18)', () => {
@@ -264,5 +265,70 @@ describe('partners schema behaviour (PostgreSQL 18)', () => {
         );
       expect(await override('2026-09-29')).toBe(SQLSTATE.checkViolation); // a Tuesday
       expect(await override('2026-09-28')).toBeNull(); // a Monday
+    }));
+
+  it('freezes component rows with their version and keeps one open proposal per price list (A-7, D-040)', () =>
+    inRollback(db.client, async () => {
+      for (const sql of PL_TEST_PRICES_SQL) await db.client.query(sql);
+      const { factory: f } = await factory();
+      const category = await id(
+        "INSERT INTO product_categories (code, name_th, name_en) VALUES ($1, 'x', 'x')",
+        [`c${++seq}`],
+      );
+      const type = await id(
+        "INSERT INTO product_types (code, category_id, name_th, name_en) VALUES ($1, $2, 'x', 'x')",
+        [`t${++seq}`, category],
+      );
+      const material = await id(
+        "INSERT INTO materials (code, kind, name_th, name_en) VALUES ($1, 'paper', 'x', 'x')",
+        [`m${++seq}`],
+      );
+      const list = await id('INSERT INTO price_lists (factory_id, product_type_id) VALUES ($1, $2)', [
+        f,
+        type,
+      ]);
+      const version = await id(
+        `INSERT INTO price_list_versions (price_list_id, version_no, origin, effective_from, reason)
+         VALUES ($1, 1, 'factory_proposal', now(), 'v1')`,
+        [list],
+      );
+      const insert = (v: string, key: string) =>
+        sqlState(
+          db.client,
+          'INSERT INTO pl_test_prices (price_list_version_id, line_key, material_id, qty_from, rate) VALUES ($1, $2, $3, 1, 5)',
+          [v, key, material],
+        );
+      expect(await insert(version, 'a')).toBeNull(); // draft: writable
+      await db.client.query(
+        "UPDATE price_list_versions SET status = 'approved', decided_at = now() WHERE id = $1",
+        [version],
+      );
+      expect(await insert(version, 'b')).toBe(SQLSTATE.restrictViolation);
+      expect(
+        await sqlState(db.client, 'UPDATE pl_test_prices SET rate = 6 WHERE price_list_version_id = $1', [
+          version,
+        ]),
+      ).toBe(SQLSTATE.restrictViolation);
+      expect(
+        await sqlState(db.client, 'DELETE FROM pl_test_prices WHERE price_list_version_id = $1', [version]),
+      ).toBe(SQLSTATE.restrictViolation);
+
+      const pending = await id(
+        `INSERT INTO price_list_versions (price_list_id, version_no, status, origin, effective_from, reason)
+         VALUES ($1, 2, 'pending_acceptance', 'platform_rate_card', now(), 'Rate card')`,
+        [list],
+      );
+      expect(await insert(pending, 'a')).toBeNull(); // a rate card under negotiation is still writable
+
+      const proposal = (status: string) =>
+        sqlState(
+          db.client,
+          `INSERT INTO price_proposals (price_list_id, direction, status, proposed_effective_from)
+           VALUES ($1, 'factory_to_packio', $2::proposal_status, now())`,
+          [list, status],
+        );
+      expect(await proposal('draft')).toBeNull();
+      expect(await proposal('submitted')).toBe(SQLSTATE.uniqueViolation);
+      expect(await proposal('approved')).toBeNull(); // closed proposals do not count
     }));
 });

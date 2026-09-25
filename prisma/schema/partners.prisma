@@ -1063,6 +1063,8 @@ model PriceProposal {
   createdBy        User?                   @relation("PriceProposalCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__created_by")
   updatedBy        User?                   @relation("PriceProposalUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_proposals__updated_by")
 
+  /// One open proposal per price list at a time, so every proposal applies to the version it was based on.
+  @@unique([priceListId], map: "ux_price_proposals__one_open", where: raw("(status = ANY (ARRAY['draft'::proposal_status, 'submitted'::proposal_status, 'under_review'::proposal_status, 'countered'::proposal_status]))"))
   @@index([priceListId, status], map: "ix_price_proposals__price_list_id__status")
   @@index([status, submittedAt], map: "ix_price_proposals__status__submitted_at")
   @@index([baseVersionId], map: "ix_price_proposals__base_version_id")

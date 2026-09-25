@@ -10,6 +10,11 @@ import { ConfigurationService } from './configuration/configuration.service';
 import { FactoriesService } from './factories/factories.service';
 import { FactoryAccess } from './factories/factory-access';
 import { FactoryScopeResolver } from './factory-scope.resolver';
+import { PriceComponentRegistry } from './pricing/price-component.registry';
+import { PriceListBuilder } from './pricing/price-list-builder';
+import { PriceListsService } from './pricing/price-lists.service';
+import { PriceProposalRecorder } from './pricing/price-proposal-recorder';
+import { PriceProposalsService } from './pricing/price-proposals.service';
 import { SiteVisitsService } from './site-visits/site-visits.service';
 
 const SERVICES = [
@@ -21,6 +26,11 @@ const SERVICES = [
   CapacityService,
   AgreementsService,
   SiteVisitsService,
+  PriceComponentRegistry,
+  PriceListBuilder,
+  PriceProposalRecorder,
+  PriceListsService,
+  PriceProposalsService,
   FieldEncryption,
   LookupHasher,
 ];
