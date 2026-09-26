@@ -5,7 +5,8 @@ import { PricingError } from './request';
  * Packio's sell side on top of a factory buy price (legacy `Calculator::SaleMargin`,
  * `app/Models/Calculator.php:223-449`, called from `FoldingCalculator::calculate:1400-1455`). The
  * margin tiers, fix cost and design fees are Packio's `sell_margin_tables` (D-063), VAT the dated
- * `vat_standard` rate. Customer prices include VAT, as legacy; shipping arrives with B2.4 (D-013).
+ * `vat_standard` rate. Customer prices include VAT, as legacy; shipping is its own quote line
+ * (B2.4, D-013: `ShippingQuoteService`), so `shippingCost` stays 0 on this path.
  */
 
 export interface SellMarginLine {

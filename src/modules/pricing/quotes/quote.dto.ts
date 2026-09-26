@@ -1,4 +1,5 @@
 import { BoolField, DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
+import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -239,7 +240,7 @@ export class CalculateQuoteDto {
   @ApiPropertyOptional({
     example: '10110',
     pattern: '^[0-9]{5}$',
-    description: 'Delivery postcode (shipping arrives with B2.4)',
+    description: 'Delivery postcode: prices shipping on the customer rate card (D-013)',
   })
   @IsOptional()
   @IsString()
@@ -262,7 +263,7 @@ export class QuoteStepDto {
   @ApiProperty({
     nullable: true,
     example: null,
-    enum: ['no_price_path', 'not_priceable', 'capacity_unavailable'],
+    enum: ['no_price_path', 'not_priceable', 'capacity_unavailable', 'delivery_unavailable'],
     enumName: 'QuoteNoPriceReason',
     description: 'Why there is no instant price',
   })
@@ -272,7 +273,7 @@ export class QuoteStepDto {
     type: String,
     nullable: true,
     example: '13.38',
-    description: 'Per piece incl. VAT and shipping',
+    description: 'Per piece incl. VAT, excluding shipping (its own line, D-013)',
   })
   unitPrice!: string | null;
 
@@ -288,10 +289,16 @@ export class QuoteStepDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    example: '0.00',
-    description: 'Shipping incl. VAT (0 until B2.4)',
+    example: '128.40',
+    description: 'Shipping incl. VAT, its own line (D-013); null while not priced',
   })
   shippingAmount!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '120.00', description: 'Shipping before VAT' })
+  shippingNetAmount!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '8.40', description: 'VAT on shipping' })
+  shippingVatAmount!: string | null;
 
   @ApiProperty({
     type: String,
@@ -318,6 +325,15 @@ export class QuoteStepDto {
 
   @ApiProperty({
     type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-10-10',
+    description: 'Ship date plus the zone’s extra lead days or the carrier’s transit days, when known',
+  })
+  earliestDeliveryDate!: string | null;
+
+  @ApiProperty({
+    type: String,
     nullable: true,
     example: '5.0000',
     description: 'Quantity tolerance, shortage % (D-021)',
@@ -332,8 +348,17 @@ export class QuoteStepDto {
   })
   toleranceOveragePct!: string | null;
 
-  @ApiProperty({ example: true, description: 'Shipping is not priced yet (B2.4)' })
+  @ApiProperty({ example: false, description: 'Shipping is not priced (no postcode, zone or band)' })
   shippingPending!: boolean;
+
+  @ApiProperty({
+    nullable: true,
+    example: null,
+    enum: RATE_MISS_REASONS,
+    enumName: 'ShippingRateMissReason',
+    description: 'Why shipping is not priced',
+  })
+  shippingPendingReason!: string | null;
 }
 
 export class QuoteCalculationDto {
@@ -364,6 +389,57 @@ export class QuotePartInternalDto {
 
   @ApiProperty({ example: false })
   layoutStandard!: boolean;
+}
+
+export class QuoteShippingInternalDto {
+  @ApiProperty({
+    enum: ['factory_fleet', 'flash_express', 'deliveree'],
+    enumName: 'CarrierCode',
+    example: 'factory_fleet',
+  })
+  method!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '95.00',
+    description: 'Packio’s delivery cost (fleet payout or carrier); needs `factory_cost.read` (D-141)',
+  })
+  costAmount!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '25.00',
+    description: 'Shipping margin before VAT (D-013); needs `margin.read` (D-141)',
+  })
+  marginAmount!: string | null;
+
+  @ApiProperty({ example: 31000, description: 'Weight the rate cards were read at. Unit: g.' })
+  weightG!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: 2, description: 'Null without a carton spec' })
+  cartons!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 61776, description: 'Unit: cm³.' })
+  volumeCm3!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: null, description: 'Null without a pallet spec' })
+  pallets!: number | null;
+
+  @ApiProperty({ example: 'bkk' })
+  zoneCode!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000d402' })
+  customerRateVersionId!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000d412',
+  })
+  factoryPayoutVersionId!: string | null;
 }
 
 export class QuoteInternalDto {
@@ -404,6 +480,13 @@ export class QuoteInternalDto {
 
   @ApiProperty({ type: [QuotePartInternalDto] })
   parts!: QuotePartInternalDto[];
+
+  @ApiProperty({
+    type: QuoteShippingInternalDto,
+    nullable: true,
+    description: 'Null while shipping is not priced',
+  })
+  shipping!: QuoteShippingInternalDto | null;
 }
 
 export class AdminQuoteStepDto extends QuoteStepDto {
@@ -441,14 +524,18 @@ export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
       productAmount: '13380.00',
       designFeeAmount: '0.00',
       structureDesignFeeAmount: '0.00',
-      shippingAmount: '0.00',
-      vatAmount: '875.33',
-      grossAmount: '13380.00',
+      shippingAmount: '128.40',
+      shippingNetAmount: '120.00',
+      shippingVatAmount: '8.40',
+      vatAmount: '883.73',
+      grossAmount: '13508.40',
       leadTimeDays: 7,
       earliestShipDate: '2026-10-09',
+      earliestDeliveryDate: '2026-10-10',
       toleranceShortagePct: '5.0000',
       toleranceOveragePct: '5.0000',
-      shippingPending: true,
+      shippingPending: false,
+      shippingPendingReason: null,
     },
   ],
 };
@@ -469,6 +556,18 @@ export const ADMIN_CALCULATION_EXAMPLE: AdminQuoteCalculationDto = {
         parts: [
           { partKey: 'main', buyPrice: '10123.45', layoutAmount: 10, sheets: 225, layoutStandard: false },
         ],
+        shipping: {
+          method: 'factory_fleet',
+          costAmount: '95.00',
+          marginAmount: '25.00',
+          weightG: 31000,
+          cartons: 2,
+          volumeCm3: 61776,
+          pallets: null,
+          zoneCode: 'bkk',
+          customerRateVersionId: '0192f3a0-7c1e-7d2a-9b1f-00000000d402',
+          factoryPayoutVersionId: '0192f3a0-7c1e-7d2a-9b1f-00000000d412',
+        },
       },
     },
   ],

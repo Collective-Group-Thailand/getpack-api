@@ -47,8 +47,9 @@ export interface FoldingOption {
   /** Price lines the factory lacks for this configuration (the loader's checks); non-empty = no price. */
   unavailable?: readonly string[];
   /**
-   * Carrier cost before VAT per part and quantity (B2.4, D-013); legacy prices each part's cartons
-   * (`Calculator.php:335-359`). Absent = shipping not priced yet.
+   * Legacy parity only: carrier cost before VAT per part and quantity folded into the per-piece price
+   * (`Calculator.php:335-359`). Packio prices delivery as its own quote line instead (B2.4, D-013), so the
+   * quote engine leaves this unset. Absent = no delivery in the per-piece price.
    */
   shippingCosts?: Readonly<Record<string, readonly number[]>>;
 }

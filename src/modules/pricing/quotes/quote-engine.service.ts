@@ -1,11 +1,17 @@
 import { isIP } from 'node:net';
 
-import { formatMoney } from '@common/money/money';
+import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma, type SalesChannel } from '@generated/prisma/client';
 import { CapacityService } from '@modules/partners/capacity/capacity.service';
 import { QuotePathService } from '@modules/partners/quote-path/quote-path.service';
+import { type RateMissReason } from '@modules/shipping/rates/customer-rates.dto';
+import {
+  type Delivery,
+  type ShipmentPart,
+  ShippingQuoteService,
+} from '@modules/shipping/shipping-quote.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import { SettingsService } from '@platform/settings/settings.service';
@@ -25,8 +31,9 @@ import {
 /**
  * Prices a folding configuration for a channel (B2.3): the instant price paths of the type (D-043),
  * one option per factory × print type, the pure calculator, then the rules that need the database —
- * capacity on the promise (D-101), the selected factory's tolerance (D-021), the margin floor (D-012) —
- * and the calculate log (B6). Customers never see the factory (D-050): the staff-only part of the
+ * capacity on the promise (D-101), the selected factory's tolerance (D-021), the margin floor (D-012),
+ * delivery as its own line (B2.4, D-013: customer rate card; factories ranked by buy price + their
+ * delivery cost, fleet payout or fallback carrier) — and the calculate log (B6). Customers never see the factory (D-050): the staff-only part of the
  * result is separate and dropped by the store surface.
  */
 
@@ -48,14 +55,20 @@ export interface QuoteStepView {
   productAmount: string | null;
   designFeeAmount: string | null;
   structureDesignFeeAmount: string | null;
+  /** Shipping incl. VAT; null while shipping is not priced. */
   shippingAmount: string | null;
+  shippingNetAmount: string | null;
+  shippingVatAmount: string | null;
   vatAmount: string | null;
   grossAmount: string | null;
   leadTimeDays: number | null;
   earliestShipDate: string | null;
+  /** Ship date plus the zone's extra lead days or the carrier's transit days, when known. */
+  earliestDeliveryDate: string | null;
   toleranceShortagePct: string | null;
   toleranceOveragePct: string | null;
   shippingPending: boolean;
+  shippingPendingReason: RateMissReason | null;
   /** Staff only (D-044, D-050). */
   internal: {
     factoryId: string;
@@ -72,6 +85,18 @@ export interface QuoteStepView {
       sheets: number;
       layoutStandard: boolean;
     }[];
+    shipping: {
+      method: 'factory_fleet' | 'flash_express' | 'deliveree';
+      costAmount: string;
+      marginAmount: string;
+      weightG: number;
+      cartons: number | null;
+      volumeCm3: number | null;
+      pallets: number | null;
+      zoneCode: string;
+      customerRateVersionId: string;
+      factoryPayoutVersionId: string | null;
+    } | null;
   } | null;
 }
 
@@ -84,6 +109,8 @@ export interface QuoteView {
     priceListVersionIds: Record<string, string>;
     sellMarginVersionIds: string[];
     vatRateVersionId: string | null;
+    shippingRateCardVersionIds: { customer: string | null; factoryPayouts: Record<string, string> };
+    settingVersionIds: Record<string, string>;
     calculatorVersion: string;
   };
 }
@@ -134,6 +161,7 @@ export class QuoteEngineService {
     private readonly capacity: CapacityService,
     private readonly calendars: BusinessCalendarService,
     private readonly settings: SettingsService,
+    private readonly shipping: ShippingQuoteService,
   ) {}
 
   async priceFolding(cfg: FoldingConfiguration, ctx: QuoteContext): Promise<QuoteView> {
@@ -162,32 +190,79 @@ export class QuoteEngineService {
       },
       { options: loaded.map((l) => l.option) },
     );
-    const floor = Number((await this.settings.at('pricing.margin_floor_pct', { at })).value);
+    const floorSetting = await this.settings.at('pricing.margin_floor_pct', { at });
+    const floor = Number(floorSetting.value);
+    const settingVersionIds: Record<string, string> = {
+      'pricing.margin_floor_pct': String(floorSetting.versionId),
+    };
     const byKey = new Map(loaded.map((l) => [l.option.optionKey, l]));
     const factoryIds = new Map(candidates.map((c) => [c.factoryPublicId, c.factoryId]));
+    const vatPct = loaded[0] ? await this.vatPct(loaded[0].vatRateVersionId, db) : null;
+    const shipParts: ShipmentPart[] = resolved.parts.map((p) => {
+      const blank = p.pattern.standardBlanks?.find(
+        (b) => b.wMm === p.geometry.w && b.lMm === p.geometry.l && b.dMm === p.geometry.d,
+      );
+      return {
+        formula: p.pattern.formula,
+        w: p.geometry.w,
+        l: p.geometry.l,
+        d: p.geometry.d,
+        gsm: resolved.materialGsm,
+        standardBlank: blank ? { dw: blank.dwMm, dl: blank.dlMm } : null,
+      };
+    });
+    let customerRateVersionId: string | null = null;
+    const payoutVersionIds: Record<string, string> = {};
 
     const steps: QuoteStepView[] = [];
     for (const [index, qty] of cfg.quantities.entries()) {
-      // Cheapest buy price first, then lead time; skip an option whose capacity cannot hold the run.
-      const ranked = result.options
-        .filter((o) => o.steps[index])
-        .sort(
-          (a, b) =>
-            a.steps[index]!.buyPrice - b.steps[index]!.buyPrice ||
-            a.steps[index]!.leadTimeDays - b.steps[index]!.leadTimeDays,
-        );
-      let chosen: { key: string; step: OptionStep; shipDate: string } | null = null;
+      const prepared = await this.shipping.prepare(shipParts, qty, ctx.deliveryPostcode ?? null, at, db);
+      Object.assign(settingVersionIds, prepared.settingVersionIds);
+      if (prepared.customer.versionId !== null)
+        customerRateVersionId = prepared.customer.versionId.toString();
+      const shippingPriced = prepared.customer.priced;
+      // Effective cost to Collective Group: buy price + delivery cost (fleet payout or carrier), then
+      // lead time; an option without a delivery path to the postcode is skipped (fail closed).
+      const deliveries = new Map<string, Delivery>();
+      const priceable = result.options.filter((o) => o.steps[index]);
+      const ranked: {
+        optionKey: string;
+        factoryId: string;
+        step: OptionStep;
+        delivery: Delivery | null;
+        cost: number;
+      }[] = [];
+      for (const o of priceable) {
+        const step = o.steps[index]!;
+        let delivery: Delivery | null = null;
+        if (shippingPriced) {
+          delivery =
+            deliveries.get(o.factoryId) ??
+            (await this.shipping.delivery(factoryIds.get(o.factoryId)!, prepared, at, db));
+          deliveries.set(o.factoryId, delivery);
+          if (!delivery.available) continue;
+        }
+        const cost = step.buyPrice + (delivery?.available ? delivery.cost.toNumber() : 0);
+        ranked.push({ optionKey: o.optionKey, factoryId: o.factoryId, step, delivery, cost });
+      }
+      ranked.sort(
+        (a, b) =>
+          a.cost - b.cost ||
+          a.step.leadTimeDays + extraDays(a.delivery) - (b.step.leadTimeDays + extraDays(b.delivery)),
+      );
+      let chosen: ((typeof ranked)[number] & { shipDate: string }) | null = null;
       const reason =
-        ranked.length === 0
+        priceable.length === 0
           ? candidates.length === 0
             ? 'no_price_path'
             : 'not_priceable'
-          : 'capacity_unavailable';
-      for (const o of ranked) {
-        const step = o.steps[index]!;
-        const shipDate = await this.promise(factoryIds.get(o.factoryId)!, resolved, step, at, db);
+          : ranked.length === 0
+            ? 'delivery_unavailable'
+            : 'capacity_unavailable';
+      for (const r of ranked) {
+        const shipDate = await this.promise(factoryIds.get(r.factoryId)!, resolved, r.step, at, db);
         if (shipDate) {
-          chosen = { key: o.optionKey, step, shipDate };
+          chosen = { ...r, shipDate };
           break;
         }
       }
@@ -195,14 +270,18 @@ export class QuoteEngineService {
         steps.push(this.noPrice(qty, reason));
         continue;
       }
-      const option = byKey.get(chosen.key)!;
-      const tolerance = await this.tolerance(
-        factoryIds.get(option.option.factoryId)!,
-        resolved.productTypeId,
-        at,
-        db,
-      );
+      const option = byKey.get(chosen.optionKey)!;
+      const factoryId = factoryIds.get(option.option.factoryId)!;
+      const tolerance = await this.tolerance(factoryId, resolved.productTypeId, at, db);
       const s = chosen.step;
+      const delivery = chosen.delivery?.available ? chosen.delivery : null;
+      const customer = prepared.customer.priced ? prepared.customer : null;
+      const shipNet = customer ? customer.net : null;
+      const shipVat = shipNet && vatPct ? ShippingQuoteService.vat(shipNet, vatPct) : null;
+      const shipGross = shipNet && shipVat ? shipNet.add(shipVat) : null;
+      if (delivery?.factoryPayoutVersionId) {
+        payoutVersionIds[option.option.factoryId] = delivery.factoryPayoutVersionId.toString();
+      }
       steps.push({
         quantity: qty,
         instant: true,
@@ -211,14 +290,23 @@ export class QuoteEngineService {
         productAmount: formatMoney(s.sum),
         designFeeAmount: formatMoney(s.designFee),
         structureDesignFeeAmount: formatMoney(s.structureDesignFee),
-        shippingAmount: formatMoney(s.deliveryPrice),
-        vatAmount: formatMoney(s.vatPrice),
-        grossAmount: formatMoney(s.total),
+        shippingAmount: shipGross ? formatMoney(shipGross) : null,
+        shippingNetAmount: shipNet ? formatMoney(shipNet) : null,
+        shippingVatAmount: shipVat ? formatMoney(shipVat) : null,
+        vatAmount: formatMoney(new MoneyDecimal(formatMoney(s.vatPrice)).add(shipVat ?? 0)),
+        grossAmount: formatMoney(new MoneyDecimal(formatMoney(s.total)).add(shipGross ?? 0)),
         leadTimeDays: s.leadTimeDays,
         earliestShipDate: chosen.shipDate,
+        earliestDeliveryDate:
+          delivery && delivery.extraDays !== null
+            ? await this.addWorkingDays(factoryId, chosen.shipDate, delivery.extraDays, db)
+            : null,
         toleranceShortagePct: tolerance.shortage,
         toleranceOveragePct: tolerance.overage,
-        shippingPending: !s.shippingPriced,
+        shippingPending: !shipGross,
+        shippingPendingReason: shipGross
+          ? null
+          : (ShippingQuoteService.missReason(prepared.customer) ?? 'no_rate_card'),
         internal: {
           factoryId: option.option.factoryId,
           printTypeId: option.printTypePublicId,
@@ -234,6 +322,21 @@ export class QuoteEngineService {
             sheets: p.layout.waste.totalSheets,
             layoutStandard: p.layout.layout.layoutStandard,
           })),
+          shipping:
+            delivery && customer && shipNet
+              ? {
+                  method: delivery.method,
+                  costAmount: formatMoney(delivery.cost),
+                  marginAmount: formatMoney(shipNet.sub(delivery.cost)),
+                  weightG: prepared.pack.weightG,
+                  cartons: prepared.pack.cartons,
+                  volumeCm3: prepared.pack.volumeCm3,
+                  pallets: prepared.pack.pallets,
+                  zoneCode: customer.zoneCode,
+                  customerRateVersionId: customer.versionPublicId,
+                  factoryPayoutVersionId: delivery.factoryPayoutVersionPublicId,
+                }
+              : null,
         },
       });
     }
@@ -251,6 +354,8 @@ export class QuoteEngineService {
         ),
         sellMarginVersionIds: [...new Set(loaded.flatMap((l) => l.sellMarginVersionIds.map(String)))],
         vatRateVersionId: loaded[0]?.vatRateVersionId.toString() ?? null,
+        shippingRateCardVersionIds: { customer: customerRateVersionId, factoryPayouts: payoutVersionIds },
+        settingVersionIds,
         calculatorVersion: FOLDING_CALCULATOR_VERSION,
       },
     };
@@ -328,13 +433,17 @@ export class QuoteEngineService {
       designFeeAmount: null,
       structureDesignFeeAmount: null,
       shippingAmount: null,
+      shippingNetAmount: null,
+      shippingVatAmount: null,
       vatAmount: null,
       grossAmount: null,
       leadTimeDays: null,
       earliestShipDate: null,
+      earliestDeliveryDate: null,
       toleranceShortagePct: null,
       toleranceOveragePct: null,
       shippingPending: false,
+      shippingPendingReason: null,
       internal: null,
     };
   }
@@ -385,6 +494,20 @@ export class QuoteEngineService {
     const calendar = await this.calendars.calendar(factory.calendar?.code);
     const start = new Date(`${availability.earliestDate}T00:00:00+07:00`);
     return bangkokDate(calendar.addWorkingDays(start, step.leadTimeDays));
+  }
+
+  private async vatPct(versionId: bigint, db: Tx): Promise<MoneyValue> {
+    const version = await db.taxRateVersion.findUniqueOrThrow({ where: { id: versionId } });
+    return new MoneyDecimal(version.ratePct.toString());
+  }
+
+  private async addWorkingDays(factoryId: bigint, date: string, days: number, db: Tx): Promise<string> {
+    const factory = await db.factory.findUniqueOrThrow({
+      where: { id: factoryId },
+      include: { calendar: true },
+    });
+    const calendar = await this.calendars.calendar(factory.calendar?.code);
+    return bangkokDate(calendar.addWorkingDays(new Date(`${date}T00:00:00+07:00`), days));
   }
 
   /** The factory's tolerance for the type, else its default, else the platform default (D-021, D-163). */
@@ -440,6 +563,7 @@ export class QuoteEngineService {
             instant: s.instant,
             reason: s.reason,
             grossAmount: s.grossAmount,
+            shippingAmount: s.shippingAmount,
           })),
           calculatorVersion: view.calculatorVersion,
           instantPath: instant,
@@ -454,3 +578,6 @@ export class QuoteEngineService {
     }
   }
 }
+
+const extraDays = (delivery: Delivery | null): number =>
+  delivery?.available ? (delivery.extraDays ?? 0) : 0;

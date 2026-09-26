@@ -54,7 +54,7 @@ const scaled = (c: PriceColumn, v: Decimal) =>
  *    least `partners.peer_benchmark_min_factories` other active factories price the same line (D-044);
  * 3. waste — actual scrap from production reports (B4): none yet, `no_actuals`;
  * 4. commercial terms — impact only;
- * 5. shipping — from the rate cards (B2.4): none yet.
+ * 5. shipping — per factory shipping payout card, not a price-list component (`FactoryRatesService.suggestions`, B2.4).
  *
  * The deviation is always computed when there is a suggestion; `above_band` is raised only once a
  * superadmin has set `partners.suggestion_deviation_band_pct` (D-172).

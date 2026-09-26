@@ -6,6 +6,7 @@ import { FactoryRatesService } from './rates/factory-rates.service';
 import { RateWorkbookService } from './rates/rate-workbook.service';
 import { ShippingRatesResolver } from './rates/shipping-rates.resolver';
 import { ZoneRefs } from './rates/zone-refs';
+import { ShippingQuoteService } from './shipping-quote.service';
 
 const SERVICES = [
   ZoneRefs,
@@ -14,6 +15,7 @@ const SERVICES = [
   ShippingRatesResolver,
   FactoryRatesService,
   CarriersService,
+  ShippingQuoteService,
 ];
 
 /**

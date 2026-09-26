@@ -126,7 +126,7 @@ export const zoneSchemes = defineResource({
   label: 'zone scheme',
   labelPlural: 'zone schemes',
   implements: ZONES,
-  note: 'One scheme for customer rates (`customer_default`) and one per carrier (D-114); rate cards arrive in B2.4.',
+  note: 'One scheme for customer rates (`customer_default`) and one per carrier (D-114); the customer rate card and factory payout cards use `customer_default` zones (B2.4).',
   read: 'partners.read',
   manage: 'zones.manage',
   delegate: (tx) => tx.zoneScheme,

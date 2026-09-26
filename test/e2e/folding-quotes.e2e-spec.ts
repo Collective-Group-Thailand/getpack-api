@@ -78,7 +78,14 @@ describe('folding quotes (e2e, B2.3)', () => {
   it('prices a configuration for CS, hiding buy prices and margins from roles without D-141 grants', async () => {
     const cs = await as('cs').post('/v1/admin/cs/folding/calculate', configuration()).expect(200);
     const step = cs.body.steps[0];
-    expect(step).toMatchObject({ quantity: 1000, instant: true, reason: null, shippingPending: true });
+    expect(step).toMatchObject({
+      quantity: 1000,
+      instant: true,
+      reason: null,
+      shippingPending: true,
+      shippingPendingReason: 'no_postcode',
+      shippingAmount: null,
+    });
     expect(step.grossAmount).toMatch(/^\d+\.\d{2}$/);
     expect(step.designFeeAmount).toBe('2500.00');
     expect(step.toleranceShortagePct).toBe('5.0000');
@@ -94,6 +101,131 @@ describe('folding quotes (e2e, B2.3)', () => {
     expect(pm.body.steps[0].internal.buyPrice).toMatch(/^\d+\.\d{2}$/);
     expect(pm.body.steps[0].internal.marginPct).toMatch(/^-?\d+\.\d{4}$/);
     expect(Number(pm.body.steps[0].grossAmount)).toBe(Number(step.grossAmount));
+  });
+
+  it('prices delivery as its own line and ranks on buy price + delivery cost (B2.4, D-013)', async () => {
+    const run = (Date.now() % 1_000_000) + 500_000;
+    const code = (n: number) => String(80_000 + ((run + n * 7919) % 9_999)).padStart(5, '0');
+    const served = code(1);
+    const unserved = code(2);
+    const factory = await prisma.factory.findUniqueOrThrow({ where: { publicId: fixture.factoryPublicId } });
+    // Fixture rows written directly (the rate-card flows are covered by shipping-rates.e2e-spec.ts).
+    await prisma.$transaction(async (tx) => {
+      const scheme = await tx.zoneScheme.findUniqueOrThrow({ where: { code: 'customer_default' } });
+      const zone = async (suffix: string, postcode: string) => {
+        const created = await tx.zone.create({
+          data: { schemeId: scheme.id, code: `fq_${suffix}_${run}`, nameTh: suffix, nameEn: suffix },
+        });
+        await tx.zonePostcode.create({ data: { zoneId: created.id, schemeId: scheme.id, postcode } });
+        return created;
+      };
+      const near = await zone('near', served);
+      const far = await zone('far', unserved);
+      const card = await tx.customerShippingRateCard.findUniqueOrThrow({ where: { key: 'default' } });
+      const last = await tx.customerShippingRateCardVersion.findFirst({
+        where: { cardId: card.id },
+        orderBy: { versionNo: 'desc' },
+      });
+      const version = await tx.customerShippingRateCardVersion.create({
+        data: {
+          cardId: card.id,
+          versionNo: (last?.versionNo ?? 0) + 1,
+          schemeId: scheme.id,
+          effectiveFrom: new Date(Date.now() - 1000),
+          reason: 'e2e (fake)',
+        },
+      });
+      await tx.customerShippingRate.createMany({
+        data: [near, far].map((z) => ({
+          versionId: version.id,
+          schemeId: scheme.id,
+          zoneId: z.id,
+          weightMinG: 0,
+          priceAmount: '120.00',
+        })),
+      });
+      await tx.customerShippingRateCardVersion.update({
+        where: { id: version.id },
+        data: { status: 'approved', decidedAt: new Date() },
+      });
+      await tx.factoryDeliveryZone.create({
+        data: { factoryId: factory.id, zoneId: near.id, serves: true, extraLeadDays: 1 },
+      });
+      const payoutCard =
+        (await tx.factoryShippingRateCard.findUnique({ where: { factoryId: factory.id } })) ??
+        (await tx.factoryShippingRateCard.create({ data: { factoryId: factory.id } }));
+      const lastPayout = await tx.factoryShippingRateCardVersion.findFirst({
+        where: { cardId: payoutCard.id },
+        orderBy: { versionNo: 'desc' },
+      });
+      const payout = await tx.factoryShippingRateCardVersion.create({
+        data: {
+          cardId: payoutCard.id,
+          versionNo: (lastPayout?.versionNo ?? 0) + 1,
+          schemeId: scheme.id,
+          effectiveFrom: new Date(Date.now() - 1000),
+          reason: 'e2e (fake)',
+        },
+      });
+      await tx.factoryShippingRate.create({
+        data: {
+          versionId: payout.id,
+          schemeId: scheme.id,
+          zoneId: near.id,
+          weightMinG: 0,
+          payoutAmount: '95.00',
+          acceptance: 'accepted',
+        },
+      });
+      const now = new Date();
+      await tx.factoryShippingRateCardVersion.update({
+        where: { id: payout.id },
+        data: { status: 'approved', sentAt: now, factoryAcceptedAt: now, decidedAt: now },
+      });
+    });
+
+    const calc = (postcode: string, role = 'partner-manager') =>
+      as(role)
+        .post(`/v1/admin/cs/folding/calculate?deliveryPostcode=${postcode}`, configuration())
+        .expect(200);
+    const without = (
+      await as('partner-manager').post('/v1/admin/cs/folding/calculate', configuration()).expect(200)
+    ).body.steps[0];
+    const step = (await calc(served)).body.steps[0];
+    expect(step).toMatchObject({
+      instant: true,
+      shippingPending: false,
+      shippingPendingReason: null,
+      shippingNetAmount: '120.00',
+      shippingVatAmount: '8.40',
+      shippingAmount: '128.40',
+    });
+    expect(Number(step.grossAmount)).toBeCloseTo(Number(without.grossAmount) + 128.4, 2);
+    expect(Number(step.vatAmount)).toBeCloseTo(Number(without.vatAmount) + 8.4, 2);
+    expect(step.earliestDeliveryDate > step.earliestShipDate).toBe(true);
+    expect(step.internal.shipping).toMatchObject({
+      method: 'factory_fleet',
+      costAmount: '95.00',
+      marginAmount: '25.00',
+    });
+    // CS sees neither the delivery cost nor the margin (D-141).
+    expect((await calc(served, 'cs')).body.steps[0].internal.shipping).toMatchObject({
+      costAmount: null,
+      marginAmount: null,
+    });
+
+    // A zone the factory does not serve, with no fallback carrier enabled: no delivery path (fail closed).
+    expect((await calc(unserved)).body.steps[0]).toMatchObject({
+      instant: false,
+      reason: 'delivery_unavailable',
+    });
+    // An address outside every zone keeps the price without shipping.
+    expect((await calc('00009')).body.steps[0]).toMatchObject({
+      instant: true,
+      shippingPending: true,
+      shippingPendingReason: 'zone_unknown',
+    });
+    await as('cs').post('/v1/admin/cs/folding/calculate?deliveryPostcode=12', configuration()).expect(422);
   });
 
   it('validates the configuration against the catalogue', async () => {

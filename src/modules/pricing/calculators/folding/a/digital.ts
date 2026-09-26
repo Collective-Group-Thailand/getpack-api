@@ -231,10 +231,10 @@ function assemblyCosts(
     const amount = asb.amount ?? 0;
     if (row.digitalMethod === 'per_carton') {
       // Legacy factory 9 group 22 counts shipping cartons through the carrier engine (`:395-411`), which
-      // arrives with the packing helper of B2.4.
+      // is not wired to the B2.4 packing helper yet (needs the carton spec setting and the part's pack).
       throw new PricingError(
         'process_not_possible',
-        `assembly ${asb.assemblyId} priced per shipping carton (B2.4)`,
+        `assembly ${asb.assemblyId} priced per shipping carton (not supported yet)`,
       );
     }
     if (row.digitalMethod === 'per_piece_area_band') {

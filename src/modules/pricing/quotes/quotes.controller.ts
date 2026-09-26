@@ -8,8 +8,18 @@ import { PrismaService } from '@database/prisma.service';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
-import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  type PipeTransform,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ApiBody, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 import { FoldingInputDataService } from './folding-input-data.service';
 import {
@@ -32,6 +42,19 @@ import {
 const CALCULATION = ['D-100', 'D-043', 'D-050', 'D-051', 'D-101'];
 
 /** The customer view: the staff-only part never leaves the store surface (D-050). */
+/** Optional 5-digit postcode query parameter. */
+class ParseOptionalPostcodePipe implements PipeTransform<unknown, string | undefined> {
+  transform(value: unknown): string | undefined {
+    if (value === undefined || value === '') return undefined;
+    if (typeof value !== 'string' || !/^[0-9]{5}$/.test(value)) {
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'deliveryPostcode', code: 'pattern', message: 'deliveryPostcode must be 5 digits' }],
+      });
+    }
+    return value;
+  }
+}
+
 const storeView = (view: QuoteView): QuoteCalculationDto => ({
   calculatorVersion: view.calculatorVersion,
   steps: view.steps.map(({ internal: _internal, ...step }) => step),
@@ -143,11 +166,19 @@ export class AdminCsFoldingController {
     'validation.failed',
     'pricing.vat_rate_missing',
   )
+  @ApiQuery({
+    name: 'deliveryPostcode',
+    required: false,
+    schema: { type: 'string', pattern: '^[0-9]{5}$', example: '10110' },
+    description: 'Prices shipping on the customer rate card (D-013)',
+  })
   async calculate(
     @CurrentActor() actor: Actor,
     @Body() body: FoldingConfigurationDto,
+    @Query('deliveryPostcode', new ParseOptionalPostcodePipe()) deliveryPostcode?: string,
   ): Promise<AdminQuoteCalculationDto> {
     const view = await this.engine.priceFolding(body, {
+      deliveryPostcode,
       channel: 'cs',
       actorUserId: actor.type === 'user' ? actor.userId : undefined,
       ip: RequestContext.current()?.ip,
@@ -166,6 +197,11 @@ export class AdminCsFoldingController {
           buyPrice: cost ? s.internal.buyPrice : null,
           marginPct: margin ? s.internal.marginPct : null,
           parts: s.internal.parts.map((p) => ({ ...p, buyPrice: cost ? p.buyPrice : null })),
+          shipping: s.internal.shipping && {
+            ...s.internal.shipping,
+            costAmount: cost ? s.internal.shipping.costAmount : null,
+            marginAmount: margin ? s.internal.shipping.marginAmount : null,
+          },
         },
       })),
     };

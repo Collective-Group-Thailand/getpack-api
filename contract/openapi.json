@@ -1415,6 +1415,15 @@
               "null"
             ]
           },
+          "earliestDeliveryDate": {
+            "description": "Ship date plus the zone’s extra lead days or the carrier’s transit days, when known",
+            "example": "2026-10-10",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "earliestShipDate": {
             "description": "Asia/Bangkok date (D-101)",
             "example": "2026-10-09",
@@ -1479,17 +1488,45 @@
             "example": null
           },
           "shippingAmount": {
-            "description": "Shipping incl. VAT (0 until B2.4)",
-            "example": "0.00",
+            "description": "Shipping incl. VAT, its own line (D-013); null while not priced",
+            "example": "128.40",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippingNetAmount": {
+            "description": "Shipping before VAT",
+            "example": "120.00",
             "type": [
               "string",
               "null"
             ]
           },
           "shippingPending": {
-            "description": "Shipping is not priced yet (B2.4)",
-            "example": true,
+            "description": "Shipping is not priced (no postcode, zone or band)",
+            "example": false,
             "type": "boolean"
+          },
+          "shippingPendingReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShippingRateMissReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why shipping is not priced",
+            "example": null
+          },
+          "shippingVatAmount": {
+            "description": "VAT on shipping",
+            "example": "8.40",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "structureDesignFeeAmount": {
             "example": "0.00",
@@ -1515,7 +1552,7 @@
             ]
           },
           "unitPrice": {
-            "description": "Per piece incl. VAT and shipping",
+            "description": "Per piece incl. VAT, excluding shipping (its own line, D-013)",
             "example": "13.38",
             "type": [
               "string",
@@ -1540,13 +1577,17 @@
           "designFeeAmount",
           "structureDesignFeeAmount",
           "shippingAmount",
+          "shippingNetAmount",
+          "shippingVatAmount",
           "vatAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
+          "earliestDeliveryDate",
           "toleranceShortagePct",
           "toleranceOveragePct",
           "shippingPending",
+          "shippingPendingReason",
           "internal"
         ],
         "type": "object"
@@ -2709,7 +2750,7 @@
             "$ref": "#/components/schemas/FoldingConfigurationDto"
           },
           "deliveryPostcode": {
-            "description": "Delivery postcode (shipping arrives with B2.4)",
+            "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
             "example": "10110",
             "pattern": "^[0-9]{5}$",
             "type": "string"
@@ -13944,6 +13985,17 @@
             "description": "Production run (the minimum for production when larger)",
             "example": 1000,
             "type": "number"
+          },
+          "shipping": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteShippingInternalDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null while shipping is not priced"
           }
         },
         "required": [
@@ -13954,7 +14006,8 @@
           "marginPct",
           "belowMarginFloor",
           "productionRun",
-          "parts"
+          "parts",
+          "shipping"
         ],
         "type": "object"
       },
@@ -13971,7 +14024,8 @@
         "enum": [
           "no_price_path",
           "not_priceable",
-          "capacity_unavailable"
+          "capacity_unavailable",
+          "delivery_unavailable"
         ],
         "type": "string"
       },
@@ -14099,10 +14153,106 @@
         ],
         "type": "object"
       },
+      "QuoteShippingInternalDto": {
+        "properties": {
+          "cartons": {
+            "description": "Null without a carton spec",
+            "example": 2,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "costAmount": {
+            "description": "Packio’s delivery cost (fleet payout or carrier); needs `factory_cost.read` (D-141)",
+            "example": "95.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerRateVersionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+            "format": "uuid",
+            "type": "string"
+          },
+          "factoryPayoutVersionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marginAmount": {
+            "description": "Shipping margin before VAT (D-013); needs `margin.read` (D-141)",
+            "example": "25.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CarrierCode"
+              }
+            ],
+            "example": "factory_fleet"
+          },
+          "pallets": {
+            "description": "Null without a pallet spec",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "volumeCm3": {
+            "description": "Unit: cm³.",
+            "example": 61776,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "weightG": {
+            "description": "Weight the rate cards were read at. Unit: g.",
+            "example": 31000,
+            "type": "number"
+          },
+          "zoneCode": {
+            "example": "bkk",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "costAmount",
+          "marginAmount",
+          "weightG",
+          "cartons",
+          "volumeCm3",
+          "pallets",
+          "zoneCode",
+          "customerRateVersionId",
+          "factoryPayoutVersionId"
+        ],
+        "type": "object"
+      },
       "QuoteStepDto": {
         "properties": {
           "designFeeAmount": {
             "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "earliestDeliveryDate": {
+            "description": "Ship date plus the zone’s extra lead days or the carrier’s transit days, when known",
+            "example": "2026-10-10",
+            "format": "date",
             "type": [
               "string",
               "null"
@@ -14162,17 +14312,45 @@
             "example": null
           },
           "shippingAmount": {
-            "description": "Shipping incl. VAT (0 until B2.4)",
-            "example": "0.00",
+            "description": "Shipping incl. VAT, its own line (D-013); null while not priced",
+            "example": "128.40",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippingNetAmount": {
+            "description": "Shipping before VAT",
+            "example": "120.00",
             "type": [
               "string",
               "null"
             ]
           },
           "shippingPending": {
-            "description": "Shipping is not priced yet (B2.4)",
-            "example": true,
+            "description": "Shipping is not priced (no postcode, zone or band)",
+            "example": false,
             "type": "boolean"
+          },
+          "shippingPendingReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShippingRateMissReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why shipping is not priced",
+            "example": null
+          },
+          "shippingVatAmount": {
+            "description": "VAT on shipping",
+            "example": "8.40",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "structureDesignFeeAmount": {
             "example": "0.00",
@@ -14198,7 +14376,7 @@
             ]
           },
           "unitPrice": {
-            "description": "Per piece incl. VAT and shipping",
+            "description": "Per piece incl. VAT, excluding shipping (its own line, D-013)",
             "example": "13.38",
             "type": [
               "string",
@@ -14223,13 +14401,17 @@
           "designFeeAmount",
           "structureDesignFeeAmount",
           "shippingAmount",
+          "shippingNetAmount",
+          "shippingVatAmount",
           "vatAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
+          "earliestDeliveryDate",
           "toleranceShortagePct",
           "toleranceOveragePct",
-          "shippingPending"
+          "shippingPending",
+          "shippingPendingReason"
         ],
         "type": "object"
       },
@@ -16360,7 +16542,7 @@
         "type": "object"
       },
       "ShippingRateMissReason": {
-        "description": "Why no rate applies",
+        "description": "Why shipping is not priced",
         "enum": [
           "no_postcode",
           "no_rate_card",
@@ -68338,6 +68520,17 @@
         "operationId": "admin.csFolding.calculate",
         "parameters": [
           {
+            "description": "Prices shipping on the customer rate card (D-013)",
+            "in": "query",
+            "name": "deliveryPostcode",
+            "required": false,
+            "schema": {
+              "example": "10110",
+              "pattern": "^[0-9]{5}$",
+              "type": "string"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -68409,8 +68602,9 @@
                   "steps": [
                     {
                       "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
-                      "grossAmount": "13380.00",
+                      "grossAmount": "13508.40",
                       "instant": true,
                       "internal": {
                         "belowMarginFloor": false,
@@ -68428,19 +68622,34 @@
                         ],
                         "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
                         "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
-                        "productionRun": 1000
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
                       },
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
-                      "shippingAmount": "0.00",
-                      "shippingPending": true,
+                      "shippingAmount": "128.40",
+                      "shippingNetAmount": "120.00",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "unitPrice": "13.38",
-                      "vatAmount": "875.33"
+                      "vatAmount": "883.73"
                     }
                   ]
                 },
@@ -99536,7 +99745,7 @@
     },
     "/v1/admin/shipping/zone-schemes": {
       "get": {
-        "description": "Filters, sort and `q` (free text over code, name). One scheme for customer rates (`customer_default`) and one per carrier (D-114); rate cards arrive in B2.4.\n\nImplements: D-013, D-114.",
+        "description": "Filters, sort and `q` (free text over code, name). One scheme for customer rates (`customer_default`) and one per carrier (D-114); the customer rate card and factory payout cards use `customer_default` zones (B2.4).\n\nImplements: D-013, D-114.",
         "operationId": "admin.shippingZoneSchemes.list",
         "parameters": [
           {
@@ -99766,7 +99975,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.zone_scheme.created`. One scheme for customer rates (`customer_default`) and one per carrier (D-114); rate cards arrive in B2.4.\n\nImplements: D-013, D-114.",
+        "description": "Audited (config) and published as `catalog.zone_scheme.created`. One scheme for customer rates (`customer_default`) and one per carrier (D-114); the customer rate card and factory payout cards use `customer_default` zones (B2.4).\n\nImplements: D-013, D-114.",
         "operationId": "admin.shippingZoneSchemes.create",
         "parameters": [
           {
@@ -99991,7 +100200,7 @@
     },
     "/v1/admin/shipping/zone-schemes/{id}": {
       "get": {
-        "description": "Returns the zone scheme and its ETag for a later update. One scheme for customer rates (`customer_default`) and one per carrier (D-114); rate cards arrive in B2.4.\n\nImplements: D-013, D-114.",
+        "description": "Returns the zone scheme and its ETag for a later update. One scheme for customer rates (`customer_default`) and one per carrier (D-114); the customer rate card and factory payout cards use `customer_default` zones (B2.4).\n\nImplements: D-013, D-114.",
         "operationId": "admin.shippingZoneSchemes.get",
         "parameters": [
           {
@@ -100180,7 +100389,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.zone_scheme.updated`. One scheme for customer rates (`customer_default`) and one per carrier (D-114); rate cards arrive in B2.4.\n\nImplements: D-013, D-114.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.zone_scheme.updated`. One scheme for customer rates (`customer_default`) and one per carrier (D-114); the customer rate card and factory payout cards use `customer_default` zones (B2.4).\n\nImplements: D-013, D-114.",
         "operationId": "admin.shippingZoneSchemes.update",
         "parameters": [
           {
@@ -124761,20 +124970,24 @@
                   "steps": [
                     {
                       "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
-                      "grossAmount": "13380.00",
+                      "grossAmount": "13508.40",
                       "instant": true,
                       "leadTimeDays": 7,
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
-                      "shippingAmount": "0.00",
-                      "shippingPending": true,
+                      "shippingAmount": "128.40",
+                      "shippingNetAmount": "120.00",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": "8.40",
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "unitPrice": "13.38",
-                      "vatAmount": "875.33"
+                      "vatAmount": "883.73"
                     }
                   ]
                 },

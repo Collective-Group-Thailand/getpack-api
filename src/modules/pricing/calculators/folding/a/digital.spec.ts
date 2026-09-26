@@ -210,7 +210,7 @@ describe('engine A digital (A/CalculateCostDigital.php)', () => {
     expect(() => price(tables({}, { finishPrices: [] }))).toThrow(PricingError);
   });
 
-  it('prices assemblies per piece with window material, and refuses per-carton ones until B2.4 (:413-430)', () => {
+  it('prices assemblies per piece with window material, and refuses per-carton ones (not wired to packing yet, :413-430)', () => {
     const row = (digitalMethod: 'per_piece' | 'per_carton') => ({
       assemblyId: 'window',
       rangeMin: 0,
