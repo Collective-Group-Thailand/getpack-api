@@ -325,6 +325,7 @@ model Factory {
   capabilityItems      FactoryCapabilityItem[]
   machines             FactoryMachine[]
   deliveryZones        FactoryDeliveryZone[]
+  shippingRateCard     FactoryShippingRateCard?   @relation("FactoryShippingRateCardFactory")
   participations       FactoryParticipation[]
   pricingArrangement   FactoryPricingArrangement?
   capacities           FactoryCapacity[]

@@ -205,6 +205,36 @@ export const PERMISSIONS = [
     decisionRefs: ['D-100', 'D-043'],
   },
   {
+    key: 'shipping_rates.read',
+    audience: 'staff',
+    description: 'Read the customer shipping rate card and its versions',
+    decisionRefs: ['D-013'],
+  },
+  {
+    key: 'shipping_rates.manage',
+    audience: 'staff',
+    description: 'Draft customer shipping rate-card versions and submit them for C-Level approval',
+    decisionRefs: ['D-013'],
+  },
+  {
+    key: 'factory_shipping_rates.manage',
+    audience: 'staff',
+    description: 'Draft factory shipping payout cards, send them to the factory and answer counters',
+    sensitive: true,
+    decisionRefs: ['D-013', 'D-042', 'D-141'],
+  },
+  {
+    key: 'carriers.read',
+    audience: 'staff',
+    description: 'Read fallback carriers and Packio’s carrier accounts',
+  },
+  {
+    key: 'carriers.manage',
+    audience: 'staff',
+    description: 'Enable or disable fallback carriers and register Packio’s carrier accounts',
+    decisionRefs: ['D-114', 'D-005'],
+  },
+  {
     key: 'sell_margins.manage',
     audience: 'staff',
     description: "Maintain Packio's sell margins, fix costs and design fees (effective-dated)",

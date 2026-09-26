@@ -137,6 +137,16 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     steps: [{ name: 'Superadmin approval', role: 'superadmin' }],
   },
   {
+    key: 'customer_shipping_rate_change',
+    subjectType: 'customer_shipping_rate_card_version',
+    description:
+      'New customer shipping rate-card versions (D-013): Logistics / Admin draft, C-Level approves (changes customer prices)',
+    decisions: ['D-013', 'D-063'],
+    reason:
+      'Chosen at B2.4 planning (2026-09-26) — no decision names the approver; C-Level (proposed default)',
+    steps: [{ name: 'C-Level approval', role: 'c_level' }],
+  },
+  {
     key: 'vendor_bank_account_change',
     subjectType: 'vendor_bank_account',
     description:

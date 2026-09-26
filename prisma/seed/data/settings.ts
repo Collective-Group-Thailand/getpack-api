@@ -372,6 +372,57 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-172', 'D-040'],
     confirmation: 'pending_business',
   },
+  // --- Shipping (B2.4, D-013). No decision gives these values: definitions only (B2.4 plan, 2026-09-26).
+  {
+    key: 'shipping.carton_spec',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      required: ['gridCm', 'maxStackHeightCm', 'maxWeightKg'],
+      properties: {
+        gridCm: { type: 'number', exclusiveMinimum: 0 },
+        maxStackHeightCm: { type: 'number', exclusiveMinimum: 0 },
+        maxWeightKg: { type: 'number', exclusiveMinimum: 0 },
+      },
+    },
+    description:
+      'D-013 shipping carton used by the packing helper (legacy parcel logic: square footprint grid, stack height, weight limit); not seeded — no carton count until set',
+    decisions: ['D-013'],
+    confirmation: 'pending_business',
+  },
+  {
+    key: 'shipping.pallet_spec',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      required: ['lengthCm', 'widthCm', 'maxHeightCm', 'maxWeightKg'],
+      properties: {
+        lengthCm: { type: 'number', exclusiveMinimum: 0 },
+        widthCm: { type: 'number', exclusiveMinimum: 0 },
+        maxHeightCm: { type: 'number', exclusiveMinimum: 0 },
+        maxWeightKg: { type: 'number', exclusiveMinimum: 0 },
+      },
+    },
+    description:
+      'D-013 pallet used to count cartons per pallet (no legacy rule exists); not seeded — no pallet count until set',
+    decisions: ['D-013'],
+    confirmation: 'pending_business',
+  },
+  {
+    key: 'shipping.target_margin_pct',
+    valueType: 'percent',
+    value: null,
+    unset: true,
+    valueSchema: { minimum: 0, maximum: 100 },
+    description:
+      'D-040 group 5 target shipping margin: suggested factory payout = customer rate × (1 − margin); not seeded — no group-5 suggestion until set',
+    decisions: ['D-040', 'D-013'],
+    confirmation: 'pending_business',
+  },
   {
     key: 'analytics.prospectus_min_group_size',
     valueType: 'integer',

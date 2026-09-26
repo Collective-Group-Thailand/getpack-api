@@ -14,10 +14,12 @@ model ZoneScheme {
   updatedById BigInt?  @map("updated_by")
   rowVersion  Int      @default(1) @map("row_version")
 
-  zones     Zone[]
-  postcodes ZonePostcode[]
-  createdBy User?          @relation("ZoneSchemeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_schemes__created_by")
-  updatedBy User?          @relation("ZoneSchemeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_schemes__updated_by")
+  zones                            Zone[]
+  postcodes                        ZonePostcode[]
+  customerShippingRateCardVersions CustomerShippingRateCardVersion[] @relation("CustomerShippingRateCardVersionScheme")
+  factoryShippingRateCardVersions  FactoryShippingRateCardVersion[]  @relation("FactoryShippingRateCardVersionScheme")
+  createdBy                        User?                             @relation("ZoneSchemeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_schemes__created_by")
+  updatedBy                        User?                             @relation("ZoneSchemeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zone_schemes__updated_by")
 
   @@map("zone_schemes")
 }
@@ -41,8 +43,10 @@ model Zone {
   updatedBy User?          @relation("ZoneUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_zones__updated_by")
 
   // --- Partners (generated back-relations)
-  factoryDeliveryZones FactoryDeliveryZone[] @relation("FactoryDeliveryZoneZone")
+  factoryDeliveryZones  FactoryDeliveryZone[]  @relation("FactoryDeliveryZoneZone")
   // --- end Partners
+  customerShippingRates CustomerShippingRate[] @relation("CustomerShippingRateZone")
+  factoryShippingRates  FactoryShippingRate[]  @relation("FactoryShippingRateZone")
 
   @@unique([schemeId, code], map: "ux_zones__scheme_id__code")
   /// Target of the composite FK from zone_postcodes (the denormalised scheme must match).
@@ -226,4 +230,249 @@ model SearchLog {
   @@id([id, occurredAt], map: "pk_search_logs")
   @@index([actorUserId, occurredAt], map: "ix_search_logs__actor_user_id__occurred_at")
   @@map("search_logs")
+}
+
+// --- Shipping rate cards & carriers (B2.4, D-013, D-114) --------------------------------------
+
+enum CarrierCode {
+  factory_fleet
+  flash_express
+  deliveree
+
+  @@map("carrier_code")
+}
+
+enum CarrierCapability {
+  quote
+  book
+  label
+  track
+  cancel
+  webhook
+
+  @@map("carrier_capability")
+}
+
+enum CarrierAccountStatus {
+  active
+  inactive
+
+  @@map("carrier_account_status")
+}
+
+/// Factory answer to one line of a factory shipping payout card drafted by Packio (D-013, D-042).
+enum RateLineAcceptance {
+  pending
+  accepted
+  countered
+
+  @@map("rate_line_acceptance")
+}
+
+/// What Packio charges the customer for delivery (D-013), normally one card (`default`).
+model CustomerShippingRateCard {
+  id           BigInt   @id(map: "pk_customer_shipping_rate_cards") @default(autoincrement())
+  publicId     String   @unique(map: "ux_customer_shipping_rate_cards__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key          String   @unique(map: "ux_customer_shipping_rate_cards__key")
+  description  String
+  decisionRefs String[] @map("decision_refs")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by")
+
+  versions  CustomerShippingRateCardVersion[]
+  createdBy User?                             @relation("CustomerShippingRateCardCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rate_cards__created_by")
+
+  @@map("customer_shipping_rate_cards")
+}
+
+/// Versioned (schema-design §2.1); `proposed` while its approval request is open. Every rate of a
+/// version uses zones of the version's scheme (composite FK).
+model CustomerShippingRateCardVersion {
+  id                BigInt              @id(map: "pk_customer_shipping_rate_card_versions") @default(autoincrement())
+  publicId          String              @unique(map: "ux_customer_shipping_rate_card_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  cardId            BigInt              @map("card_id")
+  versionNo         Int                 @map("version_no")
+  schemeId          BigInt              @map("scheme_id")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  card            CustomerShippingRateCard @relation(fields: [cardId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rate_card_versions__card_id")
+  scheme          ZoneScheme               @relation("CustomerShippingRateCardVersionScheme", fields: [schemeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rate_card_versions__scheme_id")
+  rates           CustomerShippingRate[]
+  approvalRequest ApprovalRequest?         @relation("CustomerShippingRateCardVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rate_card_versions__approval_request_id")
+  createdBy       User?                    @relation("CustomerShippingRateCardVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rate_card_versions__created_by")
+  decidedBy       User?                    @relation("CustomerShippingRateCardVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rate_card_versions__decided_by")
+
+  @@unique([cardId, versionNo], map: "ux_customer_shipping_rate_card_versions__card_id__version_no")
+  /// Target of the composite FK from customer_shipping_rates.
+  @@unique([id, schemeId], map: "ux_customer_shipping_rate_card_versions__id__scheme_id")
+  /// One version in approval at a time, so each approval decides against the card it was based on.
+  @@unique([cardId], map: "ux_customer_shipping_rate_card_versions__one_proposed", where: raw("(status = 'proposed'::config_version_status)"))
+  @@index([cardId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_customer_shipping_rate_card_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([schemeId], map: "ix_customer_shipping_rate_card_versions__scheme_id")
+  @@index([approvalRequestId], map: "ix_customer_shipping_rate_card_versions__approval_request_id")
+  @@map("customer_shipping_rate_card_versions")
+}
+
+/// One band: weight `[weight_min_g, weight_max_g)` and volume `[volume_min_cm3, volume_max_cm3)`
+/// (null max = open, null volume = any). A postcode row overrides its zone's rows. Price is
+/// VAT-exclusive; `per_extra_kg` is charged per started kg above `weight_min_g`. Overlaps refused by
+/// an exclusion constraint; rows frozen with their version (migration SQL).
+model CustomerShippingRate {
+  id           BigInt   @id(map: "pk_customer_shipping_rates") @default(autoincrement())
+  versionId    BigInt   @map("version_id")
+  schemeId     BigInt   @map("scheme_id")
+  zoneId       BigInt   @map("zone_id")
+  postcode     String?  @db.Char(5)
+  weightMinG   Int      @map("weight_min_g")
+  weightMaxG   Int?     @map("weight_max_g")
+  volumeMinCm3 BigInt?  @map("volume_min_cm3")
+  volumeMaxCm3 BigInt?  @map("volume_max_cm3")
+  priceAmount  Decimal  @map("price_amount") @db.Decimal(14, 2)
+  perExtraKg   Decimal? @map("per_extra_kg") @db.Decimal(18, 6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  version CustomerShippingRateCardVersion @relation(fields: [versionId, schemeId], references: [id, schemeId], onDelete: Cascade, onUpdate: Restrict, map: "fk_customer_shipping_rates__version_id__scheme_id")
+  zone    Zone                            @relation("CustomerShippingRateZone", fields: [zoneId, schemeId], references: [id, schemeId], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rates__zone_id__scheme_id")
+
+  @@index([versionId, schemeId], map: "ix_customer_shipping_rates__version_id__scheme_id")
+  @@index([zoneId, schemeId], map: "ix_customer_shipping_rates__zone_id__scheme_id")
+  @@map("customer_shipping_rates")
+}
+
+/// What Packio pays a factory for delivering with its own fleet (D-013); one card per factory.
+model FactoryShippingRateCard {
+  id          BigInt   @id(map: "pk_factory_shipping_rate_cards") @default(autoincrement())
+  publicId    String   @unique(map: "ux_factory_shipping_rate_cards__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  factoryId   BigInt   @unique(map: "ux_factory_shipping_rate_cards__factory_id") @map("factory_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+
+  factory   Factory                          @relation("FactoryShippingRateCardFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_cards__factory_id")
+  versions  FactoryShippingRateCardVersion[]
+  createdBy User?                            @relation("FactoryShippingRateCardCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_cards__created_by")
+
+  @@map("factory_shipping_rate_cards")
+}
+
+/// Packio drafts (`draft`), sends it to the factory (`pending_acceptance`), the factory accepts or
+/// counters per line, and the version is `approved` once every line is accepted (D-013, D-042).
+model FactoryShippingRateCardVersion {
+  id                  BigInt              @id(map: "pk_factory_shipping_rate_card_versions") @default(autoincrement())
+  publicId            String              @unique(map: "ux_factory_shipping_rate_card_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  cardId              BigInt              @map("card_id")
+  versionNo           Int                 @map("version_no")
+  schemeId            BigInt              @map("scheme_id")
+  effectiveFrom       DateTime            @map("effective_from") @db.Timestamptz(6)
+  status              ConfigVersionStatus @default(draft)
+  reason              String
+  sentAt              DateTime?           @map("sent_at") @db.Timestamptz(6)
+  sentById            BigInt?             @map("sent_by")
+  factoryAcceptedAt   DateTime?           @map("factory_accepted_at") @db.Timestamptz(6)
+  factoryAcceptedById BigInt?             @map("factory_accepted_by")
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById         BigInt?             @map("created_by")
+  decidedAt           DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById         BigInt?             @map("decided_by")
+
+  card              FactoryShippingRateCard @relation(fields: [cardId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_card_versions__card_id")
+  scheme            ZoneScheme              @relation("FactoryShippingRateCardVersionScheme", fields: [schemeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_card_versions__scheme_id")
+  rates             FactoryShippingRate[]
+  sentBy            User?                   @relation("FactoryShippingRateCardVersionSentBy", fields: [sentById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_card_versions__sent_by")
+  factoryAcceptedBy User?                   @relation("FactoryShippingRateCardVersionAcceptedBy", fields: [factoryAcceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_card_versions__factory_accepted_by")
+  createdBy         User?                   @relation("FactoryShippingRateCardVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_card_versions__created_by")
+  decidedBy         User?                   @relation("FactoryShippingRateCardVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_card_versions__decided_by")
+
+  @@unique([cardId, versionNo], map: "ux_factory_shipping_rate_card_versions__card_id__version_no")
+  @@unique([id, schemeId], map: "ux_factory_shipping_rate_card_versions__id__scheme_id")
+  /// One open version (draft or awaiting the factory) per card.
+  @@unique([cardId], map: "ux_factory_shipping_rate_card_versions__one_open", where: raw("(status = ANY (ARRAY['draft'::config_version_status, 'pending_acceptance'::config_version_status]))"))
+  @@index([cardId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_factory_shipping_rate_card_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([schemeId], map: "ix_factory_shipping_rate_card_versions__scheme_id")
+  @@map("factory_shipping_rate_card_versions")
+}
+
+/// Same band shape as the customer rates; `payout_amount` is VAT-exclusive. The factory's answer is
+/// kept per line (`acceptance`, counter amount and note) while the version is pending acceptance.
+model FactoryShippingRate {
+  id                BigInt             @id(map: "pk_factory_shipping_rates") @default(autoincrement())
+  publicId          String             @unique(map: "ux_factory_shipping_rates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  versionId         BigInt             @map("version_id")
+  schemeId          BigInt             @map("scheme_id")
+  zoneId            BigInt             @map("zone_id")
+  postcode          String?            @db.Char(5)
+  weightMinG        Int                @map("weight_min_g")
+  weightMaxG        Int?               @map("weight_max_g")
+  volumeMinCm3      BigInt?            @map("volume_min_cm3")
+  volumeMaxCm3      BigInt?            @map("volume_max_cm3")
+  payoutAmount      Decimal            @map("payout_amount") @db.Decimal(14, 2)
+  perExtraKg        Decimal?           @map("per_extra_kg") @db.Decimal(18, 6)
+  acceptance        RateLineAcceptance @default(pending)
+  counterAmount     Decimal?           @map("counter_amount") @db.Decimal(14, 2)
+  counterPerExtraKg Decimal?           @map("counter_per_extra_kg") @db.Decimal(18, 6)
+  counterNote       String?            @map("counter_note")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  version FactoryShippingRateCardVersion @relation(fields: [versionId, schemeId], references: [id, schemeId], onDelete: Cascade, onUpdate: Restrict, map: "fk_factory_shipping_rates__version_id__scheme_id")
+  zone    Zone                           @relation("FactoryShippingRateZone", fields: [zoneId, schemeId], references: [id, schemeId], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rates__zone_id__scheme_id")
+
+  @@index([versionId, schemeId], map: "ix_factory_shipping_rates__version_id__scheme_id")
+  @@index([zoneId, schemeId], map: "ix_factory_shipping_rates__zone_id__scheme_id")
+  @@map("factory_shipping_rates")
+}
+
+/// Delivery methods: the factory's own fleet (default, D-013) and Packio-booked carriers used only
+/// as fallback where a factory cannot serve a zone (D-114). Carriers are added as adapters.
+model Carrier {
+  id          BigInt              @id(map: "pk_carriers") @default(autoincrement())
+  publicId    String              @unique(map: "ux_carriers__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        CarrierCode         @unique(map: "ux_carriers__code")
+  name        String
+  adapterKey  String              @map("adapter_key")
+  enabled     Boolean             @default(false)
+  supports    CarrierCapability[]
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?             @map("updated_by")
+  rowVersion  Int                 @default(1) @map("row_version")
+
+  accounts  CarrierAccount[]
+  updatedBy User?            @relation("CarrierUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carriers__updated_by")
+
+  @@map("carriers")
+}
+
+/// Packio's own account with a carrier, per entity (D-005); credentials live in Secrets Manager and
+/// only their reference is stored.
+model CarrierAccount {
+  id                   BigInt               @id(map: "pk_carrier_accounts") @default(autoincrement())
+  publicId             String               @unique(map: "ux_carrier_accounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId             BigInt               @map("entity_id")
+  carrierId            BigInt               @map("carrier_id")
+  label                String
+  credentialsSecretRef String               @map("credentials_secret_ref")
+  sandbox              Boolean
+  status               CarrierAccountStatus @default(active)
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?              @map("created_by")
+  updatedAt            DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById          BigInt?              @map("updated_by")
+  rowVersion           Int                  @default(1) @map("row_version")
+
+  entity    Entity  @relation("CarrierAccountEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carrier_accounts__entity_id")
+  carrier   Carrier @relation(fields: [carrierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carrier_accounts__carrier_id")
+  createdBy User?   @relation("CarrierAccountCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carrier_accounts__created_by")
+  updatedBy User?   @relation("CarrierAccountUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carrier_accounts__updated_by")
+
+  /// One active account per entity, carrier and environment.
+  @@unique([entityId, carrierId, sandbox], map: "ux_carrier_accounts__one_active", where: raw("(status = 'active'::carrier_account_status)"))
+  @@index([entityId, carrierId], map: "ix_carrier_accounts__entity_id__carrier_id")
+  @@index([carrierId], map: "ix_carrier_accounts__carrier_id")
+  @@map("carrier_accounts")
 }

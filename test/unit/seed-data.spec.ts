@@ -44,6 +44,10 @@ describe('seed data (B1.2 step 3)', () => {
       'auth.device_pin_policy': 'proposed',
       // D-172: defined without a value until the business sets it.
       'partners.suggestion_deviation_band_pct': 'pending_business',
+      // B2.4: no decision gives the carton, the pallet or the target shipping margin.
+      'shipping.carton_spec': 'pending_business',
+      'shipping.pallet_spec': 'pending_business',
+      'shipping.target_margin_pct': 'pending_business',
     });
   });
 

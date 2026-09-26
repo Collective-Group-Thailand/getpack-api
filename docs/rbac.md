@@ -55,6 +55,11 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `margin.read` — See margins in amounts and percent (D-141) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |
 | `margin.read_pct_when_discounting` — See the resulting margin % while applying a discount (D-141, D-052) | ◆ |  |  |  |  | ◆ | ◆ |  |  |  |  |  |  |  |
 | `quotes.calculate` — Price a configuration for a customer in the admin zone (CS calculator) (D-100, D-043) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● |  |
+| `shipping_rates.read` — Read the customer shipping rate card and its versions (D-013) | ● | ● |  |  | ● | ● | ● |  | ● | ● | ● |  | ● | ● |
+| `shipping_rates.manage` — Draft customer shipping rate-card versions and submit them for C-Level approval (D-013) | ● |  |  |  | ● |  |  |  |  |  | ● |  |  |  |
+| `factory_shipping_rates.manage` — Draft factory shipping payout cards, send them to the factory and answer counters (D-013, D-042, D-141) | ◆ |  |  |  |  |  |  |  |  |  |  |  | ◆ |  |
+| `carriers.read` — Read fallback carriers and Packio’s carrier accounts | ● | ● |  |  | ● |  |  |  |  |  | ● |  | ● | ● |
+| `carriers.manage` — Enable or disable fallback carriers and register Packio’s carrier accounts (D-114, D-005) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `sell_margins.manage` — Maintain Packio's sell margins, fix costs and design fees (effective-dated) (D-063) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |

@@ -343,6 +343,10 @@ model Entity {
   activityLogs     ActivityLog[]
   domainEvents     DomainEvent[]
 
+  // --- Pricing (generated back-relations)
+  carrierAccounts CarrierAccount[] @relation("CarrierAccountEntity")
+  // --- end Pricing
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -547,11 +551,12 @@ model ApprovalRequest {
   // --- end Partners
 
   // --- Finance (generated back-relations)
-  vendorBankAccounts      VendorBankAccount[]      @relation("VendorBankAccountApprovalRequest")
+  vendorBankAccounts               VendorBankAccount[]               @relation("VendorBankAccountApprovalRequest")
   // --- end Finance
   // --- Pricing (generated back-relations)
-  sellMarginTableVersions SellMarginTableVersion[] @relation("SellMarginTableVersionApprovalRequest")
-  taxRateVersions         TaxRateVersion[]         @relation("TaxRateVersionApprovalRequest")
+  sellMarginTableVersions          SellMarginTableVersion[]          @relation("SellMarginTableVersionApprovalRequest")
+  taxRateVersions                  TaxRateVersion[]                  @relation("TaxRateVersionApprovalRequest")
+  customerShippingRateCardVersions CustomerShippingRateCardVersion[] @relation("CustomerShippingRateCardVersionApprovalRequest")
   // --- end Pricing
 
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))

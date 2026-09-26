@@ -52,6 +52,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'price_suggestions.read',
       'quotes.calculate',
       'sell_margins.manage',
+      'shipping_rates.read',
+      'carriers.read',
     ],
   },
   {
@@ -93,6 +95,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'geography.manage',
       'partners.read',
       'quotes.calculate',
+      'shipping_rates.read',
+      'shipping_rates.manage',
+      'carriers.read',
     ],
   },
   {
@@ -106,6 +111,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'margin.read_pct_when_discounting',
       'catalog.read',
       'quotes.calculate',
+      'shipping_rates.read',
     ],
   },
   {
@@ -119,6 +125,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'margin.read_pct_when_discounting',
       'catalog.read',
       'quotes.calculate',
+      'shipping_rates.read',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -142,6 +149,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'audit_logs.read',
       'partners.read',
       'vendor_bank_accounts.verify',
+      'shipping_rates.read',
     ],
   },
   {
@@ -157,6 +165,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'audit_logs.read',
       'audit_logs.export',
       'partners.read',
+      'shipping_rates.read',
     ],
   },
   {
@@ -165,7 +174,8 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ฝ่ายขนส่ง',
     nameEn: 'Logistics',
-    permissions: EVERY_STAFF_MEMBER,
+    // Customer rates are sell prices; factory payout cards are buy prices and stay hidden (D-141).
+    permissions: [...EVERY_STAFF_MEMBER, 'shipping_rates.read', 'shipping_rates.manage', 'carriers.read'],
   },
   {
     key: 'marketing',
@@ -195,6 +205,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'agreements.manage',
       'zones.manage',
       'quotes.calculate',
+      'shipping_rates.read',
+      'factory_shipping_rates.manage',
+      'carriers.read',
     ],
   },
   {
@@ -211,6 +224,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'users.read',
       'files.read',
       'partners.read',
+      'shipping_rates.read',
+      'carriers.read',
     ],
   },
 

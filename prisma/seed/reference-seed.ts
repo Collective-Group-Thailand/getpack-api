@@ -8,6 +8,7 @@ import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notification
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
+import { CARRIERS, CUSTOMER_SHIPPING_RATE_CARDS, ZONE_SCHEMES } from './data/shipping';
 
 type Tx = Prisma.TransactionClient;
 
@@ -58,6 +59,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureProductTypes(tx, count);
       await ensureAgreementTemplates(tx, count);
       await ensureTaxRates(tx, count);
+      await ensureShipping(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -408,5 +410,26 @@ async function ensureTaxRates(tx: Tx, count: (what: string) => void): Promise<vo
       },
     });
     count('tax_rates');
+  }
+}
+
+/** Shipping structure (B2.4): zone scheme, customer rate-card identity, carriers (D-013, D-114). */
+async function ensureShipping(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const scheme of ZONE_SCHEMES) {
+    if (await tx.zoneScheme.findUnique({ where: { code: scheme.code } })) continue;
+    await tx.zoneScheme.create({ data: { ...scheme } });
+    count('zone_schemes');
+  }
+  for (const card of CUSTOMER_SHIPPING_RATE_CARDS) {
+    if (await tx.customerShippingRateCard.findUnique({ where: { key: card.key } })) continue;
+    await tx.customerShippingRateCard.create({
+      data: { key: card.key, description: card.description, decisionRefs: [...card.decisions] },
+    });
+    count('customer_shipping_rate_cards');
+  }
+  for (const carrier of CARRIERS) {
+    if (await tx.carrier.findUnique({ where: { code: carrier.code } })) continue;
+    await tx.carrier.create({ data: { ...carrier, supports: [...carrier.supports] } });
+    count('carriers');
   }
 }
