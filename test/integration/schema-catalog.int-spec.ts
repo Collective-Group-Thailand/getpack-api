@@ -209,6 +209,25 @@ const CHECKS = [
   'ck_tax_rate_versions__version_no',
   'ck_tax_rates__code',
   'ck_tax_rates__decision_refs',
+
+  // --- B2.3 folding geometry
+  'ck_geometry_band_tables__code',
+  'ck_geometry_bands__range',
+  'ck_geometry_conditions__code',
+  'ck_geometry_conditions__variable',
+  'ck_pattern_geometry_conditions__seq',
+  'ck_pattern_standard_blanks__size',
+  'ck_pl_material_prices__band',
+  'ck_pl_material_prices__price',
+  'ck_pl_paper_sheets__sheet_cut',
+  'ck_pl_paper_sheets__size',
+  'ck_pl_paper_sizes__size',
+  'ck_pl_paper_trims__non_negative',
+  'ck_pl_print_type_terms__engine_variant',
+  'ck_pl_print_type_terms__factory_margin_pct',
+  'ck_pl_print_type_terms__lead_time_days',
+  'ck_pl_print_type_terms__min_orders',
+  'ck_pl_print_type_terms__waste_method',
 ];
 
 const TRIGGERS = [
@@ -249,6 +268,16 @@ const TRIGGERS = [
   'tg_sell_margin_table_versions__immutable',
   'tg_sell_margin_tables__print_type',
   'tg_tax_rate_versions__immutable',
+
+  // --- B2.3 folding geometry
+  'tg_pattern_geometry_conditions__sub_pattern',
+  'tg_pl_material_prices__version_frozen',
+  'tg_pl_paper_sheets__version_frozen',
+  'tg_pl_paper_sizes__version_frozen',
+  'tg_pl_paper_trims__version_frozen',
+  'tg_pl_pattern_conditions__sub_pattern',
+  'tg_pl_pattern_conditions__version_frozen',
+  'tg_pl_print_type_terms__version_frozen',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -296,6 +325,9 @@ const INDEXES = [
   'ux_sell_margin_tables__scope',
   'ix_sell_margin_table_versions__resolution',
   'ix_tax_rate_versions__resolution',
+
+  // --- B2.3 folding geometry
+  'ux_pattern_geometry_conditions__slot',
 ];
 
 const EXPRESSION_INDEXES = [
@@ -308,6 +340,9 @@ const EXPRESSION_INDEXES = [
 
   // --- B2.3 folding pricing (sell margins, tax rates, logs)
   'ux_sell_margin_tables__scope',
+
+  // --- B2.3 folding geometry
+  'ux_pattern_geometry_conditions__slot',
 ];
 
 const PARTIAL_INDEXES = INDEXES.filter((name) => !EXPRESSION_INDEXES.includes(name));
@@ -326,7 +361,7 @@ const TRIGRAM_INDEXES = [
 ];
 
 /** Exclusion constraints (non-overlapping bands, B2.3+). */
-const EXCLUSIONS = ['ex_sell_margin_lines__no_overlap'];
+const EXCLUSIONS = ['ex_sell_margin_lines__no_overlap', 'ex_geometry_bands__no_overlap'];
 
 const EXTENSIONS = ['vector', 'pgcrypto', 'pg_trgm', 'citext', 'btree_gist'];
 

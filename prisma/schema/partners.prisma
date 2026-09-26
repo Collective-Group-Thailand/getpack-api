@@ -1013,17 +1013,25 @@ model PriceListVersion {
   decidedAt            DateTime?           @map("decided_at") @db.Timestamptz(6)
   decidedById          BigInt?             @map("decided_by")
 
-  priceList        PriceList          @relation(fields: [priceListId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__price_list_id")
-  basedOn          PriceListVersion?  @relation("PriceListVersionBasedOn", fields: [basedOnVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__based_on_version_id")
-  derived          PriceListVersion[] @relation("PriceListVersionBasedOn")
-  proposal         PriceProposal?     @relation("PriceListVersionProposal", fields: [proposalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__proposal_id")
-  proposalsBasedOn PriceProposal[]    @relation("PriceProposalBaseVersion")
-  proposalsResult  PriceProposal[]    @relation("PriceProposalResultingVersion")
-  approvalRequest  ApprovalRequest?   @relation("PriceListVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__approval_request_id")
-  factoryAccepted  User?              @relation("PriceListVersionFactoryAcceptedBy", fields: [factoryAcceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__factory_accepted_by")
-  factorySignedOff User?              @relation("PriceListVersionFactorySignedOffBy", fields: [factorySignedOffById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__factory_signed_off_by")
-  createdBy        User?              @relation("PriceListVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__created_by")
-  decidedBy        User?              @relation("PriceListVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__decided_by")
+  priceList         PriceList            @relation(fields: [priceListId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__price_list_id")
+  basedOn           PriceListVersion?    @relation("PriceListVersionBasedOn", fields: [basedOnVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__based_on_version_id")
+  derived           PriceListVersion[]   @relation("PriceListVersionBasedOn")
+  proposal          PriceProposal?       @relation("PriceListVersionProposal", fields: [proposalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__proposal_id")
+  proposalsBasedOn  PriceProposal[]      @relation("PriceProposalBaseVersion")
+  proposalsResult   PriceProposal[]      @relation("PriceProposalResultingVersion")
+  approvalRequest   ApprovalRequest?     @relation("PriceListVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__approval_request_id")
+  factoryAccepted   User?                @relation("PriceListVersionFactoryAcceptedBy", fields: [factoryAcceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__factory_accepted_by")
+  factorySignedOff  User?                @relation("PriceListVersionFactorySignedOffBy", fields: [factorySignedOffById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__factory_signed_off_by")
+  createdBy         User?                @relation("PriceListVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__created_by")
+  decidedBy         User?                @relation("PriceListVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_price_list_versions__decided_by")
+  // --- Folding price components (B2.3)
+  printTypeTerms    PlPrintTypeTerm[]    @relation("PlPrintTypeTermVersion")
+  paperTrims        PlPaperTrim[]        @relation("PlPaperTrimVersion")
+  patternConditions PlPatternCondition[] @relation("PlPatternConditionVersion")
+  materialPrices    PlMaterialPrice[]    @relation("PlMaterialPriceVersion")
+  paperSizes        PlPaperSize[]        @relation("PlPaperSizeVersion")
+  paperSheets       PlPaperSheet[]       @relation("PlPaperSheetVersion")
+  // --- end Folding price components
 
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
   @@index([priceListId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_price_list_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
@@ -1190,4 +1198,141 @@ model IndexPoint {
 
   @@unique([seriesId, period], map: "ux_index_points__series_id__period")
   @@map("index_points")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Folding price components (B2.3, schema-design §3.4, A-24): created by the engine slices that read them
+// ------------------------------------------------------------------------------------------------
+
+/// Folding terms per print type (legacy `factory_match_print_type` + the folding flags of `factory`); commercial terms (D-040 group 4).
+model PlPrintTypeTerm {
+  id                    BigInt   @id(map: "pk_pl_print_type_terms") @default(autoincrement())
+  priceListVersionId    BigInt   @map("price_list_version_id")
+  lineKey               String   @map("line_key")
+  printTypeId           BigInt   @map("print_type_id")
+  engineVariant         String   @map("engine_variant")
+  wasteMethod           Int      @map("waste_method") @db.SmallInt
+  finish2StepDownWaste  Boolean  @map("finish2_step_down_waste")
+  canFlipPaperSize      Boolean  @map("can_flip_paper_size")
+  disableOverlapLayout  Boolean  @map("disable_overlap_layout")
+  factoryMarginPct      Decimal  @map("factory_margin_pct") @db.Decimal(7, 4)
+  minOrderAmount        Int?     @map("min_order_amount")
+  minOrderForProduction Int?     @map("min_order_for_production")
+  leadTimeDays          Decimal? @map("lead_time_days") @db.Decimal(6, 2)
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPrintTypeTermVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_print_type_terms__price_list_version_id")
+  printType        PrintType        @relation("PlPrintTypeTermPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_print_type_terms__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_print_type_terms__price_list_version_id__line_key")
+  @@index([printTypeId], map: "ix_pl_print_type_terms__print_type_id")
+  @@map("pl_print_type_terms")
+}
+
+/// Paper trims per print type (legacy `paper_trim`); waste allowance (D-040 group 3).
+model PlPaperTrim {
+  id                 BigInt   @id(map: "pk_pl_paper_trims") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  gapMm              Decimal  @map("gap_mm") @db.Decimal(10, 2)
+  trimWMm            Decimal  @map("trim_w_mm") @db.Decimal(10, 2)
+  trimLMm            Decimal  @map("trim_l_mm") @db.Decimal(10, 2)
+  edgeTrimMm         Decimal  @map("edge_trim_mm") @db.Decimal(10, 2)
+  trimFoilMm         Decimal  @map("trim_foil_mm") @db.Decimal(10, 2)
+  trimFinishPlateMm  Decimal  @map("trim_finish_plate_mm") @db.Decimal(10, 2)
+  endJobTrimMm       Decimal? @map("end_job_trim_mm") @db.Decimal(10, 2)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPaperTrimVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_paper_trims__price_list_version_id")
+  printType        PrintType        @relation("PlPaperTrimPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_paper_trims__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_paper_trims__price_list_version_id__line_key")
+  @@index([printTypeId], map: "ix_pl_paper_trims__print_type_id")
+  @@map("pl_paper_trims")
+}
+
+/// The factory's adjustment of a pattern blank (legacy `factory_rel_pattern_conditions`); rule, no suggestion.
+model PlPatternCondition {
+  id                 BigInt   @id(map: "pk_pl_pattern_conditions") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  patternId          BigInt   @map("pattern_id")
+  subPatternId       BigInt?  @map("sub_pattern_id")
+  plusDlMm           Decimal  @map("plus_dl_mm") @db.Decimal(10, 2)
+  plusDwMm           Decimal  @map("plus_dw_mm") @db.Decimal(10, 2)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPatternConditionVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_pattern_conditions__price_list_version_id")
+  pattern          Pattern          @relation("PlPatternConditionPattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pattern_conditions__pattern_id")
+  subPattern       SubPattern?      @relation("PlPatternConditionSubPattern", fields: [subPatternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_pattern_conditions__sub_pattern_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_pattern_conditions__price_list_version_id__line_key")
+  @@index([patternId], map: "ix_pl_pattern_conditions__pattern_id")
+  @@index([subPatternId], map: "ix_pl_pattern_conditions__sub_pattern_id")
+  @@map("pl_pattern_conditions")
+}
+
+/// Paper buy prices per material and print type (legacy per-factory `paper`, digital `paper_prices` bands); materials, index-linked (D-040 group 1).
+model PlMaterialPrice {
+  id                 BigInt   @id(map: "pk_pl_material_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  materialId         BigInt   @map("material_id")
+  printTypeId        BigInt   @map("print_type_id")
+  minPaperAmount     Int?     @map("min_paper_amount")
+  maxPaperAmount     Int?     @map("max_paper_amount")
+  costPerKg          Decimal? @map("cost_per_kg") @db.Decimal(18, 6)
+  costPerPcs         Decimal? @map("cost_per_pcs") @db.Decimal(18, 6)
+  costPerM2          Decimal? @map("cost_per_m2") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlMaterialPriceVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_material_prices__price_list_version_id")
+  material         Material         @relation("PlMaterialPriceMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_material_prices__material_id")
+  printType        PrintType        @relation("PlMaterialPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_material_prices__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_material_prices__price_list_version_id__line_key")
+  @@index([materialId], map: "ix_pl_material_prices__material_id")
+  @@index([printTypeId], map: "ix_pl_material_prices__print_type_id")
+  @@map("pl_material_prices")
+}
+
+/// Mill sizes a material comes in for the factory (legacy `paper_sizes`); a list, lines are added or removed.
+model PlPaperSize {
+  id                 BigInt   @id(map: "pk_pl_paper_sizes") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  materialId         BigInt   @map("material_id")
+  printTypeId        BigInt   @map("print_type_id")
+  sizeWIn            Decimal  @map("size_w_in") @db.Decimal(10, 4)
+  sizeLIn            Decimal  @map("size_l_in") @db.Decimal(10, 4)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPaperSizeVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_paper_sizes__price_list_version_id")
+  material         Material         @relation("PlPaperSizeMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_paper_sizes__material_id")
+  printType        PrintType        @relation("PlPaperSizePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_paper_sizes__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_paper_sizes__price_list_version_id__line_key")
+  @@index([materialId], map: "ix_pl_paper_sizes__material_id")
+  @@index([printTypeId], map: "ix_pl_paper_sizes__print_type_id")
+  @@map("pl_paper_sizes")
+}
+
+/// Press sheets cut from a mill size (legacy `paper_sheets`).
+model PlPaperSheet {
+  id                 BigInt   @id(map: "pk_pl_paper_sheets") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  sizeWIn            Decimal  @map("size_w_in") @db.Decimal(10, 4)
+  sizeLIn            Decimal  @map("size_l_in") @db.Decimal(10, 4)
+  sheetCut           Int      @map("sheet_cut") @db.SmallInt
+  sheetWIn           Decimal  @map("sheet_w_in") @db.Decimal(10, 4)
+  sheetLIn           Decimal  @map("sheet_l_in") @db.Decimal(10, 4)
+  isFixGrain         Boolean  @map("is_fix_grain")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPaperSheetVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_paper_sheets__price_list_version_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_paper_sheets__price_list_version_id__line_key")
+  @@map("pl_paper_sheets")
 }

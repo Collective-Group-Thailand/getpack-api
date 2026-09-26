@@ -384,11 +384,20 @@ model User {
   // --- end Finance
 
   // --- Pricing (generated back-relations)
-  zoneSchemesCreated   ZoneScheme[]   @relation("ZoneSchemeCreatedBy")
-  zoneSchemesUpdated   ZoneScheme[]   @relation("ZoneSchemeUpdatedBy")
-  zonesCreated         Zone[]         @relation("ZoneCreatedBy")
-  zonesUpdated         Zone[]         @relation("ZoneUpdatedBy")
-  zonePostcodesCreated ZonePostcode[] @relation("ZonePostcodeCreatedBy")
+  zoneSchemesCreated               ZoneScheme[]               @relation("ZoneSchemeCreatedBy")
+  zoneSchemesUpdated               ZoneScheme[]               @relation("ZoneSchemeUpdatedBy")
+  zonesCreated                     Zone[]                     @relation("ZoneCreatedBy")
+  zonesUpdated                     Zone[]                     @relation("ZoneUpdatedBy")
+  zonePostcodesCreated             ZonePostcode[]             @relation("ZonePostcodeCreatedBy")
+  geometryBandTablesCreated        GeometryBandTable[]        @relation("GeometryBandTableCreatedBy")
+  geometryBandTablesUpdated        GeometryBandTable[]        @relation("GeometryBandTableUpdatedBy")
+  geometryBandsCreated             GeometryBand[]             @relation("GeometryBandCreatedBy")
+  geometryBandsUpdated             GeometryBand[]             @relation("GeometryBandUpdatedBy")
+  geometryConditionsCreated        GeometryCondition[]        @relation("GeometryConditionCreatedBy")
+  geometryConditionsUpdated        GeometryCondition[]        @relation("GeometryConditionUpdatedBy")
+  patternGeometryConditionsCreated PatternGeometryCondition[] @relation("PatternGeometryConditionCreatedBy")
+  patternStandardBlanksCreated     PatternStandardBlank[]     @relation("PatternStandardBlankCreatedBy")
+  patternStandardBlanksUpdated     PatternStandardBlank[]     @relation("PatternStandardBlankUpdatedBy")
   // --- end Pricing
 
   // ux (kind, email) / (kind, phone) while not anonymised — partial unique indexes.

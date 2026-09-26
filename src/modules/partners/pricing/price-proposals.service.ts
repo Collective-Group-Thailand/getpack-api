@@ -690,6 +690,15 @@ export class PriceProposalsService {
         });
         continue;
       }
+      if (input.action === 'change' && d.values.length === 0) {
+        // List components (e.g. paper sizes): a line is only added or removed.
+        errors.push({
+          path: `${path}.action`,
+          code: 'unsupported',
+          message: `${component} lines have no values to change`,
+        });
+        continue;
+      }
       let values: PriceValues | null = null;
       let lineKey: string;
       if (input.action === 'remove') {

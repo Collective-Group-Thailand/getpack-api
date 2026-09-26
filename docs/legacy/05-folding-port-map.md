@@ -75,6 +75,37 @@ Not used by folding: `percent_reduces`, `difficult_match_margin`, `factory_fix_c
 | Q9 | `rand()`-keyed caches (`A/CalculateCost.php:428,756`); Laravel caches whose keys leave out the factory | no caches: pure function of the snapshot |
 | Q10 | `first()` without ORDER BY; unstable `usort` / `array_multisort` ties | explicit tie-break (price-list line order); stable sorts |
 | Q11 | hard-coded factory ids: 9 (digital ×1.2, lead time), 16 (500 floor, lead time), 23 (overlap, diecut waste), 3/6/10/11/PFO (lamination mapping) | per-factory price-list terms, neutral by default |
-| Q12 | `convertToMm('in', …)` uses `number_format` with a `,` separator, so ≥ 1,000 mm truncates when coerced | noted; checked per call site during the port |
+| Q12 | `number_format` with its default `,` separator fed back into arithmetic (`convertToMm('in', …)`; `PatternArea.php:554` lock-bottom `dw`) truncates from 1,000 mm | rounded to 2 decimals without truncation; each call site listed as it is ported |
+| Q13 | `swipePaperSheetSize` casts Eloquent models with `(array)`, losing every attribute, so factories with `can_flip_paper_size` never got a layout (`helpers.php:1140-1172`) | the intended rotation: each sheet plus its turned copy, marked against the grain |
+| Q14 | a missing condition, band, standard blank or paper trim is read as `null`, i.e. 0, with a PHP notice (`PatternArea.php:185-723`) | the configuration is not priced (`GeometryError`), never priced on silently wrong geometry |
+| Q15 | CS sends `isGrain` without `grainPararell`, so a fixed-grain request from CS yields no layout (`cs.vue:2189`, `PatternArea.php:947,1029`) | the orientation is a required input when the grain is fixed (API validation) |
 
 **Not in B2.3**: customer shipping and carrier engines (B2.4, D-013); promotions (B3.3); order hierarchies / SAP (D-030); `receiving_date` in calendar days (replaced by capacity + factory calendar, D-101).
+
+## 6. Geometry formulas (legacy `PatternArea::calPatternArea` cases → `geometry_formula`)
+| Legacy case | Name (Thai) | `geometry_formula` | Slots read |
+|---|---|---|---|
+| 1 | แบบฝาเปิดบน | `tuck_top` | dw, dl |
+| 2 | ถาด | `tray` | dw |
+| 3 | ปลอก | `sleeve` | dl |
+| 4 | ฝาครอบ | `lid` | dw |
+| 5 | ไส้ | `insert` | dw (uses `x`, default 3) |
+| 6 | หูแขวนฝาเปิดบน | `hanger_tuck_top` | dw, dl |
+| 7 | แบบป๊อปอัพฝาเปิดบน | `popup_tuck_top` | dw, dl |
+| 8 | แบบป๊อปอัพหูแขวน | `popup_hanger` | dw, dl |
+| 9 | แบบทรงบ้าน | `house` | aux_f (group 1 by l), dl, nd |
+| 10 | แบบฝาพับ | `fold_flap` | dw (legacy also reads dl, unused) |
+| 11 | แบบขนมญี่ปุ่น | `wagashi` | — |
+| 12 | แบบขนมฝาเสียบข้าง | `wagashi_side_tuck` | — |
+| 13 | แบบขนมฝาเปิด | `wagashi_open_top` | aux_f, aux_f10 (groups 1 and 10 by l) |
+| 14 | แบบทั่วไป overlap | `flat_overlap` | — (input `c`) |
+| 15, 33–36 | แบบทั่วไป non-overlap | `flat` | — |
+| 16 | แบบเปิดฝาบน/ฝาล่างขัดล็อค | `lock_bottom_top` | dw (variable `b`, by w), aux_f (group 1 by l), dl |
+| 17 | แบบทั่วไป overlap2 | `flat_overlap_combined` | — (input `c`) |
+| 31 sub 5, 32 sub 7 | ฝาสไลด์ / ฝาครอบ (ถาด) | `slide_tray` (on the sub-pattern) | dw |
+| 31 sub 6 | ฝาสไลด์ (ปลอก) | `slide_sleeve` (on the sub-pattern, `swap_dimensions`) | dl, looked up by d |
+| 32 sub 8 | ฝาครอบ (ฐาน) | `cover_base` (on the sub-pattern) | dw |
+| 37 | แบบทั่วไป non-overlap + dl | `flat_extended` | dl |
+| 45–48 | กล่อง/ถาดอาหาร | `standard_blank` | `pattern_standard_blanks` |
+
+Ported in `src/modules/pricing/calculators/folding/geometry/` (`formulas.ts`, `layout-amount.ts`, `pattern-area.ts`).

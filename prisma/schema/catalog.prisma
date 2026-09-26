@@ -283,6 +283,12 @@ model PrintType {
   // --- Pricing (generated back-relations)
   sellMarginTables    SellMarginTable[]   @relation("SellMarginTablePrintType")
   // --- end Pricing
+  // --- Folding price components (B2.3)
+  plPrintTypeTerms    PlPrintTypeTerm[]   @relation("PlPrintTypeTermPrintType")
+  plPaperTrims        PlPaperTrim[]       @relation("PlPaperTrimPrintType")
+  plMaterialPrices    PlMaterialPrice[]   @relation("PlMaterialPricePrintType")
+  plPaperSizes        PlPaperSize[]       @relation("PlPaperSizePrintType")
+  // --- end Folding price components
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
   @@map("print_types")
@@ -414,10 +420,11 @@ model StandardSize {
   updatedById      BigInt?       @map("updated_by")
   rowVersion       Int           @default(1) @map("row_version")
 
-  catalogProduct      CatalogProduct       @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__catalog_product_id")
+  catalogProduct      CatalogProduct         @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__catalog_product_id")
   semiDesignTemplates SemiDesignTemplate[]
-  createdBy           User?                @relation("StandardSizeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__created_by")
-  updatedBy           User?                @relation("StandardSizeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__updated_by")
+  createdBy           User?                  @relation("StandardSizeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__created_by")
+  updatedBy           User?                  @relation("StandardSizeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__updated_by")
+  standardBlanks      PatternStandardBlank[]
 
   @@unique([catalogProductId, code], map: "ux_standard_sizes__catalog_product_id__code")
   @@map("standard_sizes")
@@ -425,30 +432,37 @@ model StandardSize {
 
 /// `pattern_kind` and `constraints` are indicative (schema-design §0): validated by the calculator ports.
 model Pattern {
-  id            BigInt        @id(map: "pk_patterns") @default(autoincrement())
-  publicId      String        @unique(map: "ux_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  productTypeId BigInt        @map("product_type_id")
-  code          String        @unique(map: "ux_patterns__code")
-  name          String
-  technicalName String?       @map("technical_name")
-  patternKind   Int?          @map("pattern_kind") @db.SmallInt
+  id              BigInt           @id(map: "pk_patterns") @default(autoincrement())
+  publicId        String           @unique(map: "ux_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId   BigInt           @map("product_type_id")
+  code            String           @unique(map: "ux_patterns__code")
+  name            String
+  technicalName   String?          @map("technical_name")
+  patternKind     Int?             @map("pattern_kind") @db.SmallInt
   /// min/max w/l/h/b/s/cs/dl/dw, required_x/c (legacy `pattern` size constraints).
-  constraints   Json          @default("{}")
+  constraints     Json             @default("{}")
   /// Key understood by `@packio/dieline`.
-  dielineKey    String?       @map("dieline_key")
-  status        CatalogStatus @default(draft)
-  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById   BigInt?       @map("created_by")
-  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById   BigInt?       @map("updated_by")
-  rowVersion    Int           @default(1) @map("row_version")
+  dielineKey      String?          @map("dieline_key")
+  /// Blank formula of the folding calculator (B2.3, schema-design A-25); null = not priceable.
+  geometryFormula GeometryFormula? @map("geometry_formula")
+  status          CatalogStatus    @default(draft)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt?          @map("created_by")
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById     BigInt?          @map("updated_by")
+  rowVersion      Int              @default(1) @map("row_version")
 
-  productType     ProductType             @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__product_type_id")
-  subPatterns     SubPattern[]
-  fluteTypes      PatternFluteType[]
-  catalogProducts CatalogProductPattern[]
-  createdBy       User?                   @relation("PatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__created_by")
-  updatedBy       User?                   @relation("PatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__updated_by")
+  productType         ProductType                @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__product_type_id")
+  subPatterns         SubPattern[]
+  fluteTypes          PatternFluteType[]
+  catalogProducts     CatalogProductPattern[]
+  geometryConditions  PatternGeometryCondition[]
+  standardBlanks      PatternStandardBlank[]
+  createdBy           User?                      @relation("PatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__created_by")
+  updatedBy           User?                      @relation("PatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__updated_by")
+  // --- Folding price components (B2.3)
+  plPatternConditions PlPatternCondition[]       @relation("PlPatternConditionPattern")
+  // --- end Folding price components
 
   @@index([productTypeId], map: "ix_patterns__product_type_id")
   @@map("patterns")
@@ -456,27 +470,35 @@ model Pattern {
 
 /// Geometry factors and conditions are indicative (fixed by the calculator ports, B2.3).
 model SubPattern {
-  id          BigInt   @id(map: "pk_sub_patterns") @default(autoincrement())
-  publicId    String   @unique(map: "ux_sub_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  patternId   BigInt   @map("pattern_id")
-  seq         Int      @db.SmallInt
-  name        String
-  dl          Decimal? @db.Decimal(10, 4)
-  dw          Decimal? @db.Decimal(10, 4)
-  dh          Decimal? @db.Decimal(10, 4)
-  nl          Decimal? @db.Decimal(10, 4)
-  nw          Decimal? @db.Decimal(10, 4)
-  nh          Decimal? @db.Decimal(10, 4)
-  conditions  Json?
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById BigInt?  @map("created_by")
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById BigInt?  @map("updated_by")
-  rowVersion  Int      @default(1) @map("row_version")
+  id              BigInt           @id(map: "pk_sub_patterns") @default(autoincrement())
+  publicId        String           @unique(map: "ux_sub_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  patternId       BigInt           @map("pattern_id")
+  seq             Int              @db.SmallInt
+  name            String
+  dl              Decimal?         @db.Decimal(10, 4)
+  dw              Decimal?         @db.Decimal(10, 4)
+  dh              Decimal?         @db.Decimal(10, 4)
+  nl              Decimal?         @db.Decimal(10, 4)
+  nw              Decimal?         @db.Decimal(10, 4)
+  nh              Decimal?         @db.Decimal(10, 4)
+  conditions      Json?
+  /// Multi-part patterns: the part's own blank formula (legacy cases 31/32 by sub-pattern).
+  geometryFormula GeometryFormula? @map("geometry_formula")
+  /// The part is laid with its box turned (legacy sub-pattern 6: l ← w, w ← d, d ← l).
+  swapDimensions  Boolean          @default(false) @map("swap_dimensions")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt?          @map("created_by")
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById     BigInt?          @map("updated_by")
+  rowVersion      Int              @default(1) @map("row_version")
 
-  pattern   Pattern @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__pattern_id")
-  createdBy User?   @relation("SubPatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__created_by")
-  updatedBy User?   @relation("SubPatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__updated_by")
+  pattern             Pattern                    @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__pattern_id")
+  geometryConditions  PatternGeometryCondition[]
+  createdBy           User?                      @relation("SubPatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__created_by")
+  updatedBy           User?                      @relation("SubPatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__updated_by")
+  // --- Folding price components (B2.3)
+  plPatternConditions PlPatternCondition[]       @relation("PlPatternConditionSubPattern")
+  // --- end Folding price components
 
   @@unique([patternId, seq], map: "ux_sub_patterns__pattern_id__seq")
   @@map("sub_patterns")
@@ -580,10 +602,14 @@ model Material {
   updatedById   BigInt?       @map("updated_by")
   rowVersion    Int           @default(1) @map("row_version")
 
-  family    MaterialFamily? @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__family_id")
-  fluteType FluteType?      @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__flute_type_id")
-  createdBy User?           @relation("MaterialCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__created_by")
-  updatedBy User?           @relation("MaterialUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__updated_by")
+  family           MaterialFamily?   @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__family_id")
+  fluteType        FluteType?        @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__flute_type_id")
+  createdBy        User?             @relation("MaterialCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__created_by")
+  updatedBy        User?             @relation("MaterialUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__updated_by")
+  // --- Folding price components (B2.3)
+  plMaterialPrices PlMaterialPrice[] @relation("PlMaterialPriceMaterial")
+  plPaperSizes     PlPaperSize[]     @relation("PlPaperSizeMaterial")
+  // --- end Folding price components
 
   @@index([familyId], map: "ix_materials__family_id")
   @@index([fluteTypeId], map: "ix_materials__flute_type_id")
@@ -1533,4 +1559,171 @@ model GeoSubdistrict {
   @@index([districtId], map: "ix_geo_subdistricts__district_id")
   @@index([postcode], map: "ix_geo_subdistricts__postcode")
   @@map("geo_subdistricts")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Folding geometry (B2.3, legacy `calculate_conditions` / `conditions`, schema-design A-25)
+// ------------------------------------------------------------------------------------------------
+
+enum GeometryFormula {
+  tuck_top
+  tray
+  sleeve
+  lid
+  insert
+  hanger_tuck_top
+  popup_tuck_top
+  popup_hanger
+  house
+  fold_flap
+  wagashi
+  wagashi_side_tuck
+  wagashi_open_top
+  flat_overlap
+  flat
+  lock_bottom_top
+  flat_overlap_combined
+  slide_tray
+  slide_sleeve
+  cover_base
+  flat_extended
+  standard_blank
+
+  @@map("geometry_formula")
+}
+
+enum GeometryDeterminant {
+  w
+  l
+  d
+  x
+  c
+
+  @@map("geometry_determinant")
+}
+
+enum GeometrySlot {
+  dw
+  dl
+  nd
+  nl
+  nw
+  aux_f
+  aux_f10
+
+  @@map("geometry_slot")
+}
+
+/// A table of allowances by box dimension (legacy `conditions` grouped by `condition_conditionid`).
+model GeometryBandTable {
+  id          BigInt        @id(map: "pk_geometry_band_tables") @default(autoincrement())
+  publicId    String        @unique(map: "ux_geometry_band_tables__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String        @unique(map: "ux_geometry_band_tables__code")
+  name        String
+  status      CatalogStatus @default(draft)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  rowVersion  Int           @default(1) @map("row_version")
+
+  bands      GeometryBand[]
+  conditions GeometryCondition[]
+  createdBy  User?               @relation("GeometryBandTableCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geometry_band_tables__created_by")
+  updatedBy  User?               @relation("GeometryBandTableUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geometry_band_tables__updated_by")
+
+  @@map("geometry_band_tables")
+}
+
+/// One band, inclusive on both ends like legacy (`condition_lower ≤ v ≤ condition_upper`); overlaps
+/// are refused by an exclusion constraint (migration SQL), gaps leave the value unpriceable.
+model GeometryBand {
+  id          BigInt   @id(map: "pk_geometry_bands") @default(autoincrement())
+  publicId    String   @unique(map: "ux_geometry_bands__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  tableId     BigInt   @map("table_id")
+  lower       Decimal  @db.Decimal(12, 4)
+  upper       Decimal  @db.Decimal(12, 4)
+  value       Decimal  @db.Decimal(12, 4)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?  @map("updated_by")
+  rowVersion  Int      @default(1) @map("row_version")
+
+  table     GeometryBandTable @relation(fields: [tableId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geometry_bands__table_id")
+  createdBy User?             @relation("GeometryBandCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geometry_bands__created_by")
+  updatedBy User?             @relation("GeometryBandUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geometry_bands__updated_by")
+
+  @@index([tableId], map: "ix_geometry_bands__table_id")
+  @@map("geometry_bands")
+}
+
+/// A band table read by a given dimension under a variable name (legacy `calculate_conditions`).
+model GeometryCondition {
+  id          BigInt              @id(map: "pk_geometry_conditions") @default(autoincrement())
+  publicId    String              @unique(map: "ux_geometry_conditions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code        String              @unique(map: "ux_geometry_conditions__code")
+  bandTableId BigInt              @map("band_table_id")
+  /// Legacy variable name; only the lock-bottom formula reads it (`b`).
+  variable    String
+  determinant GeometryDeterminant
+  status      CatalogStatus       @default(draft)
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?             @map("created_by")
+  updatedAt   DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById BigInt?             @map("updated_by")
+  rowVersion  Int                 @default(1) @map("row_version")
+
+  bandTable GeometryBandTable          @relation(fields: [bandTableId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geometry_conditions__band_table_id")
+  patterns  PatternGeometryCondition[]
+  createdBy User?                      @relation("GeometryConditionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geometry_conditions__created_by")
+  updatedBy User?                      @relation("GeometryConditionUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geometry_conditions__updated_by")
+
+  @@index([bandTableId], map: "ix_geometry_conditions__band_table_id")
+  @@map("geometry_conditions")
+}
+
+/// Which conditions a pattern (or one of its parts) reads in each slot (legacy `pattern.condition_*`).
+/// ux `(pattern_id, coalesce(sub_pattern_id, 0), slot, seq)` is an expression index (migration SQL).
+model PatternGeometryCondition {
+  id           BigInt       @id(map: "pk_pattern_geometry_conditions") @default(autoincrement())
+  patternId    BigInt       @map("pattern_id")
+  subPatternId BigInt?      @map("sub_pattern_id")
+  slot         GeometrySlot
+  seq          Int          @default(1) @db.SmallInt
+  conditionId  BigInt       @map("condition_id")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?      @map("created_by")
+
+  pattern    Pattern           @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_geometry_conditions__pattern_id")
+  subPattern SubPattern?       @relation(fields: [subPatternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_geometry_conditions__sub_pattern_id")
+  condition  GeometryCondition @relation(fields: [conditionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_geometry_conditions__condition_id")
+  createdBy  User?             @relation("PatternGeometryConditionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_geometry_conditions__created_by")
+
+  @@index([patternId], map: "ix_pattern_geometry_conditions__pattern_id")
+  @@index([subPatternId], map: "ix_pattern_geometry_conditions__sub_pattern_id")
+  @@index([conditionId], map: "ix_pattern_geometry_conditions__condition_id")
+  @@map("pattern_geometry_conditions")
+}
+
+/// The die-cut blank of a pattern at one standard size (legacy `pattern_rel_standard_sizes.dl/dw`).
+model PatternStandardBlank {
+  id             BigInt   @id(map: "pk_pattern_standard_blanks") @default(autoincrement())
+  patternId      BigInt   @map("pattern_id")
+  standardSizeId BigInt   @map("standard_size_id")
+  dwMm           Decimal  @map("dw_mm") @db.Decimal(10, 2)
+  dlMm           Decimal  @map("dl_mm") @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt?  @map("created_by")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById    BigInt?  @map("updated_by")
+
+  pattern      Pattern      @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_standard_blanks__pattern_id")
+  standardSize StandardSize @relation(fields: [standardSizeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_standard_blanks__standard_size_id")
+  createdBy    User?        @relation("PatternStandardBlankCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_standard_blanks__created_by")
+  updatedBy    User?        @relation("PatternStandardBlankUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pattern_standard_blanks__updated_by")
+
+  @@unique([patternId, standardSizeId], map: "ux_pattern_standard_blanks__pattern_id__standard_size_id")
+  @@index([standardSizeId], map: "ix_pattern_standard_blanks__standard_size_id")
+  @@map("pattern_standard_blanks")
 }
