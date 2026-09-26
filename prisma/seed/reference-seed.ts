@@ -6,9 +6,9 @@ import { APPROVAL_POLICIES } from './data/approval-policies';
 import { PRODUCT_TYPES } from './data/catalog';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
+import { UNMET_DEMAND_REASONS } from './data/quotes';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
-import { UNMET_DEMAND_REASONS } from './data/quotes';
 import { CARRIERS, CUSTOMER_SHIPPING_RATE_CARDS, ZONE_SCHEMES } from './data/shipping';
 
 type Tx = Prisma.TransactionClient;
