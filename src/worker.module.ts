@@ -7,6 +7,7 @@ import { IntegrationsModule } from '@integrations/integrations.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { PartnersModule } from '@modules/partners/partners.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
+import { ShippingModule } from '@modules/shipping/shipping.module';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ApprovalsModule } from '@platform/approvals/approvals.module';
@@ -51,6 +52,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     SettingsAdminModule,
     PartnersModule,
     PricingModule,
+    ShippingModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

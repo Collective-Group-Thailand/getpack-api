@@ -16,6 +16,7 @@ import { CatalogModule } from '@modules/catalog/catalog.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { PartnersModule } from '@modules/partners/partners.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
+import { ShippingModule } from '@modules/shipping/shipping.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -71,6 +72,7 @@ import { LoggerModule } from 'nestjs-pino';
     CatalogModule,
     PartnersModule,
     PricingModule,
+    ShippingModule,
     HealthModule,
     SurfacesModule,
   ],

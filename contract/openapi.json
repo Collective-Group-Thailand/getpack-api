@@ -969,6 +969,39 @@
           "type": "https://errors.packio/settings.pending_exists"
         }
       },
+      "problem.shipping.rates_empty": {
+        "summary": "shipping.rates_empty",
+        "value": {
+          "code": "shipping.rates_empty",
+          "detail": "ต้องมีอัตราค่าขนส่งอย่างน้อยหนึ่งรายการก่อนส่งอนุมัติ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ยังไม่มีอัตรา",
+          "type": "https://errors.packio/shipping.rates_empty"
+        }
+      },
+      "problem.shipping.version_not_draft": {
+        "summary": "shipping.version_not_draft",
+        "value": {
+          "code": "shipping.version_not_draft",
+          "detail": "แก้ไขได้เฉพาะฉบับร่าง ฉบับที่ส่งอนุมัติหรือตัดสินแล้วแก้ไขไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่ใช่ฉบับร่าง",
+          "type": "https://errors.packio/shipping.version_not_draft"
+        }
+      },
+      "problem.shipping.version_not_proposed": {
+        "summary": "shipping.version_not_proposed",
+        "value": {
+          "code": "shipping.version_not_proposed",
+          "detail": "ถอนได้เฉพาะฉบับที่รออนุมัติ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่ได้อยู่ระหว่างอนุมัติ",
+          "type": "https://errors.packio/shipping.version_not_proposed"
+        }
+      },
       "problem.validation.failed": {
         "summary": "validation.failed",
         "value": {
@@ -4149,6 +4182,41 @@
         ],
         "type": "object"
       },
+      "CreateCustomerRateVersionDto": {
+        "properties": {
+          "copyFromVersionId": {
+            "description": "Copy the rates of this version (copy-on-write); ignored when `rates` is given",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "description": "Applies from this instant once approved; never before the approval (not back-dated)",
+            "example": "2026-10-15T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "rates": {
+            "description": "At most 5000 rates",
+            "items": {
+              "$ref": "#/components/schemas/CustomerRateInputDto"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "example": "Q4 rates (fake)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "effectiveFrom",
+          "reason"
+        ],
+        "type": "object"
+      },
       "CreateDelegationDto": {
         "properties": {
           "delegateId": {
@@ -6544,6 +6612,377 @@
         },
         "required": [
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CustomerRateCardDto": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CustomerRateVersionSummaryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version in force now"
+          },
+          "description": {
+            "example": "D-013 customer shipping rate card (zone/postcode × weight/volume)",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d401",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "default",
+            "type": "string"
+          },
+          "open": {
+            "description": "Drafts and versions in approval",
+            "items": {
+              "$ref": "#/components/schemas/CustomerRateVersionSummaryDto"
+            },
+            "type": "array"
+          },
+          "scheduled": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CustomerRateVersionSummaryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The approved version scheduled next, if any"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "description",
+          "current",
+          "scheduled",
+          "open"
+        ],
+        "type": "object"
+      },
+      "CustomerRateDto": {
+        "properties": {
+          "perExtraKg": {
+            "description": "Charged per started kg above `weightMinG`, VAT-exclusive (THB)",
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "postcode": {
+            "description": "Postcode override inside the zone; null = the whole zone",
+            "example": null,
+            "pattern": "^[0-9]{5}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceAmount": {
+            "description": "Price, VAT-exclusive (THB)",
+            "example": "120.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "volumeMaxCm3": {
+            "description": "Volume to (exclusive); null bounds = any volume. Unit: cm³.",
+            "example": null,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "volumeMinCm3": {
+            "description": "Volume from (inclusive). Unit: cm³.",
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightMaxG": {
+            "description": "Weight to (exclusive); null = open. Unit: g.",
+            "example": 5000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightMinG": {
+            "description": "Weight from (inclusive). Unit: g.",
+            "example": 0,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "zoneCode": {
+            "example": "bkk",
+            "type": "string"
+          },
+          "zoneId": {
+            "description": "Zone of the version’s scheme (`customer_default`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d403",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zoneId",
+          "postcode",
+          "weightMinG",
+          "weightMaxG",
+          "volumeMinCm3",
+          "volumeMaxCm3",
+          "priceAmount",
+          "perExtraKg",
+          "zoneCode"
+        ],
+        "type": "object"
+      },
+      "CustomerRateInputDto": {
+        "properties": {
+          "perExtraKg": {
+            "description": "Charged per started kg above `weightMinG`, VAT-exclusive (THB)",
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "postcode": {
+            "description": "Postcode override inside the zone; null = the whole zone",
+            "example": null,
+            "pattern": "^[0-9]{5}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceAmount": {
+            "description": "Price, VAT-exclusive (THB)",
+            "example": "120.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "volumeMaxCm3": {
+            "description": "Volume to (exclusive); null bounds = any volume. Unit: cm³.",
+            "example": null,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "volumeMinCm3": {
+            "description": "Volume from (inclusive). Unit: cm³.",
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightMaxG": {
+            "description": "Weight to (exclusive); null = open. Unit: g.",
+            "example": 5000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightMinG": {
+            "description": "Weight from (inclusive). Unit: g.",
+            "example": 0,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "zoneId": {
+            "description": "Zone of the version’s scheme (`customer_default`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d403",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zoneId",
+          "postcode",
+          "weightMinG",
+          "weightMaxG",
+          "volumeMinCm3",
+          "volumeMaxCm3",
+          "priceAmount",
+          "perExtraKg"
+        ],
+        "type": "object"
+      },
+      "CustomerRateVersionDto": {
+        "properties": {
+          "approvalRequestId": {
+            "description": "Open or decided C-Level approval request",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d404",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": "2026-10-02T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "example": "2026-10-15T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rateCount": {
+            "example": 12,
+            "type": "integer"
+          },
+          "rates": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerRateDto"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "example": "Q4 rates (fake)",
+            "type": "string"
+          },
+          "schemeCode": {
+            "description": "Zone scheme of every rate",
+            "example": "customer_default",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigVersionStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "status",
+          "effectiveFrom",
+          "reason",
+          "schemeCode",
+          "rateCount",
+          "approvalRequestId",
+          "createdAt",
+          "decidedAt",
+          "rates"
+        ],
+        "type": "object"
+      },
+      "CustomerRateVersionSummaryDto": {
+        "properties": {
+          "approvalRequestId": {
+            "description": "Open or decided C-Level approval request",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d404",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": "2026-10-02T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "example": "2026-10-15T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rateCount": {
+            "example": 12,
+            "type": "integer"
+          },
+          "reason": {
+            "example": "Q4 rates (fake)",
+            "type": "string"
+          },
+          "schemeCode": {
+            "description": "Zone scheme of every rate",
+            "example": "customer_default",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigVersionStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "status",
+          "effectiveFrom",
+          "reason",
+          "schemeCode",
+          "rateCount",
+          "approvalRequestId",
+          "createdAt",
+          "decidedAt"
         ],
         "type": "object"
       },
@@ -13028,6 +13467,55 @@
         ],
         "type": "object"
       },
+      "RateImportPreviewDto": {
+        "properties": {
+          "canConfirm": {
+            "description": "At least one row and no errors",
+            "example": true,
+            "type": "boolean"
+          },
+          "errors": {
+            "description": "First 200 row errors",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowErrorDto"
+            },
+            "type": "array"
+          },
+          "errorsTruncated": {
+            "example": false,
+            "type": "boolean"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "invalid": {
+            "description": "Rows with at least one error",
+            "example": 0,
+            "type": "integer"
+          },
+          "previewSha256": {
+            "description": "Send back to confirm exactly these rates",
+            "example": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+            "type": "string"
+          },
+          "rows": {
+            "example": 12,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fileId",
+          "previewSha256",
+          "rows",
+          "invalid",
+          "canConfirm",
+          "errors",
+          "errorsTruncated"
+        ],
+        "type": "object"
+      },
       "RealtimeAuthDto": {
         "properties": {
           "channels": {
@@ -13347,6 +13835,21 @@
         },
         "required": [
           "colours"
+        ],
+        "type": "object"
+      },
+      "ReplaceCustomerRatesDto": {
+        "properties": {
+          "rates": {
+            "description": "The complete set, at most 5000",
+            "items": {
+              "$ref": "#/components/schemas/CustomerRateInputDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rates"
         ],
         "type": "object"
       },
@@ -14860,6 +15363,112 @@
           "reason",
           "createdAt",
           "decidedAt"
+        ],
+        "type": "object"
+      },
+      "ShippingRateMissReason": {
+        "description": "Why no rate applies",
+        "enum": [
+          "no_postcode",
+          "no_rate_card",
+          "zone_unknown",
+          "no_band"
+        ],
+        "type": "string"
+      },
+      "ShippingRateQuoteDto": {
+        "properties": {
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "description": "Always THB (one currency)",
+            "example": "THB"
+          },
+          "netAmount": {
+            "description": "VAT-exclusive (THB)",
+            "example": "120.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priced": {
+            "example": true,
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShippingRateMissReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why no rate applies",
+            "example": null
+          },
+          "versionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "zoneCode": {
+            "example": "bkk",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "priced",
+          "reason",
+          "versionId",
+          "zoneCode",
+          "netAmount",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "ShippingRateQuoteRequestDto": {
+        "properties": {
+          "at": {
+            "description": "Instant to resolve the card at; default now",
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "volumeCm3": {
+            "description": "Unit: cm³.",
+            "example": 48000,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightG": {
+            "description": "Unit: g.",
+            "example": 3200,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "postcode",
+          "weightG"
         ],
         "type": "object"
       },
@@ -91446,6 +92055,2716 @@
         ]
       }
     },
+    "/v1/admin/shipping/customer-rate-card": {
+      "get": {
+        "description": "The version in force, the next scheduled version and the drafts / versions in approval of the customer rate card (D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "current": {
+                    "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-00000000d404",
+                    "createdAt": "2026-10-01T09:00:00+07:00",
+                    "decidedAt": "2026-10-02T10:00:00+07:00",
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                    "rateCount": 1,
+                    "reason": "Q4 rates (fake)",
+                    "schemeCode": "customer_default",
+                    "status": "approved",
+                    "versionNo": 2
+                  },
+                  "description": "D-013 customer shipping rate card (zone/postcode × weight/volume)",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d401",
+                  "key": "default",
+                  "open": [],
+                  "scheduled": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRateCardDto"
+                }
+              }
+            },
+            "description": "Card",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get the customer shipping rate card",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.read"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/actions/quote": {
+      "post": {
+        "description": "Resolves the version in force at `at`, the zone of the postcode and the matching band; the amount is VAT-exclusive (VAT is added on the quote line, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.quote",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "postcode": "10110",
+                    "volumeCm3": 48000,
+                    "weightG": 3200
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ShippingRateQuoteRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "netAmount": "120.00",
+                  "priced": true,
+                  "reason": null,
+                  "versionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                  "zoneCode": "bkk"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ShippingRateQuoteDto"
+                }
+              }
+            },
+            "description": "Rate",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a parcel on the customer rate card",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.read"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/versions": {
+      "get": {
+        "description": "Every version, newest first, without its rates (effective-dated, ADR-0005, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.listVersions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-00000000d404",
+                    "createdAt": "2026-10-01T09:00:00+07:00",
+                    "decidedAt": "2026-10-02T10:00:00+07:00",
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                    "rateCount": 1,
+                    "reason": "Q4 rates (fake)",
+                    "schemeCode": "customer_default",
+                    "status": "approved",
+                    "versionNo": 2
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerRateVersionSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the versions of the customer rate card",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.read"
+        ]
+      },
+      "post": {
+        "description": "A complete set of rates (copy-on-write): given, copied from another version, or empty to import from Excel. Bands are half-open and may not overlap within a zone or postcode; a postcode row overrides its zone. Not back-dated (ADR-0005, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.createVersion",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "copy": {
+                  "value": {
+                    "copyFromVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "reason": "Q4 rates (fake)"
+                  }
+                },
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "rates": [
+                      {
+                        "perExtraKg": null,
+                        "postcode": null,
+                        "priceAmount": "120.00",
+                        "volumeMaxCm3": null,
+                        "volumeMinCm3": null,
+                        "weightMaxG": 5000,
+                        "weightMinG": 0,
+                        "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                      }
+                    ],
+                    "reason": "Q4 rates (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomerRateVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "priceAmount": "120.00",
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Q4 rates (fake)",
+                  "schemeCode": "customer_default",
+                  "status": "draft",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRateVersionDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "partners.backdated": {
+                    "$ref": "#/components/examples/problem.partners.backdated"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `partners.backdated`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Draft a new version of the customer rate card",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/versions/{versionId}": {
+      "delete": {
+        "description": "Drafts only, by their author; decided versions are kept forever (ADR-0005, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.deleteDraft",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_not_draft": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Delete a draft",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.manage"
+        ]
+      },
+      "get": {
+        "description": "All rates of the version: zone or postcode × weight / volume band, VAT-exclusive (D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.getVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-00000000d404",
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "decidedAt": "2026-10-02T10:00:00+07:00",
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "priceAmount": "120.00",
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Q4 rates (fake)",
+                  "schemeCode": "customer_default",
+                  "status": "approved",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRateVersionDto"
+                }
+              }
+            },
+            "description": "Version",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a customer rate-card version with its rates",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.read"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/versions/{versionId}/actions/export": {
+      "post": {
+        "description": "The same layout the import reads; a short-lived signed download URL (audited export, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.exportVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-01T10:05:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f002",
+                  "rows": 12,
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogExportDto"
+                }
+              }
+            },
+            "description": "File",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export a version’s rates to Excel",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.read"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/versions/{versionId}/actions/import-confirm": {
+      "post": {
+        "description": "Re-reads the file and writes the rates only when the plan still matches `previewSha256` and has no errors (A-14, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.confirmImport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                    "previewSha256": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "priceAmount": "120.00",
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Q4 rates (fake)",
+                  "schemeCode": "customer_default",
+                  "status": "draft",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRateVersionDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.import_stale": {
+                    "$ref": "#/components/examples/problem.catalog.import_stale"
+                  },
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  },
+                  "shipping.version_not_draft": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.import_stale`, `file.infected`, `file.not_ready`, `shipping.version_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.import_invalid": {
+                    "$ref": "#/components/examples/problem.catalog.import_invalid"
+                  },
+                  "catalog.import_too_large": {
+                    "$ref": "#/components/examples/problem.catalog.import_too_large"
+                  },
+                  "catalog.import_unreadable": {
+                    "$ref": "#/components/examples/problem.catalog.import_unreadable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.import_invalid`, `catalog.import_too_large`, `catalog.import_unreadable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replace a draft’s rates with a previewed Excel file",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/versions/{versionId}/actions/import-preview": {
+      "post": {
+        "description": "Dry run of an uploaded `.xlsx` (sheet `rates`: zone_code, postcode, weight_min_g, weight_max_g, volume_min_cm3, volume_max_cm3, price_amount, per_extra_kg). Returns row errors and `previewSha256` to confirm exactly this plan (A-14, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.previewImport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ImportFileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "canConfirm": true,
+                  "errors": [],
+                  "errorsTruncated": false,
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                  "invalid": 0,
+                  "previewSha256": "a3f1c2d4e5b60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+                  "rows": 12
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RateImportPreviewDto"
+                }
+              }
+            },
+            "description": "Preview",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  },
+                  "shipping.version_not_draft": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.infected`, `file.not_ready`, `shipping.version_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.import_too_large": {
+                    "$ref": "#/components/examples/problem.catalog.import_too_large"
+                  },
+                  "catalog.import_unreadable": {
+                    "$ref": "#/components/examples/problem.catalog.import_unreadable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.import_too_large`, `catalog.import_unreadable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Preview an Excel file of rates for a draft",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/versions/{versionId}/actions/submit": {
+      "post": {
+        "description": "The version becomes `proposed` with an approval request (policy `customer_shipping_rate_change`, one C-Level step, chosen at B2.4 planning); on approval it applies from its effective date, or from the decision when that date has passed. One version in approval at a time (D-013, D-063).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.submitVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-00000000d404",
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "priceAmount": "120.00",
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Q4 rates (fake)",
+                  "schemeCode": "customer_default",
+                  "status": "proposed",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRateVersionDto"
+                }
+              }
+            },
+            "description": "In approval",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "partners.version_pending": {
+                    "$ref": "#/components/examples/problem.partners.version_pending"
+                  },
+                  "shipping.version_not_draft": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `partners.version_pending`, `shipping.version_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.rates_empty": {
+                    "$ref": "#/components/examples/problem.shipping.rates_empty"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.rates_empty`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Submit a draft for C-Level approval",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/versions/{versionId}/actions/withdraw": {
+      "post": {
+        "description": "The requester withdraws the version and its approval request together (ADR-0006, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.withdrawVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "Rates need another review (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-00000000d404",
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "decidedAt": "2026-10-02T10:00:00+07:00",
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "priceAmount": "120.00",
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Q4 rates (fake)",
+                  "schemeCode": "customer_default",
+                  "status": "withdrawn",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRateVersionDto"
+                }
+              }
+            },
+            "description": "Withdrawn",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "approval.not_authorised": {
+                    "$ref": "#/components/examples/problem.approval.not_authorised"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `approval.not_authorised`, `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_not_proposed": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_proposed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_not_proposed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Withdraw a version in approval",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/shipping/customer-rate-card/versions/{versionId}/rates": {
+      "put": {
+        "description": "Only the author edits a draft; submitted and decided versions are frozen (ADR-0005, D-013).\n\nImplements: D-013, D-063.",
+        "operationId": "admin.customerShippingRates.replaceRates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "rates": [
+                      {
+                        "perExtraKg": null,
+                        "postcode": null,
+                        "priceAmount": "120.00",
+                        "volumeMaxCm3": null,
+                        "volumeMinCm3": null,
+                        "weightMaxG": 5000,
+                        "weightMinG": 0,
+                        "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceCustomerRatesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalRequestId": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "priceAmount": "120.00",
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Q4 rates (fake)",
+                  "schemeCode": "customer_default",
+                  "status": "draft",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerRateVersionDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_not_draft": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replace the rates of a draft",
+        "tags": [
+          "admin.customerShippingRates"
+        ],
+        "x-required-permissions": [
+          "shipping_rates.manage"
+        ]
+      }
+    },
     "/v1/admin/shipping/zone-schemes": {
       "get": {
         "description": "Filters, sort and `q` (free text over code, name). One scheme for customer rates (`customer_default`) and one per carrier (D-114); rate cards arrive in B2.4.\n\nImplements: D-013, D-114.",
@@ -116921,6 +120240,10 @@
     {
       "description": "The CS folding calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
       "name": "admin.csFolding"
+    },
+    {
+      "description": "The customer shipping rate card: effective-dated versions approved by C-Level (D-013).",
+      "name": "admin.customerShippingRates"
     },
     {
       "description": "Partner factories: registration, onboarding steps, KYC, addresses, contacts, bank accounts and lifecycle (D-011, D-041, D-171).",

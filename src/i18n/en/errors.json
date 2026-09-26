@@ -410,5 +410,19 @@
       "title": "Not quoted instantly",
       "detail": "This product type is not quoted instantly yet; send a request for quote instead (D-100)."
     }
+  },
+  "shipping": {
+    "version_not_draft": {
+      "title": "Not a draft",
+      "detail": "Only a draft version can be changed; submitted and decided versions are frozen."
+    },
+    "version_not_proposed": {
+      "title": "Not in approval",
+      "detail": "Only a version waiting for approval can be withdrawn."
+    },
+    "rates_empty": {
+      "title": "No rates",
+      "detail": "Add at least one rate before submitting the version."
+    }
   }
 }
