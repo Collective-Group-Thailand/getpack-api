@@ -14,6 +14,7 @@ import {
 } from '@modules/shipping/shipping-quote.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
+import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import {
@@ -113,6 +114,8 @@ export interface QuoteView {
     settingVersionIds: Record<string, string>;
     calculatorVersion: string;
   };
+  /** The analytics row of this calculation (null when it could not be written); internal only. */
+  calculateLog?: { id: bigint; occurredAt: Date } | null;
 }
 
 export interface FactoryQuoteView {
@@ -162,6 +165,7 @@ export class QuoteEngineService {
     private readonly calendars: BusinessCalendarService,
     private readonly settings: SettingsService,
     private readonly shipping: ShippingQuoteService,
+    private readonly events: DomainEvents,
   ) {}
 
   async priceFolding(cfg: FoldingConfiguration, ctx: QuoteContext): Promise<QuoteView> {
@@ -359,7 +363,7 @@ export class QuoteEngineService {
         calculatorVersion: FOLDING_CALCULATOR_VERSION,
       },
     };
-    await this.log(cfg, resolved, view, ctx, at, Date.now() - started);
+    view.calculateLog = await this.log(cfg, resolved, view, ctx, at, Date.now() - started);
     return view;
   }
 
@@ -540,10 +544,10 @@ export class QuoteEngineService {
     ctx: QuoteContext,
     at: Date,
     durationMs: number,
-  ): Promise<void> {
+  ): Promise<{ id: bigint; occurredAt: Date } | null> {
     const instant = view.steps.some((s) => s.instant);
     try {
-      await this.prisma.calculateLog.create({
+      const row = await this.prisma.calculateLog.create({
         data: {
           occurredAt: at,
           channel: ctx.channel,
@@ -571,10 +575,36 @@ export class QuoteEngineService {
           durationMs,
           ipPrefix: ipPrefix(ctx.ip),
         },
+        select: { id: true, occurredAt: true },
       });
+      // Analytics and unmet demand (D-102) subscribe; banded, no PII.
+      const type = await this.prisma.productType.findUniqueOrThrow({
+        where: { id: resolved.productTypeId },
+        select: { publicId: true },
+      });
+      await this.prisma.withTx((tx) =>
+        this.events.record(tx, {
+          type: 'quote.calculated',
+          aggregateType: 'product_type',
+          aggregateId: type.publicId,
+          payload: {
+            calculateLogId: row.id.toString(),
+            occurredAt: row.occurredAt.toISOString(),
+            channel: ctx.channel,
+            productTypeId: resolved.productTypeId.toString(),
+            quantities: [...cfg.quantities],
+            instant,
+            reasons: [...new Set(view.steps.map((s) => s.reason).filter((r): r is string => r !== null))],
+            deliveryPostcode: ctx.deliveryPostcode ?? null,
+            dimensionsMm: { w: cfg.w, l: cfg.l, d: cfg.d },
+          },
+        }),
+      );
+      return row;
     } catch (error) {
       // Analytics must never fail a quote.
       this.logger.warn({ err: error }, 'calculate log not written');
+      return null;
     }
   }
 }

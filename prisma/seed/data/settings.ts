@@ -460,4 +460,9 @@ export const ENTITY_SETTING_KEYS = {
     key: 'entity.branch_code',
     description: 'D-092 branch code of the issuing entity (00000 = head office)',
   },
+  addressTh: {
+    key: 'entity.address_th',
+    description: 'D-092 registered address (Thai) printed on documents of the issuing entity',
+  },
+  phone: { key: 'entity.phone', description: 'D-092 contact phone printed on documents of the issuing entity' },
 } as const;

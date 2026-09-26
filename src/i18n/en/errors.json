@@ -454,5 +454,23 @@
       "title": "Series exists",
       "detail": "This entity already has a numbering series for the document type."
     }
+  },
+  "quotes": {
+    "nothing_to_save": {
+      "title": "Nothing to save",
+      "detail": "No quantity has an instant price; send a request for quote instead (D-100)."
+    },
+    "not_live": {
+      "title": "Quotation not valid",
+      "detail": "The quotation has expired or was replaced; re-price it first (D-051)."
+    },
+    "still_valid": {
+      "title": "Price still locked",
+      "detail": "The quotation is still valid with its price locked; re-pricing is possible after expiry (D-051)."
+    },
+    "not_repriceable": {
+      "title": "Cannot re-price",
+      "detail": "Only an instant quotation that was saved, shared or expired can be re-priced."
+    }
   }
 }

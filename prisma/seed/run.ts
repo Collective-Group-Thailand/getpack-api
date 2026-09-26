@@ -31,6 +31,8 @@ function entityFromEnv(): EntitySeedInput {
     legalNameEn: optional('SEED_ENTITY_LEGAL_NAME_EN'),
     taxId: optional('SEED_ENTITY_TAX_ID'),
     branchCode: optional('SEED_ENTITY_BRANCH_CODE'),
+    addressTh: optional('SEED_ENTITY_ADDRESS_TH'),
+    phone: optional('SEED_ENTITY_PHONE'),
   };
 }
 

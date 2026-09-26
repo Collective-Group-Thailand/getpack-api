@@ -4,7 +4,10 @@
  */
 export const API_TAGS: Record<string, string> = {
   'store.quotes':
-    'Instant price calculation per quantity (D-043, D-100); quotes are saved with B2.5 (D-051).',
+    'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',
+  'store.savedQuotes':
+    'Saved quotations: 15-day price lock, share links, PDF in the name of the issuing entity, re-pricing after expiry (D-051).',
+  'admin.quotes': 'Saved quotations with the staff view; CS saves, shares and exports them (D-051, D-141).',
   'admin.csFolding':
     'The CS folding calculator: catalogue choices and pricing with the staff view (D-100, D-141).',
   'admin.sellMarginTables': "Packio's sell margins, fix costs and design fees, effective-dated (D-063).",

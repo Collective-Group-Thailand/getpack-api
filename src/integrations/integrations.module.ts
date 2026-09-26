@@ -18,6 +18,9 @@ import { LineMessagingClient } from './line-messaging/line-messaging-client';
 import { FakeIndexSource } from './material-price-index/fake-index-source';
 import { ManualIndexSource } from './material-price-index/manual-index-source';
 import { MATERIAL_PRICE_INDEX } from './material-price-index/material-price-index.port';
+import { FakePdfRenderer } from './pdf/fake-pdf-renderer';
+import { PDF_RENDERER } from './pdf/pdf-renderer.port';
+import { PuppeteerPdfRenderer } from './pdf/puppeteer-pdf-renderer';
 import { FakeObjectStorage } from './s3/fake-object-storage';
 import { OBJECT_STORAGE, type ObjectStorage } from './s3/object-storage.port';
 import { S3ObjectStorage } from './s3/s3-object-storage';
@@ -134,6 +137,12 @@ import { WEB_PUSH } from './web-push/web-push.port';
             ),
     },
     {
+      provide: PDF_RENDERER,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes ? new FakePdfRenderer() : new PuppeteerPdfRenderer(config.get('PDF_CHROMIUM_PATH')),
+    },
+    {
       provide: SECRETS_PROVIDER,
       inject: [AppConfig],
       useFactory: (config: AppConfig) =>
@@ -176,6 +185,7 @@ import { WEB_PUSH } from './web-push/web-push.port';
     MATERIAL_PRICE_INDEX,
     SECRETS_PROVIDER,
     CARRIER_ADAPTERS,
+    PDF_RENDERER,
   ],
 })
 export class IntegrationsModule {}

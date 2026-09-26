@@ -18,7 +18,6 @@ import { PriceProposalRecorder } from './pricing/price-proposal-recorder';
 import { PriceProposalsService } from './pricing/price-proposals.service';
 import { PriceSimulationsService } from './pricing/price-simulations.service';
 import { PriceSuggestionsService } from './pricing/price-suggestions.service';
-import { NoQuotesRepricer, QUOTE_REPRICER } from './pricing/quote-repricer.port';
 import { SuggestionEngine } from './pricing/suggestion-engine';
 import { QuotePathService } from './quote-path/quote-path.service';
 import { SiteVisitsService } from './site-visits/site-visits.service';
@@ -55,8 +54,7 @@ const SERVICES = [
   providers: [
     ...SERVICES,
     FactoryScopeResolver,
-    // Replaced by quoting (B2.5) once quotes can be re-priced.
-    { provide: QUOTE_REPRICER, useClass: NoQuotesRepricer },
+    // QUOTE_REPRICER comes from the global QuotesModule (saved quotes, B2.5).
   ],
   exports: SERVICES,
 })

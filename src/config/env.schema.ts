@@ -226,6 +226,11 @@ export class EnvironmentVariables {
   @IsString()
   FIELD_ENCRYPTION_KEY?: string;
 
+  /** Chromium used by the PDF renderer (installed in the Docker image with Thai fonts). */
+  @IsOptional()
+  @IsString()
+  PDF_CHROMIUM_PATH?: string;
+
   /** Registered sender name shown on SMS. */
   @IsOptional()
   @IsString()

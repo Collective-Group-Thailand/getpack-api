@@ -11,6 +11,8 @@ export const DEV_ENTITY: EntitySeedInput = {
   legalNameEn: 'Example Development Co., Ltd. (fake data)',
   taxId: '0000000000000',
   branchCode: '00000',
+  addressTh: '99/9 ถนนตัวอย่าง แขวงทดสอบ เขตทดสอบ กรุงเทพฯ 10000 (ข้อมูลปลอม)',
+  phone: '02-000-0000',
 };
 
 /** Staff role → team for notification routing (D-143). */

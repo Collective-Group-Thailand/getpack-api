@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # One image, two processes: API (default CMD) and worker (`node dist/src/worker.js`).
-# Debian slim (not Alpine): Puppeteer/Chromium for PDFs arrives in later deliverables.
+# Debian slim (not Alpine): Chromium + Thai fonts for server-side PDFs (puppeteer-core, B2.5).
 
 ARG NODE_IMAGE=node:24-bookworm-slim
 
@@ -26,9 +26,9 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 # --- runtime ------------------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS runtime
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends tini ca-certificates \
+  && apt-get install -y --no-install-recommends tini ca-certificates chromium fonts-thai-tlwg fonts-noto-core \
   && rm -rf /var/lib/apt/lists/*
-ENV NODE_ENV=production
+ENV NODE_ENV=production PDF_CHROMIUM_PATH=/usr/bin/chromium
 WORKDIR /app
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist

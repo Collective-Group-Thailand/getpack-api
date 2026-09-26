@@ -23,6 +23,8 @@ export interface EntitySeedInput {
   legalNameEn?: string;
   taxId?: string;
   branchCode?: string;
+  addressTh?: string;
+  phone?: string;
 }
 
 export type SeedReport = Record<string, number>;
@@ -103,6 +105,8 @@ async function ensureEntitySettings(
     ['legalNameEn', input.legalNameEn],
     ['taxId', input.taxId],
     ['branchCode', input.branchCode],
+    ['addressTh', input.addressTh],
+    ['phone', input.phone],
   ];
   for (const [field, value] of values) {
     if (value === undefined || value === '') continue;

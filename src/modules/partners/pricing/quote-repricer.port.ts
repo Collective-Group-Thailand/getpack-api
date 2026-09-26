@@ -26,7 +26,7 @@ export interface QuoteRepricer {
   reprice(request: RepriceRequest): Promise<RepriceResult>;
 }
 
-/** Stand-in until quoting ships (B2.5): the window holds no quotes. */
+/** Stand-in for tests that build the partners context without saved quotes (B2.5 binds the real one). */
 export class NoQuotesRepricer implements QuoteRepricer {
   reprice(): Promise<RepriceResult> {
     return Promise.resolve({

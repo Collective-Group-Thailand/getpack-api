@@ -639,6 +639,17 @@
           "type": "https://errors.packio/numbering.series_exists"
         }
       },
+      "problem.numbering.series_missing": {
+        "summary": "numbering.series_missing",
+        "value": {
+          "code": "numbering.series_missing",
+          "detail": "ยังไม่ได้ตั้งชุดเลขที่เอกสารสำหรับ {docType} ผู้จัดการฝ่ายการเงินต้องสร้างก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่มีชุดเลขที่เอกสาร",
+          "type": "https://errors.packio/numbering.series_missing"
+        }
+      },
       "problem.outbox.not_replayable": {
         "summary": "outbox.not_replayable",
         "value": {
@@ -934,6 +945,50 @@
           "status": 503,
           "title": "ผู้ให้บริการภายนอกไม่พร้อมใช้งาน",
           "type": "https://errors.packio/provider.unavailable"
+        }
+      },
+      "problem.quotes.not_live": {
+        "summary": "quotes.not_live",
+        "value": {
+          "code": "quotes.not_live",
+          "detail": "ใบเสนอราคานี้หมดอายุหรือถูกแทนที่แล้ว กรุณาคำนวณราคาใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ใบเสนอราคาหมดอายุ",
+          "type": "https://errors.packio/quotes.not_live"
+        }
+      },
+      "problem.quotes.not_repriceable": {
+        "summary": "quotes.not_repriceable",
+        "value": {
+          "code": "quotes.not_repriceable",
+          "detail": "คำนวณใหม่ได้เฉพาะใบเสนอราคาแบบทันทีที่บันทึก แชร์ หรือหมดอายุแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "คำนวณราคาใหม่ไม่ได้",
+          "type": "https://errors.packio/quotes.not_repriceable"
+        }
+      },
+      "problem.quotes.nothing_to_save": {
+        "summary": "quotes.nothing_to_save",
+        "value": {
+          "code": "quotes.nothing_to_save",
+          "detail": "ไม่มีจำนวนใดที่คำนวณราคาได้ทันที กรุณาส่งคำขอใบเสนอราคา (RFQ)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่มีราคาให้บันทึก",
+          "type": "https://errors.packio/quotes.nothing_to_save"
+        }
+      },
+      "problem.quotes.still_valid": {
+        "summary": "quotes.still_valid",
+        "value": {
+          "code": "quotes.still_valid",
+          "detail": "ใบเสนอราคายังไม่หมดอายุ ราคายังคงเดิม คำนวณใหม่ได้หลังหมดอายุ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ราคายังล็อกอยู่",
+          "type": "https://errors.packio/quotes.still_valid"
         }
       },
       "problem.service.unavailable": {
@@ -1591,6 +1646,299 @@
           "shippingNetAmount",
           "shippingVatAmount",
           "vatAmount",
+          "grossAmount",
+          "leadTimeDays",
+          "earliestShipDate",
+          "earliestDeliveryDate",
+          "toleranceShortagePct",
+          "toleranceOveragePct",
+          "shippingPending",
+          "shippingPendingReason",
+          "internal"
+        ],
+        "type": "object"
+      },
+      "AdminSavedQuoteDto": {
+        "properties": {
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesChannel"
+              }
+            ],
+            "example": "web"
+          },
+          "configuration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoldingConfigurationDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for RFQ quotes"
+          },
+          "createdAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "CS member who saved it"
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "description": "Always THB (one currency)",
+            "example": "THB"
+          },
+          "customer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deliveryPostcode": {
+            "example": "10110",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+            "format": "uuid",
+            "type": "string"
+          },
+          "options": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AdminSavedQuoteOptionDto"
+            },
+            "type": "array"
+          },
+          "pdfStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuotePdfStatus"
+              }
+            ],
+            "example": "none"
+          },
+          "priceLocked": {
+            "description": "Saved or shared and still within its validity",
+            "example": true,
+            "type": "boolean"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "quoteCode": {
+            "description": "Issued at share or PDF",
+            "example": "QT-2026-000042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sharedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "description": "`instant` (calculator) or `rfq` (manual quotation of a request for quote)",
+            "example": "instant"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteStatus"
+              }
+            ],
+            "example": "saved"
+          },
+          "validUntil": {
+            "description": "Price lock ends (D-051)",
+            "example": "2026-10-16T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "quoteCode",
+          "status",
+          "source",
+          "productTypeCode",
+          "configuration",
+          "deliveryPostcode",
+          "validUntil",
+          "priceLocked",
+          "options",
+          "pdfStatus",
+          "currency",
+          "sharedAt",
+          "createdAt",
+          "channel",
+          "customer",
+          "createdBy"
+        ],
+        "type": "object"
+      },
+      "AdminSavedQuoteOptionDto": {
+        "properties": {
+          "designFeeAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "earliestDeliveryDate": {
+            "example": "2026-10-10",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "earliestShipDate": {
+            "example": "2026-10-09",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossAmount": {
+            "description": "Total incl. VAT",
+            "example": "13508.40",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+            "format": "uuid",
+            "type": "string"
+          },
+          "internal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteInternalDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Staff view; buy prices and margins per D-141"
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "netAmount": {
+            "description": "Total before VAT",
+            "example": "12624.67",
+            "type": "string"
+          },
+          "productAmount": {
+            "description": "Pieces incl. VAT",
+            "example": "13380.00",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "shippingAmount": {
+            "description": "Shipping incl. VAT; null while not priced",
+            "example": "128.40",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippingPending": {
+            "example": false,
+            "type": "boolean"
+          },
+          "shippingPendingReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShippingRateMissReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "structureDesignFeeAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "toleranceOveragePct": {
+            "description": "Frozen tolerance, overage % (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceShortagePct": {
+            "description": "Frozen tolerance, shortage % (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "description": "Per piece incl. VAT, excluding shipping",
+            "example": "13.38",
+            "type": "string"
+          },
+          "vatAmount": {
+            "description": "VAT included in the total",
+            "example": "883.73",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "quantity",
+          "unitPrice",
+          "productAmount",
+          "designFeeAmount",
+          "structureDesignFeeAmount",
+          "shippingAmount",
+          "vatAmount",
+          "netAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -3772,6 +4120,20 @@
           "value",
           "effectiveFrom",
           "reason"
+        ],
+        "type": "object"
+      },
+      "ClaimQuoteDto": {
+        "properties": {
+          "anonymousId": {
+            "description": "The configurator session that saved the quote",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e604",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "anonymousId"
         ],
         "type": "object"
       },
@@ -14296,6 +14658,47 @@
         ],
         "type": "object"
       },
+      "QuotePdfDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-10-01T10:05:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuotePdfStatus"
+              }
+            ],
+            "example": "ready"
+          },
+          "url": {
+            "example": "https://packio-files.s3.example.com/…&X-Amz-Expires=300",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "url",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "QuotePdfStatus": {
+        "enum": [
+          "none",
+          "pending",
+          "ready"
+        ],
+        "type": "string"
+      },
       "QuoteShippingInternalDto": {
         "properties": {
           "cartons": {
@@ -14382,6 +14785,17 @@
           "factoryPayoutVersionId"
         ],
         "type": "object"
+      },
+      "QuoteStatus": {
+        "enum": [
+          "calculated",
+          "saved",
+          "shared",
+          "converted",
+          "expired",
+          "superseded"
+        ],
+        "type": "string"
       },
       "QuoteStepDto": {
         "properties": {
@@ -15347,6 +15761,293 @@
           "company"
         ],
         "type": "string"
+      },
+      "SalesChannel": {
+        "enum": [
+          "web",
+          "cs",
+          "line",
+          "b2b"
+        ],
+        "type": "string"
+      },
+      "SaveQuoteDto": {
+        "properties": {
+          "anonymousId": {
+            "description": "Configurator session id when not signed in; claim the quote after login",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e604",
+            "format": "uuid",
+            "type": "string"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/FoldingConfigurationDto"
+          },
+          "deliveryPostcode": {
+            "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "configuration"
+        ],
+        "type": "object"
+      },
+      "SavedQuoteDto": {
+        "properties": {
+          "configuration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoldingConfigurationDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for RFQ quotes"
+          },
+          "createdAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "description": "Always THB (one currency)",
+            "example": "THB"
+          },
+          "deliveryPostcode": {
+            "example": "10110",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+            "format": "uuid",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/SavedQuoteOptionDto"
+            },
+            "type": "array"
+          },
+          "pdfStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuotePdfStatus"
+              }
+            ],
+            "example": "none"
+          },
+          "priceLocked": {
+            "description": "Saved or shared and still within its validity",
+            "example": true,
+            "type": "boolean"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "quoteCode": {
+            "description": "Issued at share or PDF",
+            "example": "QT-2026-000042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sharedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteMode"
+              }
+            ],
+            "description": "`instant` (calculator) or `rfq` (manual quotation of a request for quote)",
+            "example": "instant"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QuoteStatus"
+              }
+            ],
+            "example": "saved"
+          },
+          "validUntil": {
+            "description": "Price lock ends (D-051)",
+            "example": "2026-10-16T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "quoteCode",
+          "status",
+          "source",
+          "productTypeCode",
+          "configuration",
+          "deliveryPostcode",
+          "validUntil",
+          "priceLocked",
+          "options",
+          "pdfStatus",
+          "currency",
+          "sharedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "SavedQuoteOptionDto": {
+        "properties": {
+          "designFeeAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "earliestDeliveryDate": {
+            "example": "2026-10-10",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "earliestShipDate": {
+            "example": "2026-10-09",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossAmount": {
+            "description": "Total incl. VAT",
+            "example": "13508.40",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "netAmount": {
+            "description": "Total before VAT",
+            "example": "12624.67",
+            "type": "string"
+          },
+          "productAmount": {
+            "description": "Pieces incl. VAT",
+            "example": "13380.00",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "shippingAmount": {
+            "description": "Shipping incl. VAT; null while not priced",
+            "example": "128.40",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippingPending": {
+            "example": false,
+            "type": "boolean"
+          },
+          "shippingPendingReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShippingRateMissReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "structureDesignFeeAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "toleranceOveragePct": {
+            "description": "Frozen tolerance, overage % (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceShortagePct": {
+            "description": "Frozen tolerance, shortage % (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "description": "Per piece incl. VAT, excluding shipping",
+            "example": "13.38",
+            "type": "string"
+          },
+          "vatAmount": {
+            "description": "VAT included in the total",
+            "example": "883.73",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "quantity",
+          "unitPrice",
+          "productAmount",
+          "designFeeAmount",
+          "structureDesignFeeAmount",
+          "shippingAmount",
+          "vatAmount",
+          "netAmount",
+          "grossAmount",
+          "leadTimeDays",
+          "earliestShipDate",
+          "earliestDeliveryDate",
+          "toleranceShortagePct",
+          "toleranceOveragePct",
+          "shippingPending",
+          "shippingPendingReason"
+        ],
+        "type": "object"
       },
       "ScopedType": {
         "enum": [
@@ -16538,6 +17239,28 @@
         ],
         "type": "object"
       },
+      "ShareQuoteResultDto": {
+        "properties": {
+          "quote": {
+            "$ref": "#/components/schemas/SavedQuoteDto"
+          },
+          "sharePath": {
+            "example": "/v1/store/quotes/shared/bX2k…",
+            "type": "string"
+          },
+          "shareToken": {
+            "description": "Shown once; sharing again revokes the previous link",
+            "example": "bX2k…",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quote",
+          "shareToken",
+          "sharePath"
+        ],
+        "type": "object"
+      },
       "ShippingCardAnswer": {
         "enum": [
           "accept",
@@ -17122,6 +17845,36 @@
         "required": [
           "email",
           "password"
+        ],
+        "type": "object"
+      },
+      "StaffSaveQuoteDto": {
+        "properties": {
+          "configuration": {
+            "$ref": "#/components/schemas/FoldingConfigurationDto"
+          },
+          "customerUserId": {
+            "description": "The customer the quote is for",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e603",
+            "format": "uuid",
+            "type": "string"
+          },
+          "deliveryPostcode": {
+            "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "configuration"
         ],
         "type": "object"
       },
@@ -93981,6 +94734,2131 @@
         ]
       }
     },
+    "/v1/admin/quotes": {
+      "get": {
+        "description": "`q` matches the QT number; filter by status or customer (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "admin.quotes.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/QuoteStatus"
+            }
+          },
+          {
+            "description": "Only this customer’s quotations",
+            "in": "query",
+            "name": "customerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "channel": "cs",
+                      "configuration": {
+                        "d": 120,
+                        "design": {
+                          "graphic": false,
+                          "structure": false
+                        },
+                        "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                        "l": 40,
+                        "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                        "parts": [
+                          {
+                            "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                            "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                            "printFront": [
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              }
+                            ]
+                          }
+                        ],
+                        "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "quantities": [
+                          1000
+                        ],
+                        "w": 60
+                      },
+                      "createdAt": "2026-10-01T09:00:00+07:00",
+                      "createdBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e605"
+                      },
+                      "currency": "THB",
+                      "customer": {
+                        "displayName": "Fake Customer",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
+                      },
+                      "deliveryPostcode": "10110",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                      "options": [
+                        {
+                          "designFeeAmount": "0.00",
+                          "earliestDeliveryDate": "2026-10-10",
+                          "earliestShipDate": "2026-10-09",
+                          "grossAmount": "13508.40",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                          "internal": {
+                            "belowMarginFloor": false,
+                            "buyPrice": "10123.45",
+                            "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                            "marginPct": "24.1234",
+                            "parts": [
+                              {
+                                "buyPrice": "10123.45",
+                                "layoutAmount": 10,
+                                "layoutStandard": false,
+                                "partKey": "main",
+                                "sheets": 225
+                              }
+                            ],
+                            "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                            "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                            "productionRun": 1000,
+                            "shipping": {
+                              "cartons": 2,
+                              "costAmount": "95.00",
+                              "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                              "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                              "marginAmount": "25.00",
+                              "method": "factory_fleet",
+                              "pallets": null,
+                              "volumeCm3": 61776,
+                              "weightG": 31000,
+                              "zoneCode": "bkk"
+                            }
+                          },
+                          "leadTimeDays": 7,
+                          "netAmount": "12624.67",
+                          "productAmount": "13380.00",
+                          "quantity": 1000,
+                          "shippingAmount": "128.40",
+                          "shippingPending": false,
+                          "shippingPendingReason": null,
+                          "structureDesignFeeAmount": "0.00",
+                          "toleranceOveragePct": "5.0000",
+                          "toleranceShortagePct": "5.0000",
+                          "unitPrice": "13.38",
+                          "vatAmount": "883.73"
+                        }
+                      ],
+                      "pdfStatus": "none",
+                      "priceLocked": true,
+                      "productTypeCode": "folding_carton",
+                      "quoteCode": null,
+                      "sharedAt": null,
+                      "source": "instant",
+                      "status": "saved",
+                      "validUntil": "2026-10-16T09:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminSavedQuoteDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List saved quotations",
+        "tags": [
+          "admin.quotes"
+        ],
+        "x-required-permissions": [
+          "quotes.read"
+        ]
+      },
+      "post": {
+        "description": "CS prices and saves a quotation on the customer’s behalf (channel `cs`), with the same snapshot and validity as the store (D-051); works before a type is switched to instant.\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "admin.quotes.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "d": 120,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 40,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "parts": [
+                        {
+                          "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                          "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                          "printFront": [
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 60
+                    },
+                    "deliveryPostcode": "10110",
+                    "productTypeCode": "folding_carton"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StaffSaveQuoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "cs",
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "createdBy": {
+                    "displayName": "Dev CS",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e605"
+                  },
+                  "currency": "THB",
+                  "customer": {
+                    "displayName": "Fake Customer",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
+                  },
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSavedQuoteDto"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "quotes.nothing_to_save": {
+                    "$ref": "#/components/examples/problem.quotes.nothing_to_save"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `quotes.nothing_to_save`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Save a quotation for a customer (CS)",
+        "tags": [
+          "admin.quotes"
+        ],
+        "x-required-permissions": [
+          "quotes.manage"
+        ]
+      }
+    },
+    "/v1/admin/quotes/{quoteId}": {
+      "get": {
+        "description": "Selected factory, price-list version, delivery cost and margins per D-141; audited.\n\nImplements: D-051, D-010, D-050, D-141.",
+        "operationId": "admin.quotes.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "cs",
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "createdBy": {
+                    "displayName": "Dev CS",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e605"
+                  },
+                  "currency": "THB",
+                  "customer": {
+                    "displayName": "Fake Customer",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
+                  },
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSavedQuoteDto"
+                }
+              }
+            },
+            "description": "Quotation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a saved quotation with the staff view",
+        "tags": [
+          "admin.quotes"
+        ],
+        "x-required-permissions": [
+          "quotes.read"
+        ]
+      }
+    },
+    "/v1/admin/quotes/{quoteId}/actions/reprice": {
+      "post": {
+        "description": "A new quotation at today’s prices for the same customer; the old one becomes `superseded` (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "admin.quotes.reprice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "cs",
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "createdBy": {
+                    "displayName": "Dev CS",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e605"
+                  },
+                  "currency": "THB",
+                  "customer": {
+                    "displayName": "Fake Customer",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
+                  },
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSavedQuoteDto"
+                }
+              }
+            },
+            "description": "New quotation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "quotes.not_repriceable": {
+                    "$ref": "#/components/examples/problem.quotes.not_repriceable"
+                  },
+                  "quotes.still_valid": {
+                    "$ref": "#/components/examples/problem.quotes.still_valid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `quotes.not_repriceable`, `quotes.still_valid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "quotes.nothing_to_save": {
+                    "$ref": "#/components/examples/problem.quotes.nothing_to_save"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `quotes.nothing_to_save`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Re-price an expired quotation",
+        "tags": [
+          "admin.quotes"
+        ],
+        "x-required-permissions": [
+          "quotes.manage"
+        ]
+      }
+    },
+    "/v1/admin/quotes/{quoteId}/actions/request-pdf": {
+      "post": {
+        "description": "Issues the QT number and renders the PDF in the background (D-010, D-092); poll `GET …/pdf`.\n\nImplements: D-051, D-010, D-050, D-092.",
+        "operationId": "admin.quotes.requestPdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "cs",
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "createdBy": {
+                    "displayName": "Dev CS",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e605"
+                  },
+                  "currency": "THB",
+                  "customer": {
+                    "displayName": "Fake Customer",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
+                  },
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "pending",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSavedQuoteDto"
+                }
+              }
+            },
+            "description": "Accepted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `numbering.series_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Request the quotation PDF (CS export)",
+        "tags": [
+          "admin.quotes"
+        ],
+        "x-required-permissions": [
+          "quotes.manage"
+        ]
+      }
+    },
+    "/v1/admin/quotes/{quoteId}/actions/share": {
+      "post": {
+        "description": "Issues the QT number and a new share link (the previous one is revoked, D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "admin.quotes.share",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "quote": {
+                    "configuration": {
+                      "d": 120,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 40,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "parts": [
+                        {
+                          "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                          "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                          "printFront": [
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 60
+                    },
+                    "createdAt": "2026-10-01T09:00:00+07:00",
+                    "currency": "THB",
+                    "deliveryPostcode": "10110",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                    "options": [
+                      {
+                        "designFeeAmount": "0.00",
+                        "earliestDeliveryDate": "2026-10-10",
+                        "earliestShipDate": "2026-10-09",
+                        "grossAmount": "13508.40",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                        "leadTimeDays": 7,
+                        "netAmount": "12624.67",
+                        "productAmount": "13380.00",
+                        "quantity": 1000,
+                        "shippingAmount": "128.40",
+                        "shippingPending": false,
+                        "shippingPendingReason": null,
+                        "structureDesignFeeAmount": "0.00",
+                        "toleranceOveragePct": "5.0000",
+                        "toleranceShortagePct": "5.0000",
+                        "unitPrice": "13.38",
+                        "vatAmount": "883.73"
+                      }
+                    ],
+                    "pdfStatus": "none",
+                    "priceLocked": true,
+                    "productTypeCode": "folding_carton",
+                    "quoteCode": "QT-2026-000042",
+                    "sharedAt": null,
+                    "source": "instant",
+                    "status": "shared",
+                    "validUntil": "2026-10-16T09:00:00+07:00"
+                  },
+                  "sharePath": "/v1/store/quotes/shared/bX2k…",
+                  "shareToken": "bX2k…"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ShareQuoteResultDto"
+                }
+              }
+            },
+            "description": "Shared",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  },
+                  "quotes.not_live": {
+                    "$ref": "#/components/examples/problem.quotes.not_live"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `numbering.series_missing`, `quotes.not_live`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Share a quotation with the customer",
+        "tags": [
+          "admin.quotes"
+        ],
+        "x-required-permissions": [
+          "quotes.manage"
+        ]
+      }
+    },
+    "/v1/admin/quotes/{quoteId}/pdf": {
+      "get": {
+        "description": "`pending` while it renders; a short-lived signed download URL once ready.\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "admin.quotes.getPdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-01T10:05:00+07:00",
+                  "status": "ready",
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/QuotePdfDto"
+                }
+              }
+            },
+            "description": "PDF",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get the quotation PDF",
+        "tags": [
+          "admin.quotes"
+        ],
+        "x-required-permissions": [
+          "quotes.read"
+        ]
+      }
+    },
     "/v1/admin/realtime/auth": {
       "post": {
         "description": "Returns a 60-second token for the channels of the signed-in principal (own user, factory/company scopes).\n\nImplements: ADR-0003.",
@@ -125421,6 +128299,634 @@
         ]
       }
     },
+    "/v1/store/quotes": {
+      "get": {
+        "description": "Newest first; `priceLocked` tells whether the price still holds (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "store.quotes.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/QuoteStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "configuration": {
+                        "d": 120,
+                        "design": {
+                          "graphic": false,
+                          "structure": false
+                        },
+                        "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                        "l": 40,
+                        "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                        "parts": [
+                          {
+                            "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                            "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                            "printFront": [
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              },
+                              {
+                                "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                "percent": 100
+                              }
+                            ]
+                          }
+                        ],
+                        "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "quantities": [
+                          1000
+                        ],
+                        "w": 60
+                      },
+                      "createdAt": "2026-10-01T09:00:00+07:00",
+                      "currency": "THB",
+                      "deliveryPostcode": "10110",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                      "options": [
+                        {
+                          "designFeeAmount": "0.00",
+                          "earliestDeliveryDate": "2026-10-10",
+                          "earliestShipDate": "2026-10-09",
+                          "grossAmount": "13508.40",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                          "leadTimeDays": 7,
+                          "netAmount": "12624.67",
+                          "productAmount": "13380.00",
+                          "quantity": 1000,
+                          "shippingAmount": "128.40",
+                          "shippingPending": false,
+                          "shippingPendingReason": null,
+                          "structureDesignFeeAmount": "0.00",
+                          "toleranceOveragePct": "5.0000",
+                          "toleranceShortagePct": "5.0000",
+                          "unitPrice": "13.38",
+                          "vatAmount": "883.73"
+                        }
+                      ],
+                      "pdfStatus": "none",
+                      "priceLocked": true,
+                      "productTypeCode": "folding_carton",
+                      "quoteCode": null,
+                      "sharedAt": null,
+                      "source": "instant",
+                      "status": "saved",
+                      "validUntil": "2026-10-16T09:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/SavedQuoteDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my saved quotations",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      },
+      "post": {
+        "description": "Re-prices the configuration on the server and saves every instant quantity with the versions used (snapshot); valid for `quotes.validity_days` (15) days with the price locked (D-051). Signed in, or anonymously with `anonymousId` (claim it after login). No factory data (D-050).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "store.quotes.save",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "d": 120,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 40,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "parts": [
+                        {
+                          "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                          "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                          "printFront": [
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 60
+                    },
+                    "deliveryPostcode": "10110",
+                    "productTypeCode": "folding_carton"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SaveQuoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "quotes.nothing_to_save": {
+                    "$ref": "#/components/examples/problem.quotes.nothing_to_save"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `quotes.nothing_to_save`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Save a quotation",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      }
+    },
     "/v1/store/quotes/actions/calculate": {
       "post": {
         "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
@@ -125651,6 +129157,1811 @@
         "summary": "Calculate an instant price for a configuration",
         "tags": [
           "store.quotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/shared/{token}": {
+      "get": {
+        "description": "Anyone with the link sees the quotation, never its owner; sharing again revokes the link (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "store.quotes.getShared",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{43}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": "QT-2026-000042",
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "shared",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "Quotation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Open a shared quotation",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/{quoteId}": {
+      "get": {
+        "description": "The owner only (signed in, or the anonymous session that saved it); anyone else gets 404 (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "store.quotes.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The configurator session that saved the quote, when not signed in",
+            "in": "query",
+            "name": "anonymousId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "Quotation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get one of my quotations",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/{quoteId}/actions/claim": {
+      "post": {
+        "description": "The signed-in customer takes over the quotation the same configurator session saved (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "store.quotes.claim",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "anonymousId": "0192f3a0-7c1e-7d2a-9b1f-00000000e604"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ClaimQuoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "Quotation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Keep a quotation saved before login",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/{quoteId}/actions/reprice": {
+      "post": {
+        "description": "A new quotation at today’s prices; the old one becomes `superseded`. A live quotation keeps its lock (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "store.quotes.reprice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The configurator session that saved the quote, when not signed in",
+            "in": "query",
+            "name": "anonymousId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "none",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": null,
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "New quotation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "quotes.not_repriceable": {
+                    "$ref": "#/components/examples/problem.quotes.not_repriceable"
+                  },
+                  "quotes.still_valid": {
+                    "$ref": "#/components/examples/problem.quotes.still_valid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `quotes.not_repriceable`, `quotes.still_valid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "quotes.nothing_to_save": {
+                    "$ref": "#/components/examples/problem.quotes.nothing_to_save"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `quotes.nothing_to_save`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Re-price an expired quotation",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/{quoteId}/actions/request-pdf": {
+      "post": {
+        "description": "Issues the QT number and renders the PDF in the name of the issuing entity under the Packio brand (D-010, D-092) in the background; poll `GET /v1/store/quotes/{quoteId}/pdf`. Signed-in owners only.\n\nImplements: D-051, D-010, D-050, D-092.",
+        "operationId": "store.quotes.requestPdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "configuration": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  },
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "options": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                      "leadTimeDays": 7,
+                      "netAmount": "12624.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "shippingAmount": "128.40",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ],
+                  "pdfStatus": "pending",
+                  "priceLocked": true,
+                  "productTypeCode": "folding_carton",
+                  "quoteCode": "QT-2026-000042",
+                  "sharedAt": null,
+                  "source": "instant",
+                  "status": "saved",
+                  "validUntil": "2026-10-16T09:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SavedQuoteDto"
+                }
+              }
+            },
+            "description": "Accepted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `numbering.series_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Request the quotation PDF",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/{quoteId}/actions/share": {
+      "post": {
+        "description": "Issues the QT number (when missing) and a new share link; the token is shown once and only its hash is kept, so sharing again revokes the previous link. Live quotations only (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "store.quotes.share",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The configurator session that saved the quote, when not signed in",
+            "in": "query",
+            "name": "anonymousId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "quote": {
+                    "configuration": {
+                      "d": 120,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 40,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "parts": [
+                        {
+                          "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                          "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                          "printFront": [
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 60
+                    },
+                    "createdAt": "2026-10-01T09:00:00+07:00",
+                    "currency": "THB",
+                    "deliveryPostcode": "10110",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                    "options": [
+                      {
+                        "designFeeAmount": "0.00",
+                        "earliestDeliveryDate": "2026-10-10",
+                        "earliestShipDate": "2026-10-09",
+                        "grossAmount": "13508.40",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e602",
+                        "leadTimeDays": 7,
+                        "netAmount": "12624.67",
+                        "productAmount": "13380.00",
+                        "quantity": 1000,
+                        "shippingAmount": "128.40",
+                        "shippingPending": false,
+                        "shippingPendingReason": null,
+                        "structureDesignFeeAmount": "0.00",
+                        "toleranceOveragePct": "5.0000",
+                        "toleranceShortagePct": "5.0000",
+                        "unitPrice": "13.38",
+                        "vatAmount": "883.73"
+                      }
+                    ],
+                    "pdfStatus": "none",
+                    "priceLocked": true,
+                    "productTypeCode": "folding_carton",
+                    "quoteCode": "QT-2026-000042",
+                    "sharedAt": null,
+                    "source": "instant",
+                    "status": "shared",
+                    "validUntil": "2026-10-16T09:00:00+07:00"
+                  },
+                  "sharePath": "/v1/store/quotes/shared/bX2k…",
+                  "shareToken": "bX2k…"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ShareQuoteResultDto"
+                }
+              }
+            },
+            "description": "Shared",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  },
+                  "quotes.not_live": {
+                    "$ref": "#/components/examples/problem.quotes.not_live"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `numbering.series_missing`, `quotes.not_live`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Share a quotation",
+        "tags": [
+          "store.savedQuotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/{quoteId}/pdf": {
+      "get": {
+        "description": "`pending` while it renders; a short-lived signed download URL once ready (contract §3).\n\nImplements: D-051, D-010, D-050.",
+        "operationId": "store.quotes.getPdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "quoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-01T10:05:00+07:00",
+                  "status": "ready",
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/QuotePdfDto"
+                }
+              }
+            },
+            "description": "PDF",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get the quotation PDF",
+        "tags": [
+          "store.savedQuotes"
         ]
       }
     },
@@ -127163,6 +132474,10 @@
       "name": "admin.priceSuggestions"
     },
     {
+      "description": "Saved quotations with the staff view; CS saves, shares and exports them (D-051, D-141).",
+      "name": "admin.quotes"
+    },
+    {
       "description": "Realtime signals over SSE for staff (ids + type only, contract §6).",
       "name": "admin.realtime"
     },
@@ -127275,12 +132590,16 @@
       "name": "store.notifications"
     },
     {
-      "description": "Instant price calculation per quantity (D-043, D-100); quotes are saved with B2.5 (D-051).",
+      "description": "Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).",
       "name": "store.quotes"
     },
     {
       "description": "Realtime signals over SSE for customers (ids + type only, contract §6).",
       "name": "store.realtime"
+    },
+    {
+      "description": "Saved quotations: 15-day price lock, share links, PDF in the name of the issuing entity, re-pricing after expiry (D-051).",
+      "name": "store.savedQuotes"
     },
     {
       "description": "Web push subscriptions of the signed-in customer (D-143).",
