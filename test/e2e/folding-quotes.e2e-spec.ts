@@ -155,6 +155,24 @@ describe('folding quotes (e2e, B2.3)', () => {
     }
   });
 
+  it('lets an admin switch folding to instant now that its calculator ships (D-100, A-16)', async () => {
+    const type = await prisma.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } });
+    const change = async (quoteMode: 'instant' | 'rfq') => {
+      const current = await as('superadmin')
+        .get(`/v1/admin/catalog/product-types/${type.publicId}`)
+        .expect(200);
+      return request(server)
+        .post(`/v1/admin/catalog/product-types/${type.publicId}/actions/change-quote-mode`)
+        .auth(tokens['superadmin']!, { type: 'bearer' })
+        .set('If-Match', current.headers['etag'] as string)
+        .send({ quoteMode, reason: 'B2.3 folding calculator shipped (test)' });
+    };
+    const on = await change('instant');
+    expect(on.status).toBe(200);
+    expect(on.body.quoteMode).toBe('instant');
+    expect((await change('rfq')).status).toBe(200);
+  });
+
   it('keeps sell margins effective-dated and approved by Superadmin / C-Level (D-063)', async () => {
     const type = await prisma.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } });
     await as('cs')

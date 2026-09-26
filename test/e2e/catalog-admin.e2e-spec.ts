@@ -52,7 +52,7 @@ describe('catalogue admin (e2e, B2.1)', () => {
   const admin = as('admin');
 
   let seq = 0;
-  async function productType(): Promise<{ id: string; etag: string }> {
+  async function productType(calculatorKey = 'folding'): Promise<{ id: string; etag: string }> {
     const n = ++seq;
     const category = await admin
       .post('/v1/admin/catalog/product-categories', {
@@ -68,7 +68,7 @@ describe('catalogue admin (e2e, B2.1)', () => {
         categoryId: category.body.id,
         nameTh: 'ประเภททดสอบ',
         nameEn: 'Test type',
-        calculatorKey: 'folding',
+        calculatorKey,
       })
       .expect(201);
     return { id: type.body.id as string, etag: type.headers['etag'] as string };
@@ -158,7 +158,8 @@ describe('catalogue admin (e2e, B2.1)', () => {
   });
 
   it('keeps a new type on RFQ until its calculator ships (D-100)', async () => {
-    const type = await productType();
+    // Pouch has no calculator yet (folding ships in B2.3; the switch itself is covered in folding-quotes).
+    const type = await productType('pouch');
     const refused = await admin
       .post(`/v1/admin/catalog/product-types/${type.id}/actions/change-quote-mode`, {
         quoteMode: 'instant',

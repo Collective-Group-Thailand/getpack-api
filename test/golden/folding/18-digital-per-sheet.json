@@ -1,0 +1,39 @@
+{
+  "selection": [
+    "F1:digital"
+  ],
+  "options": [
+    {
+      "optionKey": "F1:digital",
+      "error": null,
+      "steps": [
+        {
+          "qty": 300,
+          "productionRun": 300,
+          "buyPrice": 2322,
+          "perPcs": 13.57,
+          "sum": 4071,
+          "vatPrice": 266.21538461538466,
+          "designFee": 0,
+          "structureDesignFee": 0,
+          "total": 4071,
+          "leadTimeDays": 8,
+          "marginPct": 38.96978629329403,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "31x43/1",
+              "layoutStandard": false,
+              "layoutAmount": 10,
+              "pressSheets": 54,
+              "cost": 1973.8,
+              "buyPrice": 2322,
+              "targetMarginPct": 35,
+              "perPcs": 13.57
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

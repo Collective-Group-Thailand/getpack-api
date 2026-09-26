@@ -1,0 +1,93 @@
+{
+  "selection": [
+    "F1:offset",
+    "F1:offset",
+    "F1:offset"
+  ],
+  "options": [
+    {
+      "optionKey": "F1:offset",
+      "error": null,
+      "steps": [
+        {
+          "qty": 500,
+          "productionRun": 500,
+          "buyPrice": 7679.112713018182,
+          "perPcs": 25.78,
+          "sum": 12890,
+          "vatPrice": 843.1352152481122,
+          "designFee": 0,
+          "structureDesignFee": 0,
+          "total": 12890,
+          "leadTimeDays": 8,
+          "marginPct": 36.2556198376303,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "31x43/2",
+              "layoutStandard": true,
+              "layoutAmount": 4,
+              "pressSheets": 291,
+              "cost": 6757.619187456,
+              "buyPrice": 7679.112713018182,
+              "targetMarginPct": 35,
+              "perPcs": 25.78
+            }
+          ]
+        },
+        {
+          "qty": 1000,
+          "productionRun": 1000,
+          "buyPrice": 8390.664687272727,
+          "perPcs": 12.19,
+          "sum": 12190,
+          "vatPrice": 797.1287041454561,
+          "designFee": 0,
+          "structureDesignFee": 0,
+          "total": 12190,
+          "leadTimeDays": 8,
+          "marginPct": 26.34937477127302,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "25x36/1",
+              "layoutStandard": false,
+              "layoutAmount": 8,
+              "pressSheets": 291,
+              "cost": 7383.7849248,
+              "buyPrice": 8390.664687272727,
+              "targetMarginPct": 25,
+              "perPcs": 12.19
+            }
+          ]
+        },
+        {
+          "qty": 5000,
+          "productionRun": 5000,
+          "buyPrice": 13743.893807301134,
+          "perPcs": 3.72,
+          "sum": 18600,
+          "vatPrice": 1215.7157081388505,
+          "designFee": 0,
+          "structureDesignFee": 0,
+          "total": 18600,
+          "leadTimeDays": 8,
+          "marginPct": 20.935664656923574,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "25x36/1",
+              "layoutStandard": false,
+              "layoutAmount": 8,
+              "pressSheets": 879,
+              "cost": 12094.626550424999,
+              "buyPrice": 13743.893807301134,
+              "targetMarginPct": 20,
+              "perPcs": 3.72
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

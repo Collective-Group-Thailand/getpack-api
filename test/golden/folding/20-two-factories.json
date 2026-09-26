@@ -1,0 +1,124 @@
+{
+  "selection": [
+    "F2:offset",
+    "F2:offset"
+  ],
+  "options": [
+    {
+      "optionKey": "F1:offset",
+      "error": null,
+      "steps": [
+        {
+          "qty": 1000,
+          "productionRun": 1000,
+          "buyPrice": 8390.664687272727,
+          "perPcs": 12.19,
+          "sum": 12190,
+          "vatPrice": 797.1287041454561,
+          "designFee": 2500,
+          "structureDesignFee": 1500,
+          "total": 16190,
+          "leadTimeDays": 8,
+          "marginPct": 44.54594678578247,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "25x36/1",
+              "layoutStandard": false,
+              "layoutAmount": 8,
+              "pressSheets": 291,
+              "cost": 7383.7849248,
+              "buyPrice": 8390.664687272727,
+              "targetMarginPct": 25,
+              "perPcs": 12.19
+            }
+          ]
+        },
+        {
+          "qty": 3000,
+          "productionRun": 3000,
+          "buyPrice": 10984.951016516834,
+          "perPcs": 5.3,
+          "sum": 15900,
+          "vatPrice": 1039.2620948749063,
+          "designFee": 2500,
+          "structureDesignFee": 1500,
+          "total": 19900,
+          "leadTimeDays": 8,
+          "marginPct": 40.935188001643155,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "25x36/1",
+              "layoutStandard": false,
+              "layoutAmount": 8,
+              "pressSheets": 585,
+              "cost": 9666.756894534814,
+              "buyPrice": 10984.951016516834,
+              "targetMarginPct": 25,
+              "perPcs": 5.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "optionKey": "F2:offset",
+      "error": null,
+      "steps": [
+        {
+          "qty": 1000,
+          "productionRun": 1000,
+          "buyPrice": 8025.853179130435,
+          "perPcs": 11.67,
+          "sum": 11670,
+          "vatPrice": 763.0796300521743,
+          "designFee": 2500,
+          "structureDesignFee": 1500,
+          "total": 15670,
+          "leadTimeDays": 5,
+          "marginPct": 45.196790672178906,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "25x36/1",
+              "layoutStandard": false,
+              "layoutAmount": 8,
+              "pressSheets": 291,
+              "cost": 7383.7849248,
+              "buyPrice": 8025.853179130435,
+              "targetMarginPct": 25,
+              "perPcs": 11.67
+            }
+          ]
+        },
+        {
+          "qty": 3000,
+          "productionRun": 3000,
+          "buyPrice": 10505.916845969588,
+          "perPcs": 5.07,
+          "sum": 15210,
+          "vatPrice": 994.5522389571634,
+          "designFee": 2500,
+          "structureDesignFee": 1500,
+          "total": 19210,
+          "leadTimeDays": 5,
+          "marginPct": 41.481879098451536,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "25x36/1",
+              "layoutStandard": false,
+              "layoutAmount": 8,
+              "pressSheets": 585,
+              "cost": 9665.443498292021,
+              "buyPrice": 10505.916845969588,
+              "targetMarginPct": 25,
+              "perPcs": 5.07
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

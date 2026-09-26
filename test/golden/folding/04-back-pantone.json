@@ -1,0 +1,39 @@
+{
+  "selection": [
+    "F1:offset"
+  ],
+  "options": [
+    {
+      "optionKey": "F1:offset",
+      "error": null,
+      "steps": [
+        {
+          "qty": 1000,
+          "productionRun": 1000,
+          "buyPrice": 5909.656563636364,
+          "perPcs": 8.65,
+          "sum": 8650,
+          "vatPrice": 565.5679459393941,
+          "designFee": 0,
+          "structureDesignFee": 0,
+          "total": 8650,
+          "leadTimeDays": 8,
+          "marginPct": 26.89788990646347,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "25x36/1",
+              "layoutStandard": false,
+              "layoutAmount": 8,
+              "pressSheets": 295,
+              "cost": 5200.497776,
+              "buyPrice": 5909.656563636364,
+              "targetMarginPct": 25,
+              "perPcs": 8.65
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

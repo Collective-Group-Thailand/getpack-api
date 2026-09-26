@@ -5,4 +5,7 @@ import { type CalculatorKey } from '@generated/prisma/client';
  * calculator is listed here (D-100: "a type moves from RFQ to Instant when its calculator ships").
  * Each B2.3 session adds its key in the same commit as the calculator.
  */
-export const SHIPPED_CALCULATORS: ReadonlySet<CalculatorKey> = new Set<CalculatorKey>([]);
+export const SHIPPED_CALCULATORS: ReadonlySet<CalculatorKey> = new Set<CalculatorKey>([
+  // B2.3: golden cases test/golden/folding, validation docs/pricing-validation-folding.md (pending sign-off).
+  'folding',
+]);
