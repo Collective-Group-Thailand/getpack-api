@@ -1,5 +1,6 @@
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { PARTNERS_PARTNER_CONTROLLERS } from '@modules/partners/partners.registry';
+import { PRICING_PARTNER_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { Module } from '@nestjs/common';
 import { PartnerFilesController } from '@platform/files/files.controllers';
 import { PartnerInboxController } from '@platform/notifications/my-notifications.controller';
@@ -18,6 +19,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     PartnerInboxController,
 
     ...PARTNERS_PARTNER_CONTROLLERS,
+    ...PRICING_PARTNER_CONTROLLERS,
   ],
 })
 export class PartnerApiModule {}

@@ -892,6 +892,28 @@
           "type": "https://errors.packio/partners.wrong_pricing_mode"
         }
       },
+      "problem.pricing.not_instant": {
+        "summary": "pricing.not_instant",
+        "value": {
+          "code": "pricing.not_instant",
+          "detail": "สินค้าประเภทนี้ยังไม่เปิดให้คำนวณราคาทันที กรุณาส่งคำขอใบเสนอราคา (RFQ)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ยังไม่รองรับราคาทันที",
+          "type": "https://errors.packio/pricing.not_instant"
+        }
+      },
+      "problem.pricing.vat_rate_missing": {
+        "summary": "pricing.vat_rate_missing",
+        "value": {
+          "code": "pricing.vat_rate_missing",
+          "detail": "ยังไม่มีอัตราภาษีมูลค่าเพิ่มที่มีผล ณ วันที่คำนวณราคา ฝ่ายบัญชีต้องตั้งค่าก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 503,
+          "title": "ยังไม่ได้ตั้งอัตราภาษีมูลค่าเพิ่ม",
+          "type": "https://errors.packio/pricing.vat_rate_missing"
+        }
+      },
       "problem.provider.unavailable": {
         "summary": "provider.unavailable",
         "value": {
@@ -1243,6 +1265,177 @@
           "permissions",
           "menu",
           "featureFlags"
+        ],
+        "type": "object"
+      },
+      "AdminQuoteCalculationDto": {
+        "properties": {
+          "calculatorVersion": {
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteOptionDto"
+            },
+            "type": "array"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/AdminQuoteStepDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "calculatorVersion",
+          "steps",
+          "options"
+        ],
+        "type": "object"
+      },
+      "AdminQuoteStepDto": {
+        "properties": {
+          "designFeeAmount": {
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "earliestShipDate": {
+            "description": "Asia/Bangkok date (D-101)",
+            "example": "2026-10-09",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossAmount": {
+            "description": "Total incl. VAT",
+            "example": "13380.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "instant": {
+            "description": "false = no instant price; the configurator routes to RFQ (D-043)",
+            "example": true,
+            "type": "boolean"
+          },
+          "internal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteInternalDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "productAmount": {
+            "description": "Pieces incl. VAT",
+            "example": "13380.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "number"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteNoPriceReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why there is no instant price",
+            "example": null
+          },
+          "shippingAmount": {
+            "description": "Shipping incl. VAT (0 until B2.4)",
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippingPending": {
+            "description": "Shipping is not priced yet (B2.4)",
+            "example": true,
+            "type": "boolean"
+          },
+          "structureDesignFeeAmount": {
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceOveragePct": {
+            "description": "Quantity tolerance, overage % (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceShortagePct": {
+            "description": "Quantity tolerance, shortage % (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "description": "Per piece incl. VAT and shipping",
+            "example": "13.38",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vatAmount": {
+            "description": "VAT included in the amounts",
+            "example": "875.33",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "quantity",
+          "instant",
+          "reason",
+          "unitPrice",
+          "productAmount",
+          "designFeeAmount",
+          "structureDesignFeeAmount",
+          "shippingAmount",
+          "vatAmount",
+          "grossAmount",
+          "leadTimeDays",
+          "earliestShipDate",
+          "toleranceShortagePct",
+          "toleranceOveragePct",
+          "shippingPending",
+          "internal"
         ],
         "type": "object"
       },
@@ -2382,6 +2575,30 @@
           "popup"
         ],
         "type": "string"
+      },
+      "CalculateQuoteDto": {
+        "properties": {
+          "configuration": {
+            "$ref": "#/components/schemas/FoldingConfigurationDto"
+          },
+          "deliveryPostcode": {
+            "description": "Delivery postcode (shipping arrives with B2.4)",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "configuration"
+        ],
+        "type": "object"
       },
       "CalculatorKey": {
         "enum": [
@@ -5394,6 +5611,87 @@
         ],
         "type": "object"
       },
+      "CreateSellMarginTableDto": {
+        "properties": {
+          "description": {
+            "example": "Folding sell margin by run",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SellMarginKind"
+              }
+            ],
+            "example": "margin"
+          },
+          "printTypeId": {
+            "description": "Null = every print type of the product type",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "productTypeId",
+          "printTypeId",
+          "kind",
+          "description"
+        ],
+        "type": "object"
+      },
+      "CreateSellMarginVersionDto": {
+        "properties": {
+          "effectiveFrom": {
+            "description": "Never before the approval (not back-dated)",
+            "example": "2026-10-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fallbackAmount": {
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fallbackPct": {
+            "description": "Used when no line matches",
+            "example": "30",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/SellMarginLineDto"
+            },
+            "maxItems": 200,
+            "type": "array"
+          },
+          "reason": {
+            "example": "Q4 margins (fake)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "effectiveFrom",
+          "reason",
+          "lines"
+        ],
+        "type": "object"
+      },
       "CreateSemiDesignDto": {
         "properties": {
           "catalogProductId": {
@@ -6421,6 +6719,25 @@
         ],
         "type": "object"
       },
+      "DesignOptionsDto": {
+        "properties": {
+          "graphic": {
+            "description": "Packio designs the artwork (graphic design fee)",
+            "example": false,
+            "type": "boolean"
+          },
+          "structure": {
+            "description": "Packio designs the structure (structure design fee)",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "graphic",
+          "structure"
+        ],
+        "type": "object"
+      },
       "DevicePinDto": {
         "properties": {
           "deviceId": {
@@ -6884,6 +7201,145 @@
         ],
         "type": "object"
       },
+      "FactoryQuoteDto": {
+        "properties": {
+          "calculatorVersion": {
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/FactoryQuoteOptionDto"
+            },
+            "type": "array"
+          },
+          "priceListVersionId": {
+            "description": "Own price list in force",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "calculatorVersion",
+          "priceListVersionId",
+          "options"
+        ],
+        "type": "object"
+      },
+      "FactoryQuoteOptionDto": {
+        "properties": {
+          "error": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "printTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+            "format": "uuid",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/FactoryQuoteStepDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "printTypeId",
+          "error",
+          "steps"
+        ],
+        "type": "object"
+      },
+      "FactoryQuotePartDto": {
+        "properties": {
+          "buyPrice": {
+            "description": "Buy price of the part (cost ÷ (1 − factory margin))",
+            "example": "10123.45",
+            "type": "string"
+          },
+          "layoutAmount": {
+            "example": 10,
+            "type": "number"
+          },
+          "layoutStandard": {
+            "example": false,
+            "type": "boolean"
+          },
+          "partKey": {
+            "example": "main",
+            "type": "string"
+          },
+          "sheets": {
+            "example": 225,
+            "type": "number"
+          },
+          "totalCost": {
+            "description": "Cost before the factory margin",
+            "example": "9111.11",
+            "type": "string"
+          }
+        },
+        "required": [
+          "partKey",
+          "totalCost",
+          "buyPrice",
+          "layoutAmount",
+          "sheets",
+          "layoutStandard"
+        ],
+        "type": "object"
+      },
+      "FactoryQuoteStepDto": {
+        "properties": {
+          "buyPrice": {
+            "example": "10123.45",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/FactoryQuotePartDto"
+            },
+            "type": "array"
+          },
+          "productionRun": {
+            "example": 1000,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "number"
+          }
+        },
+        "required": [
+          "quantity",
+          "productionRun",
+          "buyPrice",
+          "leadTimeDays",
+          "parts"
+        ],
+        "type": "object"
+      },
       "FactoryStatus": {
         "enum": [
           "applied",
@@ -7230,6 +7686,51 @@
         ],
         "type": "string"
       },
+      "Finish2Dto": {
+        "properties": {
+          "amount": {
+            "description": "Locations, when the finish counts them",
+            "example": 1,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "finishId": {
+            "description": "A foil, spot UV, emboss or deboss finish",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "l": {
+            "description": "Length of each location, mm",
+            "example": [
+              20
+            ],
+            "items": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "w": {
+            "description": "Width of each location, mm",
+            "example": [
+              40
+            ],
+            "items": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "maxItems": 20,
+            "type": "array"
+          }
+        },
+        "required": [
+          "finishId"
+        ],
+        "type": "object"
+      },
       "FinishDto": {
         "properties": {
           "code": {
@@ -7322,6 +7823,13 @@
           "spot_uv",
           "window",
           "other"
+        ],
+        "type": "string"
+      },
+      "FinishSlot": {
+        "enum": [
+          "finish1",
+          "finish2"
         ],
         "type": "string"
       },
@@ -7470,6 +7978,222 @@
         ],
         "type": "object"
       },
+      "FoldingConfigurationDto": {
+        "properties": {
+          "c": {
+            "description": "Overlap of the flat overlap patterns Unit: mm.",
+            "example": 0,
+            "minimum": 0,
+            "type": "number"
+          },
+          "catalogProductId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "d": {
+            "description": "Box depth (height) Unit: mm.",
+            "example": 120,
+            "minimum": 0,
+            "type": "number"
+          },
+          "design": {
+            "$ref": "#/components/schemas/DesignOptionsDto"
+          },
+          "difficultyLevelId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "grainParallel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GrainParallel"
+              }
+            ],
+            "description": "Fixed grain along this blank side; omit for a free grain (port-map Q15)",
+            "example": "dl"
+          },
+          "l": {
+            "description": "Box length Unit: mm.",
+            "example": 40,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "parts": {
+            "description": "One entry per part (one for single-part patterns)",
+            "items": {
+              "$ref": "#/components/schemas/FoldingPartDto"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "type": "array"
+          },
+          "patternId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "Quantities to price, 1 to 10",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "w": {
+            "description": "Box width Unit: mm.",
+            "example": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "x": {
+            "description": "Cells of an insert pattern (legacy default 3)",
+            "example": 3,
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "patternId",
+          "w",
+          "l",
+          "d",
+          "materialId",
+          "difficultyLevelId",
+          "quantities",
+          "parts"
+        ],
+        "type": "object"
+      },
+      "FoldingInputDataDto": {
+        "properties": {
+          "assemblies": {
+            "items": {
+              "$ref": "#/components/schemas/InputAssemblyDto"
+            },
+            "type": "array"
+          },
+          "diecutTypes": {
+            "items": {
+              "$ref": "#/components/schemas/InputNamedDto"
+            },
+            "type": "array"
+          },
+          "difficultyLevels": {
+            "items": {
+              "$ref": "#/components/schemas/InputNamedDto"
+            },
+            "type": "array"
+          },
+          "finishes": {
+            "items": {
+              "$ref": "#/components/schemas/InputFinishDto"
+            },
+            "type": "array"
+          },
+          "inkColours": {
+            "items": {
+              "$ref": "#/components/schemas/InputInkColourDto"
+            },
+            "type": "array"
+          },
+          "materials": {
+            "items": {
+              "$ref": "#/components/schemas/InputMaterialDto"
+            },
+            "type": "array"
+          },
+          "patterns": {
+            "items": {
+              "$ref": "#/components/schemas/InputPatternDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "patterns",
+          "materials",
+          "inkColours",
+          "finishes",
+          "diecutTypes",
+          "assemblies",
+          "difficultyLevels"
+        ],
+        "type": "object"
+      },
+      "FoldingPartDto": {
+        "properties": {
+          "assemblies": {
+            "items": {
+              "$ref": "#/components/schemas/AssemblyDto"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "diecutTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+            "format": "uuid",
+            "type": "string"
+          },
+          "finish1BackId": {
+            "description": "Coating or lamination, back",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "finish1FrontId": {
+            "description": "Coating or lamination, front",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "finish2": {
+            "items": {
+              "$ref": "#/components/schemas/Finish2Dto"
+            },
+            "maxItems": 4,
+            "type": "array"
+          },
+          "printBack": {
+            "items": {
+              "$ref": "#/components/schemas/PrintColourDto"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "printFront": {
+            "description": "Colours printed on the front; a process set is its colour four times",
+            "items": {
+              "$ref": "#/components/schemas/PrintColourDto"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "subPatternId": {
+            "description": "The part of a multi-part pattern",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "GeoDistrictDto": {
         "properties": {
           "code": {
@@ -7597,6 +8321,14 @@
           "updatedAt"
         ],
         "type": "object"
+      },
+      "GrainParallel": {
+        "description": "Fixed grain along this blank side; omit for a free grain (port-map Q15)",
+        "enum": [
+          "dw",
+          "dl"
+        ],
+        "type": "string"
       },
       "GrantRoleDto": {
         "properties": {
@@ -8326,6 +9058,258 @@
           "metallic"
         ],
         "type": "string"
+      },
+      "InputAssemblyDto": {
+        "properties": {
+          "code": {
+            "example": "standard",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Standard die-cut",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ไดคัททั่วไป",
+            "type": "string"
+          },
+          "requiresAmount": {
+            "example": false,
+            "type": "boolean"
+          },
+          "requiresLength": {
+            "example": false,
+            "type": "boolean"
+          },
+          "requiresWidth": {
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "requiresAmount",
+          "requiresWidth",
+          "requiresLength"
+        ],
+        "type": "object"
+      },
+      "InputFinishDto": {
+        "properties": {
+          "code": {
+            "example": "matt-lamination",
+            "type": "string"
+          },
+          "finishKind": {
+            "example": "lamination",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Matt lamination",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "เคลือบด้าน",
+            "type": "string"
+          },
+          "requiresAmount": {
+            "example": false,
+            "type": "boolean"
+          },
+          "requiresLength": {
+            "example": false,
+            "type": "boolean"
+          },
+          "requiresWidth": {
+            "example": false,
+            "type": "boolean"
+          },
+          "slot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FinishSlot"
+              }
+            ],
+            "example": "finish1"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "finishKind",
+          "slot",
+          "requiresAmount",
+          "requiresWidth",
+          "requiresLength"
+        ],
+        "type": "object"
+      },
+      "InputInkColourDto": {
+        "properties": {
+          "code": {
+            "example": "cmyk",
+            "type": "string"
+          },
+          "colourKind": {
+            "example": "process",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "CMYK",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "colourKind"
+        ],
+        "type": "object"
+      },
+      "InputMaterialDto": {
+        "properties": {
+          "code": {
+            "example": "art-350",
+            "type": "string"
+          },
+          "gsm": {
+            "example": 350,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Art card 350 gsm",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "อาร์ตการ์ด 350 แกรม",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "gsm"
+        ],
+        "type": "object"
+      },
+      "InputNamedDto": {
+        "properties": {
+          "code": {
+            "example": "standard",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Standard die-cut",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ไดคัททั่วไป",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "InputPatternDto": {
+        "properties": {
+          "code": {
+            "example": "RTE-01",
+            "type": "string"
+          },
+          "geometryFormula": {
+            "description": "Blank formula (port-map §6)",
+            "example": "tuck_top",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "ฝาเสียบกลับด้าน",
+            "type": "string"
+          },
+          "subPatterns": {
+            "description": "Parts to configure; empty = one part",
+            "items": {
+              "$ref": "#/components/schemas/InputSubPatternDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "geometryFormula",
+          "subPatterns"
+        ],
+        "type": "object"
+      },
+      "InputSubPatternDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "ถาด",
+            "type": "string"
+          },
+          "seq": {
+            "example": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "name"
+        ],
+        "type": "object"
       },
       "JobStatus": {
         "enum": [
@@ -11107,6 +12091,27 @@
         ],
         "type": "object"
       },
+      "PrintColourDto": {
+        "properties": {
+          "inkColourId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "percent": {
+            "description": "Ink coverage in percent",
+            "example": 100,
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "inkColourId",
+          "percent"
+        ],
+        "type": "object"
+      },
       "PrintTypeDto": {
         "properties": {
           "canChargePlateAndDie": {
@@ -11628,6 +12633,89 @@
         ],
         "type": "object"
       },
+      "QuoteCalculationDto": {
+        "properties": {
+          "calculatorVersion": {
+            "description": "Semver of the calculator port",
+            "example": "1.0.0",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteStepDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "calculatorVersion",
+          "steps"
+        ],
+        "type": "object"
+      },
+      "QuoteInternalDto": {
+        "properties": {
+          "belowMarginFloor": {
+            "description": "Below the margin floor (D-012)",
+            "example": false,
+            "type": "boolean"
+          },
+          "buyPrice": {
+            "description": "Needs `factory_cost.read` (D-141)",
+            "example": "10123.45",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "marginPct": {
+            "description": "Needs `margin.read` (D-141)",
+            "example": "24.1234",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/QuotePartInternalDto"
+            },
+            "type": "array"
+          },
+          "priceListVersionId": {
+            "description": "The price-list version used (snapshot, D-040)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "printTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+            "format": "uuid",
+            "type": "string"
+          },
+          "productionRun": {
+            "description": "Production run (the minimum for production when larger)",
+            "example": 1000,
+            "type": "number"
+          }
+        },
+        "required": [
+          "factoryId",
+          "printTypeId",
+          "priceListVersionId",
+          "buyPrice",
+          "marginPct",
+          "belowMarginFloor",
+          "productionRun",
+          "parts"
+        ],
+        "type": "object"
+      },
       "QuoteMode": {
         "description": "How the type is quoted today (D-100); a given configuration may still route to RFQ (D-043)",
         "enum": [
@@ -11635,6 +12723,72 @@
           "rfq"
         ],
         "type": "string"
+      },
+      "QuoteNoPriceReason": {
+        "description": "Why there is no instant price",
+        "enum": [
+          "no_price_path",
+          "not_priceable",
+          "capacity_unavailable"
+        ],
+        "type": "string"
+      },
+      "QuoteOptionDto": {
+        "properties": {
+          "error": {
+            "description": "Why the option has no price",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "optionKey": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f001:0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+            "type": "string"
+          }
+        },
+        "required": [
+          "optionKey",
+          "error"
+        ],
+        "type": "object"
+      },
+      "QuotePartInternalDto": {
+        "properties": {
+          "buyPrice": {
+            "description": "Needs `factory_cost.read` (D-141)",
+            "example": "10123.45",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "layoutAmount": {
+            "example": 10,
+            "type": "number"
+          },
+          "layoutStandard": {
+            "example": false,
+            "type": "boolean"
+          },
+          "partKey": {
+            "example": "main",
+            "type": "string"
+          },
+          "sheets": {
+            "example": 225,
+            "type": "number"
+          }
+        },
+        "required": [
+          "partKey",
+          "buyPrice",
+          "layoutAmount",
+          "sheets",
+          "layoutStandard"
+        ],
+        "type": "object"
       },
       "QuotePathDto": {
         "properties": {
@@ -11700,6 +12854,140 @@
         },
         "required": [
           "productTypeCode"
+        ],
+        "type": "object"
+      },
+      "QuoteStepDto": {
+        "properties": {
+          "designFeeAmount": {
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "earliestShipDate": {
+            "description": "Asia/Bangkok date (D-101)",
+            "example": "2026-10-09",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossAmount": {
+            "description": "Total incl. VAT",
+            "example": "13380.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "instant": {
+            "description": "false = no instant price; the configurator routes to RFQ (D-043)",
+            "example": true,
+            "type": "boolean"
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "productAmount": {
+            "description": "Pieces incl. VAT",
+            "example": "13380.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "number"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteNoPriceReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why there is no instant price",
+            "example": null
+          },
+          "shippingAmount": {
+            "description": "Shipping incl. VAT (0 until B2.4)",
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippingPending": {
+            "description": "Shipping is not priced yet (B2.4)",
+            "example": true,
+            "type": "boolean"
+          },
+          "structureDesignFeeAmount": {
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceOveragePct": {
+            "description": "Quantity tolerance, overage % (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceShortagePct": {
+            "description": "Quantity tolerance, shortage % (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "description": "Per piece incl. VAT and shipping",
+            "example": "13.38",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "vatAmount": {
+            "description": "VAT included in the amounts",
+            "example": "875.33",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "quantity",
+          "instant",
+          "reason",
+          "unitPrice",
+          "productAmount",
+          "designFeeAmount",
+          "structureDesignFeeAmount",
+          "shippingAmount",
+          "vatAmount",
+          "grossAmount",
+          "leadTimeDays",
+          "earliestShipDate",
+          "toleranceShortagePct",
+          "toleranceOveragePct",
+          "shippingPending"
         ],
         "type": "object"
       },
@@ -12399,6 +13687,229 @@
           "company"
         ],
         "type": "string"
+      },
+      "SellMarginKind": {
+        "enum": [
+          "margin",
+          "design_fee",
+          "structure_design_fee",
+          "fix_cost",
+          "target_margin"
+        ],
+        "type": "string"
+      },
+      "SellMarginLineDto": {
+        "properties": {
+          "colourCount": {
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "difficultyLevelId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "minAmount": {
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceMax": {
+            "description": "Buy price to (exclusive)",
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceMin": {
+            "description": "Buy price from (inclusive)",
+            "example": "0",
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "qtyMax": {
+            "description": "Run to (inclusive); null = open",
+            "example": 999,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "qtyMin": {
+            "description": "Run from (inclusive); null = open",
+            "example": 1,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "valueAmount": {
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "valuePct": {
+            "description": "Margin % (below 100); or an amount",
+            "example": "25",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "qtyMin",
+          "qtyMax",
+          "priceMin",
+          "priceMax",
+          "colourCount",
+          "difficultyLevelId",
+          "valuePct",
+          "valueAmount",
+          "minAmount"
+        ],
+        "type": "object"
+      },
+      "SellMarginTableDto": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SellMarginVersionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version in force now"
+          },
+          "description": {
+            "example": "Folding sell margin by run",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SellMarginKind"
+              }
+            ],
+            "example": "margin"
+          },
+          "printTypeId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "productTypeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "productTypeId",
+          "productTypeCode",
+          "printTypeId",
+          "kind",
+          "description",
+          "current"
+        ],
+        "type": "object"
+      },
+      "SellMarginVersionDto": {
+        "properties": {
+          "effectiveFrom": {
+            "example": "2026-10-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fallbackAmount": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fallbackPct": {
+            "example": "30",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/SellMarginLineDto"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "example": "Q4 margins (fake)",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigVersionStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "status",
+          "effectiveFrom",
+          "fallbackPct",
+          "fallbackAmount",
+          "reason",
+          "lines"
+        ],
+        "type": "object"
       },
       "SemiDesignDto": {
         "properties": {
@@ -65199,6 +66710,490 @@
         ]
       }
     },
+    "/v1/admin/cs/folding/calculate": {
+      "post": {
+        "description": "The store calculation plus the staff view: selected factory and print type, price-list version, production run, margin-floor flag (D-012) and each option’s reason when it has no price. Buy prices need `factory_cost.read`, the margin `margin.read` (D-141); they are null otherwise. Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "operationId": "admin.csFolding.calculate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/FoldingConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "optionKey": "0192f3a0-7c1e-7d2a-9b1f-00000000f001:0192f3a0-7c1e-7d2a-9b1f-00000000a107"
+                    }
+                  ],
+                  "steps": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13380.00",
+                      "instant": true,
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000
+                      },
+                      "leadTimeDays": 7,
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "shippingAmount": "0.00",
+                      "shippingPending": true,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "875.33"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuoteCalculationDto"
+                }
+              }
+            },
+            "description": "Prices per quantity with the staff view",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a folding configuration for a customer (CS)",
+        "tags": [
+          "admin.csFolding"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/folding/input-data": {
+      "get": {
+        "description": "Active folding patterns with their parts, papers, ink colours, finishes 1 and 2, die-cuts, assemblies and difficulty levels (D-100).\n\nImplements: D-100.",
+        "operationId": "admin.csFolding.inputData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assemblies": [],
+                  "diecutTypes": [
+                    {
+                      "code": "standard",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                      "nameEn": "Standard die-cut",
+                      "nameTh": "ไดคัททั่วไป"
+                    }
+                  ],
+                  "difficultyLevels": [
+                    {
+                      "code": "normal",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "nameEn": "Normal",
+                      "nameTh": "ปกติ"
+                    }
+                  ],
+                  "finishes": [
+                    {
+                      "code": "matt-lamination",
+                      "finishKind": "lamination",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                      "nameEn": "Matt lamination",
+                      "nameTh": "เคลือบด้าน",
+                      "requiresAmount": false,
+                      "requiresLength": false,
+                      "requiresWidth": false,
+                      "slot": "finish1"
+                    }
+                  ],
+                  "inkColours": [
+                    {
+                      "code": "cmyk",
+                      "colourKind": "process",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                      "name": "CMYK"
+                    }
+                  ],
+                  "materials": [
+                    {
+                      "code": "art-350",
+                      "gsm": 350,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "nameEn": "Art card 350 gsm",
+                      "nameTh": "อาร์ตการ์ด 350 แกรม"
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "code": "RTE-01",
+                      "geometryFormula": "tuck_top",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "name": "ฝาเสียบกลับด้าน",
+                      "subPatterns": []
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FoldingInputDataDto"
+                }
+              }
+            },
+            "description": "Input data",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Catalogue choices of the CS folding calculator",
+        "tags": [
+          "admin.csFolding"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
     "/v1/admin/factories": {
       "get": {
         "description": "Filter by status; `q` searches code, names and tax id.\n\nImplements: D-011, D-041, D-171.",
@@ -87656,6 +89651,1083 @@
         ]
       }
     },
+    "/v1/admin/sell-margin-tables": {
+      "get": {
+        "description": "Margin tiers, fix costs and design fees per product type / print type, with the version in force (D-063).\n\nImplements: D-063, D-012.",
+        "operationId": "admin.sellMarginTables.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "current": {
+                      "effectiveFrom": "2026-10-01T00:00:00+07:00",
+                      "fallbackAmount": null,
+                      "fallbackPct": "30",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b002",
+                      "lines": [
+                        {
+                          "colourCount": null,
+                          "difficultyLevelId": null,
+                          "minAmount": null,
+                          "priceMax": null,
+                          "priceMin": "0",
+                          "qtyMax": 999,
+                          "qtyMin": 1,
+                          "valueAmount": null,
+                          "valuePct": "25"
+                        }
+                      ],
+                      "reason": "Q4 margins (fake)",
+                      "status": "approved",
+                      "versionNo": 1
+                    },
+                    "description": "Folding sell margin by run",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b001",
+                    "kind": "margin",
+                    "printTypeId": null,
+                    "productTypeCode": "folding_carton",
+                    "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SellMarginTableDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Tables",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List Packio’s sell-margin tables",
+        "tags": [
+          "admin.sellMarginTables"
+        ],
+        "x-required-permissions": [
+          "margin.read"
+        ]
+      },
+      "post": {
+        "description": "One per product type, print type (or every print type) and kind; audited (D-063).\n\nImplements: D-063, D-012.",
+        "operationId": "admin.sellMarginTables.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "description": "Folding sell margin by run",
+                    "kind": "margin",
+                    "printTypeId": null,
+                    "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateSellMarginTableDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "current": null,
+                  "description": "Folding sell margin by run",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b001",
+                  "kind": "margin",
+                  "printTypeId": null,
+                  "productTypeCode": "folding_carton",
+                  "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SellMarginTableDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a sell-margin table",
+        "tags": [
+          "admin.sellMarginTables"
+        ],
+        "x-required-permissions": [
+          "sell_margins.manage"
+        ]
+      }
+    },
+    "/v1/admin/sell-margin-tables/versions/{versionId}/actions/approve": {
+      "post": {
+        "description": "Freezes its lines; it applies from its effective date, or from now when that date has passed (never retroactively). Superadmin / C-Level (D-063); audited, event `sell_margin_table.version_approved`.\n\nImplements: D-063, D-012.",
+        "operationId": "admin.sellMarginTables.approveVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "effectiveFrom": "2026-10-01T00:00:00+07:00",
+                  "fallbackAmount": null,
+                  "fallbackPct": "30",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b002",
+                  "lines": [
+                    {
+                      "colourCount": null,
+                      "difficultyLevelId": null,
+                      "minAmount": null,
+                      "priceMax": null,
+                      "priceMin": "0",
+                      "qtyMax": 999,
+                      "qtyMin": 1,
+                      "valueAmount": null,
+                      "valuePct": "25"
+                    }
+                  ],
+                  "reason": "Q4 margins (fake)",
+                  "status": "approved",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SellMarginVersionDto"
+                }
+              }
+            },
+            "description": "Approved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "partners.proposal_closed": {
+                    "$ref": "#/components/examples/problem.partners.proposal_closed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `partners.proposal_closed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Approve a draft sell-margin version",
+        "tags": [
+          "admin.sellMarginTables"
+        ],
+        "x-required-permissions": [
+          "sell_margins.manage"
+        ]
+      }
+    },
+    "/v1/admin/sell-margin-tables/{tableId}/versions": {
+      "get": {
+        "description": "Every version, newest first, with its lines (effective-dated, ADR-0005).\n\nImplements: D-063, D-012.",
+        "operationId": "admin.sellMarginTables.listVersions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "effectiveFrom": "2026-10-01T00:00:00+07:00",
+                    "fallbackAmount": null,
+                    "fallbackPct": "30",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b002",
+                    "lines": [
+                      {
+                        "colourCount": null,
+                        "difficultyLevelId": null,
+                        "minAmount": null,
+                        "priceMax": null,
+                        "priceMin": "0",
+                        "qtyMax": 999,
+                        "qtyMin": 1,
+                        "valueAmount": null,
+                        "valuePct": "25"
+                      }
+                    ],
+                    "reason": "Q4 margins (fake)",
+                    "status": "approved",
+                    "versionNo": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SellMarginVersionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the versions of a sell-margin table",
+        "tags": [
+          "admin.sellMarginTables"
+        ],
+        "x-required-permissions": [
+          "margin.read"
+        ]
+      },
+      "post": {
+        "description": "A complete set of lines (copy-on-write): run bands inclusive, price bands half-open, no overlap; one of a percentage or an amount per line; the fallback applies when no line matches (A-23, D-063).\n\nImplements: D-063, D-012.",
+        "operationId": "admin.sellMarginTables.createVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2026-10-01T00:00:00+07:00",
+                    "fallbackAmount": null,
+                    "fallbackPct": "30",
+                    "lines": [
+                      {
+                        "colourCount": null,
+                        "difficultyLevelId": null,
+                        "minAmount": null,
+                        "priceMax": null,
+                        "priceMin": "0",
+                        "qtyMax": 999,
+                        "qtyMin": 1,
+                        "valueAmount": null,
+                        "valuePct": "25"
+                      }
+                    ],
+                    "reason": "Q4 margins (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateSellMarginVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "effectiveFrom": "2026-10-01T00:00:00+07:00",
+                  "fallbackAmount": null,
+                  "fallbackPct": "30",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b002",
+                  "lines": [
+                    {
+                      "colourCount": null,
+                      "difficultyLevelId": null,
+                      "minAmount": null,
+                      "priceMax": null,
+                      "priceMin": "0",
+                      "qtyMax": 999,
+                      "qtyMin": 1,
+                      "valueAmount": null,
+                      "valuePct": "25"
+                    }
+                  ],
+                  "reason": "Q4 margins (fake)",
+                  "status": "draft",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SellMarginVersionDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Draft a new version of a sell-margin table",
+        "tags": [
+          "admin.sellMarginTables"
+        ],
+        "x-required-permissions": [
+          "sell_margins.manage"
+        ]
+      }
+    },
     "/v1/admin/settings": {
       "get": {
         "description": "Every configurable business value with the version in force, scheduled versions and any pending change (ADR-0005). Sensitive values are masked without `settings.read_sensitive`.\n\nImplements: ADR-0005, D-063.",
@@ -103554,6 +106626,291 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/pricing/folding/calculate": {
+      "post": {
+        "description": "The buy side only, on the factory’s own price list in force: cost, buy price per part, layouts, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
+        "operationId": "partner.pricingFolding.calculate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "d": 120,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 40,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "parts": [
+                      {
+                        "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                        "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                        "printFront": [
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          },
+                          {
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                            "percent": 100
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 60
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/FoldingConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                      "steps": [
+                        {
+                          "buyPrice": "10123.45",
+                          "leadTimeDays": 7,
+                          "parts": [
+                            {
+                              "buyPrice": "10123.45",
+                              "layoutAmount": 10,
+                              "layoutStandard": false,
+                              "partKey": "main",
+                              "sheets": 225,
+                              "totalCost": "9111.11"
+                            }
+                          ],
+                          "productionRun": 1000,
+                          "quantity": 1000
+                        }
+                      ]
+                    }
+                  ],
+                  "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryQuoteDto"
+                }
+              }
+            },
+            "description": "Buy side per print type",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Price a folding configuration on my own price list",
+        "tags": [
+          "partner.pricingFolding"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
     "/v1/partner/files/presign": {
       "post": {
         "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years).\n\nImplements: ADR-0003.",
@@ -112317,6 +115674,235 @@
         ]
       }
     },
+    "/v1/store/quotes/actions/calculate": {
+      "post": {
+        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
+        "operationId": "store.quotes.calculate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "d": 120,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 40,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "parts": [
+                        {
+                          "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                          "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                          "printFront": [
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            },
+                            {
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                              "percent": 100
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 60
+                    },
+                    "productTypeCode": "folding_carton"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CalculateQuoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "steps": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13380.00",
+                      "instant": true,
+                      "leadTimeDays": 7,
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "shippingAmount": "0.00",
+                      "shippingPending": true,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "unitPrice": "13.38",
+                      "vatAmount": "875.33"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteCalculationDto"
+                }
+              }
+            },
+            "description": "Prices per quantity",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Calculate an instant price for a configuration",
+        "tags": [
+          "store.quotes"
+        ]
+      }
+    },
     "/v1/store/realtime/auth": {
       "post": {
         "description": "Returns a 60-second token for the channels of the signed-in principal (own user, factory/company scopes).\n\nImplements: ADR-0003.",
@@ -113333,6 +116919,10 @@
       "name": "admin.consentPurposes"
     },
     {
+      "description": "The CS folding calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
+      "name": "admin.csFolding"
+    },
+    {
       "description": "Partner factories: registration, onboarding steps, KYC, addresses, contacts, bank accounts and lifecycle (D-011, D-041, D-171).",
       "name": "admin.factories"
     },
@@ -113405,6 +116995,10 @@
       "name": "admin.roles"
     },
     {
+      "description": "Packio's sell margins, fix costs and design fees, effective-dated (D-063).",
+      "name": "admin.sellMarginTables"
+    },
+    {
       "description": "Effective-dated business settings: history and dated changes (ADR-0005, D-063).",
       "name": "admin.settings"
     },
@@ -113473,6 +117067,10 @@
       "name": "partner.priceProposals"
     },
     {
+      "description": "A factory prices a folding configuration on its own price list (D-044).",
+      "name": "partner.pricingFolding"
+    },
+    {
       "description": "Realtime signals over SSE for factory users (ids + type only, contract §6).",
       "name": "partner.realtime"
     },
@@ -113495,6 +117093,10 @@
     {
       "description": "The signed-in customer's in-app notifications.",
       "name": "store.notifications"
+    },
+    {
+      "description": "Instant price calculation per quantity (D-043, D-100); quotes are saved with B2.5 (D-051).",
+      "name": "store.quotes"
     },
     {
       "description": "Realtime signals over SSE for customers (ids + type only, contract §6).",

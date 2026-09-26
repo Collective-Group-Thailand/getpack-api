@@ -88,6 +88,29 @@ export interface QuoteView {
   };
 }
 
+export interface FactoryQuoteView {
+  calculatorVersion: string;
+  priceListVersionId: string | null;
+  options: {
+    printTypeId: string;
+    error: string | null;
+    steps: {
+      quantity: number;
+      productionRun: number | null;
+      buyPrice: string | null;
+      leadTimeDays: number | null;
+      parts: {
+        partKey: string;
+        totalCost: string;
+        buyPrice: string;
+        layoutAmount: number;
+        sheets: number;
+        layoutStandard: boolean;
+      }[];
+    }[];
+  }[];
+}
+
 /** Keeps the network part only (schema-design §2.11): /24 for IPv4, /48 for IPv6. */
 export function ipPrefix(ip: string | undefined): string | null {
   if (!ip) return null;
@@ -198,8 +221,8 @@ export class QuoteEngineService {
         shippingPending: !s.shippingPriced,
         internal: {
           factoryId: option.option.factoryId,
-          printTypeId: option.option.printTypeId,
-          priceListVersionId: option.priceListVersionId.toString(),
+          printTypeId: option.printTypePublicId,
+          priceListVersionId: option.priceListVersionPublicId,
           buyPrice: formatMoney(s.buyPrice),
           marginPct: s.marginPct.toFixed(4),
           belowMarginFloor: s.marginPct < floor,
@@ -233,6 +256,66 @@ export class QuoteEngineService {
     };
     await this.log(cfg, resolved, view, ctx, at, Date.now() - started);
     return view;
+  }
+
+  /**
+   * The buy side of a configuration at one factory, on its own price list in force (D-044: a factory
+   * sees only its own prices, never Packio's sell side or another factory).
+   */
+  async priceFoldingForFactory(
+    cfg: FoldingConfiguration,
+    factory: { id: bigint; publicId: string },
+    at = new Date(),
+  ): Promise<FactoryQuoteView> {
+    const db = this.prisma;
+    const resolved = await this.loader.resolve(cfg, db);
+    const version = await db.priceListVersion.findFirst({
+      where: {
+        status: 'approved',
+        effectiveFrom: { lte: at },
+        priceList: { factoryId: factory.id, productTypeId: resolved.productTypeId },
+      },
+      orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+    });
+    if (!version)
+      return { calculatorVersion: FOLDING_CALCULATOR_VERSION, priceListVersionId: null, options: [] };
+    const loaded = await this.loader.options(factory, version.id, resolved, at, db);
+    const result = foldingCalculator.calculate(
+      { quantities: cfg.quantities, parts: resolved.parts, design: { graphic: false, structure: false } },
+      { options: loaded.map((l) => l.option) },
+    );
+    return {
+      calculatorVersion: FOLDING_CALCULATOR_VERSION,
+      priceListVersionId: version.publicId,
+      options: result.options.map((o, i) => ({
+        printTypeId: loaded[i]!.printTypePublicId,
+        error: o.error ? `${o.error.code}: ${o.error.detail}` : null,
+        steps: o.steps.map((s, q) =>
+          s
+            ? {
+                quantity: s.qty,
+                productionRun: s.boxAmount,
+                buyPrice: formatMoney(s.buyPrice),
+                leadTimeDays: s.leadTimeDays,
+                parts: s.parts.map((p) => ({
+                  partKey: p.partKey,
+                  totalCost: formatMoney(p.layout.totalCost),
+                  buyPrice: formatMoney(p.buyPrice),
+                  layoutAmount: p.layout.layout.layoutAmount,
+                  sheets: p.layout.waste.totalSheets,
+                  layoutStandard: p.layout.layout.layoutStandard,
+                })),
+              }
+            : {
+                quantity: cfg.quantities[q]!,
+                productionRun: null,
+                buyPrice: null,
+                leadTimeDays: null,
+                parts: [],
+              },
+        ),
+      })),
+    };
   }
 
   private noPrice(quantity: number, reason: string): QuoteStepView {

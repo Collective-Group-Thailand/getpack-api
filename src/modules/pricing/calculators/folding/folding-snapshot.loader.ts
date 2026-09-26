@@ -75,7 +75,9 @@ export interface ResolvedFolding {
 
 export interface LoadedOption {
   option: FoldingOption;
+  printTypePublicId: string;
   priceListVersionId: bigint;
+  priceListVersionPublicId: string;
   sellMarginVersionIds: bigint[];
   vatRateVersionId: bigint;
 }
@@ -329,6 +331,10 @@ export class FoldingSnapshotLoader {
     const v = priceListVersionId;
     const terms = await db.plPrintTypeTerm.findMany({
       where: { priceListVersionId: v },
+      include: {
+        printType: { select: { publicId: true } },
+        priceListVersion: { select: { publicId: true } },
+      },
       orderBy: { id: 'asc' },
     });
     const loaded: LoadedOption[] = [];
@@ -620,10 +626,12 @@ export class FoldingSnapshotLoader {
       const sell = await this.sell(resolved.productTypeId, pt, at, db);
       loaded.push({
         priceListVersionId: v,
+        priceListVersionPublicId: t.priceListVersion.publicId,
+        printTypePublicId: t.printType.publicId,
         sellMarginVersionIds: sell.versionIds,
         vatRateVersionId: sell.vatRateVersionId,
         option: {
-          optionKey: `${factory.publicId}:${pt}`,
+          optionKey: `${factory.publicId}:${t.printType.publicId}`,
           factoryId: factory.publicId,
           printTypeId: pt.toString(),
           engine,

@@ -4,6 +4,7 @@ import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/u
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
 import { FactoryOwnersService } from '@modules/partners/factories/factory-owners.service';
 import { PARTNERS_ADMIN_CONTROLLERS } from '@modules/partners/partners.registry';
+import { PRICING_ADMIN_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { Module } from '@nestjs/common';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
 import { AuditLogsController } from '@platform/audit/audit.controller';
@@ -48,6 +49,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
 
     ...CATALOG_ADMIN_CONTROLLERS,
     ...PARTNERS_ADMIN_CONTROLLERS,
+    ...PRICING_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

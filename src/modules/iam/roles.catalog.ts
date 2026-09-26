@@ -50,6 +50,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'audit_logs.read',
       'partners.read',
       'price_suggestions.read',
+      'quotes.calculate',
+      'sell_margins.manage',
     ],
   },
   {
@@ -90,6 +92,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'seo.manage',
       'geography.manage',
       'partners.read',
+      'quotes.calculate',
     ],
   },
   {
@@ -98,7 +101,12 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ฝ่ายบริการลูกค้า',
     nameEn: 'CS',
-    permissions: [...EVERY_STAFF_MEMBER, 'margin.read_pct_when_discounting', 'catalog.read'],
+    permissions: [
+      ...EVERY_STAFF_MEMBER,
+      'margin.read_pct_when_discounting',
+      'catalog.read',
+      'quotes.calculate',
+    ],
   },
   {
     key: 'cs_lead',
@@ -106,7 +114,12 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'หัวหน้าฝ่ายบริการลูกค้า',
     nameEn: 'CS Lead',
-    permissions: [...EVERY_STAFF_MEMBER, 'margin.read_pct_when_discounting', 'catalog.read'],
+    permissions: [
+      ...EVERY_STAFF_MEMBER,
+      'margin.read_pct_when_discounting',
+      'catalog.read',
+      'quotes.calculate',
+    ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
   {
@@ -181,6 +194,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'index_series.manage',
       'agreements.manage',
       'zones.manage',
+      'quotes.calculate',
     ],
   },
   {

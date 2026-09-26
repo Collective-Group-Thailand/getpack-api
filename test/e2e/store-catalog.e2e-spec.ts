@@ -203,6 +203,9 @@ describe('store catalogue (e2e, B2.1)', () => {
     const keys = (res.body.hits as { kind: string; key: string }[]).map((h) => `${h.kind}:${h.key}`);
     expect(keys).toEqual(expect.arrayContaining([`catalog_product:${active.slug}`, `stock_product:${sku}`]));
     expect(keys).not.toContain(`catalog_product:${draftSlug}`);
+    // Each search is logged for analytics (B2.3, schema-design §3.5).
+    const logged = await prisma.searchLog.findFirst({ where: { keyword: word }, orderBy: { id: 'desc' } });
+    expect(logged).toMatchObject({ keyword: word, channel: 'web', resultsCount: res.body.hits.length });
     await get('/v1/store/catalog/search?q=x').expect(422);
   });
 

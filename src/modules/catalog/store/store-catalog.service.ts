@@ -642,6 +642,22 @@ export class StoreCatalogService {
    * stock products, showcase products and articles: a row matches on trigram similarity or a
    * substring, and is ranked by the best similarity of its names.
    */
+  /** One `search_logs` row per search (B6 analytics, schema-design §3.5); never fails the search. */
+  async logSearch(keyword: string, resultsCount: number, actorUserId?: bigint): Promise<void> {
+    try {
+      await this.prisma.searchLog.create({
+        data: {
+          keyword: keyword.trim().slice(0, 200),
+          resultsCount,
+          channel: 'web',
+          actorUserId: actorUserId ?? null,
+        },
+      });
+    } catch {
+      // Analytics must never fail a search.
+    }
+  }
+
   async search(query: string): Promise<StoreSearchHitDto[]> {
     const q = query.trim();
     const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;

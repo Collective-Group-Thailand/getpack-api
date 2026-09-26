@@ -197,6 +197,21 @@ export const PERMISSIONS = [
     decisionRefs: ['D-141', 'D-052'],
   },
 
+  // --- Pricing (B2.3)
+  {
+    key: 'quotes.calculate',
+    audience: 'staff',
+    description: 'Price a configuration for a customer in the admin zone (CS calculator)',
+    decisionRefs: ['D-100', 'D-043'],
+  },
+  {
+    key: 'sell_margins.manage',
+    audience: 'staff',
+    description: "Maintain Packio's sell margins, fix costs and design fees (effective-dated)",
+    sensitive: true,
+    decisionRefs: ['D-063'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

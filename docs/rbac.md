@@ -54,6 +54,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_cost.read` — See full factory buy prices and costs (D-141, D-044) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |
 | `margin.read` — See margins in amounts and percent (D-141) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |
 | `margin.read_pct_when_discounting` — See the resulting margin % while applying a discount (D-141, D-052) | ◆ |  |  |  |  | ◆ | ◆ |  |  |  |  |  |  |  |
+| `quotes.calculate` — Price a configuration for a customer in the admin zone (CS calculator) (D-100, D-043) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● |  |
+| `sell_margins.manage` — Maintain Packio's sell margins, fix costs and design fees (effective-dated) (D-063) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

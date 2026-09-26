@@ -1,4 +1,5 @@
-import { Public } from '@common/auth/auth.decorators';
+import { OptionalActor, Public } from '@common/auth/auth.decorators';
+import { type Actor } from '@common/context/actor';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { paginated } from '@common/pagination/pagination';
@@ -324,8 +325,14 @@ export class StoreCatalogController {
     },
   })
   @ApiStandardErrors('validation.failed')
-  async search(@Query() query: StoreSearchQuery): Promise<StoreSearchResultDto> {
-    return { q: query.q, hits: await this.catalog.search(query.q) };
+  async search(
+    @OptionalActor() actor: Actor | undefined,
+    @Query() query: StoreSearchQuery,
+  ): Promise<StoreSearchResultDto> {
+    const hits = await this.catalog.search(query.q);
+    // Analytics (B6): written on each request that reaches the API (cached responses are not counted).
+    await this.catalog.logSearch(query.q, hits.length, actor?.type === 'user' ? actor.userId : undefined);
+    return { q: query.q, hits };
   }
 
   // --- CMS ------------------------------------------------------------------------------------

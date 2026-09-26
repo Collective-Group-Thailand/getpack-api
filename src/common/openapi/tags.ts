@@ -3,6 +3,12 @@
  * contract build. Tags are `<surface>.<resource>` (`store.orders`) or `ops.<area>`.
  */
 export const API_TAGS: Record<string, string> = {
+  'store.quotes':
+    'Instant price calculation per quantity (D-043, D-100); quotes are saved with B2.5 (D-051).',
+  'admin.csFolding':
+    'The CS folding calculator: catalogue choices and pricing with the staff view (D-100, D-141).',
+  'admin.sellMarginTables': "Packio's sell margins, fix costs and design fees, effective-dated (D-063).",
+  'partner.pricingFolding': 'A factory prices a folding configuration on its own price list (D-044).',
   'ops.health': 'Liveness and readiness of the API and its dependencies (database, Redis, object storage).',
   'auth.staff': 'Sign-in for Packio staff (e-mail + password). ADR-0004.',
   'auth.partner': 'Sign-in for partner-factory users (password or device PIN). ADR-0004.',
