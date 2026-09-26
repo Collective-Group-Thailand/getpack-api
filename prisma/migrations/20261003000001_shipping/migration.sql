@@ -14,7 +14,7 @@ CREATE TYPE "rate_line_acceptance" AS ENUM ('pending', 'accepted', 'countered');
 
 -- CreateTable
 CREATE TABLE "customer_shipping_rate_cards" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "key" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE "customer_shipping_rate_cards" (
 
 -- CreateTable
 CREATE TABLE "customer_shipping_rate_card_versions" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "card_id" BIGINT NOT NULL,
     "version_no" INTEGER NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE "customer_shipping_rate_card_versions" (
 
 -- CreateTable
 CREATE TABLE "customer_shipping_rates" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "version_id" BIGINT NOT NULL,
     "scheme_id" BIGINT NOT NULL,
     "zone_id" BIGINT NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE "customer_shipping_rates" (
 
 -- CreateTable
 CREATE TABLE "factory_shipping_rate_cards" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "factory_id" BIGINT NOT NULL,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -75,7 +75,7 @@ CREATE TABLE "factory_shipping_rate_cards" (
 
 -- CreateTable
 CREATE TABLE "factory_shipping_rate_card_versions" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "card_id" BIGINT NOT NULL,
     "version_no" INTEGER NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE "factory_shipping_rate_card_versions" (
 
 -- CreateTable
 CREATE TABLE "factory_shipping_rates" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "version_id" BIGINT NOT NULL,
     "scheme_id" BIGINT NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE "factory_shipping_rates" (
 
 -- CreateTable
 CREATE TABLE "carriers" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "code" "carrier_code" NOT NULL,
     "name" TEXT NOT NULL,
@@ -137,7 +137,7 @@ CREATE TABLE "carriers" (
 
 -- CreateTable
 CREATE TABLE "carrier_accounts" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "entity_id" BIGINT NOT NULL,
     "carrier_id" BIGINT NOT NULL,

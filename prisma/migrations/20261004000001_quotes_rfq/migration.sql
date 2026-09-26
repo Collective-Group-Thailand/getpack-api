@@ -29,7 +29,7 @@ CREATE TYPE "unmet_demand_source" AS ENUM ('rfq_declined', 'rfq_expired', 'no_pr
 
 -- CreateTable
 CREATE TABLE "document_series" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "entity_id" BIGINT NOT NULL,
     "doc_type" "document_type" NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE "document_series" (
 
 -- CreateTable
 CREATE TABLE "document_sequences" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "series_id" BIGINT NOT NULL,
     "period_key" TEXT NOT NULL,
     "next_value" BIGINT NOT NULL DEFAULT 1,
@@ -59,7 +59,7 @@ CREATE TABLE "document_sequences" (
 
 -- CreateTable
 CREATE TABLE "quotes" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "quote_code" TEXT,
     "entity_id" BIGINT NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE "quotes" (
 
 -- CreateTable
 CREATE TABLE "quote_options" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "quote_id" BIGINT NOT NULL,
     "quantity" INTEGER NOT NULL,
@@ -125,7 +125,7 @@ CREATE TABLE "quote_options" (
 
 -- CreateTable
 CREATE TABLE "rfqs" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "rfq_code" TEXT NOT NULL,
     "entity_id" BIGINT NOT NULL,
@@ -161,7 +161,7 @@ CREATE TABLE "rfqs" (
 
 -- CreateTable
 CREATE TABLE "rfq_quantity_tiers" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "rfq_id" BIGINT NOT NULL,
     "quantity" INTEGER NOT NULL,
 
@@ -170,7 +170,7 @@ CREATE TABLE "rfq_quantity_tiers" (
 
 -- CreateTable
 CREATE TABLE "rfq_messages" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "rfq_id" BIGINT NOT NULL,
     "author_user_id" BIGINT NOT NULL,
@@ -183,7 +183,7 @@ CREATE TABLE "rfq_messages" (
 
 -- CreateTable
 CREATE TABLE "rfq_factory_consultations" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "rfq_id" BIGINT NOT NULL,
     "factory_id" BIGINT NOT NULL,
@@ -201,7 +201,7 @@ CREATE TABLE "rfq_factory_consultations" (
 
 -- CreateTable
 CREATE TABLE "rfq_quotes" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "public_id" UUID NOT NULL DEFAULT uuidv7(),
     "rfq_id" BIGINT NOT NULL,
     "version_no" INTEGER NOT NULL,
@@ -217,7 +217,7 @@ CREATE TABLE "rfq_quotes" (
 
 -- CreateTable
 CREATE TABLE "rfq_quote_lines" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "rfq_quote_id" BIGINT NOT NULL,
     "quantity" INTEGER NOT NULL,
     "unit_price" DECIMAL(18,6) NOT NULL,
@@ -236,7 +236,7 @@ CREATE TABLE "rfq_quote_lines" (
 
 -- CreateTable
 CREATE TABLE "unmet_demand_reasons" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "code" TEXT NOT NULL,
     "name_th" TEXT NOT NULL,
     "name_en" TEXT NOT NULL,
@@ -248,7 +248,7 @@ CREATE TABLE "unmet_demand_reasons" (
 
 -- CreateTable
 CREATE TABLE "unmet_demand_records" (
-    "id" BIGSERIAL NOT NULL,
+    "id" BIGINT GENERATED ALWAYS AS IDENTITY,
     "occurred_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "source" "unmet_demand_source" NOT NULL,
     "reason_id" BIGINT,
