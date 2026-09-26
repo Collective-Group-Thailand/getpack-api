@@ -23,6 +23,8 @@ export interface SettingValues {
   'auth.device_pin_policy': { length: number; maxAttempts: number; lockMinutes: number };
   'notifications.marketing_window': { from: string; to: string; timezone?: string };
   'pricing.margin_floor_pct': string;
+  'quotes.validity_days': number;
+  'fulfilment.tolerance_default_pct': string;
   'partners.peer_benchmark_min_factories': number;
   'partners.impact_simulation_window_days': number;
   /** Not seeded (D-172): reading it throws `SettingNotFoundError` until a superadmin sets it. */

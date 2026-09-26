@@ -1268,6 +1268,9 @@ model PlPrintTypeTerm {
   costMultiplier              Decimal  @default(1) @map("cost_multiplier") @db.Decimal(7, 4)
   /// Lowest buy price of a lot (legacy factory 16: 500).
   minLotPrice                 Decimal? @map("min_lot_price") @db.Decimal(18, 6)
+  /// From this quantity the lead time is `bulk_lead_time_days` (legacy factories 9 and 16, `getCustomLeadTime`).
+  bulkLeadTimeMinQty          Int?     @map("bulk_lead_time_min_qty")
+  bulkLeadTimeDays            Decimal? @map("bulk_lead_time_days") @db.Decimal(6, 2)
   createdAt                   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   priceListVersion PriceListVersion @relation("PlPrintTypeTermVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_print_type_terms__price_list_version_id")

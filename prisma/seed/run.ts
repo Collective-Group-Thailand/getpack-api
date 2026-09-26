@@ -7,6 +7,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { config } from 'dotenv';
 
 import { PrismaClient } from '../../src/generated/prisma/client';
+import { seedDevFolding } from './dev-folding';
 import { seedDev } from './dev-seed';
 import { type EntitySeedInput, seedReference } from './reference-seed';
 
@@ -46,6 +47,11 @@ async function main(): Promise<void> {
       mode === 'dev'
         ? await seedDev(prisma, optional('DEV_SEED_PASSWORD'))
         : await seedReference(prisma, entityFromEnv());
+    if (mode === 'dev') {
+      // A fake folding factory so `pnpm dev` can price a folding box (B2.3).
+      const folding = await prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 });
+      if (folding.created) report['dev_folding_factory'] = 1;
+    }
     const created = Object.entries(report)
       .map(([what, n]) => `${what}=${n}`)
       .join(' ');

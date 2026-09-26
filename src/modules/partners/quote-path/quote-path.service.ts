@@ -95,6 +95,26 @@ export class QuotePathService {
     return result;
   }
 
+  /**
+   * The instant price paths of a type at `at` (D-043): active factories with an active capability, tier A
+   * and a price list in force. Tier B needs envelope matchers, which no component registers yet (A-13).
+   */
+  async instantCandidates(
+    productTypeId: bigint,
+    at = new Date(),
+    db: Tx = this.prisma,
+  ): Promise<{ factoryId: bigint; factoryPublicId: string; priceListVersionId: bigint }[]> {
+    return (await this.candidates(db, productTypeId, at))
+      .filter(
+        (c) => c.factoryStatus === 'active' && c.capabilityStatus === 'active' && c.tier === 'A' && c.version,
+      )
+      .map((c) => ({
+        factoryId: c.factoryId,
+        factoryPublicId: c.factoryPublicId,
+        priceListVersionId: c.version!.id,
+      }));
+  }
+
   /** Factories with a capability for the type, with what is in force at `at`. */
   private async candidates(db: Tx, productTypeId: bigint, at: Date): Promise<Candidate[]> {
     const inForce = { status: 'approved' as const, effectiveFrom: { lte: at } };

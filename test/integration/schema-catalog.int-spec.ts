@@ -269,6 +269,7 @@ const CHECKS = [
   'ck_pl_print_prices__digital',
   'ck_pl_print_type_terms__digital_methods',
   'ck_pl_print_type_terms__digital_values',
+  'ck_pl_print_type_terms__bulk_lead_time',
 ];
 
 const TRIGGERS = [

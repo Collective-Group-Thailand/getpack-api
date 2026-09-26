@@ -57,6 +57,7 @@ describe('price governance (e2e, B2.2)', () => {
     prisma = app.get(PrismaService);
     await seedDev(prisma, E2E_DEV_PASSWORD);
     for (const sql of PL_TEST_PRICES_SQL) await prisma.$executeRawUnsafe(sql);
+    app.get(PriceComponentRegistry).unregister(PL_TEST_PRICES.component); // the real folding component, B2.3
     app.get(PriceComponentRegistry).register(PL_TEST_PRICES);
     for (const role of ['superadmin', 'partner-manager']) {
       const res = await request(server)

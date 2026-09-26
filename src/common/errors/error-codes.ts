@@ -96,6 +96,8 @@ export const ERROR_CODES = {
   'partners.maker_checker': HttpStatus.FORBIDDEN,
   'partners.version_not_awaiting': HttpStatus.CONFLICT,
   'partners.price_line_conflict': HttpStatus.CONFLICT,
+  'pricing.vat_rate_missing': HttpStatus.SERVICE_UNAVAILABLE,
+  'pricing.not_instant': HttpStatus.UNPROCESSABLE_ENTITY,
   'service.unavailable': HttpStatus.SERVICE_UNAVAILABLE,
   'internal.unexpected': HttpStatus.INTERNAL_SERVER_ERROR,
 } as const satisfies Record<string, HttpStatus>;

@@ -400,5 +400,15 @@
       "title": "Price line conflict",
       "detail": "A line no longer matches the version the proposal was based on; draft a new proposal."
     }
+  },
+  "pricing": {
+    "vat_rate_missing": {
+      "title": "VAT rate not set",
+      "detail": "No standard VAT rate is in force for the pricing date; Finance must set it (accounting-design §2)."
+    },
+    "not_instant": {
+      "title": "Not quoted instantly",
+      "detail": "This product type is not quoted instantly yet; send a request for quote instead (D-100)."
+    }
   }
 }

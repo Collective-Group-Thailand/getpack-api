@@ -44,6 +44,8 @@ export interface FoldingOption {
   tables: OffsetTables | DigitalTables;
   parts: Readonly<Record<string, { geometry: GeometrySnapshot; exclusions: readonly ProcessExclusion[] }>>;
   sell: SellSnapshot;
+  /** Price lines the factory lacks for this configuration (the loader's checks); non-empty = no price. */
+  unavailable?: readonly string[];
   /**
    * Carrier cost before VAT per part and quantity (B2.4, D-013); legacy prices each part's cartons
    * (`Calculator.php:335-359`). Absent = shipping not priced yet.
@@ -100,6 +102,7 @@ export interface FoldingResult {
 type PartLayouts = { boxAmount: number; layouts: (PricedLayout | DigitalPricedLayout)[] }[];
 
 function priceParts(input: FoldingInput, option: FoldingOption): Map<string, PartLayouts> {
+  if (option.unavailable?.length) throw new PricingError('price_line_missing', option.unavailable.join(', '));
   if (option.engine === 'b') {
     // Legacy prices type-B factories only in the factory tools (`FoldingCalculator.php:414`); engine B is
     // not ported (PROGRESS, B2.3 slice 6), so a B print type is no instant price path.
