@@ -228,6 +228,36 @@ const CHECKS = [
   'ck_pl_print_type_terms__lead_time_days',
   'ck_pl_print_type_terms__min_orders',
   'ck_pl_print_type_terms__waste_method',
+
+  // --- B2.3 folding offset components
+  'ck_pl_assembly_prices__non_negative',
+  'ck_pl_assembly_prices__range',
+  'ck_pl_assembly_prices__type',
+  'ck_pl_assembly_sheets__size',
+  'ck_pl_assembly_wastes__sheet_band',
+  'ck_pl_assembly_wastes__waste',
+  'ck_pl_diecut_block_prices__lay',
+  'ck_pl_diecut_block_prices__non_negative',
+  'ck_pl_diecut_block_prices__size',
+  'ck_pl_diecut_prices__non_negative',
+  'ck_pl_diecut_prices__sheet_band',
+  'ck_pl_diecut_wastes__box_band',
+  'ck_pl_diecut_wastes__sheet_band',
+  'ck_pl_diecut_wastes__waste',
+  'ck_pl_finish_plates__price',
+  'ck_pl_finish_plates__size',
+  'ck_pl_finish_prices__non_negative',
+  'ck_pl_finish_prices__sheet_band',
+  'ck_pl_finish_wastes__sheet_band',
+  'ck_pl_finish_wastes__waste',
+  'ck_pl_print_plates__price',
+  'ck_pl_print_plates__size',
+  'ck_pl_print_prices__non_negative',
+  'ck_pl_print_prices__sheet_band',
+  'ck_pl_print_wastes__percent_band',
+  'ck_pl_print_wastes__sheet_band',
+  'ck_pl_print_wastes__waste',
+  'ck_pl_process_exclusions__process',
 ];
 
 const TRIGGERS = [
@@ -278,6 +308,22 @@ const TRIGGERS = [
   'tg_pl_pattern_conditions__sub_pattern',
   'tg_pl_pattern_conditions__version_frozen',
   'tg_pl_print_type_terms__version_frozen',
+
+  // --- B2.3 folding offset components
+  'tg_pl_assembly_prices__version_frozen',
+  'tg_pl_assembly_sheets__version_frozen',
+  'tg_pl_assembly_wastes__version_frozen',
+  'tg_pl_diecut_block_prices__version_frozen',
+  'tg_pl_diecut_prices__version_frozen',
+  'tg_pl_diecut_wastes__version_frozen',
+  'tg_pl_finish_plates__version_frozen',
+  'tg_pl_finish_prices__version_frozen',
+  'tg_pl_finish_wastes__version_frozen',
+  'tg_pl_ink_colours__version_frozen',
+  'tg_pl_print_plates__version_frozen',
+  'tg_pl_print_prices__version_frozen',
+  'tg_pl_print_wastes__version_frozen',
+  'tg_pl_process_exclusions__version_frozen',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */

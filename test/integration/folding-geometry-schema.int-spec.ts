@@ -123,9 +123,9 @@ describe('folding geometry schema behaviour (PostgreSQL 18)', () => {
            VALUES ($1, $2, $3, $4, 1, false, false, false, $5)`,
           [version, key, printType, variant, marginPct],
         );
-      expect(await terms('k1', 'c', 10)).toBe(SQLSTATE.checkViolation);
-      expect(await terms('k1', 'a', 100)).toBe(SQLSTATE.checkViolation);
-      expect(await terms('k1', 'a', 12.5)).toBeNull();
+      expect(await terms('k1', 'a', 10)).toBe(SQLSTATE.checkViolation);
+      expect(await terms('k1', 'a_offset', 100)).toBe(SQLSTATE.checkViolation);
+      expect(await terms('k1', 'a_offset', 12.5)).toBeNull();
       await db.client.query(
         "UPDATE price_list_versions SET status = 'approved', decided_at = now() WHERE id = $1",
         [version],

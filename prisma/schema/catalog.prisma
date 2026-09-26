@@ -277,17 +277,28 @@ model PrintType {
   updatedBy   User?       @relation("PrintTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_print_types__updated_by")
 
   // --- Partners (generated back-relations)
-  factoryCapabilities FactoryCapability[] @relation("FactoryCapabilityPrintType")
-  factoryMachines     FactoryMachine[]    @relation("FactoryMachinePrintType")
+  factoryCapabilities          FactoryCapability[]  @relation("FactoryCapabilityPrintType")
+  factoryMachines              FactoryMachine[]     @relation("FactoryMachinePrintType")
   // --- end Partners
   // --- Pricing (generated back-relations)
-  sellMarginTables    SellMarginTable[]   @relation("SellMarginTablePrintType")
+  sellMarginTables             SellMarginTable[]    @relation("SellMarginTablePrintType")
   // --- end Pricing
   // --- Folding price components (B2.3)
-  plPrintTypeTerms    PlPrintTypeTerm[]   @relation("PlPrintTypeTermPrintType")
-  plPaperTrims        PlPaperTrim[]       @relation("PlPaperTrimPrintType")
-  plMaterialPrices    PlMaterialPrice[]   @relation("PlMaterialPricePrintType")
-  plPaperSizes        PlPaperSize[]       @relation("PlPaperSizePrintType")
+  plPrintTypeTerms             PlPrintTypeTerm[]    @relation("PlPrintTypeTermPrintType")
+  plPaperTrims                 PlPaperTrim[]        @relation("PlPaperTrimPrintType")
+  plMaterialPrices             PlMaterialPrice[]    @relation("PlMaterialPricePrintType")
+  plPaperSizes                 PlPaperSize[]        @relation("PlPaperSizePrintType")
+  plInkColoursPrintType        PlInkColour[]        @relation("PlInkColourPrintType")
+  plPrintWastesPrintType       PlPrintWaste[]       @relation("PlPrintWastePrintType")
+  plFinishWastesPrintType      PlFinishWaste[]      @relation("PlFinishWastePrintType")
+  plDiecutWastesPrintType      PlDiecutWaste[]      @relation("PlDiecutWastePrintType")
+  plAssemblyWastesPrintType    PlAssemblyWaste[]    @relation("PlAssemblyWastePrintType")
+  plPrintPlatesPrintType       PlPrintPlate[]       @relation("PlPrintPlatePrintType")
+  plPrintPricesPrintType       PlPrintPrice[]       @relation("PlPrintPricePrintType")
+  plFinishPricesPrintType      PlFinishPrice[]      @relation("PlFinishPricePrintType")
+  plFinishPlatesPrintType      PlFinishPlate[]      @relation("PlFinishPlatePrintType")
+  plDiecutPricesPrintType      PlDiecutPrice[]      @relation("PlDiecutPricePrintType")
+  plDiecutBlockPricesPrintType PlDiecutBlockPrice[] @relation("PlDiecutBlockPricePrintType")
   // --- end Folding price components
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
@@ -602,13 +613,14 @@ model Material {
   updatedById   BigInt?       @map("updated_by")
   rowVersion    Int           @default(1) @map("row_version")
 
-  family           MaterialFamily?   @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__family_id")
-  fluteType        FluteType?        @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__flute_type_id")
-  createdBy        User?             @relation("MaterialCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__created_by")
-  updatedBy        User?             @relation("MaterialUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__updated_by")
+  family                      MaterialFamily?      @relation(fields: [familyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__family_id")
+  fluteType                   FluteType?           @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__flute_type_id")
+  createdBy                   User?                @relation("MaterialCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__created_by")
+  updatedBy                   User?                @relation("MaterialUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__updated_by")
   // --- Folding price components (B2.3)
-  plMaterialPrices PlMaterialPrice[] @relation("PlMaterialPriceMaterial")
-  plPaperSizes     PlPaperSize[]     @relation("PlPaperSizeMaterial")
+  plMaterialPrices            PlMaterialPrice[]    @relation("PlMaterialPriceMaterial")
+  plPaperSizes                PlPaperSize[]        @relation("PlPaperSizeMaterial")
+  plProcessExclusionsMaterial PlProcessExclusion[] @relation("PlProcessExclusionMaterial")
   // --- end Folding price components
 
   @@index([familyId], map: "ix_materials__family_id")
@@ -659,9 +671,15 @@ model Finish {
   updatedById    BigInt?       @map("updated_by")
   rowVersion     Int           @default(1) @map("row_version")
 
-  group     FinishGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__group_id")
-  createdBy User?        @relation("FinishCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__created_by")
-  updatedBy User?        @relation("FinishUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__updated_by")
+  group                     FinishGroup?         @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__group_id")
+  createdBy                 User?                @relation("FinishCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__created_by")
+  updatedBy                 User?                @relation("FinishUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__updated_by")
+  // --- Folding price components (B2.3)
+  plProcessExclusionsFinish PlProcessExclusion[] @relation("PlProcessExclusionFinish")
+  plFinishWastesFinish      PlFinishWaste[]      @relation("PlFinishWasteFinish")
+  plFinishPricesFinish      PlFinishPrice[]      @relation("PlFinishPriceFinish")
+  plFinishPlatesFinish      PlFinishPlate[]      @relation("PlFinishPlateFinish")
+  // --- end Folding price components
 
   @@index([groupId], map: "ix_finishes__group_id")
   @@map("finishes")
@@ -720,9 +738,13 @@ model InkColour {
   updatedById BigInt?       @map("updated_by")
   rowVersion  Int           @default(1) @map("row_version")
 
-  group     InkColourGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__group_id")
-  createdBy User?           @relation("InkColourCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__created_by")
-  updatedBy User?           @relation("InkColourUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__updated_by")
+  group                  InkColourGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__group_id")
+  createdBy              User?           @relation("InkColourCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__created_by")
+  updatedBy              User?           @relation("InkColourUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__updated_by")
+  // --- Folding price components (B2.3)
+  plInkColoursInkColour  PlInkColour[]   @relation("PlInkColourInkColour")
+  plPrintPricesInkColour PlPrintPrice[]  @relation("PlPrintPriceInkColour")
+  // --- end Folding price components
 
   @@index([groupId], map: "ix_ink_colours__group_id")
   @@map("ink_colours")
@@ -763,9 +785,12 @@ model DiecutType {
   updatedById BigInt?       @map("updated_by")
   rowVersion  Int           @default(1) @map("row_version")
 
-  group     DiecutGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__group_id")
-  createdBy User?        @relation("DiecutTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__created_by")
-  updatedBy User?        @relation("DiecutTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__updated_by")
+  group                    DiecutGroup?    @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__group_id")
+  createdBy                User?           @relation("DiecutTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__created_by")
+  updatedBy                User?           @relation("DiecutTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__updated_by")
+  // --- Folding price components (B2.3)
+  plDiecutWastesDiecutType PlDiecutWaste[] @relation("PlDiecutWasteDiecutType")
+  // --- end Folding price components
 
   @@index([groupId], map: "ix_diecut_types__group_id")
   @@map("diecut_types")
@@ -812,9 +837,14 @@ model Assembly {
   updatedById    BigInt?       @map("updated_by")
   rowVersion     Int           @default(1) @map("row_version")
 
-  group     AssemblyGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__group_id")
-  createdBy User?          @relation("AssemblyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__created_by")
-  updatedBy User?          @relation("AssemblyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__updated_by")
+  group                       AssemblyGroup?       @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__group_id")
+  createdBy                   User?                @relation("AssemblyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__created_by")
+  updatedBy                   User?                @relation("AssemblyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__updated_by")
+  // --- Folding price components (B2.3)
+  plProcessExclusionsAssembly PlProcessExclusion[] @relation("PlProcessExclusionAssembly")
+  plAssemblyWastesAssembly    PlAssemblyWaste[]    @relation("PlAssemblyWasteAssembly")
+  plAssemblyPricesAssembly    PlAssemblyPrice[]    @relation("PlAssemblyPriceAssembly")
+  // --- end Folding price components
 
   @@index([groupId], map: "ix_assemblies__group_id")
   @@map("assemblies")
@@ -856,12 +886,25 @@ model DifficultyLevel {
   updatedById BigInt?       @map("updated_by")
   rowVersion  Int           @default(1) @map("row_version")
 
-  group           DifficultyLevelGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__group_id")
-  createdBy       User?                 @relation("DifficultyLevelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__created_by")
-  updatedBy       User?                 @relation("DifficultyLevelUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__updated_by")
+  group                              DifficultyLevelGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__group_id")
+  createdBy                          User?                 @relation("DifficultyLevelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__created_by")
+  updatedBy                          User?                 @relation("DifficultyLevelUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__updated_by")
   // --- Pricing (generated back-relations)
-  sellMarginLines SellMarginLine[]      @relation("SellMarginLineDifficultyLevel")
+  sellMarginLines                    SellMarginLine[]      @relation("SellMarginLineDifficultyLevel")
   // --- end Pricing
+  // --- Folding price components (B2.3)
+  plPrintWastesDifficultyLevel       PlPrintWaste[]        @relation("PlPrintWasteDifficultyLevel")
+  plFinishWastesDifficultyLevel      PlFinishWaste[]       @relation("PlFinishWasteDifficultyLevel")
+  plDiecutWastesDifficultyLevel      PlDiecutWaste[]       @relation("PlDiecutWasteDifficultyLevel")
+  plAssemblyWastesDifficultyLevel    PlAssemblyWaste[]     @relation("PlAssemblyWasteDifficultyLevel")
+  plPrintPlatesDifficultyLevel       PlPrintPlate[]        @relation("PlPrintPlateDifficultyLevel")
+  plPrintPricesDifficultyLevel       PlPrintPrice[]        @relation("PlPrintPriceDifficultyLevel")
+  plFinishPricesDifficultyLevel      PlFinishPrice[]       @relation("PlFinishPriceDifficultyLevel")
+  plFinishPlatesDifficultyLevel      PlFinishPlate[]       @relation("PlFinishPlateDifficultyLevel")
+  plDiecutPricesDifficultyLevel      PlDiecutPrice[]       @relation("PlDiecutPriceDifficultyLevel")
+  plDiecutBlockPricesDifficultyLevel PlDiecutBlockPrice[]  @relation("PlDiecutBlockPriceDifficultyLevel")
+  plAssemblyPricesDifficultyLevel    PlAssemblyPrice[]     @relation("PlAssemblyPriceDifficultyLevel")
+  // --- end Folding price components
 
   @@index([groupId], map: "ix_difficulty_levels__group_id")
   @@map("difficulty_levels")

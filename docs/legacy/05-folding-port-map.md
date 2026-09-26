@@ -79,6 +79,11 @@ Not used by folding: `percent_reduces`, `difficult_match_margin`, `factory_fix_c
 | Q13 | `swipePaperSheetSize` casts Eloquent models with `(array)`, losing every attribute, so factories with `can_flip_paper_size` never got a layout (`helpers.php:1140-1172`) | the intended rotation: each sheet plus its turned copy, marked against the grain |
 | Q14 | a missing condition, band, standard blank or paper trim is read as `null`, i.e. 0, with a PHP notice (`PatternArea.php:185-723`) | the configuration is not priced (`GeometryError`), never priced on silently wrong geometry |
 | Q15 | CS sends `isGrain` without `grainPararell`, so a fixed-grain request from CS yields no layout (`cs.vue:2189`, `PatternArea.php:947,1029`) | the orientation is a required input when the grain is fixed (API validation) |
+| Q16 | a missing **price** row is read as `null`, i.e. the process costs 0 (print colour, finish 1, finish 2 on any machine, all die-cut or print-plate data); a missing **waste** band silently adds no waste (`A/CalculateCost.php` `calCost*`, `A/CalculateWaste.php` `cal*Waste`) | a missing price line refuses the configuration (`price_line_missing`), and an incomplete print plate is skipped rather than looking free; a missing waste band keeps legacy's no-waste result and is reported in `missingBands` for the staff breakdown |
+| Q17 | finish-2 waste sets are compacted when an F2 has no waste rows, so later F2s read another F2's sheets and step-down percentages (`A/CalculateWaste.php:320-336`, `A/CalculateCost.php:1092`) | waste is kept by F2 position; an F2 without waste rows adds none |
+| Q18 | per-process cost variables are not reset between layouts, so a layout missing a process would inherit the previous layout's cost (`A/CalculateCost.php:72-82, 190-244`) | computed per layout (unreachable in legacy when the data is complete, since every priced layout carries each requested process) |
+| Q19 | the 4-colour flat print price is read straight from the database without the factory filter, behind a `rand()` cache key (`A/CalculateCost.php:428-455`) | read from the factory's own price list |
+| Q20 | a band bound left `NULL` never matches in legacy (`NULL >= x` is false) | `NULL` bounds are open (“no lower / upper limit”) |
 
 **Not in B2.3**: customer shipping and carrier engines (B2.4, D-013); promotions (B3.3); order hierarchies / SAP (D-030); `receiving_date` in calendar days (replaced by capacity + factory calendar, D-101).
 
@@ -109,3 +114,7 @@ Not used by folding: `percent_reduces`, `difficult_match_margin`, `factory_fix_c
 | 45–48 | กล่อง/ถาดอาหาร | `standard_blank` | `pattern_standard_blanks` |
 
 Ported in `src/modules/pricing/calculators/folding/geometry/` (`formulas.ts`, `layout-amount.ts`, `pattern-area.ts`).
+
+## 7. Engine A offset (slice 4)
+Ported in `src/modules/pricing/calculators/folding/` — `request.ts` (the `PrepareRequest` process arrays), `tables.ts` (price-list rows), `a/waste.ts` (`A/CalculateWaste`), `a/cost.ts` (`A/CalculateCost` print / die-cut / finish / assembly / ordering), `margin.ts` (`calMargin` + `Object/Margin`), `a/engine.ts` (`FoldingCalculator::calculate` for one part).
+Legacy per-factory definitions become price-list data: `color.color_type` → `pl_ink_colours.is_standard`; `finish.diecut_window_price` → `pl_finish_prices.adds_diecut_window`; `assembly.assembly_type` / `diecut_window_price` → `pl_assembly_prices`; `finish.required_*` / `assembly.required_*` / `assembly.skip_waste` come from the platform catalogue. Hard-coded factories become terms: `PFO` → `four_colour_price_by_max_percent`, `assembly_waste_by_assembly`; factory 23 → `diecut_waste_by_box_amount`. Legacy's unused `required_amount` quantity of finish 2 and assemblies stays unused.
