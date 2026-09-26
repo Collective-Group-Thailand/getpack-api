@@ -73,9 +73,8 @@ export class UnmetDemandSubscriber {
       },
       quantityBand: quantityBand(Math.max(...quantities, 0)),
       provinceId: province?.district.provinceId ?? null,
-      calculateLogId: event.payload['calculateLogId']
-        ? BigInt(String(event.payload['calculateLogId']))
-        : null,
+      calculateLogId:
+        typeof event.payload['calculateLogId'] === 'string' ? BigInt(event.payload['calculateLogId']) : null,
     });
   }
 
