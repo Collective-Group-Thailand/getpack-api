@@ -1247,6 +1247,27 @@ model PlPrintTypeTerm {
   assemblyWasteByAssembly     Boolean  @default(false) @map("assembly_waste_by_assembly")
   /// Legacy factory 23: die-cut waste also matches the box-amount band.
   diecutWasteByBoxAmount      Boolean  @default(false) @map("diecut_waste_by_box_amount")
+  /// Digital paper cost (legacy factories 9 `per_piece_band`, 23 `per_sheet`; `auto` = blank area when trimmed, else sheet area).
+  digitalPaperMethod          String   @default("auto") @map("digital_paper_method")
+  /// Digital blank trims (legacy `factory_match_print_type.trim_dl/dw`).
+  trimDlMm                    Decimal  @default(0) @map("trim_dl_mm") @db.Decimal(10, 2)
+  trimDwMm                    Decimal  @default(0) @map("trim_dw_mm") @db.Decimal(10, 2)
+  /// Legacy `use_paper_amount_for_cal`: digital die-cut priced on the die-cut sheets.
+  usePaperAmountForCal        Boolean  @default(false) @map("use_paper_amount_for_cal")
+  /// Digital print cost basis (legacy 9/16 `blank_area`, 23 `per_sheet`, else `sheet_area`).
+  digitalPrintMethod          String   @default("sheet_area") @map("digital_print_method")
+  /// Digital print price band: press sheets, or the run (`box`, legacy factory 9).
+  digitalPrintBand            String   @default("sheets") @map("digital_print_band")
+  /// Digital print prices per material, with the two-sided add-on (legacy factory 16).
+  digitalPrintByMaterial      Boolean  @default(false) @map("digital_print_by_material")
+  /// Digital finish-1 basis (legacy 16 `blank_area_in2`, 9 `per_sheet_per_layout`, 23 `per_sheet`, else `sheet_area`).
+  digitalFinishMethod         String   @default("sheet_area") @map("digital_finish_method")
+  /// Digital die block (legacy 9 `per_piece`, 23 `flat_by_pieces`).
+  digitalDiecutBlock          String   @default("none") @map("digital_diecut_block")
+  /// Cost uplift before the margin (legacy factory 9: 1.2).
+  costMultiplier              Decimal  @default(1) @map("cost_multiplier") @db.Decimal(7, 4)
+  /// Lowest buy price of a lot (legacy factory 16: 500).
+  minLotPrice                 Decimal? @map("min_lot_price") @db.Decimal(18, 6)
   createdAt                   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   priceListVersion PriceListVersion @relation("PlPrintTypeTermVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_print_type_terms__price_list_version_id")
@@ -1552,12 +1573,17 @@ model PlPrintPrice {
   percentColor                  Decimal? @map("percent_color") @db.Decimal(7, 4)
   minPaperSheetAmount           Decimal? @map("min_paper_sheet_amount") @db.Decimal(12, 2)
   maxPaperSheetAmount           Decimal? @map("max_paper_sheet_amount") @db.Decimal(12, 2)
+  minBoxAmount                  Int?     @map("min_box_amount")
+  maxBoxAmount                  Int?     @map("max_box_amount")
+  materialId                    BigInt?  @map("material_id")
   pricePerSheet                 Decimal? @map("price_per_sheet") @db.Decimal(18, 6)
   pricePerPcs                   Decimal? @map("price_per_pcs") @db.Decimal(18, 6)
   flatPriceFourColor            Decimal? @map("flat_price_four_color") @db.Decimal(18, 6)
   flatPriceFourColorPerPcs      Decimal? @map("flat_price_four_color_per_pcs") @db.Decimal(18, 6)
   priceColorCombineSpecialColor Decimal? @map("price_color_combine_special_color") @db.Decimal(18, 6)
   operationCost                 Decimal? @map("operation_cost") @db.Decimal(18, 6)
+  priceInkPerM2                 Decimal? @map("price_ink_per_m2") @db.Decimal(18, 6)
+  addTwoSidePerSqm              Decimal? @map("add_two_side_per_sqm") @db.Decimal(18, 6)
   createdAt                     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   priceListVersion PriceListVersion @relation("PlPrintPriceVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_print_prices__price_list_version_id")
@@ -1565,12 +1591,14 @@ model PlPrintPrice {
   printType        PrintType        @relation("PlPrintPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_print_prices__print_type_id")
   machine          FactoryMachine   @relation("PlPrintPriceMachine", fields: [machineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_print_prices__machine_id")
   inkColour        InkColour        @relation("PlPrintPriceInkColour", fields: [inkColourId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_print_prices__ink_colour_id")
+  material         Material?        @relation("PlPrintPriceMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_print_prices__material_id")
 
   @@unique([priceListVersionId, lineKey], map: "ux_pl_print_prices__price_list_version_id__line_key")
   @@index([difficultyLevelId], map: "ix_pl_print_prices__difficulty_level_id")
   @@index([printTypeId], map: "ix_pl_print_prices__print_type_id")
   @@index([machineId], map: "ix_pl_print_prices__machine_id")
   @@index([inkColourId], map: "ix_pl_print_prices__ink_colour_id")
+  @@index([materialId], map: "ix_pl_print_prices__material_id")
   @@map("pl_print_prices")
 }
 
@@ -1654,6 +1682,8 @@ model PlDiecutPrice {
   diecutPrice         Decimal? @map("diecut_price") @db.Decimal(18, 6)
   pricePerSheet       Decimal? @map("price_per_sheet") @db.Decimal(18, 6)
   operationCost       Decimal? @map("operation_cost") @db.Decimal(18, 6)
+  pricePerPcs         Decimal? @map("price_per_pcs") @db.Decimal(18, 6)
+  minPrice            Decimal? @map("min_price") @db.Decimal(18, 6)
   createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   priceListVersion PriceListVersion @relation("PlDiecutPriceVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_diecut_prices__price_list_version_id")
@@ -1682,8 +1712,12 @@ model PlDiecutBlockPrice {
   blockLMaxIn        Decimal  @map("block_l_max_in") @db.Decimal(10, 4)
   layMin             Int?     @map("lay_min")
   layMax             Int?     @map("lay_max")
+  minPcs             Int?     @map("min_pcs")
+  maxPcs             Int?     @map("max_pcs")
   diecutPrice        Decimal? @map("diecut_price") @db.Decimal(18, 6)
   pricePerDrawing    Decimal? @map("price_per_drawing") @db.Decimal(18, 6)
+  pricePerPcs        Decimal? @map("price_per_pcs") @db.Decimal(18, 6)
+  minDiecutPrice     Decimal? @map("min_diecut_price") @db.Decimal(18, 6)
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   priceListVersion PriceListVersion @relation("PlDiecutBlockPriceVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_diecut_block_prices__price_list_version_id")
@@ -1707,6 +1741,10 @@ model PlAssemblyPrice {
   assemblyId          BigInt   @map("assembly_id")
   rangeAmountMin      Int?     @map("range_amount_min")
   rangeAmountMax      Int?     @map("range_amount_max")
+  /// Digital rows are per print type; offset reads every row (legacy).
+  printTypeId         BigInt?  @map("print_type_id")
+  minAreaSqcm         Decimal? @map("min_area_sqcm") @db.Decimal(12, 2)
+  maxAreaSqcm         Decimal? @map("max_area_sqcm") @db.Decimal(12, 2)
   assemblyType        Int      @map("assembly_type") @db.SmallInt
   addsDiecutWindow    Boolean  @default(false) @map("adds_diecut_window")
   pricePerCm          Decimal? @map("price_per_cm") @db.Decimal(18, 6)
@@ -1715,15 +1753,19 @@ model PlAssemblyPrice {
   minimumOperation    Decimal? @map("minimum_operation") @db.Decimal(18, 6)
   blockPrice          Decimal? @map("block_price") @db.Decimal(18, 6)
   materialPricePerIn2 Decimal? @map("material_price_per_in2") @db.Decimal(18, 6)
+  /// Digital price basis: `per_piece`, `per_piece_area_band` (legacy factory 9 group 20), `per_carton` (factory 9 group 22).
+  digitalMethod       String   @default("per_piece") @map("digital_method")
   createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   priceListVersion PriceListVersion @relation("PlAssemblyPriceVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_assembly_prices__price_list_version_id")
   difficultyLevel  DifficultyLevel  @relation("PlAssemblyPriceDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_assembly_prices__difficulty_level_id")
   assembly         Assembly         @relation("PlAssemblyPriceAssembly", fields: [assemblyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_assembly_prices__assembly_id")
+  printType        PrintType?       @relation("PlAssemblyPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_assembly_prices__print_type_id")
 
   @@unique([priceListVersionId, lineKey], map: "ux_pl_assembly_prices__price_list_version_id__line_key")
   @@index([difficultyLevelId], map: "ix_pl_assembly_prices__difficulty_level_id")
   @@index([assemblyId], map: "ix_pl_assembly_prices__assembly_id")
+  @@index([printTypeId], map: "ix_pl_assembly_prices__print_type_id")
   @@map("pl_assembly_prices")
 }
 

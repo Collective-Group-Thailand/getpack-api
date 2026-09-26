@@ -56,6 +56,12 @@ export interface PrintPriceRow extends SheetBand {
   flatPriceFourColorPerPcs: number;
   priceColorCombineSpecialColor: number;
   operationCost: number;
+  /** Digital: run band (legacy `min_amount` / `max_amount`), material, ink per m², two-sided add-on. */
+  minBox?: number | null;
+  maxBox?: number | null;
+  materialId?: string | null;
+  priceInkPerM2?: number;
+  addTwoSidePerSqm?: number;
 }
 
 export interface FinishPriceRow extends SheetBand {
@@ -85,6 +91,9 @@ export interface DiecutPriceRow extends SheetBand {
   diecutPrice: number;
   pricePerSheet: number;
   operationCost: number;
+  /** Digital only. */
+  pricePerPcs?: number;
+  minPrice?: number;
 }
 
 export interface DiecutBlockRow extends SizeRange {
@@ -93,6 +102,11 @@ export interface DiecutBlockRow extends SizeRange {
   layMax: number | null;
   diecutPrice: number;
   pricePerDrawing: number;
+  /** Digital only: pieces band, price per piece, floor. */
+  minPcs?: number | null;
+  maxPcs?: number | null;
+  pricePerPcs?: number;
+  minDiecutPrice?: number;
 }
 
 export interface AssemblyPriceRow {
@@ -108,6 +122,11 @@ export interface AssemblyPriceRow {
   minimumOperation: number;
   blockPrice: number;
   materialPricePerIn2: number;
+  /** Digital: rows are per print type, optionally banded by window area, priced by `digitalMethod`. */
+  printTypeId?: string | null;
+  minAreaSqcm?: number | null;
+  maxAreaSqcm?: number | null;
+  digitalMethod?: 'per_piece' | 'per_piece_area_band' | 'per_carton';
 }
 
 export interface AssemblySheetRow {
@@ -154,3 +173,43 @@ export const inBand = (min: number | null, max: number | null, value: number): b
 
 export const inSheetBand = (row: SheetBand, sheets: number): boolean =>
   inBand(row.minSheets, row.maxSheets, sheets);
+
+/** Paper buy price of the material for the print type; digital bands by press sheets (legacy `paper_prices`). */
+export interface MaterialPriceRow {
+  minPaperAmount: number | null;
+  maxPaperAmount: number | null;
+  costPerKg: number | null;
+  costPerPcs: number | null;
+  costPerM2: number | null;
+}
+
+/** Terms of legacy's factory-specific digital branches (`A/CalculateCostDigital.php`), neutral by default. */
+export interface DigitalTerms {
+  paperMethod: 'auto' | 'per_piece_band' | 'per_sheet';
+  trimDlMm: number;
+  trimDwMm: number;
+  usePaperAmountForCal: boolean;
+  printMethod: 'sheet_area' | 'blank_area' | 'per_sheet';
+  printBand: 'sheets' | 'box';
+  printByMaterial: boolean;
+  finishMethod: 'sheet_area' | 'blank_area_in2' | 'per_sheet_per_layout' | 'per_sheet';
+  diecutBlock: 'none' | 'per_piece' | 'flat_by_pieces';
+  costMultiplier: number;
+  minLotPrice: number | null;
+}
+
+/** Everything engine A digital reads for one factory × print type × difficulty level. */
+export interface DigitalTables {
+  terms: OffsetTerms & DigitalTerms;
+  printTypeId: string;
+  printWastes: readonly PrintWasteRow[];
+  finishWastes: readonly FinishWasteRow[];
+  diecutWastes: readonly DiecutWasteRow[];
+  assemblyWastes: readonly AssemblyWasteRow[];
+  materialPrices: readonly MaterialPriceRow[];
+  printPrices: readonly PrintPriceRow[];
+  finishPrices: readonly FinishPriceRow[];
+  diecutPrices: readonly DiecutPriceRow[];
+  diecutBlocks: readonly DiecutBlockRow[];
+  assemblyPrices: readonly AssemblyPriceRow[];
+}

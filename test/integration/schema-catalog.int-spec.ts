@@ -258,6 +258,17 @@ const CHECKS = [
   'ck_pl_print_wastes__sheet_band',
   'ck_pl_print_wastes__waste',
   'ck_pl_process_exclusions__process',
+
+  // --- B2.3 folding digital components
+  'ck_pl_assembly_prices__area',
+  'ck_pl_assembly_prices__digital_method',
+  'ck_pl_diecut_block_prices__digital',
+  'ck_pl_diecut_block_prices__pcs',
+  'ck_pl_diecut_prices__digital',
+  'ck_pl_print_prices__box_band',
+  'ck_pl_print_prices__digital',
+  'ck_pl_print_type_terms__digital_methods',
+  'ck_pl_print_type_terms__digital_values',
 ];
 
 const TRIGGERS = [

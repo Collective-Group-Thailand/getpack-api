@@ -118,3 +118,22 @@ Ported in `src/modules/pricing/calculators/folding/geometry/` (`formulas.ts`, `l
 ## 7. Engine A offset (slice 4)
 Ported in `src/modules/pricing/calculators/folding/` — `request.ts` (the `PrepareRequest` process arrays), `tables.ts` (price-list rows), `a/waste.ts` (`A/CalculateWaste`), `a/cost.ts` (`A/CalculateCost` print / die-cut / finish / assembly / ordering), `margin.ts` (`calMargin` + `Object/Margin`), `a/engine.ts` (`FoldingCalculator::calculate` for one part).
 Legacy per-factory definitions become price-list data: `color.color_type` → `pl_ink_colours.is_standard`; `finish.diecut_window_price` → `pl_finish_prices.adds_diecut_window`; `assembly.assembly_type` / `diecut_window_price` → `pl_assembly_prices`; `finish.required_*` / `assembly.required_*` / `assembly.skip_waste` come from the platform catalogue. Hard-coded factories become terms: `PFO` → `four_colour_price_by_max_percent`, `assembly_waste_by_assembly`; factory 23 → `diecut_waste_by_box_amount`. Legacy's unused `required_amount` quantity of finish 2 and assemblies stays unused.
+
+## 8. Engine A digital (slice 5)
+Ported in `a/digital.ts` (+ `priceDigitalPart` in `a/engine.ts`, `digitalFactoryMargin` in `margin.ts`); the waste is engine A's, with every print-waste row as one set. Legacy's factory branches → `pl_print_type_terms` digital terms (neutral defaults = legacy's generic branch):
+| Legacy | Term |
+|---|---|
+| factory 9 paper `paper_prices` per piece by sheet band (`:112-130`) | `digital_paper_method = per_piece_band` |
+| factory 23 paper per press sheet (`:131-133`) | `digital_paper_method = per_sheet` |
+| `trim_dl/trim_dw > 0` blank-area paper (`:134-136`) | `trim_dl_mm`, `trim_dw_mm` (with `auto`) |
+| factories 9/16 ink on the blank × run; 23 per piece × sheets (`:169-175`) | `digital_print_method = blank_area / per_sheet` |
+| factory 9 print band by run (`:154-160`, back ignores custom cost `:195`) | `digital_print_band = box` |
+| factory 16 prices per paper + two-sided add-on (`:161-164, :229-231`) | `digital_print_by_material` |
+| factories 16/9/23 finish-1 bases (`:238-246`) | `digital_finish_method` |
+| `use_paper_amount_for_cal` die-cut (`:290-303`) | `use_paper_amount_for_cal` |
+| factories 9/23 die block (`:325-353`) | `digital_diecut_block = per_piece / flat_by_pieces` |
+| factory 9 group 20 area-banded assembly; group 22 shipping-carton assembly (`:384-411`) | `pl_assembly_prices.digital_method = per_piece_area_band / per_carton` |
+| factory 9 ×1.2 before margin (`:459-469`) | `cost_multiplier` |
+| factory 16 minimum lot 500 (`:2386`) | `min_lot_price` |
+
+`per_carton` needs the shipping-carton count of the B2.4 packing helper (legacy calls the carrier engine and pays 10 THB per carton); until then such an assembly refuses the configuration (`process_not_possible`). Digital assembly prices are read per print type (legacy filter), offset ones ignore it (legacy).

@@ -299,6 +299,7 @@ model PrintType {
   plFinishPlatesPrintType      PlFinishPlate[]      @relation("PlFinishPlatePrintType")
   plDiecutPricesPrintType      PlDiecutPrice[]      @relation("PlDiecutPricePrintType")
   plDiecutBlockPricesPrintType PlDiecutBlockPrice[] @relation("PlDiecutBlockPricePrintType")
+  plAssemblyPricesPrintType    PlAssemblyPrice[]    @relation("PlAssemblyPricePrintType")
   // --- end Folding price components
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
@@ -621,6 +622,7 @@ model Material {
   plMaterialPrices            PlMaterialPrice[]    @relation("PlMaterialPriceMaterial")
   plPaperSizes                PlPaperSize[]        @relation("PlPaperSizeMaterial")
   plProcessExclusionsMaterial PlProcessExclusion[] @relation("PlProcessExclusionMaterial")
+  plPrintPricesMaterial       PlPrintPrice[]       @relation("PlPrintPriceMaterial")
   // --- end Folding price components
 
   @@index([familyId], map: "ix_materials__family_id")

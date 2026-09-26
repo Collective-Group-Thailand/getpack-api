@@ -37,3 +37,29 @@ export function factoryMargin(totalCost: number, marginPct: number, qty: number)
     suggestPrice: convertNumberFloat(salePrice / qty),
   };
 }
+
+/**
+ * Digital margin (legacy `A/CalculateCostDigital::calMargin:2379-2425`): on the production run, with the
+ * factory's lowest lot price; legacy then shows the rounded lot as the sale price (`:487-488`).
+ */
+export function digitalFactoryMargin(
+  totalCost: number,
+  marginPct: number,
+  boxAmount: number,
+  minLotPrice: number | null,
+): FactoryMargin {
+  const marginPrice = totalCost / (1 - marginPct / 100) - totalCost;
+  let salePrice = marginPrice + totalCost;
+  if (salePrice < (minLotPrice ?? 0)) salePrice = minLotPrice ?? 0;
+  const suggestPrice = convertNumberFloat(salePrice / boxAmount);
+  const saleValue = phpFloatval(suggestPrice) * boxAmount;
+  return {
+    percentMargin: marginPct,
+    margin: marginPrice,
+    saleValueBahtPerLot: saleValue,
+    totalCost,
+    qty: boxAmount,
+    salePrice: saleValue,
+    suggestPrice,
+  };
+}

@@ -6,8 +6,9 @@ import {
   type PatternArea,
 } from '../geometry/types';
 import { excludedProcess, type PartRequest, PricingError, type ProcessExclusion } from '../request';
-import { type OffsetTables } from '../tables';
+import { type DigitalTables, type OffsetTables } from '../tables';
 import { type PricedLayout, priceLayout, sortPricedLayouts } from './cost';
+import { type DigitalPricedLayout, priceDigitalLayout, sortDigitalLayouts } from './digital';
 import { layoutWaste } from './waste';
 
 /**
@@ -77,6 +78,46 @@ export function priceOffsetPart(input: OffsetPartInput, snapshot: OffsetPartSnap
       qty: input.quantities[index]!,
       boxAmount: boxAmounts[index]!,
       layouts: sortPricedLayouts(priced),
+    };
+  });
+  return { patternArea: geometry.patternArea, steps };
+}
+
+export interface DigitalPartSnapshot extends Omit<OffsetPartSnapshot, 'tables'> {
+  tables: DigitalTables;
+}
+
+export interface DigitalPartResult {
+  patternArea: PatternArea;
+  steps: { qty: number; boxAmount: number; layouts: DigitalPricedLayout[] }[];
+}
+
+/** Engine A digital for one part: the same layouts and waste as offset, digital cost (`:1349`). */
+export function priceDigitalPart(input: OffsetPartInput, snapshot: DigitalPartSnapshot): DigitalPartResult {
+  const excluded = excludedProcess(input.request, snapshot.exclusions);
+  if (excluded) throw new PricingError('process_not_possible', excluded);
+  const boxAmounts = productionRuns(input.quantities, snapshot.minOrderForProduction);
+  let geometry;
+  try {
+    geometry = calculateGeometry(
+      { ...input.geometry, boxAmounts, quantities: input.quantities },
+      snapshot.geometry,
+    );
+  } catch (error) {
+    if (error instanceof GeometryError) throw new PricingError(error.code, error.detail);
+    throw error;
+  }
+  const steps = geometry.layouts.map((candidates, index) => {
+    const priced: DigitalPricedLayout[] = [];
+    for (const layout of candidates) {
+      const waste = layoutWaste('digital', input.request, layout, snapshot.tables);
+      const result = priceDigitalLayout(input.request, layout, waste, snapshot.tables);
+      if (result) priced.push(result);
+    }
+    return {
+      qty: input.quantities[index]!,
+      boxAmount: boxAmounts[index]!,
+      layouts: sortDigitalLayouts(priced),
     };
   });
   return { patternArea: geometry.patternArea, steps };
