@@ -246,6 +246,10 @@ model ProductType {
   factoryTolerancePolicies FactoryTolerancePolicy[]  @relation("FactoryTolerancePolicyProductType")
   priceLists               PriceList[]               @relation("PriceListProductType")
   // --- end Partners
+  // --- Pricing (generated back-relations)
+  sellMarginTables         SellMarginTable[]         @relation("SellMarginTableProductType")
+  calculateLogs            CalculateLog[]            @relation("CalculateLogProductType")
+  // --- end Pricing
 
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
@@ -276,6 +280,9 @@ model PrintType {
   factoryCapabilities FactoryCapability[] @relation("FactoryCapabilityPrintType")
   factoryMachines     FactoryMachine[]    @relation("FactoryMachinePrintType")
   // --- end Partners
+  // --- Pricing (generated back-relations)
+  sellMarginTables    SellMarginTable[]   @relation("SellMarginTablePrintType")
+  // --- end Pricing
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
   @@map("print_types")
@@ -314,6 +321,9 @@ model CatalogProduct {
   productEmbeddings ProductEmbedding[]
   createdBy         User?                   @relation("CatalogProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__created_by")
   updatedBy         User?                   @relation("CatalogProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__updated_by")
+  // --- Pricing (generated back-relations)
+  calculateLogs     CalculateLog[]          @relation("CalculateLogCatalogProduct")
+  // --- end Pricing
 
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
@@ -820,9 +830,12 @@ model DifficultyLevel {
   updatedById BigInt?       @map("updated_by")
   rowVersion  Int           @default(1) @map("row_version")
 
-  group     DifficultyLevelGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__group_id")
-  createdBy User?                 @relation("DifficultyLevelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__created_by")
-  updatedBy User?                 @relation("DifficultyLevelUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__updated_by")
+  group           DifficultyLevelGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__group_id")
+  createdBy       User?                 @relation("DifficultyLevelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__created_by")
+  updatedBy       User?                 @relation("DifficultyLevelUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__updated_by")
+  // --- Pricing (generated back-relations)
+  sellMarginLines SellMarginLine[]      @relation("SellMarginLineDifficultyLevel")
+  // --- end Pricing
 
   @@index([groupId], map: "ix_difficulty_levels__group_id")
   @@map("difficulty_levels")
@@ -925,15 +938,18 @@ model StockProduct {
   updatedById   BigInt?       @map("updated_by")
   rowVersion    Int           @default(1) @map("row_version")
 
-  productType  ProductType                @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__product_type_id")
-  seoPage      SeoPage?                   @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__seo_page_id")
-  attributes   StockProductAttribute[]
-  images       StockProductImage[]
-  levels       StockLevel[]
-  movements    StockMovement[]
-  priceSummary StockProductPriceSummary[]
-  createdBy    User?                      @relation("StockProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__created_by")
-  updatedBy    User?                      @relation("StockProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__updated_by")
+  productType   ProductType                @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__product_type_id")
+  seoPage       SeoPage?                   @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__seo_page_id")
+  attributes    StockProductAttribute[]
+  images        StockProductImage[]
+  levels        StockLevel[]
+  movements     StockMovement[]
+  priceSummary  StockProductPriceSummary[]
+  createdBy     User?                      @relation("StockProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__created_by")
+  updatedBy     User?                      @relation("StockProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__updated_by")
+  // --- Pricing (generated back-relations)
+  calculateLogs CalculateLog[]             @relation("CalculateLogStockProduct")
+  // --- end Pricing
 
   @@index([productTypeId], map: "ix_stock_products__product_type_id")
   @@index([seoPageId], map: "ix_stock_products__seo_page_id")

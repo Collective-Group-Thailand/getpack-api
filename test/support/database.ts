@@ -68,4 +68,5 @@ export const SQLSTATE = {
   uniqueViolation: '23505',
   checkViolation: '23514',
   foreignKeyViolation: '23503',
+  exclusionViolation: '23P01',
 } as const;

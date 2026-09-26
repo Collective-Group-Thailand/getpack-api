@@ -117,3 +117,29 @@ export const NATIONAL_CALENDAR = {
   name: 'Thai public holidays',
   weekendDays: [0, 6],
 } as const;
+
+export interface TaxRateSeed {
+  code: string;
+  nameTh: string;
+  nameEn: string;
+  description: string;
+  decisions: string[];
+  /** Percent, decimal string. */
+  ratePct: string;
+}
+
+/**
+ * Statutory rates the calculators need before B5 (schema-design §7 A-22). Withholding rates are
+ * seeded with the finance context (B5).
+ */
+export const TAX_RATES: readonly TaxRateSeed[] = [
+  {
+    code: 'vat_standard',
+    nameTh: 'ภาษีมูลค่าเพิ่ม อัตราทั่วไป',
+    nameEn: 'VAT, standard rate',
+    description:
+      'Output VAT on sales; rate changes are dated, never edited in place (accounting-design.md §2)',
+    decisions: ['D-033'],
+    ratePct: '7',
+  },
+];

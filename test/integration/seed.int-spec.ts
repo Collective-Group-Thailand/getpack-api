@@ -67,6 +67,14 @@ describe('seeds (PostgreSQL 18)', () => {
     }
   });
 
+  it('seeds the standard VAT rate as a dated, approved version (accounting-design §2, A-22)', async () => {
+    const { rows } = await db.client.query<{ code: string; rate: string; status: string; versions: string }>(`
+      SELECT t.code, min(v.rate_pct)::text AS rate, min(v.status::text) AS status, count(v.id) AS versions
+        FROM tax_rates t JOIN tax_rate_versions v ON v.tax_rate_id = t.id
+       GROUP BY t.id`);
+    expect(rows).toEqual([{ code: 'vat_standard', rate: '7.0000', status: 'approved', versions: '1' }]);
+  });
+
   it('keeps the issuing entity data in entity-scoped settings, not in code (D-092)', async () => {
     const { rows } = await db.client.query<{ key: string }>(
       "SELECT key FROM settings WHERE scope_type = 'entity' ORDER BY key",

@@ -6,7 +6,7 @@ import { APPROVAL_POLICIES } from './data/approval-policies';
 import { PRODUCT_TYPES } from './data/catalog';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
-import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TEAMS } from './data/reference';
+import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
 
 type Tx = Prisma.TransactionClient;
@@ -57,6 +57,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureNotifications(tx, count);
       await ensureProductTypes(tx, count);
       await ensureAgreementTemplates(tx, count);
+      await ensureTaxRates(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -381,5 +382,31 @@ async function ensureAgreementTemplates(tx: Tx, count: (what: string) => void): 
     if (await tx.agreementTemplate.findUnique({ where: { key: template.key } })) continue;
     await tx.agreementTemplate.create({ data: { ...template } });
     count('agreement_templates');
+  }
+}
+
+async function ensureTaxRates(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const rate of TAX_RATES) {
+    if (await tx.taxRate.findUnique({ where: { code: rate.code } })) continue;
+    await tx.taxRate.create({
+      data: {
+        code: rate.code,
+        nameTh: rate.nameTh,
+        nameEn: rate.nameEn,
+        description: rate.description,
+        decisionRefs: rate.decisions,
+        versions: {
+          create: {
+            versionNo: 1,
+            effectiveFrom: SEED_EFFECTIVE_FROM,
+            status: 'approved',
+            ratePct: rate.ratePct,
+            reason: `Seed default from ${rate.decisions.join(', ')} (accounting-design.md §2)`,
+            decidedAt: new Date(),
+          },
+        },
+      },
+    });
+    count('tax_rates');
   }
 }

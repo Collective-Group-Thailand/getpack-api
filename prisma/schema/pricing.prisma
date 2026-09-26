@@ -68,3 +68,162 @@ model ZonePostcode {
   @@index([postcode], map: "ix_zone_postcodes__postcode")
   @@map("zone_postcodes")
 }
+
+// --- Sell margins & logs (B2.3) --------------------------------------------------------------
+
+enum SellMarginKind {
+  margin
+  design_fee
+  structure_design_fee
+  fix_cost
+  target_margin
+
+  @@map("sell_margin_kind")
+}
+
+enum SalesChannel {
+  web
+  cs
+  line
+  b2b
+
+  @@map("sales_channel")
+}
+
+/// Packio's own sell-side pricing (legacy `locopack_margins`, `factory_match_print_type.locopack_*`,
+/// `SALE_MARGIN_*`), never a factory buy price. Editable by Superadmin / C-Level (D-063).
+/// ux `(product_type_id, coalesce(print_type_id, 0), kind)` is an expression index (migration SQL).
+model SellMarginTable {
+  id            BigInt         @id(map: "pk_sell_margin_tables") @default(autoincrement())
+  publicId      String         @unique(map: "ux_sell_margin_tables__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId BigInt         @map("product_type_id")
+  /// Null = every print type of the product type.
+  printTypeId   BigInt?        @map("print_type_id")
+  kind          SellMarginKind
+  description   String
+  decisionRefs  String[]       @map("decision_refs")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?        @map("created_by")
+
+  productType ProductType              @relation("SellMarginTableProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sell_margin_tables__product_type_id")
+  printType   PrintType?               @relation("SellMarginTablePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sell_margin_tables__print_type_id")
+  versions    SellMarginTableVersion[]
+  createdBy   User?                    @relation("SellMarginTableCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sell_margin_tables__created_by")
+
+  @@index([productTypeId], map: "ix_sell_margin_tables__product_type_id")
+  @@index([printTypeId], map: "ix_sell_margin_tables__print_type_id")
+  @@map("sell_margin_tables")
+}
+
+/// Versioned (schema-design §2.1). The fallback applies when no line's bands match (legacy
+/// `factory_match_print_type.locopack_margin` / `locopack_fix_cost`).
+model SellMarginTableVersion {
+  id                BigInt              @id(map: "pk_sell_margin_table_versions") @default(autoincrement())
+  publicId          String              @unique(map: "ux_sell_margin_table_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  tableId           BigInt              @map("table_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  fallbackPct       Decimal?            @map("fallback_pct") @db.Decimal(7, 4)
+  fallbackAmount    Decimal?            @map("fallback_amount") @db.Decimal(18, 6)
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  table           SellMarginTable  @relation(fields: [tableId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sell_margin_table_versions__table_id")
+  lines           SellMarginLine[]
+  approvalRequest ApprovalRequest? @relation("SellMarginTableVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sell_margin_table_versions__approval_request_id")
+  createdBy       User?            @relation("SellMarginTableVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sell_margin_table_versions__created_by")
+  decidedBy       User?            @relation("SellMarginTableVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sell_margin_table_versions__decided_by")
+
+  @@unique([tableId, versionNo], map: "ux_sell_margin_table_versions__table_id__version_no")
+  @@index([tableId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_sell_margin_table_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_sell_margin_table_versions__approval_request_id")
+  @@map("sell_margin_table_versions")
+}
+
+/// One band of a sell-margin version. Quantity bands are inclusive (`qty_min ≤ q ≤ qty_max`), price
+/// bands half-open (`price_min ≤ p < price_max`) as in legacy `FoldingCalculator.php:1419-1427`; null
+/// bounds are open. Overlaps are refused by an exclusion constraint (migration SQL). Rows are
+/// frozen once their version is decided (trigger).
+model SellMarginLine {
+  id                BigInt   @id(map: "pk_sell_margin_lines") @default(autoincrement())
+  versionId         BigInt   @map("version_id")
+  qtyMin            Int?     @map("qty_min")
+  qtyMax            Int?     @map("qty_max")
+  priceMin          Decimal? @map("price_min") @db.Decimal(18, 6)
+  priceMax          Decimal? @map("price_max") @db.Decimal(18, 6)
+  colourCount       Int?     @map("colour_count") @db.SmallInt
+  difficultyLevelId BigInt?  @map("difficulty_level_id")
+  valuePct          Decimal? @map("value_pct") @db.Decimal(7, 4)
+  valueAmount       Decimal? @map("value_amount") @db.Decimal(18, 6)
+  minAmount         Decimal? @map("min_amount") @db.Decimal(18, 6)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  version         SellMarginTableVersion @relation(fields: [versionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_sell_margin_lines__version_id")
+  difficultyLevel DifficultyLevel?       @relation("SellMarginLineDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sell_margin_lines__difficulty_level_id")
+
+  @@index([versionId], map: "ix_sell_margin_lines__version_id")
+  @@index([difficultyLevelId], map: "ix_sell_margin_lines__difficulty_level_id")
+  @@map("sell_margin_lines")
+}
+
+/// Every calculation, for analytics (B6) and RFQ routing (D-102). Partitioned monthly on
+/// `occurred_at` (schema-design §1.7); IPs are truncated (§2.11). `quote_id` gets its FK in B2.5.
+model CalculateLog {
+  id                 BigInt       @default(autoincrement())
+  occurredAt         DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  channel            SalesChannel
+  productTypeId      BigInt       @map("product_type_id")
+  catalogProductId   BigInt?      @map("catalog_product_id")
+  stockProductId     BigInt?      @map("stock_product_id")
+  actorUserId        BigInt?      @map("actor_user_id")
+  anonymousId        String?      @map("anonymous_id")
+  quantities         Int[]
+  lengthMm           Decimal?     @map("length_mm") @db.Decimal(10, 2)
+  widthMm            Decimal?     @map("width_mm") @db.Decimal(10, 2)
+  heightMm           Decimal?     @map("height_mm") @db.Decimal(10, 2)
+  deliveryPostcode   String?      @map("delivery_postcode") @db.Char(5)
+  promotionCode      String?      @map("promotion_code")
+  input              Json
+  inputSchemaVersion Int          @map("input_schema_version") @db.SmallInt
+  resultSummary      Json         @map("result_summary")
+  calculatorVersion  String?      @map("calculator_version")
+  instantPath        Boolean      @map("instant_path")
+  routedToRfq        Boolean      @map("routed_to_rfq")
+  quoteId            BigInt?      @map("quote_id")
+  durationMs         Int          @map("duration_ms")
+  ipPrefix           String?      @map("ip_prefix") @db.Inet
+
+  productType    ProductType     @relation("CalculateLogProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__product_type_id")
+  catalogProduct CatalogProduct? @relation("CalculateLogCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__catalog_product_id")
+  stockProduct   StockProduct?   @relation("CalculateLogStockProduct", fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__stock_product_id")
+  actorUser      User?           @relation("CalculateLogActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__actor_user_id")
+
+  @@id([id, occurredAt], map: "pk_calculate_logs")
+  @@index([productTypeId, occurredAt], map: "ix_calculate_logs__product_type_id__occurred_at")
+  @@index([catalogProductId], map: "ix_calculate_logs__catalog_product_id")
+  @@index([stockProductId], map: "ix_calculate_logs__stock_product_id")
+  @@index([actorUserId, occurredAt], map: "ix_calculate_logs__actor_user_id__occurred_at")
+  @@map("calculate_logs")
+}
+
+/// Store searches, for analytics (B6). Partitioned monthly on `occurred_at` (schema-design §1.7).
+model SearchLog {
+  id           BigInt       @default(autoincrement())
+  occurredAt   DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  keyword      String
+  resultsCount Int          @map("results_count")
+  channel      SalesChannel
+  actorUserId  BigInt?      @map("actor_user_id")
+  anonymousId  String?      @map("anonymous_id")
+
+  actorUser User? @relation("SearchLogActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_search_logs__actor_user_id")
+
+  @@id([id, occurredAt], map: "pk_search_logs")
+  @@index([actorUserId, occurredAt], map: "ix_search_logs__actor_user_id__occurred_at")
+  @@map("search_logs")
+}

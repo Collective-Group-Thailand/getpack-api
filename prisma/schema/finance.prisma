@@ -104,3 +104,50 @@ model VendorBankAccount {
   @@index([approvalRequestId], map: "ix_vendor_bank_accounts__approval_request_id")
   @@map("vendor_bank_accounts")
 }
+
+/// Statutory rates (schema-design §3.8), migrated early in B2.3 so quotes snapshot the VAT rate
+/// version they used (schema-design §7 A-22). Changes go through `tax_setting_change` (D-169).
+model TaxRate {
+  id           BigInt   @id(map: "pk_tax_rates") @default(autoincrement())
+  publicId     String   @unique(map: "ux_tax_rates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  /// `vat_standard`, `wht_hire_of_work`, `wht_transport`, …
+  code         String   @unique(map: "ux_tax_rates__code")
+  nameTh       String   @map("name_th")
+  nameEn       String   @map("name_en")
+  description  String
+  decisionRefs String[] @map("decision_refs")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by")
+
+  versions  TaxRateVersion[]
+  createdBy User?            @relation("TaxRateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_rates__created_by")
+
+  @@map("tax_rates")
+}
+
+/// Versioned (schema-design §2.1): rate changes are dated, never edited in place (accounting §2).
+model TaxRateVersion {
+  id                BigInt              @id(map: "pk_tax_rate_versions") @default(autoincrement())
+  publicId          String              @unique(map: "ux_tax_rate_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  taxRateId         BigInt              @map("tax_rate_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  ratePct           Decimal             @map("rate_pct") @db.Decimal(7, 4)
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  taxRate         TaxRate          @relation(fields: [taxRateId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_rate_versions__tax_rate_id")
+  approvalRequest ApprovalRequest? @relation("TaxRateVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_rate_versions__approval_request_id")
+  createdBy       User?            @relation("TaxRateVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_rate_versions__created_by")
+  decidedBy       User?            @relation("TaxRateVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_rate_versions__decided_by")
+
+  @@unique([taxRateId, versionNo], map: "ux_tax_rate_versions__tax_rate_id__version_no")
+  @@index([taxRateId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_tax_rate_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_tax_rate_versions__approval_request_id")
+  @@map("tax_rate_versions")
+}

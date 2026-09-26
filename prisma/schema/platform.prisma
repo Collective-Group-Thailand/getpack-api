@@ -547,8 +547,12 @@ model ApprovalRequest {
   // --- end Partners
 
   // --- Finance (generated back-relations)
-  vendorBankAccounts VendorBankAccount[] @relation("VendorBankAccountApprovalRequest")
+  vendorBankAccounts      VendorBankAccount[]      @relation("VendorBankAccountApprovalRequest")
   // --- end Finance
+  // --- Pricing (generated back-relations)
+  sellMarginTableVersions SellMarginTableVersion[] @relation("SellMarginTableVersionApprovalRequest")
+  taxRateVersions         TaxRateVersion[]         @relation("TaxRateVersionApprovalRequest")
+  // --- end Pricing
 
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")

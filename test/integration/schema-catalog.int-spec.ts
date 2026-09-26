@@ -183,6 +183,32 @@ const CHECKS = [
   'ck_vendors__postcode',
   'ck_vendors__tax_id',
   'ck_zone_postcodes__postcode',
+
+  // --- B2.3 folding pricing (sell margins, tax rates, logs)
+  'ck_calculate_logs__duration_ms',
+  'ck_calculate_logs__input_schema_version',
+  'ck_calculate_logs__postcode',
+  'ck_calculate_logs__quantities',
+  'ck_search_logs__results_count',
+  'ck_sell_margin_lines__amounts',
+  'ck_sell_margin_lines__colour_count',
+  'ck_sell_margin_lines__price',
+  'ck_sell_margin_lines__qty',
+  'ck_sell_margin_lines__value',
+  'ck_sell_margin_lines__value_pct',
+  'ck_sell_margin_table_versions__decided',
+  'ck_sell_margin_table_versions__fallback',
+  'ck_sell_margin_table_versions__reason',
+  'ck_sell_margin_table_versions__status',
+  'ck_sell_margin_table_versions__version_no',
+  'ck_sell_margin_tables__decision_refs',
+  'ck_tax_rate_versions__decided',
+  'ck_tax_rate_versions__rate_pct',
+  'ck_tax_rate_versions__reason',
+  'ck_tax_rate_versions__status',
+  'ck_tax_rate_versions__version_no',
+  'ck_tax_rates__code',
+  'ck_tax_rates__decision_refs',
 ];
 
 const TRIGGERS = [
@@ -217,6 +243,12 @@ const TRIGGERS = [
   'tg_factory_tolerance_policy_versions__immutable',
   'tg_price_list_versions__immutable',
   'tg_vendor_bank_accounts__immutable',
+
+  // --- B2.3 folding pricing (sell margins, tax rates, logs)
+  'tg_sell_margin_lines__version_frozen',
+  'tg_sell_margin_table_versions__immutable',
+  'tg_sell_margin_tables__print_type',
+  'tg_tax_rate_versions__immutable',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -259,6 +291,11 @@ const INDEXES = [
   'ux_factory_contacts__one_primary',
   'ux_vendor_bank_accounts__one_active',
   'ux_price_proposals__one_open',
+
+  // --- B2.3 folding pricing (sell margins, tax rates, logs)
+  'ux_sell_margin_tables__scope',
+  'ix_sell_margin_table_versions__resolution',
+  'ix_tax_rate_versions__resolution',
 ];
 
 const EXPRESSION_INDEXES = [
@@ -268,6 +305,9 @@ const EXPRESSION_INDEXES = [
   'ux_stock_product_price_summaries__product__zone',
   'ux_factory_capabilities__factory__type__print_type',
   'ux_factory_tolerance_policies__factory__type',
+
+  // --- B2.3 folding pricing (sell margins, tax rates, logs)
+  'ux_sell_margin_tables__scope',
 ];
 
 const PARTIAL_INDEXES = INDEXES.filter((name) => !EXPRESSION_INDEXES.includes(name));
@@ -285,7 +325,10 @@ const TRIGRAM_INDEXES = [
   'ix_stock_products__sku_trgm',
 ];
 
-const EXTENSIONS = ['vector', 'pgcrypto', 'pg_trgm', 'citext'];
+/** Exclusion constraints (non-overlapping bands, B2.3+). */
+const EXCLUSIONS = ['ex_sell_margin_lines__no_overlap'];
+
+const EXTENSIONS = ['vector', 'pgcrypto', 'pg_trgm', 'citext', 'btree_gist'];
 
 describe('schema catalogue after migrations (PostgreSQL 18)', () => {
   let db: MigratedDatabase;
@@ -311,6 +354,11 @@ describe('schema catalogue after migrations (PostgreSQL 18)', () => {
   it('keeps every hand-written check constraint', async () => {
     const found = await names("SELECT DISTINCT conname AS name FROM pg_constraint WHERE contype = 'c'");
     expect(CHECKS.filter((name) => !found.includes(name))).toEqual([]);
+  });
+
+  it('keeps every exclusion constraint', async () => {
+    const found = await names("SELECT DISTINCT conname AS name FROM pg_constraint WHERE contype = 'x'");
+    expect(EXCLUSIONS.filter((name) => !found.includes(name))).toEqual([]);
   });
 
   it('keeps every trigger', async () => {
@@ -351,8 +399,8 @@ describe('schema catalogue after migrations (PostgreSQL 18)', () => {
     expect(wrong).toEqual([]);
   });
 
-  it('partitions audit and activity logs monthly in schema `partitions`, with a default partition', async () => {
-    for (const parent of ['audit_logs', 'activity_logs']) {
+  it('partitions audit, activity, calculate and search logs monthly in schema `partitions`, with a default partition', async () => {
+    for (const parent of ['audit_logs', 'activity_logs', 'calculate_logs', 'search_logs']) {
       const children = await names(`
         SELECT n.nspname || '.' || c.relname AS name
           FROM pg_inherits i
