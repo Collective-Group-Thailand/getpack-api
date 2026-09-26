@@ -433,4 +433,56 @@ describe('shipping rate cards (e2e, B2.4)', () => {
     });
     expect(audits).toBeGreaterThan(0);
   });
+
+  it('enables a fallback carrier only with a Packio account and stores its callbacks once (D-114)', async () => {
+    const base = '/v1/admin/shipping/carriers';
+    const list = await as('logistics').get(base).expect(200);
+    expect(
+      (list.body as { code: string; enabled: boolean }[]).find((c) => c.code === 'flash_express'),
+    ).toMatchObject({ enabled: false });
+    await as('logistics').post(`${base}/flash_express/actions/enable`, {}).expect(403);
+    await as('superadmin').post(`${base}/factory_fleet/actions/disable`, {}).expect(409);
+    await as('superadmin')
+      .post(`${base}/deliveree/actions/enable`, {})
+      .expect((res) => {
+        // Deliveree has no account in this suite; Flash may already have one from an earlier run.
+        expect([200, 409]).toContain(res.status);
+      });
+    const account = await as('superadmin')
+      .post(`${base}/flash_express/accounts`, {
+        label: 'Packio Flash sandbox (fake)',
+        credentialsSecretRef: 'packio/test/flash',
+        sandbox: true,
+      })
+      .expect(201);
+    expect(account.body).toMatchObject({ active: true, sandbox: true });
+    expect(JSON.stringify(account.body)).not.toContain('packio/test/flash');
+    const enabled = await as('superadmin').post(`${base}/flash_express/actions/enable`, {}).expect(200);
+    expect(enabled.body.enabled).toBe(true);
+    const quote = await as('superadmin')
+      .post(`${base}/flash_express/actions/test-quote`, {
+        from: { postcode: '10250' },
+        to: { postcode: '50000' },
+        parcels: [{ weightG: 3200 }],
+      })
+      .expect(200);
+    expect(quote.body).toMatchObject({ amount: '100.00', currency: 'THB' });
+
+    const hook = (body: object, valid: boolean) =>
+      request(server)
+        .post('/webhooks/carriers/flash-express')
+        .set(valid ? { 'x-fake-carrier-signature': 'valid' } : {})
+        .send(body);
+    const payload = { ref: `FAKE-${run}`, status: 'in_transit', at: String(run) };
+    await hook(payload, false).expect(401);
+    await hook(payload, true).expect(200);
+    await hook(payload, true).expect(200);
+    const rows = await prisma.webhookInbox.findMany({
+      where: { provider: 'flash_express', providerEventId: `FAKE-${run}:in_transit:${run}` },
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ signatureValid: true, status: 'received' });
+    expect(rows[0]!.domainEventId).not.toBeNull();
+    await as('superadmin').post(`${base}/flash_express/actions/disable`, {}).expect(200);
+  });
 });

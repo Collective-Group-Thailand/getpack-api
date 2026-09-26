@@ -1,6 +1,10 @@
 import { AppConfig } from '@config/app-config';
 import { Global, Module } from '@nestjs/common';
 
+import { CARRIER_ADAPTERS, type CarrierAdapter } from './carriers/carrier-adapter.port';
+import { DelivereeAdapter } from './carriers/deliveree.adapter';
+import { FakeCarrierAdapter } from './carriers/fake-carrier.adapter';
+import { FlashExpressAdapter } from './carriers/flash-express.adapter';
 import { EMAIL_SENDER } from './email/email-sender.port';
 import { FakeEmailSender } from './email/fake-email-sender';
 import { SesEmailSender } from './email/ses-email-sender';
@@ -18,6 +22,8 @@ import { FakeObjectStorage } from './s3/fake-object-storage';
 import { OBJECT_STORAGE, type ObjectStorage } from './s3/object-storage.port';
 import { S3ObjectStorage } from './s3/s3-object-storage';
 import { AwsSecretsProvider } from './secrets/aws-secrets.provider';
+import { FakeSecretsProvider } from './secrets/fake-secrets.provider';
+import { SECRETS_PROVIDER } from './secrets/secrets.port';
 import { FakeSmsSender } from './sms/fake-sms-sender';
 import { SMS_SENDER } from './sms/sms-sender.port';
 import { ThaiBulkSmsSender } from './sms/thaibulksms-sender';
@@ -128,6 +134,29 @@ import { WEB_PUSH } from './web-push/web-push.port';
             ),
     },
     {
+      provide: SECRETS_PROVIDER,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes
+          ? new FakeSecretsProvider({}, { fake: 'true' })
+          : new AwsSecretsProvider({
+              region: config.get('AWS_REGION'),
+              endpoint: config.get('AWS_ENDPOINT_URL'),
+            }),
+    },
+    {
+      // Fallback carriers (D-013, D-114): one adapter per carrier, fakes in tests and `pnpm dev`.
+      provide: CARRIER_ADAPTERS,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        new Map<string, CarrierAdapter>(
+          (config.useFakes
+            ? [new FakeCarrierAdapter('flash_express'), new FakeCarrierAdapter('deliveree')]
+            : [new FlashExpressAdapter(), new DelivereeAdapter()]
+          ).map((a) => [a.code, a]),
+        ),
+    },
+    {
       provide: VIRUS_SCANNER,
       inject: [AppConfig],
       useFactory: (config: AppConfig) =>
@@ -145,6 +174,8 @@ import { WEB_PUSH } from './web-push/web-push.port';
     WEB_PUSH,
     TEAMS_WEBHOOK,
     MATERIAL_PRICE_INDEX,
+    SECRETS_PROVIDER,
+    CARRIER_ADAPTERS,
   ],
 })
 export class IntegrationsModule {}

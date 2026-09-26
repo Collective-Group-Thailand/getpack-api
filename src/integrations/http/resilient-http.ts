@@ -45,6 +45,8 @@ export interface HttpCallOptions {
   timeoutMs?: number;
   /** Extra attempts for network errors and 5xx; only for idempotent calls. */
   retries?: number;
+  /** `buffer`: the body is returned as raw bytes (documents such as label PDFs). */
+  responseType?: 'json' | 'buffer';
 }
 
 export interface HttpResult {
@@ -72,8 +74,13 @@ export class ResilientHttp {
           body: options.body,
           signal: AbortSignal.timeout(options.timeoutMs ?? 5_000),
         });
-        const text = await response.text();
-        const body: unknown = text ? safeJson(text) : null;
+        let body: unknown;
+        if (options.responseType === 'buffer' && response.status < 300) {
+          body = Buffer.from(await response.arrayBuffer());
+        } else {
+          const text = await response.text();
+          body = text ? safeJson(text) : null;
+        }
         if (response.status >= 500) {
           lastError = new ProviderUnavailableError(this.provider, `HTTP ${response.status}`, response.status);
         } else {

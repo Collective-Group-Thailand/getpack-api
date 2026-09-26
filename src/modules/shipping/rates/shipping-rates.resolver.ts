@@ -66,15 +66,13 @@ export class ShippingRatesResolver {
     return {
       version,
       bands: await this.cached(`c:${version.id}`, () =>
-        db.customerShippingRate
-          .findMany({ where: { versionId: version.id } })
-          .then((rows) =>
-            rows.map((r) => ({
-              ...r,
-              amount: new MoneyDecimal(r.priceAmount.toString()),
-              perExtraKg: dec(r.perExtraKg),
-            })),
-          ),
+        db.customerShippingRate.findMany({ where: { versionId: version.id } }).then((rows) =>
+          rows.map((r) => ({
+            ...r,
+            amount: new MoneyDecimal(r.priceAmount.toString()),
+            perExtraKg: dec(r.perExtraKg),
+          })),
+        ),
       ),
     };
   }
@@ -90,15 +88,13 @@ export class ShippingRatesResolver {
     return {
       version,
       bands: await this.cached(`f:${version.id}`, () =>
-        db.factoryShippingRate
-          .findMany({ where: { versionId: version.id } })
-          .then((rows) =>
-            rows.map((r) => ({
-              ...r,
-              amount: new MoneyDecimal(r.payoutAmount.toString()),
-              perExtraKg: dec(r.perExtraKg),
-            })),
-          ),
+        db.factoryShippingRate.findMany({ where: { versionId: version.id } }).then((rows) =>
+          rows.map((r) => ({
+            ...r,
+            amount: new MoneyDecimal(r.payoutAmount.toString()),
+            perExtraKg: dec(r.perExtraKg),
+          })),
+        ),
       ),
     };
   }

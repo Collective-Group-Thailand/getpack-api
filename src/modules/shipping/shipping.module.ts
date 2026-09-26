@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 
+import { CarriersService } from './carriers/carriers.service';
 import { CustomerRatesService } from './rates/customer-rates.service';
 import { FactoryRatesService } from './rates/factory-rates.service';
 import { RateWorkbookService } from './rates/rate-workbook.service';
@@ -12,6 +13,7 @@ const SERVICES = [
   CustomerRatesService,
   ShippingRatesResolver,
   FactoryRatesService,
+  CarriersService,
 ];
 
 /**

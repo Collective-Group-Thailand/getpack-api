@@ -1,5 +1,6 @@
 import { type Type } from '@nestjs/common';
 
+import { AdminCarriersController, CarrierWebhooksController } from './carriers/carriers.controller';
 import { CustomerShippingRatesController } from './rates/customer-rates.controller';
 import {
   AdminFactoryShippingRatesController,
@@ -10,7 +11,11 @@ import {
 export const SHIPPING_ADMIN_CONTROLLERS: Type<unknown>[] = [
   CustomerShippingRatesController,
   AdminFactoryShippingRatesController,
+  AdminCarriersController,
 ];
 
 /** `/v1/partner/*` controllers of the shipping context (own factory only, D-044). */
 export const SHIPPING_PARTNER_CONTROLLERS: Type<unknown>[] = [PartnerShippingRatesController];
+
+/** `/webhooks/*` controllers of the shipping context (signature-verified carrier callbacks). */
+export const SHIPPING_WEBHOOK_CONTROLLERS: Type<unknown>[] = [CarrierWebhooksController];

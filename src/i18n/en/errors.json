@@ -431,6 +431,18 @@
     "version_not_awaiting": {
       "title": "Not awaiting the factory",
       "detail": "Only a version sent to the factory and not yet settled can be answered or withdrawn."
+    },
+    "carrier_fixed": {
+      "title": "Not a fallback carrier",
+      "detail": "The factory fleet is the default delivery method and cannot be changed here."
+    },
+    "carrier_account_missing": {
+      "title": "No carrier account",
+      "detail": "Register Packio's own account with the carrier first."
+    },
+    "carrier_refused": {
+      "title": "Carrier refused",
+      "detail": "The carrier refused the request: {detail}"
     }
   }
 }
