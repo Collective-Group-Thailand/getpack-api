@@ -101,6 +101,8 @@ export const ERROR_CODES = {
   'shipping.version_not_draft': HttpStatus.CONFLICT,
   'shipping.version_not_proposed': HttpStatus.CONFLICT,
   'shipping.rates_empty': HttpStatus.UNPROCESSABLE_ENTITY,
+  'shipping.version_open': HttpStatus.CONFLICT,
+  'shipping.version_not_awaiting': HttpStatus.CONFLICT,
   'service.unavailable': HttpStatus.SERVICE_UNAVAILABLE,
   'internal.unexpected': HttpStatus.INTERNAL_SERVER_ERROR,
 } as const satisfies Record<string, HttpStatus>;

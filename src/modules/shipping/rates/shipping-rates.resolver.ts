@@ -22,15 +22,24 @@ export type RateResolution =
     }
   | { priced: false; reason: RateMissReason; versionId: bigint | null; versionPublicId: string | null };
 
-interface ResolvedVersion {
+export interface ResolvedVersion {
   id: bigint;
   publicId: string;
   versionNo: number;
   schemeId: bigint;
 }
 
-/** Approved versions never change (trigger), so their bands are cached by version id. */
-const CACHE_LIMIT = 64;
+export interface CardAt {
+  version: ResolvedVersion;
+  bands: RateBand[];
+}
+
+/** Approved versions never change (trigger), so their bands are cached by card kind and version id. */
+const CACHE_LIMIT = 128;
+const VERSION_SELECT = { id: true, publicId: true, versionNo: true, schemeId: true } as const;
+
+const dec = (value: { toString(): string } | null): MoneyValue | null =>
+  value === null ? null : new MoneyDecimal(value.toString());
 
 /**
  * Resolves the customer shipping price and a factory's payout for a parcel at an instant (D-013):
@@ -39,12 +48,60 @@ const CACHE_LIMIT = 64;
  */
 @Injectable()
 export class ShippingRatesResolver {
-  private readonly bands = new Map<bigint, RateBand[]>();
+  private readonly cache = new Map<string, RateBand[]>();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly zones: ZoneRefs,
   ) {}
+
+  /** The customer card in force at `at` with its bands, or null before any approved version. */
+  async customerCard(at: Date, db: Tx = this.prisma): Promise<CardAt | null> {
+    const version = await db.customerShippingRateCardVersion.findFirst({
+      where: { card: { key: CUSTOMER_RATE_CARD_KEY }, status: 'approved', effectiveFrom: { lte: at } },
+      orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+      select: VERSION_SELECT,
+    });
+    if (!version) return null;
+    return {
+      version,
+      bands: await this.cached(`c:${version.id}`, () =>
+        db.customerShippingRate
+          .findMany({ where: { versionId: version.id } })
+          .then((rows) =>
+            rows.map((r) => ({
+              ...r,
+              amount: new MoneyDecimal(r.priceAmount.toString()),
+              perExtraKg: dec(r.perExtraKg),
+            })),
+          ),
+      ),
+    };
+  }
+
+  /** A factory's payout card in force at `at` with its bands, or null before any accepted version. */
+  async factoryCard(factoryId: bigint, at: Date, db: Tx = this.prisma): Promise<CardAt | null> {
+    const version = await db.factoryShippingRateCardVersion.findFirst({
+      where: { card: { factoryId }, status: 'approved', effectiveFrom: { lte: at } },
+      orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+      select: VERSION_SELECT,
+    });
+    if (!version) return null;
+    return {
+      version,
+      bands: await this.cached(`f:${version.id}`, () =>
+        db.factoryShippingRate
+          .findMany({ where: { versionId: version.id } })
+          .then((rows) =>
+            rows.map((r) => ({
+              ...r,
+              amount: new MoneyDecimal(r.payoutAmount.toString()),
+              perExtraKg: dec(r.perExtraKg),
+            })),
+          ),
+      ),
+    };
+  }
 
   async customerRate(
     postcode: string | null,
@@ -52,20 +109,7 @@ export class ShippingRatesResolver {
     at: Date,
     db: Tx = this.prisma,
   ): Promise<RateResolution> {
-    const version = await db.customerShippingRateCardVersion.findFirst({
-      where: { card: { key: CUSTOMER_RATE_CARD_KEY }, status: 'approved', effectiveFrom: { lte: at } },
-      orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
-      select: { id: true, publicId: true, versionNo: true, schemeId: true },
-    });
-    return this.resolve(version, postcode, parcel, db, (id) =>
-      db.customerShippingRate.findMany({ where: { versionId: id } }).then((rows) =>
-        rows.map((r) => ({
-          ...r,
-          amount: new MoneyDecimal(r.priceAmount.toString()),
-          perExtraKg: dec(r.perExtraKg),
-        })),
-      ),
-    );
+    return this.resolve(await this.customerCard(at, db), postcode, parcel, db);
   }
 
   async factoryPayout(
@@ -75,59 +119,32 @@ export class ShippingRatesResolver {
     at: Date,
     db: Tx = this.prisma,
   ): Promise<RateResolution> {
-    const version = await db.factoryShippingRateCardVersion.findFirst({
-      where: { card: { factoryId }, status: 'approved', effectiveFrom: { lte: at } },
-      orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
-      select: { id: true, publicId: true, versionNo: true, schemeId: true },
-    });
-    return this.resolve(version, postcode, parcel, db, (id) =>
-      db.factoryShippingRate.findMany({ where: { versionId: id } }).then((rows) =>
-        rows.map((r) => ({
-          ...r,
-          amount: new MoneyDecimal(r.payoutAmount.toString()),
-          perExtraKg: dec(r.perExtraKg),
-        })),
-      ),
-    );
+    return this.resolve(await this.factoryCard(factoryId, at, db), postcode, parcel, db);
   }
 
   private async resolve(
-    version: ResolvedVersion | null,
+    card: CardAt | null,
     postcode: string | null,
     parcel: Parcel,
     db: Tx,
-    load: (versionId: bigint) => Promise<RateBand[]>,
   ): Promise<RateResolution> {
-    if (!postcode)
-      return {
-        priced: false,
-        reason: 'no_postcode',
-        versionId: version?.id ?? null,
-        versionPublicId: version?.publicId ?? null,
-      };
-    if (!version) return { priced: false, reason: 'no_rate_card', versionId: null, versionPublicId: null };
-    const zone = await this.zones.zoneOf(version.schemeId, postcode, db);
-    if (!zone)
-      return {
-        priced: false,
-        reason: 'zone_unknown',
-        versionId: version.id,
-        versionPublicId: version.publicId,
-      };
-    let bands = this.bands.get(version.id);
-    if (!bands) {
-      bands = await load(version.id);
-      if (this.bands.size >= CACHE_LIMIT) this.bands.delete(this.bands.keys().next().value!);
-      this.bands.set(version.id, bands);
-    }
-    const band = matchBand(bands, zone.id, postcode, parcel);
-    if (!band)
-      return { priced: false, reason: 'no_band', versionId: version.id, versionPublicId: version.publicId };
+    const miss = (reason: RateMissReason): RateResolution => ({
+      priced: false,
+      reason,
+      versionId: card?.version.id ?? null,
+      versionPublicId: card?.version.publicId ?? null,
+    });
+    if (!postcode) return miss('no_postcode');
+    if (!card) return miss('no_rate_card');
+    const zone = await this.zones.zoneOf(card.version.schemeId, postcode, db);
+    if (!zone) return miss('zone_unknown');
+    const band = matchBand(card.bands, zone.id, postcode, parcel);
+    if (!band) return miss('no_band');
     return {
       priced: true,
-      versionId: version.id,
-      versionPublicId: version.publicId,
-      versionNo: version.versionNo,
+      versionId: card.version.id,
+      versionPublicId: card.version.publicId,
+      versionNo: card.version.versionNo,
       zoneId: zone.id,
       zonePublicId: zone.publicId,
       zoneCode: zone.code,
@@ -135,7 +152,14 @@ export class ShippingRatesResolver {
       net: bandAmount(band, parcel.weightG),
     };
   }
-}
 
-const dec = (value: { toString(): string } | null): MoneyValue | null =>
-  value === null ? null : new MoneyDecimal(value.toString());
+  private async cached(key: string, load: () => Promise<RateBand[]>): Promise<RateBand[]> {
+    let bands = this.cache.get(key);
+    if (!bands) {
+      bands = await load();
+      if (this.cache.size >= CACHE_LIMIT) this.cache.delete(this.cache.keys().next().value!);
+      this.cache.set(key, bands);
+    }
+    return bands;
+  }
+}

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { PrismaService } from '@database/prisma.service';
 import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
 import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
@@ -13,6 +15,12 @@ import { seedDev } from '../../prisma/seed/dev-seed';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
 import { E2E_DEV_PASSWORD } from '../support/e2e';
+
+function taxId(seed: number): string {
+  const body = `0000${String(seed).padStart(8, '0')}`;
+  const sum = [...body].map(Number).reduce((acc, d, i) => acc + d * (13 - i), 0);
+  return `${body}${(11 - (sum % 11)) % 10}`;
+}
 
 const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
@@ -292,5 +300,137 @@ describe('shipping rate cards (e2e, B2.4)', () => {
       '99.00',
     ]);
     await as('logistics').delete(`${base}/versions/${draft.body.id}`).expect(204);
+  });
+
+  it('runs a factory payout card: Packio drafts, the factory counters, Packio settles (D-013, D-042)', async () => {
+    const created = await as('partner-manager')
+      .post('/v1/admin/factories', {
+        legalName: `บริษัท โรงงานขนส่ง ${run} จำกัด`,
+        juristicType: 'company',
+        taxId: taxId(run * 10 + 3),
+        isVatRegistered: true,
+        onboardingMode: 'assisted',
+      })
+      .expect(201);
+    const factoryId = created.body.id as string;
+    const email = `ship-${run}@factory.example`;
+    await as('partner-manager')
+      .post(`/v1/admin/factories/${factoryId}/owner-account`, {
+        email,
+        displayName: 'เจ้าของ',
+        initialPassword: E2E_DEV_PASSWORD,
+      })
+      .expect(201);
+    tokens['owner'] = (
+      await request(server)
+        .post('/v1/auth/partner/login')
+        .send({ email, password: E2E_DEV_PASSWORD })
+        .expect(200)
+    ).body.accessToken as string;
+    const admin = `/v1/admin/factories/${factoryId}/shipping-rate-card`;
+    const partner = `/v1/partner/factories/${factoryId}/shipping-rate-card`;
+
+    // Buy prices: Logistics has neither the permission nor D-141 visibility.
+    await as('logistics').get(admin).expect(403);
+    expect((await as('owner').get(partner).expect(200)).body).toMatchObject({ id: null, current: null });
+
+    const payout = (zoneId: string, over: object = {}) => ({
+      zoneId,
+      postcode: null,
+      weightMinG: 0,
+      weightMaxG: null,
+      volumeMinCm3: null,
+      volumeMaxCm3: null,
+      payoutAmount: '95.00',
+      perExtraKg: null,
+      ...over,
+    });
+    const draft = await as('partner-manager')
+      .post(`${admin}/versions`, {
+        effectiveFrom: new Date().toISOString(),
+        reason: 'Initial payout card (fake)',
+        rates: [payout(zoneA.id), payout(zoneB.id, { payoutAmount: '250.00' })],
+      })
+      .expect(201);
+    expect(draft.body).toMatchObject({ status: 'draft', openLines: 2 });
+    await as('partner-manager')
+      .post(`${admin}/versions`, { effectiveFrom: new Date().toISOString(), reason: 'second', rates: [] })
+      .expect(409);
+    // A factory never sees Packio's drafts.
+    await as('owner').get(`${partner}/versions/${draft.body.id}`).expect(404);
+
+    const sent = await as('partner-manager')
+      .post(`${admin}/versions/${draft.body.id}/actions/send`, {})
+      .expect(200);
+    expect(sent.body.status).toBe('pending_acceptance');
+    const pending = await as('owner').get(`${partner}/versions/${draft.body.id}`).expect(200);
+    const [lineA, lineB] = pending.body.rates as { id: string; zoneCode: string }[];
+    const byZone = (code: string) => [lineA!, lineB!].find((l) => l.zoneCode === code)!;
+
+    const respond = (body: object) =>
+      request(server)
+        .post(`${partner}/versions/${draft.body.id}/actions/respond`)
+        .auth(tokens['owner']!, { type: 'bearer' })
+        .set('Idempotency-Key', randomUUID())
+        .send(body);
+    await respond({ lines: [{ rateId: byZone(zoneA.code).id, decision: 'counter' }] }).expect(422);
+    const answered = await respond({
+      lines: [
+        { rateId: byZone(zoneA.code).id, decision: 'accept' },
+        { rateId: byZone(zoneB.code).id, decision: 'counter', counterAmount: '270.00', note: 'Fuel (fake)' },
+      ],
+    }).expect(200);
+    expect(answered.body).toMatchObject({ status: 'pending_acceptance', openLines: 1 });
+
+    const suggestions = await as('superadmin')
+      .get(`${admin}/versions/${draft.body.id}/suggestions`)
+      .expect(200);
+    const forA = (
+      suggestions.body as { rateId: string; customerNetAmount: string | null; basis: string }[]
+    ).find((x) => x.rateId === byZone(zoneA.code).id);
+    // The customer card approved above charges 120.00 in zone A; no target margin is set yet.
+    expect(forA).toMatchObject({
+      customerNetAmount: '120.00',
+      basis: 'target_margin_not_set',
+      suggestedAmount: null,
+    });
+    await as('owner')
+      .get(`/v1/admin/factories/${factoryId}/shipping-rate-card/versions/${draft.body.id}/suggestions`)
+      .expect(403);
+
+    // Packio keeps its value: the line goes back to the factory, which then accepts the rest.
+    await as('partner-manager')
+      .post(`${admin}/versions/${draft.body.id}/actions/answer-counters`, {
+        lines: [{ rateId: byZone(zoneB.code).id, decision: 'keep' }],
+      })
+      .expect(200);
+    await respond({
+      lines: [{ rateId: byZone(zoneB.code).id, decision: 'counter', counterAmount: '260.00' }],
+    }).expect(200);
+    const settled = await as('partner-manager')
+      .post(`${admin}/versions/${draft.body.id}/actions/answer-counters`, {
+        lines: [{ rateId: byZone(zoneB.code).id, decision: 'accept_counter' }],
+      })
+      .expect(200);
+    expect(settled.body).toMatchObject({ status: 'approved', openLines: 0 });
+    expect(settled.body.factoryAcceptedAt).not.toBeNull();
+    expect(
+      (settled.body.rates as { zoneCode: string; payoutAmount: string }[]).find(
+        (r) => r.zoneCode === zoneB.code,
+      ),
+    ).toMatchObject({ payoutAmount: '260.00' });
+
+    const card = await as('owner').get(partner).expect(200);
+    expect(card.body.current.id).toBe(draft.body.id);
+    const staffView = await as('partner-manager').get(admin).expect(200);
+    expect(staffView.body.current.id).toBe(draft.body.id);
+    const audits = await prisma.auditLog.count({
+      where: {
+        category: 'data_access',
+        action: 'price.read_other_factory',
+        resourceType: { startsWith: 'factory_shipping_rate_card' },
+      },
+    });
+    expect(audits).toBeGreaterThan(0);
   });
 });

@@ -53,6 +53,9 @@ export const API_TAGS: Record<string, string> = {
     'Versioned partner agreement texts (D-011; confidentiality both directions, D-044).',
   'admin.shippingZoneSchemes': 'Zone schemes: customer zones and one per carrier (D-013, D-114).',
   'admin.shippingZones': 'Zones and their postcodes (D-013, D-114).',
+  'admin.factoryShippingRates':
+    'Factory shipping payout cards: Packio drafts, the factory accepts per line; buy prices (D-013, D-042, D-141).',
+  'partner.shippingRates': 'The own shipping payout card: read and accept or counter (D-013, D-042).',
   'admin.customerShippingRates':
     'The customer shipping rate card: effective-dated versions approved by C-Level (D-013).',
   'admin.priceLists':

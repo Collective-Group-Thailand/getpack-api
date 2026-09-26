@@ -423,6 +423,14 @@
     "rates_empty": {
       "title": "No rates",
       "detail": "Add at least one rate before submitting the version."
+    },
+    "version_open": {
+      "title": "Version already open",
+      "detail": "Finish, send or delete the open draft (or the version awaiting the factory) first."
+    },
+    "version_not_awaiting": {
+      "title": "Not awaiting the factory",
+      "detail": "Only a version sent to the factory and not yet settled can be answered or withdrawn."
     }
   }
 }

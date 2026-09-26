@@ -980,6 +980,17 @@
           "type": "https://errors.packio/shipping.rates_empty"
         }
       },
+      "problem.shipping.version_not_awaiting": {
+        "summary": "shipping.version_not_awaiting",
+        "value": {
+          "code": "shipping.version_not_awaiting",
+          "detail": "ตอบรับหรือถอนได้เฉพาะฉบับที่ส่งให้โรงงานแล้วและยังไม่สรุปผล",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่ได้รอโรงงานตอบรับ",
+          "type": "https://errors.packio/shipping.version_not_awaiting"
+        }
+      },
       "problem.shipping.version_not_draft": {
         "summary": "shipping.version_not_draft",
         "value": {
@@ -1000,6 +1011,17 @@
           "status": 409,
           "title": "ไม่ได้อยู่ระหว่างอนุมัติ",
           "type": "https://errors.packio/shipping.version_not_proposed"
+        }
+      },
+      "problem.shipping.version_open": {
+        "summary": "shipping.version_open",
+        "value": {
+          "code": "shipping.version_open",
+          "detail": "ต้องจัดการฉบับร่างหรือฉบับที่รอโรงงานตอบรับให้เสร็จก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีฉบับที่เปิดอยู่แล้ว",
+          "type": "https://errors.packio/shipping.version_open"
         }
       },
       "problem.validation.failed": {
@@ -1630,6 +1652,21 @@
               "$ref": "#/components/schemas/CounterAnswerInput"
             },
             "maxItems": 5000,
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "type": "object"
+      },
+      "AnswerShippingCountersDto": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/ShippingCounterAnswerDto"
+            },
+            "minItems": 1,
             "type": "array"
           }
         },
@@ -4544,6 +4581,41 @@
           "taxId",
           "isVatRegistered",
           "onboardingMode"
+        ],
+        "type": "object"
+      },
+      "CreateFactoryRateVersionDto": {
+        "properties": {
+          "copyFromVersionId": {
+            "description": "Copy the rates of this version of the same card; ignored when `rates` is given",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "description": "Applies from this instant once the factory has accepted every line; never back-dated",
+            "example": "2026-10-15T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "rates": {
+            "description": "At most 5000 rates",
+            "items": {
+              "$ref": "#/components/schemas/FactoryRateInputDto"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "example": "Initial payout card (fake)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "effectiveFrom",
+          "reason"
         ],
         "type": "object"
       },
@@ -7776,6 +7848,425 @@
           "buyPrice",
           "leadTimeDays",
           "parts"
+        ],
+        "type": "object"
+      },
+      "FactoryRateCardDto": {
+        "properties": {
+          "current": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactoryRateVersionSummaryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version in force now"
+          },
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a201",
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "description": "Null until a first draft",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d411",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "open": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactoryRateVersionSummaryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The draft or the version awaiting the factory (a factory never sees Packio’s drafts)"
+          },
+          "scheduled": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FactoryRateVersionSummaryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Accepted, applying later"
+          }
+        },
+        "required": [
+          "id",
+          "factoryId",
+          "current",
+          "scheduled",
+          "open"
+        ],
+        "type": "object"
+      },
+      "FactoryRateDto": {
+        "properties": {
+          "acceptance": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RateLineAcceptance"
+              }
+            ],
+            "example": "accepted"
+          },
+          "counterAmount": {
+            "description": "Factory counter (THB, VAT-exclusive)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "counterNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "counterPerExtraKg": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+            "format": "uuid",
+            "type": "string"
+          },
+          "payoutAmount": {
+            "description": "Payout, VAT-exclusive (THB)",
+            "example": "95.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "perExtraKg": {
+            "description": "Paid per started kg above `weightMinG`, VAT-exclusive (THB)",
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "postcode": {
+            "description": "Postcode override inside the zone; null = the whole zone",
+            "example": null,
+            "pattern": "^[0-9]{5}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "volumeMaxCm3": {
+            "description": "Volume to (exclusive). Unit: cm³.",
+            "example": null,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "volumeMinCm3": {
+            "description": "Volume from (inclusive). Unit: cm³.",
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightMaxG": {
+            "description": "Weight to (exclusive); null = open. Unit: g.",
+            "example": 5000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightMinG": {
+            "description": "Weight from (inclusive). Unit: g.",
+            "example": 0,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "zoneCode": {
+            "example": "bkk",
+            "type": "string"
+          },
+          "zoneId": {
+            "description": "Zone of the `customer_default` scheme",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d403",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zoneId",
+          "postcode",
+          "weightMinG",
+          "weightMaxG",
+          "volumeMinCm3",
+          "volumeMaxCm3",
+          "payoutAmount",
+          "perExtraKg",
+          "id",
+          "zoneCode",
+          "acceptance",
+          "counterAmount",
+          "counterPerExtraKg",
+          "counterNote"
+        ],
+        "type": "object"
+      },
+      "FactoryRateInputDto": {
+        "properties": {
+          "payoutAmount": {
+            "description": "Payout, VAT-exclusive (THB)",
+            "example": "95.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "perExtraKg": {
+            "description": "Paid per started kg above `weightMinG`, VAT-exclusive (THB)",
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "postcode": {
+            "description": "Postcode override inside the zone; null = the whole zone",
+            "example": null,
+            "pattern": "^[0-9]{5}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "volumeMaxCm3": {
+            "description": "Volume to (exclusive). Unit: cm³.",
+            "example": null,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "volumeMinCm3": {
+            "description": "Volume from (inclusive). Unit: cm³.",
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightMaxG": {
+            "description": "Weight to (exclusive); null = open. Unit: g.",
+            "example": 5000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "weightMinG": {
+            "description": "Weight from (inclusive). Unit: g.",
+            "example": 0,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "zoneId": {
+            "description": "Zone of the `customer_default` scheme",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d403",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "zoneId",
+          "postcode",
+          "weightMinG",
+          "weightMaxG",
+          "volumeMinCm3",
+          "volumeMaxCm3",
+          "payoutAmount",
+          "perExtraKg"
+        ],
+        "type": "object"
+      },
+      "FactoryRateVersionDto": {
+        "properties": {
+          "decidedAt": {
+            "example": "2026-10-03T11:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "example": "2026-10-15T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "factoryAcceptedAt": {
+            "example": "2026-10-03T11:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+            "format": "uuid",
+            "type": "string"
+          },
+          "openLines": {
+            "description": "Lines not yet accepted (pending or countered)",
+            "example": 0,
+            "type": "integer"
+          },
+          "rateCount": {
+            "example": 3,
+            "type": "integer"
+          },
+          "rates": {
+            "items": {
+              "$ref": "#/components/schemas/FactoryRateDto"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "example": "Initial payout card (fake)",
+            "type": "string"
+          },
+          "sentAt": {
+            "example": "2026-10-02T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigVersionStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "versionNo": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "status",
+          "effectiveFrom",
+          "reason",
+          "rateCount",
+          "openLines",
+          "sentAt",
+          "factoryAcceptedAt",
+          "decidedAt",
+          "rates"
+        ],
+        "type": "object"
+      },
+      "FactoryRateVersionSummaryDto": {
+        "properties": {
+          "decidedAt": {
+            "example": "2026-10-03T11:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "effectiveFrom": {
+            "example": "2026-10-15T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "factoryAcceptedAt": {
+            "example": "2026-10-03T11:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+            "format": "uuid",
+            "type": "string"
+          },
+          "openLines": {
+            "description": "Lines not yet accepted (pending or countered)",
+            "example": 0,
+            "type": "integer"
+          },
+          "rateCount": {
+            "example": 3,
+            "type": "integer"
+          },
+          "reason": {
+            "example": "Initial payout card (fake)",
+            "type": "string"
+          },
+          "sentAt": {
+            "example": "2026-10-02T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigVersionStatus"
+              }
+            ],
+            "example": "approved"
+          },
+          "versionNo": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "status",
+          "effectiveFrom",
+          "reason",
+          "rateCount",
+          "openLines",
+          "sentAt",
+          "factoryAcceptedAt",
+          "decidedAt"
         ],
         "type": "object"
       },
@@ -13516,6 +14007,14 @@
         ],
         "type": "object"
       },
+      "RateLineAcceptance": {
+        "enum": [
+          "pending",
+          "accepted",
+          "countered"
+        ],
+        "type": "string"
+      },
       "RealtimeAuthDto": {
         "properties": {
           "channels": {
@@ -13867,6 +14366,21 @@
         ],
         "type": "object"
       },
+      "ReplaceFactoryRatesDto": {
+        "properties": {
+          "rates": {
+            "description": "The complete set, at most 5000",
+            "items": {
+              "$ref": "#/components/schemas/FactoryRateInputDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rates"
+        ],
+        "type": "object"
+      },
       "ReplaceFluteTypesDto": {
         "properties": {
           "fluteTypeIds": {
@@ -13987,6 +14501,19 @@
               "$ref": "#/components/schemas/RateCardLineResponse"
             },
             "maxItems": 5000,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "RespondToShippingCardDto": {
+        "properties": {
+          "lines": {
+            "description": "Omit to accept every pending line (the whole card)",
+            "items": {
+              "$ref": "#/components/schemas/ShippingCardAnswerDto"
+            },
+            "minItems": 1,
             "type": "array"
           }
         },
@@ -15366,6 +15893,160 @@
         ],
         "type": "object"
       },
+      "ShippingCardAnswer": {
+        "enum": [
+          "accept",
+          "counter"
+        ],
+        "type": "string"
+      },
+      "ShippingCardAnswerDto": {
+        "properties": {
+          "counterAmount": {
+            "example": "105.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "counterPerExtraKg": {
+            "example": null,
+            "pattern": "^\\d{1,12}(\\.\\d{1,6})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShippingCardAnswer"
+              }
+            ],
+            "example": "counter"
+          },
+          "note": {
+            "example": "Fuel costs (fake)",
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rateId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateId",
+          "decision"
+        ],
+        "type": "object"
+      },
+      "ShippingCounterAnswer": {
+        "description": "`accept_counter` takes the factory’s values; `keep` sends Packio’s value back for an answer",
+        "enum": [
+          "accept_counter",
+          "keep"
+        ],
+        "type": "string"
+      },
+      "ShippingCounterAnswerDto": {
+        "properties": {
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShippingCounterAnswer"
+              }
+            ],
+            "description": "`accept_counter` takes the factory’s values; `keep` sends Packio’s value back for an answer",
+            "example": "accept_counter"
+          },
+          "rateId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rateId",
+          "decision"
+        ],
+        "type": "object"
+      },
+      "ShippingPayoutSuggestionDto": {
+        "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShippingSuggestionBasis"
+              }
+            ],
+            "example": "customer_rate_less_target_margin"
+          },
+          "customerNetAmount": {
+            "description": "Customer rate for the band minimum",
+            "example": "120.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deviationPct": {
+            "description": "(proposed − suggested) / suggested, %",
+            "example": "-1.04",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payoutAmount": {
+            "description": "Proposed payout (THB)",
+            "example": "95.00",
+            "type": "string"
+          },
+          "peerCount": {
+            "description": "Peers counted; the median needs the benchmark minimum (D-101)",
+            "example": 1,
+            "type": "integer"
+          },
+          "peerMedianAmount": {
+            "description": "Median payout of peers serving the zone",
+            "example": "100.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rateId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+            "format": "uuid",
+            "type": "string"
+          },
+          "suggestedAmount": {
+            "description": "Customer rate × (1 − target margin)",
+            "example": "96.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "rateId",
+          "payoutAmount",
+          "customerNetAmount",
+          "suggestedAmount",
+          "deviationPct",
+          "peerMedianAmount",
+          "peerCount",
+          "basis"
+        ],
+        "type": "object"
+      },
       "ShippingRateMissReason": {
         "description": "Why no rate applies",
         "enum": [
@@ -15471,6 +16152,14 @@
           "weightG"
         ],
         "type": "object"
+      },
+      "ShippingSuggestionBasis": {
+        "enum": [
+          "customer_rate_less_target_margin",
+          "target_margin_not_set",
+          "no_customer_rate"
+        ],
+        "type": "string"
       },
       "ShowcaseCategoryDto": {
         "properties": {
@@ -77492,6 +78181,2430 @@
         ]
       }
     },
+    "/v1/admin/factories/{factoryId}/shipping-rate-card": {
+      "get": {
+        "description": "The version in force, the next scheduled one and the open draft or version awaiting the factory. Buy prices: D-141 roles only; every read is audited (D-044, D-013).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "current": {
+                    "decidedAt": "2026-10-03T11:00:00+07:00",
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "factoryAcceptedAt": "2026-10-03T11:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                    "openLines": 0,
+                    "rateCount": 1,
+                    "reason": "Initial payout card (fake)",
+                    "sentAt": "2026-10-02T09:00:00+07:00",
+                    "status": "approved",
+                    "versionNo": 1
+                  },
+                  "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000a201",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d411",
+                  "open": null,
+                  "scheduled": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateCardDto"
+                }
+              }
+            },
+            "description": "Card",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a factory’s shipping payout card",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/shipping-rate-card/versions": {
+      "get": {
+        "description": "Every version, newest first, without rates (effective-dated, ADR-0005); audited (D-044).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.listVersions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "decidedAt": "2026-10-03T11:00:00+07:00",
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "factoryAcceptedAt": "2026-10-03T11:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                    "openLines": 0,
+                    "rateCount": 1,
+                    "reason": "Initial payout card (fake)",
+                    "sentAt": "2026-10-02T09:00:00+07:00",
+                    "status": "approved",
+                    "versionNo": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FactoryRateVersionSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the versions of a factory’s payout card",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read"
+        ]
+      },
+      "post": {
+        "description": "A complete set of payout lines over the `customer_default` zones (copy-on-write). One draft or version awaiting the factory at a time; not back-dated (D-013, D-042).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.createVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "rates": [
+                      {
+                        "payoutAmount": "95.00",
+                        "perExtraKg": null,
+                        "postcode": null,
+                        "volumeMaxCm3": null,
+                        "volumeMinCm3": null,
+                        "weightMaxG": 5000,
+                        "weightMinG": 0,
+                        "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                      }
+                    ],
+                    "reason": "Initial payout card (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateFactoryRateVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "factoryAcceptedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                  "openLines": 1,
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "acceptance": "pending",
+                      "counterAmount": null,
+                      "counterNote": null,
+                      "counterPerExtraKg": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                      "payoutAmount": "95.00",
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Initial payout card (fake)",
+                  "sentAt": null,
+                  "status": "draft",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateVersionDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_open": {
+                    "$ref": "#/components/examples/problem.shipping.version_open"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_open`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "partners.backdated": {
+                    "$ref": "#/components/examples/problem.partners.backdated"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `partners.backdated`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Draft a new payout-card version",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read",
+          "factory_shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/shipping-rate-card/versions/{versionId}": {
+      "delete": {
+        "description": "Drafts only; sent and decided versions are kept (ADR-0005, D-013).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.deleteDraft",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_not_draft": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Delete a draft payout-card version",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read",
+          "factory_shipping_rates.manage"
+        ]
+      },
+      "get": {
+        "description": "Lines with the factory’s answer per line (accepted / countered); audited (D-044, D-013).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.getVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": "2026-10-03T11:00:00+07:00",
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "factoryAcceptedAt": "2026-10-03T11:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                  "openLines": 0,
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "acceptance": "accepted",
+                      "counterAmount": null,
+                      "counterNote": null,
+                      "counterPerExtraKg": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                      "payoutAmount": "95.00",
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Initial payout card (fake)",
+                  "sentAt": "2026-10-02T09:00:00+07:00",
+                  "status": "approved",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateVersionDto"
+                }
+              }
+            },
+            "description": "Version",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a payout-card version with its lines",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/shipping-rate-card/versions/{versionId}/actions/answer-counters": {
+      "post": {
+        "description": "`accept_counter` takes the factory’s values for the line; `keep` returns Packio’s value to the factory for a new answer. The version applies once every line is accepted (D-042, D-013).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.answerCounters",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "lines": [
+                      {
+                        "decision": "accept_counter",
+                        "rateId": "0192f3a0-7c1e-7d2a-9b1f-00000000d413"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AnswerShippingCountersDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": "2026-10-03T11:00:00+07:00",
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "factoryAcceptedAt": "2026-10-03T11:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                  "openLines": 0,
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "acceptance": "accepted",
+                      "counterAmount": null,
+                      "counterNote": null,
+                      "counterPerExtraKg": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                      "payoutAmount": "95.00",
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Initial payout card (fake)",
+                  "sentAt": "2026-10-02T09:00:00+07:00",
+                  "status": "approved",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateVersionDto"
+                }
+              }
+            },
+            "description": "Version",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_not_awaiting": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_awaiting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_not_awaiting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Answer the factory’s counters",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read",
+          "factory_shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/shipping-rate-card/versions/{versionId}/actions/send": {
+      "post": {
+        "description": "The version becomes `pending_acceptance` and visible to the factory, which accepts the whole card or answers per line; it applies only once every line is accepted (D-042, D-013). Event `factory_shipping_rate_card.version_sent`.\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.sendVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "factoryAcceptedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                  "openLines": 1,
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "acceptance": "pending",
+                      "counterAmount": null,
+                      "counterNote": null,
+                      "counterPerExtraKg": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                      "payoutAmount": "95.00",
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Initial payout card (fake)",
+                  "sentAt": "2026-10-02T09:00:00+07:00",
+                  "status": "pending_acceptance",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateVersionDto"
+                }
+              }
+            },
+            "description": "Awaiting the factory",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_not_draft": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.rates_empty": {
+                    "$ref": "#/components/examples/problem.shipping.rates_empty"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.rates_empty`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Send a draft to the factory for acceptance",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read",
+          "factory_shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/shipping-rate-card/versions/{versionId}/actions/withdraw": {
+      "post": {
+        "description": "The version is closed without applying; the card in force stays (D-042, D-013).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.withdrawVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "Zones changed (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "factoryAcceptedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                  "openLines": 1,
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "acceptance": "pending",
+                      "counterAmount": null,
+                      "counterNote": null,
+                      "counterPerExtraKg": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                      "payoutAmount": "95.00",
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Initial payout card (fake)",
+                  "sentAt": "2026-10-02T09:00:00+07:00",
+                  "status": "withdrawn",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateVersionDto"
+                }
+              }
+            },
+            "description": "Withdrawn",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_not_awaiting": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_awaiting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_not_awaiting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Withdraw a version awaiting the factory",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read",
+          "factory_shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/shipping-rate-card/versions/{versionId}/rates": {
+      "put": {
+        "description": "Drafts only; a sent version changes only through the factory’s answers (D-042, D-013).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "admin.factoryShippingRates.replaceRates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "rates": [
+                      {
+                        "payoutAmount": "95.00",
+                        "perExtraKg": null,
+                        "postcode": null,
+                        "volumeMaxCm3": null,
+                        "volumeMinCm3": null,
+                        "weightMaxG": 5000,
+                        "weightMinG": 0,
+                        "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceFactoryRatesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "factoryAcceptedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                  "openLines": 1,
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "acceptance": "pending",
+                      "counterAmount": null,
+                      "counterNote": null,
+                      "counterPerExtraKg": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                      "payoutAmount": "95.00",
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Initial payout card (fake)",
+                  "sentAt": null,
+                  "status": "draft",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateVersionDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipping.version_not_draft": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipping.version_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replace the lines of a draft",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read",
+          "factory_shipping_rates.manage"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/shipping-rate-card/versions/{versionId}/suggestions": {
+      "get": {
+        "description": "Per line: the customer rate of the same band less the target shipping margin (D-040 group 5; the setting `shipping.target_margin_pct` has no value until the business sets it) and the peer median only with ≥ `partners.peer_benchmark_min_factories` other active factories (D-101). Never shown to factories (D-044); audited.\n\nImplements: D-040, D-044, D-101, D-013.",
+        "operationId": "admin.factoryShippingRates.suggestions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "basis": "customer_rate_less_target_margin",
+                    "customerNetAmount": "120.00",
+                    "deviationPct": "-1.04",
+                    "payoutAmount": "95.00",
+                    "peerCount": 1,
+                    "peerMedianAmount": null,
+                    "rateId": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                    "suggestedAmount": "96.00"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ShippingPayoutSuggestionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Suggestions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Staff-only payout suggestions for a version",
+        "tags": [
+          "admin.factoryShippingRates"
+        ],
+        "x-required-permissions": [
+          "partners.read",
+          "factory_cost.read",
+          "price_suggestions.read"
+        ]
+      }
+    },
     "/v1/admin/factories/{factoryId}/site-visits": {
       "get": {
         "description": "Newest first, with inspectors and photos (D-041).\n\nImplements: D-041.",
@@ -110230,6 +113343,931 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/shipping-rate-card": {
+      "get": {
+        "description": "What Packio pays the factory for delivering with its own fleet: in force, scheduled, awaiting an answer (D-013).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "partner.shippingRates.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "current": {
+                    "decidedAt": "2026-10-03T11:00:00+07:00",
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "factoryAcceptedAt": "2026-10-03T11:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                    "openLines": 0,
+                    "rateCount": 1,
+                    "reason": "Initial payout card (fake)",
+                    "sentAt": "2026-10-02T09:00:00+07:00",
+                    "status": "approved",
+                    "versionNo": 1
+                  },
+                  "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000a201",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d411",
+                  "open": null,
+                  "scheduled": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateCardDto"
+                }
+              }
+            },
+            "description": "Card",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Get the own shipping payout card",
+        "tags": [
+          "partner.shippingRates"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/shipping-rate-card/versions": {
+      "get": {
+        "description": "Every version sent to the factory, newest first (D-013, D-042).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "partner.shippingRates.listVersions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "decidedAt": "2026-10-03T11:00:00+07:00",
+                    "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                    "factoryAcceptedAt": "2026-10-03T11:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                    "openLines": 0,
+                    "rateCount": 1,
+                    "reason": "Initial payout card (fake)",
+                    "sentAt": "2026-10-02T09:00:00+07:00",
+                    "status": "approved",
+                    "versionNo": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FactoryRateVersionSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List the own payout-card versions",
+        "tags": [
+          "partner.shippingRates"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/shipping-rate-card/versions/{versionId}": {
+      "get": {
+        "description": "Lines and the factory’s answers; drafts are not visible before Packio sends them (D-042).\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "partner.shippingRates.getVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "factoryAcceptedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                  "openLines": 1,
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "acceptance": "pending",
+                      "counterAmount": null,
+                      "counterNote": null,
+                      "counterPerExtraKg": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                      "payoutAmount": "95.00",
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Initial payout card (fake)",
+                  "sentAt": "2026-10-02T09:00:00+07:00",
+                  "status": "pending_acceptance",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateVersionDto"
+                }
+              }
+            },
+            "description": "Version",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Get an own payout-card version",
+        "tags": [
+          "partner.shippingRates"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/shipping-rate-card/versions/{versionId}/actions/respond": {
+      "post": {
+        "description": "Without `lines` every pending line is accepted (the whole card); otherwise each named line is accepted or countered with an amount. The card applies once every line is accepted, from its effective date or now (D-042, D-013). A replay with the same `Idempotency-Key` within 24 h returns the original response.\n\nImplements: D-013, D-042, D-044.",
+        "operationId": "partner.shippingRates.respond",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "counter": {
+                  "value": {
+                    "lines": [
+                      {
+                        "counterAmount": "105.00",
+                        "decision": "counter",
+                        "note": "Fuel costs (fake)",
+                        "rateId": "0192f3a0-7c1e-7d2a-9b1f-00000000d413"
+                      }
+                    ]
+                  }
+                },
+                "whole": {
+                  "value": {}
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RespondToShippingCardDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "decidedAt": null,
+                  "effectiveFrom": "2026-10-15T00:00:00+07:00",
+                  "factoryAcceptedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                  "openLines": 1,
+                  "rateCount": 1,
+                  "rates": [
+                    {
+                      "acceptance": "countered",
+                      "counterAmount": "105.00",
+                      "counterNote": "Fuel costs (fake)",
+                      "counterPerExtraKg": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d413",
+                      "payoutAmount": "95.00",
+                      "perExtraKg": null,
+                      "postcode": null,
+                      "volumeMaxCm3": null,
+                      "volumeMinCm3": null,
+                      "weightMaxG": 5000,
+                      "weightMinG": 0,
+                      "zoneCode": "bkk",
+                      "zoneId": "0192f3a0-7c1e-7d2a-9b1f-00000000d403"
+                    }
+                  ],
+                  "reason": "Initial payout card (fake)",
+                  "sentAt": "2026-10-02T09:00:00+07:00",
+                  "status": "pending_acceptance",
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryRateVersionDto"
+                }
+              }
+            },
+            "description": "Version",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "shipping.version_not_awaiting": {
+                    "$ref": "#/components/examples/problem.shipping.version_not_awaiting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `shipping.version_not_awaiting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Accept or counter a payout card",
+        "tags": [
+          "partner.shippingRates"
+        ],
+        "x-required-permissions": [
+          "factory_rate_card.accept"
+        ]
+      }
+    },
     "/v1/partner/files/presign": {
       "post": {
         "description": "Returns a presigned URL (or, for large files, multipart part URLs). PUT the bytes to S3, then call `…/actions/complete`. The purpose decides retention, accepted types and size (financial records ≥ 10 years).\n\nImplements: ADR-0003.",
@@ -120250,6 +124288,10 @@
       "name": "admin.factories"
     },
     {
+      "description": "Factory shipping payout cards: Packio drafts, the factory accepts per line; buy prices (D-013, D-042, D-141).",
+      "name": "admin.factoryShippingRates"
+    },
+    {
       "description": "Operational feature flags (not business values).",
       "name": "admin.featureFlags"
     },
@@ -120396,6 +124438,10 @@
     {
       "description": "Realtime signals over SSE for factory users (ids + type only, contract §6).",
       "name": "partner.realtime"
+    },
+    {
+      "description": "The own shipping payout card: read and accept or counter (D-013, D-042).",
+      "name": "partner.shippingRates"
     },
     {
       "description": "Web push subscriptions of the signed-in factory user (D-143).",
