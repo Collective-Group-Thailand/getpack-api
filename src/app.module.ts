@@ -17,6 +17,7 @@ import { IamModule } from '@modules/iam/iam.module';
 import { PartnersModule } from '@modules/partners/partners.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
+import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
@@ -75,6 +76,7 @@ import { LoggerModule } from 'nestjs-pino';
     PricingModule,
     ShippingModule,
     QuotesModule,
+    RfqModule,
     HealthModule,
     SurfacesModule,
   ],

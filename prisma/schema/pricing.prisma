@@ -795,8 +795,10 @@ model RfqQuote {
   quote     Quote?         @relation("QuoteRfqQuote")
 
   @@unique([rfqId, versionNo], map: "ux_rfq_quotes__rfq_id__version_no")
-  /// One draft or sent quotation per RFQ at a time.
-  @@unique([rfqId], map: "ux_rfq_quotes__one_open", where: raw("(status = ANY (ARRAY['draft'::rfq_quote_status, 'sent'::rfq_quote_status]))"))
+  /// One draft per RFQ; sending it supersedes the quotation the customer holds.
+  @@unique([rfqId], map: "ux_rfq_quotes__one_draft", where: raw("(status = 'draft'::rfq_quote_status)"))
+  /// One quotation in the customer's hands per RFQ.
+  @@unique([rfqId], map: "ux_rfq_quotes__one_sent", where: raw("(status = 'sent'::rfq_quote_status)"))
   @@index([createdById], map: "ix_rfq_quotes__created_by")
   @@map("rfq_quotes")
 }

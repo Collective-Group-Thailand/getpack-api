@@ -8,6 +8,7 @@ import { IamModule } from '@modules/iam/iam.module';
 import { PartnersModule } from '@modules/partners/partners.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
+import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
@@ -55,6 +56,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     PricingModule,
     ShippingModule,
     QuotesModule,
+    RfqModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

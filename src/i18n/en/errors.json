@@ -472,5 +472,39 @@
       "title": "Cannot re-price",
       "detail": "Only an instant quotation that was saved, shared or expired can be re-priced."
     }
+  },
+  "rfq": {
+    "closed": {
+      "title": "Request closed",
+      "detail": "The request for quote was accepted, declined or has expired."
+    },
+    "invalid_transition": {
+      "title": "Not allowed now",
+      "detail": "The request for quote is not in a status that allows this."
+    },
+    "quote_not_open": {
+      "title": "Quotation not open",
+      "detail": "Only a sent quotation within its validity can be accepted (D-051)."
+    },
+    "quote_not_draft": {
+      "title": "Not a draft",
+      "detail": "Only a draft quotation can be sent or discarded."
+    },
+    "quote_empty": {
+      "title": "No lines",
+      "detail": "Add at least one quantity line before sending."
+    },
+    "draft_open": {
+      "title": "Draft exists",
+      "detail": "Send or discard the open draft quotation first."
+    },
+    "consultation_open": {
+      "title": "Already asked",
+      "detail": "This factory already has an open request for this RFQ."
+    },
+    "consultation_closed": {
+      "title": "Request closed",
+      "detail": "The request for a buy price was already answered or has expired."
+    }
   }
 }
