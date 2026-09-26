@@ -54,6 +54,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'sell_margins.manage',
       'shipping_rates.read',
       'carriers.read',
+      'quotes.read',
+      'rfqs.read',
     ],
   },
   {
@@ -98,6 +100,11 @@ export const ROLES: readonly RoleDefinition[] = [
       'shipping_rates.read',
       'shipping_rates.manage',
       'carriers.read',
+      'quotes.read',
+      'quotes.manage',
+      'rfqs.read',
+      'rfqs.manage',
+      'document_series.read',
     ],
   },
   {
@@ -112,6 +119,10 @@ export const ROLES: readonly RoleDefinition[] = [
       'catalog.read',
       'quotes.calculate',
       'shipping_rates.read',
+      'quotes.read',
+      'quotes.manage',
+      'rfqs.read',
+      'rfqs.manage',
     ],
   },
   {
@@ -126,6 +137,10 @@ export const ROLES: readonly RoleDefinition[] = [
       'catalog.read',
       'quotes.calculate',
       'shipping_rates.read',
+      'quotes.read',
+      'quotes.manage',
+      'rfqs.read',
+      'rfqs.manage',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -150,6 +165,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'partners.read',
       'vendor_bank_accounts.verify',
       'shipping_rates.read',
+      'quotes.read',
+      'document_series.read',
     ],
   },
   {
@@ -166,6 +183,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'audit_logs.export',
       'partners.read',
       'shipping_rates.read',
+      'quotes.read',
+      'document_series.read',
+      'document_series.manage',
     ],
   },
   {
@@ -208,6 +228,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'shipping_rates.read',
       'factory_shipping_rates.manage',
       'carriers.read',
+      'rfqs.read',
     ],
   },
   {
@@ -226,6 +247,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'partners.read',
       'shipping_rates.read',
       'carriers.read',
+      'quotes.read',
+      'rfqs.read',
+      'document_series.read',
     ],
   },
 
@@ -247,6 +271,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_agreements.accept',
       'factory_bank_account.propose',
       'factory_capacity.read',
+      'factory_rfq.read',
+      'factory_rfq.respond',
     ],
   },
   {
@@ -255,7 +281,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'ผู้วางแผนการผลิต',
     nameEn: 'Planner',
-    permissions: ['factory_profile.read', 'factory_capacity.read'],
+    permissions: ['factory_profile.read', 'factory_capacity.read', 'factory_rfq.read', 'factory_rfq.respond'],
   },
   {
     key: 'factory_operator',

@@ -251,6 +251,12 @@ model ProductType {
   calculateLogs            CalculateLog[]            @relation("CalculateLogProductType")
   // --- end Pricing
 
+  // --- Quotes & RFQ (generated back-relations)
+  quotes             Quote[]             @relation("QuoteProductType")
+  rfqs               Rfq[]               @relation("RfqProductType")
+  unmetDemandRecords UnmetDemandRecord[] @relation("UnmetDemandProductType")
+
+  // --- end Quotes & RFQ
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }
@@ -343,6 +349,10 @@ model CatalogProduct {
   calculateLogs     CalculateLog[]          @relation("CalculateLogCatalogProduct")
   // --- end Pricing
 
+  // --- Quotes & RFQ (generated back-relations)
+  quotes Quote[] @relation("QuoteCatalogProduct")
+
+  // --- end Quotes & RFQ
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_th_trgm")
@@ -1022,6 +1032,10 @@ model StockProduct {
   calculateLogs CalculateLog[]             @relation("CalculateLogStockProduct")
   // --- end Pricing
 
+  // --- Quotes & RFQ (generated back-relations)
+  quotes Quote[] @relation("QuoteStockProduct")
+
+  // --- end Quotes & RFQ
   @@index([productTypeId], map: "ix_stock_products__product_type_id")
   @@index([seoPageId], map: "ix_stock_products__seo_page_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_stock_products__name_th_trgm")
@@ -1550,6 +1564,11 @@ model GeoProvince {
   createdBy User?         @relation("GeoProvinceCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_provinces__created_by")
   updatedBy User?         @relation("GeoProvinceUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_geo_provinces__updated_by")
 
+  // --- Quotes & RFQ (generated back-relations)
+  rfqs               Rfq[]               @relation("RfqProvince")
+  unmetDemandRecords UnmetDemandRecord[] @relation("UnmetDemandProvince")
+
+  // --- end Quotes & RFQ
   @@map("geo_provinces")
 }
 

@@ -56,6 +56,7 @@ export const API_TAGS: Record<string, string> = {
   'admin.factoryShippingRates':
     'Factory shipping payout cards: Packio drafts, the factory accepts per line; buy prices (D-013, D-042, D-141).',
   'partner.shippingRates': 'The own shipping payout card: read and accept or counter (D-013, D-042).',
+  'admin.documentSeries': 'Document numbering series per entity and document type (accounting-design §4, D-169).',
   'admin.carriers': 'Delivery methods: the factory fleet and Packio-booked fallback carriers (D-013, D-114).',
   'webhooks.carriers': 'Carrier status callbacks, signature-verified and stored once (D-114).',
   'admin.customerShippingRates':

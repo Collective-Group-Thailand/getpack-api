@@ -8,6 +8,7 @@ import { DomainEvents } from './domain-events/domain-events.service';
 import { OutboxAdminService } from './domain-events/outbox-admin.service';
 import { EntitiesService } from './entities/entities.service';
 import { FeatureFlagsService } from './feature-flags/feature-flags.service';
+import { DocumentNumberingService } from './numbering/document-numbering.service';
 import { SettingsService } from './settings/settings.service';
 
 /** Writers every state change uses in its transaction (schema-design §2.6), shared by both processes. */
@@ -23,6 +24,7 @@ import { SettingsService } from './settings/settings.service';
     SettingsService,
     FeatureFlagsService,
     OutboxAdminService,
+    DocumentNumberingService,
   ],
   exports: [
     InvalidationBus,
@@ -34,6 +36,7 @@ import { SettingsService } from './settings/settings.service';
     SettingsService,
     FeatureFlagsService,
     OutboxAdminService,
+    DocumentNumberingService,
   ],
 })
 export class PlatformCoreModule {}

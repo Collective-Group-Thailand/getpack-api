@@ -628,6 +628,17 @@
           "type": "https://errors.packio/notification.channel_unsupported"
         }
       },
+      "problem.numbering.series_exists": {
+        "summary": "numbering.series_exists",
+        "value": {
+          "code": "numbering.series_exists",
+          "detail": "นิติบุคคลนี้มีชุดเลขที่เอกสารประเภทนี้อยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีชุดเลขที่อยู่แล้ว",
+          "type": "https://errors.packio/numbering.series_exists"
+        }
+      },
       "problem.outbox.not_replayable": {
         "summary": "outbox.not_replayable",
         "value": {
@@ -4766,6 +4777,54 @@
         ],
         "type": "object"
       },
+      "CreateDocumentSeriesDto": {
+        "properties": {
+          "description": {
+            "example": "Quotations of Collective Group (fake)",
+            "type": "string"
+          },
+          "docType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DocumentType"
+              }
+            ],
+            "example": "qt"
+          },
+          "format": {
+            "description": "Placeholders `{prefix}`, `{yyyy}`, `{yy}`, `{mm}`, `{seq:N}` (Asia/Bangkok dates)",
+            "example": "{prefix}-{yyyy}-{seq:6}",
+            "type": "string"
+          },
+          "isGapless": {
+            "description": "Statutory documents must be gapless (accounting-design §4)",
+            "example": true,
+            "type": "boolean"
+          },
+          "prefix": {
+            "example": "QT",
+            "pattern": "^[A-Z0-9-]{1,10}$",
+            "type": "string"
+          },
+          "resetPeriod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SequenceReset"
+              }
+            ],
+            "example": "yearly"
+          }
+        },
+        "required": [
+          "docType",
+          "prefix",
+          "format",
+          "resetPeriod",
+          "isGapless",
+          "description"
+        ],
+        "type": "object"
+      },
       "CreateFactoryAddressDto": {
         "properties": {
           "kind": {
@@ -7730,6 +7789,90 @@
           "updatedAt"
         ],
         "type": "object"
+      },
+      "DocumentSeriesDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "example": "Quotations of Collective Group (fake)",
+            "type": "string"
+          },
+          "docType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DocumentType"
+              }
+            ],
+            "example": "qt"
+          },
+          "entityCode": {
+            "example": "CGT",
+            "type": "string"
+          },
+          "format": {
+            "example": "{prefix}-{yyyy}-{seq:6}",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e501",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isGapless": {
+            "example": true,
+            "type": "boolean"
+          },
+          "prefix": {
+            "example": "QT",
+            "type": "string"
+          },
+          "resetPeriod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SequenceReset"
+              }
+            ],
+            "example": "yearly"
+          }
+        },
+        "required": [
+          "id",
+          "entityCode",
+          "docType",
+          "prefix",
+          "format",
+          "resetPeriod",
+          "isGapless",
+          "description",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "DocumentType": {
+        "enum": [
+          "qt",
+          "iv",
+          "tr",
+          "rc",
+          "cn",
+          "dn",
+          "po",
+          "gr",
+          "bs",
+          "pv",
+          "wt",
+          "jv",
+          "order_group",
+          "job",
+          "claim",
+          "shipment",
+          "rfq"
+        ],
+        "type": "string"
       },
       "DownloadUrlDto": {
         "properties": {
@@ -15651,6 +15794,14 @@
           "updatedAt"
         ],
         "type": "object"
+      },
+      "SequenceReset": {
+        "enum": [
+          "never",
+          "yearly",
+          "monthly"
+        ],
+        "type": "string"
       },
       "SetCapacityDto": {
         "properties": {
@@ -69022,6 +69173,380 @@
         ],
         "x-required-permissions": [
           "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/document-series": {
+      "get": {
+        "description": "One series per entity and document type (schema-design §2.7, accounting-design §4, D-092).\n\nImplements: D-092, D-169.",
+        "operationId": "admin.documentSeries.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "createdAt": "2026-10-01T09:00:00+07:00",
+                    "description": "Quotations of Collective Group (fake)",
+                    "docType": "qt",
+                    "entityCode": "CGT",
+                    "format": "{prefix}-{yyyy}-{seq:6}",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e501",
+                    "isGapless": true,
+                    "prefix": "QT",
+                    "resetPeriod": "yearly"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentSeriesDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Series",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List document numbering series",
+        "tags": [
+          "admin.documentSeries"
+        ],
+        "x-required-permissions": [
+          "document_series.read"
+        ]
+      },
+      "post": {
+        "description": "Formats are not decided (schema-design Q-2): the Finance Manager creates each series once for the default entity (D-169); statutory documents are gapless. Documents that need a number refuse with `numbering.series_missing` until their series exists. Audited.\n\nImplements: D-092, D-169.",
+        "operationId": "admin.documentSeries.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "description": "Quotations of Collective Group (fake)",
+                    "docType": "qt",
+                    "format": "{prefix}-{yyyy}-{seq:6}",
+                    "isGapless": true,
+                    "prefix": "QT",
+                    "resetPeriod": "yearly"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateDocumentSeriesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-01T09:00:00+07:00",
+                  "description": "Quotations of Collective Group (fake)",
+                  "docType": "qt",
+                  "entityCode": "CGT",
+                  "format": "{prefix}-{yyyy}-{seq:6}",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e501",
+                  "isGapless": true,
+                  "prefix": "QT",
+                  "resetPeriod": "yearly"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentSeriesDto"
+                }
+              }
+            },
+            "description": "Series",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "numbering.series_exists": {
+                    "$ref": "#/components/examples/problem.numbering.series_exists"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `numbering.series_exists`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a document numbering series",
+        "tags": [
+          "admin.documentSeries"
+        ],
+        "x-required-permissions": [
+          "document_series.manage"
         ]
       }
     },
@@ -126564,6 +127089,10 @@
     {
       "description": "The customer shipping rate card: effective-dated versions approved by C-Level (D-013).",
       "name": "admin.customerShippingRates"
+    },
+    {
+      "description": "Document numbering series per entity and document type (accounting-design §4, D-169).",
+      "name": "admin.documentSeries"
     },
     {
       "description": "Partner factories: registration, onboarding steps, KYC, addresses, contacts, bank accounts and lifecycle (D-011, D-041, D-171).",

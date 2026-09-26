@@ -12,6 +12,7 @@ import { AuditLogsController } from '@platform/audit/audit.controller';
 import { AuditQueryService } from '@platform/audit/audit-query.service';
 import { OutboxAdminController } from '@platform/domain-events/outbox-admin.controller';
 import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.controller';
+import { DocumentSeriesController } from '@platform/numbering/document-series.controller';
 import { AdminFilesController } from '@platform/files/files.controllers';
 import { AdminInboxController } from '@platform/notifications/my-notifications.controller';
 import {
@@ -47,6 +48,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ConsentPurposesController,
     AdminInboxController,
     AuditLogsController,
+    DocumentSeriesController,
 
     ...CATALOG_ADMIN_CONTROLLERS,
     ...PARTNERS_ADMIN_CONTROLLERS,

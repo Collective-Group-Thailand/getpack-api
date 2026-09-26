@@ -206,11 +206,13 @@ model CalculateLog {
   catalogProduct CatalogProduct? @relation("CalculateLogCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__catalog_product_id")
   stockProduct   StockProduct?   @relation("CalculateLogStockProduct", fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__stock_product_id")
   actorUser      User?           @relation("CalculateLogActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__actor_user_id")
+  quote          Quote?          @relation("CalculateLogQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__quote_id")
 
   @@id([id, occurredAt], map: "pk_calculate_logs")
   @@index([productTypeId, occurredAt], map: "ix_calculate_logs__product_type_id__occurred_at")
   @@index([catalogProductId], map: "ix_calculate_logs__catalog_product_id")
   @@index([stockProductId], map: "ix_calculate_logs__stock_product_id")
+  @@index([quoteId], map: "ix_calculate_logs__quote_id")
   @@index([actorUserId, occurredAt], map: "ix_calculate_logs__actor_user_id__occurred_at")
   @@map("calculate_logs")
 }
@@ -475,4 +477,397 @@ model CarrierAccount {
   @@index([entityId, carrierId], map: "ix_carrier_accounts__entity_id__carrier_id")
   @@index([carrierId], map: "ix_carrier_accounts__carrier_id")
   @@map("carrier_accounts")
+}
+
+// --- Quotes (B2.5, D-051) -------------------------------------------------------------------------
+
+enum QuoteSource {
+  instant
+  rfq
+
+  @@map("quote_source")
+}
+
+enum QuoteStatus {
+  calculated
+  saved
+  shared
+  converted
+  expired
+  superseded
+
+  @@map("quote_status")
+}
+
+/**
+ * A saved quotation (D-051): the input and the priced result are a write-once snapshot with the
+ * version ids of everything used (`config_refs`, schema-design §2.2) and `snapshot_sha256`; only the
+ * lifecycle columns change (trigger). Valid for `quotes.validity_days` with the price locked.
+ */
+model Quote {
+  id                 BigInt       @id(map: "pk_quotes") @default(autoincrement())
+  publicId           String       @unique(map: "ux_quotes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  quoteCode          String?      @unique(map: "ux_quotes__quote_code") @map("quote_code")
+  entityId           BigInt       @map("entity_id")
+  channel            SalesChannel
+  source             QuoteSource
+  rfqQuoteId         BigInt?      @unique(map: "ux_quotes__rfq_quote_id") @map("rfq_quote_id")
+  customerUserId     BigInt?      @map("customer_user_id")
+  createdById        BigInt?      @map("created_by")
+  anonymousId        String?      @map("anonymous_id")
+  productTypeId      BigInt       @map("product_type_id")
+  catalogProductId   BigInt?      @map("catalog_product_id")
+  stockProductId     BigInt?      @map("stock_product_id")
+  input              Json
+  inputSchemaVersion Int          @map("input_schema_version") @db.SmallInt
+  calculatorVersion  String       @map("calculator_version")
+  configRefs         Json         @map("config_refs")
+  status             QuoteStatus
+  validUntil         DateTime     @map("valid_until") @db.Timestamptz(6)
+  shareTokenHash     Bytes?       @unique(map: "ux_quotes__share_token_hash") @map("share_token_hash")
+  sharedAt           DateTime?    @map("shared_at") @db.Timestamptz(6)
+  pdfFileId          BigInt?      @map("pdf_file_id")
+  pdfRequestedAt     DateTime?    @map("pdf_requested_at") @db.Timestamptz(6)
+  deliveryPostcode   String?      @map("delivery_postcode") @db.Char(5)
+  promotionCode      String?      @map("promotion_code")
+  snapshotSha256     Bytes        @map("snapshot_sha256")
+  supersededById     BigInt?      @map("superseded_by_id")
+  convertedAt        DateTime?    @map("converted_at") @db.Timestamptz(6)
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int          @default(1) @map("row_version")
+
+  entity         Entity          @relation("QuoteEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__entity_id")
+  rfqQuote       RfqQuote?       @relation("QuoteRfqQuote", fields: [rfqQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__rfq_quote_id")
+  customer       User?           @relation("QuoteCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__customer_user_id")
+  createdBy      User?           @relation("QuoteCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__created_by")
+  productType    ProductType     @relation("QuoteProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__product_type_id")
+  catalogProduct CatalogProduct? @relation("QuoteCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__catalog_product_id")
+  stockProduct   StockProduct?   @relation("QuoteStockProduct", fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__stock_product_id")
+  pdfFile        FileObject?     @relation("QuotePdfFile", fields: [pdfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__pdf_file_id")
+  supersededBy   Quote?          @relation("QuoteSupersededBy", fields: [supersededById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__superseded_by_id")
+  supersedes     Quote[]         @relation("QuoteSupersededBy")
+  options        QuoteOption[]
+  acceptedRfq    Rfq?            @relation("RfqAcceptedQuote")
+  calculateLogs  CalculateLog[]  @relation("CalculateLogQuote")
+
+  @@index([customerUserId, createdAt(sort: Desc)], map: "ix_quotes__customer_user_id__created_at")
+  @@index([status, validUntil], map: "ix_quotes__status__valid_until")
+  @@index([anonymousId], map: "ix_quotes__anonymous_id")
+  @@index([entityId], map: "ix_quotes__entity_id")
+  @@index([productTypeId], map: "ix_quotes__product_type_id")
+  @@index([catalogProductId], map: "ix_quotes__catalog_product_id")
+  @@index([stockProductId], map: "ix_quotes__stock_product_id")
+  @@index([createdById], map: "ix_quotes__created_by")
+  @@index([pdfFileId], map: "ix_quotes__pdf_file_id")
+  @@index([supersededById], map: "ix_quotes__superseded_by_id")
+  @@map("quotes")
+}
+
+/**
+ * One priced quantity of a quote; immutable. Staff-only columns never reach the customer (D-050).
+ */
+model QuoteOption {
+  id                   BigInt      @id(map: "pk_quote_options") @default(autoincrement())
+  publicId             String      @unique(map: "ux_quote_options__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  quoteId              BigInt      @map("quote_id")
+  quantity             Int
+  unit                 ProductUnit
+  result               Json
+  netAmount            Decimal     @map("net_amount") @db.Decimal(14, 2)
+  discountAmount       Decimal     @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  vatAmount            Decimal     @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount          Decimal     @map("gross_amount") @db.Decimal(14, 2)
+  shippingAmount       Decimal?    @map("shipping_amount") @db.Decimal(14, 2)
+  unitPrice            Decimal     @map("unit_price") @db.Decimal(18, 6)
+  leadTimeDays         Int?        @map("lead_time_days") @db.SmallInt
+  earliestShipDate     DateTime?   @map("earliest_ship_date") @db.Date
+  toleranceShortagePct Decimal?    @map("tolerance_shortage_pct") @db.Decimal(7, 4)
+  toleranceOveragePct  Decimal?    @map("tolerance_overage_pct") @db.Decimal(7, 4)
+  selectedFactoryId    BigInt?     @map("selected_factory_id")
+  priceListVersionId   BigInt?     @map("price_list_version_id")
+  internalBreakdown    Json?       @map("internal_breakdown")
+  buyCostNet           Decimal?    @map("buy_cost_net") @db.Decimal(14, 2)
+  marginPct            Decimal?    @map("margin_pct") @db.Decimal(9, 4)
+  belowMarginFloor     Boolean     @default(false) @map("below_margin_floor")
+  createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  quote            Quote             @relation(fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_options__quote_id")
+  selectedFactory  Factory?          @relation("QuoteOptionFactory", fields: [selectedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_options__selected_factory_id")
+  priceListVersion PriceListVersion? @relation("QuoteOptionPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_options__price_list_version_id")
+
+  @@unique([quoteId, quantity], map: "ux_quote_options__quote_id__quantity")
+  @@index([selectedFactoryId], map: "ix_quote_options__selected_factory_id")
+  @@index([priceListVersionId], map: "ix_quote_options__price_list_version_id")
+  @@map("quote_options")
+}
+
+// --- RFQ (B2.5, D-100, D-043, D-102) --------------------------------------------------------------
+
+enum RfqStatus {
+  submitted
+  in_review
+  need_info
+  quoted
+  accepted
+  declined
+  expired
+
+  @@map("rfq_status")
+}
+
+enum MessageVisibility {
+  customer
+  internal
+
+  @@map("message_visibility")
+}
+
+enum ConsultationStatus {
+  requested
+  responded
+  declined
+  expired
+
+  @@map("consultation_status")
+}
+
+enum RfqQuoteStatus {
+  draft
+  sent
+  accepted
+  superseded
+  expired
+
+  @@map("rfq_quote_status")
+}
+
+enum UnmetDemandSource {
+  rfq_declined
+  rfq_expired
+  no_price_path
+  capability_missing
+  capacity_limited
+
+  @@map("unmet_demand_source")
+}
+
+/**
+ * A request for quote (D-100): the customer's spec, quoted by CS with factory consultation.
+ */
+model Rfq {
+  id                       BigInt       @id(map: "pk_rfqs") @default(autoincrement())
+  publicId                 String       @unique(map: "ux_rfqs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  rfqCode                  String       @unique(map: "ux_rfqs__rfq_code") @map("rfq_code")
+  entityId                 BigInt       @map("entity_id")
+  channel                  SalesChannel
+  customerUserId           BigInt       @map("customer_user_id")
+  createdById              BigInt?      @map("created_by")
+  productTypeId            BigInt       @map("product_type_id")
+  spec                     Json
+  specSchemaVersion        Int          @map("spec_schema_version") @db.SmallInt
+  lengthMm                 Decimal?     @map("length_mm") @db.Decimal(10, 2)
+  widthMm                  Decimal?     @map("width_mm") @db.Decimal(10, 2)
+  heightMm                 Decimal?     @map("height_mm") @db.Decimal(10, 2)
+  targetDate               DateTime?    @map("target_date") @db.Date
+  deliveryPostcode         String       @map("delivery_postcode") @db.Char(5)
+  provinceId               BigInt?      @map("province_id")
+  notes                    String       @default("")
+  status                   RfqStatus    @default(submitted)
+  declineReasonId          BigInt?      @map("decline_reason_id")
+  declineNote              String?      @map("decline_note")
+  assignedToUserId         BigInt?      @map("assigned_to_user_id")
+  slaDueAt                 DateTime?    @map("sla_due_at") @db.Timestamptz(6)
+  firstResponseAt          DateTime?    @map("first_response_at") @db.Timestamptz(6)
+  routedFromCalculateLogId BigInt?      @map("routed_from_calculate_log_id")
+  acceptedQuoteId          BigInt?      @unique(map: "ux_rfqs__accepted_quote_id") @map("accepted_quote_id")
+  submittedAt              DateTime     @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  closedAt                 DateTime?    @map("closed_at") @db.Timestamptz(6)
+  createdAt                DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion               Int          @default(1) @map("row_version")
+
+  entity        Entity                   @relation("RfqEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__entity_id")
+  customer      User                     @relation("RfqCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__customer_user_id")
+  createdBy     User?                    @relation("RfqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__created_by")
+  assignedTo    User?                    @relation("RfqAssignedTo", fields: [assignedToUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__assigned_to_user_id")
+  productType   ProductType              @relation("RfqProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__product_type_id")
+  province      GeoProvince?             @relation("RfqProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__province_id")
+  declineReason UnmetDemandReason?       @relation(fields: [declineReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__decline_reason_id")
+  acceptedQuote Quote?                   @relation("RfqAcceptedQuote", fields: [acceptedQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__accepted_quote_id")
+  tiers         RfqQuantityTier[]
+  messages      RfqMessage[]
+  consultations RfqFactoryConsultation[]
+  quotes        RfqQuote[]
+  unmetDemand   UnmetDemandRecord[]
+
+  @@index([customerUserId, submittedAt(sort: Desc)], map: "ix_rfqs__customer_user_id__submitted_at")
+  @@index([status, slaDueAt], map: "ix_rfqs__status__sla_due_at")
+  @@index([assignedToUserId], map: "ix_rfqs__assigned_to_user_id")
+  @@index([entityId], map: "ix_rfqs__entity_id")
+  @@index([productTypeId], map: "ix_rfqs__product_type_id")
+  @@index([provinceId], map: "ix_rfqs__province_id")
+  @@index([declineReasonId], map: "ix_rfqs__decline_reason_id")
+  @@index([createdById], map: "ix_rfqs__created_by")
+  @@map("rfqs")
+}
+
+model RfqQuantityTier {
+  id       BigInt @id(map: "pk_rfq_quantity_tiers") @default(autoincrement())
+  rfqId    BigInt @map("rfq_id")
+  quantity Int
+
+  rfq Rfq @relation(fields: [rfqId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_rfq_quantity_tiers__rfq_id")
+
+  @@unique([rfqId, quantity], map: "ux_rfq_quantity_tiers__rfq_id__quantity")
+  @@map("rfq_quantity_tiers")
+}
+
+/**
+ * Conversation on an RFQ; `internal` messages are never shown to the customer. Append-only.
+ */
+model RfqMessage {
+  id           BigInt            @id(map: "pk_rfq_messages") @default(autoincrement())
+  publicId     String            @unique(map: "ux_rfq_messages__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  rfqId        BigInt            @map("rfq_id")
+  authorUserId BigInt            @map("author_user_id")
+  visibility   MessageVisibility
+  body         String
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  rfq    Rfq  @relation(fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_messages__rfq_id")
+  author User @relation("RfqMessageAuthor", fields: [authorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_messages__author_user_id")
+
+  @@index([rfqId, createdAt], map: "ix_rfq_messages__rfq_id__created_at")
+  @@index([authorUserId], map: "ix_rfq_messages__author_user_id")
+  @@map("rfq_messages")
+}
+
+/**
+ * Packio asks a factory for its buy price per tier; the factory never sees the sell price (D-044).
+ */
+model RfqFactoryConsultation {
+  id            BigInt             @id(map: "pk_rfq_factory_consultations") @default(autoincrement())
+  publicId      String             @unique(map: "ux_rfq_factory_consultations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  rfqId         BigInt             @map("rfq_id")
+  factoryId     BigInt             @map("factory_id")
+  requestedById BigInt             @map("requested_by")
+  note          String             @default("")
+  dueAt         DateTime           @map("due_at") @db.Timestamptz(6)
+  status        ConsultationStatus @default(requested)
+  response      Json?
+  respondedById BigInt?            @map("responded_by")
+  respondedAt   DateTime?          @map("responded_at") @db.Timestamptz(6)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  rfq         Rfq     @relation(fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__rfq_id")
+  factory     Factory @relation("RfqConsultationFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__factory_id")
+  requestedBy User    @relation("RfqConsultationRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__requested_by")
+  respondedBy User?   @relation("RfqConsultationRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_factory_consultations__responded_by")
+
+  /// One open consultation per factory and RFQ.
+  @@unique([rfqId, factoryId], map: "ux_rfq_factory_consultations__one_open", where: raw("(status = 'requested'::consultation_status)"))
+  @@index([factoryId, status], map: "ix_rfq_factory_consultations__factory_id__status")
+  @@index([rfqId], map: "ix_rfq_factory_consultations__rfq_id")
+  @@index([requestedById], map: "ix_rfq_factory_consultations__requested_by")
+  @@index([respondedById], map: "ix_rfq_factory_consultations__responded_by")
+  @@map("rfq_factory_consultations")
+}
+
+/**
+ * A versioned manual quotation for an RFQ; the accepted one becomes a `quotes` row (`source = rfq`).
+ */
+model RfqQuote {
+  id          BigInt         @id(map: "pk_rfq_quotes") @default(autoincrement())
+  publicId    String         @unique(map: "ux_rfq_quotes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  rfqId       BigInt         @map("rfq_id")
+  versionNo   Int            @map("version_no")
+  status      RfqQuoteStatus @default(draft)
+  validUntil  DateTime?      @map("valid_until") @db.Timestamptz(6)
+  note        String         @default("")
+  createdById BigInt         @map("created_by")
+  sentAt      DateTime?      @map("sent_at") @db.Timestamptz(6)
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  rfq       Rfq            @relation(fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_quotes__rfq_id")
+  createdBy User           @relation("RfqQuoteCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_quotes__created_by")
+  lines     RfqQuoteLine[]
+  quote     Quote?         @relation("QuoteRfqQuote")
+
+  @@unique([rfqId, versionNo], map: "ux_rfq_quotes__rfq_id__version_no")
+  /// One draft or sent quotation per RFQ at a time.
+  @@unique([rfqId], map: "ux_rfq_quotes__one_open", where: raw("(status = ANY (ARRAY['draft'::rfq_quote_status, 'sent'::rfq_quote_status]))"))
+  @@index([createdById], map: "ix_rfq_quotes__created_by")
+  @@map("rfq_quotes")
+}
+
+/**
+ * A quantity tier of an RFQ quotation; staff-only columns are never shown to the customer.
+ */
+model RfqQuoteLine {
+  id                BigInt   @id(map: "pk_rfq_quote_lines") @default(autoincrement())
+  rfqQuoteId        BigInt   @map("rfq_quote_id")
+  quantity          Int
+  unitPrice         Decimal  @map("unit_price") @db.Decimal(18, 6)
+  netAmount         Decimal  @map("net_amount") @db.Decimal(14, 2)
+  vatAmount         Decimal  @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount       Decimal  @map("gross_amount") @db.Decimal(14, 2)
+  shippingNetAmount Decimal  @default(0) @map("shipping_net_amount") @db.Decimal(14, 2)
+  leadTimeDays      Int      @map("lead_time_days") @db.SmallInt
+  factoryId         BigInt?  @map("factory_id")
+  buyUnitPrice      Decimal? @map("buy_unit_price") @db.Decimal(18, 6)
+  marginPct         Decimal? @map("margin_pct") @db.Decimal(9, 4)
+  belowMarginFloor  Boolean  @default(false) @map("below_margin_floor")
+
+  rfqQuote RfqQuote @relation(fields: [rfqQuoteId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_rfq_quote_lines__rfq_quote_id")
+  factory  Factory? @relation("RfqQuoteLineFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfq_quote_lines__factory_id")
+
+  @@unique([rfqQuoteId, quantity], map: "ux_rfq_quote_lines__rfq_quote_id__quantity")
+  @@index([factoryId], map: "ix_rfq_quote_lines__factory_id")
+  @@map("rfq_quote_lines")
+}
+
+/**
+ * Reason codes for declined / expired RFQs and unmet demand (D-102).
+ */
+model UnmetDemandReason {
+  id        BigInt   @id(map: "pk_unmet_demand_reasons") @default(autoincrement())
+  code      String   @unique(map: "ux_unmet_demand_reasons__code")
+  nameTh    String   @map("name_th")
+  nameEn    String   @map("name_en")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  rfqs    Rfq[]
+  records UnmetDemandRecord[]
+
+  @@map("unmet_demand_reasons")
+}
+
+/**
+ * Demand Packio could not serve (D-102): banded, no PII; source of the partner prospectus (B6).
+ */
+model UnmetDemandRecord {
+  id             BigInt            @id(map: "pk_unmet_demand_records") @default(autoincrement())
+  occurredAt     DateTime          @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  source         UnmetDemandSource
+  reasonId       BigInt?           @map("reason_id")
+  productTypeId  BigInt            @map("product_type_id")
+  specBand       Json              @map("spec_band")
+  quantityBand   String            @map("quantity_band")
+  provinceId     BigInt?           @map("province_id")
+  rfqId          BigInt?           @map("rfq_id")
+  calculateLogId BigInt?           @map("calculate_log_id")
+  domainEventId  String?           @unique(map: "ux_unmet_demand_records__domain_event_id") @map("domain_event_id") @db.Uuid
+
+  reason      UnmetDemandReason? @relation(fields: [reasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__reason_id")
+  productType ProductType        @relation("UnmetDemandProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__product_type_id")
+  province    GeoProvince?       @relation("UnmetDemandProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__province_id")
+  rfq         Rfq?               @relation(fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unmet_demand_records__rfq_id")
+
+  @@index([productTypeId, occurredAt], map: "ix_unmet_demand_records__product_type_id__occurred_at")
+  @@index([reasonId], map: "ix_unmet_demand_records__reason_id")
+  @@index([provinceId], map: "ix_unmet_demand_records__province_id")
+  @@index([rfqId], map: "ix_unmet_demand_records__rfq_id")
+  @@map("unmet_demand_records")
 }

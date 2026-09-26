@@ -372,6 +372,19 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-172', 'D-040'],
     confirmation: 'pending_business',
   },
+  // --- RFQ (B2.5, D-100). No decision gives the SLA: definition only (B2.5 plan, 2026-09-26).
+  {
+    key: 'rfq.sla_business_hours',
+    valueType: 'integer',
+    value: null,
+    unset: true,
+    valueSchema: { minimum: 1, maximum: 720 },
+    description:
+      'D-100 first-response SLA of a request for quote, in business hours; scoped per product type (RFQ category) with a platform fallback; not seeded — no SLA due date until set',
+    decisions: ['D-100'],
+    confirmation: 'pending_business',
+  },
+
   // --- Shipping (B2.4, D-013). No decision gives these values: definitions only (B2.4 plan, 2026-09-26).
   {
     key: 'shipping.carton_spec',

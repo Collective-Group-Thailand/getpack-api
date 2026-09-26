@@ -35,6 +35,25 @@ const TEAM_OF: Record<string, string> = {
  * (`DEV_SEED_PASSWORD`, argon2id) when given; users that already have a password keep it.
  * Partner and company users need factories/companies (B2.2 / B3.5) and are added there.
  */
+const DEV_SERIES = [
+  {
+    docType: 'qt',
+    prefix: 'DEVQT',
+    format: '{prefix}-{yyyy}-{seq:6}',
+    resetPeriod: 'yearly',
+    isGapless: true,
+    description: '[DEV] fake quotation series',
+  },
+  {
+    docType: 'rfq',
+    prefix: 'DEVRFQ',
+    format: '{prefix}-{yy}{mm}-{seq:5}',
+    resetPeriod: 'monthly',
+    isGapless: false,
+    description: '[DEV] fake RFQ series',
+  },
+] as const;
+
 export async function seedDev(prisma: PrismaClient, devPassword?: string): Promise<SeedReport> {
   const report = await seedReference(prisma, DEV_ENTITY);
   const count = (what: string) => (report[what] = (report[what] ?? 0) + 1);
@@ -73,6 +92,20 @@ export async function seedDev(prisma: PrismaClient, devPassword?: string): Promi
     }
 
     if (await seedDevCatalog(tx)) count('dev_catalog');
+
+    // Obviously fake numbering for `pnpm dev` and the tests: real formats are not decided (schema-design
+    // Q-2) and are created by a Finance Manager (D-169).
+    const entity = await tx.entity.findFirstOrThrow({ where: { isDefault: true } });
+    for (const series of DEV_SERIES) {
+      if (
+        await tx.documentSeries.findUnique({
+          where: { entityId_docType: { entityId: entity.id, docType: series.docType } },
+        })
+      )
+        continue;
+      await tx.documentSeries.create({ data: { entityId: entity.id, ...series, decisionRefs: ['D-092'] } });
+      count('dev_document_series');
+    }
 
     const customerEmail = 'customer@example.invalid';
     if (!(await tx.user.findFirst({ where: { kind: 'customer', email: customerEmail } }))) {

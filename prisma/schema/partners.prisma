@@ -342,6 +342,12 @@ model Factory {
   createdBy            User?                      @relation("FactoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factories__created_by")
   updatedBy            User?                      @relation("FactoryUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factories__updated_by")
 
+  // --- Quotes & RFQ (generated back-relations)
+  quoteOptions     QuoteOption[]            @relation("QuoteOptionFactory")
+  rfqConsultations RfqFactoryConsultation[] @relation("RfqConsultationFactory")
+  rfqQuoteLines    RfqQuoteLine[]           @relation("RfqQuoteLineFactory")
+
+  // --- end Quotes & RFQ
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
@@ -1056,6 +1062,10 @@ model PriceListVersion {
   assemblySheets    PlAssemblySheet[]    @relation("PlAssemblySheetVersion")
   // --- end Folding price components
 
+  // --- Quotes & RFQ (generated back-relations)
+  quoteOptions QuoteOption[] @relation("QuoteOptionPriceListVersion")
+
+  // --- end Quotes & RFQ
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
   @@index([priceListId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_price_list_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
   @@index([basedOnVersionId], map: "ix_price_list_versions__based_on_version_id")

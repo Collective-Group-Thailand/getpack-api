@@ -347,6 +347,12 @@ model Entity {
   carrierAccounts CarrierAccount[] @relation("CarrierAccountEntity")
   // --- end Pricing
 
+  // --- Quotes & RFQ (generated back-relations)
+  quotes         Quote[]          @relation("QuoteEntity")
+  rfqs           Rfq[]            @relation("RfqEntity")
+  documentSeries DocumentSeries[] @relation("DocumentSeriesEntity")
+
+  // --- end Quotes & RFQ
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -703,6 +709,10 @@ model FileObject {
   agreementAcceptancesSigned   AgreementAcceptance[]      @relation("AgreementAcceptanceSignedFile")
   // --- end Partners
 
+  // --- Quotes & RFQ (generated back-relations)
+  quotePdfs Quote[] @relation("QuotePdfFile")
+
+  // --- end Quotes & RFQ
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
   @@index([ownerUserId], map: "ix_file_objects__owner_user_id")
@@ -1143,4 +1153,81 @@ model DesignEmbedding {
 
   @@unique([subjectId, model, modelVersion], map: "ux_design_embeddings__subject__model__version")
   @@map("design_embeddings")
+}
+
+// --- Document numbering (schema-design §2.7, migrated with its first user in B2.5) ---------------
+
+/**
+ * Statutory documents (accounting-design §4) and non-statutory running codes (§2.7).
+ */
+enum DocumentType {
+  qt
+  iv
+  tr
+  rc
+  cn
+  dn
+  po
+  gr
+  bs
+  pv
+  wt
+  jv
+  order_group
+  job
+  claim
+  shipment
+  rfq
+
+  @@map("document_type")
+}
+
+enum SequenceReset {
+  never
+  yearly
+  monthly
+
+  @@map("sequence_reset")
+}
+
+/**
+ * One numbering series per entity and document type. `format` placeholders: `{prefix}`, `{yyyy}`,
+ * `{yy}`, `{mm}`, `{seq:N}` (zero-padded). Changes go through `document_series_change` (D-169, B5).
+ */
+model DocumentSeries {
+  id           BigInt        @id(map: "pk_document_series") @default(autoincrement())
+  publicId     String        @unique(map: "ux_document_series__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId     BigInt        @map("entity_id")
+  docType      DocumentType  @map("doc_type")
+  prefix       String
+  format       String
+  resetPeriod  SequenceReset @map("reset_period")
+  isGapless    Boolean       @map("is_gapless")
+  description  String
+  decisionRefs String[]      @map("decision_refs")
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion   Int           @default(1) @map("row_version")
+
+  entity    Entity             @relation("DocumentSeriesEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_series__entity_id")
+  sequences DocumentSequence[]
+
+  @@unique([entityId, docType], map: "ux_document_series__entity_id__doc_type")
+  @@map("document_series")
+}
+
+/**
+ * The next number per series and period; taken `FOR UPDATE` inside the issuing transaction.
+ */
+model DocumentSequence {
+  id        BigInt   @id(map: "pk_document_sequences") @default(autoincrement())
+  seriesId  BigInt   @map("series_id")
+  periodKey String   @map("period_key")
+  nextValue BigInt   @default(1) @map("next_value")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  series DocumentSeries @relation(fields: [seriesId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_document_sequences__series_id")
+
+  @@unique([seriesId, periodKey], map: "ux_document_sequences__series_id__period_key")
+  @@map("document_sequences")
 }

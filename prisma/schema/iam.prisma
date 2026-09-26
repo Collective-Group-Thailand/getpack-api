@@ -423,6 +423,18 @@ model User {
   carrierAccountsUpdated                  CarrierAccount[]                  @relation("CarrierAccountUpdatedBy")
   // --- end Pricing
 
+  // --- Quotes & RFQ (generated back-relations)
+  quotesAsCustomer          Quote[]                  @relation("QuoteCustomer")
+  quotesCreated             Quote[]                  @relation("QuoteCreatedBy")
+  rfqsAsCustomer            Rfq[]                    @relation("RfqCustomer")
+  rfqsCreated               Rfq[]                    @relation("RfqCreatedBy")
+  rfqsAssigned              Rfq[]                    @relation("RfqAssignedTo")
+  rfqMessages               RfqMessage[]             @relation("RfqMessageAuthor")
+  rfqConsultationsRequested RfqFactoryConsultation[] @relation("RfqConsultationRequestedBy")
+  rfqConsultationsResponded RfqFactoryConsultation[] @relation("RfqConsultationRespondedBy")
+  rfqQuotesCreated          RfqQuote[]               @relation("RfqQuoteCreatedBy")
+
+  // --- end Quotes & RFQ
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

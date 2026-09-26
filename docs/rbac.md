@@ -55,6 +55,12 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `margin.read` — See margins in amounts and percent (D-141) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |
 | `margin.read_pct_when_discounting` — See the resulting margin % while applying a discount (D-141, D-052) | ◆ |  |  |  |  | ◆ | ◆ |  |  |  |  |  |  |  |
 | `quotes.calculate` — Price a configuration for a customer in the admin zone (CS calculator) (D-100, D-043) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● |  |
+| `quotes.read` — Read saved quotations (D-051) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
+| `quotes.manage` — Save quotations for a customer, share them and issue their PDF (D-051) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
+| `rfqs.read` — Read requests for quote and their conversation (D-100) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● | ● |
+| `rfqs.manage` — Work requests for quote: assign, ask for information, consult factories, quote, decline (D-100, D-043, D-102) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
+| `document_series.read` — Read document numbering series (D-092) | ● |  |  |  | ● |  |  |  | ● | ● |  |  |  | ● |
+| `document_series.manage` — Create document numbering series (D-092, D-169) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
 | `shipping_rates.read` — Read the customer shipping rate card and its versions (D-013) | ● | ● |  |  | ● | ● | ● |  | ● | ● | ● |  | ● | ● |
 | `shipping_rates.manage` — Draft customer shipping rate-card versions and submit them for C-Level approval (D-013) | ● |  |  |  | ● |  |  |  |  |  | ● |  |  |  |
 | `factory_shipping_rates.manage` — Draft factory shipping payout cards, send them to the factory and answer counters (D-013, D-042, D-141) | ◆ |  |  |  |  |  |  |  |  |  |  |  | ◆ |  |
@@ -93,6 +99,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_agreements.accept` — Accept the partner agreement on behalf of the factory (D-011) | ● |  |  |  |  |  |
 | `factory_bank_account.propose` — Propose a new bank account for payouts (dual approval by Packio Finance) (D-033) | ● |  |  |  |  | ● |
 | `factory_capacity.read` — Read the own capacity and bookings (D-101) | ● | ● |  |  |  |  |
+| `factory_rfq.read` — Read the requests for a buy price Packio sent the factory (never the sell price) (D-100, D-044) | ● | ● |  |  |  |  |
+| `factory_rfq.respond` — Answer a request for a buy price per quantity tier, or decline it (D-100) | ● | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

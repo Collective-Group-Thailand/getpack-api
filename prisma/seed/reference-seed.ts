@@ -8,6 +8,7 @@ import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notification
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
+import { UNMET_DEMAND_REASONS } from './data/quotes';
 import { CARRIERS, CUSTOMER_SHIPPING_RATE_CARDS, ZONE_SCHEMES } from './data/shipping';
 
 type Tx = Prisma.TransactionClient;
@@ -60,6 +61,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureAgreementTemplates(tx, count);
       await ensureTaxRates(tx, count);
       await ensureShipping(tx, count);
+      await ensureUnmetDemandReasons(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -431,5 +433,14 @@ async function ensureShipping(tx: Tx, count: (what: string) => void): Promise<vo
     if (await tx.carrier.findUnique({ where: { code: carrier.code } })) continue;
     await tx.carrier.create({ data: { ...carrier, supports: [...carrier.supports] } });
     count('carriers');
+  }
+}
+
+/** Reason codes for declined / expired RFQs and unmet demand (D-102). */
+async function ensureUnmetDemandReasons(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const reason of UNMET_DEMAND_REASONS) {
+    if (await tx.unmetDemandReason.findUnique({ where: { code: reason.code } })) continue;
+    await tx.unmetDemandReason.create({ data: { ...reason } });
+    count('unmet_demand_reasons');
   }
 }

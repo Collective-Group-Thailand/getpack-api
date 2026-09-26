@@ -205,6 +205,42 @@ export const PERMISSIONS = [
     decisionRefs: ['D-100', 'D-043'],
   },
   {
+    key: 'quotes.read',
+    audience: 'staff',
+    description: 'Read saved quotations',
+    decisionRefs: ['D-051'],
+  },
+  {
+    key: 'quotes.manage',
+    audience: 'staff',
+    description: 'Save quotations for a customer, share them and issue their PDF',
+    decisionRefs: ['D-051'],
+  },
+  {
+    key: 'rfqs.read',
+    audience: 'staff',
+    description: 'Read requests for quote and their conversation',
+    decisionRefs: ['D-100'],
+  },
+  {
+    key: 'rfqs.manage',
+    audience: 'staff',
+    description: 'Work requests for quote: assign, ask for information, consult factories, quote, decline',
+    decisionRefs: ['D-100', 'D-043', 'D-102'],
+  },
+  {
+    key: 'document_series.read',
+    audience: 'staff',
+    description: 'Read document numbering series',
+    decisionRefs: ['D-092'],
+  },
+  {
+    key: 'document_series.manage',
+    audience: 'staff',
+    description: 'Create document numbering series',
+    decisionRefs: ['D-092', 'D-169'],
+  },
+  {
     key: 'shipping_rates.read',
     audience: 'staff',
     description: 'Read the customer shipping rate card and its versions',
@@ -292,6 +328,19 @@ export const PERMISSIONS = [
     audience: 'partner',
     description: 'Read the own capacity and bookings',
     decisionRefs: ['D-101'],
+  },
+
+  {
+    key: 'factory_rfq.read',
+    audience: 'partner',
+    description: 'Read the requests for a buy price Packio sent the factory (never the sell price)',
+    decisionRefs: ['D-100', 'D-044'],
+  },
+  {
+    key: 'factory_rfq.respond',
+    audience: 'partner',
+    description: 'Answer a request for a buy price per quantity tier, or decline it',
+    decisionRefs: ['D-100'],
   },
 
   // --- B2B company (company-scoped)

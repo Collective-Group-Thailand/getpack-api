@@ -29,6 +29,8 @@ export interface SettingValues {
   'partners.impact_simulation_window_days': number;
   /** Not seeded (D-172): reading it throws `SettingNotFoundError` until a superadmin sets it. */
   'partners.suggestion_deviation_band_pct': string;
+  /** Not seeded (B2.5): RFQ first-response SLA per product type; no due date until set. */
+  'rfq.sla_business_hours': number;
   /** Not seeded (B2.4): the packing helper counts no cartons until set. */
   'shipping.carton_spec': { gridCm: number; maxStackHeightCm: number; maxWeightKg: number };
   /** Not seeded (B2.4): no cartons-per-pallet figure until set. */
