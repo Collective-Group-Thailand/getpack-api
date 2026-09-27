@@ -17,6 +17,7 @@ import { PARTNERS_ADMIN_CONTROLLERS } from '@modules/partners/partners.registry'
 import { PAYMENT_SCHEDULES_ADMIN_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PAYMENTS_ADMIN_CONTROLLERS } from '@modules/payments/payments.registry';
 import { PRICING_ADMIN_CONTROLLERS } from '@modules/pricing/pricing.registry';
+import { PRODUCTION_ADMIN_CONTROLLERS } from '@modules/production/production.registry';
 import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
@@ -82,6 +83,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...ARTWORK_ADMIN_CONTROLLERS,
     ...DESIGN_SERVICES_ADMIN_CONTROLLERS,
     ...DESIGNS_ADMIN_CONTROLLERS,
+    ...PRODUCTION_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

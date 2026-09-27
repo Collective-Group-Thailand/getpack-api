@@ -491,6 +491,38 @@ export const PERMISSIONS = [
     decisionRefs: ['D-070'],
   },
 
+  // --- B4.2 production
+  {
+    key: 'production.read',
+    audience: 'staff',
+    description: 'Read production jobs, milestones, QC, inspections and factory scorecards',
+    decisionRefs: ['D-073', 'D-155'],
+  },
+  {
+    key: 'production.start_manual',
+    audience: 'staff',
+    description: 'Start production as an exception, with a reason (audited)',
+    decisionRefs: ['D-073'],
+  },
+  {
+    key: 'production.manage',
+    audience: 'staff',
+    description: 'Reassign jobs to another factory, hold and resume jobs, resolve escalations',
+    decisionRefs: ['D-012', 'D-074', 'D-101'],
+  },
+  {
+    key: 'milestone_routes.manage',
+    audience: 'staff',
+    description: 'Edit milestone routes per product type as new versions',
+    decisionRefs: ['D-075'],
+  },
+  {
+    key: 'inspections.perform',
+    audience: 'staff',
+    description: 'Carry out Packio inspections and record their results',
+    decisionRefs: ['D-076'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },
@@ -554,6 +586,47 @@ export const PERMISSIONS = [
     audience: 'partner',
     description: 'Answer a request for a buy price per quantity tier, or decline it',
     decisionRefs: ['D-100'],
+  },
+  {
+    key: 'factory_jobs.read',
+    audience: 'partner',
+    description: 'Read the own factory’s production jobs: spec, approved artwork, delivery contacts',
+    decisionRefs: ['D-142'],
+  },
+  {
+    key: 'factory_jobs.respond',
+    audience: 'partner',
+    description: 'Accept or reject released jobs within the acceptance time',
+    decisionRefs: ['D-074'],
+  },
+  {
+    key: 'factory_milestones.update',
+    audience: 'partner',
+    description: 'Start and complete milestones with quantities and photos',
+    decisionRefs: ['D-075'],
+  },
+  {
+    key: 'factory_qc.record',
+    audience: 'partner',
+    description: 'Record QC checklists with photos',
+    decisionRefs: ['D-076'],
+  },
+  {
+    key: 'factory_issues.raise',
+    audience: 'partner',
+    description: 'Raise production issues on own jobs',
+  },
+  {
+    key: 'factory_capacity.manage',
+    audience: 'partner',
+    description: 'Set weekly capacity overrides of the own factory',
+    decisionRefs: ['D-101'],
+  },
+  {
+    key: 'factory_scorecard.read',
+    audience: 'partner',
+    description: 'Read the own factory’s monthly scorecard',
+    decisionRefs: ['D-155'],
   },
 
   // --- B2B company (company-scoped)

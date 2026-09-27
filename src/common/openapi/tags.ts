@@ -70,6 +70,10 @@ export const API_TAGS: Record<string, string> = {
     'My online designs (immutable versions, ETag, assets, from semi-design templates) and dieline drawings (D-152).',
   'admin.designs':
     'Designs for staff: read customers’ designs, author template designs, draw an order’s dieline template (D-070).',
+  'admin.production':
+    'Production jobs: automatic release (D-073), manual exceptions, acceptance SLA and escalations (D-074), reassignment within the margin floor (D-012, D-101).',
+  'partner.production':
+    'My factory’s jobs: accept / reject, milestones with photos and quantities, QC, issues, capacity and scorecard (D-074…D-076, D-142, D-155).',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',
   'admin.roles': 'The role and permission catalogue (D-140, D-141).',
   'admin.approvals': 'Generic approval engine: inbox, approve, reject, withdraw (ADR-0006).',

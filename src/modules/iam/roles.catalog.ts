@@ -62,6 +62,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'loyalty.read',
       'companies.read',
       'discount_memos.read',
+      'production.read',
     ],
   },
   {
@@ -76,6 +77,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'partners.read',
       'orders.read',
       'discount_memos.read',
+      'production.read',
     ],
   },
   {
@@ -84,11 +86,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ผู้อำนวยการ',
     nameEn: 'Director',
-    permissions: [
-      ...APPROVER,
-      'orders.read',
-      'discount_memos.read',
-    ],
+    permissions: [...APPROVER, 'orders.read', 'discount_memos.read', 'production.read'],
   },
   {
     key: 'admin',
@@ -147,6 +145,11 @@ export const ROLES: readonly RoleDefinition[] = [
       'design_services.manage',
       'mockups.manage',
       'drawings.generate',
+      'production.read',
+      'production.start_manual',
+      'production.manage',
+      'milestone_routes.manage',
+      'inspections.perform',
     ],
   },
   {
@@ -180,6 +183,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'artwork.submit_on_behalf',
       'proofs.decide_on_behalf',
       'drawings.generate',
+      'production.read',
+      'production.start_manual',
     ],
   },
   {
@@ -223,6 +228,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'proofs.decide_on_behalf',
       'mockups.manage',
       'drawings.generate',
+      'production.read',
+      'production.start_manual',
+      'production.manage',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -241,6 +249,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'prepress.review',
       'design_services.manage',
       'drawings.generate',
+      'production.read',
     ],
   },
   {
@@ -269,6 +278,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'companies.read',
       'company_credit.manage',
       'discount_memos.read',
+      'production.read',
     ],
   },
   {
@@ -302,6 +312,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'companies.kyc_review',
       'company_credit.manage',
       'discount_memos.read',
+      'production.read',
     ],
   },
   {
@@ -317,6 +328,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'shipping_rates.manage',
       'carriers.read',
       'orders.read',
+      'production.read',
     ],
   },
   {
@@ -363,6 +375,10 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_shipping_rates.manage',
       'carriers.read',
       'rfqs.read',
+      'production.read',
+      'production.manage',
+      'milestone_routes.manage',
+      'inspections.perform',
     ],
   },
   {
@@ -392,6 +408,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'companies.read',
       'discount_memos.read',
       'artwork.read',
+      'production.read',
     ],
   },
 
@@ -415,6 +432,13 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_capacity.read',
       'factory_rfq.read',
       'factory_rfq.respond',
+      'factory_jobs.read',
+      'factory_jobs.respond',
+      'factory_milestones.update',
+      'factory_qc.record',
+      'factory_issues.raise',
+      'factory_capacity.manage',
+      'factory_scorecard.read',
     ],
   },
   {
@@ -423,7 +447,18 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'ผู้วางแผนการผลิต',
     nameEn: 'Planner',
-    permissions: ['factory_profile.read', 'factory_capacity.read', 'factory_rfq.read', 'factory_rfq.respond'],
+    permissions: [
+      'factory_profile.read',
+      'factory_capacity.read',
+      'factory_rfq.read',
+      'factory_rfq.respond',
+      'factory_jobs.read',
+      'factory_jobs.respond',
+      'factory_milestones.update',
+      'factory_issues.raise',
+      'factory_capacity.manage',
+      'factory_scorecard.read',
+    ],
   },
   {
     key: 'factory_operator',
@@ -431,7 +466,12 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'ผู้ปฏิบัติงาน',
     nameEn: 'Operator',
-    permissions: ['factory_profile.read'],
+    permissions: [
+      'factory_profile.read',
+      'factory_jobs.read',
+      'factory_milestones.update',
+      'factory_issues.raise',
+    ],
   },
   {
     key: 'factory_qc',
@@ -439,7 +479,14 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'ฝ่ายควบคุมคุณภาพ',
     nameEn: 'QC',
-    permissions: ['factory_profile.read'],
+    permissions: [
+      'factory_profile.read',
+      'factory_jobs.read',
+      'factory_milestones.update',
+      'factory_qc.record',
+      'factory_issues.raise',
+      'factory_scorecard.read',
+    ],
   },
   {
     key: 'factory_shipping',
@@ -447,7 +494,12 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'ฝ่ายจัดส่ง',
     nameEn: 'Shipping',
-    permissions: ['factory_profile.read'],
+    permissions: [
+      'factory_profile.read',
+      'factory_jobs.read',
+      'factory_milestones.update',
+      'factory_issues.raise',
+    ],
   },
   {
     key: 'factory_accountant',
@@ -455,7 +507,12 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'factory',
     nameTh: 'ฝ่ายบัญชีโรงงาน',
     nameEn: 'Factory Accountant',
-    permissions: ['factory_profile.read', 'factory_prices.read', 'factory_bank_account.propose'],
+    permissions: [
+      'factory_profile.read',
+      'factory_prices.read',
+      'factory_bank_account.propose',
+      'factory_jobs.read',
+    ],
   },
 
   // --- B2B company (company scope)
@@ -479,10 +536,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'company',
     nameTh: 'ผู้สั่งซื้อ',
     nameEn: 'Buyer',
-    permissions: [
-      'company_profile.read',
-      'company_orders.place',
-    ],
+    permissions: ['company_profile.read', 'company_orders.place'],
   },
   {
     key: 'company_approver',

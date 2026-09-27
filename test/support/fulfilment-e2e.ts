@@ -5,6 +5,8 @@ import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateway
 import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
 import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
 import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { PreflightService } from '@modules/artwork/preflight/preflight.service';
+import { PasswordService } from '@modules/auth/password.service';
 import { DiscoveryModule } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';
@@ -165,4 +167,68 @@ export async function payDue(
     .send(scb.settle(payment.referenceCode, payment.cashAmount))
     .expect(200);
   return payment;
+}
+
+/** A factory user with `role` in the factory's scope, signed in with a password (fake data). */
+export async function factoryToken(
+  ctx: CommerceApp,
+  factoryPublicId: string,
+  role: string,
+  n: number,
+): Promise<string> {
+  const factory = await ctx.prisma.factory.findUniqueOrThrow({ where: { publicId: factoryPublicId } });
+  const roleRow = await ctx.prisma.role.findUniqueOrThrow({ where: { key: role } });
+  const email = `${role}-${ctx.run}-${n}@factory.invalid`;
+  await ctx.prisma.user.create({
+    data: {
+      kind: 'partner',
+      status: 'active',
+      email,
+      displayName: `${role} (fake)`,
+      passwordHash: await new PasswordService().hash(E2E_DEV_PASSWORD),
+      roles: {
+        create: { roleId: roleRow.id, scopeType: 'factory', scopeId: factory.id, reason: 'e2e (fake)' },
+      },
+    },
+  });
+  const login = await request(ctx.server)
+    .post('/v1/auth/partner/login')
+    .send({ email, password: E2E_DEV_PASSWORD })
+    .expect(200);
+  return login.body.accessToken as string;
+}
+
+/**
+ * Artwork approved the real way: the customer uploads a clean PDF, preflight runs, Prepress accepts it and
+ * sends a proof, the customer approves it. Returns the approved proof id.
+ */
+export async function approveArtwork(
+  ctx: CommerceApp,
+  token: string,
+  prepressToken: string,
+  orderId: string,
+): Promise<string> {
+  const file = await uploadPdf(ctx, token, await makePdf({ widthMm: 100, heightMm: 100 }));
+  const submission = await as(ctx, token)
+    .post(`/v1/store/orders/${orderId}/artwork-submissions`, { files: [{ fileId: file }] })
+    .expect(201);
+  await ctx.app.get(PreflightService).runDue();
+  await as(ctx, prepressToken)
+    .post(`/v1/admin/artwork-submissions/${submission.body.id as string}/actions/accept`)
+    .expect(200);
+  const proofFile = await uploadPdf(
+    ctx,
+    prepressToken,
+    await makePdf({ widthMm: 100, heightMm: 100 }),
+    'proof',
+    'admin',
+  );
+  const proof = await as(ctx, prepressToken)
+    .post(`/v1/admin/orders/${orderId}/proofs`, { proofFileId: proofFile })
+    .expect(201);
+  await as(ctx, token)
+    .post(`/v1/store/proofs/${proof.body.id as string}/actions/approve`)
+    .set('Idempotency-Key', randomUUID())
+    .expect(200);
+  return proof.body.id as string;
 }

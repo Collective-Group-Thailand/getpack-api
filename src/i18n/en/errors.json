@@ -862,5 +862,31 @@
       "title": "Pattern not drawable",
       "detail": "This box style has no automatic dieline"
     }
+  },
+  "production": {
+    "already_released": {
+      "title": "Already released",
+      "detail": "This order already has a production job"
+    },
+    "gate_closed": {
+      "title": "Production cannot start",
+      "detail": "Production cannot start yet ({reason})"
+    },
+    "invalid_status": {
+      "title": "Wrong job status",
+      "detail": "The production job is {status}"
+    },
+    "factory_unavailable": {
+      "title": "Factory unavailable",
+      "detail": "This factory cannot take production jobs"
+    },
+    "no_price_path": {
+      "title": "No price at that factory",
+      "detail": "That factory has no price for this specification"
+    },
+    "below_margin_floor": {
+      "title": "Below the margin floor",
+      "detail": "Moving the job there leaves less than {floor}% margin"
+    }
   }
 }

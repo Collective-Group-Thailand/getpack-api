@@ -1552,6 +1552,72 @@
           "type": "https://errors.packio/pricing.vat_rate_missing"
         }
       },
+      "problem.production.already_released": {
+        "summary": "production.already_released",
+        "value": {
+          "code": "production.already_released",
+          "detail": "คำสั่งซื้อนี้มีงานผลิตอยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เริ่มผลิตแล้ว",
+          "type": "https://errors.packio/production.already_released"
+        }
+      },
+      "problem.production.below_margin_floor": {
+        "summary": "production.below_margin_floor",
+        "value": {
+          "code": "production.below_margin_floor",
+          "detail": "ย้ายงานไปโรงงานนี้แล้วกำไรต่ำกว่า {floor}%",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "กำไรต่ำกว่าขั้นต่ำ",
+          "type": "https://errors.packio/production.below_margin_floor"
+        }
+      },
+      "problem.production.factory_unavailable": {
+        "summary": "production.factory_unavailable",
+        "value": {
+          "code": "production.factory_unavailable",
+          "detail": "โรงงานนี้ไม่ได้อยู่ในสถานะที่รับงานผลิตได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "โรงงานรับงานไม่ได้",
+          "type": "https://errors.packio/production.factory_unavailable"
+        }
+      },
+      "problem.production.gate_closed": {
+        "summary": "production.gate_closed",
+        "value": {
+          "code": "production.gate_closed",
+          "detail": "ยังเริ่มผลิตไม่ได้ ({reason})",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังเริ่มผลิตไม่ได้",
+          "type": "https://errors.packio/production.gate_closed"
+        }
+      },
+      "problem.production.invalid_status": {
+        "summary": "production.invalid_status",
+        "value": {
+          "code": "production.invalid_status",
+          "detail": "งานผลิตอยู่ในสถานะ {status}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "สถานะงานผลิตไม่ถูกต้อง",
+          "type": "https://errors.packio/production.invalid_status"
+        }
+      },
+      "problem.production.no_price_path": {
+        "summary": "production.no_price_path",
+        "value": {
+          "code": "production.no_price_path",
+          "detail": "โรงงานนี้ไม่มีราคาสำหรับสเปกนี้ ย้ายงานไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่มีราคาของโรงงานนี้",
+          "type": "https://errors.packio/production.no_price_path"
+        }
+      },
       "problem.promotions.budget_exhausted": {
         "summary": "promotions.budget_exhausted",
         "value": {
@@ -3189,6 +3255,281 @@
           "createdAt",
           "status",
           "lastLoginAt"
+        ],
+        "type": "object"
+      },
+      "AdminJobDto": {
+        "properties": {
+          "acceptDueAt": {
+            "description": "Accept within 1 business day (D-074)",
+            "example": "2026-09-28T10:00:00+07:00",
+            "type": "string"
+          },
+          "acceptedAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedFileId": {
+            "description": "The approved artwork (locked copy)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assignments": {
+            "items": {
+              "$ref": "#/components/schemas/JobAssignmentDto"
+            },
+            "type": "array"
+          },
+          "atRisk": {
+            "example": false,
+            "type": "boolean"
+          },
+          "buyCostNet": {
+            "description": "D-141: only with `factory_cost.read`",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "destinations": {
+            "items": {
+              "$ref": "#/components/schemas/JobDestinationDto"
+            },
+            "type": "array"
+          },
+          "dielineFileId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "escalatedAt": {
+            "description": "Escalated to the Partner team / CS (D-074, D-012)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "factoryCode": {
+            "example": "F9001",
+            "type": "string"
+          },
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "holdReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "inspectionReasons": {
+            "description": "Why Packio inspects (D-076)",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "inspectionRequired": {
+            "description": "Packio inspects this job before shipping (D-076)",
+            "example": false,
+            "type": "boolean"
+          },
+          "jobNo": {
+            "example": "JOB-2609-00001",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobKind"
+              }
+            ],
+            "example": "production"
+          },
+          "lotNo": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneDto"
+            },
+            "type": "array"
+          },
+          "orderCode": {
+            "example": "DEVOR-2609-00001",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "plannedFinishOn": {
+            "example": "2026-10-09",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plannedStartOn": {
+            "example": "2026-09-28",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "predictedFinishOn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "promisedShipDate": {
+            "example": "2026-10-09",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantityGood": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityOrdered": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "quantityScrap": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "rejectNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rejectReasonCode": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rejectedAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "releaseMode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionStartMode"
+              }
+            ],
+            "example": "auto"
+          },
+          "releaseReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "releasedAt": {
+            "example": "2026-09-27T10:00:00+07:00",
+            "type": "string"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "What to make (no selling price)",
+            "example": {
+              "productTypeCode": "folding_carton",
+              "quantity": 1000
+            },
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionJobStatus"
+              }
+            ],
+            "example": "released"
+          }
+        },
+        "required": [
+          "id",
+          "jobNo",
+          "kind",
+          "status",
+          "releasedAt",
+          "acceptDueAt",
+          "acceptedAt",
+          "plannedStartOn",
+          "plannedFinishOn",
+          "promisedShipDate",
+          "quantityOrdered",
+          "quantityGood",
+          "quantityScrap",
+          "lotNo",
+          "spec",
+          "approvedFileId",
+          "dielineFileId",
+          "inspectionRequired",
+          "holdReason",
+          "destinations",
+          "milestones",
+          "orderId",
+          "orderCode",
+          "factoryId",
+          "factoryCode",
+          "releaseMode",
+          "releaseReason",
+          "rejectedAt",
+          "rejectReasonCode",
+          "rejectNote",
+          "escalatedAt",
+          "predictedFinishOn",
+          "atRisk",
+          "inspectionReasons",
+          "buyCostNet",
+          "assignments"
         ],
         "type": "object"
       },
@@ -5692,6 +6033,23 @@
       "AssigneeFilter": {
         "enum": [
           "me"
+        ],
+        "type": "string"
+      },
+      "AssignmentMode": {
+        "enum": [
+          "auto",
+          "manual",
+          "escalated"
+        ],
+        "type": "string"
+      },
+      "AssignmentReason": {
+        "enum": [
+          "initial",
+          "rejected",
+          "acceptance_overdue",
+          "manual"
         ],
         "type": "string"
       },
@@ -14233,6 +14591,15 @@
         ],
         "type": "string"
       },
+      "EvidenceRequirement": {
+        "enum": [
+          "none",
+          "photo",
+          "qc_form",
+          "photo_and_qc_form"
+        ],
+        "type": "string"
+      },
       "ExpiringPointsDto": {
         "properties": {
           "expiresAt": {
@@ -17577,6 +17944,139 @@
         ],
         "type": "object"
       },
+      "JobAssignmentDto": {
+        "properties": {
+          "decidedAt": {
+            "example": "2026-09-27T10:00:00+07:00",
+            "type": "string"
+          },
+          "fromFactoryId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marginAfterPct": {
+            "description": "D-141: only with `margin.read`",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssignmentMode"
+              }
+            ],
+            "example": "auto"
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssignmentReason"
+              }
+            ],
+            "example": "initial"
+          },
+          "toFactoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "fromFactoryId",
+          "toFactoryId",
+          "reason",
+          "mode",
+          "marginAfterPct",
+          "note",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
+      "JobDestinationDto": {
+        "properties": {
+          "line1": {
+            "example": "1 ถนนทดสอบ",
+            "type": "string"
+          },
+          "line2": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66810001234",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "recipientName": {
+            "description": "Recipient (D-142: name, address and phone only)",
+            "example": "ผู้รับ ทดสอบ",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recipientName",
+          "phone",
+          "line1",
+          "line2",
+          "postcode",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "JobKind": {
+        "enum": [
+          "production",
+          "mockup",
+          "reproduction"
+        ],
+        "type": "string"
+      },
+      "JobQueue": {
+        "enum": [
+          "escalated",
+          "at_risk",
+          "awaiting_acceptance"
+        ],
+        "type": "string"
+      },
+      "JobRejectReason": {
+        "enum": [
+          "capacity",
+          "spec_not_feasible",
+          "material_unavailable",
+          "artwork_issue",
+          "price",
+          "other"
+        ],
+        "type": "string"
+      },
       "JobStatus": {
         "enum": [
           "queued",
@@ -18209,6 +18709,153 @@
         "enum": [
           "customer",
           "internal"
+        ],
+        "type": "string"
+      },
+      "MilestoneDto": {
+        "properties": {
+          "completedAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerVisible": {
+            "example": true,
+            "type": "boolean"
+          },
+          "dueAt": {
+            "example": "2026-10-02T17:00:00+07:00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceRequirement"
+              }
+            ],
+            "example": "photo"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "printing",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Printing",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "พิมพ์",
+            "type": "string"
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onTime": {
+            "description": "Completed by its due time",
+            "example": null,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "photoFileIds": {
+            "description": "Photo evidence files",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000f1005"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "quantityIn": {
+            "example": 1050,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityOut": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityScrap": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "seq": {
+            "example": 4,
+            "type": "integer"
+          },
+          "startedAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MilestoneStatus"
+              }
+            ],
+            "example": "in_progress"
+          },
+          "tracksQuantity": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "key",
+          "nameTh",
+          "nameEn",
+          "status",
+          "evidence",
+          "tracksQuantity",
+          "customerVisible",
+          "dueAt",
+          "startedAt",
+          "completedAt",
+          "quantityIn",
+          "quantityOut",
+          "quantityScrap",
+          "onTime",
+          "note",
+          "photoFileIds"
+        ],
+        "type": "object"
+      },
+      "MilestoneStatus": {
+        "enum": [
+          "pending",
+          "in_progress",
+          "completed",
+          "skipped"
         ],
         "type": "string"
       },
@@ -19567,6 +20214,171 @@
           "approvalRequestId",
           "tier",
           "envelopeNote"
+        ],
+        "type": "object"
+      },
+      "PartnerJobDto": {
+        "properties": {
+          "acceptDueAt": {
+            "description": "Accept within 1 business day (D-074)",
+            "example": "2026-09-28T10:00:00+07:00",
+            "type": "string"
+          },
+          "acceptedAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedFileId": {
+            "description": "The approved artwork (locked copy)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "destinations": {
+            "items": {
+              "$ref": "#/components/schemas/JobDestinationDto"
+            },
+            "type": "array"
+          },
+          "dielineFileId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "holdReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "inspectionRequired": {
+            "description": "Packio inspects this job before shipping (D-076)",
+            "example": false,
+            "type": "boolean"
+          },
+          "jobNo": {
+            "example": "JOB-2609-00001",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobKind"
+              }
+            ],
+            "example": "production"
+          },
+          "lotNo": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "milestones": {
+            "items": {
+              "$ref": "#/components/schemas/MilestoneDto"
+            },
+            "type": "array"
+          },
+          "plannedFinishOn": {
+            "example": "2026-10-09",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plannedStartOn": {
+            "example": "2026-09-28",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "promisedShipDate": {
+            "example": "2026-10-09",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantityGood": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityOrdered": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "quantityScrap": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "releasedAt": {
+            "example": "2026-09-27T10:00:00+07:00",
+            "type": "string"
+          },
+          "spec": {
+            "additionalProperties": true,
+            "description": "What to make (no selling price)",
+            "example": {
+              "productTypeCode": "folding_carton",
+              "quantity": 1000
+            },
+            "type": "object"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionJobStatus"
+              }
+            ],
+            "example": "released"
+          }
+        },
+        "required": [
+          "id",
+          "jobNo",
+          "kind",
+          "status",
+          "releasedAt",
+          "acceptDueAt",
+          "acceptedAt",
+          "plannedStartOn",
+          "plannedFinishOn",
+          "promisedShipDate",
+          "quantityOrdered",
+          "quantityGood",
+          "quantityScrap",
+          "lotNo",
+          "spec",
+          "approvedFileId",
+          "dielineFileId",
+          "inspectionRequired",
+          "holdReason",
+          "destinations",
+          "milestones"
         ],
         "type": "object"
       },
@@ -22316,6 +23128,25 @@
         ],
         "type": "string"
       },
+      "ProductionJobStatus": {
+        "enum": [
+          "released",
+          "accepted",
+          "rejected",
+          "in_progress",
+          "on_hold",
+          "completed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "ProductionStartMode": {
+        "enum": [
+          "auto",
+          "manual_exception"
+        ],
+        "type": "string"
+      },
       "PromotionAction": {
         "enum": [
           "activate",
@@ -23884,6 +24715,26 @@
         ],
         "type": "object"
       },
+      "ReassignJobDto": {
+        "properties": {
+          "factoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "example": "โรงงานเดิมเครื่องจักรเสีย",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "factoryId",
+          "note"
+        ],
+        "type": "object"
+      },
       "RecordConsentDto": {
         "properties": {
           "granted": {
@@ -24267,6 +25118,27 @@
         },
         "required": [
           "comment"
+        ],
+        "type": "object"
+      },
+      "RejectJobDto": {
+        "properties": {
+          "note": {
+            "example": "คิวเต็มถึงสิ้นเดือน",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "reasonCode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobRejectReason"
+              }
+            ],
+            "example": "capacity"
+          }
+        },
+        "required": [
+          "reasonCode"
         ],
         "type": "object"
       },
@@ -28648,6 +29520,21 @@
           "sort",
           "status",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "StartProductionDto": {
+        "properties": {
+          "reason": {
+            "description": "Why production starts as an exception (audited)",
+            "example": "ลูกค้ายืนยันงานเร่งด่วน อนุมัติแบบทางโทรศัพท์แล้ว",
+            "maxLength": 1000,
+            "minLength": 10,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ],
         "type": "object"
       },
@@ -121655,6 +122542,334 @@
         ]
       }
     },
+    "/v1/admin/orders/{orderId}/actions/start-production": {
+      "post": {
+        "description": "Production normally starts by itself once the artwork is approved and the instalments required before production are paid (D-073). CS may start it earlier only as a documented exception — never before payment; the reason is audited.\n\nImplements: D-073.",
+        "operationId": "admin.production.startManually",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้ายืนยันงานเร่งด่วน อนุมัติแบบทางโทรศัพท์แล้ว"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StartProductionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                  "acceptedAt": null,
+                  "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "assignments": [
+                    {
+                      "decidedAt": "2026-09-27T10:00:00+07:00",
+                      "fromFactoryId": null,
+                      "marginAfterPct": null,
+                      "mode": "auto",
+                      "note": null,
+                      "reason": "initial",
+                      "toFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003"
+                    }
+                  ],
+                  "atRisk": false,
+                  "buyCostNet": null,
+                  "destinations": [
+                    {
+                      "line1": "1 ถนนทดสอบ",
+                      "line2": null,
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "quantity": 1000,
+                      "recipientName": "ผู้รับ ทดสอบ"
+                    }
+                  ],
+                  "dielineFileId": null,
+                  "escalatedAt": null,
+                  "factoryCode": "F9001",
+                  "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "holdReason": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspectionReasons": [],
+                  "inspectionRequired": false,
+                  "jobNo": "JOB-2609-00001",
+                  "kind": "production",
+                  "lotNo": null,
+                  "milestones": [
+                    {
+                      "completedAt": null,
+                      "customerVisible": true,
+                      "dueAt": "2026-10-02T17:00:00+07:00",
+                      "evidence": "photo",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                      "key": "printing",
+                      "nameEn": "Printing",
+                      "nameTh": "พิมพ์",
+                      "note": null,
+                      "onTime": null,
+                      "photoFileIds": [],
+                      "quantityIn": 1050,
+                      "quantityOut": null,
+                      "quantityScrap": null,
+                      "seq": 4,
+                      "startedAt": "2026-10-01T09:00:00+07:00",
+                      "status": "in_progress",
+                      "tracksQuantity": true
+                    }
+                  ],
+                  "orderCode": "DEVOR-2609-00001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "plannedFinishOn": "2026-10-09",
+                  "plannedStartOn": "2026-09-28",
+                  "predictedFinishOn": null,
+                  "promisedShipDate": "2026-10-09",
+                  "quantityGood": null,
+                  "quantityOrdered": 1000,
+                  "quantityScrap": null,
+                  "rejectNote": null,
+                  "rejectReasonCode": null,
+                  "rejectedAt": null,
+                  "releaseMode": "manual_exception",
+                  "releaseReason": "ลูกค้ายืนยันงานเร่งด่วน",
+                  "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "spec": {
+                    "productTypeCode": "folding_carton",
+                    "quantity": 1000
+                  },
+                  "status": "released"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminJobDto"
+                }
+              }
+            },
+            "description": "Released",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  },
+                  "production.already_released": {
+                    "$ref": "#/components/examples/problem.production.already_released"
+                  },
+                  "production.gate_closed": {
+                    "$ref": "#/components/examples/problem.production.gate_closed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `numbering.series_missing`, `production.already_released`, `production.gate_closed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Start production as an exception",
+        "tags": [
+          "admin.production"
+        ],
+        "x-required-permissions": [
+          "production.start_manual"
+        ]
+      }
+    },
     "/v1/admin/orders/{orderId}/artwork-submissions": {
       "get": {
         "description": "Newest first, with preflight reports (D-070).\n\nImplements: D-070, D-073.",
@@ -129836,6 +131051,934 @@
         ],
         "x-required-permissions": [
           "price_suggestions.read"
+        ]
+      }
+    },
+    "/v1/admin/production-jobs": {
+      "get": {
+        "description": "Newest first; queues: `awaiting_acceptance` (released, not yet accepted), `escalated` (rejected or overdue with no factory to move to, D-074 / D-012), `at_risk` (predicted to miss the promised date). Buy prices only with `factory_cost.read` (D-141).\n\nImplements: D-073, D-074, D-141.",
+        "operationId": "admin.production.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProductionJobStatus"
+            }
+          },
+          {
+            "description": "Work queues",
+            "in": "query",
+            "name": "queue",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/JobQueue"
+            }
+          },
+          {
+            "in": "query",
+            "name": "orderId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                      "acceptedAt": null,
+                      "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                      "assignments": [
+                        {
+                          "decidedAt": "2026-09-27T10:00:00+07:00",
+                          "fromFactoryId": null,
+                          "marginAfterPct": null,
+                          "mode": "auto",
+                          "note": null,
+                          "reason": "initial",
+                          "toFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003"
+                        }
+                      ],
+                      "atRisk": false,
+                      "buyCostNet": null,
+                      "destinations": [
+                        {
+                          "line1": "1 ถนนทดสอบ",
+                          "line2": null,
+                          "phone": "+66810001234",
+                          "postcode": "10110",
+                          "quantity": 1000,
+                          "recipientName": "ผู้รับ ทดสอบ"
+                        }
+                      ],
+                      "dielineFileId": null,
+                      "escalatedAt": null,
+                      "factoryCode": "F9001",
+                      "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                      "holdReason": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "inspectionReasons": [],
+                      "inspectionRequired": false,
+                      "jobNo": "JOB-2609-00001",
+                      "kind": "production",
+                      "lotNo": null,
+                      "milestones": [
+                        {
+                          "completedAt": null,
+                          "customerVisible": true,
+                          "dueAt": "2026-10-02T17:00:00+07:00",
+                          "evidence": "photo",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                          "key": "printing",
+                          "nameEn": "Printing",
+                          "nameTh": "พิมพ์",
+                          "note": null,
+                          "onTime": null,
+                          "photoFileIds": [],
+                          "quantityIn": 1050,
+                          "quantityOut": null,
+                          "quantityScrap": null,
+                          "seq": 4,
+                          "startedAt": "2026-10-01T09:00:00+07:00",
+                          "status": "in_progress",
+                          "tracksQuantity": true
+                        }
+                      ],
+                      "orderCode": "DEVOR-2609-00001",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                      "plannedFinishOn": "2026-10-09",
+                      "plannedStartOn": "2026-09-28",
+                      "predictedFinishOn": null,
+                      "promisedShipDate": "2026-10-09",
+                      "quantityGood": null,
+                      "quantityOrdered": 1000,
+                      "quantityScrap": null,
+                      "rejectNote": null,
+                      "rejectReasonCode": null,
+                      "rejectedAt": null,
+                      "releaseMode": "auto",
+                      "releaseReason": null,
+                      "releasedAt": "2026-09-27T10:00:00+07:00",
+                      "spec": {
+                        "productTypeCode": "folding_carton",
+                        "quantity": 1000
+                      },
+                      "status": "released"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminJobDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List production jobs",
+        "tags": [
+          "admin.production"
+        ],
+        "x-required-permissions": [
+          "production.read"
+        ]
+      }
+    },
+    "/v1/admin/production-jobs/{jobId}": {
+      "get": {
+        "description": "With milestones, photos and assignment history (D-012).\n\nImplements: D-073, D-012.",
+        "operationId": "admin.production.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                  "acceptedAt": null,
+                  "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "assignments": [
+                    {
+                      "decidedAt": "2026-09-27T10:00:00+07:00",
+                      "fromFactoryId": null,
+                      "marginAfterPct": null,
+                      "mode": "auto",
+                      "note": null,
+                      "reason": "initial",
+                      "toFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003"
+                    }
+                  ],
+                  "atRisk": false,
+                  "buyCostNet": null,
+                  "destinations": [
+                    {
+                      "line1": "1 ถนนทดสอบ",
+                      "line2": null,
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "quantity": 1000,
+                      "recipientName": "ผู้รับ ทดสอบ"
+                    }
+                  ],
+                  "dielineFileId": null,
+                  "escalatedAt": null,
+                  "factoryCode": "F9001",
+                  "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "holdReason": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspectionReasons": [],
+                  "inspectionRequired": false,
+                  "jobNo": "JOB-2609-00001",
+                  "kind": "production",
+                  "lotNo": null,
+                  "milestones": [
+                    {
+                      "completedAt": null,
+                      "customerVisible": true,
+                      "dueAt": "2026-10-02T17:00:00+07:00",
+                      "evidence": "photo",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                      "key": "printing",
+                      "nameEn": "Printing",
+                      "nameTh": "พิมพ์",
+                      "note": null,
+                      "onTime": null,
+                      "photoFileIds": [],
+                      "quantityIn": 1050,
+                      "quantityOut": null,
+                      "quantityScrap": null,
+                      "seq": 4,
+                      "startedAt": "2026-10-01T09:00:00+07:00",
+                      "status": "in_progress",
+                      "tracksQuantity": true
+                    }
+                  ],
+                  "orderCode": "DEVOR-2609-00001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "plannedFinishOn": "2026-10-09",
+                  "plannedStartOn": "2026-09-28",
+                  "predictedFinishOn": null,
+                  "promisedShipDate": "2026-10-09",
+                  "quantityGood": null,
+                  "quantityOrdered": 1000,
+                  "quantityScrap": null,
+                  "rejectNote": null,
+                  "rejectReasonCode": null,
+                  "rejectedAt": null,
+                  "releaseMode": "auto",
+                  "releaseReason": null,
+                  "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "spec": {
+                    "productTypeCode": "folding_carton",
+                    "quantity": 1000
+                  },
+                  "status": "released"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminJobDto"
+                }
+              }
+            },
+            "description": "Job",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a production job",
+        "tags": [
+          "admin.production"
+        ],
+        "x-required-permissions": [
+          "production.read"
+        ]
+      }
+    },
+    "/v1/admin/production-jobs/{jobId}/actions/reassign": {
+      "post": {
+        "description": "For a released (not yet accepted) or rejected job: the new factory makes it at its own buy price while the customer price never changes, and only if the margin stays at or above the floor (D-012, 10 %, setting). Returns the new job.\n\nImplements: D-012, D-101.",
+        "operationId": "admin.production.reassign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                    "note": "โรงงานเดิมเครื่องจักรเสีย"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReassignJobDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                  "acceptedAt": null,
+                  "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "assignments": [
+                    {
+                      "decidedAt": "2026-09-27T10:00:00+07:00",
+                      "fromFactoryId": null,
+                      "marginAfterPct": null,
+                      "mode": "auto",
+                      "note": null,
+                      "reason": "initial",
+                      "toFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003"
+                    }
+                  ],
+                  "atRisk": false,
+                  "buyCostNet": null,
+                  "destinations": [
+                    {
+                      "line1": "1 ถนนทดสอบ",
+                      "line2": null,
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "quantity": 1000,
+                      "recipientName": "ผู้รับ ทดสอบ"
+                    }
+                  ],
+                  "dielineFileId": null,
+                  "escalatedAt": null,
+                  "factoryCode": "F9001",
+                  "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "holdReason": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspectionReasons": [],
+                  "inspectionRequired": false,
+                  "jobNo": "JOB-2609-00001",
+                  "kind": "production",
+                  "lotNo": null,
+                  "milestones": [
+                    {
+                      "completedAt": null,
+                      "customerVisible": true,
+                      "dueAt": "2026-10-02T17:00:00+07:00",
+                      "evidence": "photo",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                      "key": "printing",
+                      "nameEn": "Printing",
+                      "nameTh": "พิมพ์",
+                      "note": null,
+                      "onTime": null,
+                      "photoFileIds": [],
+                      "quantityIn": 1050,
+                      "quantityOut": null,
+                      "quantityScrap": null,
+                      "seq": 4,
+                      "startedAt": "2026-10-01T09:00:00+07:00",
+                      "status": "in_progress",
+                      "tracksQuantity": true
+                    }
+                  ],
+                  "orderCode": "DEVOR-2609-00001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "plannedFinishOn": "2026-10-09",
+                  "plannedStartOn": "2026-09-28",
+                  "predictedFinishOn": null,
+                  "promisedShipDate": "2026-10-09",
+                  "quantityGood": null,
+                  "quantityOrdered": 1000,
+                  "quantityScrap": null,
+                  "rejectNote": null,
+                  "rejectReasonCode": null,
+                  "rejectedAt": null,
+                  "releaseMode": "auto",
+                  "releaseReason": null,
+                  "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "spec": {
+                    "productTypeCode": "folding_carton",
+                    "quantity": 1000
+                  },
+                  "status": "released"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminJobDto"
+                }
+              }
+            },
+            "description": "The new job",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "production.invalid_status": {
+                    "$ref": "#/components/examples/problem.production.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `production.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "production.below_margin_floor": {
+                    "$ref": "#/components/examples/problem.production.below_margin_floor"
+                  },
+                  "production.factory_unavailable": {
+                    "$ref": "#/components/examples/problem.production.factory_unavailable"
+                  },
+                  "production.no_price_path": {
+                    "$ref": "#/components/examples/problem.production.no_price_path"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `production.below_margin_floor`, `production.factory_unavailable`, `production.no_price_path`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Move a job to another factory",
+        "tags": [
+          "admin.production"
+        ],
+        "x-required-permissions": [
+          "production.manage"
         ]
       }
     },
@@ -167244,6 +169387,1160 @@
         ]
       }
     },
+    "/v1/partner/production-jobs": {
+      "get": {
+        "description": "Newest first; `awaiting_acceptance` = released jobs to accept within 1 business day (D-074). No selling prices (D-142).\n\nImplements: D-074, D-142.",
+        "operationId": "partner.production.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ProductionJobStatus"
+            }
+          },
+          {
+            "description": "Work queues",
+            "in": "query",
+            "name": "queue",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/JobQueue"
+            }
+          },
+          {
+            "in": "query",
+            "name": "orderId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                      "acceptedAt": null,
+                      "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                      "destinations": [
+                        {
+                          "line1": "1 ถนนทดสอบ",
+                          "line2": null,
+                          "phone": "+66810001234",
+                          "postcode": "10110",
+                          "quantity": 1000,
+                          "recipientName": "ผู้รับ ทดสอบ"
+                        }
+                      ],
+                      "dielineFileId": null,
+                      "holdReason": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "inspectionRequired": false,
+                      "jobNo": "JOB-2609-00001",
+                      "kind": "production",
+                      "lotNo": null,
+                      "milestones": [
+                        {
+                          "completedAt": null,
+                          "customerVisible": true,
+                          "dueAt": "2026-10-02T17:00:00+07:00",
+                          "evidence": "photo",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                          "key": "printing",
+                          "nameEn": "Printing",
+                          "nameTh": "พิมพ์",
+                          "note": null,
+                          "onTime": null,
+                          "photoFileIds": [],
+                          "quantityIn": 1050,
+                          "quantityOut": null,
+                          "quantityScrap": null,
+                          "seq": 4,
+                          "startedAt": "2026-10-01T09:00:00+07:00",
+                          "status": "in_progress",
+                          "tracksQuantity": true
+                        }
+                      ],
+                      "plannedFinishOn": "2026-10-09",
+                      "plannedStartOn": "2026-09-28",
+                      "promisedShipDate": "2026-10-09",
+                      "quantityGood": null,
+                      "quantityOrdered": 1000,
+                      "quantityScrap": null,
+                      "releasedAt": "2026-09-27T10:00:00+07:00",
+                      "spec": {
+                        "productTypeCode": "folding_carton",
+                        "quantity": 1000
+                      },
+                      "status": "released"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PartnerJobDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "List my factory’s jobs",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.read"
+        ]
+      }
+    },
+    "/v1/partner/production-jobs/{jobId}": {
+      "get": {
+        "description": "Spec, the approved artwork and dieline (download the approved version only), delivery contacts (D-142), milestones.\n\nImplements: D-142, D-075.",
+        "operationId": "partner.production.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                  "acceptedAt": null,
+                  "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "destinations": [
+                    {
+                      "line1": "1 ถนนทดสอบ",
+                      "line2": null,
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "quantity": 1000,
+                      "recipientName": "ผู้รับ ทดสอบ"
+                    }
+                  ],
+                  "dielineFileId": null,
+                  "holdReason": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspectionRequired": false,
+                  "jobNo": "JOB-2609-00001",
+                  "kind": "production",
+                  "lotNo": null,
+                  "milestones": [
+                    {
+                      "completedAt": null,
+                      "customerVisible": true,
+                      "dueAt": "2026-10-02T17:00:00+07:00",
+                      "evidence": "photo",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                      "key": "printing",
+                      "nameEn": "Printing",
+                      "nameTh": "พิมพ์",
+                      "note": null,
+                      "onTime": null,
+                      "photoFileIds": [],
+                      "quantityIn": 1050,
+                      "quantityOut": null,
+                      "quantityScrap": null,
+                      "seq": 4,
+                      "startedAt": "2026-10-01T09:00:00+07:00",
+                      "status": "in_progress",
+                      "tracksQuantity": true
+                    }
+                  ],
+                  "plannedFinishOn": "2026-10-09",
+                  "plannedStartOn": "2026-09-28",
+                  "promisedShipDate": "2026-10-09",
+                  "quantityGood": null,
+                  "quantityOrdered": 1000,
+                  "quantityScrap": null,
+                  "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "spec": {
+                    "productTypeCode": "folding_carton",
+                    "quantity": 1000
+                  },
+                  "status": "released"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerJobDto"
+                }
+              }
+            },
+            "description": "Job",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Get one of my jobs",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.read"
+        ]
+      }
+    },
+    "/v1/partner/production-jobs/{jobId}/actions/accept": {
+      "post": {
+        "description": "Within 1 business day of release (D-074); books the load in the planned week (D-101). Counts for the scorecard (D-155).\n\nImplements: D-074, D-101, D-155.",
+        "operationId": "partner.production.accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                  "acceptedAt": "2026-09-27T14:00:00+07:00",
+                  "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "destinations": [
+                    {
+                      "line1": "1 ถนนทดสอบ",
+                      "line2": null,
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "quantity": 1000,
+                      "recipientName": "ผู้รับ ทดสอบ"
+                    }
+                  ],
+                  "dielineFileId": null,
+                  "holdReason": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspectionRequired": false,
+                  "jobNo": "JOB-2609-00001",
+                  "kind": "production",
+                  "lotNo": null,
+                  "milestones": [
+                    {
+                      "completedAt": null,
+                      "customerVisible": true,
+                      "dueAt": "2026-10-02T17:00:00+07:00",
+                      "evidence": "photo",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                      "key": "printing",
+                      "nameEn": "Printing",
+                      "nameTh": "พิมพ์",
+                      "note": null,
+                      "onTime": null,
+                      "photoFileIds": [],
+                      "quantityIn": 1050,
+                      "quantityOut": null,
+                      "quantityScrap": null,
+                      "seq": 4,
+                      "startedAt": "2026-10-01T09:00:00+07:00",
+                      "status": "in_progress",
+                      "tracksQuantity": true
+                    }
+                  ],
+                  "plannedFinishOn": "2026-10-09",
+                  "plannedStartOn": "2026-09-28",
+                  "promisedShipDate": "2026-10-09",
+                  "quantityGood": null,
+                  "quantityOrdered": 1000,
+                  "quantityScrap": null,
+                  "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "spec": {
+                    "productTypeCode": "folding_carton",
+                    "quantity": 1000
+                  },
+                  "status": "accepted"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerJobDto"
+                }
+              }
+            },
+            "description": "Accepted",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "production.invalid_status": {
+                    "$ref": "#/components/examples/problem.production.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `production.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Accept a job",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.respond"
+        ]
+      }
+    },
+    "/v1/partner/production-jobs/{jobId}/actions/reject": {
+      "post": {
+        "description": "Packio moves the job to another factory when one keeps the margin floor (D-012, D-101) or escalates it; the customer price never changes. Counts in the scorecard.\n\nImplements: D-012, D-074.",
+        "operationId": "partner.production.reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "คิวเต็มถึงสิ้นเดือน",
+                    "reasonCode": "capacity"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RejectJobDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "acceptDueAt": "2026-09-28T10:00:00+07:00",
+                  "acceptedAt": null,
+                  "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1005",
+                  "destinations": [
+                    {
+                      "line1": "1 ถนนทดสอบ",
+                      "line2": null,
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "quantity": 1000,
+                      "recipientName": "ผู้รับ ทดสอบ"
+                    }
+                  ],
+                  "dielineFileId": null,
+                  "holdReason": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "inspectionRequired": false,
+                  "jobNo": "JOB-2609-00001",
+                  "kind": "production",
+                  "lotNo": null,
+                  "milestones": [
+                    {
+                      "completedAt": null,
+                      "customerVisible": true,
+                      "dueAt": "2026-10-02T17:00:00+07:00",
+                      "evidence": "photo",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                      "key": "printing",
+                      "nameEn": "Printing",
+                      "nameTh": "พิมพ์",
+                      "note": null,
+                      "onTime": null,
+                      "photoFileIds": [],
+                      "quantityIn": 1050,
+                      "quantityOut": null,
+                      "quantityScrap": null,
+                      "seq": 4,
+                      "startedAt": "2026-10-01T09:00:00+07:00",
+                      "status": "in_progress",
+                      "tracksQuantity": true
+                    }
+                  ],
+                  "plannedFinishOn": "2026-10-09",
+                  "plannedStartOn": "2026-09-28",
+                  "promisedShipDate": "2026-10-09",
+                  "quantityGood": null,
+                  "quantityOrdered": 1000,
+                  "quantityScrap": null,
+                  "releasedAt": "2026-09-27T10:00:00+07:00",
+                  "spec": {
+                    "productTypeCode": "folding_carton",
+                    "quantity": 1000
+                  },
+                  "status": "rejected"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerJobDto"
+                }
+              }
+            },
+            "description": "Rejected",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "production.invalid_status": {
+                    "$ref": "#/components/examples/problem.production.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `production.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Reject a job with a reason",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_jobs.respond"
+        ]
+      }
+    },
     "/v1/partner/realtime/auth": {
       "post": {
         "description": "Returns a 60-second token for the channels of the signed-in principal (own user, factory/company scopes).\n\nImplements: ADR-0003.",
@@ -200624,6 +203921,10 @@
       "name": "admin.priceSuggestions"
     },
     {
+      "description": "Production jobs: automatic release (D-073), manual exceptions, acceptance SLA and escalations (D-074), reassignment within the margin floor (D-012, D-101).",
+      "name": "admin.production"
+    },
+    {
       "description": "Promotions with validated conditions and benefits, coupon codes (single, bulk-unique, per-customer), CSV export and the redemption report (D-053).",
       "name": "admin.promotions"
     },
@@ -200730,6 +204031,10 @@
     {
       "description": "A factory prices a folding configuration on its own price list (D-044).",
       "name": "partner.pricingFolding"
+    },
+    {
+      "description": "My factory’s jobs: accept / reject, milestones with photos and quantities, QC, issues, capacity and scorecard (D-074…D-076, D-142, D-155).",
+      "name": "partner.production"
     },
     {
       "description": "Realtime signals over SSE for factory users (ids + type only, contract §6).",

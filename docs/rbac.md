@@ -100,6 +100,11 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `design_services.manage` — Assign designers, deliver design rounds and re-quote structure or concept changes (D-071) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |
 | `mockups.manage` — Add a paid mockup / physical proof to an order at a CS-quoted price (audited) (D-072) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
 | `drawings.generate` — Generate dieline drawings and send templates to customers (D-070) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  |  |
+| `production.read` — Read production jobs, milestones, QC, inspections and factory scorecards (D-073, D-155) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |
+| `production.start_manual` — Start production as an exception, with a reason (audited) (D-073) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
+| `production.manage` — Reassign jobs to another factory, hold and resume jobs, resolve escalations (D-012, D-074, D-101) | ● |  |  |  | ● |  | ● |  |  |  |  |  | ● |  |
+| `milestone_routes.manage` — Edit milestone routes per product type as new versions (D-075) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |
+| `inspections.perform` — Carry out Packio inspections and record their results (D-076) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|
@@ -134,6 +139,13 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_capacity.read` — Read the own capacity and bookings (D-101) | ● | ● |  |  |  |  |
 | `factory_rfq.read` — Read the requests for a buy price Packio sent the factory (never the sell price) (D-100, D-044) | ● | ● |  |  |  |  |
 | `factory_rfq.respond` — Answer a request for a buy price per quantity tier, or decline it (D-100) | ● | ● |  |  |  |  |
+| `factory_jobs.read` — Read the own factory’s production jobs: spec, approved artwork, delivery contacts (D-142) | ● | ● | ● | ● | ● | ● |
+| `factory_jobs.respond` — Accept or reject released jobs within the acceptance time (D-074) | ● | ● |  |  |  |  |
+| `factory_milestones.update` — Start and complete milestones with quantities and photos (D-075) | ● | ● | ● | ● | ● |  |
+| `factory_qc.record` — Record QC checklists with photos (D-076) | ● |  |  | ● |  |  |
+| `factory_issues.raise` — Raise production issues on own jobs | ● | ● | ● | ● | ● |  |
+| `factory_capacity.manage` — Set weekly capacity overrides of the own factory (D-101) | ● | ● |  |  |  |  |
+| `factory_scorecard.read` — Read the own factory’s monthly scorecard (D-155) | ● | ● |  | ● |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

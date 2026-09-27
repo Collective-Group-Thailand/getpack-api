@@ -73,6 +73,24 @@ export interface SettingValues {
   'payments.qr_validity_minutes': number;
   /** Not seeded: fee 0 until Finance sets it. */
   'payments.method_fees': Record<string, { pct?: string; fixedAmount?: string }>;
+  /** D-074 business days a factory has to accept a released job. */
+  'production.factory_acceptance_sla_business_days': number;
+  /** D-101 active factories a product type needs before auto-selection / auto-reassignment. */
+  'partners.auto_selection_min_factories': number;
+  /** D-076 Packio risk-based inspection sampling. */
+  'qc.inspection_sampling': {
+    fullInspectionFromValue: string;
+    sampledBandFromValue: string;
+    sampledBandRatePct: string;
+    trialFactoryJobs: number;
+    trialFactoryRatePct: string;
+    highDefectRateThresholdPct: string;
+    highDefectWindowDays: number;
+    highDefectRatePct: string;
+    specialFinishOrFoodUpliftPp: string;
+    isoInspectionLevel: string;
+    aql: { critical: string; major: string; minor: string };
+  };
   /** D-070 preflight: severity per check and the technical thresholds (ADR-0009, proposed). */
   'artwork.preflight_rules': {
     severities: Record<string, 'block' | 'warn' | 'info'>;

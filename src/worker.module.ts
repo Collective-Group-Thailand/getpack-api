@@ -19,6 +19,7 @@ import { PartnersModule } from '@modules/partners/partners.module';
 import { PaymentSchedulesModule } from '@modules/payment-schedules/payment-schedules.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
+import { ProductionModule } from '@modules/production/production.module';
 import { PromotionsModule } from '@modules/promotions/promotions.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
@@ -83,6 +84,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     ArtworkModule,
     DesignServicesModule,
     DesignsModule,
+    ProductionModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],
