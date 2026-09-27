@@ -299,6 +299,19 @@ export const PERMISSIONS = [
     decisionRefs: ['D-051'],
   },
 
+  {
+    key: 'orders.read',
+    audience: 'staff',
+    description: 'Read order groups, orders and their queues',
+    decisionRefs: ['D-060'],
+  },
+  {
+    key: 'orders.cancel',
+    audience: 'staff',
+    description: 'Cancel order groups or orders before production, with a reason',
+    decisionRefs: ['D-060'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

@@ -562,5 +562,15 @@
       "title": "Withholding rate missing",
       "detail": "The withholding rate {code} is not set; please contact customer service (D-174)."
     }
+  },
+  "order": {
+    "invalid_transition": {
+      "title": "Invalid order transition",
+      "detail": "An order in {from} cannot take {fact}: {reason}."
+    },
+    "cancel_not_allowed": {
+      "title": "Cannot cancel",
+      "detail": "Only unpaid orders can be cancelled here; please contact customer service."
+    }
   }
 }

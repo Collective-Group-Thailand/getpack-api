@@ -56,6 +56,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'carriers.read',
       'quotes.read',
       'rfqs.read',
+      'orders.read',
     ],
   },
   {
@@ -64,7 +65,12 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'รองประธาน',
     nameEn: 'VP',
-    permissions: [...APPROVER, ...COST_AND_MARGIN, 'partners.read'],
+    permissions: [
+      ...APPROVER,
+      ...COST_AND_MARGIN,
+      'partners.read',
+      'orders.read',
+    ],
   },
   {
     key: 'director',
@@ -72,7 +78,10 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ผู้อำนวยการ',
     nameEn: 'Director',
-    permissions: APPROVER,
+    permissions: [
+      ...APPROVER,
+      'orders.read',
+    ],
   },
   {
     key: 'admin',
@@ -108,6 +117,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'customers.read',
       'customers.manage',
       'carts.manage_on_behalf',
+      'orders.read',
+      'orders.cancel',
     ],
   },
   {
@@ -129,6 +140,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'customers.read',
       'customers.manage',
       'carts.manage_on_behalf',
+      'orders.read',
+      'orders.cancel',
     ],
   },
   {
@@ -150,6 +163,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'customers.read',
       'customers.manage',
       'carts.manage_on_behalf',
+      'orders.read',
+      'orders.cancel',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -159,7 +174,11 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ฝ่ายเตรียมพิมพ์',
     nameEn: 'Prepress',
-    permissions: [...EVERY_STAFF_MEMBER, 'catalog.read'],
+    permissions: [
+      ...EVERY_STAFF_MEMBER,
+      'catalog.read',
+      'orders.read',
+    ],
   },
   {
     key: 'finance',
@@ -177,6 +196,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'quotes.read',
       'document_series.read',
       'customers.read',
+      'orders.read',
     ],
   },
   {
@@ -197,6 +217,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'document_series.read',
       'document_series.manage',
       'customers.read',
+      'orders.read',
     ],
   },
   {
@@ -206,7 +227,13 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายขนส่ง',
     nameEn: 'Logistics',
     // Customer rates are sell prices; factory payout cards are buy prices and stay hidden (D-141).
-    permissions: [...EVERY_STAFF_MEMBER, 'shipping_rates.read', 'shipping_rates.manage', 'carriers.read'],
+    permissions: [
+      ...EVERY_STAFF_MEMBER,
+      'shipping_rates.read',
+      'shipping_rates.manage',
+      'carriers.read',
+      'orders.read',
+    ],
   },
   {
     key: 'marketing',
@@ -262,6 +289,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'rfqs.read',
       'document_series.read',
       'customers.read',
+      'orders.read',
     ],
   },
 

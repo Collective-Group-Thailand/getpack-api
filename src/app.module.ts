@@ -17,6 +17,7 @@ import { CatalogModule } from '@modules/catalog/catalog.module';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { IamModule } from '@modules/iam/iam.module';
+import { OrdersModule } from '@modules/orders/orders.module';
 import { PartnersModule } from '@modules/partners/partners.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
@@ -83,6 +84,7 @@ import { LoggerModule } from 'nestjs-pino';
     CustomersModule,
     CartsModule,
     CheckoutModule,
+    OrdersModule,
     HealthModule,
     SurfacesModule,
   ],

@@ -70,6 +70,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `customers.read` — Find customers and read their profile, addresses and tax profiles (D-092) | ● |  |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
 | `customers.manage` — Create customer accounts and keep their addresses and tax profiles (CS) (D-092) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
 | `carts.manage_on_behalf` — Build a cart for a customer and check it out on their behalf (CS) (D-051) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
+| `orders.read` — Read order groups, orders and their queues (D-060) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  | ● |
+| `orders.cancel` — Cancel order groups or orders before production, with a reason (D-060) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

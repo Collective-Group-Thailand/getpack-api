@@ -3,6 +3,7 @@ import { CARTS_STORE_CONTROLLERS } from '@modules/carts/carts.registry';
 import { StoreCatalogController } from '@modules/catalog/store/store-catalog.controller';
 import { CHECKOUT_STORE_CONTROLLERS } from '@modules/checkout/checkout.registry';
 import { CUSTOMERS_STORE_CONTROLLERS } from '@modules/customers/customers.registry';
+import { ORDERS_STORE_CONTROLLERS } from '@modules/orders/orders.registry';
 import { StoreQuotePathController } from '@modules/partners/quote-path/quote-path.controller';
 import { PRICING_STORE_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
@@ -34,6 +35,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...CUSTOMERS_STORE_CONTROLLERS,
     ...CARTS_STORE_CONTROLLERS,
     ...CHECKOUT_STORE_CONTROLLERS,
+    ...ORDERS_STORE_CONTROLLERS,
   ],
 })
 export class StoreApiModule {}

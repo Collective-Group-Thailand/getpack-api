@@ -1,7 +1,7 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional } from 'class-validator';
+import { IsIn, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
 import { AddressSnapshotDto } from '../carts/carts.dto';
 
@@ -382,3 +382,20 @@ export class OrderGroupListQuery extends PageQuery {
   @IsIn(ORDER_GROUP_STATUSES)
   status?: (typeof ORDER_GROUP_STATUSES)[number];
 }
+
+export class CancelOrderDto {
+  @ApiProperty({
+    example: 'customer_request',
+    description: 'An active cancel reason (`order_cancel_reasons`); customers may use `customer` reasons only',
+  })
+  @IsString()
+  @Matches(/^[a-z][a-z0-9_]*$/)
+  reasonCode!: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'ลูกค้าเปลี่ยนแบบ', maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  note?: string | null;
+}
+

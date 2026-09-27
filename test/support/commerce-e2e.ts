@@ -236,3 +236,40 @@ export async function expireQuote(ctx: CommerceApp, quotePublicId: string): Prom
     );
   });
 }
+
+/**
+ * A customer's placed order group: one quotation per quantity (one item each) delivered to `postcode`
+ * (which must have shipping, see `seedShipping`). Returns the group body.
+ */
+export async function placeOrder(
+  ctx: CommerceApp,
+  token: string,
+  fixture: DevFolding,
+  postcode: string,
+  quantities: number[] = [1000],
+  body: Record<string, unknown> = {},
+) {
+  const address = await addAddress(ctx, token, postcode);
+  for (const quantity of quantities) {
+    const quote = await saveQuote(ctx, token, fixture, [quantity]);
+    await as(ctx, token)
+      .post('/v1/store/cart/items', {
+        quoteId: quote.id,
+        quoteOptionId: quote.options[0]!.id,
+        designOption: 'own_file',
+        destinations: [{ addressId: address.id, quantity }],
+      })
+      .expect(201);
+  }
+  const placed = await as(ctx, token)
+    .post('/v1/store/checkout', body)
+    .set('Idempotency-Key', crypto.randomUUID())
+    .expect(201);
+  return placed.body as {
+    id: string;
+    groupCode: string;
+    status: string;
+    totals: { grossAmount: string; cashAmount: string };
+    orders: { id: string; orderCode: string; status: string; totals: { grossAmount: string } }[];
+  };
+}
