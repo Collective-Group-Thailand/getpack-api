@@ -720,5 +720,43 @@
       "title": "Already reviewed",
       "detail": "This order has already been reviewed"
     }
+  },
+  "companies": {
+    "tax_id_taken": {
+      "title": "Tax id already registered",
+      "detail": "A company with this tax id already exists"
+    },
+    "invalid_status": {
+      "title": "Wrong company status",
+      "detail": "Not possible while the company is {status}"
+    },
+    "kyc_incomplete": {
+      "title": "KYC incomplete",
+      "detail": "Missing documents: {missing}"
+    },
+    "certificate_too_old": {
+      "title": "Certificate too old",
+      "detail": "The company certificate must be issued within {months} months"
+    },
+    "branch_exists": {
+      "title": "Branch exists",
+      "detail": "This branch code exists already"
+    },
+    "head_office_required": {
+      "title": "Head office required",
+      "detail": "The head office cannot be removed"
+    },
+    "account_not_found": {
+      "title": "Account not found",
+      "detail": "No customer account uses this phone or e-mail; ask them to sign up first"
+    },
+    "already_member": {
+      "title": "Already a member",
+      "detail": "This account is already a member or invited"
+    },
+    "cannot_remove_self": {
+      "title": "Cannot remove yourself",
+      "detail": "You cannot remove yourself from the company"
+    }
   }
 }

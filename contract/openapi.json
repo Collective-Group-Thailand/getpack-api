@@ -507,6 +507,105 @@
           "type": "https://errors.packio/checkout.wht_rate_missing"
         }
       },
+      "problem.companies.account_not_found": {
+        "summary": "companies.account_not_found",
+        "value": {
+          "code": "companies.account_not_found",
+          "detail": "ไม่พบบัญชีลูกค้าที่ใช้เบอร์โทรหรืออีเมลนี้ ให้สมัครสมาชิกก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่พบบัญชี",
+          "type": "https://errors.packio/companies.account_not_found"
+        }
+      },
+      "problem.companies.already_member": {
+        "summary": "companies.already_member",
+        "value": {
+          "code": "companies.already_member",
+          "detail": "บัญชีนี้เป็นสมาชิกหรือได้รับเชิญแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เป็นสมาชิกอยู่แล้ว",
+          "type": "https://errors.packio/companies.already_member"
+        }
+      },
+      "problem.companies.branch_exists": {
+        "summary": "companies.branch_exists",
+        "value": {
+          "code": "companies.branch_exists",
+          "detail": "รหัสสาขานี้มีอยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีสาขานี้แล้ว",
+          "type": "https://errors.packio/companies.branch_exists"
+        }
+      },
+      "problem.companies.cannot_remove_self": {
+        "summary": "companies.cannot_remove_self",
+        "value": {
+          "code": "companies.cannot_remove_self",
+          "detail": "ลบตัวเองออกจากบริษัทไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ลบตัวเองไม่ได้",
+          "type": "https://errors.packio/companies.cannot_remove_self"
+        }
+      },
+      "problem.companies.certificate_too_old": {
+        "summary": "companies.certificate_too_old",
+        "value": {
+          "code": "companies.certificate_too_old",
+          "detail": "หนังสือรับรองบริษัทต้องออกไม่เกิน {months} เดือน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "หนังสือรับรองเก่าเกินไป",
+          "type": "https://errors.packio/companies.certificate_too_old"
+        }
+      },
+      "problem.companies.head_office_required": {
+        "summary": "companies.head_office_required",
+        "value": {
+          "code": "companies.head_office_required",
+          "detail": "ต้องมีสำนักงานใหญ่เสมอ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ลบสำนักงานใหญ่ไม่ได้",
+          "type": "https://errors.packio/companies.head_office_required"
+        }
+      },
+      "problem.companies.invalid_status": {
+        "summary": "companies.invalid_status",
+        "value": {
+          "code": "companies.invalid_status",
+          "detail": "ทำรายการนี้ไม่ได้เมื่อบริษัทอยู่ในสถานะ {status}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "สถานะบริษัทไม่ถูกต้อง",
+          "type": "https://errors.packio/companies.invalid_status"
+        }
+      },
+      "problem.companies.kyc_incomplete": {
+        "summary": "companies.kyc_incomplete",
+        "value": {
+          "code": "companies.kyc_incomplete",
+          "detail": "ยังขาดเอกสาร: {missing}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เอกสารไม่ครบ",
+          "type": "https://errors.packio/companies.kyc_incomplete"
+        }
+      },
+      "problem.companies.tax_id_taken": {
+        "summary": "companies.tax_id_taken",
+        "value": {
+          "code": "companies.tax_id_taken",
+          "detail": "มีบริษัทที่ใช้เลขประจำตัวผู้เสียภาษีนี้อยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เลขผู้เสียภาษีนี้มีบริษัทแล้ว",
+          "type": "https://errors.packio/companies.tax_id_taken"
+        }
+      },
       "problem.concurrency.precondition_required": {
         "summary": "concurrency.precondition_required",
         "value": {
@@ -1993,6 +2092,38 @@
         ],
         "type": "object"
       },
+      "AddCompanyKycDocumentDto": {
+        "properties": {
+          "docType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyKycDocType"
+              }
+            ],
+            "example": "company_certificate"
+          },
+          "fileId": {
+            "description": "A file you uploaded (purpose `evidence`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "description": "Issue date (certificate ≤ 6 months, D-120)",
+            "example": "2026-09-01",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "docType",
+          "fileId"
+        ],
+        "type": "object"
+      },
       "AddImageDto": {
         "properties": {
           "fileId": {
@@ -2452,6 +2583,160 @@
             "description": "Campaign attribution of this order (D-102)"
           }
         },
+        "type": "object"
+      },
+      "AdminCompanyDto": {
+        "properties": {
+          "branches": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyBranchDto"
+            },
+            "type": "array"
+          },
+          "companyCode": {
+            "description": "Assigned at activation",
+            "example": "CO-00001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creditStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditStatus"
+              }
+            ],
+            "description": "D-121 / D-122",
+            "example": "prepaid"
+          },
+          "documentEmail": {
+            "example": "account@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isVatRegistered": {
+            "example": true,
+            "type": "boolean"
+          },
+          "kycApprovedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kycDocuments": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyKycDocumentDto"
+            },
+            "type": "array"
+          },
+          "legalName": {
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyMemberDto"
+            },
+            "type": "array"
+          },
+          "missingKyc": {
+            "description": "Documents still required before review (D-120)",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/CompanyKycDocType"
+            },
+            "type": "array"
+          },
+          "orderApprovalThreshold": {
+            "example": "50000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paidOrdersCount": {
+            "description": "Paid order groups (credit eligibility, D-121)",
+            "example": 2,
+            "type": "integer"
+          },
+          "poNumberPolicy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PoNumberPolicy"
+              }
+            ],
+            "example": "optional"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "statusReason": {
+            "description": "Why it was sent back, suspended or closed",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxId": {
+            "example": "0000000000019",
+            "type": "string"
+          },
+          "tradeName": {
+            "example": "Example Foods",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "withholdsTax": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "companyCode",
+          "legalName",
+          "tradeName",
+          "taxId",
+          "isVatRegistered",
+          "withholdsTax",
+          "documentEmail",
+          "status",
+          "statusReason",
+          "creditStatus",
+          "poNumberPolicy",
+          "orderApprovalThreshold",
+          "branches",
+          "members",
+          "kycDocuments",
+          "missingKyc",
+          "createdAt",
+          "paidOrdersCount",
+          "kycApprovedAt"
+        ],
         "type": "object"
       },
       "AdminCustomerDto": {
@@ -4024,6 +4309,62 @@
         },
         "required": [
           "code"
+        ],
+        "type": "object"
+      },
+      "ApplyCompanyDto": {
+        "properties": {
+          "documentEmail": {
+            "example": "account@example.com",
+            "format": "email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "headOffice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyBranchInputDto"
+              }
+            ],
+            "description": "The head office address (branch 00000)"
+          },
+          "isVatRegistered": {
+            "description": "ภ.พ.20 required in KYC when true (D-120)",
+            "example": true,
+            "type": "boolean"
+          },
+          "legalName": {
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "taxId": {
+            "example": "0000000000019",
+            "pattern": "^[0-9]{13}$",
+            "type": "string"
+          },
+          "tradeName": {
+            "example": "Example Foods",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "withholdsTax": {
+            "description": "The company withholds tax on payments (accounting-design §2)",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "legalName",
+          "taxId",
+          "isVatRegistered",
+          "headOffice"
         ],
         "type": "object"
       },
@@ -6741,6 +7082,456 @@
           "scope"
         ],
         "type": "object"
+      },
+      "CompanyAction": {
+        "enum": [
+          "suspend",
+          "reactivate",
+          "close"
+        ],
+        "type": "string"
+      },
+      "CompanyBranchDto": {
+        "properties": {
+          "branchCode": {
+            "example": "00000",
+            "type": "string"
+          },
+          "branchType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchType"
+              }
+            ],
+            "example": "head_office"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isDefault": {
+            "example": true,
+            "type": "boolean"
+          },
+          "line1": {
+            "example": "99/9 ถนนบางนา-ตราด",
+            "type": "string"
+          },
+          "line2": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "สำนักงานใหญ่",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10260",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "branchType",
+          "branchCode",
+          "name",
+          "line1",
+          "line2",
+          "postcode",
+          "isDefault"
+        ],
+        "type": "object"
+      },
+      "CompanyBranchInputDto": {
+        "properties": {
+          "branchCode": {
+            "description": "Branch number on the tax invoice (head office 00000)",
+            "example": "00001",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "branchType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchType"
+              }
+            ],
+            "example": "branch"
+          },
+          "isDefault": {
+            "description": "Default branch for tax invoices",
+            "example": false,
+            "type": "boolean"
+          },
+          "line1": {
+            "example": "99/9 ถนนบางนา-ตราด",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "line2": {
+            "example": null,
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "สาขาบางนา",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10260",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "provinceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+            "format": "uuid",
+            "type": "string"
+          },
+          "subdistrictId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "line1",
+          "postcode",
+          "provinceId"
+        ],
+        "type": "object"
+      },
+      "CompanyDto": {
+        "properties": {
+          "branches": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyBranchDto"
+            },
+            "type": "array"
+          },
+          "companyCode": {
+            "description": "Assigned at activation",
+            "example": "CO-00001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creditStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditStatus"
+              }
+            ],
+            "description": "D-121 / D-122",
+            "example": "prepaid"
+          },
+          "documentEmail": {
+            "example": "account@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isVatRegistered": {
+            "example": true,
+            "type": "boolean"
+          },
+          "kycDocuments": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyKycDocumentDto"
+            },
+            "type": "array"
+          },
+          "legalName": {
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyMemberDto"
+            },
+            "type": "array"
+          },
+          "missingKyc": {
+            "description": "Documents still required before review (D-120)",
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/CompanyKycDocType"
+            },
+            "type": "array"
+          },
+          "orderApprovalThreshold": {
+            "example": "50000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "poNumberPolicy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PoNumberPolicy"
+              }
+            ],
+            "example": "optional"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "statusReason": {
+            "description": "Why it was sent back, suspended or closed",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxId": {
+            "example": "0000000000019",
+            "type": "string"
+          },
+          "tradeName": {
+            "example": "Example Foods",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "withholdsTax": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "companyCode",
+          "legalName",
+          "tradeName",
+          "taxId",
+          "isVatRegistered",
+          "withholdsTax",
+          "documentEmail",
+          "status",
+          "statusReason",
+          "creditStatus",
+          "poNumberPolicy",
+          "orderApprovalThreshold",
+          "branches",
+          "members",
+          "kycDocuments",
+          "missingKyc",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CompanyInvitationDto": {
+        "properties": {
+          "companyId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "companyName": {
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": "string"
+          },
+          "id": {
+            "description": "Accept with this id",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "invitedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "invitedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "roles": {
+            "example": [
+              "company_buyer"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CompanyRole"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "companyId",
+          "companyName",
+          "roles",
+          "invitedBy",
+          "invitedAt"
+        ],
+        "type": "object"
+      },
+      "CompanyKycDocType": {
+        "enum": [
+          "company_certificate",
+          "vat_registration_pp20",
+          "signatory_id",
+          "financial_statement",
+          "other"
+        ],
+        "type": "string"
+      },
+      "CompanyKycDocumentDto": {
+        "properties": {
+          "docType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyKycDocType"
+              }
+            ],
+            "example": "company_certificate"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "issuedOn": {
+            "example": "2026-09-01",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/KycStatus"
+              }
+            ],
+            "example": "pending"
+          }
+        },
+        "required": [
+          "id",
+          "docType",
+          "fileId",
+          "issuedOn",
+          "status",
+          "note"
+        ],
+        "type": "object"
+      },
+      "CompanyMemberDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "joinedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "roles": {
+            "example": [
+              "company_admin"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CompanyRole"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MemberStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserRefDto"
+          }
+        },
+        "required": [
+          "id",
+          "user",
+          "status",
+          "roles",
+          "joinedAt"
+        ],
+        "type": "object"
+      },
+      "CompanyRole": {
+        "enum": [
+          "company_admin",
+          "company_buyer",
+          "company_approver",
+          "company_accountant"
+        ],
+        "type": "string"
+      },
+      "CompanyStatus": {
+        "enum": [
+          "applied",
+          "kyc_review",
+          "active",
+          "suspended",
+          "closed"
+        ],
+        "type": "string"
       },
       "CompleteRefundDto": {
         "properties": {
@@ -10386,6 +11177,16 @@
           "self",
           "cs",
           "line_liff"
+        ],
+        "type": "string"
+      },
+      "CreditStatus": {
+        "description": "D-121 / D-122",
+        "enum": [
+          "prepaid",
+          "eligible",
+          "credit",
+          "blocked_overdue"
         ],
         "type": "string"
       },
@@ -14709,6 +15510,36 @@
         ],
         "type": "string"
       },
+      "InviteMemberDto": {
+        "properties": {
+          "email": {
+            "example": "buyer@example.com",
+            "format": "email",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Phone (E.164) or e-mail of an existing customer account",
+            "example": "+66810001234",
+            "pattern": "^\\+66[0-9]{8,9}$",
+            "type": "string"
+          },
+          "roles": {
+            "example": [
+              "company_buyer"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CompanyRole"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "roles"
+        ],
+        "type": "object"
+      },
       "JobStatus": {
         "enum": [
           "queued",
@@ -15296,6 +16127,14 @@
           "foil",
           "label_stock",
           "other"
+        ],
+        "type": "string"
+      },
+      "MemberStatus": {
+        "enum": [
+          "invited",
+          "active",
+          "removed"
         ],
         "type": "string"
       },
@@ -17173,6 +18012,14 @@
           "none",
           "after_pod",
           "after_pod_and_claim_window"
+        ],
+        "type": "string"
+      },
+      "PoNumberPolicy": {
+        "enum": [
+          "required",
+          "optional",
+          "none"
         ],
         "type": "string"
       },
@@ -21204,7 +22051,8 @@
       "ReviewKycDocumentDto": {
         "properties": {
           "note": {
-            "example": "หนังสือรับรองอายุไม่เกิน 6 เดือน",
+            "example": null,
+            "maxLength": 500,
             "type": [
               "string",
               "null"
@@ -27762,6 +28610,48 @@
               "string",
               "null"
             ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdateCompanySettingsDto": {
+        "properties": {
+          "documentEmail": {
+            "example": "account@example.com",
+            "format": "email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderApprovalThreshold": {
+            "description": "Orders above this value wait for the company approver (D-123); null = never. Audited.",
+            "example": "50000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "poNumberPolicy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PoNumberPolicy"
+              }
+            ],
+            "description": "D-125",
+            "example": "required"
+          },
+          "tradeName": {
+            "example": "Example Foods",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "withholdsTax": {
+            "example": true,
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -77955,6 +78845,1678 @@
         ],
         "x-required-permissions": [
           "cms.manage"
+        ]
+      }
+    },
+    "/v1/admin/companies": {
+      "get": {
+        "description": "Newest first; `status=kyc_review` is the review queue (D-120).\n\nImplements: D-120, D-123, D-125.",
+        "operationId": "admin.companies.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CompanyStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "branches": [
+                        {
+                          "branchCode": "00000",
+                          "branchType": "head_office",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                          "isDefault": true,
+                          "line1": "99/9 ถนนบางนา-ตราด",
+                          "line2": null,
+                          "name": "สำนักงานใหญ่",
+                          "postcode": "10260"
+                        }
+                      ],
+                      "companyCode": "CO-00001",
+                      "createdAt": "2026-10-01T10:00:00+07:00",
+                      "creditStatus": "prepaid",
+                      "documentEmail": "account@example.com",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                      "isVatRegistered": true,
+                      "kycApprovedAt": "2026-10-02T10:00:00+07:00",
+                      "kycDocuments": [
+                        {
+                          "docType": "company_certificate",
+                          "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                          "issuedOn": "2026-09-01",
+                          "note": null,
+                          "status": "verified"
+                        }
+                      ],
+                      "legalName": "บริษัท ตัวอย่าง จำกัด",
+                      "members": [
+                        {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                          "joinedAt": "2026-10-01T10:00:00+07:00",
+                          "roles": [
+                            "company_admin"
+                          ],
+                          "status": "active",
+                          "user": {
+                            "displayName": "สมชาย ทดสอบ",
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                          }
+                        }
+                      ],
+                      "missingKyc": [],
+                      "orderApprovalThreshold": "50000.00",
+                      "paidOrdersCount": 2,
+                      "poNumberPolicy": "optional",
+                      "status": "active",
+                      "statusReason": null,
+                      "taxId": "0000000000019",
+                      "tradeName": "Example Foods",
+                      "withholdsTax": true
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminCompanyDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List companies",
+        "tags": [
+          "admin.companies"
+        ],
+        "x-required-permissions": [
+          "companies.read"
+        ]
+      }
+    },
+    "/v1/admin/companies/{companyId}": {
+      "get": {
+        "description": "With members, branches and KYC documents.\n\nImplements: D-120, D-123, D-125.",
+        "operationId": "admin.companies.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycApprovedAt": "2026-10-02T10:00:00+07:00",
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "paidOrdersCount": 2,
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a company",
+        "tags": [
+          "admin.companies"
+        ],
+        "x-required-permissions": [
+          "companies.read"
+        ]
+      }
+    },
+    "/v1/admin/companies/{companyId}/actions/approve-kyc": {
+      "post": {
+        "description": "Every required document verified → the company is active and gets its code (series `company`); it starts prepaid (D-121).\n\nImplements: D-120, D-121.",
+        "operationId": "admin.companies.approveKyc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycApprovedAt": "2026-10-02T10:00:00+07:00",
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "paidOrdersCount": 2,
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
+                  "companies.kyc_incomplete": {
+                    "$ref": "#/components/examples/problem.companies.kyc_incomplete"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.invalid_status`, `companies.kyc_incomplete`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Approve the application",
+        "tags": [
+          "admin.companies"
+        ],
+        "x-required-permissions": [
+          "companies.kyc_review"
+        ]
+      }
+    },
+    "/v1/admin/companies/{companyId}/actions/reject-kyc": {
+      "post": {
+        "description": "With a reason; the company may upload again and resubmit (D-120).\n\nImplements: D-120.",
+        "operationId": "admin.companies.rejectKyc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "หนังสือรับรองเกิน 6 เดือน"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycApprovedAt": "2026-10-02T10:00:00+07:00",
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "paidOrdersCount": 2,
+                  "poNumberPolicy": "optional",
+                  "status": "applied",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Send the application back",
+        "tags": [
+          "admin.companies"
+        ],
+        "x-required-permissions": [
+          "companies.kyc_review"
+        ]
+      }
+    },
+    "/v1/admin/companies/{companyId}/actions/{action}": {
+      "post": {
+        "description": "With a reason; closing returns it to prepaid.\n\nImplements: D-120.",
+        "operationId": "admin.companies.setStatus",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CompanyAction"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้าขอปิดบัญชี"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycApprovedAt": "2026-10-02T10:00:00+07:00",
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "paidOrdersCount": 2,
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Suspend, reactivate or close a company",
+        "tags": [
+          "admin.companies"
+        ],
+        "x-required-permissions": [
+          "companies.manage"
+        ]
+      }
+    },
+    "/v1/admin/companies/{companyId}/kyc-documents/{documentId}/actions/review": {
+      "post": {
+        "description": "A company certificate older than `b2b.kyc_certificate_max_age_months` (6) cannot be verified (D-120).\n\nImplements: D-120.",
+        "operationId": "admin.companies.reviewKycDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "outcome": "verified"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReviewKycDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycApprovedAt": "2026-10-02T10:00:00+07:00",
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "paidOrdersCount": 2,
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.certificate_too_old": {
+                    "$ref": "#/components/examples/problem.companies.certificate_too_old"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.certificate_too_old`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Verify or reject a KYC document",
+        "tags": [
+          "admin.companies"
+        ],
+        "x-required-permissions": [
+          "companies.kyc_review"
         ]
       }
     },
@@ -161045,6 +163607,3090 @@
         ]
       }
     },
+    "/v1/store/companies": {
+      "get": {
+        "description": "Companies I am an active member of (D-125).\n\nImplements: D-120, D-123, D-125.",
+        "operationId": "store.companies.listMine",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "branches": [
+                      {
+                        "branchCode": "00000",
+                        "branchType": "head_office",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                        "isDefault": true,
+                        "line1": "99/9 ถนนบางนา-ตราด",
+                        "line2": null,
+                        "name": "สำนักงานใหญ่",
+                        "postcode": "10260"
+                      }
+                    ],
+                    "companyCode": "CO-00001",
+                    "createdAt": "2026-10-01T10:00:00+07:00",
+                    "creditStatus": "prepaid",
+                    "documentEmail": "account@example.com",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                    "isVatRegistered": true,
+                    "kycDocuments": [
+                      {
+                        "docType": "company_certificate",
+                        "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                        "issuedOn": "2026-09-01",
+                        "note": null,
+                        "status": "verified"
+                      }
+                    ],
+                    "legalName": "บริษัท ตัวอย่าง จำกัด",
+                    "members": [
+                      {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                        "joinedAt": "2026-10-01T10:00:00+07:00",
+                        "roles": [
+                          "company_admin"
+                        ],
+                        "status": "active",
+                        "user": {
+                          "displayName": "สมชาย ทดสอบ",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                        }
+                      }
+                    ],
+                    "missingKyc": [],
+                    "orderApprovalThreshold": "50000.00",
+                    "poNumberPolicy": "optional",
+                    "status": "active",
+                    "statusReason": null,
+                    "taxId": "0000000000019",
+                    "tradeName": "Example Foods",
+                    "withholdsTax": true
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Companies",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my companies",
+        "tags": [
+          "store.companies"
+        ]
+      },
+      "post": {
+        "description": "Creates the company with its head office (branch 00000) and makes me its Company Admin. Next: upload the KYC documents and submit them for review (D-120). New companies are prepaid (D-121).\n\nImplements: D-120, D-121.",
+        "operationId": "store.companies.apply",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "documentEmail": "account@example.com",
+                    "headOffice": {
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006"
+                    },
+                    "isVatRegistered": true,
+                    "legalName": "บริษัท ตัวอย่าง จำกัด",
+                    "taxId": "0000000000019",
+                    "withholdsTax": true
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ApplyCompanyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": null,
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "applied",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.tax_id_taken": {
+                    "$ref": "#/components/examples/problem.companies.tax_id_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.tax_id_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Apply for a B2B company account",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}": {
+      "get": {
+        "description": "Members only.\n\nImplements: D-120, D-123, D-125.",
+        "operationId": "store.companies.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my company",
+        "tags": [
+          "store.companies"
+        ]
+      },
+      "patch": {
+        "description": "Company Admin: PO number policy (D-125), the order value above which the approver must approve (D-123, audited), withholding and document e-mail. Guarded by `If-Match`.\n\nImplements: D-120, D-123, D-125.",
+        "operationId": "store.companies.updateSettings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "orderApprovalThreshold": "50000.00",
+                    "poNumberPolicy": "required"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanySettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Update my company’s settings",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/actions/submit-kyc": {
+      "post": {
+        "description": "Once the required documents are in (D-120).\n\nImplements: D-120.",
+        "operationId": "store.companies.submitKyc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": null,
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "kyc_review",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
+                  "companies.kyc_incomplete": {
+                    "$ref": "#/components/examples/problem.companies.kyc_incomplete"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.invalid_status`, `companies.kyc_incomplete`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Submit the application for review",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/branches": {
+      "post": {
+        "description": "Company Admin; each branch can receive tax invoices (D-125).\n\nImplements: D-125.",
+        "operationId": "store.companies.addBranch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "branchCode": "00001",
+                    "line1": "1 ถนนบางนา",
+                    "name": "สาขาบางนา",
+                    "postcode": "10260",
+                    "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CompanyBranchInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.branch_exists": {
+                    "$ref": "#/components/examples/problem.companies.branch_exists"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.branch_exists`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Add a branch",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/branches/{branchId}": {
+      "delete": {
+        "description": "Company Admin; the head office stays.\n\nImplements: D-125.",
+        "operationId": "store.companies.removeBranch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.head_office_required": {
+                    "$ref": "#/components/examples/problem.companies.head_office_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.head_office_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove a branch",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/kyc-documents": {
+      "post": {
+        "description": "Company Admin, with a file I uploaded: company certificate (≤ 6 months), ภ.พ.20 if VAT-registered, signatory id (D-120).\n\nImplements: D-120.",
+        "operationId": "store.companies.addKycDocument",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "docType": "company_certificate",
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                    "issuedOn": "2026-09-01"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddCompanyKycDocumentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Add a KYC document",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/members": {
+      "post": {
+        "description": "Company Admin: an existing customer account (phone or e-mail) with company roles — Admin, Buyer, Approver, Accountant.\n\nImplements: D-123, D-125.",
+        "operationId": "store.companies.inviteMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "phone": "+66810001234",
+                    "roles": [
+                      "company_buyer"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/InviteMemberDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.already_member": {
+                    "$ref": "#/components/examples/problem.companies.already_member"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.already_member`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.account_not_found": {
+                    "$ref": "#/components/examples/problem.companies.account_not_found"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.account_not_found`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Invite a member",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/members/{memberId}/actions/remove": {
+      "post": {
+        "description": "Company Admin; the member’s company roles are revoked.\n\nImplements: D-125.",
+        "operationId": "store.companies.removeMember",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.cannot_remove_self": {
+                    "$ref": "#/components/examples/problem.companies.cannot_remove_self"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.cannot_remove_self`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove a member",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/company-invitations": {
+      "get": {
+        "description": "Pending invitations to join a company.\n\nImplements: D-125.",
+        "operationId": "store.companies.listInvitations",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "companyId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                    "companyName": "บริษัท ตัวอย่าง จำกัด",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                    "invitedAt": "2026-10-01T10:00:00+07:00",
+                    "invitedBy": {
+                      "displayName": "สมชาย ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                    },
+                    "roles": [
+                      "company_buyer"
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyInvitationDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Invitations",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my company invitations",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/company-invitations/{memberId}/actions/accept": {
+      "post": {
+        "description": "I join with the invited company roles.\n\nImplements: D-125.",
+        "operationId": "store.companies.acceptInvitation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260"
+                    }
+                  ],
+                  "companyCode": "CO-00001",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Accept a company invitation",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
     "/v1/store/customer-profile": {
       "get": {
         "description": "Customer type (individual / juristic / government drives payment schedules, D-020) and the customer code, assigned at the first checkout.\n\nImplements: D-020, D-092.",
@@ -175327,6 +180973,10 @@
       "name": "admin.cmsVideos"
     },
     {
+      "description": "B2B companies for staff: KYC review and activation, suspension and closure (D-120).",
+      "name": "admin.companies"
+    },
+    {
       "description": "PDPA consent purposes and their versioned texts (D-005, D-144).",
       "name": "admin.consentPurposes"
     },
@@ -175573,6 +181223,10 @@
     {
       "description": "Preview and place the order group from the cart (D-051, D-060, D-013, D-174).",
       "name": "store.checkout"
+    },
+    {
+      "description": "B2B companies: apply, KYC, members and company roles, branches, PO policy and approval threshold (D-120…D-125).",
+      "name": "store.companies"
     },
     {
       "description": "The signed-in customer’s profile: customer type and customer code (D-020).",

@@ -408,6 +408,25 @@ export const PERMISSIONS = [
     decisionRefs: ['D-135'],
   },
 
+  {
+    key: 'companies.read',
+    audience: 'staff',
+    description: 'Read B2B companies, their members, branches and KYC documents',
+    decisionRefs: ['D-120', 'D-125'],
+  },
+  {
+    key: 'companies.manage',
+    audience: 'staff',
+    description: 'Suspend, reactivate or close B2B companies',
+    decisionRefs: ['D-120'],
+  },
+  {
+    key: 'companies.kyc_review',
+    audience: 'staff',
+    description: 'Verify company KYC documents and approve or reject applications',
+    decisionRefs: ['D-120'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },
@@ -476,6 +495,12 @@ export const PERMISSIONS = [
   // --- B2B company (company-scoped)
   { key: 'company_profile.read', audience: 'customer', description: 'Read the own company profile' },
   { key: 'company_members.manage', audience: 'customer', description: 'Invite and remove company members' },
+  {
+    key: 'company_profile.manage',
+    audience: 'customer',
+    description: 'Edit the own company: settings, approval threshold, branches, KYC documents',
+    decisionRefs: ['D-120', 'D-123', 'D-125'],
+  },
   {
     key: 'company_orders.approve',
     audience: 'customer',

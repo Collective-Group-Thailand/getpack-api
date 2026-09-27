@@ -59,6 +59,8 @@ export interface SettingValues {
   'loyalty.redemption_limits': { minimumBaht: string; maxPctOfOrder: string };
   'loyalty.tiers': { tier: 'member' | 'silver' | 'gold'; minSpend12m: string; multiplier: string }[];
   'loyalty.activity_rewards': { signupBaht: string; lineLinkingBaht: string; reviewBaht: string };
+  /** D-120 */
+  'b2b.kyc_certificate_max_age_months': number;
   'referral.rules': {
     refereeDiscountPct: string;
     refereeDiscountMaxBaht: string;

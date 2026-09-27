@@ -60,6 +60,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'payments.read',
       'promotions.read',
       'loyalty.read',
+      'companies.read',
     ],
   },
   {
@@ -132,6 +133,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'loyalty.read',
       'loyalty.adjust',
       'reviews.moderate',
+      'companies.read',
+      'companies.manage',
+      'companies.kyc_review',
     ],
   },
   {
@@ -158,6 +162,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'orders.manage',
       'payments.read',
       'loyalty.read',
+      'companies.read',
     ],
   },
   {
@@ -190,6 +195,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'loyalty.read',
       'loyalty.adjust',
       'reviews.moderate',
+      'companies.read',
+      'companies.manage',
+      'companies.kyc_review',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -228,6 +236,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'refunds.request',
       'refunds.complete',
       'loyalty.read',
+      'companies.read',
     ],
   },
   {
@@ -257,6 +266,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'refunds.complete',
       'promotions.read',
       'loyalty.read',
+      'companies.read',
+      'companies.kyc_review',
     ],
   },
   {
@@ -344,6 +355,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'payments.read',
       'promotions.read',
       'loyalty.read',
+      'companies.read',
     ],
   },
 
@@ -417,7 +429,12 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'company',
     nameTh: 'ผู้ดูแลบัญชีบริษัท',
     nameEn: 'Company Admin',
-    permissions: ['company_profile.read', 'company_members.manage', 'company_documents.read'],
+    permissions: [
+      'company_profile.read',
+      'company_members.manage',
+      'company_documents.read',
+      'company_profile.manage',
+    ],
   },
   {
     key: 'company_buyer',

@@ -315,9 +315,20 @@ export async function setSetting(ctx: CommerceApp, key: string, value: unknown):
 
 /** Uploads a slip file (the fake verifier reads `FAKESLIP;transRef=…;amount=…;date=…;receiver=ok`) and scans it. */
 export async function uploadSlipFile(ctx: CommerceApp, token: string, text: string, surface: 'store' | 'admin' = 'store') {
+  return uploadFile(ctx, token, text, 'slip', surface);
+}
+
+/** Uploads a small PNG through presign → put → complete → scan and returns its file id. */
+export async function uploadFile(
+  ctx: CommerceApp,
+  token: string,
+  text: string,
+  purpose: 'slip' | 'evidence' | 'document',
+  surface: 'store' | 'admin' = 'store',
+) {
   const body = Buffer.from(text);
   const presigned = await as(ctx, token)
-    .post(`/v1/${surface}/files/presign`, { purpose: 'slip', fileName: 'slip.png', mimeType: 'image/png', sizeBytes: body.length })
+    .post(`/v1/${surface}/files/presign`, { purpose, fileName: `${purpose}.png`, mimeType: 'image/png', sizeBytes: body.length })
     .expect(201);
   const row = await ctx.prisma.fileObject.findUniqueOrThrow({ where: { publicId: presigned.body.fileId as string } });
   ctx.app.get<FakeObjectStorage>(OBJECT_STORAGE).putDirect(row.storageKey, body, 'image/png');

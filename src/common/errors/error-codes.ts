@@ -171,6 +171,15 @@ export const ERROR_CODES = {
   'loyalty.insufficient_points': HttpStatus.CONFLICT,
   'reviews.not_delivered': HttpStatus.CONFLICT,
   'reviews.exists': HttpStatus.CONFLICT,
+  'companies.tax_id_taken': HttpStatus.CONFLICT,
+  'companies.invalid_status': HttpStatus.CONFLICT,
+  'companies.kyc_incomplete': HttpStatus.CONFLICT,
+  'companies.certificate_too_old': HttpStatus.UNPROCESSABLE_ENTITY,
+  'companies.branch_exists': HttpStatus.CONFLICT,
+  'companies.head_office_required': HttpStatus.CONFLICT,
+  'companies.account_not_found': HttpStatus.UNPROCESSABLE_ENTITY,
+  'companies.already_member': HttpStatus.CONFLICT,
+  'companies.cannot_remove_self': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

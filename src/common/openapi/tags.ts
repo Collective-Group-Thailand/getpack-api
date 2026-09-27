@@ -29,6 +29,8 @@ export const API_TAGS: Record<string, string> = {
   'store.reviews': 'Review a delivered order and earn the review reward (D-135).',
   'admin.loyalty': 'A customer’s points, tier and history; audited staff adjustments (D-130…D-134).',
   'admin.reviews': 'Order reviews and their moderation (D-135).',
+  'store.companies': 'B2B companies: apply, KYC, members and company roles, branches, PO policy and approval threshold (D-120…D-125).',
+  'admin.companies': 'B2B companies for staff: KYC review and activation, suspension and closure (D-120).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',

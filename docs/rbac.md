@@ -87,6 +87,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `loyalty.read` — Read customers’ points, tiers and points history (D-130, D-134) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  | ● |  | ● |
 | `loyalty.adjust` — Add or remove a customer’s points with a reason (audited) (D-131, D-132) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |
 | `reviews.moderate` — Hide or re-publish order reviews (D-135) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |
+| `companies.read` — Read B2B companies, their members, branches and KYC documents (D-120, D-125) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
+| `companies.manage` — Suspend, reactivate or close B2B companies (D-120) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
+| `companies.kyc_review` — Verify company KYC documents and approve or reject applications (D-120) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|
@@ -137,6 +140,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 |---|:-:|:-:|:-:|:-:|
 | `company_profile.read` — Read the own company profile | ● | ● | ● | ● |
 | `company_members.manage` — Invite and remove company members | ● |  |  |  |
+| `company_profile.manage` — Edit the own company: settings, approval threshold, branches, KYC documents (D-120, D-123, D-125) | ● |  |  |  |
 | `company_orders.approve` — Approve company orders above the company threshold (D-123) |  |  | ● |  |
 | `company_documents.read` — Read company invoices and statements | ● |  |  | ● |
 

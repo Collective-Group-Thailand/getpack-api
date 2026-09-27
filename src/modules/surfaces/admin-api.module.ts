@@ -2,6 +2,7 @@ import { AdminMeController } from '@modules/auth/controllers/me.controllers';
 import { CARTS_ADMIN_CONTROLLERS } from '@modules/carts/carts.registry';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry';
+import { COMPANIES_ADMIN_CONTROLLERS } from '@modules/companies/companies.registry';
 import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
@@ -71,6 +72,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,
     ...PROMOTIONS_ADMIN_CONTROLLERS,
     ...LOYALTY_ADMIN_CONTROLLERS,
+    ...COMPANIES_ADMIN_CONTROLLERS,
     ...PAYMENTS_ADMIN_CONTROLLERS,
   ],
 })

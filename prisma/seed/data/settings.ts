@@ -260,6 +260,13 @@ export const SETTINGS: readonly SettingSeed[] = [
 
   // --- B2B (D-121, D-122)
   {
+    key: 'b2b.kyc_certificate_max_age_months',
+    valueType: 'integer',
+    value: 6,
+    description: 'D-120 a company certificate is accepted only when issued within this many months',
+    decisions: ['D-120'],
+  },
+  {
     key: 'b2b.credit_terms',
     valueType: 'json',
     value: { allowedDays: [15, 30, 45, 60], defaultDays: 30 },

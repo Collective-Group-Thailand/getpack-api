@@ -78,6 +78,14 @@ const DEV_SERIES = [
     isGapless: false,
     description: '[DEV] fake customer code series',
   },
+  {
+    docType: 'company',
+    prefix: 'DEVCO',
+    format: '{prefix}-{seq:5}',
+    resetPeriod: 'never',
+    isGapless: false,
+    description: '[DEV] fake company code series',
+  },
 ] as const;
 
 export async function seedDev(prisma: PrismaClient, devPassword?: string): Promise<SeedReport> {
