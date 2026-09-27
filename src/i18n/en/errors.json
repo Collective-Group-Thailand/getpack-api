@@ -579,6 +579,10 @@
     "reprice_below_paid": {
       "title": "New total below the amount paid",
       "detail": "The new total {total} is below what was already paid ({paid}); that needs a credit note (B5)."
+    },
+    "reprice_has_add_ons": {
+      "title": "Order has add-on charges",
+      "detail": "This order has add-on charges (design revision / mockup) with their own instalments; it cannot be re-priced"
     }
   },
   "payments": {
@@ -817,6 +821,26 @@
     "annotation_closed": {
       "title": "Annotations closed",
       "detail": "This proof is {status}; annotations are closed"
+    }
+  },
+  "design_services": {
+    "invalid_status": {
+      "title": "Wrong design service status",
+      "detail": "The design service is {status}"
+    },
+    "fee_changed": {
+      "title": "Revision fee changed",
+      "detail": "The fee for this round is THB {fee}; please confirm again"
+    },
+    "no_extra_round": {
+      "title": "No chargeable round",
+      "detail": "The next revision is free or no change was requested"
+    }
+  },
+  "mockups": {
+    "exists": {
+      "title": "Mockup exists",
+      "detail": "This order already has a mockup (physical proof)"
     }
   }
 }

@@ -716,6 +716,39 @@
           "type": "https://errors.packio/consent.purpose_unavailable"
         }
       },
+      "problem.design_services.fee_changed": {
+        "summary": "design_services.fee_changed",
+        "value": {
+          "code": "design_services.fee_changed",
+          "detail": "ค่าแก้แบบรอบนี้คือ {fee} บาท กรุณายืนยันอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ค่าแก้แบบเปลี่ยนไป",
+          "type": "https://errors.packio/design_services.fee_changed"
+        }
+      },
+      "problem.design_services.invalid_status": {
+        "summary": "design_services.invalid_status",
+        "value": {
+          "code": "design_services.invalid_status",
+          "detail": "งานออกแบบอยู่ในสถานะ {status}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "สถานะงานออกแบบไม่ถูกต้อง",
+          "type": "https://errors.packio/design_services.invalid_status"
+        }
+      },
+      "problem.design_services.no_extra_round": {
+        "summary": "design_services.no_extra_round",
+        "value": {
+          "code": "design_services.no_extra_round",
+          "detail": "รอบแก้แบบถัดไปยังอยู่ในจำนวนครั้งฟรี หรือยังไม่มีการขอแก้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่มีรอบแก้แบบที่ต้องชำระ",
+          "type": "https://errors.packio/design_services.no_extra_round"
+        }
+      },
       "problem.discount_memos.not_usable": {
         "summary": "discount_memos.not_usable",
         "value": {
@@ -978,6 +1011,17 @@
           "status": 409,
           "title": "คะแนนไม่พอ",
           "type": "https://errors.packio/loyalty.insufficient_points"
+        }
+      },
+      "problem.mockups.exists": {
+        "summary": "mockups.exists",
+        "value": {
+          "code": "mockups.exists",
+          "detail": "คำสั่งซื้อนี้มีม็อกอัพ (ปรู๊ฟจริง) แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีม็อกอัพแล้ว",
+          "type": "https://errors.packio/mockups.exists"
         }
       },
       "problem.notification.channel_unsupported": {
@@ -2295,6 +2339,75 @@
         },
         "required": [
           "fileId"
+        ],
+        "type": "object"
+      },
+      "AddMockupDto": {
+        "properties": {
+          "mockupOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MockupKind"
+              }
+            ],
+            "example": "with_print"
+          },
+          "netAmount": {
+            "description": "CS-quoted price, net of VAT (THB)",
+            "example": "800.00",
+            "type": "string"
+          },
+          "reason": {
+            "example": "ลูกค้าขอตัวอย่างจริงก่อนผลิต 1 ชิ้น",
+            "maxLength": 800,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "mockupOption",
+          "netAmount",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "AddOnChargeDto": {
+        "properties": {
+          "cashAmount": {
+            "description": "What the customer pays (gross − withholding)",
+            "example": "856.00",
+            "type": "string"
+          },
+          "grossAmount": {
+            "example": "856.00",
+            "type": "string"
+          },
+          "instalmentId": {
+            "description": "The instalment to pay (due now)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e4001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "netAmount": {
+            "example": "800.00",
+            "type": "string"
+          },
+          "vatAmount": {
+            "example": "56.00",
+            "type": "string"
+          },
+          "whtAmount": {
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "instalmentId",
+          "netAmount",
+          "vatAmount",
+          "grossAmount",
+          "whtAmount",
+          "cashAmount"
         ],
         "type": "object"
       },
@@ -5467,6 +5580,26 @@
         ],
         "type": "object"
       },
+      "AssignDesignerDto": {
+        "properties": {
+          "assigneeUserId": {
+            "description": "A Packio designer (staff user)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e3006",
+            "format": "uuid",
+            "type": "string"
+          },
+          "vendorId": {
+            "description": "A freelance designer (vendor of kind freelancer)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "AssignRfqDto": {
         "properties": {
           "userId": {
@@ -5480,6 +5613,12 @@
           "userId"
         ],
         "type": "object"
+      },
+      "AssigneeFilter": {
+        "enum": [
+          "me"
+        ],
+        "type": "string"
       },
       "AttributeReferralDto": {
         "properties": {
@@ -7647,6 +7786,20 @@
         ],
         "type": "object"
       },
+      "CloseDesignServiceDto": {
+        "properties": {
+          "reason": {
+            "example": "ลูกค้าต้องการเปลี่ยนโครงสร้างกล่อง ต้องเสนอราคาออกแบบใหม่",
+            "maxLength": 1500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
       "CompanyAction": {
         "enum": [
           "suspend",
@@ -8304,6 +8457,26 @@
           "withdrawn"
         ],
         "type": "string"
+      },
+      "ConfirmExtraRoundDto": {
+        "properties": {
+          "changeRequest": {
+            "example": "ขอเปลี่ยนสีตัวอักษรเป็นสีทอง",
+            "maxLength": 4000,
+            "minLength": 3,
+            "type": "string"
+          },
+          "expectedFeeGross": {
+            "description": "The fee incl. VAT the customer agrees to (from `nextRevision.feeGross`); refused if it changed",
+            "example": "535.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expectedFeeGross",
+          "changeRequest"
+        ],
+        "type": "object"
       },
       "ConfirmImportDto": {
         "properties": {
@@ -12557,6 +12730,32 @@
         ],
         "type": "object"
       },
+      "DeliverDesignDto": {
+        "properties": {
+          "fileIds": {
+            "description": "The designed artwork (uploads with purpose `artwork`)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          },
+          "note": {
+            "example": "แบบรอบแรกตามบรีฟ",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileIds"
+        ],
+        "type": "object"
+      },
       "DeliveryZoneDto": {
         "properties": {
           "extraLeadDays": {
@@ -12613,6 +12812,92 @@
           "zoneId"
         ],
         "type": "object"
+      },
+      "DesignBriefDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "description": "Logos and references you uploaded",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "brandCategory": {
+            "description": "Legacy `brd_brand_category`",
+            "example": "เครื่องดื่ม",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "brandName": {
+            "description": "Legacy `brd_brand_name`",
+            "example": "ร้านกาแฟทดสอบ",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "description": "Legacy `brd_description`",
+            "example": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า",
+            "maxLength": 5000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "brandName",
+          "brandCategory",
+          "description"
+        ],
+        "type": "object"
+      },
+      "DesignBriefViewDto": {
+        "properties": {
+          "attachmentFileIds": {
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "brandCategory": {
+            "example": "เครื่องดื่ม",
+            "type": "string"
+          },
+          "brandName": {
+            "example": "ร้านกาแฟทดสอบ",
+            "type": "string"
+          },
+          "description": {
+            "example": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า",
+            "type": "string"
+          }
+        },
+        "required": [
+          "brandName",
+          "brandCategory",
+          "description",
+          "attachmentFileIds"
+        ],
+        "type": "object"
+      },
+      "DesignDueState": {
+        "enum": [
+          "not_started",
+          "on_track",
+          "target_missed",
+          "max_breached",
+          "closed"
+        ],
+        "type": "string"
       },
       "DesignFontDto": {
         "properties": {
@@ -12685,6 +12970,270 @@
           "structure"
         ],
         "type": "object"
+      },
+      "DesignRoundDto": {
+        "properties": {
+          "changeRequest": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "chargeable": {
+            "example": false,
+            "type": "boolean"
+          },
+          "deliveredAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "feeNet": {
+            "description": "Fee net of VAT (THB)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "instalmentId": {
+            "description": "The instalment paying a chargeable round",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignRoundKind"
+              }
+            ],
+            "example": "initial"
+          },
+          "requestedAt": {
+            "example": "2026-09-27T10:00:00+07:00",
+            "type": "string"
+          },
+          "roundNo": {
+            "description": "Round 1 is the initial design; later rounds are revisions",
+            "example": 1,
+            "type": "integer"
+          },
+          "startedAt": {
+            "example": "2026-09-27T10:00:00+07:00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignRoundStatus"
+              }
+            ],
+            "example": "in_progress"
+          },
+          "submissionId": {
+            "description": "The artwork version delivered",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "roundNo",
+          "kind",
+          "chargeable",
+          "feeNet",
+          "status",
+          "changeRequest",
+          "submissionId",
+          "instalmentId",
+          "requestedAt",
+          "startedAt",
+          "deliveredAt"
+        ],
+        "type": "object"
+      },
+      "DesignRoundKind": {
+        "enum": [
+          "initial",
+          "revision"
+        ],
+        "type": "string"
+      },
+      "DesignRoundStatus": {
+        "enum": [
+          "awaiting_payment",
+          "in_progress",
+          "delivered",
+          "approved",
+          "changes_requested"
+        ],
+        "type": "string"
+      },
+      "DesignServiceDto": {
+        "properties": {
+          "assignee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Staff only; null on the store surface"
+          },
+          "brief": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DesignBriefViewDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "briefSubmittedAt": {
+            "example": "2026-09-27T09:00:00+07:00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "closeReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "designFeeNet": {
+            "description": "The order’s design fee, net of VAT (basis of the extra-round fee)",
+            "example": "1500.00",
+            "type": "string"
+          },
+          "dueState": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignDueState"
+              }
+            ],
+            "example": "on_track"
+          },
+          "freeRounds": {
+            "example": 3,
+            "type": "integer"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "maxDueAt": {
+            "description": "10 business days from the start (D-071)",
+            "example": "2026-10-11T10:00:00+07:00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nextRevision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NextRevisionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the next revision costs, once changes are requested"
+          },
+          "orderCode": {
+            "example": "OR2609270001",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "revisionsUsed": {
+            "description": "Revision rounds opened so far",
+            "example": 1,
+            "type": "integer"
+          },
+          "rounds": {
+            "items": {
+              "$ref": "#/components/schemas/DesignRoundDto"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignServiceStatus"
+              }
+            ],
+            "example": "in_progress"
+          },
+          "targetDueAt": {
+            "description": "5 business days from the start (D-071)",
+            "example": "2026-10-04T10:00:00+07:00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "orderCode",
+          "status",
+          "brief",
+          "briefSubmittedAt",
+          "assignee",
+          "targetDueAt",
+          "maxDueAt",
+          "dueState",
+          "freeRounds",
+          "revisionsUsed",
+          "designFeeNet",
+          "nextRevision",
+          "closeReason",
+          "rounds"
+        ],
+        "type": "object"
+      },
+      "DesignServiceStatus": {
+        "enum": [
+          "brief_pending",
+          "in_progress",
+          "delivered",
+          "revision_requested",
+          "approved",
+          "cancelled",
+          "requoted"
+        ],
+        "type": "string"
       },
       "DestinationInputDto": {
         "properties": {
@@ -17156,6 +17705,13 @@
         ],
         "type": "string"
       },
+      "MockupKind": {
+        "enum": [
+          "with_print",
+          "without_print"
+        ],
+        "type": "string"
+      },
       "MockupOption": {
         "enum": [
           "none",
@@ -17265,6 +17821,42 @@
           "code",
           "link",
           "referrals"
+        ],
+        "type": "object"
+      },
+      "NextRevisionDto": {
+        "properties": {
+          "chargeable": {
+            "example": true,
+            "type": "boolean"
+          },
+          "feeGross": {
+            "description": "Incl. VAT",
+            "example": "535.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "feeNet": {
+            "description": "max(minimum, % of the design fee), net (D-071)",
+            "example": "500.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "revisionNo": {
+            "description": "Revision number (the initial design is not a revision)",
+            "example": 4,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "revisionNo",
+          "chargeable",
+          "feeNet",
+          "feeGross"
         ],
         "type": "object"
       },
@@ -91667,6 +92259,1646 @@
         ]
       }
     },
+    "/v1/admin/design-services": {
+      "get": {
+        "description": "Earliest target date first, with the due state against 5 / 10 business days (D-071).\n\nImplements: D-071.",
+        "operationId": "admin.designServices.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DesignServiceStatus"
+            }
+          },
+          {
+            "description": "`me`: assigned to the signed-in user",
+            "in": "query",
+            "name": "assignee",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AssigneeFilter"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "assignee": null,
+                      "brief": {
+                        "attachmentFileIds": [
+                          "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                        ],
+                        "brandCategory": "เครื่องดื่ม",
+                        "brandName": "ร้านกาแฟทดสอบ",
+                        "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                      },
+                      "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                      "closeReason": null,
+                      "designFeeNet": "1500.00",
+                      "dueState": "on_track",
+                      "freeRounds": 3,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                      "maxDueAt": "2026-10-11T10:00:00+07:00",
+                      "nextRevision": null,
+                      "orderCode": "OR2609270001",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                      "revisionsUsed": 0,
+                      "rounds": [
+                        {
+                          "changeRequest": null,
+                          "chargeable": false,
+                          "deliveredAt": null,
+                          "feeNet": null,
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                          "instalmentId": null,
+                          "kind": "initial",
+                          "requestedAt": "2026-09-27T10:00:00+07:00",
+                          "roundNo": 1,
+                          "startedAt": "2026-09-27T10:00:00+07:00",
+                          "status": "in_progress",
+                          "submissionId": null
+                        }
+                      ],
+                      "status": "in_progress",
+                      "targetDueAt": "2026-10-04T10:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/DesignServiceDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "The hired-design queue",
+        "tags": [
+          "admin.designServices"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
+        ]
+      }
+    },
+    "/v1/admin/design-services/{designServiceId}": {
+      "get": {
+        "description": "With rounds and due state (D-071).\n\nImplements: D-071.",
+        "operationId": "admin.designServices.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designServiceId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "brief": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  },
+                  "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                  "closeReason": null,
+                  "designFeeNet": "1500.00",
+                  "dueState": "on_track",
+                  "freeRounds": 3,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                  "maxDueAt": "2026-10-11T10:00:00+07:00",
+                  "nextRevision": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                  "revisionsUsed": 0,
+                  "rounds": [
+                    {
+                      "changeRequest": null,
+                      "chargeable": false,
+                      "deliveredAt": null,
+                      "feeNet": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                      "instalmentId": null,
+                      "kind": "initial",
+                      "requestedAt": "2026-09-27T10:00:00+07:00",
+                      "roundNo": 1,
+                      "startedAt": "2026-09-27T10:00:00+07:00",
+                      "status": "in_progress",
+                      "submissionId": null
+                    }
+                  ],
+                  "status": "in_progress",
+                  "targetDueAt": "2026-10-04T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignServiceDto"
+                }
+              }
+            },
+            "description": "Design service",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a hired design",
+        "tags": [
+          "admin.designServices"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
+        ]
+      }
+    },
+    "/v1/admin/design-services/{designServiceId}/actions/assign": {
+      "post": {
+        "description": "A Packio designer or a freelancer vendor (D-071).\n\nImplements: D-071.",
+        "operationId": "admin.designServices.assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designServiceId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "assigneeUserId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3006"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AssignDesignerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": {
+                    "displayName": "นักออกแบบ ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3006"
+                  },
+                  "brief": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  },
+                  "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                  "closeReason": null,
+                  "designFeeNet": "1500.00",
+                  "dueState": "on_track",
+                  "freeRounds": 3,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                  "maxDueAt": "2026-10-11T10:00:00+07:00",
+                  "nextRevision": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                  "revisionsUsed": 0,
+                  "rounds": [
+                    {
+                      "changeRequest": null,
+                      "chargeable": false,
+                      "deliveredAt": null,
+                      "feeNet": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                      "instalmentId": null,
+                      "kind": "initial",
+                      "requestedAt": "2026-09-27T10:00:00+07:00",
+                      "roundNo": 1,
+                      "startedAt": "2026-09-27T10:00:00+07:00",
+                      "status": "in_progress",
+                      "submissionId": null
+                    }
+                  ],
+                  "status": "in_progress",
+                  "targetDueAt": "2026-10-04T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignServiceDto"
+                }
+              }
+            },
+            "description": "Assigned",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "design_services.invalid_status": {
+                    "$ref": "#/components/examples/problem.design_services.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `design_services.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Assign a designer",
+        "tags": [
+          "admin.designServices"
+        ],
+        "x-required-permissions": [
+          "design_services.manage"
+        ]
+      }
+    },
+    "/v1/admin/design-services/{designServiceId}/actions/cancel": {
+      "post": {
+        "description": "With a reason (D-071).\n\nImplements: D-071.",
+        "operationId": "admin.designServices.cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designServiceId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้าส่งไฟล์เองแทน"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CloseDesignServiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "brief": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  },
+                  "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                  "closeReason": "ลูกค้าส่งไฟล์เองแทน",
+                  "designFeeNet": "1500.00",
+                  "dueState": "closed",
+                  "freeRounds": 3,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                  "maxDueAt": "2026-10-11T10:00:00+07:00",
+                  "nextRevision": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                  "revisionsUsed": 0,
+                  "rounds": [
+                    {
+                      "changeRequest": null,
+                      "chargeable": false,
+                      "deliveredAt": null,
+                      "feeNet": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                      "instalmentId": null,
+                      "kind": "initial",
+                      "requestedAt": "2026-09-27T10:00:00+07:00",
+                      "roundNo": 1,
+                      "startedAt": "2026-09-27T10:00:00+07:00",
+                      "status": "in_progress",
+                      "submissionId": null
+                    }
+                  ],
+                  "status": "cancelled",
+                  "targetDueAt": "2026-10-04T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignServiceDto"
+                }
+              }
+            },
+            "description": "Cancelled",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "design_services.invalid_status": {
+                    "$ref": "#/components/examples/problem.design_services.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `design_services.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Cancel a hired design",
+        "tags": [
+          "admin.designServices"
+        ],
+        "x-required-permissions": [
+          "design_services.manage"
+        ]
+      }
+    },
+    "/v1/admin/design-services/{designServiceId}/actions/deliver": {
+      "post": {
+        "description": "Becomes a new artwork version (source `design_service`): preflight, Prepress review and a proof follow (D-071, D-070).\n\nImplements: D-071, D-070.",
+        "operationId": "admin.designServices.deliver",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designServiceId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "note": "แบบรอบแรกตามบรีฟ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DeliverDesignDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "brief": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  },
+                  "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                  "closeReason": null,
+                  "designFeeNet": "1500.00",
+                  "dueState": "on_track",
+                  "freeRounds": 3,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                  "maxDueAt": "2026-10-11T10:00:00+07:00",
+                  "nextRevision": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                  "revisionsUsed": 0,
+                  "rounds": [
+                    {
+                      "changeRequest": null,
+                      "chargeable": false,
+                      "deliveredAt": null,
+                      "feeNet": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                      "instalmentId": null,
+                      "kind": "initial",
+                      "requestedAt": "2026-09-27T10:00:00+07:00",
+                      "roundNo": 1,
+                      "startedAt": "2026-09-27T10:00:00+07:00",
+                      "status": "in_progress",
+                      "submissionId": null
+                    }
+                  ],
+                  "status": "delivered",
+                  "targetDueAt": "2026-10-04T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignServiceDto"
+                }
+              }
+            },
+            "description": "Delivered",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  },
+                  "design_services.invalid_status": {
+                    "$ref": "#/components/examples/problem.design_services.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`, `design_services.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Deliver the design of the current round",
+        "tags": [
+          "admin.designServices"
+        ],
+        "x-required-permissions": [
+          "design_services.manage"
+        ]
+      }
+    },
+    "/v1/admin/design-services/{designServiceId}/actions/requote": {
+      "post": {
+        "description": "A change to the structure / dieline or the concept is a new design, re-quoted — not a revision (D-071).\n\nImplements: D-071.",
+        "operationId": "admin.designServices.requote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designServiceId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้าต้องการเปลี่ยนโครงสร้างกล่อง ต้องเสนอราคาออกแบบใหม่"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CloseDesignServiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "brief": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  },
+                  "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                  "closeReason": "ลูกค้าต้องการเปลี่ยนโครงสร้างกล่อง",
+                  "designFeeNet": "1500.00",
+                  "dueState": "closed",
+                  "freeRounds": 3,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                  "maxDueAt": "2026-10-11T10:00:00+07:00",
+                  "nextRevision": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                  "revisionsUsed": 0,
+                  "rounds": [
+                    {
+                      "changeRequest": null,
+                      "chargeable": false,
+                      "deliveredAt": null,
+                      "feeNet": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                      "instalmentId": null,
+                      "kind": "initial",
+                      "requestedAt": "2026-09-27T10:00:00+07:00",
+                      "roundNo": 1,
+                      "startedAt": "2026-09-27T10:00:00+07:00",
+                      "status": "in_progress",
+                      "submissionId": null
+                    }
+                  ],
+                  "status": "requoted",
+                  "targetDueAt": "2026-10-04T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignServiceDto"
+                }
+              }
+            },
+            "description": "Re-quoted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "design_services.invalid_status": {
+                    "$ref": "#/components/examples/problem.design_services.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `design_services.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Close for a new design quote",
+        "tags": [
+          "admin.designServices"
+        ],
+        "x-required-permissions": [
+          "design_services.manage"
+        ]
+      }
+    },
     "/v1/admin/discount-memos": {
       "get": {
         "description": "Newest first; filter by status or customer (D-052).\n\nImplements: D-052, D-162.",
@@ -118198,6 +120430,278 @@
         ],
         "x-required-permissions": [
           "artwork.submit_on_behalf"
+        ]
+      }
+    },
+    "/v1/admin/orders/{orderId}/mockup": {
+      "post": {
+        "description": "The optional paid add-on the customer asked for (D-072), at a CS-quoted price (no calculator prices it yet; audited): an order line and an instalment due now; production of the mockup starts once it is paid. Before production only; one per order.\n\nImplements: D-072, D-020.",
+        "operationId": "admin.artwork.addMockup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "mockupOption": "with_print",
+                    "netAmount": "800.00",
+                    "reason": "ลูกค้าขอตัวอย่างจริงก่อนผลิต 1 ชิ้น"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddMockupDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cashAmount": "856.00",
+                  "grossAmount": "856.00",
+                  "instalmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000e4001",
+                  "netAmount": "800.00",
+                  "vatAmount": "56.00",
+                  "whtAmount": "0.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AddOnChargeDto"
+                }
+              }
+            },
+            "description": "Added",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "mockups.exists": {
+                    "$ref": "#/components/examples/problem.mockups.exists"
+                  },
+                  "order.invalid_transition": {
+                    "$ref": "#/components/examples/problem.order.invalid_transition"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `mockups.exists`, `order.invalid_transition`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add a paid mockup (physical proof) to an order",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "mockups.manage"
         ]
       }
     },
@@ -181734,6 +184238,813 @@
         ]
       }
     },
+    "/v1/store/orders/{orderId}/design-service": {
+      "get": {
+        "description": "Status, brief, due dates (target 5 / maximum 10 business days from the start), rounds, and — once changes were requested — what the next revision costs: free for the first 3 revisions, then max(THB 500, 20 % of the design fee) (D-071, settings).\n\nImplements: D-071.",
+        "operationId": "store.designServices.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "brief": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  },
+                  "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                  "closeReason": null,
+                  "designFeeNet": "1500.00",
+                  "dueState": "on_track",
+                  "freeRounds": 3,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                  "maxDueAt": "2026-10-11T10:00:00+07:00",
+                  "nextRevision": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                  "revisionsUsed": 0,
+                  "rounds": [
+                    {
+                      "changeRequest": null,
+                      "chargeable": false,
+                      "deliveredAt": null,
+                      "feeNet": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                      "instalmentId": null,
+                      "kind": "initial",
+                      "requestedAt": "2026-09-27T10:00:00+07:00",
+                      "roundNo": 1,
+                      "startedAt": "2026-09-27T10:00:00+07:00",
+                      "status": "in_progress",
+                      "submissionId": null
+                    }
+                  ],
+                  "status": "in_progress",
+                  "targetDueAt": "2026-10-04T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignServiceDto"
+                }
+              }
+            },
+            "description": "Design service",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get the hired design of my order",
+        "tags": [
+          "store.designServices"
+        ]
+      }
+    },
+    "/v1/store/orders/{orderId}/design-service/actions/confirm-extra-round": {
+      "post": {
+        "description": "Beyond the free revisions each round costs max(THB 500, 20 % of the design fee) (D-071): confirming adds it to the order with its own instalment, due now; the round starts once it is paid. Send the fee shown in `nextRevision.feeGross`; a different amount is refused (`design_services.fee_changed`).\n\nImplements: D-071, D-020.",
+        "operationId": "store.designServices.confirmExtraRound",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "changeRequest": "ขอเปลี่ยนสีตัวอักษรเป็นสีทอง",
+                    "expectedFeeGross": "535.00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmExtraRoundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "brief": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  },
+                  "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                  "closeReason": null,
+                  "designFeeNet": "1500.00",
+                  "dueState": "on_track",
+                  "freeRounds": 3,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                  "maxDueAt": "2026-10-11T10:00:00+07:00",
+                  "nextRevision": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                  "revisionsUsed": 3,
+                  "rounds": [
+                    {
+                      "changeRequest": null,
+                      "chargeable": false,
+                      "deliveredAt": null,
+                      "feeNet": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                      "instalmentId": null,
+                      "kind": "initial",
+                      "requestedAt": "2026-09-27T10:00:00+07:00",
+                      "roundNo": 1,
+                      "startedAt": "2026-09-27T10:00:00+07:00",
+                      "status": "in_progress",
+                      "submissionId": null
+                    }
+                  ],
+                  "status": "revision_requested",
+                  "targetDueAt": "2026-10-04T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignServiceDto"
+                }
+              }
+            },
+            "description": "Round added, awaiting payment",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "design_services.fee_changed": {
+                    "$ref": "#/components/examples/problem.design_services.fee_changed"
+                  },
+                  "design_services.no_extra_round": {
+                    "$ref": "#/components/examples/problem.design_services.no_extra_round"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "order.invalid_transition": {
+                    "$ref": "#/components/examples/problem.order.invalid_transition"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `design_services.fee_changed`, `design_services.no_extra_round`, `idempotency.in_progress`, `order.invalid_transition`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Confirm a paid revision round",
+        "tags": [
+          "store.designServices"
+        ]
+      }
+    },
+    "/v1/store/orders/{orderId}/design-service/brief": {
+      "put": {
+        "description": "Brand name, category, description and attachments (legacy `brd_*`). Work starts once the brief is in and the order is paid for production (D-071).\n\nImplements: D-071.",
+        "operationId": "store.designServices.submitBrief",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DesignBriefDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "brief": {
+                    "attachmentFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000e3004"
+                    ],
+                    "brandCategory": "เครื่องดื่ม",
+                    "brandName": "ร้านกาแฟทดสอบ",
+                    "description": "กล่องโทนมินิมอล สีครีม มีโลโก้ด้านหน้า"
+                  },
+                  "briefSubmittedAt": "2026-09-27T09:00:00+07:00",
+                  "closeReason": null,
+                  "designFeeNet": "1500.00",
+                  "dueState": "on_track",
+                  "freeRounds": 3,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3001",
+                  "maxDueAt": "2026-10-11T10:00:00+07:00",
+                  "nextRevision": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e3002",
+                  "revisionsUsed": 0,
+                  "rounds": [
+                    {
+                      "changeRequest": null,
+                      "chargeable": false,
+                      "deliveredAt": null,
+                      "feeNet": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
+                      "instalmentId": null,
+                      "kind": "initial",
+                      "requestedAt": "2026-09-27T10:00:00+07:00",
+                      "roundNo": 1,
+                      "startedAt": "2026-09-27T10:00:00+07:00",
+                      "status": "in_progress",
+                      "submissionId": null
+                    }
+                  ],
+                  "status": "in_progress",
+                  "targetDueAt": "2026-10-04T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DesignServiceDto"
+                }
+              }
+            },
+            "description": "Brief stored",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "design_services.invalid_status": {
+                    "$ref": "#/components/examples/problem.design_services.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `design_services.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Send the design brief",
+        "tags": [
+          "store.designServices"
+        ]
+      }
+    },
     "/v1/store/orders/{orderId}/proofs": {
       "get": {
         "description": "Newest version first, with annotations and the compare data of the version each one answers (D-070).\n\nImplements: D-070, D-073.",
@@ -192379,6 +195690,10 @@
       "name": "admin.customers"
     },
     {
+      "description": "The hired-design queue: assign designers, deliver rounds, re-quote structure / concept changes (D-071).",
+      "name": "admin.designServices"
+    },
+    {
       "description": "Discounts above the CS limit, routed to the matching tier only; company discounts (D-052, D-124, D-162).",
       "name": "admin.discountMemos"
     },
@@ -192633,6 +195948,10 @@
     {
       "description": "The signed-in customer’s profile: customer type and customer code (D-020).",
       "name": "store.customerProfile"
+    },
+    {
+      "description": "Hired design of my orders: brief, rounds, due dates, 3 free revisions then paid rounds (D-071).",
+      "name": "store.designServices"
     },
     {
       "description": "Customer uploads (artwork, slips…): presign → PUT → complete → signed download.",

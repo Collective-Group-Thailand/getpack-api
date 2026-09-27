@@ -193,6 +193,11 @@ export const ERROR_CODES = {
   'proofs.no_accepted_artwork': HttpStatus.CONFLICT,
   'proofs.not_pending': HttpStatus.CONFLICT,
   'proofs.annotation_closed': HttpStatus.CONFLICT,
+  'order.reprice_has_add_ons': HttpStatus.CONFLICT,
+  'design_services.invalid_status': HttpStatus.CONFLICT,
+  'design_services.fee_changed': HttpStatus.CONFLICT,
+  'design_services.no_extra_round': HttpStatus.CONFLICT,
+  'mockups.exists': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

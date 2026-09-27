@@ -19,8 +19,10 @@ survives a cancelled order or a CS re-price.
    order's gross** (`instalment_allocations`), rounded half-up to the satang, with the rounding remainder on the
    order with the **largest gross** (ties: the first order). VAT and withholding are allocated the same way; net
    and cash are derived as above.
-3. **Payments** are applied to instalments oldest-`seq` first (FIFO) and follow the instalments' allocations to
-   orders; an instalment is `paid` when its cash is fully covered, `partially_paid` otherwise.
+3. **Payments** are applied to instalments oldest-`seq` first (FIFO) — instalments already due (due, overdue,
+   partially paid) before those not due yet (amended in B4.1, so an add-on charge a customer pays is not taken
+   by a later instalment) — and follow the instalments' allocations to orders; an instalment is `paid` when its
+   cash is fully covered, `partially_paid` otherwise.
 4. **Changes after placement** re-allocate **only the unpaid part**: a cancelled order or a CS re-price
    (`order.repriced`) recomputes the unpaid instalments' amounts from the group's new totals minus what is already
    paid, keeping the template percentages for the remaining instalments; paid amounts and their allocations never

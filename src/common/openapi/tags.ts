@@ -62,6 +62,10 @@ export const API_TAGS: Record<string, string> = {
     'Artwork of my orders: versions, automated preflight with a Thai report (D-070), proofs and annotations (D-073).',
   'admin.artwork':
     'Prepress: the work queue with SLA, preflight reports, accept / reject submissions (D-070).',
+  'store.designServices':
+    'Hired design of my orders: brief, rounds, due dates, 3 free revisions then paid rounds (D-071).',
+  'admin.designServices':
+    'The hired-design queue: assign designers, deliver rounds, re-quote structure / concept changes (D-071).',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',
   'admin.roles': 'The role and permission catalogue (D-140, D-141).',
   'admin.approvals': 'Generic approval engine: inbox, approve, reject, withdraw (ADR-0006).',

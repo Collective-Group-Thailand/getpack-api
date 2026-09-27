@@ -424,6 +424,7 @@ const CHECKS = [
   'ck_discount_memos__subject',
   // --- B4.1 artwork, proofs, design services, designs
   'ck_instalments__fixed_amount',
+  'ck_instalments__add_on_line',
   'ck_artwork_submissions__version',
   'ck_artwork_submissions__attempts',
   'ck_artwork_submissions__rejected',

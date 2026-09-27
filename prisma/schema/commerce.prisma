@@ -668,7 +668,8 @@ model OrderLine {
   discounts OrderDiscount[]
 
   // --- Fulfilment B4.1 (generated back-relations)
-  designRounds DesignRound[] @relation("DesignRoundOrderLine")
+  designRounds     DesignRound[] @relation("DesignRoundOrderLine")
+  addOnInstalments Instalment[]  @relation("InstalmentAddOnLine")
   // --- end Fulfilment B4.1
 
   @@unique([orderId, lineNo], map: "ux_order_lines__order_id__line_no")
@@ -1032,6 +1033,8 @@ model Instalment {
   requiredBefore    RequiredBefore   @map("required_before")
   /// An add-on charge (extra design round D-071, mockup D-072): its amount is fixed, never rebalanced.
   fixedAmount       Boolean          @default(false) @map("fixed_amount")
+  /// The add-on line a fixed-amount instalment pays for.
+  orderLineId       BigInt?          @map("order_line_id")
   dueAt             DateTime?        @map("due_at") @db.Timestamptz(6)
   netAmount         Decimal          @map("net_amount") @db.Decimal(14, 2)
   discountAmount    Decimal          @default(0) @map("discount_amount") @db.Decimal(14, 2)
@@ -1048,6 +1051,7 @@ model Instalment {
   rowVersion        Int              @default(1) @map("row_version")
 
   schedule    PaymentSchedule        @relation(fields: [paymentScheduleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_instalments__payment_schedule_id")
+  orderLine   OrderLine?             @relation("InstalmentAddOnLine", fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_instalments__order_line_id")
   allocations InstalmentAllocation[]
   payments    PaymentAllocation[]
 
@@ -1057,6 +1061,7 @@ model Instalment {
 
   @@unique([paymentScheduleId, seq], map: "ux_instalments__payment_schedule_id__seq")
   @@index([status, dueAt], map: "ix_instalments__status__due_at")
+  @@index([orderLineId], map: "ix_instalments__order_line_id")
   @@map("instalments")
 }
 

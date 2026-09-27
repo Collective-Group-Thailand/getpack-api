@@ -116,14 +116,26 @@ export class ArtworkService implements OnModuleInit {
     input: SubmitInput,
     opts: SubmitOptions,
   ): Promise<SubmissionRow> {
-    const order = await this.orders.order({ publicId: orderPublicId }, opts.customerUserId);
+    const id = await this.prisma.withTx((tx) => this.submitIn(tx, actor, orderPublicId, input, opts));
+    return this.prisma.artworkSubmission.findUniqueOrThrow({ where: { id }, include: SUBMISSION_INCLUDE });
+  }
+
+  /** `submit` in the caller's transaction (a designer's delivery, B4.1); returns the submission id. */
+  async submitIn(
+    tx: Tx,
+    actor: Actor,
+    orderPublicId: string,
+    input: SubmitInput,
+    opts: SubmitOptions,
+  ): Promise<bigint> {
+    const order = await this.orders.order({ publicId: orderPublicId }, opts.customerUserId, tx);
     const files = input.files ?? [];
     const links = input.links ?? [];
     if (!files.some((f) => (f.role ?? 'artwork') === 'artwork') && links.length === 0)
       throw new DomainException('validation.failed', {
         errors: [{ path: 'files', code: 'required', message: 'at least one artwork file or link' }],
       });
-    const objects = await this.prisma.fileObject.findMany({
+    const objects = await tx.fileObject.findMany({
       where: { publicId: { in: files.map((f) => f.fileId) } },
     });
     for (const f of files) {
@@ -136,72 +148,69 @@ export class ArtworkService implements OnModuleInit {
         throw new DomainException('artwork.file_not_usable', { params: { fileId: f.fileId } });
     }
 
-    const id = await this.prisma.withTx(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${order.id} FOR UPDATE`;
-      const current = await tx.order.findUniqueOrThrow({ where: { id: order.id } });
-      this.assertTakesArtwork(current.status, current.artworkStatus);
-      const last = await tx.artworkSubmission.findFirst({
-        where: { orderId: order.id },
-        orderBy: { versionNo: 'desc' },
-        select: { versionNo: true },
-      });
-      const versionNo = (last?.versionNo ?? 0) + 1;
-      const at = new Date();
-      // A newer version replaces what was waiting, and a proof the customer has not answered yet.
-      await tx.artworkSubmission.updateMany({
-        where: { orderId: order.id, status: { in: ['submitted', 'accepted_for_proof'] } },
-        data: { status: 'superseded', rowVersion: { increment: 1 } },
-      });
-      await tx.proof.updateMany({
-        where: { orderId: order.id, status: 'pending_customer' },
-        data: { status: 'superseded', decidedAt: at, rowVersion: { increment: 1 } },
-      });
-      const submission = await tx.artworkSubmission.create({
-        data: {
-          orderId: order.id,
-          versionNo,
-          source: opts.source ?? 'upload',
-          channel: opts.channel,
-          designDocumentVersionId: opts.designDocumentVersionId ?? null,
-          note: input.note ?? null,
-          submittedById: actor.type === 'user' ? actor.userId : current.customerUserId,
-          submittedAt: at,
-        },
-      });
-      let sort = 0;
-      for (const f of files) {
-        await tx.artworkSubmissionFile.create({
-          data: {
-            submissionId: submission.id,
-            fileObjectId: objects.find((o) => o.publicId === f.fileId)!.id,
-            role: f.role ?? 'artwork',
-            sort: sort++,
-          },
-        });
-      }
-      for (const url of links) {
-        await tx.artworkSubmissionFile.create({
-          data: { submissionId: submission.id, linkUrl: url, role: 'link', sort: sort++ },
-        });
-      }
-      await this.setArtworkStatus(tx, current.id, 'uploaded', actor);
-      await this.record(
-        tx,
-        current.publicId,
-        'artwork.submitted',
-        {
-          submissionId: submission.publicId,
-          versionNo,
-          source: submission.source,
-          channel: submission.channel,
-          files: files.length + links.length,
-        },
-        actor,
-        await this.customerPublicId(tx, current.customerUserId),
-      );
-      return submission.id;
+    await tx.$queryRaw`SELECT id FROM orders WHERE id = ${order.id} FOR UPDATE`;
+    const current = await tx.order.findUniqueOrThrow({ where: { id: order.id } });
+    this.assertTakesArtwork(current.status, current.artworkStatus);
+    const last = await tx.artworkSubmission.findFirst({
+      where: { orderId: order.id },
+      orderBy: { versionNo: 'desc' },
+      select: { versionNo: true },
     });
-    return this.prisma.artworkSubmission.findUniqueOrThrow({ where: { id }, include: SUBMISSION_INCLUDE });
+    const versionNo = (last?.versionNo ?? 0) + 1;
+    const at = new Date();
+    // A newer version replaces what was waiting, and a proof the customer has not answered yet.
+    await tx.artworkSubmission.updateMany({
+      where: { orderId: order.id, status: { in: ['submitted', 'accepted_for_proof'] } },
+      data: { status: 'superseded', rowVersion: { increment: 1 } },
+    });
+    await tx.proof.updateMany({
+      where: { orderId: order.id, status: 'pending_customer' },
+      data: { status: 'superseded', decidedAt: at, rowVersion: { increment: 1 } },
+    });
+    const submission = await tx.artworkSubmission.create({
+      data: {
+        orderId: order.id,
+        versionNo,
+        source: opts.source ?? 'upload',
+        channel: opts.channel,
+        designDocumentVersionId: opts.designDocumentVersionId ?? null,
+        note: input.note ?? null,
+        submittedById: actor.type === 'user' ? actor.userId : current.customerUserId,
+        submittedAt: at,
+      },
+    });
+    let sort = 0;
+    for (const f of files) {
+      await tx.artworkSubmissionFile.create({
+        data: {
+          submissionId: submission.id,
+          fileObjectId: objects.find((o) => o.publicId === f.fileId)!.id,
+          role: f.role ?? 'artwork',
+          sort: sort++,
+        },
+      });
+    }
+    for (const url of links) {
+      await tx.artworkSubmissionFile.create({
+        data: { submissionId: submission.id, linkUrl: url, role: 'link', sort: sort++ },
+      });
+    }
+    await this.setArtworkStatus(tx, current.id, 'uploaded', actor);
+    await this.record(
+      tx,
+      current.publicId,
+      'artwork.submitted',
+      {
+        submissionId: submission.publicId,
+        versionNo,
+        source: submission.source,
+        channel: submission.channel,
+        files: files.length + links.length,
+      },
+      actor,
+      await this.customerPublicId(tx, current.customerUserId),
+    );
+    return submission.id;
   }
 
   // --- prepress review -------------------------------------------------------------------------------

@@ -1,9 +1,24 @@
+import { randomUUID } from 'node:crypto';
+
+import { PrismaService } from '@database/prisma.service';
+import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateways';
+import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
 import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
 import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
+import { DiscoveryModule } from '@nestjs/core';
+import { Test } from '@nestjs/testing';
+import { envelopeFromRow } from '@platform/domain-events/domain-event';
+import { EventConsumerRunner } from '@platform/domain-events/event-consumer.runner';
+import { SubscriberRegistry } from '@platform/domain-events/subscriber-registry';
 import { FileProcessingJobs } from '@platform/files/file-processing.jobs';
 import { PDFDocument, rgb } from 'pdf-lib';
+import request from 'supertest';
 
+import { seedDev } from '../../prisma/seed/dev-seed';
+import { AppModule } from '../../src/app.module';
+import { configureApp } from '../../src/bootstrap';
 import { as, type CommerceApp } from './commerce-e2e';
+import { E2E_DEV_PASSWORD } from './e2e';
 
 /** Shared helpers of the fulfilment e2e suites (B4). */
 
@@ -75,3 +90,79 @@ export const uploadPdf = (
     mimeType: 'application/pdf',
     surface,
   });
+
+export interface FulfilmentApp extends CommerceApp {
+  /**
+   * Runs every registered domain-event subscriber (the worker's consumers, exactly-once through
+   * `event_consumptions`) on the events recorded since the suite started, until nothing new happens.
+   */
+  pump: (opts?: { skip?: string[] }) => Promise<number>;
+}
+
+/** The commerce app plus the worker's subscriber registry, so suites can drive event chains (B4). */
+export async function bootFulfilmentApp(): Promise<FulfilmentApp> {
+  const moduleRef = await Test.createTestingModule({
+    imports: [AppModule, DiscoveryModule],
+    providers: [SubscriberRegistry, EventConsumerRunner],
+  }).compile();
+  const app = moduleRef.createNestApplication({ logger: process.env['E2E_LOG'] ? ['error'] : false });
+  configureApp(app);
+  await app.listen(0, '127.0.0.1');
+  const prisma = app.get(PrismaService);
+  await seedDev(prisma, E2E_DEV_PASSWORD);
+  const since = new Date();
+  const registry = app.get(SubscriberRegistry);
+  const runner = app.get(EventConsumerRunner);
+  const pump = async (opts: { skip?: string[] } = {}) => {
+    const skip = new Set(['notifications.router', ...(opts.skip ?? [])]);
+    let total = 0;
+    for (let round = 0; round < 25; round++) {
+      const events = await prisma.domainEvent.findMany({
+        where: { occurredAt: { gte: since } },
+        orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
+      });
+      let processed = 0;
+      for (const event of events) {
+        for (const subscriber of registry.forType(event.type)) {
+          if (skip.has(subscriber.consumer)) continue;
+          const done = await prisma.eventConsumption.findUnique({
+            where: { consumer_eventId: { consumer: subscriber.consumer, eventId: event.id } },
+          });
+          if (done) continue;
+          if ((await runner.consume(subscriber.consumer, envelopeFromRow(event))) === 'processed')
+            processed++;
+        }
+      }
+      total += processed;
+      if (processed === 0) return total;
+    }
+    throw new Error('event pump did not settle after 25 rounds');
+  };
+  return {
+    app,
+    server: app.getHttpServer(),
+    prisma,
+    run: (Date.now() % 1_000_000) + Math.floor(Math.random() * 1000),
+    pump,
+  };
+}
+
+/** Pays what is due on the group by SCB QR, confirmed by the fake SCB callback (flag `payments.scb` on). */
+export async function payDue(
+  ctx: CommerceApp,
+  token: string,
+  groupId: string,
+): Promise<{ cashAmount: string }> {
+  const payment = (
+    await as(ctx, token)
+      .post(`/v1/store/order-groups/${groupId}/payments`, { method: 'scb_qr' })
+      .set('Idempotency-Key', randomUUID())
+      .expect(201)
+  ).body as { referenceCode: string; cashAmount: string };
+  const scb = ctx.app.get<FakeScbGateway>(SCB_GATEWAY);
+  await request(ctx.server)
+    .post('/webhooks/scb/payment-confirmation')
+    .send(scb.settle(payment.referenceCode, payment.cashAmount))
+    .expect(200);
+  return payment;
+}

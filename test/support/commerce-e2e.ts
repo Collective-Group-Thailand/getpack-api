@@ -69,6 +69,7 @@ export function as(ctx: CommerceApp, token: string) {
     get: (url: string) => auth(request(ctx.server).get(url)),
     post: (url: string, body: object = {}) => auth(request(ctx.server).post(url)).send(body),
     patch: (url: string, body: object = {}) => auth(request(ctx.server).patch(url)).send(body),
+    put: (url: string, body: object = {}) => auth(request(ctx.server).put(url)).send(body),
     delete: (url: string) => auth(request(ctx.server).delete(url)),
   };
 }

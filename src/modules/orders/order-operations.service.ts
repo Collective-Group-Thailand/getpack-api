@@ -63,6 +63,9 @@ export class OrderOperationsService {
       });
     if ((await this.prisma.orderDiscount.count({ where: { orderId: order.id } })) > 0)
       throw new DomainException('order.reprice_has_discounts');
+    // Add-on charges (extra design rounds, mockups) have their own instalments; a re-price would drop them.
+    if ((await this.prisma.orderLine.count({ where: { orderId: order.id, lineType: { in: ['extra_revision', 'mockup'] } } })) > 0)
+      throw new DomainException('order.reprice_has_add_ons');
     const group = await this.prisma.orderGroup.findUniqueOrThrow({ where: { id: order.orderGroupId } });
 
     const quote = await this.prisma.quote.findFirst({

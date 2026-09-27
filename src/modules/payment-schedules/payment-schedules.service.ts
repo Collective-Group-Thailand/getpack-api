@@ -318,6 +318,57 @@ export class PaymentSchedulesService implements OnModuleInit {
     }
   }
 
+  /**
+   * An add-on charge after placement (extra design round D-071, mockup D-072; ADR-0008 item 6): a
+   * fixed-amount instalment due now, required before nothing, allocated to its order and naming its line.
+   * The caller has already added the line to the order and the group totals.
+   */
+  async addFixedInstalment(
+    tx: Tx,
+    input: {
+      groupId: bigint;
+      orderId: bigint;
+      orderLineId: bigint;
+      labelTh: string;
+      labelEn: string;
+      amounts: AmountSet;
+    },
+    actor: Actor,
+    at = new Date(),
+  ): Promise<Instalment> {
+    const schedule = await this.forGroup(input.groupId, tx);
+    const seq = Math.max(0, ...schedule.instalments.map((i) => i.seq)) + 1;
+    const instalment = await tx.instalment.create({
+      data: {
+        paymentScheduleId: schedule.id,
+        seq,
+        labelTh: input.labelTh,
+        labelEn: input.labelEn,
+        pct: '0',
+        dueTrigger: 'at_checkout',
+        requiredBefore: 'none',
+        fixedAmount: true,
+        orderLineId: input.orderLineId,
+        dueAt: at,
+        status: 'due',
+        netAmount: input.amounts.net,
+        vatAmount: input.amounts.vat,
+        grossAmount: input.amounts.gross,
+        whtAmount: input.amounts.wht,
+        cashAmount: input.amounts.cash,
+      },
+    });
+    await this.allocate(tx, instalment.id, input.amounts, [{ key: input.orderId, gross: input.amounts.gross }]);
+    const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: input.groupId } });
+    await this.record(tx, group.publicId, 'instalment.due', {
+      instalmentId: instalment.publicId,
+      seq,
+      cashAmount: input.amounts.cash,
+      addOn: true,
+    }, actor);
+    return instalment;
+  }
+
   // --- reads & override -------------------------------------------------------------------------------
 
   async forGroup(groupId: bigint, db: Tx = this.prisma): Promise<ScheduleRow> {
@@ -494,7 +545,11 @@ export class PaymentSchedulesService implements OnModuleInit {
    */
   async applyPayment(tx: Tx, groupId: bigint, paymentId: bigint, cash: string, actor: Actor, at = new Date()) {
     const schedule = await this.forGroup(groupId, tx);
-    const open = schedule.instalments.filter((i) => OPEN.includes(i.status));
+    // What is due takes the cash first (oldest seq first), then what is not due yet (ADR-0008 item 3).
+    const dueFirst = (i: { status: InstalmentStatus }) => (i.status === 'pending' ? 1 : 0);
+    const open = schedule.instalments
+      .filter((i) => OPEN.includes(i.status))
+      .sort((a, b) => dueFirst(a) - dueFirst(b) || a.seq - b.seq);
     const { applications, leftover } = applyFifo(
       open.map((i) => ({
         key: i.id,
@@ -521,7 +576,13 @@ export class PaymentSchedulesService implements OnModuleInit {
         },
       });
       if (a.fullyPaid)
-        await this.record(tx, group.publicId, 'instalment.paid', { seq: instalment.seq, cashAmount: a.cash }, actor);
+        await this.record(
+          tx,
+          group.publicId,
+          'instalment.paid',
+          { instalmentId: instalment.publicId, seq: instalment.seq, cashAmount: a.cash, fixedAmount: instalment.fixedAmount },
+          actor,
+        );
     }
     await this.evaluateGates(tx, groupId, actor);
     return { applications, leftover };
@@ -679,8 +740,9 @@ export class PaymentSchedulesService implements OnModuleInit {
     const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: groupId }, include: { orders: true } });
     const active = group.orders.filter((o) => o.status !== 'cancelled');
     const live = schedule.instalments.filter((i) => i.status !== 'cancelled');
-    const fixed = live.filter((i) => i.status === 'paid' || i.status === 'refunded');
-    const adjustable = live.filter((i) => OPEN.includes(i.status));
+    // Paid instalments and add-on charges (ADR-0008 item 6) keep their amounts; the rest is re-split.
+    const fixed = live.filter((i) => i.status === 'paid' || i.status === 'refunded' || i.fixedAmount);
+    const adjustable = live.filter((i) => OPEN.includes(i.status) && !i.fixedAmount);
     const target = active.map(setOf).reduce(addSets, ZERO);
     const remainder = subSets(target, fixed.map(setOf).reduce(addSets, ZERO));
     const paidOnAdjustable = adjustable.reduce((a, i) => a.add(i.paidAmount.toString()), new MoneyDecimal(0));
@@ -697,7 +759,14 @@ export class PaymentSchedulesService implements OnModuleInit {
     }
     if (adjustable.length > 0) {
       const parts = splitByPct(remainder, adjustable.map((i) => i.pct.toFixed(4)), true);
-      const orders = active.map((o) => ({ key: o.id, gross: o.grossAmount.toFixed(2) }));
+      // Each order's share excludes its add-on charges, which have their own instalments.
+      const charges = await tx.instalmentAllocation.groupBy({
+        by: ['orderId'],
+        where: { instalment: { paymentScheduleId: schedule.id, fixedAmount: true, status: { not: 'cancelled' } } },
+        _sum: { grossAmount: true },
+      });
+      const chargeOf = (orderId: bigint) => D(charges.find((c) => c.orderId === orderId)?._sum.grossAmount ?? 0);
+      const orders = active.map((o) => ({ key: o.id, gross: formatMoney(D(o.grossAmount).sub(chargeOf(o.id))) }));
       for (const [index, i] of adjustable.entries()) {
         const a = parts[index]!;
         const paid = D(i.paidAmount);
