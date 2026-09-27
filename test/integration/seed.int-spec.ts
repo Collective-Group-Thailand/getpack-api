@@ -96,6 +96,10 @@ describe('seeds (PostgreSQL 18)', () => {
     expect(await count("feature_flags WHERE key LIKE 'payments.%'")).toBe(5);
   });
 
+  it('seeds the drawing engine flag off until @packio/dieline is published (B4.1)', async () => {
+    expect(await count("feature_flags WHERE key = 'drawing.engine' AND NOT enabled")).toBe(1);
+  });
+
   it('seeds the order cancel reasons lookup (B3.1)', async () => {
     expect(await count('order_cancel_reasons')).toBe(7);
     expect(await count("order_cancel_reasons WHERE code = 'payment_expired' AND applies_to = 'system'")).toBe(1);

@@ -29,6 +29,11 @@ survives a cancelled order or a CS re-price.
    instalment `required_before = production` is paid; it may ship when every instalment
    `required_before = shipping` (and production) is paid.
 
+6. **Add-on charges after placement** (an extra design round from round 4, D-071; a mockup, D-072) add their own
+   order line (a re-price revision of the order) and their own instalment with `fixed_amount = true`, `pct = 0`,
+   due at once and required before nothing. A fixed-amount instalment keeps its amount: the re-allocation of item 4
+   treats it like a paid one, and the percentages apply to the rest. (Amendment, B4.1, 2026-09-27.)
+
 ## Consequences
 - Instalment documents (B5.2) and journal dimensions (order, order group) read the allocations; the sum over
   allocations equals the instalment, and the sum over instalments equals the group, by construction.

@@ -73,6 +73,22 @@ export interface SettingValues {
   'payments.qr_validity_minutes': number;
   /** Not seeded: fee 0 until Finance sets it. */
   'payments.method_fees': Record<string, { pct?: string; fixedAmount?: string }>;
+  /** D-070 preflight: severity per check and the technical thresholds (ADR-0009, proposed). */
+  'artwork.preflight_rules': {
+    severities: Record<string, 'block' | 'warn' | 'info'>;
+    bleedMm: string;
+    sizeToleranceMm: string;
+    minEffectivePpi: number;
+    safeZoneMm: string;
+    minLineWidthPt: string;
+    maxInkCoveragePct: number;
+  };
+  /** Not seeded (B4.1): no prepress due time until set. */
+  'artwork.prepress_sla_business_hours': number;
+  /** D-071 hired design delivery target and maximum. */
+  'design.hired_design_sla': { targetBusinessDays: number; maxBusinessDays: number };
+  'design.free_revision_rounds': number;
+  'design.extra_revision_fee': { minimumAmount: string; pctOfDesignFee: string };
   /** Not seeded: no slip passes automatically until set (D-061). */
   'payments.slip_receiver_accounts': { accountType: string; accountNumber: string; accountNameTH?: string }[];
 }

@@ -340,6 +340,10 @@ model CartItem {
   reorderOfOrderId     BigInt?      @map("reorder_of_order_id")
   quantity             Int
   designOption         DesignOption @map("design_option")
+  /// The customer's online design (B4.1).
+  designDocumentId     BigInt?      @map("design_document_id")
+  /// Reorder with unchanged artwork: the approved proof carried over, proof skipped (D-153).
+  reuseArtworkProofId  BigInt?      @map("reuse_artwork_proof_id")
   /// Free-text design reference until design documents exist (B4.1).
   designNote           String?      @map("design_note")
   mockupOption         MockupOption @default(none) @map("mockup_option")
@@ -365,6 +369,8 @@ model CartItem {
   reorderOfOrder     Order?                @relation("CartItemReorderOf", fields: [reorderOfOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reorder_of_order_id")
   pendingQuote       Quote?                @relation("CartItemPendingQuote", fields: [pendingQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__pending_quote_id")
   pendingQuoteOption QuoteOption?          @relation("CartItemPendingQuoteOption", fields: [pendingQuoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__pending_quote_option_id")
+  designDocument     DesignDocument?       @relation("CartItemDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__design_document_id")
+  reuseArtworkProof  Proof?                @relation("CartItemReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reuse_artwork_proof_id")
   destinations       CartItemDestination[]
 
   @@index([cartId], map: "ix_cart_items__cart_id")
@@ -373,6 +379,8 @@ model CartItem {
   @@index([reorderOfOrderId], map: "ix_cart_items__reorder_of_order_id")
   @@index([pendingQuoteId], map: "ix_cart_items__pending_quote_id")
   @@index([pendingQuoteOptionId], map: "ix_cart_items__pending_quote_option_id")
+  @@index([designDocumentId], map: "ix_cart_items__design_document_id")
+  @@index([reuseArtworkProofId], map: "ix_cart_items__reuse_artwork_proof_id")
   @@map("cart_items")
 }
 
@@ -520,6 +528,10 @@ model Order {
   artworkStatus           ArtworkStatus        @map("artwork_status")
   designOption            DesignOption         @map("design_option")
   designNote              String?              @map("design_note")
+  /// The customer's online design (B4.1).
+  designDocumentId        BigInt?              @map("design_document_id")
+  /// Reorder with unchanged artwork: the approved proof carried over, proof skipped (D-153).
+  reuseArtworkProofId     BigInt?              @map("reuse_artwork_proof_id")
   mockupOption            MockupOption         @default(none) @map("mockup_option")
   quantityOrdered         Int                  @map("quantity_ordered")
   quantityDelivered       Int?                 @map("quantity_delivered")
@@ -593,6 +605,17 @@ model Order {
 
   company Company? @relation("OrderCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__company_id")
 
+  designDocument    DesignDocument? @relation("OrderDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_id")
+  reuseArtworkProof Proof?          @relation("OrderReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reuse_artwork_proof_id")
+
+  // --- Fulfilment B4.1 (generated back-relations)
+  artworkSubmissions   ArtworkSubmission[]   @relation("ArtworkSubmissionOrder")
+  proofs               Proof[]               @relation("ProofOrder")
+  dielineDeliveries    DielineDelivery[]     @relation("DielineDeliveryOrder")
+  designServiceRequest DesignServiceRequest? @relation("DesignServiceRequestOrder")
+  drawingJobs          DrawingJob[]          @relation("DrawingJobOrder")
+  // --- end Fulfilment B4.1
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -608,6 +631,8 @@ model Order {
   @@index([cancelReasonId], map: "ix_orders__cancel_reason_id")
   @@index([selectedFactoryId], map: "ix_orders__selected_factory_id")
   @@index([updatedById], map: "ix_orders__updated_by")
+  @@index([designDocumentId], map: "ix_orders__design_document_id")
+  @@index([reuseArtworkProofId], map: "ix_orders__reuse_artwork_proof_id")
   @@map("orders")
 }
 
@@ -641,6 +666,10 @@ model OrderLine {
 
   order     Order           @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_lines__order_id")
   discounts OrderDiscount[]
+
+  // --- Fulfilment B4.1 (generated back-relations)
+  designRounds DesignRound[] @relation("DesignRoundOrderLine")
+  // --- end Fulfilment B4.1
 
   @@unique([orderId, lineNo], map: "ux_order_lines__order_id__line_no")
   @@map("order_lines")
@@ -1001,6 +1030,8 @@ model Instalment {
   dueTrigger        DueTrigger       @map("due_trigger")
   dueOffsetDays     Int?             @map("due_offset_days") @db.SmallInt
   requiredBefore    RequiredBefore   @map("required_before")
+  /// An add-on charge (extra design round D-071, mockup D-072): its amount is fixed, never rebalanced.
+  fixedAmount       Boolean          @default(false) @map("fixed_amount")
   dueAt             DateTime?        @map("due_at") @db.Timestamptz(6)
   netAmount         Decimal          @map("net_amount") @db.Decimal(14, 2)
   discountAmount    Decimal          @default(0) @map("discount_amount") @db.Decimal(14, 2)
@@ -1019,6 +1050,10 @@ model Instalment {
   schedule    PaymentSchedule        @relation(fields: [paymentScheduleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_instalments__payment_schedule_id")
   allocations InstalmentAllocation[]
   payments    PaymentAllocation[]
+
+  // --- Fulfilment B4.1 (generated back-relations)
+  designRounds DesignRound[] @relation("DesignRoundInstalment")
+  // --- end Fulfilment B4.1
 
   @@unique([paymentScheduleId, seq], map: "ux_instalments__payment_schedule_id__seq")
   @@index([status, dueAt], map: "ix_instalments__status__due_at")
@@ -1794,6 +1829,10 @@ model Company {
   addresses     CustomerAddress[]    @relation("CustomerAddressCompany")
   quotes        Quote[]              @relation("QuoteCompany")
   files         FileObject[]         @relation("FileObjectOwnerCompany")
+
+  // --- Fulfilment B4.1 (generated back-relations)
+  designDocuments DesignDocument[] @relation("DesignDocumentCompany")
+  // --- end Fulfilment B4.1
 
   @@unique([taxId], map: "ux_companies__tax_id", where: raw("(status <> 'closed'::company_status)"))
   @@index([status], map: "ix_companies__status")

@@ -60,6 +60,9 @@ describe('seed data (B1.2 step 3)', () => {
       'payments.method_fees': 'pending_business',
       'payments.slip_receiver_accounts': 'pending_business',
       'promotions.code_attempt_limits': 'proposed',
+      // B4.1: D-070 fixes four severities only; the rest and every threshold are proposed (ADR-0009).
+      'artwork.preflight_rules': 'proposed',
+      'artwork.prepress_sla_business_hours': 'pending_business',
     });
   });
 

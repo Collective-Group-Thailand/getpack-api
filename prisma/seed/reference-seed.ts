@@ -10,6 +10,7 @@ import {
   PAYMENT_SCHEDULE_TEMPLATES,
   REFERRAL_PROMOTION,
 } from './data/commerce';
+import { FULFILMENT_FEATURE_FLAGS } from './data/fulfilment';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { UNMET_DEMAND_REASONS } from './data/quotes';
@@ -514,9 +515,9 @@ async function ensurePaymentScheduleTemplates(tx: Tx, count: (what: string) => v
   }
 }
 
-/** Payment provider feature flags, off (D-005, D-176). */
+/** Payment provider (D-005, D-176) and fulfilment integration (B4) feature flags, off. */
 async function ensurePaymentFeatureFlags(tx: Tx, count: (what: string) => void): Promise<void> {
-  for (const flag of PAYMENT_FEATURE_FLAGS) {
+  for (const flag of [...PAYMENT_FEATURE_FLAGS, ...FULFILMENT_FEATURE_FLAGS]) {
     if (await tx.featureFlag.findUnique({ where: { key: flag.key } })) continue;
     await tx.featureFlag.create({
       data: { key: flag.key, description: flag.description, enabled: false, ownerRoleKey: 'superadmin' },

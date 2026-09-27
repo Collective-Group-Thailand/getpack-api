@@ -1,0 +1,553 @@
+// Fulfilment (docs/schema-design.md §3.7): artwork, preflight, proofs, design services, designs &
+// drawings (B4.1). Hand-written checks, triggers and partial indexes live in the migrations.
+
+// --- Enums (B4.1) ----------------------------------------------------------------------------------
+
+enum ArtworkSource {
+  upload
+  designer
+  design_service
+
+  @@map("artwork_source")
+}
+
+enum ArtworkFileRole {
+  artwork
+  font
+  link
+  reference
+
+  @@map("artwork_file_role")
+}
+
+enum PreflightStatus {
+  pending
+  running
+  passed
+  passed_with_warnings
+  blocked
+  error
+
+  @@map("preflight_status")
+}
+
+enum SubmissionStatus {
+  submitted
+  superseded
+  accepted_for_proof
+  rejected
+
+  @@map("submission_status")
+}
+
+enum PreflightCheck {
+  size_mismatch
+  missing_bleed
+  low_resolution
+  rgb_colour
+  fonts_not_embedded
+  safe_zone
+  thin_lines
+  overprint
+  ink_coverage
+
+  @@map("preflight_check")
+}
+
+enum PreflightSeverity {
+  block
+  warn
+  info
+
+  @@map("preflight_severity")
+}
+
+enum ProofStatus {
+  pending_customer
+  approved
+  changes_requested
+  superseded
+
+  @@map("proof_status")
+}
+
+enum DecisionChannel {
+  web
+  line_liff
+  cs_on_behalf
+
+  @@map("decision_channel")
+}
+
+enum AnnotationKind {
+  pin
+  rect
+  draw
+
+  @@map("annotation_kind")
+}
+
+enum DielineTrigger {
+  auto_after_payment
+  manual
+
+  @@map("dieline_trigger")
+}
+
+enum DesignServiceStatus {
+  brief_pending
+  in_progress
+  delivered
+  revision_requested
+  approved
+  cancelled
+  requoted
+
+  @@map("design_service_status")
+}
+
+enum DesignRoundKind {
+  initial
+  revision
+
+  @@map("design_round_kind")
+}
+
+enum DesignRoundStatus {
+  awaiting_payment
+  in_progress
+  delivered
+  approved
+  changes_requested
+
+  @@map("design_round_status")
+}
+
+enum DesignAssetKind {
+  image
+  font
+  logo
+  svg
+
+  @@map("design_asset_kind")
+}
+
+enum DrawingFormat {
+  svg
+  dxf
+  pdf
+
+  @@map("drawing_format")
+}
+
+enum DrawingStatus {
+  queued
+  running
+  succeeded
+  failed
+  engine_unavailable
+
+  @@map("drawing_status")
+}
+
+// --- Artwork, preflight, proofs (D-070, B4.1) --------------------------------------------------------
+
+/// One version of the files a customer (or Packio on their behalf) submits for an order.
+model ArtworkSubmission {
+  id                      BigInt           @id(map: "pk_artwork_submissions") @default(autoincrement())
+  publicId                String           @unique(map: "ux_artwork_submissions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId                 BigInt           @map("order_id")
+  versionNo               Int              @map("version_no")
+  source                  ArtworkSource
+  channel                 UploadChannel
+  designDocumentVersionId BigInt?          @map("design_document_version_id")
+  note                    String?
+  submittedById           BigInt           @map("submitted_by")
+  submittedAt             DateTime         @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  preflightStatus         PreflightStatus  @default(pending) @map("preflight_status")
+  /// Thai report: per file and page, the checks run, their measurements and thumbnails (schema version 1).
+  preflightReport         Json?            @map("preflight_report")
+  /// Setting versions the checks used (`artwork.preflight_rules`), snapshot per run (§2.2).
+  preflightRefs           Json?            @map("preflight_refs")
+  preflightCompletedAt    DateTime?        @map("preflight_completed_at") @db.Timestamptz(6)
+  /// Worker lease: a run is retried by another worker after this instant (crash safety).
+  preflightLockedUntil    DateTime?        @map("preflight_locked_until") @db.Timestamptz(6)
+  preflightAttempts       Int              @default(0) @map("preflight_attempts") @db.SmallInt
+  status                  SubmissionStatus @default(submitted)
+  reviewedById            BigInt?          @map("reviewed_by")
+  reviewedAt              DateTime?        @map("reviewed_at") @db.Timestamptz(6)
+  rejectReason            String?          @map("reject_reason")
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion              Int              @default(1) @map("row_version")
+
+  order                 Order                   @relation("ArtworkSubmissionOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submissions__order_id")
+  designDocumentVersion DesignDocumentVersion?  @relation("ArtworkSubmissionDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submissions__design_document_version_id")
+  submittedBy           User                    @relation("ArtworkSubmissionSubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submissions__submitted_by")
+  reviewedBy            User?                   @relation("ArtworkSubmissionReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submissions__reviewed_by")
+  files                 ArtworkSubmissionFile[]
+  findings              PreflightFinding[]
+  proofs                Proof[]
+  designRounds          DesignRound[]           @relation("DesignRoundSubmission")
+
+  @@unique([orderId, versionNo], map: "ux_artwork_submissions__order_id__version_no")
+  @@index([designDocumentVersionId], map: "ix_artwork_submissions__design_document_version_id")
+  @@index([submittedById], map: "ix_artwork_submissions__submitted_by")
+  @@index([reviewedById], map: "ix_artwork_submissions__reviewed_by")
+  @@index([preflightStatus, preflightLockedUntil], map: "ix_artwork_submissions__preflight_queue", where: raw("(preflight_status = ANY (ARRAY['pending'::preflight_status, 'running'::preflight_status]))"))
+  @@map("artwork_submissions")
+}
+
+model ArtworkSubmissionFile {
+  id           BigInt          @id(map: "pk_artwork_submission_files") @default(autoincrement())
+  publicId     String          @unique(map: "ux_artwork_submission_files__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  submissionId BigInt          @map("submission_id")
+  fileObjectId BigInt?         @map("file_object_id")
+  /// Role `link`: a shared-drive link instead of an upload (legacy `ggdrive_name`).
+  linkUrl      String?         @map("link_url")
+  role         ArtworkFileRole
+  sort         Int             @default(0) @db.SmallInt
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  submission ArtworkSubmission  @relation(fields: [submissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submission_files__submission_id")
+  fileObject FileObject?        @relation("ArtworkSubmissionFileObject", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_artwork_submission_files__file_object_id")
+  findings   PreflightFinding[]
+
+  @@index([submissionId], map: "ix_artwork_submission_files__submission_id")
+  @@index([fileObjectId], map: "ix_artwork_submission_files__file_object_id")
+  @@map("artwork_submission_files")
+}
+
+/// One finding of an automated preflight run (D-070). Append-only; a re-run writes new rows.
+model PreflightFinding {
+  id           BigInt            @id(map: "pk_preflight_findings") @default(autoincrement())
+  submissionId BigInt            @map("submission_id")
+  fileId       BigInt?           @map("file_id")
+  run          Int               @default(1) @db.SmallInt
+  checkKey     PreflightCheck    @map("check_key")
+  severity     PreflightSeverity
+  page         Int?              @db.SmallInt
+  details      Json
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  submission ArtworkSubmission      @relation(fields: [submissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_preflight_findings__submission_id")
+  file       ArtworkSubmissionFile? @relation(fields: [fileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_preflight_findings__file_id")
+
+  @@index([submissionId, run], map: "ix_preflight_findings__submission_id__run")
+  @@index([fileId], map: "ix_preflight_findings__file_id")
+  @@map("preflight_findings")
+}
+
+/// A proof Prepress sends the customer; approval locks and hashes the approved file.
+model Proof {
+  id                 BigInt           @id(map: "pk_proofs") @default(autoincrement())
+  publicId           String           @unique(map: "ux_proofs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId            BigInt           @map("order_id")
+  versionNo          Int              @map("version_no")
+  submissionId       BigInt?          @map("submission_id")
+  /// The proof this version answers (version compare, B4.1).
+  previousProofId    BigInt?          @map("previous_proof_id")
+  changeNote         String?          @map("change_note")
+  proofFileId        BigInt           @map("proof_file_id")
+  dielineFileId      BigInt?          @map("dieline_file_id")
+  preparedById       BigInt           @map("prepared_by")
+  status             ProofStatus      @default(pending_customer)
+  sentAt             DateTime         @default(now()) @map("sent_at") @db.Timestamptz(6)
+  decidedAt          DateTime?        @map("decided_at") @db.Timestamptz(6)
+  decidedByUserId    BigInt?          @map("decided_by_user_id")
+  decisionChannel    DecisionChannel? @map("decision_channel")
+  onBehalfReason     String?          @map("on_behalf_reason")
+  decisionComment    String?          @map("decision_comment")
+  decisionIp         String?          @map("decision_ip") @db.Inet
+  decisionUserAgent  String?          @map("decision_user_agent")
+  /// The locked copy of the approved file (never the working file) and its SHA-256.
+  approvedFileId     BigInt?          @map("approved_file_id")
+  approvedFileSha256 Bytes?           @map("approved_file_sha256")
+  /// Reorder with unchanged artwork (D-153): the proof this one was carried over from.
+  reusedFromProofId  BigInt?          @map("reused_from_proof_id")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int              @default(1) @map("row_version")
+
+  order         Order              @relation("ProofOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__order_id")
+  submission    ArtworkSubmission? @relation(fields: [submissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__submission_id")
+  previousProof Proof?             @relation("ProofPrevious", fields: [previousProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__previous_proof_id")
+  nextProofs    Proof[]            @relation("ProofPrevious")
+  proofFile     FileObject         @relation("ProofFile", fields: [proofFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__proof_file_id")
+  dielineFile   FileObject?        @relation("ProofDielineFile", fields: [dielineFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__dieline_file_id")
+  approvedFile  FileObject?        @relation("ProofApprovedFile", fields: [approvedFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__approved_file_id")
+  preparedBy    User               @relation("ProofPreparedBy", fields: [preparedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__prepared_by")
+  decidedBy     User?              @relation("ProofDecidedBy", fields: [decidedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__decided_by_user_id")
+  reusedFrom    Proof?             @relation("ProofReusedFrom", fields: [reusedFromProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs__reused_from_proof_id")
+  reusedBy      Proof[]            @relation("ProofReusedFrom")
+  annotations   ProofAnnotation[]
+  cartReuses    CartItem[]         @relation("CartItemReuseProof")
+  orderReuses   Order[]            @relation("OrderReuseProof")
+
+  @@unique([orderId, versionNo], map: "ux_proofs__order_id__version_no")
+  @@unique([orderId], map: "ux_proofs__one_approved", where: raw("(status = 'approved'::proof_status)"))
+  @@index([submissionId], map: "ix_proofs__submission_id")
+  @@index([previousProofId], map: "ix_proofs__previous_proof_id")
+  @@index([proofFileId], map: "ix_proofs__proof_file_id")
+  @@index([dielineFileId], map: "ix_proofs__dieline_file_id")
+  @@index([approvedFileId], map: "ix_proofs__approved_file_id")
+  @@index([preparedById], map: "ix_proofs__prepared_by")
+  @@index([decidedByUserId], map: "ix_proofs__decided_by_user_id")
+  @@index([reusedFromProofId], map: "ix_proofs__reused_from_proof_id")
+  @@index([status, sentAt], map: "ix_proofs__status__sent_at")
+  @@map("proofs")
+}
+
+model ProofAnnotation {
+  id           BigInt         @id(map: "pk_proof_annotations") @default(autoincrement())
+  publicId     String         @unique(map: "ux_proof_annotations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  proofId      BigInt         @map("proof_id")
+  parentId     BigInt?        @map("parent_id")
+  page         Int            @db.SmallInt
+  kind         AnnotationKind
+  /// Page-relative (0–1) coordinates: `{x,y}` pin, `{x,y,w,h}` rect, `{points:[[x,y]…]}` draw.
+  geometry     Json
+  comment      String
+  authorUserId BigInt         @map("author_user_id")
+  resolvedAt   DateTime?      @map("resolved_at") @db.Timestamptz(6)
+  resolvedById BigInt?        @map("resolved_by")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  proof      Proof             @relation(fields: [proofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_annotations__proof_id")
+  parent     ProofAnnotation?  @relation("ProofAnnotationReplies", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_annotations__parent_id")
+  replies    ProofAnnotation[] @relation("ProofAnnotationReplies")
+  author     User              @relation("ProofAnnotationAuthor", fields: [authorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_annotations__author_user_id")
+  resolvedBy User?             @relation("ProofAnnotationResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_annotations__resolved_by")
+
+  @@index([proofId, createdAt], map: "ix_proof_annotations__proof_id__created_at")
+  @@index([parentId], map: "ix_proof_annotations__parent_id")
+  @@index([authorUserId], map: "ix_proof_annotations__author_user_id")
+  @@index([resolvedById], map: "ix_proof_annotations__resolved_by")
+  @@map("proof_annotations")
+}
+
+/// Template / dieline sent to the customer (legacy `sendDrawingAutov2`).
+model DielineDelivery {
+  id           BigInt         @id(map: "pk_dieline_deliveries") @default(autoincrement())
+  publicId     String         @unique(map: "ux_dieline_deliveries__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId      BigInt         @map("order_id")
+  drawingJobId BigInt?        @map("drawing_job_id")
+  /// A template Prepress uploaded instead of a generated drawing.
+  fileObjectId BigInt?        @map("file_object_id")
+  trigger      DielineTrigger
+  note         String?
+  sentAt       DateTime       @default(now()) @map("sent_at") @db.Timestamptz(6)
+  sentById     BigInt?        @map("sent_by")
+
+  order      Order       @relation("DielineDeliveryOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_deliveries__order_id")
+  drawingJob DrawingJob? @relation(fields: [drawingJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_deliveries__drawing_job_id")
+  fileObject FileObject? @relation("DielineDeliveryFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_deliveries__file_object_id")
+  sentBy     User?       @relation("DielineDeliverySentBy", fields: [sentById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_deliveries__sent_by")
+
+  @@unique([orderId], map: "ux_dieline_deliveries__one_auto", where: raw("(trigger = 'auto_after_payment'::dieline_trigger)"))
+  @@index([orderId], map: "ix_dieline_deliveries__order_id")
+  @@index([drawingJobId], map: "ix_dieline_deliveries__drawing_job_id")
+  @@index([fileObjectId], map: "ix_dieline_deliveries__file_object_id")
+  @@index([sentById], map: "ix_dieline_deliveries__sent_by")
+  @@map("dieline_deliveries")
+}
+
+// --- Design services (D-071) -------------------------------------------------------------------------
+
+model DesignServiceRequest {
+  id               BigInt              @id(map: "pk_design_service_requests") @default(autoincrement())
+  publicId         String              @unique(map: "ux_design_service_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId          BigInt              @unique(map: "ux_design_service_requests__order_id") @map("order_id")
+  /// Legacy `brd_*` brief: brand name, brand category, description (+ attachments, schema version 1).
+  brief            Json?
+  briefSubmittedAt DateTime?           @map("brief_submitted_at") @db.Timestamptz(6)
+  assignedUserId   BigInt?             @map("assigned_user_id")
+  assignedVendorId BigInt?             @map("assigned_vendor_id")
+  status           DesignServiceStatus @default(brief_pending)
+  /// Set when work starts: target 5 / maximum 10 business days (D-071, settings snapshot).
+  targetDueAt      DateTime?           @map("target_due_at") @db.Timestamptz(6)
+  maxDueAt         DateTime?           @map("max_due_at") @db.Timestamptz(6)
+  freeRounds       Int                 @map("free_rounds") @db.SmallInt
+  designFeeNet     Decimal             @map("design_fee_net") @db.Decimal(14, 2)
+  /// Setting versions used (`design.hired_design_sla`, `design.free_revision_rounds`, `design.extra_revision_fee`).
+  policyRefs       Json                @map("policy_refs")
+  cancelReason     String?             @map("cancel_reason")
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?             @map("created_by")
+  updatedAt        DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?             @map("updated_by")
+  rowVersion       Int                 @default(1) @map("row_version")
+
+  order          Order         @relation("DesignServiceRequestOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_service_requests__order_id")
+  assignedUser   User?         @relation("DesignServiceRequestAssignee", fields: [assignedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_service_requests__assigned_user_id")
+  assignedVendor Vendor?       @relation("DesignServiceRequestVendor", fields: [assignedVendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_service_requests__assigned_vendor_id")
+  createdBy      User?         @relation("DesignServiceRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_service_requests__created_by")
+  updatedBy      User?         @relation("DesignServiceRequestUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_service_requests__updated_by")
+  rounds         DesignRound[]
+
+  @@index([assignedUserId], map: "ix_design_service_requests__assigned_user_id")
+  @@index([assignedVendorId], map: "ix_design_service_requests__assigned_vendor_id")
+  @@index([createdById], map: "ix_design_service_requests__created_by")
+  @@index([updatedById], map: "ix_design_service_requests__updated_by")
+  @@index([status, targetDueAt], map: "ix_design_service_requests__status__target_due_at")
+  @@map("design_service_requests")
+}
+
+model DesignRound {
+  id            BigInt            @id(map: "pk_design_rounds") @default(autoincrement())
+  publicId      String            @unique(map: "ux_design_rounds__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  requestId     BigInt            @map("request_id")
+  roundNo       Int               @map("round_no") @db.SmallInt
+  kind          DesignRoundKind
+  chargeable    Boolean           @default(false)
+  /// max(minimum, % × design fee) snapshot (D-071); net of VAT.
+  feeAmount     Decimal?          @map("fee_amount") @db.Decimal(14, 2)
+  orderLineId   BigInt?           @map("order_line_id")
+  instalmentId  BigInt?           @map("instalment_id")
+  status        DesignRoundStatus
+  changeRequest String?           @map("change_request")
+  /// The artwork the designer delivered for this round.
+  submissionId  BigInt?           @map("submission_id")
+  requestedAt   DateTime          @default(now()) @map("requested_at") @db.Timestamptz(6)
+  startedAt     DateTime?         @map("started_at") @db.Timestamptz(6)
+  deliveredAt   DateTime?         @map("delivered_at") @db.Timestamptz(6)
+  decidedAt     DateTime?         @map("decided_at") @db.Timestamptz(6)
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion    Int               @default(1) @map("row_version")
+
+  request    DesignServiceRequest @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_rounds__request_id")
+  orderLine  OrderLine?           @relation("DesignRoundOrderLine", fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_rounds__order_line_id")
+  instalment Instalment?          @relation("DesignRoundInstalment", fields: [instalmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_rounds__instalment_id")
+  submission ArtworkSubmission?   @relation("DesignRoundSubmission", fields: [submissionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_rounds__submission_id")
+
+  @@unique([requestId, roundNo], map: "ux_design_rounds__request_id__round_no")
+  @@index([orderLineId], map: "ix_design_rounds__order_line_id")
+  @@index([instalmentId], map: "ix_design_rounds__instalment_id")
+  @@index([submissionId], map: "ix_design_rounds__submission_id")
+  @@map("design_rounds")
+}
+
+// --- Designs & drawings ------------------------------------------------------------------------------
+
+model DesignDocument {
+  id                   BigInt    @id(map: "pk_design_documents") @default(autoincrement())
+  publicId             String    @unique(map: "ux_design_documents__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ownerUserId          BigInt    @map("owner_user_id")
+  companyId            BigInt?   @map("company_id")
+  catalogProductId     BigInt    @map("catalog_product_id")
+  patternId            BigInt?   @map("pattern_id")
+  lengthMm             Decimal?  @map("length_mm") @db.Decimal(10, 2)
+  widthMm              Decimal?  @map("width_mm") @db.Decimal(10, 2)
+  heightMm             Decimal?  @map("height_mm") @db.Decimal(10, 2)
+  materialId           BigInt?   @map("material_id")
+  semiDesignTemplateId BigInt?   @map("semi_design_template_id")
+  title                String
+  thumbnailFileId      BigInt?   @map("thumbnail_file_id")
+  currentVersionId     BigInt?   @unique(map: "ux_design_documents__current_version_id") @map("current_version_id")
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion           Int       @default(1) @map("row_version")
+
+  owner              User                    @relation("DesignDocumentOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__owner_user_id")
+  company            Company?                @relation("DesignDocumentCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__company_id")
+  catalogProduct     CatalogProduct          @relation("DesignDocumentCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__catalog_product_id")
+  pattern            Pattern?                @relation("DesignDocumentPattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__pattern_id")
+  material           Material?               @relation("DesignDocumentMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__material_id")
+  semiDesignTemplate SemiDesignTemplate?     @relation("DesignDocumentSemiDesignTemplate", fields: [semiDesignTemplateId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__semi_design_template_id")
+  thumbnailFile      FileObject?             @relation("DesignDocumentThumbnail", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__thumbnail_file_id")
+  currentVersion     DesignDocumentVersion?  @relation("DesignDocumentCurrentVersion", fields: [currentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_documents__current_version_id")
+  versions           DesignDocumentVersion[] @relation("DesignDocumentVersions")
+  assets             DesignAsset[]
+  drawingJobs        DrawingJob[]            @relation("DrawingJobDesignDocument")
+  cartItems          CartItem[]              @relation("CartItemDesignDocument")
+  orders             Order[]                 @relation("OrderDesignDocument")
+
+  @@index([ownerUserId, updatedAt(sort: Desc)], map: "ix_design_documents__owner_user_id__updated_at")
+  @@index([companyId], map: "ix_design_documents__company_id")
+  @@index([catalogProductId], map: "ix_design_documents__catalog_product_id")
+  @@index([patternId], map: "ix_design_documents__pattern_id")
+  @@index([materialId], map: "ix_design_documents__material_id")
+  @@index([semiDesignTemplateId], map: "ix_design_documents__semi_design_template_id")
+  @@index([thumbnailFileId], map: "ix_design_documents__thumbnail_file_id")
+  @@map("design_documents")
+}
+
+/// Immutable snapshot of a design document (schema-design §3.7).
+model DesignDocumentVersion {
+  id            BigInt   @id(map: "pk_design_document_versions") @default(autoincrement())
+  publicId      String   @unique(map: "ux_design_document_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  documentId    BigInt   @map("document_id")
+  versionNo     Int      @map("version_no")
+  schemaVersion Int      @map("schema_version") @db.SmallInt
+  document      Json
+  contentSha256 Bytes    @map("content_sha256")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+
+  designDocument      DesignDocument       @relation("DesignDocumentVersions", fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__document_id")
+  currentOf           DesignDocument?      @relation("DesignDocumentCurrentVersion")
+  createdBy           User?                @relation("DesignDocumentVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__created_by")
+  submissions         ArtworkSubmission[]  @relation("ArtworkSubmissionDesignVersion")
+  semiDesignTemplates SemiDesignTemplate[] @relation("SemiDesignTemplateDesignVersion")
+
+  @@unique([documentId, versionNo], map: "ux_design_document_versions__document_id__version_no")
+  @@index([createdById], map: "ix_design_document_versions__created_by")
+  @@map("design_document_versions")
+}
+
+model DesignAsset {
+  id           BigInt          @id(map: "pk_design_assets") @default(autoincrement())
+  publicId     String          @unique(map: "ux_design_assets__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  documentId   BigInt          @map("document_id")
+  fileObjectId BigInt          @map("file_object_id")
+  kind         DesignAssetKind
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document   DesignDocument @relation(fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_assets__document_id")
+  fileObject FileObject     @relation("DesignAssetFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_assets__file_object_id")
+
+  @@unique([documentId, fileObjectId], map: "ux_design_assets__document_id__file_object_id")
+  @@index([fileObjectId], map: "ix_design_assets__file_object_id")
+  @@map("design_assets")
+}
+
+/// Drawing log: one request to the dieline engine (`@packio/dieline`).
+model DrawingJob {
+  id               BigInt        @id(map: "pk_drawing_jobs") @default(autoincrement())
+  publicId         String        @unique(map: "ux_drawing_jobs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  requestedById    BigInt?       @map("requested_by")
+  orderId          BigInt?       @map("order_id")
+  designDocumentId BigInt?       @map("design_document_id")
+  patternId        BigInt        @map("pattern_id")
+  lengthMm         Decimal       @map("length_mm") @db.Decimal(10, 2)
+  widthMm          Decimal       @map("width_mm") @db.Decimal(10, 2)
+  heightMm         Decimal       @map("height_mm") @db.Decimal(10, 2)
+  format           DrawingFormat
+  engineVersion    String?       @map("engine_version")
+  status           DrawingStatus @default(queued)
+  outputFileId     BigInt?       @map("output_file_id")
+  error            String?
+  attempts         Int           @default(0) @db.SmallInt
+  lockedUntil      DateTime?     @map("locked_until") @db.Timestamptz(6)
+  completedAt      DateTime?     @map("completed_at") @db.Timestamptz(6)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  requestedBy       User?             @relation("DrawingJobRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_drawing_jobs__requested_by")
+  order             Order?            @relation("DrawingJobOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_drawing_jobs__order_id")
+  designDocument    DesignDocument?   @relation("DrawingJobDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_drawing_jobs__design_document_id")
+  pattern           Pattern           @relation("DrawingJobPattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_drawing_jobs__pattern_id")
+  outputFile        FileObject?       @relation("DrawingJobOutputFile", fields: [outputFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_drawing_jobs__output_file_id")
+  dielineDeliveries DielineDelivery[]
+
+  @@index([requestedById], map: "ix_drawing_jobs__requested_by")
+  @@index([orderId], map: "ix_drawing_jobs__order_id")
+  @@index([designDocumentId], map: "ix_drawing_jobs__design_document_id")
+  @@index([patternId], map: "ix_drawing_jobs__pattern_id")
+  @@index([outputFileId], map: "ix_drawing_jobs__output_file_id")
+  @@index([status, lockedUntil], map: "ix_drawing_jobs__queue", where: raw("(status = ANY (ARRAY['queued'::drawing_status, 'running'::drawing_status]))"))
+  @@map("drawing_jobs")
+}

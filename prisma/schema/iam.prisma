@@ -497,6 +497,22 @@ model User {
   discountMemosAsCustomer                DiscountMemo[]                   @relation("DiscountMemoCustomer")
   // --- end Commerce
 
+  // --- Fulfilment B4.1 (generated back-relations)
+  artworkSubmitted         ArtworkSubmission[]     @relation("ArtworkSubmissionSubmittedBy")
+  artworkReviewed          ArtworkSubmission[]     @relation("ArtworkSubmissionReviewedBy")
+  proofsPrepared           Proof[]                 @relation("ProofPreparedBy")
+  proofsDecided            Proof[]                 @relation("ProofDecidedBy")
+  proofAnnotations         ProofAnnotation[]       @relation("ProofAnnotationAuthor")
+  proofAnnotationsResolved ProofAnnotation[]       @relation("ProofAnnotationResolvedBy")
+  dielineDeliveriesSent    DielineDelivery[]       @relation("DielineDeliverySentBy")
+  designRequestsAssigned   DesignServiceRequest[]  @relation("DesignServiceRequestAssignee")
+  designRequestsCreated    DesignServiceRequest[]  @relation("DesignServiceRequestCreatedBy")
+  designRequestsUpdated    DesignServiceRequest[]  @relation("DesignServiceRequestUpdatedBy")
+  designDocuments          DesignDocument[]        @relation("DesignDocumentOwner")
+  designVersionsCreated    DesignDocumentVersion[] @relation("DesignDocumentVersionCreatedBy")
+  drawingJobsRequested     DrawingJob[]            @relation("DrawingJobRequestedBy")
+  // --- end Fulfilment B4.1
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

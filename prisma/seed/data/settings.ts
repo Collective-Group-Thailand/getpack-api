@@ -166,6 +166,44 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-076'],
   },
 
+  // --- Artwork & prepress (D-070, B4.1)
+  {
+    key: 'artwork.preflight_rules',
+    valueType: 'json',
+    value: {
+      severities: {
+        size_mismatch: 'block',
+        missing_bleed: 'block',
+        low_resolution: 'warn',
+        rgb_colour: 'warn',
+        fonts_not_embedded: 'info',
+        safe_zone: 'info',
+        thin_lines: 'info',
+        overprint: 'info',
+        ink_coverage: 'info',
+      },
+      bleedMm: '3',
+      sizeToleranceMm: '1',
+      minEffectivePpi: 300,
+      safeZoneMm: '3',
+      minLineWidthPt: '0.25',
+      maxInkCoveragePct: 300,
+    },
+    description:
+      'D-070 preflight: block on size mismatch or missing bleed, warn on low resolution or RGB; other checks report only; technical thresholds proposed (ADR-0009)',
+    decisions: ['D-070'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'artwork.prepress_sla_business_hours',
+    valueType: 'integer',
+    value: null,
+    unset: true,
+    description: 'D-070 prepress queue: business hours to answer a submission; no decision gives it, no due time until set',
+    decisions: ['D-070'],
+    confirmation: 'pending_business',
+  },
+
   // --- Design services (D-071)
   {
     key: 'design.hired_design_sla',

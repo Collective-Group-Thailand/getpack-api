@@ -155,6 +155,7 @@ enum AttachmentSubject {
   price_proposal
   vendor_invoice
   other
+  design_service_request
 
   @@map("attachment_subject")
 }
@@ -741,6 +742,17 @@ model FileObject {
 
   ownerCompany        Company?             @relation("FileObjectOwnerCompany", fields: [ownerCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_company_id")
   companyKycDocuments CompanyKycDocument[] @relation("CompanyKycDocumentFile")
+
+  // --- Fulfilment B4.1 (generated back-relations)
+  artworkFiles       ArtworkSubmissionFile[] @relation("ArtworkSubmissionFileObject")
+  proofFiles         Proof[]                 @relation("ProofFile")
+  proofDielineFiles  Proof[]                 @relation("ProofDielineFile")
+  proofApprovedFiles Proof[]                 @relation("ProofApprovedFile")
+  dielineDeliveries  DielineDelivery[]       @relation("DielineDeliveryFile")
+  designThumbnails   DesignDocument[]        @relation("DesignDocumentThumbnail")
+  designAssets       DesignAsset[]           @relation("DesignAssetFile")
+  drawingOutputs     DrawingJob[]            @relation("DrawingJobOutputFile")
+  // --- end Fulfilment B4.1
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")

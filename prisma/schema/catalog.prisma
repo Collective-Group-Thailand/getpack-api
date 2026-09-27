@@ -357,6 +357,10 @@ model CatalogProduct {
   // --- end Quotes & RFQ
   orders Order[] @relation("OrderCatalogProduct")
 
+  // --- Fulfilment B4.1 (generated back-relations)
+  designDocuments DesignDocument[] @relation("DesignDocumentCatalogProduct")
+  // --- end Fulfilment B4.1
+
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_th_trgm")
@@ -489,6 +493,11 @@ model Pattern {
   // --- Folding price components (B2.3)
   plPatternConditions PlPatternCondition[]       @relation("PlPatternConditionPattern")
   // --- end Folding price components
+
+  // --- Fulfilment B4.1 (generated back-relations)
+  designDocuments DesignDocument[] @relation("DesignDocumentPattern")
+  drawingJobs     DrawingJob[]     @relation("DrawingJobPattern")
+  // --- end Fulfilment B4.1
 
   @@index([productTypeId], map: "ix_patterns__product_type_id")
   @@map("patterns")
@@ -638,6 +647,10 @@ model Material {
   plProcessExclusionsMaterial PlProcessExclusion[] @relation("PlProcessExclusionMaterial")
   plPrintPricesMaterial       PlPrintPrice[]       @relation("PlPrintPriceMaterial")
   // --- end Folding price components
+
+  // --- Fulfilment B4.1 (generated back-relations)
+  designDocuments DesignDocument[] @relation("DesignDocumentMaterial")
+  // --- end Fulfilment B4.1
 
   @@index([familyId], map: "ix_materials__family_id")
   @@index([fluteTypeId], map: "ix_materials__flute_type_id")
@@ -1244,12 +1257,14 @@ model SemiDesignTemplate {
   updatedById             BigInt?       @map("updated_by")
   rowVersion              Int           @default(1) @map("row_version")
 
-  semiDesign    SemiDesign               @relation(fields: [semiDesignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__semi_design_id")
-  standardSize  StandardSize             @relation(fields: [standardSizeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__standard_size_id")
-  thumbnailFile FileObject               @relation("SemiDesignTemplateThumbnailFile", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__thumbnail_file_id")
-  fonts         SemiDesignTemplateFont[]
-  createdBy     User?                    @relation("SemiDesignTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__created_by")
-  updatedBy     User?                    @relation("SemiDesignTemplateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__updated_by")
+  semiDesign      SemiDesign               @relation(fields: [semiDesignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__semi_design_id")
+  standardSize    StandardSize             @relation(fields: [standardSizeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__standard_size_id")
+  thumbnailFile   FileObject               @relation("SemiDesignTemplateThumbnailFile", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__thumbnail_file_id")
+  fonts           SemiDesignTemplateFont[]
+  designVersion   DesignDocumentVersion?   @relation("SemiDesignTemplateDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__design_document_version_id")
+  designDocuments DesignDocument[]         @relation("DesignDocumentSemiDesignTemplate")
+  createdBy       User?                    @relation("SemiDesignTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__created_by")
+  updatedBy       User?                    @relation("SemiDesignTemplateUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_semi_design_templates__updated_by")
 
   @@index([semiDesignId], map: "ix_semi_design_templates__semi_design_id")
   @@index([standardSizeId], map: "ix_semi_design_templates__standard_size_id")

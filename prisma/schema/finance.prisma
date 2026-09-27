@@ -67,6 +67,10 @@ model Vendor {
   createdBy    User?               @relation("VendorCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendors__created_by")
   updatedBy    User?               @relation("VendorUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendors__updated_by")
 
+  // --- Fulfilment B4.1 (generated back-relations)
+  designServiceRequests DesignServiceRequest[] @relation("DesignServiceRequestVendor")
+  // --- end Fulfilment B4.1
+
   @@index([taxId, branchCode], map: "ix_vendors__tax_id__branch_code")
   @@index([subdistrictId], map: "ix_vendors__subdistrict_id")
   @@map("vendors")
