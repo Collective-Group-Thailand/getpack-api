@@ -12,6 +12,7 @@ import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { CartsModule } from '@modules/carts/carts.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { IamModule } from '@modules/iam/iam.module';
@@ -79,6 +80,7 @@ import { LoggerModule } from 'nestjs-pino';
     QuotesModule,
     RfqModule,
     CustomersModule,
+    CartsModule,
     HealthModule,
     SurfacesModule,
   ],

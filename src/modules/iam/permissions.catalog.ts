@@ -292,6 +292,13 @@ export const PERMISSIONS = [
     decisionRefs: ['D-092'],
   },
 
+  {
+    key: 'carts.manage_on_behalf',
+    audience: 'staff',
+    description: 'Build a cart for a customer and check it out on their behalf (CS)',
+    decisionRefs: ['D-051'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

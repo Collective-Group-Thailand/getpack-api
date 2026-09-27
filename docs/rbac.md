@@ -69,6 +69,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `sell_margins.manage` — Maintain Packio's sell margins, fix costs and design fees (effective-dated) (D-063) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |
 | `customers.read` — Find customers and read their profile, addresses and tax profiles (D-092) | ● |  |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
 | `customers.manage` — Create customer accounts and keep their addresses and tax profiles (CS) (D-092) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
+| `carts.manage_on_behalf` — Build a cart for a customer and check it out on their behalf (CS) (D-051) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

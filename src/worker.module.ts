@@ -4,6 +4,7 @@ import { AppConfigModule } from '@config/app-config.module';
 import { DatabaseModule } from '@database/database.module';
 import { BULLMQ_REDIS, RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
+import { CartsModule } from '@modules/carts/carts.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { PartnersModule } from '@modules/partners/partners.module';
@@ -59,6 +60,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     QuotesModule,
     RfqModule,
     CustomersModule,
+    CartsModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

@@ -506,5 +506,31 @@
       "title": "Request closed",
       "detail": "The request for a buy price was already answered or has expired."
     }
+  },
+  "cart": {
+    "item_exists": {
+      "title": "Already in the cart",
+      "detail": "This quotation option is already in the cart."
+    },
+    "design_option_unavailable": {
+      "title": "Design option not available",
+      "detail": "Hired design needs a quotation priced with the design fee; free design needs a promotion."
+    },
+    "mockup_price_unavailable": {
+      "title": "Mockup cannot be priced yet",
+      "detail": "The physical proof add-on cannot be priced yet; please contact customer service (D-072)."
+    },
+    "price_locked": {
+      "title": "Price still locked",
+      "detail": "The price of this item is still locked; no re-pricing needed (D-051)."
+    },
+    "reprice_unavailable": {
+      "title": "Cannot re-price",
+      "detail": "This quantity no longer has an instant price; remove the item and ask for a new quotation."
+    },
+    "no_pending_reprice": {
+      "title": "Nothing to confirm",
+      "detail": "This item has no re-priced option waiting for confirmation."
+    }
   }
 }

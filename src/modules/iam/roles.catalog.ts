@@ -107,6 +107,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'document_series.read',
       'customers.read',
       'customers.manage',
+      'carts.manage_on_behalf',
     ],
   },
   {
@@ -127,6 +128,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'rfqs.manage',
       'customers.read',
       'customers.manage',
+      'carts.manage_on_behalf',
     ],
   },
   {
@@ -147,6 +149,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'rfqs.manage',
       'customers.read',
       'customers.manage',
+      'carts.manage_on_behalf',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).

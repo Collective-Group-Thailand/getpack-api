@@ -5,6 +5,7 @@ import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 
+import { type DevFolding, seedDevFolding } from '../../prisma/seed/dev-folding';
 import { seedDev } from '../../prisma/seed/dev-seed';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/bootstrap';
@@ -65,4 +66,173 @@ export async function devGeo(prisma: PrismaService) {
   const province = await prisma.geoProvince.findUniqueOrThrow({ where: { code: 'DEV1' } });
   const subdistrict = await prisma.geoSubdistrict.findUniqueOrThrow({ where: { code: 'DEV10101' } });
   return { provinceId: province.publicId, subdistrictId: subdistrict.publicId, postcode: subdistrict.postcode };
+}
+
+/** The dev folding factory with folding switched to instant (switch back in `afterAll`, A-16). */
+export async function foldingReady(ctx: CommerceApp): Promise<DevFolding> {
+  const { fixture } = await ctx.prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 });
+  await ctx.prisma.productType.update({ where: { code: 'folding_carton' }, data: { quoteMode: 'instant' } });
+  return fixture;
+}
+
+export async function foldingBackToRfq(ctx: CommerceApp | undefined): Promise<void> {
+  await ctx?.prisma.productType.update({ where: { code: 'folding_carton' }, data: { quoteMode: 'rfq' } });
+}
+
+export function foldingConfiguration(fixture: DevFolding, quantities: number[], graphic = false) {
+  return {
+    patternId: fixture.patternPublicId,
+    w: 200,
+    l: 300,
+    d: 50,
+    materialId: fixture.materialPublicId,
+    difficultyLevelId: fixture.difficultyLevelPublicId,
+    quantities,
+    parts: [
+      {
+        printFront: [1, 2, 3, 4].map(() => ({ inkColourId: fixture.inkColourPublicId, percent: 100 })),
+        finish1FrontId: fixture.finishPublicId,
+        diecutTypeId: fixture.diecutTypePublicId,
+      },
+    ],
+    design: { graphic, structure: false },
+  };
+}
+
+/** A saved instant quotation of the signed-in customer. */
+export async function saveQuote(
+  ctx: CommerceApp,
+  token: string,
+  fixture: DevFolding,
+  quantities: number[],
+  opts: { graphic?: boolean; postcode?: string } = {},
+) {
+  const res = await as(ctx, token)
+    .post('/v1/store/quotes', {
+      productTypeCode: 'folding_carton',
+      configuration: foldingConfiguration(fixture, quantities, opts.graphic ?? false),
+      ...(opts.postcode && { deliveryPostcode: opts.postcode }),
+    })
+    .expect(201);
+  return res.body as { id: string; options: { id: string; quantity: number; grossAmount: string }[] };
+}
+
+/** A delivery address of the signed-in customer on an arbitrary postcode (dev province, no subdistrict). */
+export async function addAddress(ctx: CommerceApp, token: string, postcode: string, label = 'ปลายทาง') {
+  const province = await ctx.prisma.geoProvince.findUniqueOrThrow({ where: { code: 'DEV1' } });
+  const res = await as(ctx, token)
+    .post('/v1/store/addresses', {
+      kind: 'delivery',
+      label,
+      recipientName: 'ผู้รับ ทดสอบ',
+      phone: '0810001234',
+      line1: '1 ถนนทดสอบ',
+      provinceId: province.publicId,
+      postcode,
+    })
+    .expect(201);
+  return res.body as { id: string };
+}
+
+/**
+ * Fake shipping for `postcodes`: one customer zone per postcode on a new approved customer rate-card
+ * version (THB 120 per shipment) and the dev factory serving them on its own fleet (payout THB 95).
+ */
+export async function seedShipping(ctx: CommerceApp, factoryPublicId: string, postcodes: string[]) {
+  const factory = await ctx.prisma.factory.findUniqueOrThrow({ where: { publicId: factoryPublicId } });
+  await ctx.prisma.$transaction(async (tx) => {
+    const scheme = await tx.zoneScheme.findUniqueOrThrow({ where: { code: 'customer_default' } });
+    const zones = [];
+    for (const postcode of postcodes) {
+      const zone = await tx.zone.create({
+        data: { schemeId: scheme.id, code: `b3_${postcode}_${ctx.run}`, nameTh: postcode, nameEn: postcode },
+      });
+      await tx.zonePostcode.create({ data: { zoneId: zone.id, schemeId: scheme.id, postcode } });
+      zones.push(zone);
+    }
+    const card = await tx.customerShippingRateCard.findUniqueOrThrow({ where: { key: 'default' } });
+    const last = await tx.customerShippingRateCardVersion.findFirst({
+      where: { cardId: card.id },
+      orderBy: { versionNo: 'desc' },
+    });
+    const version = await tx.customerShippingRateCardVersion.create({
+      data: {
+        cardId: card.id,
+        versionNo: (last?.versionNo ?? 0) + 1,
+        schemeId: scheme.id,
+        effectiveFrom: new Date(Date.now() - 1000),
+        reason: 'e2e (fake)',
+      },
+    });
+    await tx.customerShippingRate.createMany({
+      data: zones.map((z) => ({
+        versionId: version.id,
+        schemeId: scheme.id,
+        zoneId: z.id,
+        weightMinG: 0,
+        priceAmount: '120.00',
+      })),
+    });
+    await tx.customerShippingRateCardVersion.update({
+      where: { id: version.id },
+      data: { status: 'approved', decidedAt: new Date() },
+    });
+    for (const zone of zones) {
+      await tx.factoryDeliveryZone.create({
+        data: { factoryId: factory.id, zoneId: zone.id, serves: true, extraLeadDays: 1 },
+      });
+    }
+    const payoutCard =
+      (await tx.factoryShippingRateCard.findUnique({ where: { factoryId: factory.id } })) ??
+      (await tx.factoryShippingRateCard.create({ data: { factoryId: factory.id } }));
+    const lastPayout = await tx.factoryShippingRateCardVersion.findFirst({
+      where: { cardId: payoutCard.id },
+      orderBy: { versionNo: 'desc' },
+    });
+    const payout = await tx.factoryShippingRateCardVersion.create({
+      data: {
+        cardId: payoutCard.id,
+        versionNo: (lastPayout?.versionNo ?? 0) + 1,
+        schemeId: scheme.id,
+        effectiveFrom: new Date(Date.now() - 1000),
+        reason: 'e2e (fake)',
+      },
+    });
+    await tx.factoryShippingRate.createMany({
+      data: zones.map((z) => ({
+        versionId: payout.id,
+        schemeId: scheme.id,
+        zoneId: z.id,
+        weightMinG: 0,
+        payoutAmount: '95.00',
+        acceptance: 'accepted' as const,
+      })),
+    });
+    const now = new Date();
+    await tx.factoryShippingRateCardVersion.update({
+      where: { id: payout.id },
+      data: { status: 'approved', sentAt: now, factoryAcceptedAt: now, decidedAt: now },
+    });
+  });
+}
+
+/** Unique 5-digit postcodes for a suite run (the e2e database is shared). */
+export function postcodes(ctx: CommerceApp, count: number): string[] {
+  return Array.from({ length: count }, (_, n) => String(60_000 + ((ctx.run * 13 + n * 7919) % 9_999)).padStart(5, '0'));
+}
+
+/** Moves a quotation's validity into the past (test only: the snapshot trigger forbids it otherwise). */
+export async function expireQuote(ctx: CommerceApp, quotePublicId: string): Promise<void> {
+  await ctx.prisma.$transaction(async (tx) => {
+    await tx.$executeRawUnsafe(`SET LOCAL session_replication_role = replica`);
+    await tx.$executeRawUnsafe(
+      `UPDATE quotes SET valid_until = now() - interval '1 minute' WHERE public_id = $1::uuid`,
+      quotePublicId,
+    );
+    await tx.$executeRawUnsafe(
+      `UPDATE cart_items SET price_locked_until = now() - interval '1 minute'
+        WHERE quote_id = (SELECT id FROM quotes WHERE public_id = $1::uuid)`,
+      quotePublicId,
+    );
+  });
 }

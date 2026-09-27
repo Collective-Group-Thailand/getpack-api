@@ -122,6 +122,12 @@ export const ERROR_CODES = {
   'rfq.consultation_closed': HttpStatus.CONFLICT,
   'service.unavailable': HttpStatus.SERVICE_UNAVAILABLE,
   'internal.unexpected': HttpStatus.INTERNAL_SERVER_ERROR,
+  'cart.item_exists': HttpStatus.CONFLICT,
+  'cart.design_option_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'cart.mockup_price_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'cart.price_locked': HttpStatus.CONFLICT,
+  'cart.reprice_unavailable': HttpStatus.CONFLICT,
+  'cart.no_pending_reprice': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

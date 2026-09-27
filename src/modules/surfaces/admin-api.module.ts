@@ -1,4 +1,5 @@
 import { AdminMeController } from '@modules/auth/controllers/me.controllers';
+import { CARTS_ADMIN_CONTROLLERS } from '@modules/carts/carts.registry';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
@@ -58,6 +59,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...SHIPPING_ADMIN_CONTROLLERS,
     ...QUOTES_ADMIN_CONTROLLERS,
     ...CUSTOMERS_ADMIN_CONTROLLERS,
+    ...CARTS_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}
