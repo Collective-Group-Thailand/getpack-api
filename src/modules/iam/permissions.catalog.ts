@@ -278,6 +278,20 @@ export const PERMISSIONS = [
     decisionRefs: ['D-063'],
   },
 
+  // --- Commerce (B3)
+  {
+    key: 'customers.read',
+    audience: 'staff',
+    description: 'Find customers and read their profile, addresses and tax profiles',
+    decisionRefs: ['D-092'],
+  },
+  {
+    key: 'customers.manage',
+    audience: 'staff',
+    description: 'Create customer accounts and keep their addresses and tax profiles (CS)',
+    decisionRefs: ['D-092'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

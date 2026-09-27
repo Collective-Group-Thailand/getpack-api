@@ -1490,6 +1490,299 @@
         ],
         "type": "object"
       },
+      "AddressDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isDefault": {
+            "example": true,
+            "type": "boolean"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressKind"
+              }
+            ],
+            "example": "delivery"
+          },
+          "label": {
+            "example": "สำนักงาน",
+            "type": "string"
+          },
+          "lat": {
+            "example": 13.7563,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "line1": {
+            "example": "99/9 ถนนตัวอย่าง",
+            "type": "string"
+          },
+          "line2": {
+            "example": "อาคารทดสอบ ชั้น 9",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lng": {
+            "example": 100.5018,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "phone": {
+            "description": "E.164",
+            "example": "+66810001234",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "province": {
+            "$ref": "#/components/schemas/GeoRefDto"
+          },
+          "recipientName": {
+            "example": "สมชาย ทดสอบ",
+            "type": "string"
+          },
+          "subdistrict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeoRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updatedAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "recipientName",
+          "phone",
+          "line1",
+          "line2",
+          "subdistrict",
+          "province",
+          "postcode",
+          "lat",
+          "lng",
+          "isDefault",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "AddressInputDto": {
+        "properties": {
+          "isDefault": {
+            "description": "Default address of its kind",
+            "example": true,
+            "type": "boolean"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AddressKind"
+              }
+            ],
+            "example": "delivery"
+          },
+          "label": {
+            "description": "The customer’s own name for the address",
+            "example": "สำนักงาน",
+            "type": "string"
+          },
+          "lat": {
+            "example": 13.7563,
+            "maximum": 90,
+            "minimum": -90,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "line1": {
+            "example": "99/9 ถนนตัวอย่าง",
+            "type": "string"
+          },
+          "line2": {
+            "example": "อาคารทดสอบ ชั้น 9",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lng": {
+            "example": 100.5018,
+            "maximum": 180,
+            "minimum": -180,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "phone": {
+            "description": "Thai (0…) or E.164 (+…); stored as E.164",
+            "example": "+66810001234",
+            "pattern": "^(\\+[1-9]\\d{7,14}|0\\d{8,9})$",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "pattern": "^\\d{5}$",
+            "type": "string"
+          },
+          "provinceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "recipientName": {
+            "example": "สมชาย ทดสอบ",
+            "type": "string"
+          },
+          "subdistrictId": {
+            "description": "Geography subdistrict; its postcode must match `postcode`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "recipientName",
+          "phone",
+          "line1",
+          "postcode",
+          "provinceId"
+        ],
+        "type": "object"
+      },
+      "AddressKind": {
+        "enum": [
+          "delivery",
+          "billing"
+        ],
+        "type": "string"
+      },
+      "AdminCustomerDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdVia": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreationChannel"
+              }
+            ],
+            "example": "self"
+          },
+          "customerCode": {
+            "description": "Assigned at the first checkout or when CS creates the account",
+            "example": "CU-000042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerType"
+              }
+            ],
+            "example": "individual"
+          },
+          "displayName": {
+            "example": "สมชาย ทดสอบ",
+            "type": "string"
+          },
+          "email": {
+            "example": "somchai@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstName": {
+            "example": "สมชาย",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastLoginAt": {
+            "example": "2026-10-02T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastName": {
+            "example": "ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66810001234",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "description": "Account status",
+            "example": "active",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "customerCode",
+          "customerType",
+          "displayName",
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "createdVia",
+          "createdAt",
+          "status",
+          "lastLoginAt"
+        ],
+        "type": "object"
+      },
       "AdminMeDto": {
         "properties": {
           "displayName": {
@@ -3226,6 +3519,13 @@
           "home_strip",
           "category",
           "popup"
+        ],
+        "type": "string"
+      },
+      "BranchType": {
+        "enum": [
+          "head_office",
+          "branch"
         ],
         "type": "string"
       },
@@ -7601,6 +7901,14 @@
         ],
         "type": "object"
       },
+      "CreationChannel": {
+        "enum": [
+          "self",
+          "cs",
+          "line_liff"
+        ],
+        "type": "string"
+      },
       "Currency": {
         "description": "Always THB (one currency)",
         "enum": [
@@ -7620,6 +7928,89 @@
         },
         "required": [
           "nextCursor"
+        ],
+        "type": "object"
+      },
+      "CustomerProfileDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdVia": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreationChannel"
+              }
+            ],
+            "example": "self"
+          },
+          "customerCode": {
+            "description": "Assigned at the first checkout or when CS creates the account",
+            "example": "CU-000042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerType"
+              }
+            ],
+            "example": "individual"
+          },
+          "displayName": {
+            "example": "สมชาย ทดสอบ",
+            "type": "string"
+          },
+          "email": {
+            "example": "somchai@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstName": {
+            "example": "สมชาย",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastName": {
+            "example": "ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66810001234",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "customerCode",
+          "customerType",
+          "displayName",
+          "firstName",
+          "lastName",
+          "email",
+          "phone",
+          "createdVia",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -7993,6 +8384,14 @@
           "decidedAt"
         ],
         "type": "object"
+      },
+      "CustomerType": {
+        "enum": [
+          "individual",
+          "juristic",
+          "government"
+        ],
+        "type": "string"
       },
       "DecideLinesDto": {
         "properties": {
@@ -9809,6 +10208,63 @@
         ],
         "type": "string"
       },
+      "FindOrCreateCustomerDto": {
+        "properties": {
+          "customerType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerType"
+              }
+            ],
+            "example": "individual"
+          },
+          "displayName": {
+            "example": "สมชาย ทดสอบ",
+            "type": "string"
+          },
+          "email": {
+            "example": "somchai@example.com",
+            "format": "email",
+            "maxLength": 254,
+            "type": "string"
+          },
+          "firstName": {
+            "example": "สมชาย",
+            "type": "string"
+          },
+          "lastName": {
+            "example": "ทดสอบ",
+            "type": "string"
+          },
+          "phone": {
+            "description": "Phone (Thai or E.164); phone or e-mail is required",
+            "example": "+66810001234",
+            "pattern": "^(\\+[1-9]\\d{7,14}|0\\d{8,9})$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "displayName"
+        ],
+        "type": "object"
+      },
+      "FindOrCreateCustomerResultDto": {
+        "properties": {
+          "created": {
+            "description": "false when an existing customer matched",
+            "example": false,
+            "type": "boolean"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/AdminCustomerDto"
+          }
+        },
+        "required": [
+          "created",
+          "customer"
+        ],
+        "type": "object"
+      },
       "Finish2Dto": {
         "properties": {
           "amount": {
@@ -10396,6 +10852,29 @@
           "nameEn",
           "region",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "GeoRefDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Bangkok",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กรุงเทพมหานคร",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nameTh",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -21118,6 +21597,203 @@
         ],
         "type": "string"
       },
+      "TaxProfileDto": {
+        "properties": {
+          "branchCode": {
+            "example": "00000",
+            "type": "string"
+          },
+          "branchType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchType"
+              }
+            ],
+            "example": "head_office"
+          },
+          "documentEmail": {
+            "example": "account@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isDefault": {
+            "example": true,
+            "type": "boolean"
+          },
+          "line1": {
+            "example": "99/9 ถนนตัวอย่าง",
+            "type": "string"
+          },
+          "line2": {
+            "example": "อาคารทดสอบ ชั้น 9",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "province": {
+            "$ref": "#/components/schemas/GeoRefDto"
+          },
+          "subdistrict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeoRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "taxId": {
+            "example": "0000000000019",
+            "type": "string"
+          },
+          "taxType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerType"
+              }
+            ],
+            "example": "juristic"
+          },
+          "updatedAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "withholdsTax": {
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "taxType",
+          "name",
+          "taxId",
+          "branchType",
+          "branchCode",
+          "line1",
+          "line2",
+          "subdistrict",
+          "province",
+          "postcode",
+          "withholdsTax",
+          "documentEmail",
+          "isDefault",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "TaxProfileInputDto": {
+        "properties": {
+          "branchCode": {
+            "description": "Required for a branch; head office is always 00000",
+            "example": "00000",
+            "pattern": "^\\d{5}$",
+            "type": "string"
+          },
+          "branchType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BranchType"
+              }
+            ],
+            "example": "head_office"
+          },
+          "documentEmail": {
+            "example": "account@example.com",
+            "format": "email",
+            "maxLength": 254,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isDefault": {
+            "example": true,
+            "type": "boolean"
+          },
+          "line1": {
+            "example": "99/9 ถนนตัวอย่าง",
+            "type": "string"
+          },
+          "line2": {
+            "example": "อาคารทดสอบ ชั้น 9",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "Buyer name on the tax invoice",
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "pattern": "^\\d{5}$",
+            "type": "string"
+          },
+          "provinceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "subdistrictId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxId": {
+            "description": "Thai tax / citizen id; the check digit is validated",
+            "example": "0000000000019",
+            "pattern": "^\\d{13}$",
+            "type": "string"
+          },
+          "taxType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerType"
+              }
+            ],
+            "example": "juristic"
+          },
+          "withholdsTax": {
+            "description": "The customer withholds tax on payments (accounting-design §2, D-174)",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "taxType",
+          "name",
+          "taxId",
+          "branchType",
+          "line1",
+          "postcode",
+          "provinceId"
+        ],
+        "type": "object"
+      },
       "TemplateAvailability": {
         "enum": [
           "none",
@@ -21396,6 +22072,58 @@
           "shortagePct",
           "overagePct"
         ],
+        "type": "object"
+      },
+      "UpdateAddressDto": {
+        "properties": {
+          "isDefault": {
+            "example": true,
+            "type": "boolean"
+          },
+          "label": {
+            "example": "สำนักงาน",
+            "type": "string"
+          },
+          "line1": {
+            "example": "99/9 ถนนตัวอย่าง",
+            "type": "string"
+          },
+          "line2": {
+            "example": "อาคารทดสอบ ชั้น 9",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "description": "Thai (0…) or E.164 (+…); stored as E.164",
+            "example": "+66810001234",
+            "pattern": "^(\\+[1-9]\\d{7,14}|0\\d{8,9})$",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "pattern": "^\\d{5}$",
+            "type": "string"
+          },
+          "provinceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "recipientName": {
+            "example": "สมชาย ทดสอบ",
+            "type": "string"
+          },
+          "subdistrictId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
         "type": "object"
       },
       "UpdateArticleCategoryDto": {
@@ -21801,6 +22529,37 @@
             "description": "An https:// URL or a site path",
             "example": null,
             "pattern": "^(https://|/)",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdateCustomerProfileDto": {
+        "properties": {
+          "customerType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerType"
+              }
+            ],
+            "example": "juristic"
+          },
+          "displayName": {
+            "example": "สมชาย ทดสอบ",
+            "type": "string"
+          },
+          "firstName": {
+            "example": "สมชาย",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastName": {
+            "example": "ทดสอบ",
             "type": [
               "string",
               "null"
@@ -23564,6 +24323,61 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateTaxProfileDto": {
+        "properties": {
+          "documentEmail": {
+            "example": "account@example.com",
+            "format": "email",
+            "maxLength": 254,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isDefault": {
+            "example": true,
+            "type": "boolean"
+          },
+          "line1": {
+            "example": "99/9 ถนนตัวอย่าง",
+            "type": "string"
+          },
+          "line2": {
+            "example": "อาคารทดสอบ ชั้น 9",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "pattern": "^\\d{5}$",
+            "type": "string"
+          },
+          "provinceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "subdistrictId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "withholdsTax": {
+            "example": false,
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -71416,6 +72230,2086 @@
         ],
         "x-required-permissions": [
           "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/customers": {
+      "get": {
+        "description": "Search by phone (Thai or E.164), e-mail, name or customer code; newest first.\n\nImplements: D-092.",
+        "operationId": "admin.customers.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "createdAt": "2026-10-01T10:00:00+07:00",
+                      "createdVia": "cs",
+                      "customerCode": "CU-000042",
+                      "customerType": "individual",
+                      "displayName": "สมชาย ทดสอบ",
+                      "email": "somchai@example.com",
+                      "firstName": "สมชาย",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                      "lastLoginAt": null,
+                      "lastName": "ทดสอบ",
+                      "phone": "+66810001234",
+                      "status": "active"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminCustomerDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Find customers",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.read"
+        ]
+      },
+      "post": {
+        "description": "CS looks the customer up by phone or e-mail and creates the account when none matches, so orders can be placed on their behalf. A created account gets its customer code (series `customer`) and publishes `customer.registered` (via `cs`). Returns 200 with `created: false` when an account matched.\n\nImplements: D-092.",
+        "operationId": "admin.customers.findOrCreate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "displayName": "สมชาย ทดสอบ",
+                    "phone": "0810001234"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/FindOrCreateCustomerDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "created": false,
+                  "customer": {
+                    "createdAt": "2026-10-01T10:00:00+07:00",
+                    "createdVia": "cs",
+                    "customerCode": "CU-000042",
+                    "customerType": "individual",
+                    "displayName": "สมชาย ทดสอบ",
+                    "email": "somchai@example.com",
+                    "firstName": "สมชาย",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                    "lastLoginAt": null,
+                    "lastName": "ทดสอบ",
+                    "phone": "+66810001234",
+                    "status": "active"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FindOrCreateCustomerResultDto"
+                }
+              }
+            },
+            "description": "An existing customer matched",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "created": true,
+                  "customer": {
+                    "createdAt": "2026-10-01T10:00:00+07:00",
+                    "createdVia": "cs",
+                    "customerCode": "CU-000042",
+                    "customerType": "individual",
+                    "displayName": "สมชาย ทดสอบ",
+                    "email": "somchai@example.com",
+                    "firstName": "สมชาย",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                    "lastLoginAt": null,
+                    "lastName": "ทดสอบ",
+                    "phone": "+66810001234",
+                    "status": "active"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FindOrCreateCustomerResultDto"
+                }
+              }
+            },
+            "description": "Created (or 200 when found)",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `numbering.series_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Find or create a customer (CS)",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.manage"
+        ]
+      }
+    },
+    "/v1/admin/customers/{customerId}": {
+      "get": {
+        "description": "Account and profile (customer type, code, how it was created).\n\nImplements: D-092.",
+        "operationId": "admin.customers.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "createdVia": "cs",
+                  "customerCode": "CU-000042",
+                  "customerType": "individual",
+                  "displayName": "สมชาย ทดสอบ",
+                  "email": "somchai@example.com",
+                  "firstName": "สมชาย",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "lastLoginAt": null,
+                  "lastName": "ทดสอบ",
+                  "phone": "+66810001234",
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCustomerDto"
+                }
+              }
+            },
+            "description": "Customer",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a customer",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.read"
+        ]
+      }
+    },
+    "/v1/admin/customers/{customerId}/addresses": {
+      "get": {
+        "description": "Same rules as the customer’s own list (D-142).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "admin.customers.listAddresses",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AddressKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                      "isDefault": true,
+                      "kind": "delivery",
+                      "label": "สำนักงาน",
+                      "lat": 13.7563,
+                      "line1": "99/9 ถนนตัวอย่าง",
+                      "line2": "อาคารทดสอบ ชั้น 9",
+                      "lng": 100.5018,
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "province": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                        "nameEn": "Bangkok",
+                        "nameTh": "กรุงเทพมหานคร"
+                      },
+                      "recipientName": "สมชาย ทดสอบ",
+                      "subdistrict": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                        "nameEn": "Sample",
+                        "nameTh": "แขวงตัวอย่าง"
+                      },
+                      "updatedAt": "2026-10-01T10:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AddressDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List a customer's addresses",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.read"
+        ]
+      },
+      "post": {
+        "description": "CS enters an address on the customer’s behalf; recorded with the CS user (D-142).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "admin.customers.createAddress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "isDefault": true,
+                    "kind": "delivery",
+                    "label": "สำนักงาน",
+                    "line1": "99/9 ถนนตัวอย่าง",
+                    "phone": "0810001234",
+                    "postcode": "10110",
+                    "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "recipientName": "สมชาย ทดสอบ",
+                    "subdistrictId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddressInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                  "isDefault": true,
+                  "kind": "delivery",
+                  "label": "สำนักงาน",
+                  "lat": 13.7563,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": "อาคารทดสอบ ชั้น 9",
+                  "lng": 100.5018,
+                  "phone": "+66810001234",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "recipientName": "สมชาย ทดสอบ",
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add an address for a customer (CS)",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.manage"
+        ]
+      }
+    },
+    "/v1/admin/customers/{customerId}/addresses/{addressId}": {
+      "patch": {
+        "description": "Guarded by `If-Match`; orders keep their snapshot (D-142).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "admin.customers.updateAddress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "addressId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "label": "โกดัง"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAddressDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                  "isDefault": true,
+                  "kind": "delivery",
+                  "label": "สำนักงาน",
+                  "lat": 13.7563,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": "อาคารทดสอบ ชั้น 9",
+                  "lng": 100.5018,
+                  "phone": "+66810001234",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "recipientName": "สมชาย ทดสอบ",
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Update a customer's address (CS)",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.manage"
+        ]
+      }
+    },
+    "/v1/admin/customers/{customerId}/tax-profiles": {
+      "get": {
+        "description": "Buyer data and withholding flag (D-174).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "admin.customers.listTaxProfiles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "documentEmail": "account@example.com",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนตัวอย่าง",
+                      "line2": null,
+                      "name": "บริษัท ตัวอย่าง จำกัด",
+                      "postcode": "10110",
+                      "province": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                        "nameEn": "Bangkok",
+                        "nameTh": "กรุงเทพมหานคร"
+                      },
+                      "subdistrict": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                        "nameEn": "Sample",
+                        "nameTh": "แขวงตัวอย่าง"
+                      },
+                      "taxId": "0000000000019",
+                      "taxType": "juristic",
+                      "updatedAt": "2026-10-01T10:00:00+07:00",
+                      "withholdsTax": true
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/TaxProfileDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List a customer's tax-invoice profiles",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.read"
+        ]
+      },
+      "post": {
+        "description": "Same validation as the customer’s own (check digit, head office / branch, D-174).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "admin.customers.createTaxProfile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "branchType": "head_office",
+                    "isDefault": true,
+                    "line1": "99/9 ถนนตัวอย่าง",
+                    "name": "บริษัท ตัวอย่าง จำกัด",
+                    "postcode": "10110",
+                    "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "taxId": "0000000000019",
+                    "taxType": "juristic",
+                    "withholdsTax": true
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/TaxProfileInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branchCode": "00000",
+                  "branchType": "head_office",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+                  "isDefault": true,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": null,
+                  "name": "บริษัท ตัวอย่าง จำกัด",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "taxId": "0000000000019",
+                  "taxType": "juristic",
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxProfileDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add a tax-invoice profile for a customer (CS)",
+        "tags": [
+          "admin.customers"
+        ],
+        "x-required-permissions": [
+          "customers.manage"
         ]
       }
     },
@@ -128390,6 +131284,1184 @@
         ]
       }
     },
+    "/v1/store/addresses": {
+      "get": {
+        "description": "Delivery and billing addresses, default first (D-142: orders copy a snapshot).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.addresses.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AddressKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                      "isDefault": true,
+                      "kind": "delivery",
+                      "label": "สำนักงาน",
+                      "lat": 13.7563,
+                      "line1": "99/9 ถนนตัวอย่าง",
+                      "line2": "อาคารทดสอบ ชั้น 9",
+                      "lng": 100.5018,
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "province": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                        "nameEn": "Bangkok",
+                        "nameTh": "กรุงเทพมหานคร"
+                      },
+                      "recipientName": "สมชาย ทดสอบ",
+                      "subdistrict": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                        "nameEn": "Sample",
+                        "nameTh": "แขวงตัวอย่าง"
+                      },
+                      "updatedAt": "2026-10-01T10:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AddressDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my addresses",
+        "tags": [
+          "store.addresses"
+        ]
+      },
+      "post": {
+        "description": "The phone is stored as E.164; a subdistrict must belong to the province and match the postcode. The first address of a kind becomes the default (D-142).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.addresses.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "isDefault": true,
+                    "kind": "delivery",
+                    "label": "สำนักงาน",
+                    "line1": "99/9 ถนนตัวอย่าง",
+                    "phone": "0810001234",
+                    "postcode": "10110",
+                    "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "recipientName": "สมชาย ทดสอบ",
+                    "subdistrictId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddressInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                  "isDefault": true,
+                  "kind": "delivery",
+                  "label": "สำนักงาน",
+                  "lat": 13.7563,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": "อาคารทดสอบ ชั้น 9",
+                  "lng": 100.5018,
+                  "phone": "+66810001234",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "recipientName": "สมชาย ทดสอบ",
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Add an address",
+        "tags": [
+          "store.addresses"
+        ]
+      }
+    },
+    "/v1/store/addresses/{addressId}": {
+      "delete": {
+        "description": "Soft delete (schema-design §1.6); carts and orders keep their snapshot (D-142).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.addresses.delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "addressId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove an address",
+        "tags": [
+          "store.addresses"
+        ]
+      },
+      "get": {
+        "description": "Only the owner; anything else is 404.\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.addresses.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "addressId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                  "isDefault": true,
+                  "kind": "delivery",
+                  "label": "สำนักงาน",
+                  "lat": 13.7563,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": "อาคารทดสอบ ชั้น 9",
+                  "lng": 100.5018,
+                  "phone": "+66810001234",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "recipientName": "สมชาย ทดสอบ",
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            },
+            "description": "Address",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get one of my addresses",
+        "tags": [
+          "store.addresses"
+        ]
+      },
+      "patch": {
+        "description": "Partial update guarded by `If-Match`; orders placed before keep their snapshot (D-142).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.addresses.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "addressId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "isDefault": true,
+                    "label": "โกดัง"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAddressDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                  "isDefault": true,
+                  "kind": "delivery",
+                  "label": "สำนักงาน",
+                  "lat": 13.7563,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": "อาคารทดสอบ ชั้น 9",
+                  "lng": 100.5018,
+                  "phone": "+66810001234",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "recipientName": "สมชาย ทดสอบ",
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AddressDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Update an address",
+        "tags": [
+          "store.addresses"
+        ]
+      }
+    },
     "/v1/store/catalog/article-categories": {
       "get": {
         "description": "Published categories in display order.\n\nImplements: D-005.",
@@ -131871,6 +135943,435 @@
         "summary": "Get a stock product",
         "tags": [
           "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/customer-profile": {
+      "get": {
+        "description": "Customer type (individual / juristic / government drives payment schedules, D-020) and the customer code, assigned at the first checkout.\n\nImplements: D-020, D-092.",
+        "operationId": "store.customerProfile.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "createdVia": "self",
+                  "customerCode": "CU-000042",
+                  "customerType": "individual",
+                  "displayName": "สมชาย ทดสอบ",
+                  "email": "somchai@example.com",
+                  "firstName": "สมชาย",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "lastName": "ทดสอบ",
+                  "phone": "+66810001234"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerProfileDto"
+                }
+              }
+            },
+            "description": "Profile",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my customer profile",
+        "tags": [
+          "store.customerProfile"
+        ]
+      },
+      "patch": {
+        "description": "Names and customer type; guarded by `If-Match` (D-020).\n\nImplements: D-020.",
+        "operationId": "store.customerProfile.update",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "customerType": "juristic"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomerProfileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "createdVia": "self",
+                  "customerCode": "CU-000042",
+                  "customerType": "individual",
+                  "displayName": "สมชาย ทดสอบ",
+                  "email": "somchai@example.com",
+                  "firstName": "สมชาย",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "lastName": "ทดสอบ",
+                  "phone": "+66810001234"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerProfileDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Update my customer profile",
+        "tags": [
+          "store.customerProfile"
         ]
       }
     },
@@ -138929,6 +143430,1179 @@
         ]
       }
     },
+    "/v1/store/tax-profiles": {
+      "get": {
+        "description": "Buyer data for full-form tax invoices issued by the entity (D-092): tax id, head office / branch and whether the customer withholds tax (D-174).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.taxProfiles.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "documentEmail": "account@example.com",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนตัวอย่าง",
+                      "line2": null,
+                      "name": "บริษัท ตัวอย่าง จำกัด",
+                      "postcode": "10110",
+                      "province": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                        "nameEn": "Bangkok",
+                        "nameTh": "กรุงเทพมหานคร"
+                      },
+                      "subdistrict": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                        "nameEn": "Sample",
+                        "nameTh": "แขวงตัวอย่าง"
+                      },
+                      "taxId": "0000000000019",
+                      "taxType": "juristic",
+                      "updatedAt": "2026-10-01T10:00:00+07:00",
+                      "withholdsTax": true
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/TaxProfileDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my tax-invoice profiles",
+        "tags": [
+          "store.taxProfiles"
+        ]
+      },
+      "post": {
+        "description": "The tax id check digit is validated; head office is branch 00000, a branch needs its own code. `withholdsTax` makes checkout show the expected cash after withholding (D-174).\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.taxProfiles.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "branchType": "head_office",
+                    "isDefault": true,
+                    "line1": "99/9 ถนนตัวอย่าง",
+                    "name": "บริษัท ตัวอย่าง จำกัด",
+                    "postcode": "10110",
+                    "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "taxId": "0000000000019",
+                    "taxType": "juristic",
+                    "withholdsTax": true
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/TaxProfileInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branchCode": "00000",
+                  "branchType": "head_office",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+                  "isDefault": true,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": null,
+                  "name": "บริษัท ตัวอย่าง จำกัด",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "taxId": "0000000000019",
+                  "taxType": "juristic",
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxProfileDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Add a tax-invoice profile",
+        "tags": [
+          "store.taxProfiles"
+        ]
+      }
+    },
+    "/v1/store/tax-profiles/{taxProfileId}": {
+      "delete": {
+        "description": "Soft delete; issued documents and orders keep their buyer snapshot.\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.taxProfiles.delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taxProfileId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove a tax-invoice profile",
+        "tags": [
+          "store.taxProfiles"
+        ]
+      },
+      "get": {
+        "description": "Only the owner; anything else is 404.\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.taxProfiles.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taxProfileId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branchCode": "00000",
+                  "branchType": "head_office",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+                  "isDefault": true,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": null,
+                  "name": "บริษัท ตัวอย่าง จำกัด",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "taxId": "0000000000019",
+                  "taxType": "juristic",
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxProfileDto"
+                }
+              }
+            },
+            "description": "Tax profile",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get one of my tax-invoice profiles",
+        "tags": [
+          "store.taxProfiles"
+        ]
+      },
+      "patch": {
+        "description": "Name, address, withholding flag and document e-mail; tax id and branch never change (add a new profile instead). Guarded by `If-Match`.\n\nImplements: D-142, D-174, D-092.",
+        "operationId": "store.taxProfiles.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taxProfileId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "withholdsTax": true
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaxProfileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branchCode": "00000",
+                  "branchType": "head_office",
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+                  "isDefault": true,
+                  "line1": "99/9 ถนนตัวอย่าง",
+                  "line2": null,
+                  "name": "บริษัท ตัวอย่าง จำกัด",
+                  "postcode": "10110",
+                  "province": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                    "nameEn": "Bangkok",
+                    "nameTh": "กรุงเทพมหานคร"
+                  },
+                  "subdistrict": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
+                    "nameEn": "Sample",
+                    "nameTh": "แขวงตัวอย่าง"
+                  },
+                  "taxId": "0000000000019",
+                  "taxType": "juristic",
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxProfileDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Update a tax-invoice profile",
+        "tags": [
+          "store.taxProfiles"
+        ]
+      }
+    },
     "/v1/store/web-push/subscriptions": {
       "post": {
         "description": "One subscription per endpoint; the auth secret is stored encrypted. Sent only when the user permits it (D-143).\n\nImplements: D-143.",
@@ -140084,6 +145758,10 @@
       "name": "admin.customerShippingRates"
     },
     {
+      "description": "CS finds or creates customers and keeps their addresses and tax profiles (D-092).",
+      "name": "admin.customers"
+    },
+    {
       "description": "Document numbering series per entity and document type (accounting-design §4, D-169).",
       "name": "admin.documentSeries"
     },
@@ -140264,8 +145942,16 @@
       "name": "partner.webPush"
     },
     {
+      "description": "Delivery and billing addresses of the signed-in customer; orders keep a snapshot (D-142).",
+      "name": "store.addresses"
+    },
+    {
       "description": "Public catalogue and CMS reads for the storefront: products, stock products, showcase, articles, FAQs, SEO, geography, search, images and the Merchant feed — no prices or factory data (D-100, D-050).",
       "name": "store.catalog"
+    },
+    {
+      "description": "The signed-in customer’s profile: customer type and customer code (D-020).",
+      "name": "store.customerProfile"
     },
     {
       "description": "Customer uploads (artwork, slips…): presign → PUT → complete → signed download.",
@@ -140294,6 +145980,10 @@
     {
       "description": "Saved quotations: 15-day price lock, share links, PDF in the name of the issuing entity, re-pricing after expiry (D-051).",
       "name": "store.savedQuotes"
+    },
+    {
+      "description": "Buyer data for full-form tax invoices: tax id, head office / branch, withholding flag (D-092, D-174).",
+      "name": "store.taxProfiles"
     },
     {
       "description": "Web push subscriptions of the signed-in customer (D-143).",

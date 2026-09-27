@@ -67,6 +67,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `carriers.read` — Read fallback carriers and Packio’s carrier accounts | ● | ● |  |  | ● |  |  |  |  |  | ● |  | ● | ● |
 | `carriers.manage` — Enable or disable fallback carriers and register Packio’s carrier accounts (D-114, D-005) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `sell_margins.manage` — Maintain Packio's sell margins, fix costs and design fees (effective-dated) (D-063) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |
+| `customers.read` — Find customers and read their profile, addresses and tax profiles (D-092) | ● |  |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
+| `customers.manage` — Create customer accounts and keep their addresses and tax profiles (CS) (D-092) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

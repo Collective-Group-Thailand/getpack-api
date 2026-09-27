@@ -105,6 +105,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'rfqs.read',
       'rfqs.manage',
       'document_series.read',
+      'customers.read',
+      'customers.manage',
     ],
   },
   {
@@ -123,6 +125,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'quotes.manage',
       'rfqs.read',
       'rfqs.manage',
+      'customers.read',
+      'customers.manage',
     ],
   },
   {
@@ -141,6 +145,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'quotes.manage',
       'rfqs.read',
       'rfqs.manage',
+      'customers.read',
+      'customers.manage',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -167,6 +173,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'shipping_rates.read',
       'quotes.read',
       'document_series.read',
+      'customers.read',
     ],
   },
   {
@@ -186,6 +193,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'quotes.read',
       'document_series.read',
       'document_series.manage',
+      'customers.read',
     ],
   },
   {
@@ -250,6 +258,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'quotes.read',
       'rfqs.read',
       'document_series.read',
+      'customers.read',
     ],
   },
 

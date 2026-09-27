@@ -3,6 +3,11 @@
  * contract build. Tags are `<surface>.<resource>` (`store.orders`) or `ops.<area>`.
  */
 export const API_TAGS: Record<string, string> = {
+  'store.customerProfile': 'The signed-in customer’s profile: customer type and customer code (D-020).',
+  'store.addresses': 'Delivery and billing addresses of the signed-in customer; orders keep a snapshot (D-142).',
+  'store.taxProfiles':
+    'Buyer data for full-form tax invoices: tax id, head office / branch, withholding flag (D-092, D-174).',
+  'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',
   'store.savedQuotes':
