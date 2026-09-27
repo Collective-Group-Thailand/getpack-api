@@ -1,4 +1,5 @@
 import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
+import { LOGISTICS_PARTNER_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { PARTNERS_PARTNER_CONTROLLERS } from '@modules/partners/partners.registry';
 import { PRICING_PARTNER_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { PRODUCTION_PARTNER_CONTROLLERS } from '@modules/production/production.registry';
@@ -26,6 +27,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...SHIPPING_PARTNER_CONTROLLERS,
     ...QUOTES_PARTNER_CONTROLLERS,
     ...PRODUCTION_PARTNER_CONTROLLERS,
+    ...LOGISTICS_PARTNER_CONTROLLERS,
   ],
 })
 export class PartnerApiModule {}

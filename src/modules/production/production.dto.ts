@@ -174,6 +174,13 @@ export class MilestoneDto {
 }
 
 export class JobDestinationDto {
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000f2002',
+    description: 'Referenced by shipment items (B4.3)',
+  })
+  id!: string;
+
   @ApiProperty({ example: 'ผู้รับ ทดสอบ', description: 'Recipient (D-142: name, address and phone only)' })
   recipientName!: string;
 
@@ -400,6 +407,7 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
   holdReason: null,
   destinations: [
     {
+      id: '0192f3a0-7c1e-7d2a-9b1f-0000000f2002',
       recipientName: 'ผู้รับ ทดสอบ',
       phone: '+66810001234',
       line1: '1 ถนนทดสอบ',
@@ -1159,7 +1167,7 @@ export class ScorecardDto {
     type: String,
     nullable: true,
     example: '90.0000',
-    description: 'Finished by the promised date, % of completed jobs',
+    description: 'First pickup by the promised ship date, % of jobs first shipped in the month',
   })
   onTimeShippingPct!: string | null;
 

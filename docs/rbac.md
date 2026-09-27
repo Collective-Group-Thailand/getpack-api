@@ -105,6 +105,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `production.manage` — Reassign jobs to another factory, hold and resume jobs, resolve escalations (D-012, D-074, D-101) | ● |  |  |  | ● |  | ● |  |  |  |  |  | ● |  |
 | `milestone_routes.manage` — Edit milestone routes per product type as new versions (D-075) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |
 | `inspections.perform` — Carry out Packio inspections and record their results (D-076) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |
+| `shipments.read` — Read shipments, carrier events, proofs of delivery and delivery reconciliations (D-013, D-080) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |
+| `shipments.manage` — Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments (D-013, D-114) | ● |  |  |  | ● |  | ● |  |  |  | ● |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|
@@ -146,6 +148,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_issues.raise` — Raise production issues on own jobs | ● | ● | ● | ● | ● |  |
 | `factory_capacity.manage` — Set weekly capacity overrides of the own factory (D-101) | ● | ● |  |  |  |  |
 | `factory_scorecard.read` — Read the own factory’s monthly scorecard (D-155) | ● | ● |  | ● |  |  |
+| `factory_shipments.read` — Read the own factory’s shipments, labels and packing lists (D-013, D-142) | ● | ● |  |  | ● |  |
+| `factory_shipments.manage` — Create, pack, dispatch and deliver shipments with proof of delivery (D-013) | ● |  |  |  | ● |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

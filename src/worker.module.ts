@@ -13,6 +13,7 @@ import { DesignServicesModule } from '@modules/design-services/design-services.m
 import { DesignsModule } from '@modules/designs/designs.module';
 import { DiscountMemosModule } from '@modules/discount-memos/discount-memos.module';
 import { IamModule } from '@modules/iam/iam.module';
+import { LogisticsModule } from '@modules/logistics/logistics.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PartnersModule } from '@modules/partners/partners.module';
@@ -85,6 +86,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     DesignServicesModule,
     DesignsModule,
     ProductionModule,
+    LogisticsModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

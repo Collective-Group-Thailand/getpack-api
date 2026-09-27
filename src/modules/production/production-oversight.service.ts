@@ -418,14 +418,14 @@ export class ProductionOversightService {
     const from = startOfBangkokDay(firstDay);
     const to = startOfBangkokDay(nextMonth(firstDay));
     const inMonth = { gte: from, lt: to };
-    const [released, completed, firstQcs, milestones] = await Promise.all([
+    const [released, completed, firstQcs, milestones, shipped] = await Promise.all([
       this.prisma.productionJob.findMany({
         where: { factoryId, releasedAt: inMonth, jobKind: { not: 'mockup' } },
         select: { acceptedAt: true, acceptDueAt: true, rejectedAt: true },
       }),
       this.prisma.productionJob.findMany({
         where: { factoryId, status: 'completed', actualFinishAt: inMonth },
-        select: { id: true, actualFinishAt: true, promisedShipDate: true },
+        select: { id: true },
       }),
       this.prisma.$queryRaw<{ result: string }[]>`
         SELECT DISTINCT ON (q.job_id) q.result::text AS result FROM qc_checks q
@@ -436,12 +436,22 @@ export class ProductionOversightService {
         where: { factoryId, completedAt: inMonth, dueAt: { not: null } },
         select: { onTime: true },
       }),
+      // On-time shipping (B4.3): the job's first pickup against its promised ship date.
+      this.prisma.$queryRaw<{ first_pickup: Date; promised_ship_date: Date | null }[]>`
+        SELECT min(s.picked_up_at) AS first_pickup, j.promised_ship_date
+          FROM shipment_items i
+          JOIN shipments s ON s.id = i.shipment_id
+          JOIN production_jobs j ON j.id = i.production_job_id
+         WHERE j.factory_id = ${factoryId} AND s.picked_up_at IS NOT NULL AND j.job_kind <> 'mockup'
+         GROUP BY j.id, j.promised_ship_date
+        HAVING min(s.picked_up_at) >= ${from} AND min(s.picked_up_at) < ${to}`,
     ]);
     const responded = released.filter((j) => j.acceptedAt || j.rejectedAt);
     const onTimeAcceptance = released.filter((j) => j.acceptedAt && j.acceptedAt <= j.acceptDueAt).length;
-    const shippedOnTime = completed.filter(
+    const shippedOnTime = shipped.filter(
       (j) =>
-        j.promisedShipDate && bangkokDate(j.actualFinishAt!) <= j.promisedShipDate.toISOString().slice(0, 10),
+        j.promised_ship_date &&
+        bangkokDate(j.first_pickup) <= j.promised_ship_date.toISOString().slice(0, 10),
     ).length;
     const firstPass = firstQcs.filter((q) => q.result === 'pass').length;
     const claims = await this.factoryClaims(
@@ -453,7 +463,8 @@ export class ProductionOversightService {
       responded: responded.length,
       acceptedOnTime: onTimeAcceptance,
       completed: completed.length,
-      completedByPromise: shippedOnTime,
+      shipped: shipped.length,
+      shippedByPromise: shippedOnTime,
       firstQcChecks: firstQcs.length,
       firstPass,
       factoryClaims: claims,
@@ -462,7 +473,7 @@ export class ProductionOversightService {
     };
     const values = {
       onTimeAcceptancePct: pct(onTimeAcceptance, released.length),
-      onTimeShippingPct: pct(shippedOnTime, completed.length),
+      onTimeShippingPct: pct(shippedOnTime, shipped.length),
       qcFirstPassPct: pct(firstPass, firstQcs.length),
       claimRatePct: pct(claims, completed.length),
       onTimeUpdatesPct: pct(inputs.milestonesOnTime, milestones.length),

@@ -1,0 +1,167 @@
+import { toBangkokIso } from '@common/time/bangkok';
+import { type DeliveryReconciliation, type Prisma } from '@generated/prisma/client';
+
+import {
+  type AdminShipmentDto,
+  type DeliveryReconciliationDto,
+  type PartnerShipmentDto,
+  type ProofOfDeliveryDto,
+  type StoreShipmentDto,
+} from './logistics.dto';
+
+export const SHIPMENT_INCLUDE = {
+  factory: { select: { publicId: true, code: true } },
+  carrier: { select: { code: true } },
+  labelFile: { select: { publicId: true } },
+  packingListFile: { select: { publicId: true } },
+  items: {
+    orderBy: { id: 'asc' },
+    include: {
+      order: { select: { publicId: true, orderCode: true } },
+      orderDestination: { select: { publicId: true } },
+      productionJob: { select: { publicId: true, jobNo: true } },
+    },
+  },
+  events: { orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }] },
+  proofOfDelivery: { include: { signatureFile: { select: { publicId: true } } } },
+} satisfies Prisma.ShipmentInclude;
+export type ShipmentRow = Prisma.ShipmentGetPayload<{ include: typeof SHIPMENT_INCLUDE }>;
+
+const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
+const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+
+function podDto(row: ShipmentRow, photos: string[]): ProofOfDeliveryDto | null {
+  const pod = row.proofOfDelivery;
+  if (!pod) return null;
+  return {
+    kind: pod.kind,
+    receiverName: pod.receiverName,
+    deliveredQuantity: pod.deliveredQuantity,
+    capturedAt: toBangkokIso(pod.capturedAt),
+    signatureFileId: pod.signatureFile?.publicId ?? null,
+    photoFileIds: photos,
+    carrierPodRef: pod.carrierPodRef,
+  };
+}
+
+/** The factory's projection (D-142): where to deliver and what, no price. */
+export function partnerShipmentDto(row: ShipmentRow, podPhotos: string[] = []): PartnerShipmentDto {
+  return {
+    id: row.publicId,
+    shipmentNo: row.shipmentNo,
+    status: row.status,
+    carrier: row.carrier.code,
+    trackingNo: row.trackingNo,
+    destination: {
+      recipientName: row.recipientName,
+      phone: row.phone,
+      line1: row.line1,
+      line2: row.line2,
+      postcode: row.postcode,
+    },
+    cartonsCount: row.cartonsCount,
+    weightG: row.weightG,
+    volumeCm3: row.volumeCm3 === null ? null : Number(row.volumeCm3),
+    plannedShipOn: day(row.plannedShipOn),
+    readyAt: iso(row.readyAt),
+    pickedUpAt: iso(row.pickedUpAt),
+    deliveredAt: iso(row.deliveredAt),
+    labelFileId: row.labelFile?.publicId ?? null,
+    packingListFileId: row.packingListFile?.publicId ?? null,
+    items: row.items.map((i) => ({
+      destinationId: i.orderDestination.publicId,
+      jobId: i.productionJob.publicId,
+      jobNo: i.productionJob.jobNo,
+      orderCode: i.order.orderCode,
+      quantity: i.quantity,
+      deliveredQuantity: i.deliveredQuantity,
+    })),
+    events: row.events.map((e) => ({
+      occurredAt: toBangkokIso(e.occurredAt),
+      status: e.status,
+      source: e.source,
+      location: e.location,
+      note: e.note,
+    })),
+    proofOfDelivery: podDto(row, podPhotos),
+    note: row.note,
+  };
+}
+
+export function adminShipmentDto(
+  row: ShipmentRow,
+  grants: { cost: boolean },
+  podPhotos: string[] = [],
+): AdminShipmentDto {
+  return {
+    ...partnerShipmentDto(row, podPhotos),
+    factoryId: row.factory.publicId,
+    factoryCode: row.factory.code,
+    carrierBookingRef: row.carrierBookingRef,
+    trackingUrl: row.trackingUrl,
+    payoutAmount: grants.cost ? (row.payoutAmount?.toFixed(2) ?? null) : null,
+    carrierCostAmount: grants.cost ? (row.carrierCostAmount?.toFixed(2) ?? null) : null,
+    cancelledAt: iso(row.cancelledAt),
+    cancelReason: row.cancelReason,
+  };
+}
+
+/** The customer's view of the shipments carrying one of their orders (D-050: no factory, no costs). */
+export function storeShipmentDto(
+  row: ShipmentRow,
+  orderId: bigint,
+  podPhotos: string[] = [],
+): StoreShipmentDto {
+  const pod = row.proofOfDelivery;
+  return {
+    id: row.publicId,
+    shipmentNo: row.shipmentNo,
+    status: row.status,
+    carrier: row.carrier.code === 'factory_fleet' ? 'packio' : row.carrier.code,
+    trackingNo: row.trackingNo,
+    trackingUrl: row.trackingUrl,
+    destination: {
+      recipientName: row.recipientName,
+      phone: row.phone,
+      line1: row.line1,
+      line2: row.line2,
+      postcode: row.postcode,
+    },
+    cartonsCount: row.cartonsCount,
+    pickedUpAt: iso(row.pickedUpAt),
+    deliveredAt: iso(row.deliveredAt),
+    items: row.items
+      .filter((i) => i.orderId === orderId)
+      .map((i) => ({
+        orderCode: i.order.orderCode,
+        quantity: i.quantity,
+        deliveredQuantity: i.deliveredQuantity,
+      })),
+    events: row.events
+      .filter((e) => e.status !== 'draft')
+      .map((e) => ({
+        occurredAt: toBangkokIso(e.occurredAt),
+        status: e.status,
+        location: e.location,
+      })),
+    proofOfDelivery: pod
+      ? { receiverName: pod.receiverName, capturedAt: toBangkokIso(pod.capturedAt), photoFileIds: podPhotos }
+      : null,
+  };
+}
+
+export function reconciliationDto(r: DeliveryReconciliation): DeliveryReconciliationDto {
+  return {
+    outcome: r.outcome,
+    orderedQuantity: r.orderedQuantity,
+    deliveredQuantity: r.deliveredQuantity,
+    payableQuantity: r.payableQuantity,
+    deviationPct: r.deviationPct.toFixed(4),
+    toleranceShortagePct: r.toleranceShortagePct.toFixed(4),
+    toleranceOveragePct: r.toleranceOveragePct.toFixed(4),
+    creditNetAmount: r.creditNetAmount?.toFixed(2) ?? null,
+    creditVatAmount: r.creditVatAmount?.toFixed(2) ?? null,
+    creditAmount: r.creditAmount?.toFixed(2) ?? null,
+    evaluatedAt: toBangkokIso(r.evaluatedAt),
+  };
+}

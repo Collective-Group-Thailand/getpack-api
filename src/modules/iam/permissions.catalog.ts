@@ -522,6 +522,18 @@ export const PERMISSIONS = [
     description: 'Carry out Packio inspections and record their results',
     decisionRefs: ['D-076'],
   },
+  {
+    key: 'shipments.read',
+    audience: 'staff',
+    description: 'Read shipments, carrier events, proofs of delivery and delivery reconciliations',
+    decisionRefs: ['D-013', 'D-080'],
+  },
+  {
+    key: 'shipments.manage',
+    audience: 'staff',
+    description: 'Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments',
+    decisionRefs: ['D-013', 'D-114'],
+  },
 
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
@@ -627,6 +639,18 @@ export const PERMISSIONS = [
     audience: 'partner',
     description: 'Read the own factory’s monthly scorecard',
     decisionRefs: ['D-155'],
+  },
+  {
+    key: 'factory_shipments.read',
+    audience: 'partner',
+    description: 'Read the own factory’s shipments, labels and packing lists',
+    decisionRefs: ['D-013', 'D-142'],
+  },
+  {
+    key: 'factory_shipments.manage',
+    audience: 'partner',
+    description: 'Create, pack, dispatch and deliver shipments with proof of delivery',
+    decisionRefs: ['D-013'],
   },
 
   // --- B2B company (company-scoped)

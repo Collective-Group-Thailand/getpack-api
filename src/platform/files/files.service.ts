@@ -248,6 +248,8 @@ export class FilesService {
     mimeType: string;
     retentionClass: FileRetentionClass;
     ownerUserId: bigint | null;
+    /** A document for a factory (carton labels, packing lists): readable within its scope. */
+    ownerFactoryId?: bigint | null;
   }): Promise<FileObject> {
     const now = new Date();
     const file = await this.prisma.fileObject.create({
@@ -263,6 +265,7 @@ export class FilesService {
         scannedAt: now,
         retentionClass: input.retentionClass,
         ownerUserId: input.ownerUserId,
+        ownerFactoryId: input.ownerFactoryId ?? null,
       },
     });
     const storageKey = `${input.retentionClass}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${file.publicId}`;

@@ -23,6 +23,8 @@ export interface OrderLifecycleHook {
   blocksExpiry?(tx: Tx, groupId: bigint): Promise<boolean>;
   /** Amount already paid on the group (refund needed on cancel, B3.2); THB decimal string. */
   paidAmount?(tx: Tx, groupId: bigint): Promise<string>;
+  /** True when a delivered order must not complete automatically yet (an open claim, B4.5; D-081). */
+  blocksCompletion?(tx: Tx, orderId: bigint): Promise<boolean>;
 }
 
 @Injectable()

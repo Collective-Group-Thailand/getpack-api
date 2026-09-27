@@ -906,5 +906,43 @@
       "title": "Role not allowed",
       "detail": "Owners grant factory staff roles only (not owner)"
     }
+  },
+  "shipments": {
+    "invalid_status": {
+      "title": "Wrong shipment status",
+      "detail": "The shipment is {status}"
+    },
+    "job_not_shippable": {
+      "title": "Job not ready to ship",
+      "detail": "Only completed jobs ship (the job is {status})"
+    },
+    "quantity_exceeds": {
+      "title": "Too many pieces",
+      "detail": "Only {available} pieces are left to ship"
+    },
+    "destinations_differ": {
+      "title": "Different addresses",
+      "detail": "One shipment goes to one address; split it by destination"
+    },
+    "payment_pending": {
+      "title": "Payment pending",
+      "detail": "Instalments due before shipping are unpaid"
+    },
+    "inspection_pending": {
+      "title": "Inspection pending",
+      "detail": "The Packio inspection of this job has not passed"
+    },
+    "carrier_unavailable": {
+      "title": "Carrier unavailable",
+      "detail": "{carrier} cannot be booked ({reason})"
+    },
+    "pod_required": {
+      "title": "Proof of delivery required",
+      "detail": "A factory delivery is delivered only with its proof of delivery"
+    },
+    "delivered_quantity_invalid": {
+      "title": "Delivered quantities invalid",
+      "detail": "Report a delivered quantity for every item of the shipment"
+    }
   }
 }

@@ -78,6 +78,7 @@ export function partnerJobDto(row: JobRow, photos: Map<bigint, string[]>): Partn
     inspectionRequired: row.inspectionRequired,
     holdReason: row.holdReason,
     destinations: row.order.destinations.map((d) => ({
+      id: d.publicId,
       recipientName: d.recipientName,
       phone: d.phone,
       line1: d.line1,

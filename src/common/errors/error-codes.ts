@@ -212,6 +212,15 @@ export const ERROR_CODES = {
   'production.evidence_missing': HttpStatus.CONFLICT,
   'production.quantity_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
   'factory_users.role_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
+  'shipments.invalid_status': HttpStatus.CONFLICT,
+  'shipments.job_not_shippable': HttpStatus.CONFLICT,
+  'shipments.quantity_exceeds': HttpStatus.UNPROCESSABLE_ENTITY,
+  'shipments.destinations_differ': HttpStatus.UNPROCESSABLE_ENTITY,
+  'shipments.payment_pending': HttpStatus.CONFLICT,
+  'shipments.inspection_pending': HttpStatus.CONFLICT,
+  'shipments.carrier_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'shipments.pod_required': HttpStatus.CONFLICT,
+  'shipments.delivered_quantity_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

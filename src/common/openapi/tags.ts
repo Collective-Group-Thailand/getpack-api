@@ -77,6 +77,11 @@ export const API_TAGS: Record<string, string> = {
   'admin.milestoneRoutes': 'Milestone routes per product type and variant, versioned (D-075).',
   'partner.factoryUsers': 'The users of my factory and their factory roles (factory owner, D-140).',
   'admin.inspections': 'Packio risk-based inspections (D-076, ISO 2859-1) and factory scorecards (D-155).',
+  'partner.logistics':
+    'My factory’s shipments: create from completed jobs, labels and packing lists, dispatch behind the shipping gate, delivery steps and proof of delivery (D-013, D-142).',
+  'admin.logistics':
+    'Shipments for staff: fallback carrier booking (D-114), status corrections, PODs on behalf, delivery reconciliation (D-021, D-080, D-165).',
+  'store.logistics': 'The shipments of my orders and confirming receipt (D-050, D-081).',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',
   'admin.roles': 'The role and permission catalogue (D-140, D-141).',
   'admin.approvals': 'Generic approval engine: inbox, approve, reject, withdraw (ADR-0006).',

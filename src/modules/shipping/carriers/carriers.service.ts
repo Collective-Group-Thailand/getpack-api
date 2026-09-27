@@ -9,6 +9,8 @@ import { type CarrierCode, Prisma, type WebhookProvider } from '@generated/prism
 import {
   CARRIER_ADAPTERS,
   type CarrierAdapters,
+  type CarrierBooking,
+  type CarrierBookingRequest,
   type CarrierCall,
   type CarrierParcel,
   type CarrierPlace,
@@ -266,6 +268,62 @@ export class CarriersService {
       await tx.webhookInbox.update({ where: { id: inbox.id }, data: { domainEventId: event.id } });
     });
     return parsed.reply;
+  }
+
+  /**
+   * Books a fallback delivery for a shipment (B4.3): Packio's active account, the carrier's quote first
+   * (Packio's cost, P25), then the booking. Anything the carrier cannot or will not do →
+   * `shipments.carrier_unavailable` (staff pick another carrier or split the shipment).
+   */
+  async book(
+    code: FallbackCarrierCode,
+    request: CarrierBookingRequest,
+  ): Promise<{ booking: CarrierBooking; carrierId: bigint; costAmount: MoneyValue | null }> {
+    const carrier = await this.prisma.carrier.findUnique({ where: { code } });
+    const adapter = this.adapters.get(code);
+    const unavailable = (reason: string, cause?: unknown) =>
+      new DomainException('shipments.carrier_unavailable', { params: { carrier: code, reason }, cause });
+    if (!carrier || !adapter || !carrier.enabled) throw unavailable('not enabled');
+    const account = await this.activeAccount(this.prisma, carrier.id);
+    if (!account) throw unavailable('no active account');
+    const call = await this.call(account);
+    const [from, to] = await Promise.all([this.enrich(request.from), this.enrich(request.to)]);
+    try {
+      const quote = await adapter
+        .quote(call, { from, to, parcels: request.parcels })
+        .catch((error: unknown) => {
+          if (error instanceof ProviderUnavailableError) throw error;
+          return null;
+        });
+      const booking = await adapter.book(call, {
+        ...request,
+        from: { ...request.from, ...from },
+        to: { ...request.to, ...to },
+      });
+      return { booking, carrierId: carrier.id, costAmount: quote ? new MoneyDecimal(quote.amount) : null };
+    } catch (error) {
+      if (error instanceof ProviderUnavailableError)
+        throw new DomainException('provider.unavailable', { cause: error });
+      throw unavailable((error as Error).message, error);
+    }
+  }
+
+  /** Cancels a fallback booking; a carrier that refuses (already picked up) surfaces the reason. */
+  async cancelBooking(carrierId: bigint, bookingRef: string): Promise<void> {
+    const carrier = await this.prisma.carrier.findUniqueOrThrow({ where: { id: carrierId } });
+    const adapter = this.adapters.get(carrier.code as FallbackCarrierCode);
+    const account = await this.activeAccount(this.prisma, carrier.id);
+    if (!adapter || !account) return;
+    try {
+      await adapter.cancel(await this.call(account), bookingRef);
+    } catch (error) {
+      if (error instanceof ProviderUnavailableError)
+        throw new DomainException('provider.unavailable', { cause: error });
+      throw new DomainException('shipments.carrier_unavailable', {
+        params: { carrier: carrier.code, reason: (error as Error).message },
+        cause: error,
+      });
+    }
   }
 
   // --- helpers ---------------------------------------------------------------------------------------

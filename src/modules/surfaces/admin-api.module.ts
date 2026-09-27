@@ -10,6 +10,7 @@ import { DESIGNS_ADMIN_CONTROLLERS } from '@modules/designs/designs.registry';
 import { DISCOUNT_MEMOS_ADMIN_CONTROLLERS } from '@modules/discount-memos/discount-memos.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
+import { LOGISTICS_ADMIN_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { LOYALTY_ADMIN_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
 import { ORDERS_ADMIN_CONTROLLERS } from '@modules/orders/orders.registry';
 import { FactoryOwnersService } from '@modules/partners/factories/factory-owners.service';
@@ -84,6 +85,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...DESIGN_SERVICES_ADMIN_CONTROLLERS,
     ...DESIGNS_ADMIN_CONTROLLERS,
     ...PRODUCTION_ADMIN_CONTROLLERS,
+    ...LOGISTICS_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}
