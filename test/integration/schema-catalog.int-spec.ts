@@ -384,6 +384,19 @@ const CHECKS = [
   'ck_referral_attributions__qualified',
   'ck_referral_attributions__rewarded',
   'ck_referral_attributions__self',
+  // --- B3.4 loyalty
+  'ck_loyalty_memberships__values',
+  'ck_order_reviews__comment',
+  'ck_order_reviews__moderated',
+  'ck_order_reviews__rating',
+  'ck_points_ledger__adjust_reason',
+  'ck_points_ledger__pending',
+  'ck_points_ledger__points',
+  'ck_points_ledger__sign',
+  'ck_points_ledger__status',
+  'ck_points_ledger__values',
+  'ck_points_lot_consumptions__points',
+  'ck_points_lots__remaining',
 ];
 
 const TRIGGERS = [
@@ -475,6 +488,11 @@ const TRIGGERS = [
   // --- B3.3 promotions, campaigns, referral
   'tg_coupon_batches__append_only',
   'tg_promotion_redemptions__no_delete',
+  // --- B3.4 loyalty
+  'tg_order_reviews__no_delete',
+  'tg_points_ledger__guard',
+  'tg_points_lot_consumptions__append_only',
+  'tg_points_lots__no_delete',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -536,6 +554,14 @@ const INDEXES = [
   'ix_payment_schedule_template_versions__resolution',
   'ux_payments__provider__provider_ref',
   'ux_slips__bank_trans_ref',
+  // --- B3.4 loyalty
+  'ix_points_ledger__pending',
+  'ix_points_lots__open',
+  'ux_points_ledger__group_redemption',
+  'ux_points_ledger__one_off_rewards',
+  'ux_points_ledger__order_earning',
+  'ux_points_ledger__referral_reward',
+  'ux_points_ledger__review_reward',
 ];
 
 const EXPRESSION_INDEXES = [

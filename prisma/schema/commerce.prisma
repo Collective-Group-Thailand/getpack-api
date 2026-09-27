@@ -463,6 +463,8 @@ model OrderGroup {
   redemptions     PromotionRedemption[] @relation("PromotionRedemptionGroup")
   referralFirstOf ReferralAttribution[] @relation("ReferralFirstOrderGroup")
 
+  pointsEntries PointsEntry[] @relation("PointsEntryOrderGroup")
+
   @@index([customerUserId, placedAt(sort: Desc)], map: "ix_order_groups__customer_user_id__placed_at")
   @@index([status, placedAt(sort: Desc)], map: "ix_order_groups__status__placed_at")
   @@index([entityId], map: "ix_order_groups__entity_id")
@@ -561,6 +563,9 @@ model Order {
   stockMovements        StockMovement[]        @relation("StockMovementOrder")
   instalmentAllocations InstalmentAllocation[] @relation("InstalmentAllocationOrder")
   refunds               Refund[]               @relation("RefundOrder")
+
+  pointsEntries PointsEntry[] @relation("PointsEntryOrder")
+  review        OrderReview?  @relation("OrderReviewOrder")
 
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -1481,8 +1486,185 @@ model ReferralAttribution {
   firstOrderGroup OrderGroup?      @relation("ReferralFirstOrderGroup", fields: [firstOrderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_referral_attributions__first_order_group_id")
   approvalRequest ApprovalRequest? @relation("ReferralApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_referral_attributions__approval_request_id")
 
+  pointsEntries PointsEntry[]
+
   @@index([referrerUserId, status], map: "ix_referral_attributions__referrer_user_id__status")
   @@index([firstOrderGroupId], map: "ix_referral_attributions__first_order_group_id")
   @@index([approvalRequestId], map: "ix_referral_attributions__approval_request_id")
   @@map("referral_attributions")
+}
+
+// --- Loyalty (D-130…D-135, B3.4; schema-design §3.6) -----------------------------------------------
+
+enum LoyaltyTier {
+  member
+  silver
+  gold
+
+  @@map("loyalty_tier")
+}
+
+enum PointsEntryType {
+  earn_order
+  earn_signup
+  earn_line_link
+  earn_review
+  earn_referral
+  earn_bonus
+  redeem
+  redeem_reversal
+  reversal_claim_refund
+  expire
+  adjust
+
+  @@map("points_entry_type")
+}
+
+enum PointsStatus {
+  pending
+  available
+  expired
+  reversed
+
+  @@map("points_status")
+}
+
+enum ReviewStatus {
+  pending
+  published
+  hidden
+
+  @@map("review_status")
+}
+
+/// A customer's tier from 12-month spend, recalculated nightly (D-134); thresholds are settings.
+model LoyaltyMembership {
+  userId                BigInt      @id(map: "pk_loyalty_memberships") @map("user_id")
+  tier                  LoyaltyTier @default(member)
+  spend12m              Decimal     @default(0) @map("spend_12m") @db.Decimal(14, 2)
+  multiplier            Decimal     @default(1) @db.Decimal(5, 2)
+  tiersSettingVersionId BigInt?     @map("tiers_setting_version_id")
+  evaluatedAt           DateTime?   @map("evaluated_at") @db.Timestamptz(6)
+  createdAt             DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion            Int         @default(1) @map("row_version")
+
+  user                User            @relation("LoyaltyMembershipUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_loyalty_memberships__user_id")
+  tiersSettingVersion SettingVersion? @relation("LoyaltyMembershipTiersVersion", fields: [tiersSettingVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_loyalty_memberships__tiers_setting_version_id")
+
+  @@index([tiersSettingVersionId], map: "ix_loyalty_memberships__tiers_setting_version_id")
+  @@map("loyalty_memberships")
+}
+
+/// Append-only points ledger (D-130…D-133): signed points at the point value in force; only the status
+/// of an earning moves (pending → available | reversed, available → expired).
+model PointsEntry {
+  id                         BigInt          @id(map: "pk_points_ledger") @default(autoincrement())
+  publicId                   String          @unique(map: "ux_points_ledger__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId                     BigInt          @map("user_id")
+  entryType                  PointsEntryType @map("entry_type")
+  points                     Int
+  pointValue                 Decimal         @map("point_value") @db.Decimal(18, 6)
+  pointValueSettingVersionId BigInt?         @map("point_value_setting_version_id")
+  bahtValue                  Decimal         @map("baht_value") @db.Decimal(14, 2)
+  status                     PointsStatus
+  availableAt                DateTime?       @map("available_at") @db.Timestamptz(6)
+  expiresAt                  DateTime?       @map("expires_at") @db.Timestamptz(6)
+  orderId                    BigInt?         @map("order_id")
+  orderGroupId               BigInt?         @map("order_group_id")
+  reviewId                   BigInt?         @map("review_id")
+  referralAttributionId      BigInt?         @map("referral_attribution_id")
+  reversesEntryId            BigInt?         @map("reverses_entry_id")
+  reason                     String?
+  domainEventId              String?         @map("domain_event_id") @db.Uuid
+  createdAt                  DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById                BigInt?         @map("created_by")
+
+  user                User                   @relation("PointsEntryUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_ledger__user_id")
+  pointValueVersion   SettingVersion?        @relation("PointsEntryPointValueVersion", fields: [pointValueSettingVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_ledger__point_value_setting_version_id")
+  order               Order?                 @relation("PointsEntryOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_ledger__order_id")
+  orderGroup          OrderGroup?            @relation("PointsEntryOrderGroup", fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_ledger__order_group_id")
+  review              OrderReview?           @relation(fields: [reviewId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_ledger__review_id")
+  referralAttribution ReferralAttribution?   @relation(fields: [referralAttributionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_ledger__referral_attribution_id")
+  reversesEntry       PointsEntry?           @relation("PointsEntryReverses", fields: [reversesEntryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_ledger__reverses_entry_id")
+  reversedBy          PointsEntry[]          @relation("PointsEntryReverses")
+  createdBy           User?                  @relation("PointsEntryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_ledger__created_by")
+  lot                 PointsLot?
+  consumptions        PointsLotConsumption[]
+
+  @@unique([userId, entryType], map: "ux_points_ledger__one_off_rewards", where: raw("(entry_type = ANY (ARRAY['earn_signup'::points_entry_type, 'earn_line_link'::points_entry_type]))"))
+  @@unique([reviewId], map: "ux_points_ledger__review_reward", where: raw("(entry_type = 'earn_review'::points_entry_type)"))
+  @@unique([orderId, entryType], map: "ux_points_ledger__order_earning", where: raw("(entry_type = 'earn_order'::points_entry_type)"))
+  @@unique([referralAttributionId], map: "ux_points_ledger__referral_reward", where: raw("(entry_type = 'earn_referral'::points_entry_type)"))
+  @@unique([orderGroupId], map: "ux_points_ledger__group_redemption", where: raw("(entry_type = 'redeem'::points_entry_type)"))
+  @@index([userId, createdAt(sort: Desc)], map: "ix_points_ledger__user_id__created_at")
+  @@index([availableAt], map: "ix_points_ledger__pending", where: raw("(status = 'pending'::points_status)"))
+  @@index([pointValueSettingVersionId], map: "ix_points_ledger__point_value_setting_version_id")
+  @@index([orderId], map: "ix_points_ledger__order_id")
+  @@index([orderGroupId], map: "ix_points_ledger__order_group_id")
+  @@index([reviewId], map: "ix_points_ledger__review_id")
+  @@index([referralAttributionId], map: "ix_points_ledger__referral_attribution_id")
+  @@index([reversesEntryId], map: "ix_points_ledger__reverses_entry_id")
+  @@index([createdById], map: "ix_points_ledger__created_by")
+  @@map("points_ledger")
+}
+
+/// One lot per credited earning; redemptions, reversals and expiry consume lots FIFO by expiry (D-132).
+model PointsLot {
+  id          BigInt    @id(map: "pk_points_lots") @default(autoincrement())
+  earnEntryId BigInt    @unique(map: "ux_points_lots__earn_entry_id") @map("earn_entry_id")
+  userId      BigInt    @map("user_id")
+  points      Int
+  remaining   Int
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz(6)
+  remindedAt  DateTime? @map("reminded_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  earnEntry    PointsEntry            @relation(fields: [earnEntryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_lots__earn_entry_id")
+  user         User                   @relation("PointsLotUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_lots__user_id")
+  consumptions PointsLotConsumption[]
+
+  @@index([userId, expiresAt], map: "ix_points_lots__open", where: raw("(remaining > 0)"))
+  @@map("points_lots")
+}
+
+/// What each entry took from (positive) or gave back to (negative) a lot; append-only.
+model PointsLotConsumption {
+  id               BigInt   @id(map: "pk_points_lot_consumptions") @default(autoincrement())
+  lotId            BigInt   @map("lot_id")
+  consumingEntryId BigInt   @map("consuming_entry_id")
+  points           Int
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  lot            PointsLot   @relation(fields: [lotId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_lot_consumptions__lot_id")
+  consumingEntry PointsEntry @relation(fields: [consumingEntryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_points_lot_consumptions__consuming_entry_id")
+
+  @@index([lotId], map: "ix_points_lot_consumptions__lot_id")
+  @@index([consumingEntryId], map: "ix_points_lot_consumptions__consuming_entry_id")
+  @@map("points_lot_consumptions")
+}
+
+/// A customer's review of a delivered order (D-135 activity reward); CS may hide it.
+model OrderReview {
+  id            BigInt       @id(map: "pk_order_reviews") @default(autoincrement())
+  publicId      String       @unique(map: "ux_order_reviews__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId       BigInt       @unique(map: "ux_order_reviews__order_id") @map("order_id")
+  userId        BigInt       @map("user_id")
+  rating        Int          @db.SmallInt
+  comment       String?
+  status        ReviewStatus @default(published)
+  moderatedById BigInt?      @map("moderated_by")
+  moderatedAt   DateTime?    @map("moderated_at") @db.Timestamptz(6)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion    Int          @default(1) @map("row_version")
+
+  order         Order         @relation("OrderReviewOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_reviews__order_id")
+  user          User          @relation("OrderReviewUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_reviews__user_id")
+  moderatedBy   User?         @relation("OrderReviewModeratedBy", fields: [moderatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_reviews__moderated_by")
+  pointsEntries PointsEntry[]
+
+  @@index([userId], map: "ix_order_reviews__user_id")
+  @@index([moderatedById], map: "ix_order_reviews__moderated_by")
+  @@map("order_reviews")
 }

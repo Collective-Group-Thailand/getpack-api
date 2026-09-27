@@ -478,6 +478,12 @@ model User {
   identityFingerprints                   IdentityFingerprint[]            @relation("IdentityFingerprintUser")
   referralsMade                          ReferralAttribution[]            @relation("ReferralReferrer")
   referralOf                             ReferralAttribution?             @relation("ReferralReferee")
+  loyaltyMembership                      LoyaltyMembership?               @relation("LoyaltyMembershipUser")
+  pointsEntries                          PointsEntry[]                    @relation("PointsEntryUser")
+  pointsEntriesCreated                   PointsEntry[]                    @relation("PointsEntryCreatedBy")
+  pointsLots                             PointsLot[]                      @relation("PointsLotUser")
+  orderReviews                           OrderReview[]                    @relation("OrderReviewUser")
+  orderReviewsModerated                  OrderReview[]                    @relation("OrderReviewModeratedBy")
   // --- end Commerce
 
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))

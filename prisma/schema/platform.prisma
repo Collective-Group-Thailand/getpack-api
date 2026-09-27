@@ -416,6 +416,9 @@ model SettingVersion {
   createdBy       User?            @relation("SettingVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_setting_versions__created_by")
   decidedBy       User?            @relation("SettingVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_setting_versions__decided_by")
 
+  loyaltyMembershipsTiers LoyaltyMembership[] @relation("LoyaltyMembershipTiersVersion")
+  pointsEntries           PointsEntry[]       @relation("PointsEntryPointValueVersion")
+
   @@unique([settingId, versionNo], map: "ux_setting_versions__setting_id__version_no")
   @@index([settingId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_setting_versions__resolution", where: raw("status = 'approved'"))
   @@index([approvalRequestId], map: "ix_setting_versions__approval_request_id")
