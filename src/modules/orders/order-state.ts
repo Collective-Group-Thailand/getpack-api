@@ -100,10 +100,10 @@ export function applyFact(current: OrderFacts, fact: OrderFact, at: Date): FactR
 
 export type GroupStatus = 'pending_company_approval' | 'waiting_payment' | 'in_progress' | 'completed' | 'cancelled';
 
-/** Group status from its orders (a group held for company approval stays held until decided). */
+/** Group status from its orders (a group held for company approval stays held until decided or cancelled). */
 export function groupStatusOf(current: GroupStatus, orders: readonly OrderStatus[]): GroupStatus {
-  if (current === 'pending_company_approval') return current;
   if (orders.every((s) => s === 'cancelled')) return 'cancelled';
+  if (current === 'pending_company_approval') return current;
   if (orders.every((s) => s === 'completed' || s === 'cancelled')) return 'completed';
   if (orders.some((s) => s !== 'waiting_payment' && s !== 'cancelled')) return 'in_progress';
   return 'waiting_payment';

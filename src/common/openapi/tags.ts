@@ -30,6 +30,7 @@ export const API_TAGS: Record<string, string> = {
   'admin.loyalty': 'A customer’s points, tier and history; audited staff adjustments (D-130…D-134).',
   'admin.reviews': 'Order reviews and their moderation (D-135).',
   'store.companies': 'B2B companies: apply, KYC, members and company roles, branches, PO policy and approval threshold (D-120…D-125).',
+  'store.companyApprovals': 'Company approvers decide orders above the company threshold before placement (D-123).',
   'admin.companies': 'B2B companies for staff: KYC review and activation, suspension and closure (D-120).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':

@@ -496,6 +496,12 @@ export const PERMISSIONS = [
   { key: 'company_profile.read', audience: 'customer', description: 'Read the own company profile' },
   { key: 'company_members.manage', audience: 'customer', description: 'Invite and remove company members' },
   {
+    key: 'company_orders.place',
+    audience: 'customer',
+    description: 'Place orders for the company (its branch on the tax invoice)',
+    decisionRefs: ['D-123', 'D-125'],
+  },
+  {
     key: 'company_profile.manage',
     audience: 'customer',
     description: 'Edit the own company: settings, approval threshold, branches, KYC documents',

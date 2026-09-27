@@ -122,6 +122,11 @@ export interface CheckoutExtension {
   readonly key: string;
   /** Lower runs first (promotions 100, points 200, discounts 300; schedule 900, approval 950). */
   readonly order: number;
+  /**
+   * Supplies the buyer's tax profile instead of `taxProfileId` (a company branch, B3.5); `undefined` when
+   * the extension does not apply. Runs before pricing so withholding follows the buyer.
+   */
+  taxProfile?(who: { actor: Actor; customerUserId: bigint }, input: CheckoutInput, db: Tx): Promise<TaxProfileSnapshot | undefined>;
   /** Adjusts prices on the draft (reads only); runs for preview and checkout. */
   adjust?(draft: CheckoutDraft, db: Tx): Promise<void>;
   /** Writes its rows in the checkout transaction once the group and its orders exist. */

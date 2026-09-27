@@ -77,7 +77,11 @@ export class OrdersService {
     return row;
   }
 
-  async order(where: Prisma.OrderWhereUniqueInput, customerUserId?: bigint, db: Tx = this.prisma): Promise<OrderRow> {
+  async order(
+    where: Prisma.OrderWhereUniqueInput,
+    customerUserId?: bigint,
+    db: Tx = this.prisma,
+  ): Promise<OrderRow> {
     const row = await db.order.findUnique({ where, include: ORDER_INCLUDE });
     if (!row || (customerUserId !== undefined && row.customerUserId !== customerUserId))
       throw new DomainException('http.not_found');
@@ -149,11 +153,18 @@ export class OrdersService {
       actor,
     );
     if (result.status !== order.status) {
-      await this.record(tx, 'order', order.publicId, 'order.status_changed', {
-        from: order.status,
-        to: result.status,
-        fact: fact.kind,
-      }, actor);
+      await this.record(
+        tx,
+        'order',
+        order.publicId,
+        'order.status_changed',
+        {
+          from: order.status,
+          to: result.status,
+          fact: fact.kind,
+        },
+        actor,
+      );
     }
     await this.refreshGroup(tx, order.orderGroupId, actor, at);
     return true;
@@ -168,28 +179,44 @@ export class OrdersService {
     input: CancelInput,
     opts: { customerUserId?: bigint; ifMatch?: string } = {},
   ): Promise<OrderGroupRow> {
-    return this.prisma.withTx(async (tx) => {
-      const group = await this.group(publicId, opts.customerUserId, tx);
-      assertIfMatch(opts.ifMatch, groupEtag(group), { required: false });
-      if (group.status === 'cancelled' || group.status === 'completed')
-        throw new DomainException('order.invalid_transition', {
-          params: { from: group.status, fact: 'cancelled', reason: `the group is ${group.status}` },
-        });
-      const reason = await this.reason(tx, input.reasonCode, opts.customerUserId !== undefined);
-      const paid = await this.paidAmount(tx, group.id);
-      if (opts.customerUserId !== undefined && (group.status !== 'waiting_payment' || paid !== '0.00'))
-        throw new DomainException('order.cancel_not_allowed');
-      const at = new Date();
-      for (const order of group.orders.filter((o) => o.status !== 'cancelled')) {
-        await this.cancelOne(tx, order, reason.id, input.note ?? null, actor, at);
-      }
-      await this.record(tx, 'order_group', group.publicId, 'order_group.cancelled', {
+    return this.prisma.withTx((tx) => this.cancelGroupIn(tx, actor, publicId, input, opts));
+  }
+
+  /** `cancelGroup` inside the caller's transaction (subscribers, e.g. a rejected company approval). */
+  async cancelGroupIn(
+    tx: Tx,
+    actor: Actor,
+    publicId: string,
+    input: CancelInput,
+    opts: { customerUserId?: bigint; ifMatch?: string; system?: boolean } = {},
+  ): Promise<OrderGroupRow> {
+    const group = await this.group(publicId, opts.customerUserId, tx);
+    assertIfMatch(opts.ifMatch, groupEtag(group), { required: false });
+    if (group.status === 'cancelled' || group.status === 'completed')
+      throw new DomainException('order.invalid_transition', {
+        params: { from: group.status, fact: 'cancelled', reason: `the group is ${group.status}` },
+      });
+    const reason = await this.reason(tx, input.reasonCode, opts.customerUserId !== undefined, opts.system ?? false);
+    const paid = await this.paidAmount(tx, group.id);
+    if (opts.customerUserId !== undefined && (group.status !== 'waiting_payment' || paid !== '0.00'))
+      throw new DomainException('order.cancel_not_allowed');
+    const at = new Date();
+    for (const order of group.orders.filter((o) => o.status !== 'cancelled')) {
+      await this.cancelOne(tx, order, reason.id, input.note ?? null, actor, at);
+    }
+    await this.record(
+      tx,
+      'order_group',
+      group.publicId,
+      'order_group.cancelled',
+      {
         reasonCode: reason.code,
         paidAmount: paid,
         refundRequired: paid !== '0.00',
-      }, actor);
-      return this.group(publicId, undefined, tx);
-    });
+      },
+      actor,
+    );
+    return this.group(publicId, undefined, tx);
   }
 
   /** Cancels one order of a group before production (staff); the group follows its orders. */
@@ -202,7 +229,14 @@ export class OrdersService {
     });
   }
 
-  private async cancelOne(tx: Tx, order: Order, reasonId: bigint, note: string | null, actor: Actor, at: Date) {
+  private async cancelOne(
+    tx: Tx,
+    order: Order,
+    reasonId: bigint,
+    note: string | null,
+    actor: Actor,
+    at: Date,
+  ) {
     const result = applyFact(FACTS_OF(order), { kind: 'cancelled' }, at);
     if (!result.ok)
       throw new DomainException('order.invalid_transition', {
@@ -222,12 +256,19 @@ export class OrdersService {
       },
     });
     const reason = await tx.orderCancelReason.findUniqueOrThrow({ where: { id: reasonId } });
-    await this.record(tx, 'order', order.publicId, 'order.cancelled', {
-      from: order.status,
-      reasonCode: reason.code,
-      requiresCreditNote: reason.requiresCreditNote,
-      grossAmount: order.grossAmount.toFixed(2),
-    }, actor);
+    await this.record(
+      tx,
+      'order',
+      order.publicId,
+      'order.cancelled',
+      {
+        from: order.status,
+        reasonCode: reason.code,
+        requiresCreditNote: reason.requiresCreditNote,
+        grossAmount: order.grossAmount.toFixed(2),
+      },
+      actor,
+    );
     await this.refreshGroup(tx, order.orderGroupId, actor, at, reasonId, note);
   }
 
@@ -255,9 +296,16 @@ export class OrdersService {
           for (const order of group.orders.filter((o) => o.status !== 'cancelled')) {
             await this.cancelOne(tx, order, reason.id, null, actor, now);
           }
-          await this.record(tx, 'order_group', publicId, 'order_group.expired', {
-            expiresAt: group.expiresAt.toISOString(),
-          }, actor);
+          await this.record(
+            tx,
+            'order_group',
+            publicId,
+            'order_group.expired',
+            {
+              expiresAt: group.expiresAt.toISOString(),
+            },
+            actor,
+          );
           cancelled += 1;
         });
       } catch (error) {
@@ -278,8 +326,14 @@ export class OrdersService {
     cancelReasonId: bigint | null = null,
     cancelNote: string | null = null,
   ) {
-    const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: groupId }, include: { orders: true } });
-    const status = groupStatusOf(group.status, group.orders.map((o) => o.status));
+    const group = await tx.orderGroup.findUniqueOrThrow({
+      where: { id: groupId },
+      include: { orders: true },
+    });
+    const status = groupStatusOf(
+      group.status,
+      group.orders.map((o) => o.status),
+    );
     if (status === group.status) return;
     await tx.orderGroup.update({
       where: { id: group.id },
@@ -288,21 +342,34 @@ export class OrdersService {
         ...(status !== 'waiting_payment' && { expiresAt: null }),
         ...(status === 'cancelled' && {
           cancelledAt: at,
-          cancelReasonId: cancelReasonId ?? group.orders.find((o) => o.cancelReasonId)?.cancelReasonId ?? null,
+          cancelReasonId:
+            cancelReasonId ?? group.orders.find((o) => o.cancelReasonId)?.cancelReasonId ?? null,
           cancelNote,
         }),
         rowVersion: { increment: 1 },
       },
     });
-    await this.record(tx, 'order_group', group.publicId, 'order_group.status_changed', {
-      from: group.status,
-      to: status,
-    }, actor);
+    await this.record(
+      tx,
+      'order_group',
+      group.publicId,
+      'order_group.status_changed',
+      {
+        from: group.status,
+        to: status,
+      },
+      actor,
+    );
   }
 
-  private async reason(tx: Tx, code: string, customer: boolean) {
+  private async reason(tx: Tx, code: string, customer: boolean, system = false) {
     const reason = await tx.orderCancelReason.findUnique({ where: { code } });
-    if (!reason || !reason.active || reason.appliesTo === 'system' || (customer && reason.appliesTo !== 'customer')) {
+    if (
+      !reason ||
+      !reason.active ||
+      (reason.appliesTo === 'system' && !system) ||
+      (customer && reason.appliesTo !== 'customer')
+    ) {
       throw new DomainException('validation.failed', {
         errors: [{ path: 'reasonCode', code: 'invalid', message: 'not a cancel reason you may use' }],
       });
@@ -344,4 +411,3 @@ export class OrdersService {
     });
   }
 }
-

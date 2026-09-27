@@ -757,6 +757,10 @@
     "cannot_remove_self": {
       "title": "Cannot remove yourself",
       "detail": "You cannot remove yourself from the company"
+    },
+    "po_required": {
+      "title": "PO number required",
+      "detail": "This company requires a PO number on every order"
     }
   }
 }

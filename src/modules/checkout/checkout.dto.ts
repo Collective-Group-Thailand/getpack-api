@@ -8,6 +8,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   Max,
   MaxLength,
@@ -99,6 +100,20 @@ export class CheckoutDto {
   @Min(1)
   @Max(10_000_000)
   redeemPoints?: number;
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001',
+    description: 'Order for this B2B company (I must be allowed to order for it); the invoice names its branch (D-125)',
+  })
+  @IsOptional()
+  @IsUUID()
+  companyId?: string;
+
+  @ApiPropertyOptional({ type: String, format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1002', description: 'Company branch on the tax invoice; default branch when omitted' })
+  @IsOptional()
+  @IsUUID()
+  companyBranchId?: string;
 }
 
 export class AdminCheckoutDto extends CheckoutDto {

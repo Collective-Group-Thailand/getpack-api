@@ -421,3 +421,52 @@ export class CompanyListQuery extends PageQuery {
   status?: (typeof COMPANY_STATUSES)[number];
 
 }
+
+export class CompanyApprovalDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1010', description: 'The approval to decide' })
+  id!: string;
+
+  @ApiProperty({ enum: ['pending', 'approved', 'rejected', 'withdrawn', 'expired'], enumName: 'ApprovalStatus', example: 'pending' })
+  status!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1011' })
+  groupId!: string;
+
+  @ApiProperty({ example: 'OG-2610-00001' })
+  groupCode!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'PO-0001' })
+  poNumber!: string | null;
+
+  @ApiProperty({ example: '85600.00', description: 'Order value incl. VAT' })
+  amount!: string;
+
+  @ApiProperty({ type: UserRefDto, description: 'Who placed the order' })
+  requester!: UserRefDto;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-01T10:00:00+07:00' })
+  requestedAt!: string;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+}
+
+export const COMPANY_APPROVAL_EXAMPLE: CompanyApprovalDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-0000000c1010',
+  status: 'pending',
+  groupId: '0192f3a0-7c1e-7d2a-9b1f-0000000c1011',
+  groupCode: 'OG-2610-00001',
+  poNumber: 'PO-0001',
+  amount: '85600.00',
+  requester: { id: IDS.user, displayName: 'สมชาย ทดสอบ' },
+  requestedAt: '2026-10-01T10:00:00+07:00',
+  currency: 'THB',
+};
+
+export class CompanyApprovalDecisionDto {
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'อนุมัติตามงบประมาณ', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  comment?: string | null;
+}

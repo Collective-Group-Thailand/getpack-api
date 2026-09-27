@@ -336,3 +336,46 @@ export async function uploadFile(
   await ctx.app.get(FileProcessingJobs).processOne(await ctx.prisma.fileObject.findUniqueOrThrow({ where: { id: row.id } }));
   return presigned.body.fileId as string;
 }
+
+/** A valid fake Thai tax id (0000… with its check digit), unique per run and `n`. */
+export function fakeTaxId(ctx: CommerceApp, n: number): string {
+  const base = `0000${String(ctx.run * 10 + n).padStart(8, '0').slice(-8)}`;
+  const sum = [...base].reduce((a, d, i) => a + Number(d) * (13 - i), 0);
+  return base + String((11 - (sum % 11)) % 10);
+}
+
+/**
+ * An active company (fixture: applied through the API, KYC approval written directly) with its Company
+ * Admin and members who accepted `roles`. Returns the company public id.
+ */
+export async function activeCompany(
+  ctx: CommerceApp,
+  adminToken: string,
+  n: number,
+  members: { token: string; phone: string; roles: string[] }[] = [],
+  settings: Record<string, unknown> = {},
+): Promise<string> {
+  const province = await ctx.prisma.geoProvince.findUniqueOrThrow({ where: { code: 'DEV1' } });
+  const applied = await as(ctx, adminToken)
+    .post('/v1/store/companies', {
+      legalName: `บริษัท ทดสอบ ${n} จำกัด`,
+      taxId: fakeTaxId(ctx, n),
+      isVatRegistered: true,
+      withholdsTax: true,
+      headOffice: { name: 'สำนักงานใหญ่', line1: '1 ถนนทดสอบ', postcode: '99999', provinceId: province.publicId },
+    })
+    .expect(201);
+  const id = applied.body.id as string;
+  await ctx.prisma.company.update({ where: { publicId: id }, data: { status: 'active', kycApprovedAt: new Date(), companyCode: `E2E-${ctx.run}-${n}` } });
+  for (const m of members) {
+    await as(ctx, adminToken).post(`/v1/store/companies/${id}/members`, { phone: m.phone, roles: m.roles }).expect(201);
+    const invitations = await as(ctx, m.token).get('/v1/store/company-invitations').expect(200);
+    const invitation = (invitations.body as { id: string; companyId: string }[]).find((i) => i.companyId === id)!;
+    await as(ctx, m.token).post(`/v1/store/company-invitations/${invitation.id}/actions/accept`).expect(200);
+  }
+  if (Object.keys(settings).length > 0) {
+    const etag = (await as(ctx, adminToken).get(`/v1/store/companies/${id}`).expect(200)).headers['etag'] as string;
+    await as(ctx, adminToken).patch(`/v1/store/companies/${id}`, settings).set('If-Match', etag).expect(200);
+  }
+  return id;
+}

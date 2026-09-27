@@ -434,6 +434,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'company_members.manage',
       'company_documents.read',
       'company_profile.manage',
+      'company_orders.place',
     ],
   },
   {
@@ -442,7 +443,10 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'company',
     nameTh: 'ผู้สั่งซื้อ',
     nameEn: 'Buyer',
-    permissions: ['company_profile.read'],
+    permissions: [
+      'company_profile.read',
+      'company_orders.place',
+    ],
   },
   {
     key: 'company_approver',

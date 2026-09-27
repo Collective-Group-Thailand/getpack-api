@@ -180,6 +180,7 @@ export const ERROR_CODES = {
   'companies.account_not_found': HttpStatus.UNPROCESSABLE_ENTITY,
   'companies.already_member': HttpStatus.CONFLICT,
   'companies.cannot_remove_self': HttpStatus.CONFLICT,
+  'companies.po_required': HttpStatus.UNPROCESSABLE_ENTITY,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

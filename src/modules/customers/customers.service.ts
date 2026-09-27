@@ -61,6 +61,9 @@ export interface TaxProfileSnapshot {
   provinceNameTh: string;
   withholdsTax: boolean;
   documentEmail: string | null;
+  /** Set when the buyer is a B2B company: the invoice names the company branch (D-125). */
+  companyId?: string;
+  companyBranchId?: string;
 }
 
 export const addressEtag = (row: { publicId: string; rowVersion: number }) => etagOf(row.publicId, row.rowVersion);

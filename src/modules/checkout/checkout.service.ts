@@ -91,7 +91,15 @@ export class CheckoutService {
     const cart = await this.carts.get(who);
     if (cart.items.length === 0) throw new DomainException('checkout.cart_empty');
     this.checkItems(cart, at);
-    const taxProfile = input.taxProfileId ? await this.taxProfile(who.customerUserId, input.taxProfileId) : null;
+    let taxProfile: TaxProfileSnapshot | null = null;
+    for (const extension of this.extensions.list()) {
+      const supplied = extension.taxProfile ? await extension.taxProfile(who, input, this.prisma) : undefined;
+      if (supplied !== undefined) {
+        taxProfile = supplied;
+        break;
+      }
+    }
+    if (!taxProfile && input.taxProfileId) taxProfile = await this.taxProfile(who.customerUserId, input.taxProfileId);
     const nature = await this.settings.at('tax.nature_by_product_type', { at });
     const floor = await this.settings.at('pricing.margin_floor_pct', { at });
     const withholds = taxProfile !== null && taxProfile.withholdsTax && taxProfile.taxType !== 'individual';

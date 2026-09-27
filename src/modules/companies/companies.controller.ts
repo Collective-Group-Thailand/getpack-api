@@ -5,6 +5,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 import { ReasonDto } from '@modules/iam/admin/users-admin.dto';
 import { ApiSurface } from '@modules/surfaces/surfaces';
@@ -18,7 +19,10 @@ import {
   AdminCompanyDto,
   APPLY_EXAMPLE,
   ApplyCompanyDto,
+  COMPANY_APPROVAL_EXAMPLE,
   COMPANY_EXAMPLE,
+  CompanyApprovalDecisionDto,
+  CompanyApprovalDto,
   CompanyBranchInputDto,
   CompanyDto,
   CompanyInvitationDto,
@@ -226,6 +230,76 @@ export class StoreCompaniesController {
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async accept(@CurrentActor() actor: Actor, @Param('memberId', ParseUUIDPipe) memberId: string, @Res({ passthrough: true }) res: Response) {
     return respond(await this.companies.accept(customer(actor), memberId), res);
+  }
+}
+
+@ApiSurface('store', 'companyApprovals')
+@Controller('companies/:companyId/approvals')
+export class StoreCompanyApprovalsController {
+  constructor(private readonly companies: CompaniesService) {}
+
+  @Get()
+  @companyParam
+  @ApiEndpoint({
+    id: 'store.companyApprovals.list',
+    summary: 'List orders waiting for my approval',
+    description: 'Company approvers: orders above the company threshold, waiting before placement (D-123).',
+    implements: ['D-123'],
+  })
+  @ApiSuccess(200, { description: 'Pending approvals', type: [CompanyApprovalDto], example: [COMPANY_APPROVAL_EXAMPLE] })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async list(@CurrentActor() actor: Actor, @Param('companyId', ParseUUIDPipe) id: string): Promise<CompanyApprovalDto[]> {
+    const groups = await this.companies.pendingApprovals(customer(actor), id);
+    return groups.map((g) => ({
+      id: g.companyApprovalRequest!.publicId,
+      status: g.companyApprovalRequest!.status,
+      groupId: g.publicId,
+      groupCode: g.groupCode,
+      poNumber: g.poNumber,
+      amount: g.grossAmount.toFixed(2),
+      requester: { id: g.companyApprovalRequest!.requester.publicId, displayName: g.companyApprovalRequest!.requester.displayName },
+      requestedAt: toBangkokIso(g.companyApprovalRequest!.createdAt),
+      currency: 'THB',
+    }));
+  }
+
+  @Post(':approvalId/actions/:decision')
+  @HttpCode(200)
+  @companyParam
+  @ApiParam({ name: 'approvalId', format: 'uuid' })
+  @ApiParam({ name: 'decision', enum: ['approve', 'reject'], enumName: 'CompanyApprovalDecision' })
+  @ApiEndpoint({
+    id: 'store.companyApprovals.decide',
+    summary: 'Approve or reject a company order',
+    description:
+      'Company approver (not the person who placed it): approved → the order waits for payment and its unpaid ' +
+      'expiry starts (D-060); rejected → the order group is cancelled (D-123).',
+    implements: ['D-123', 'D-060'],
+  })
+  @ApiBody({ type: CompanyApprovalDecisionDto, examples: { default: { value: { comment: 'อนุมัติตามงบประมาณ' } } } })
+  @ApiSuccess(200, { description: 'Decision recorded', type: CompanyApprovalDto, example: { ...COMPANY_APPROVAL_EXAMPLE, status: 'approved' } })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed', 'approval.not_pending', 'iam.sod_conflict')
+  async decide(
+    @CurrentActor() actor: Actor,
+    @Param('companyId', ParseUUIDPipe) id: string,
+    @Param('approvalId', ParseUUIDPipe) approvalId: string,
+    @Param('decision') decision: string,
+    @Body() body: CompanyApprovalDecisionDto,
+  ): Promise<CompanyApprovalDto> {
+    if (decision !== 'approve' && decision !== 'reject') throw new DomainException('http.not_found');
+    const request = await this.companies.decideApproval(customer(actor), id, approvalId, decision === 'approve', body.comment ?? null);
+    const payload = request.payloadSnapshot as { groupId: string; groupCode: string; poNumber: string | null; amount: string };
+    return {
+      id: request.publicId,
+      status: request.status,
+      groupId: payload.groupId,
+      groupCode: payload.groupCode,
+      poNumber: payload.poNumber,
+      amount: payload.amount,
+      requester: { id: request.requester.publicId, displayName: request.requester.displayName },
+      requestedAt: toBangkokIso(request.createdAt),
+      currency: 'THB',
+    };
   }
 }
 

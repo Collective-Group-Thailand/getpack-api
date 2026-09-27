@@ -595,6 +595,17 @@
           "type": "https://errors.packio/companies.kyc_incomplete"
         }
       },
+      "problem.companies.po_required": {
+        "summary": "companies.po_required",
+        "value": {
+          "code": "companies.po_required",
+          "detail": "บริษัทนี้กำหนดให้ระบุเลขที่ใบสั่งซื้อ (PO) ทุกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ต้องระบุเลขที่ PO",
+          "type": "https://errors.packio/companies.po_required"
+        }
+      },
       "problem.companies.tax_id_taken": {
         "summary": "companies.tax_id_taken",
         "value": {
@@ -2527,6 +2538,18 @@
             },
             "maxItems": 10,
             "type": "array"
+          },
+          "companyBranchId": {
+            "description": "Company branch on the tax invoice; default branch when omitted",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "companyId": {
+            "description": "Order for this B2B company (I must be allowed to order for it); the invoice names its branch (D-125)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+            "format": "uuid",
+            "type": "string"
           },
           "csRemarks": {
             "description": "Internal only",
@@ -6898,6 +6921,18 @@
             "maxItems": 10,
             "type": "array"
           },
+          "companyBranchId": {
+            "description": "Company branch on the tax invoice; default branch when omitted",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "companyId": {
+            "description": "Order for this B2B company (I must be allowed to order for it); the invoice names its branch (D-125)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+            "format": "uuid",
+            "type": "string"
+          },
           "expectedGrossAmount": {
             "description": "The total the client showed; a different server total is refused (`checkout.total_changed`)",
             "example": "14182.80",
@@ -7090,6 +7125,94 @@
           "close"
         ],
         "type": "string"
+      },
+      "CompanyApprovalDecision": {
+        "enum": [
+          "approve",
+          "reject"
+        ],
+        "type": "string"
+      },
+      "CompanyApprovalDecisionDto": {
+        "properties": {
+          "comment": {
+            "example": "อนุมัติตามงบประมาณ",
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "CompanyApprovalDto": {
+        "properties": {
+          "amount": {
+            "description": "Order value incl. VAT",
+            "example": "85600.00",
+            "type": "string"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "groupCode": {
+            "example": "OG-2610-00001",
+            "type": "string"
+          },
+          "groupId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1011",
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "description": "The approval to decide",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1010",
+            "format": "uuid",
+            "type": "string"
+          },
+          "poNumber": {
+            "example": "PO-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requestedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "requester": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              }
+            ],
+            "description": "Who placed the order"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalStatus"
+              }
+            ],
+            "example": "pending"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "groupId",
+          "groupCode",
+          "poNumber",
+          "amount",
+          "requester",
+          "requestedAt",
+          "currency"
+        ],
+        "type": "object"
       },
       "CompanyBranchDto": {
         "properties": {
@@ -85966,6 +86089,9 @@
                   "checkout.total_changed": {
                     "$ref": "#/components/examples/problem.checkout.total_changed"
                   },
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
                   "idempotency.in_progress": {
                     "$ref": "#/components/examples/problem.idempotency.in_progress"
                   },
@@ -85987,7 +86113,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `loyalty.insufficient_points`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `companies.invalid_status`, `idempotency.in_progress`, `loyalty.insufficient_points`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -86030,6 +86156,9 @@
                   "checkout.shipping_unavailable": {
                     "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
                   },
+                  "companies.po_required": {
+                    "$ref": "#/components/examples/problem.companies.po_required"
+                  },
                   "idempotency.key_reused": {
                     "$ref": "#/components/examples/problem.idempotency.key_reused"
                   },
@@ -86042,7 +86171,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `idempotency.key_reused`, `validation.failed`",
+            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `companies.po_required`, `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -86358,6 +86487,9 @@
                   "checkout.price_expired": {
                     "$ref": "#/components/examples/problem.checkout.price_expired"
                   },
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
                   "loyalty.insufficient_points": {
                     "$ref": "#/components/examples/problem.loyalty.insufficient_points"
                   },
@@ -86373,7 +86505,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `loyalty.insufficient_points`, `promotions.budget_exhausted`, `promotions.limit_reached`",
+            "description": "Problem: `checkout.price_expired`, `companies.invalid_status`, `loyalty.insufficient_points`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -86396,6 +86528,9 @@
                   "checkout.shipping_unavailable": {
                     "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
                   },
+                  "companies.po_required": {
+                    "$ref": "#/components/examples/problem.companies.po_required"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -86405,7 +86540,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `validation.failed`",
+            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `companies.po_required`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -163091,6 +163226,9 @@
                   "checkout.total_changed": {
                     "$ref": "#/components/examples/problem.checkout.total_changed"
                   },
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
                   "idempotency.in_progress": {
                     "$ref": "#/components/examples/problem.idempotency.in_progress"
                   },
@@ -163112,7 +163250,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `loyalty.insufficient_points`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `companies.invalid_status`, `idempotency.in_progress`, `loyalty.insufficient_points`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -163155,6 +163293,9 @@
                   "checkout.shipping_unavailable": {
                     "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
                   },
+                  "companies.po_required": {
+                    "$ref": "#/components/examples/problem.companies.po_required"
+                  },
                   "idempotency.key_reused": {
                     "$ref": "#/components/examples/problem.idempotency.key_reused"
                   },
@@ -163167,7 +163308,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `idempotency.key_reused`, `validation.failed`",
+            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `companies.po_required`, `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -163472,6 +163613,9 @@
                   "checkout.price_expired": {
                     "$ref": "#/components/examples/problem.checkout.price_expired"
                   },
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
                   "loyalty.insufficient_points": {
                     "$ref": "#/components/examples/problem.loyalty.insufficient_points"
                   },
@@ -163487,7 +163631,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `loyalty.insufficient_points`, `promotions.budget_exhausted`, `promotions.limit_reached`",
+            "description": "Problem: `checkout.price_expired`, `companies.invalid_status`, `loyalty.insufficient_points`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -163510,6 +163654,9 @@
                   "checkout.shipping_unavailable": {
                     "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
                   },
+                  "companies.po_required": {
+                    "$ref": "#/components/examples/problem.companies.po_required"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -163519,7 +163666,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `validation.failed`",
+            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `companies.po_required`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -164885,6 +165032,475 @@
         "summary": "Submit the application for review",
         "tags": [
           "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/approvals": {
+      "get": {
+        "description": "Company approvers: orders above the company threshold, waiting before placement (D-123).\n\nImplements: D-123.",
+        "operationId": "store.companyApprovals.list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "amount": "85600.00",
+                    "currency": "THB",
+                    "groupCode": "OG-2610-00001",
+                    "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1011",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1010",
+                    "poNumber": "PO-0001",
+                    "requestedAt": "2026-10-01T10:00:00+07:00",
+                    "requester": {
+                      "displayName": "สมชาย ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                    },
+                    "status": "pending"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyApprovalDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Pending approvals",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List orders waiting for my approval",
+        "tags": [
+          "store.companyApprovals"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/approvals/{approvalId}/actions/{decision}": {
+      "post": {
+        "description": "Company approver (not the person who placed it): approved → the order waits for payment and its unpaid expiry starts (D-060); rejected → the order group is cancelled (D-123).\n\nImplements: D-123, D-060.",
+        "operationId": "store.companyApprovals.decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "approvalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "decision",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CompanyApprovalDecision"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "comment": "อนุมัติตามงบประมาณ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CompanyApprovalDecisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "amount": "85600.00",
+                  "currency": "THB",
+                  "groupCode": "OG-2610-00001",
+                  "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1011",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1010",
+                  "poNumber": "PO-0001",
+                  "requestedAt": "2026-10-01T10:00:00+07:00",
+                  "requester": {
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                  },
+                  "status": "approved"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyApprovalDto"
+                }
+              }
+            },
+            "description": "Decision recorded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "approval.not_pending": {
+                    "$ref": "#/components/examples/problem.approval.not_pending"
+                  },
+                  "iam.sod_conflict": {
+                    "$ref": "#/components/examples/problem.iam.sod_conflict"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `approval.not_pending`, `iam.sod_conflict`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Approve or reject a company order",
+        "tags": [
+          "store.companyApprovals"
         ]
       }
     },
@@ -181227,6 +181843,10 @@
     {
       "description": "B2B companies: apply, KYC, members and company roles, branches, PO policy and approval threshold (D-120…D-125).",
       "name": "store.companies"
+    },
+    {
+      "description": "Company approvers decide orders above the company threshold before placement (D-123).",
+      "name": "store.companyApprovals"
     },
     {
       "description": "The signed-in customer’s profile: customer type and customer code (D-020).",

@@ -75,5 +75,6 @@ describe('order state (facts → status, B3.1)', () => {
     expect(groupStatusOf('waiting_payment', ['cancelled', 'cancelled'])).toBe('cancelled');
     expect(groupStatusOf('waiting_payment', ['cancelled', 'waiting_payment'])).toBe('waiting_payment');
     expect(groupStatusOf('pending_company_approval', ['waiting_payment'])).toBe('pending_company_approval');
+    expect(groupStatusOf('pending_company_approval', ['cancelled', 'cancelled'])).toBe('cancelled');
   });
 });

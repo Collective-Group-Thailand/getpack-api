@@ -48,6 +48,8 @@ const ERRORS = [
   'promotions.limit_reached',
   'promotions.budget_exhausted',
   'loyalty.insufficient_points',
+  'companies.po_required',
+  'companies.invalid_status',
 ] as const;
 const named = <T>(cls: T, name: string): T => Object.defineProperty(cls, 'name', { value: name });
 
@@ -84,9 +86,10 @@ function scheduleOf(draft: CheckoutDraft): CheckoutPreviewDto['paymentSchedule']
 
 /** Controller body → checkout input (the CS schedule choice is an extension input). */
 function inputOf(body: AdminCheckoutDto, admin: boolean): CheckoutInput {
-  const { paymentSchedule, csRemarks, redeemPoints, ...rest } = body;
+  const { paymentSchedule, csRemarks, redeemPoints, companyId, companyBranchId, ...rest } = body;
   const extensions = {
     ...(redeemPoints && { points: redeemPoints }),
+    ...(companyId && { company: { companyId, branchId: companyBranchId ?? null } }),
     ...(admin && paymentSchedule && { paymentSchedule }),
   };
   return { ...rest, ...(admin && { csRemarks }), ...(Object.keys(extensions).length > 0 && { extensions }) };

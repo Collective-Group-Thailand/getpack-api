@@ -140,6 +140,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 |---|:-:|:-:|:-:|:-:|
 | `company_profile.read` — Read the own company profile | ● | ● | ● | ● |
 | `company_members.manage` — Invite and remove company members | ● |  |  |  |
+| `company_orders.place` — Place orders for the company (its branch on the tax invoice) (D-123, D-125) | ● | ● |  |  |
 | `company_profile.manage` — Edit the own company: settings, approval threshold, branches, KYC documents (D-120, D-123, D-125) | ● |  |  |  |
 | `company_orders.approve` — Approve company orders above the company threshold (D-123) |  |  | ● |  |
 | `company_documents.read` — Read company invoices and statements | ● |  |  | ● |

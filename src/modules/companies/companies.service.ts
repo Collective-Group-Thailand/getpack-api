@@ -8,6 +8,7 @@ import { isValidThaiTaxId } from '@modules/customers/thai-tax-id';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
+import { ApprovalsService } from '@platform/approvals/approvals.service';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { EntitiesService } from '@platform/entities/entities.service';
@@ -81,6 +82,7 @@ export class CompaniesService {
     private readonly numbering: DocumentNumberingService,
     private readonly entities: EntitiesService,
     private readonly audit: AuditService,
+    private readonly approvals: ApprovalsService,
     private readonly events: DomainEvents,
     private readonly activity: ActivityLogService,
   ) {}
@@ -95,6 +97,16 @@ export class CompaniesService {
     if (!member) throw new DomainException('http.not_found');
     if (permission && !(await this.hasCompanyPermission(actor.userId, company.id, permission)))
       throw new DomainException('auth.forbidden');
+    return company;
+  }
+
+  /** The active company a customer may order for (`company_orders.place` in its scope). */
+  async orderingCompany(db: Tx, customerUserId: bigint, publicId: string): Promise<CompanyRow> {
+    const company = await db.company.findUnique({ where: { publicId }, include: COMPANY_INCLUDE });
+    if (!company || !company.members.some((m) => m.userId === customerUserId && m.status === 'active'))
+      throw new DomainException('http.not_found');
+    if (company.status !== 'active') throw new DomainException('companies.invalid_status', { params: { status: company.status } });
+    if (!(await this.hasCompanyPermission(customerUserId, company.id, 'company_orders.place'))) throw new DomainException('auth.forbidden');
     return company;
   }
 
@@ -438,6 +450,36 @@ export class CompaniesService {
         data: { role: role.key, scope: { type: 'company', id: company.publicId }, reason },
       });
     }
+  }
+
+  // --- company order approvals (D-123) --------------------------------------------------------------
+
+  /** Orders of the company waiting for its approver. */
+  async pendingApprovals(actor: UserActor, publicId: string) {
+    const company = await this.forMember(actor, publicId, 'company_orders.approve');
+    const groups = await this.prisma.orderGroup.findMany({
+      where: { companyId: company.id, status: 'pending_company_approval', companyApprovalRequestId: { not: null } },
+      include: {
+        companyApprovalRequest: { include: { requester: { select: { publicId: true, displayName: true } } } },
+      },
+      orderBy: { placedAt: 'asc' },
+    });
+    return groups.filter((g) => g.companyApprovalRequest?.status === 'pending');
+  }
+
+  /** The company approver approves or rejects in the store; the approval engine checks the role and SoD. */
+  async decideApproval(actor: UserActor, publicId: string, approvalPublicId: string, approve: boolean, comment: string | null) {
+    const company = await this.forMember(actor, publicId, 'company_orders.approve');
+    const group = await this.prisma.orderGroup.findFirst({
+      where: { companyId: company.id, companyApprovalRequest: { publicId: approvalPublicId } },
+    });
+    if (!group) throw new DomainException('http.not_found');
+    if (approve) await this.approvals.approve(actor, approvalPublicId, comment ?? undefined);
+    else await this.approvals.reject(actor, approvalPublicId, comment ?? 'rejected by the company approver');
+    return this.prisma.approvalRequest.findUniqueOrThrow({
+      where: { publicId: approvalPublicId },
+      include: { requester: { select: { publicId: true, displayName: true } } },
+    });
   }
 
   // --- helpers ------------------------------------------------------------------------------------------
