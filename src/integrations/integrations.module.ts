@@ -18,6 +18,11 @@ import { LineMessagingClient } from './line-messaging/line-messaging-client';
 import { FakeIndexSource } from './material-price-index/fake-index-source';
 import { ManualIndexSource } from './material-price-index/manual-index-source';
 import { MATERIAL_PRICE_INDEX } from './material-price-index/material-price-index.port';
+import { FakeScbGateway, FakeSlipVerifier, FakeTwoC2PGateway } from './payments/fake-payment-gateways';
+import { SCB_GATEWAY, SLIP_VERIFIER, TWOC2P_GATEWAY } from './payments/payment-gateways.port';
+import { ScbAdapter } from './payments/scb.adapter';
+import { Slip2GoAdapter } from './payments/slip2go.adapter';
+import { TwoC2PAdapter } from './payments/twoc2p.adapter';
 import { FakePdfRenderer } from './pdf/fake-pdf-renderer';
 import { PDF_RENDERER } from './pdf/pdf-renderer.port';
 import { PuppeteerPdfRenderer } from './pdf/puppeteer-pdf-renderer';
@@ -64,6 +69,46 @@ import { WEB_PUSH } from './web-push/web-push.port';
               endpoint: config.get('AWS_ENDPOINT_URL'),
               forcePathStyle: config.get('S3_FORCE_PATH_STYLE'),
             }),
+    },
+    {
+      provide: SCB_GATEWAY,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes
+          ? new FakeScbGateway()
+          : new ScbAdapter({
+              baseUrl: config.get('SCB_API_BASE_URL'),
+              apiKey: config.get('SCB_API_KEY'),
+              apiSecret: config.get('SCB_API_SECRET'),
+              billerId: config.get('SCB_BILLER_ID'),
+              ref3Prefix: config.get('SCB_REF3_PREFIX'),
+              merchantId: config.get('SCB_MERCHANT_ID'),
+              terminalId: config.get('SCB_TERMINAL_ID'),
+            }),
+    },
+    {
+      provide: TWOC2P_GATEWAY,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes
+          ? new FakeTwoC2PGateway()
+          : new TwoC2PAdapter({
+              baseUrl: config.get('TWOC2P_BASE_URL'),
+              apiVersion: config.get('TWOC2P_API_VERSION'),
+              merchantId: config.get('TWOC2P_MERCHANT_ID'),
+              secretKey: config.get('TWOC2P_SECRET_KEY'),
+              paymentActionUrl: config.get('TWOC2P_PAYMENT_ACTION_URL'),
+              merchantPrivateKeyPem: config.get('TWOC2P_MERCHANT_PRIVATE_KEY'),
+              twoc2pPublicKeyPem: config.get('TWOC2P_PUBLIC_KEY'),
+            }),
+    },
+    {
+      provide: SLIP_VERIFIER,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) =>
+        config.useFakes
+          ? new FakeSlipVerifier()
+          : new Slip2GoAdapter({ apiUrl: config.get('SLIP2GO_API_URL'), secretKey: config.get('SLIP2GO_SECRET_KEY') }),
     },
     {
       provide: SMS_SENDER,
@@ -173,6 +218,9 @@ import { WEB_PUSH } from './web-push/web-push.port';
     },
   ],
   exports: [
+    SCB_GATEWAY,
+    TWOC2P_GATEWAY,
+    SLIP_VERIFIER,
     VIRUS_SCANNER,
     OBJECT_STORAGE,
     SMS_SENDER,

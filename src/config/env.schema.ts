@@ -193,6 +193,85 @@ export class EnvironmentVariables {
   @IsString()
   THAIBULKSMS_API_SECRET?: string;
 
+  // --- Payments (B3.2, D-176; docs/integrations/payment-providers.md). Optional: an adapter without its
+  // configuration refuses with `provider.unavailable`, and each method stays behind its feature flag.
+
+  /** SCB Open API host, e.g. `https://api-sandbox.partners.scb/partners/sandbox`. */
+  @IsOptional()
+  @IsString()
+  SCB_API_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SCB_API_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  SCB_API_SECRET?: string;
+
+  /** QR 30 Biller ID (15 digits) and the Ref3 prefix of the SCB merchant profile. */
+  @IsOptional()
+  @IsString()
+  SCB_BILLER_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SCB_REF3_PREFIX?: string;
+
+  /** QR CS merchant and terminal. */
+  @IsOptional()
+  @IsString()
+  SCB_MERCHANT_ID?: string;
+
+  @IsOptional()
+  @IsString()
+  SCB_TERMINAL_ID?: string;
+
+  /** 2C2P PGW host (`https://sandbox-pgw.2c2p.com` or `https://pgw.2c2p.com`) and API version. */
+  @IsOptional()
+  @IsString()
+  TWOC2P_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  TWOC2P_API_VERSION?: string;
+
+  @IsOptional()
+  @IsString()
+  TWOC2P_MERCHANT_ID?: string;
+
+  /** HS256 merchant secret key (payment token, inquiry, backend notifications). */
+  @IsOptional()
+  @IsString()
+  TWOC2P_SECRET_KEY?: string;
+
+  /** Refunds (Payment Process API): endpoint, merchant private key (PKCS#8 PEM), 2C2P public key (PEM). */
+  @IsOptional()
+  @IsString()
+  TWOC2P_PAYMENT_ACTION_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  TWOC2P_MERCHANT_PRIVATE_KEY?: string;
+
+  @IsOptional()
+  @IsString()
+  TWOC2P_PUBLIC_KEY?: string;
+
+  /** Slip2Go API host and secret key (slip verification, D-061). */
+  @IsOptional()
+  @IsString()
+  SLIP2GO_API_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  SLIP2GO_SECRET_KEY?: string;
+
+  /** Public URL of this API (webhook callbacks) and of the storefront (2C2P browser return). */
+  @IsOptional()
+  @IsString()
+  STOREFRONT_BASE_URL?: string;
+
   // --- Notifications (D-143)
 
   /** Verified SES sender, e.g. `Packio <no-reply@packio.example>`. */

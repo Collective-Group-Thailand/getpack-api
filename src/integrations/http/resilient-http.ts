@@ -41,7 +41,7 @@ export class CircuitBreaker {
 export interface HttpCallOptions {
   method?: 'GET' | 'POST';
   headers?: Record<string, string>;
-  body?: string | URLSearchParams;
+  body?: string | URLSearchParams | FormData;
   timeoutMs?: number;
   /** Extra attempts for network errors and 5xx; only for idempotent calls. */
   retries?: number;
