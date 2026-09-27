@@ -47,6 +47,15 @@ export interface SettingValues {
   'orders.auto_complete_days': number;
   'claims.window_days': number;
   'discounts.cs_limit_pct': string;
+  'payments.schedule_split_threshold': string;
+  'payments.slip_review_sla_business_hours': number;
+  /** D-175 business hours of working days (proposed). */
+  'calendar.business_hours': { from: string; to: string; timezone?: string };
+  'payments.qr_validity_minutes': number;
+  /** Not seeded: fee 0 until Finance sets it. */
+  'payments.method_fees': Record<string, { pct?: string; fixedAmount?: string }>;
+  /** Not seeded: no slip passes automatically until set (D-061). */
+  'payments.slip_receiver_accounts': { accountType: string; accountNumber: string; accountNameTH?: string }[];
 }
 
 export type SettingKey = keyof SettingValues;

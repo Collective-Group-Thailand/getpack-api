@@ -8,3 +8,4 @@
 | 0005 | [Effective-dated configuration](0005-effective-dated-configuration.md) | Accepted |
 | 0006 | [Approval-matrix engine](0006-approval-matrix-engine.md) | Accepted (implemented in B1.3) |
 | 0007 | Posting-rule engine | B5.1 |
+| 0008 | [Payment schedules: instalment amounts and allocation](0008-payment-schedule-allocation.md) | Accepted (B3.2) |

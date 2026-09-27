@@ -4,7 +4,7 @@ import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { APPROVAL_POLICIES } from './data/approval-policies';
 import { PRODUCT_TYPES } from './data/catalog';
-import { ORDER_CANCEL_REASONS } from './data/commerce';
+import { ORDER_CANCEL_REASONS, PAYMENT_FEATURE_FLAGS, PAYMENT_SCHEDULE_TEMPLATES } from './data/commerce';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { UNMET_DEMAND_REASONS } from './data/quotes';
@@ -66,6 +66,8 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureShipping(tx, count);
       await ensureUnmetDemandReasons(tx, count);
       await ensureOrderCancelReasons(tx, count);
+      await ensurePaymentScheduleTemplates(tx, count);
+      await ensurePaymentFeatureFlags(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -457,5 +459,62 @@ async function ensureOrderCancelReasons(tx: Tx, count: (what: string) => void): 
     if (await tx.orderCancelReason.findUnique({ where: { code: reason.code } })) continue;
     await tx.orderCancelReason.create({ data: { ...reason, sort: (index + 1) * 10 } });
     count('order_cancel_reasons');
+  }
+}
+
+/**
+ * Payment schedule templates of D-020 (B3.2), one approved v1 each: the version is written as a draft
+ * with its instalments (frozen once decided) and then approved; the 100 % total is checked at commit.
+ */
+async function ensurePaymentScheduleTemplates(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const t of PAYMENT_SCHEDULE_TEMPLATES) {
+    if (await tx.paymentScheduleTemplate.findUnique({ where: { key: t.key } })) continue;
+    const template = await tx.paymentScheduleTemplate.create({
+      data: {
+        key: t.key,
+        nameTh: t.nameTh,
+        nameEn: t.nameEn,
+        description: t.description,
+        decisionRefs: t.decisions,
+      },
+    });
+    const version = await tx.paymentScheduleTemplateVersion.create({
+      data: {
+        templateId: template.id,
+        versionNo: 1,
+        effectiveFrom: SEED_EFFECTIVE_FROM,
+        selectionRule: t.selectionRule as Prisma.InputJsonValue,
+        priority: t.priority,
+        requiresPermissionToSelect: t.requiresPermissionToSelect,
+        reason: `Seed default from ${t.decisions.join(', ')}`,
+        instalments: {
+          create: t.instalments.map((i, index) => ({
+            seq: index + 1,
+            labelTh: i.labelTh,
+            labelEn: i.labelEn,
+            pct: i.pct,
+            dueTrigger: i.dueTrigger,
+            dueOffsetDays: i.dueOffsetDays ?? null,
+            requiredBefore: i.requiredBefore,
+          })),
+        },
+      },
+    });
+    await tx.paymentScheduleTemplateVersion.update({
+      where: { id: version.id },
+      data: { status: 'approved', decidedAt: new Date() },
+    });
+    count('payment_schedule_templates');
+  }
+}
+
+/** Payment provider feature flags, off (D-005, D-176). */
+async function ensurePaymentFeatureFlags(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const flag of PAYMENT_FEATURE_FLAGS) {
+    if (await tx.featureFlag.findUnique({ where: { key: flag.key } })) continue;
+    await tx.featureFlag.create({
+      data: { key: flag.key, description: flag.description, enabled: false, ownerRoleKey: 'superadmin' },
+    });
+    count('feature_flags');
   }
 }

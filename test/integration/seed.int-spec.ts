@@ -80,6 +80,22 @@ describe('seeds (PostgreSQL 18)', () => {
     ]);
   });
 
+  it('seeds the D-020 payment schedule templates and the payment flags off (B3.2)', async () => {
+    const { rows } = await db.client.query<{ key: string; status: string; instalments: string; pct: string }>(`
+      SELECT t.key, v.status::text AS status, count(i.id) AS instalments, sum(i.pct)::text AS pct
+        FROM payment_schedule_templates t
+        JOIN payment_schedule_template_versions v ON v.template_id = t.id
+        JOIN payment_schedule_template_instalments i ON i.template_version_id = v.id
+       GROUP BY t.key, v.status ORDER BY t.key`);
+    expect(rows).toEqual([
+      { key: 'credit_term', status: 'approved', instalments: '1', pct: '100.0000' },
+      { key: 'deposit_50_before_shipping_50', status: 'approved', instalments: '2', pct: '100.0000' },
+      { key: 'full_upfront', status: 'approved', instalments: '1', pct: '100.0000' },
+    ]);
+    expect(await count("feature_flags WHERE key LIKE 'payments.%' AND enabled")).toBe(0);
+    expect(await count("feature_flags WHERE key LIKE 'payments.%'")).toBe(5);
+  });
+
   it('seeds the order cancel reasons lookup (B3.1)', async () => {
     expect(await count('order_cancel_reasons')).toBe(7);
     expect(await count("order_cancel_reasons WHERE code = 'payment_expired' AND applies_to = 'system'")).toBe(1);

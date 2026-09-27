@@ -320,6 +320,41 @@ const CHECKS = [
   'ck_tax_profiles__postcode',
   'ck_tax_profiles__tax_id',
   'ck_tax_profiles__text',
+
+  // --- B3.2 payment schedules & payments
+  'ck_instalment_allocations__amounts',
+  'ck_instalment_allocations__cash',
+  'ck_instalments__amounts',
+  'ck_instalments__cash',
+  'ck_instalments__gross',
+  'ck_instalments__offset',
+  'ck_instalments__paid',
+  'ck_instalments__paid_status',
+  'ck_instalments__pct',
+  'ck_instalments__seq',
+  'ck_payment_allocations__amounts',
+  'ck_payment_schedule_template_instalments__labels',
+  'ck_payment_schedule_template_instalments__offset',
+  'ck_payment_schedule_template_instalments__pct',
+  'ck_payment_schedule_template_instalments__seq',
+  'ck_payment_schedule_template_versions__decided',
+  'ck_payment_schedule_template_versions__priority',
+  'ck_payment_schedule_template_versions__reason',
+  'ck_payment_schedule_template_versions__status',
+  'ck_payment_schedule_template_versions__version_no',
+  'ck_payment_schedule_templates__decision_refs',
+  'ck_payment_schedule_templates__key',
+  'ck_payment_schedules__override',
+  'ck_payments__amounts',
+  'ck_payments__cash',
+  'ck_payments__paid',
+  'ck_payments__reference_code',
+  'ck_payments__refunded',
+  'ck_refunds__amount',
+  'ck_refunds__completed',
+  'ck_refunds__reason',
+  'ck_slips__declared_amount',
+  'ck_slips__reviewed',
 ];
 
 const TRIGGERS = [
@@ -395,6 +430,18 @@ const TRIGGERS = [
   'tg_order_notes__append_only',
   'tg_order_price_revisions__append_only',
   'tg_orders__snapshot_write_once',
+
+  // --- B3.2 payment schedules & payments
+  'tg_instalments__no_delete',
+  'tg_payment_allocations__append_only',
+  'tg_payment_schedule_template_instalments__draft_only',
+  'tg_payment_schedule_template_versions__immutable',
+  'tg_payment_schedule_template_versions__total_100',
+  'tg_payment_schedules__no_delete',
+  'tg_payments__no_delete',
+  'tg_refunds__no_delete',
+  'tg_slip_verifications__append_only',
+  'tg_slips__no_delete',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -451,6 +498,11 @@ const INDEXES = [
   'ux_carts__one_active',
   'ux_customer_addresses__one_default',
   'ux_tax_profiles__one_default',
+
+  // --- B3.2 payment schedules & payments
+  'ix_payment_schedule_template_versions__resolution',
+  'ux_payments__provider__provider_ref',
+  'ux_slips__bank_trans_ref',
 ];
 
 const EXPRESSION_INDEXES = [

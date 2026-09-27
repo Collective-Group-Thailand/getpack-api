@@ -54,3 +54,104 @@ export const ORDER_CANCEL_REASONS = [
     requiresCreditNote: false,
   },
 ] as const;
+
+export interface ScheduleTemplateSeed {
+  key: string;
+  nameTh: string;
+  nameEn: string;
+  description: string;
+  decisions: string[];
+  priority: number;
+  selectionRule: Record<string, unknown>;
+  requiresPermissionToSelect: boolean;
+  instalments: {
+    labelTh: string;
+    labelEn: string;
+    pct: string;
+    dueTrigger: 'at_checkout' | 'before_production' | 'before_shipping' | 'on_delivery' | 'days_after_delivery';
+    dueOffsetDays?: number;
+    requiredBefore: 'none' | 'production' | 'shipping';
+  }[];
+}
+
+/**
+ * Payment schedule templates of D-020 (B3.2, ADR-0008). The order-value threshold is not in the rule: it is
+ * the setting `payments.schedule_split_threshold` (THB 20,000), read at checkout. Lower priority is tried
+ * first. The credit-term offset is the D-121 default (30 days); a company's own term replaces it (B3.5).
+ */
+export const PAYMENT_SCHEDULE_TEMPLATES: readonly ScheduleTemplateSeed[] = [
+  {
+    key: 'credit_term',
+    nameTh: 'เครดิตเทอม',
+    nameEn: 'Credit term',
+    description: 'D-020 / D-121 approved B2B credit: the whole amount is due after delivery, no gate',
+    decisions: ['D-020', 'D-121'],
+    priority: 10,
+    selectionRule: { creditApproved: true },
+    requiresPermissionToSelect: false,
+    instalments: [
+      {
+        labelTh: 'ชำระตามเครดิตเทอม',
+        labelEn: 'Credit-term payment',
+        pct: '100',
+        dueTrigger: 'days_after_delivery',
+        dueOffsetDays: 30,
+        requiredBefore: 'none',
+      },
+    ],
+  },
+  {
+    key: 'full_upfront',
+    nameTh: 'ชำระเต็มจำนวน',
+    nameEn: 'Full payment upfront',
+    description: 'D-020 below the split threshold: 100 % at checkout, required before production',
+    decisions: ['D-020'],
+    priority: 100,
+    selectionRule: { orderValue: { lt: { setting: 'payments.schedule_split_threshold' } } },
+    requiresPermissionToSelect: false,
+    instalments: [
+      {
+        labelTh: 'ชำระเต็มจำนวน',
+        labelEn: 'Full payment',
+        pct: '100',
+        dueTrigger: 'at_checkout',
+        requiredBefore: 'production',
+      },
+    ],
+  },
+  {
+    key: 'deposit_50_before_shipping_50',
+    nameTh: 'มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง',
+    nameEn: '50 % deposit, 50 % before shipping',
+    description: 'D-020 from the split threshold: 50 % deposit before production, 50 % before shipping',
+    decisions: ['D-020'],
+    priority: 100,
+    selectionRule: { orderValue: { gte: { setting: 'payments.schedule_split_threshold' } } },
+    requiresPermissionToSelect: false,
+    instalments: [
+      {
+        labelTh: 'มัดจำ 50%',
+        labelEn: '50 % deposit',
+        pct: '50',
+        dueTrigger: 'at_checkout',
+        requiredBefore: 'production',
+      },
+      {
+        labelTh: 'ส่วนที่เหลือก่อนจัดส่ง',
+        labelEn: 'Balance before shipping',
+        pct: '50',
+        dueTrigger: 'before_shipping',
+        requiredBefore: 'shipping',
+      },
+    ],
+  },
+];
+
+/** Payment providers stay off until Collective Group (Thailand) has its own accounts (D-005, D-176, D-111). */
+export const PAYMENT_FEATURE_FLAGS = [
+  { key: 'payments.scb', description: 'SCB QR payments (PromptPay QR 30, QR CS) — D-176, on once the merchant account exists' },
+  { key: 'payments.twoc2p', description: '2C2P card and online banking — D-176, on once the merchant account exists' },
+  { key: 'payments.slip_verify', description: 'Automatic slip verification (Slip2Go) — D-061 / D-176; off: slips go to Finance' },
+  { key: 'payments.twoc2p_ipp', description: '2C2P card instalments (IPP) — R2 (D-111), adapter stubbed' },
+  { key: 'payments.scb_direct_debit', description: 'SCB direct debit — R2 (D-111), adapter stubbed' },
+] as const;

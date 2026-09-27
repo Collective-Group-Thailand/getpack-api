@@ -54,6 +54,11 @@ describe('seed data (B1.2 step 3)', () => {
       'orders.unpaid_expiry_days': 'proposed',
       // B3.1: nature of the sale per product type (accounting-design §2 ⚖).
       'tax.nature_by_product_type': 'pending_cpa',
+      // B3.2: D-175 business hours and the SCB QR lifetime are proposed; fees and receiver accounts open.
+      'calendar.business_hours': 'proposed',
+      'payments.qr_validity_minutes': 'proposed',
+      'payments.method_fees': 'pending_business',
+      'payments.slip_receiver_accounts': 'pending_business',
     });
   });
 

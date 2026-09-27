@@ -303,6 +303,51 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'finance_manager',
   },
 
+  // --- Payments (B3.2)
+  {
+    key: 'calendar.business_hours',
+    valueType: 'time_of_day_window',
+    value: { from: '09:00', to: '18:00', timezone: 'Asia/Bangkok' },
+    description:
+      'D-175 business hours of working days (national calendar) for business-hour SLAs such as the D-061 slip review',
+    decisions: ['D-175', 'D-061'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'payments.qr_validity_minutes',
+    valueType: 'integer',
+    value: 1440,
+    valueSchema: { minimum: 5, maximum: 10080 },
+    description:
+      'D-060 / D-176 lifetime of one SCB QR payment attempt (minutes); legacy used SCB_DAYS_UNTIL_EXPIRATION (sample 1 day); never shortens the order expiry',
+    decisions: ['D-060', 'D-176'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'payments.method_fees',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: { type: 'object', additionalProperties: { type: 'object' } },
+    description:
+      'D-176 fee Packio expects per payment method ({method: {pct, fixedAmount}}), recorded on each payment for P04; not seeded — fee 0 until Finance sets it',
+    decisions: ['D-176'],
+    confirmation: 'pending_business',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'payments.slip_receiver_accounts',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: { type: 'array' },
+    description:
+      'D-061 collection accounts a slip must pay into ([{accountType, accountNumber}] in the Slip2Go form); not seeded — until set, no slip passes automatically (all go to Finance)',
+    decisions: ['D-061'],
+    confirmation: 'pending_business',
+    ownerRole: 'finance_manager',
+  },
+
   // --- Notifications (D-144)
   {
     key: 'notifications.marketing_window',

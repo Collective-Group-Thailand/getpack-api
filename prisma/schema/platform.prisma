@@ -357,6 +357,8 @@ model Entity {
   carts       Cart[]       @relation("CartEntity")
   orderGroups OrderGroup[] @relation("OrderGroupEntity")
   orders      Order[]      @relation("OrderEntity")
+  payments    Payment[]    @relation("PaymentEntity")
+  refunds     Refund[]     @relation("RefundEntity")
   // --- end Commerce
 
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
@@ -571,6 +573,9 @@ model ApprovalRequest {
   customerShippingRateCardVersions CustomerShippingRateCardVersion[] @relation("CustomerShippingRateCardVersionApprovalRequest")
   // --- end Pricing
 
+  paymentScheduleTemplateVersions PaymentScheduleTemplateVersion[] @relation("PaymentScheduleTemplateVersionApprovalRequest")
+  refunds                         Refund[]                         @relation("RefundApprovalRequest")
+
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")
   @@index([status, expiresAt], map: "ix_approval_requests__status__expires_at")
@@ -719,6 +724,8 @@ model FileObject {
   quotePdfs Quote[] @relation("QuotePdfFile")
 
   // --- end Quotes & RFQ
+  slips Slip[] @relation("SlipFile")
+
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
   @@index([ownerUserId], map: "ix_file_objects__owner_user_id")

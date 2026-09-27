@@ -308,4 +308,131 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
     );
     await prisma.cartItem.create({ data: item });
   });
+
+  // --- B3.2 ------------------------------------------------------------------------------------------
+
+  it('checks template instalments add up to 100 % at commit and freezes them with their version (D-020)', async () => {
+    const template = await prisma.paymentScheduleTemplate.create({
+      data: { key: `int_${seq++}`, nameTh: 'x', nameEn: 'x', description: 'x', decisionRefs: ['D-020'] },
+    });
+    const draft = (pct: string) =>
+      prisma.$transaction(async (tx) => {
+        const version = await tx.paymentScheduleTemplateVersion.create({
+          data: {
+            templateId: template.id,
+            versionNo: seq++,
+            effectiveFrom: new Date(),
+            selectionRule: {},
+            priority: 1,
+            reason: 'int',
+            instalments: {
+              create: [
+                { seq: 1, labelTh: 'ก', labelEn: 'a', pct, dueTrigger: 'at_checkout', requiredBefore: 'production' },
+                { seq: 2, labelTh: 'ข', labelEn: 'b', pct: '40', dueTrigger: 'before_shipping', requiredBefore: 'shipping' },
+              ],
+            },
+          },
+        });
+        await tx.paymentScheduleTemplateVersion.update({
+          where: { id: version.id },
+          data: { status: 'approved', decidedAt: new Date() },
+        });
+        return version;
+      });
+    await expect(draft('50')).rejects.toThrow(/100/);
+    const ok = await draft('60');
+    const instalment = await prisma.paymentScheduleTemplateInstalment.findFirstOrThrow({
+      where: { templateVersionId: ok.id },
+    });
+    expect(
+      await state(`UPDATE payment_schedule_template_instalments SET pct = 10 WHERE id = $1`, [instalment.id]),
+    ).toBe(SQLSTATE.restrictViolation);
+  });
+
+  it('never accepts a provider transaction or a slip reference twice (D-061)', async () => {
+    const payment = (ref: string, providerRef: string | null) =>
+      prisma.payment.create({
+        data: {
+          entityId: fx.entityId,
+          method: 'scb_qr',
+          provider: 'scb',
+          status: 'succeeded',
+          referenceCode: ref,
+          amount: '100.00',
+          cashAmount: '100.00',
+          providerRef,
+          paidAt: new Date(),
+        },
+      });
+    const first = await payment(`INTREF${seq++}AA`, 'SCB-TX-1');
+    await expect(payment(`INTREF${seq++}BB`, 'SCB-TX-1')).rejects.toThrow();
+    await expect(payment('bad-ref', null)).rejects.toThrow(/ck_payments__reference_code/);
+
+    const file = await prisma.fileObject.findFirst();
+    if (file) {
+      const slip = (status: 'passed' | 'failed') =>
+        prisma.slip.create({
+          data: {
+            paymentId: first.id,
+            fileObjectId: file.id,
+            uploadedVia: 'web',
+            declaredAmount: '100.00',
+            declaredTransferredAt: new Date(),
+            verificationStatus: status,
+            bankTransRef: 'TRANSREF-1',
+          },
+        });
+      await slip('passed');
+      await expect(slip('passed')).rejects.toThrow();
+      await slip('failed');
+    }
+  });
+
+  it('keeps instalment arithmetic and payment allocations append-only (ADR-0008)', async () => {
+    const o = await order();
+    const template = await prisma.paymentScheduleTemplateVersion.findFirstOrThrow({ where: { status: 'approved' } });
+    const schedule = await prisma.paymentSchedule.create({
+      data: { orderGroupId: o.orderGroupId, templateVersionId: template.id },
+    });
+    const base = {
+      paymentScheduleId: schedule.id,
+      labelTh: 'ก',
+      labelEn: 'a',
+      pct: '100',
+      dueTrigger: 'at_checkout' as const,
+      requiredBefore: 'production' as const,
+      netAmount: '1000.00',
+      vatAmount: '70.00',
+      grossAmount: '1070.00',
+      whtAmount: '30.00',
+      cashAmount: '1040.00',
+    };
+    await expect(prisma.instalment.create({ data: { ...base, seq: 1, cashAmount: '1070.00' } })).rejects.toThrow(
+      /ck_instalments__cash/,
+    );
+    const instalment = await prisma.instalment.create({ data: { ...base, seq: 1 } });
+    await expect(
+      prisma.instalment.update({ where: { id: instalment.id }, data: { status: 'paid' } }),
+    ).rejects.toThrow(/ck_instalments__paid_status/);
+    const payment = await prisma.payment.create({
+      data: {
+        entityId: fx.entityId,
+        orderGroupId: o.orderGroupId,
+        method: 'bank_transfer_slip',
+        provider: 'slip',
+        status: 'succeeded',
+        referenceCode: `INTPAY${seq++}XX`,
+        amount: '1070.00',
+        whtAmount: '30.00',
+        cashAmount: '1040.00',
+        paidAt: new Date(),
+        allocations: { create: { instalmentId: instalment.id, cashAmount: '1040.00', grossAmount: '1070.00' } },
+      },
+      include: { allocations: true },
+    });
+    expect(
+      await state(`UPDATE payment_allocations SET cash_amount = 1 WHERE id = $1`, [payment.allocations[0]!.id]),
+    ).toBe(SQLSTATE.restrictViolation);
+    expect(await state('DELETE FROM payments WHERE id = $1', [payment.id])).toBe(SQLSTATE.restrictViolation);
+  });
 });

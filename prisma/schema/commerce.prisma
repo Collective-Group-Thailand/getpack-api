@@ -439,14 +439,16 @@ model OrderGroup {
   updatedById            BigInt?          @map("updated_by")
   rowVersion             Int              @default(1) @map("row_version")
 
-  entity       Entity             @relation("OrderGroupEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__entity_id")
-  customer     User               @relation("OrderGroupCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__customer_user_id")
-  placedBy     User               @relation("OrderGroupPlacedBy", fields: [placedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__placed_by_user_id")
-  onBehalfOf   User?              @relation("OrderGroupOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__on_behalf_of_user_id")
-  cart         Cart?              @relation("OrderGroupCart", fields: [cartId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cart_id")
-  cancelReason OrderCancelReason? @relation("OrderGroupCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cancel_reason_id")
-  updatedBy    User?              @relation("OrderGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__updated_by")
-  orders       Order[]
+  entity          Entity             @relation("OrderGroupEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__entity_id")
+  customer        User               @relation("OrderGroupCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__customer_user_id")
+  placedBy        User               @relation("OrderGroupPlacedBy", fields: [placedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__placed_by_user_id")
+  onBehalfOf      User?              @relation("OrderGroupOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__on_behalf_of_user_id")
+  cart            Cart?              @relation("OrderGroupCart", fields: [cartId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cart_id")
+  cancelReason    OrderCancelReason? @relation("OrderGroupCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cancel_reason_id")
+  updatedBy       User?              @relation("OrderGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__updated_by")
+  orders          Order[]
+  paymentSchedule PaymentSchedule?
+  payments        Payment[]
 
   @@index([customerUserId, placedAt(sort: Desc)], map: "ix_order_groups__customer_user_id__placed_at")
   @@index([status, placedAt(sort: Desc)], map: "ix_order_groups__status__placed_at")
@@ -524,26 +526,28 @@ model Order {
   updatedById             BigInt?              @map("updated_by")
   rowVersion              Int                  @default(1) @map("row_version")
 
-  entity          Entity               @relation("OrderEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__entity_id")
-  orderGroup      OrderGroup           @relation(fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__order_group_id")
-  customer        User                 @relation("OrderCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__customer_user_id")
-  productType     ProductType          @relation("OrderProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__product_type_id")
-  catalogProduct  CatalogProduct?      @relation("OrderCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__catalog_product_id")
-  stockProduct    StockProduct?        @relation("OrderStockProduct", fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__stock_product_id")
-  quote           Quote                @relation("OrderQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__quote_id")
-  quoteOption     QuoteOption          @relation("OrderQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__quote_option_id")
-  reorderOfOrder  Order?               @relation("OrderReorderOf", fields: [reorderOfOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reorder_of_order_id")
-  reorders        Order[]              @relation("OrderReorderOf")
-  cancelReason    OrderCancelReason?   @relation("OrderCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__cancel_reason_id")
-  selectedFactory Factory?             @relation("OrderSelectedFactory", fields: [selectedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__selected_factory_id")
-  updatedBy       User?                @relation("OrderUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__updated_by")
-  lines           OrderLine[]
-  discounts       OrderDiscount[]
-  destinations    OrderDestination[]
-  notes           OrderNote[]
-  priceRevisions  OrderPriceRevision[]
-  cartReorders    CartItem[]           @relation("CartItemReorderOf")
-  stockMovements  StockMovement[]      @relation("StockMovementOrder")
+  entity                Entity                 @relation("OrderEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__entity_id")
+  orderGroup            OrderGroup             @relation(fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__order_group_id")
+  customer              User                   @relation("OrderCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__customer_user_id")
+  productType           ProductType            @relation("OrderProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__product_type_id")
+  catalogProduct        CatalogProduct?        @relation("OrderCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__catalog_product_id")
+  stockProduct          StockProduct?          @relation("OrderStockProduct", fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__stock_product_id")
+  quote                 Quote                  @relation("OrderQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__quote_id")
+  quoteOption           QuoteOption            @relation("OrderQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__quote_option_id")
+  reorderOfOrder        Order?                 @relation("OrderReorderOf", fields: [reorderOfOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reorder_of_order_id")
+  reorders              Order[]                @relation("OrderReorderOf")
+  cancelReason          OrderCancelReason?     @relation("OrderCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__cancel_reason_id")
+  selectedFactory       Factory?               @relation("OrderSelectedFactory", fields: [selectedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__selected_factory_id")
+  updatedBy             User?                  @relation("OrderUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__updated_by")
+  lines                 OrderLine[]
+  discounts             OrderDiscount[]
+  destinations          OrderDestination[]
+  notes                 OrderNote[]
+  priceRevisions        OrderPriceRevision[]
+  cartReorders          CartItem[]             @relation("CartItemReorderOf")
+  stockMovements        StockMovement[]        @relation("StockMovementOrder")
+  instalmentAllocations InstalmentAllocation[] @relation("InstalmentAllocationOrder")
+  refunds               Refund[]               @relation("RefundOrder")
 
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -706,6 +710,438 @@ model OrderCancelReason {
 
   orderGroups OrderGroup[] @relation("OrderGroupCancelReason")
   orders      Order[]      @relation("OrderCancelReason")
+  refunds     Refund[]     @relation("RefundCancelReason")
 
   @@map("order_cancel_reasons")
+}
+
+// --- Enums (B3.2) ----------------------------------------------------------------------------------
+
+enum DueTrigger {
+  at_checkout
+  before_production
+  before_shipping
+  on_delivery
+  days_after_delivery
+
+  @@map("due_trigger")
+}
+
+enum RequiredBefore {
+  none
+  production
+  shipping
+
+  @@map("required_before")
+}
+
+enum InstalmentStatus {
+  pending
+  due
+  partially_paid
+  paid
+  overdue
+  cancelled
+  refunded
+
+  @@map("instalment_status")
+}
+
+enum PaymentMethod {
+  scb_qr
+  scb_qr_cross_bank
+  card_2c2p
+  online_banking_2c2p
+  bank_transfer_slip
+  store_credit
+  credit_term_transfer
+  card_instalment_2c2p
+  scb_direct_debit
+
+  @@map("payment_method")
+}
+
+enum PaymentProvider {
+  scb
+  twoc2p
+  slip
+  bank
+  internal
+
+  @@map("payment_provider")
+}
+
+enum PaymentStatus {
+  initiated
+  pending
+  awaiting_verification
+  succeeded
+  failed
+  cancelled
+  expired
+  refunded
+  partially_refunded
+
+  @@map("payment_status")
+}
+
+enum UploadChannel {
+  web
+  line_liff
+  cs
+
+  @@map("upload_channel")
+}
+
+enum SlipStatus {
+  pending
+  passed
+  failed
+  manual_review
+  manual_approved
+  manual_rejected
+
+  @@map("slip_status")
+}
+
+enum SlipCheckResult {
+  pass
+  mismatch
+  duplicate
+  unreadable
+  provider_error
+
+  @@map("slip_check_result")
+}
+
+enum RefundChannel {
+  original_gateway
+  bank_transfer
+  store_credit
+
+  @@map("refund_channel")
+}
+
+enum RefundStatus {
+  requested
+  pending_approval
+  approved
+  processing
+  succeeded
+  failed
+  rejected
+
+  @@map("refund_status")
+}
+
+// --- Payment schedules (D-020, B3.2, ADR-0008) -----------------------------------------------------
+
+/// Identity of a schedule template; its rules live in versions (schema-design §2.1).
+model PaymentScheduleTemplate {
+  id           BigInt   @id(map: "pk_payment_schedule_templates") @default(autoincrement())
+  publicId     String   @unique(map: "ux_payment_schedule_templates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key          String   @unique(map: "ux_payment_schedule_templates__key")
+  nameTh       String   @map("name_th")
+  nameEn       String   @map("name_en")
+  description  String
+  decisionRefs String[] @map("decision_refs")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by")
+
+  versions  PaymentScheduleTemplateVersion[]
+  createdBy User?                            @relation("PaymentScheduleTemplateCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_schedule_templates__created_by")
+
+  @@index([createdById], map: "ix_payment_schedule_templates__created_by")
+  @@map("payment_schedule_templates")
+}
+
+/// Versioned (§2.1): selection rule and instalments; never edited once decided.
+model PaymentScheduleTemplateVersion {
+  id                         BigInt              @id(map: "pk_payment_schedule_template_versions") @default(autoincrement())
+  publicId                   String              @unique(map: "ux_payment_schedule_template_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  templateId                 BigInt              @map("template_id")
+  versionNo                  Int                 @map("version_no")
+  effectiveFrom              DateTime            @map("effective_from") @db.Timestamptz(6)
+  status                     ConfigVersionStatus @default(draft)
+  /// Validated JSON (customer types, order value against a setting, product types, credit approval).
+  selectionRule              Json                @map("selection_rule")
+  priority                   Int                 @db.SmallInt
+  requiresPermissionToSelect Boolean             @default(false) @map("requires_permission_to_select")
+  reason                     String
+  approvalRequestId          BigInt?             @map("approval_request_id")
+  createdAt                  DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById                BigInt?             @map("created_by")
+  decidedAt                  DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById                BigInt?             @map("decided_by")
+
+  template        PaymentScheduleTemplate             @relation(fields: [templateId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_schedule_template_versions__template_id")
+  approvalRequest ApprovalRequest?                    @relation("PaymentScheduleTemplateVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_schedule_template_versions__approval_request_id")
+  createdBy       User?                               @relation("PaymentScheduleTemplateVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_schedule_template_versions__created_by")
+  decidedBy       User?                               @relation("PaymentScheduleTemplateVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_schedule_template_versions__decided_by")
+  instalments     PaymentScheduleTemplateInstalment[]
+  schedules       PaymentSchedule[]
+
+  @@unique([templateId, versionNo], map: "ux_payment_schedule_template_versions__template_id__version_no")
+  @@index([templateId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_payment_schedule_template_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_payment_schedule_template_versions__approval_request_id")
+  @@index([createdById], map: "ix_payment_schedule_template_versions__created_by")
+  @@index([decidedById], map: "ix_payment_schedule_template_versions__decided_by")
+  @@map("payment_schedule_template_versions")
+}
+
+/// Instalments of a template version (percentages add up to 100, checked by a deferred trigger).
+model PaymentScheduleTemplateInstalment {
+  id                BigInt         @id(map: "pk_payment_schedule_template_instalments") @default(autoincrement())
+  templateVersionId BigInt         @map("template_version_id")
+  seq               Int            @db.SmallInt
+  labelTh           String         @map("label_th")
+  labelEn           String         @map("label_en")
+  pct               Decimal        @db.Decimal(7, 4)
+  dueTrigger        DueTrigger     @map("due_trigger")
+  dueOffsetDays     Int?           @map("due_offset_days") @db.SmallInt
+  requiredBefore    RequiredBefore @map("required_before")
+
+  templateVersion PaymentScheduleTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_payment_schedule_template_instalments__template_version_id")
+
+  @@unique([templateVersionId, seq], map: "ux_payment_schedule_template_instalments__version__seq")
+  @@map("payment_schedule_template_instalments")
+}
+
+/// The schedule of one order group (D-020): the template version it was built from, or a CS override.
+model PaymentSchedule {
+  id                BigInt   @id(map: "pk_payment_schedules") @default(autoincrement())
+  publicId          String   @unique(map: "ux_payment_schedules__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderGroupId      BigInt   @unique(map: "ux_payment_schedules__order_group_id") @map("order_group_id")
+  templateVersionId BigInt   @map("template_version_id")
+  isOverride        Boolean  @default(false) @map("is_override")
+  overrideReason    String?  @map("override_reason")
+  overrideById      BigInt?  @map("override_by")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  orderGroup      OrderGroup                     @relation(fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_schedules__order_group_id")
+  templateVersion PaymentScheduleTemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_schedules__template_version_id")
+  overrideBy      User?                          @relation("PaymentScheduleOverrideBy", fields: [overrideById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_schedules__override_by")
+  instalments     Instalment[]
+
+  @@index([templateVersionId], map: "ix_payment_schedules__template_version_id")
+  @@index([overrideById], map: "ix_payment_schedules__override_by")
+  @@map("payment_schedules")
+}
+
+/// One instalment of a group (§2.9 amounts; `paid_amount` is cash received). Split to orders by ADR-0008.
+model Instalment {
+  id                BigInt           @id(map: "pk_instalments") @default(autoincrement())
+  publicId          String           @unique(map: "ux_instalments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  paymentScheduleId BigInt           @map("payment_schedule_id")
+  seq               Int              @db.SmallInt
+  labelTh           String           @map("label_th")
+  labelEn           String           @map("label_en")
+  pct               Decimal          @db.Decimal(7, 4)
+  dueTrigger        DueTrigger       @map("due_trigger")
+  dueOffsetDays     Int?             @map("due_offset_days") @db.SmallInt
+  requiredBefore    RequiredBefore   @map("required_before")
+  dueAt             DateTime?        @map("due_at") @db.Timestamptz(6)
+  netAmount         Decimal          @map("net_amount") @db.Decimal(14, 2)
+  discountAmount    Decimal          @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  vatAmount         Decimal          @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount       Decimal          @map("gross_amount") @db.Decimal(14, 2)
+  whtAmount         Decimal          @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  cashAmount        Decimal          @map("cash_amount") @db.Decimal(14, 2)
+  paidAmount        Decimal          @default(0) @map("paid_amount") @db.Decimal(14, 2)
+  status            InstalmentStatus @default(pending)
+  paidAt            DateTime?        @map("paid_at") @db.Timestamptz(6)
+  overdueNotifiedAt DateTime?        @map("overdue_notified_at") @db.Timestamptz(6)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion        Int              @default(1) @map("row_version")
+
+  schedule    PaymentSchedule        @relation(fields: [paymentScheduleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_instalments__payment_schedule_id")
+  allocations InstalmentAllocation[]
+  payments    PaymentAllocation[]
+
+  @@unique([paymentScheduleId, seq], map: "ux_instalments__payment_schedule_id__seq")
+  @@index([status, dueAt], map: "ix_instalments__status__due_at")
+  @@map("instalments")
+}
+
+/// The share of an instalment carried by each order of the group (ADR-0008).
+model InstalmentAllocation {
+  id           BigInt  @id(map: "pk_instalment_allocations") @default(autoincrement())
+  instalmentId BigInt  @map("instalment_id")
+  orderId      BigInt  @map("order_id")
+  netAmount    Decimal @map("net_amount") @db.Decimal(14, 2)
+  vatAmount    Decimal @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount  Decimal @map("gross_amount") @db.Decimal(14, 2)
+  whtAmount    Decimal @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  cashAmount   Decimal @map("cash_amount") @db.Decimal(14, 2)
+
+  instalment Instalment @relation(fields: [instalmentId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_instalment_allocations__instalment_id")
+  order      Order      @relation("InstalmentAllocationOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_instalment_allocations__order_id")
+
+  @@unique([instalmentId, orderId], map: "ux_instalment_allocations__instalment_id__order_id")
+  @@index([orderId], map: "ix_instalment_allocations__order_id")
+  @@map("instalment_allocations")
+}
+
+// --- Payments (D-061, B3.2) ------------------------------------------------------------------------
+
+/// A payment attempt or receipt. `amount` is the gross it settles (incl. the customer's withholding),
+/// `cash_amount` the money received. `reference_code` is what the provider echoes back (ref1 / invoiceNo).
+/// A receipt that matches no group stays with `order_group_id` null (unidentified receipts queue).
+model Payment {
+  id              BigInt          @id(map: "pk_payments") @default(autoincrement())
+  publicId        String          @unique(map: "ux_payments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId        BigInt          @map("entity_id")
+  orderGroupId    BigInt?         @map("order_group_id")
+  method          PaymentMethod
+  provider        PaymentProvider
+  status          PaymentStatus
+  referenceCode   String          @unique(map: "ux_payments__reference_code") @map("reference_code")
+  amount          Decimal         @db.Decimal(14, 2)
+  whtAmount       Decimal         @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  cashAmount      Decimal         @map("cash_amount") @db.Decimal(14, 2)
+  feeAmount       Decimal         @default(0) @map("fee_amount") @db.Decimal(14, 2)
+  refundedAmount  Decimal         @default(0) @map("refunded_amount") @db.Decimal(14, 2)
+  providerRef     String?         @map("provider_ref")
+  /// Redacted provider data (no card or account numbers, PDPA).
+  providerPayload Json?           @map("provider_payload")
+  qrPayload       String?         @map("qr_payload")
+  redirectUrl     String?         @map("redirect_url")
+  expiresAt       DateTime?       @map("expires_at") @db.Timestamptz(6)
+  paidAt          DateTime?       @map("paid_at") @db.Timestamptz(6)
+  verifiedAt      DateTime?       @map("verified_at") @db.Timestamptz(6)
+  verifiedById    BigInt?         @map("verified_by")
+  initiatedById   BigInt?         @map("initiated_by")
+  failureReason   String?         @map("failure_reason")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int             @default(1) @map("row_version")
+
+  entity      Entity              @relation("PaymentEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payments__entity_id")
+  orderGroup  OrderGroup?         @relation(fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payments__order_group_id")
+  verifiedBy  User?               @relation("PaymentVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payments__verified_by")
+  initiatedBy User?               @relation("PaymentInitiatedBy", fields: [initiatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payments__initiated_by")
+  allocations PaymentAllocation[]
+  slips       Slip[]
+  refunds     Refund[]
+
+  @@unique([provider, providerRef], map: "ux_payments__provider__provider_ref", where: raw("(provider_ref IS NOT NULL)"))
+  @@index([orderGroupId, status], map: "ix_payments__order_group_id__status")
+  @@index([status, expiresAt], map: "ix_payments__status__expires_at")
+  @@index([entityId], map: "ix_payments__entity_id")
+  @@index([verifiedById], map: "ix_payments__verified_by")
+  @@index([initiatedById], map: "ix_payments__initiated_by")
+  @@map("payments")
+}
+
+/// Cash of a payment applied to instalments (FIFO by `seq`, ADR-0008).
+model PaymentAllocation {
+  id           BigInt   @id(map: "pk_payment_allocations") @default(autoincrement())
+  paymentId    BigInt   @map("payment_id")
+  instalmentId BigInt   @map("instalment_id")
+  cashAmount   Decimal  @map("cash_amount") @db.Decimal(14, 2)
+  grossAmount  Decimal  @map("gross_amount") @db.Decimal(14, 2)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payment    Payment    @relation(fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_allocations__payment_id")
+  instalment Instalment @relation(fields: [instalmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payment_allocations__instalment_id")
+
+  @@unique([paymentId, instalmentId], map: "ux_payment_allocations__payment_id__instalment_id")
+  @@index([instalmentId], map: "ix_payment_allocations__instalment_id")
+  @@map("payment_allocations")
+}
+
+/// A bank-transfer slip (D-061): verified automatically; failures go to Finance within 4 business hours.
+model Slip {
+  id                    BigInt        @id(map: "pk_slips") @default(autoincrement())
+  publicId              String        @unique(map: "ux_slips__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  paymentId             BigInt        @map("payment_id")
+  fileObjectId          BigInt        @map("file_object_id")
+  uploadedVia           UploadChannel @map("uploaded_via")
+  declaredAmount        Decimal       @map("declared_amount") @db.Decimal(14, 2)
+  declaredTransferredAt DateTime      @map("declared_transferred_at") @db.Timestamptz(6)
+  verificationStatus    SlipStatus    @default(pending) @map("verification_status")
+  bankTransRef          String?       @map("bank_trans_ref")
+  slaDueAt              DateTime?     @map("sla_due_at") @db.Timestamptz(6)
+  reviewedById          BigInt?       @map("reviewed_by")
+  reviewedAt            DateTime?     @map("reviewed_at") @db.Timestamptz(6)
+  reviewNote            String?       @map("review_note")
+  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById           BigInt?       @map("created_by")
+
+  payment       Payment            @relation(fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_slips__payment_id")
+  fileObject    FileObject         @relation("SlipFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_slips__file_object_id")
+  reviewedBy    User?              @relation("SlipReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_slips__reviewed_by")
+  createdBy     User?              @relation("SlipCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_slips__created_by")
+  verifications SlipVerification[]
+
+  @@unique([bankTransRef], map: "ux_slips__bank_trans_ref", where: raw("(verification_status = ANY (ARRAY['passed'::slip_status, 'manual_approved'::slip_status]))"))
+  @@index([paymentId], map: "ix_slips__payment_id")
+  @@index([verificationStatus, slaDueAt], map: "ix_slips__verification_status__sla_due_at")
+  @@index([fileObjectId], map: "ix_slips__file_object_id")
+  @@index([reviewedById], map: "ix_slips__reviewed_by")
+  @@index([createdById], map: "ix_slips__created_by")
+  @@map("slips")
+}
+
+/// One call to the slip-verification provider (append-only).
+model SlipVerification {
+  id              BigInt          @id(map: "pk_slip_verifications") @default(autoincrement())
+  slipId          BigInt          @map("slip_id")
+  provider        String
+  requestedAt     DateTime        @default(now()) @map("requested_at") @db.Timestamptz(6)
+  result          SlipCheckResult
+  receiverMatched Boolean         @map("receiver_matched")
+  amountMatched   Boolean         @map("amount_matched")
+  dateMatched     Boolean         @map("date_matched")
+  transRef        String?         @map("trans_ref")
+  /// Redacted provider response (no account numbers in full, PDPA).
+  response        Json
+
+  slip Slip @relation(fields: [slipId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_slip_verifications__slip_id")
+
+  @@index([slipId], map: "ix_slip_verifications__slip_id")
+  @@map("slip_verifications")
+}
+
+/// A refund of (part of) a payment, approved by the Finance Manager (D-169, maker-checker).
+model Refund {
+  id                BigInt        @id(map: "pk_refunds") @default(autoincrement())
+  publicId          String        @unique(map: "ux_refunds__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId          BigInt        @map("entity_id")
+  paymentId         BigInt        @map("payment_id")
+  orderId           BigInt?       @map("order_id")
+  amount            Decimal       @db.Decimal(14, 2)
+  cancelReasonId    BigInt?       @map("cancel_reason_id")
+  reasonNote        String        @map("reason_note")
+  channel           RefundChannel
+  status            RefundStatus  @default(requested)
+  approvalRequestId BigInt?       @map("approval_request_id")
+  providerRef       String?       @map("provider_ref")
+  failureReason     String?       @map("failure_reason")
+  requestedById     BigInt        @map("requested_by")
+  decidedAt         DateTime?     @map("decided_at") @db.Timestamptz(6)
+  completedAt       DateTime?     @map("completed_at") @db.Timestamptz(6)
+  completedById     BigInt?       @map("completed_by")
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion        Int           @default(1) @map("row_version")
+
+  entity          Entity             @relation("RefundEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__entity_id")
+  payment         Payment            @relation(fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__payment_id")
+  order           Order?             @relation("RefundOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__order_id")
+  cancelReason    OrderCancelReason? @relation("RefundCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__cancel_reason_id")
+  approvalRequest ApprovalRequest?   @relation("RefundApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__approval_request_id")
+  requestedBy     User               @relation("RefundRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__requested_by")
+  completedBy     User?              @relation("RefundCompletedBy", fields: [completedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__completed_by")
+
+  @@index([paymentId], map: "ix_refunds__payment_id")
+  @@index([status], map: "ix_refunds__status")
+  @@index([entityId], map: "ix_refunds__entity_id")
+  @@index([orderId], map: "ix_refunds__order_id")
+  @@index([cancelReasonId], map: "ix_refunds__cancel_reason_id")
+  @@index([approvalRequestId], map: "ix_refunds__approval_request_id")
+  @@index([requestedById], map: "ix_refunds__requested_by")
+  @@index([completedById], map: "ix_refunds__completed_by")
+  @@map("refunds")
 }
