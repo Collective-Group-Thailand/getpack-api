@@ -704,5 +704,11 @@
       "title": "New customers only",
       "detail": "A referral code can only be used before the first order"
     }
+  },
+  "loyalty": {
+    "insufficient_points": {
+      "title": "Not enough points",
+      "detail": "Not enough points to redeem; preview the checkout again"
+    }
   }
 }

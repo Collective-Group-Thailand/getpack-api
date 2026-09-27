@@ -5,6 +5,7 @@ import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry'
 import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
+import { LOYALTY_ADMIN_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
 import { ORDERS_ADMIN_CONTROLLERS } from '@modules/orders/orders.registry';
 import { FactoryOwnersService } from '@modules/partners/factories/factory-owners.service';
 import { PARTNERS_ADMIN_CONTROLLERS } from '@modules/partners/partners.registry';
@@ -69,6 +70,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...ORDERS_ADMIN_CONTROLLERS,
     ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,
     ...PROMOTIONS_ADMIN_CONTROLLERS,
+    ...LOYALTY_ADMIN_CONTROLLERS,
     ...PAYMENTS_ADMIN_CONTROLLERS,
   ],
 })

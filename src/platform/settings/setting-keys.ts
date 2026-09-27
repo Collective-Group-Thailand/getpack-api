@@ -51,6 +51,14 @@ export interface SettingValues {
   'campaigns.budget_alert_pct': string;
   /** D-053 rate limits on coupon code attempts (proposed). */
   'promotions.code_attempt_limits': { perCustomerPerHour: number; perIpPerHour: number; perDevicePerHour: number };
+  /** D-130…D-135 loyalty (all numbers are settings). */
+  'loyalty.earn_rate': { bahtPerPoint: string; basis: string };
+  'loyalty.point_value': string;
+  'loyalty.expected_redemption_rate_pct': string;
+  'loyalty.points_expiry': { monthsPerEarning: number; reminderDaysBefore: number };
+  'loyalty.redemption_limits': { minimumBaht: string; maxPctOfOrder: string };
+  'loyalty.tiers': { tier: 'member' | 'silver' | 'gold'; minSpend12m: string; multiplier: string }[];
+  'loyalty.activity_rewards': { signupBaht: string; lineLinkingBaht: string; reviewBaht: string };
   'referral.rules': {
     refereeDiscountPct: string;
     refereeDiscountMaxBaht: string;

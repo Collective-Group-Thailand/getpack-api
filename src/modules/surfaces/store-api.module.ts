@@ -3,6 +3,7 @@ import { CARTS_STORE_CONTROLLERS } from '@modules/carts/carts.registry';
 import { StoreCatalogController } from '@modules/catalog/store/store-catalog.controller';
 import { CHECKOUT_STORE_CONTROLLERS } from '@modules/checkout/checkout.registry';
 import { CUSTOMERS_STORE_CONTROLLERS } from '@modules/customers/customers.registry';
+import { LOYALTY_STORE_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
 import { ORDERS_STORE_CONTROLLERS } from '@modules/orders/orders.registry';
 import { StoreQuotePathController } from '@modules/partners/quote-path/quote-path.controller';
 import { PAYMENT_SCHEDULES_STORE_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
@@ -41,6 +42,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...ORDERS_STORE_CONTROLLERS,
     ...PAYMENT_SCHEDULES_STORE_CONTROLLERS,
     ...PROMOTIONS_STORE_CONTROLLERS,
+    ...LOYALTY_STORE_CONTROLLERS,
     ...PAYMENTS_STORE_CONTROLLERS,
   ],
 })

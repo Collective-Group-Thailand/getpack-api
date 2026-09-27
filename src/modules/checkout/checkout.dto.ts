@@ -5,10 +5,13 @@ import {
   ArrayMaxSize,
   IsArray,
   IsEmail,
+  IsInt,
   IsOptional,
   IsString,
   Matches,
+  Max,
   MaxLength,
+  Min,
   ValidateNested,
 } from 'class-validator';
 
@@ -84,6 +87,18 @@ export class CheckoutDto {
   @IsString()
   @Matches(/^\d{1,12}\.\d{2}$/)
   expectedGrossAmount?: string;
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    example: 40,
+    description: 'Points to redeem (D-133): capped at 20 % of the order value, the margin floor and the balance; min THB 10',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(10_000_000)
+  redeemPoints?: number;
 }
 
 export class AdminCheckoutDto extends CheckoutDto {

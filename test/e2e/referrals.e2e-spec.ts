@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { LoyaltyService } from '@modules/loyalty/loyalty.service';
 import { ReferralsService } from '@modules/promotions/referrals.service';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';
 
@@ -133,6 +134,12 @@ describe('referrals (e2e, B3.3)', () => {
     expect(event.payload).toMatchObject({ rewardBaht: rules['referrerRewardBaht'] });
     const counts = await as(ctx, referrer.token).get('/v1/store/referral').expect(200);
     expect(counts.body.referrals).toMatchObject({ qualified: 1 });
+
+    // Loyalty (B3.4) pays the referrer THB 500 = 200 points and marks the referral rewarded (D-136, D-131).
+    await ctx.prisma.withTx((tx) => ctx.app.get(LoyaltyService).onReferralQualified(envelopeFromRow(event), tx));
+    expect((await ctx.prisma.referralAttribution.findUniqueOrThrow({ where: { id: referral.id } })).status).toBe('rewarded');
+    const points = await as(ctx, referrer.token).get('/v1/store/loyalty').expect(200);
+    expect(points.body.availablePoints).toBe(200);
 
     // The referee discount is a system promotion: its values are the referral settings, not editable.
     const system = await ctx.prisma.promotion.findFirstOrThrow({ where: { kind: 'referral' } });

@@ -25,6 +25,7 @@ export const API_TAGS: Record<string, string> = {
     'Promotions with validated conditions and benefits, coupon codes (single, bulk-unique, per-customer), CSV export and the redemption report (D-053).',
   'store.referral': 'My referral code and link; use a friend’s code before the first order (D-136).',
   'admin.referrals': 'Referrals with their fraud flags; `under_review` is Marketing’s queue (D-136).',
+  'store.loyalty': 'My points, tier and points history (D-130…D-134); redeem at checkout with `redeemPoints` (D-133).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',

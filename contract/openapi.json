@@ -760,6 +760,17 @@
           "type": "https://errors.packio/internal.unexpected"
         }
       },
+      "problem.loyalty.insufficient_points": {
+        "summary": "loyalty.insufficient_points",
+        "value": {
+          "code": "loyalty.insufficient_points",
+          "detail": "คะแนนสะสมไม่พอสำหรับการแลก กรุณาดูราคาใหม่อีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "คะแนนไม่พอ",
+          "type": "https://errors.packio/loyalty.insufficient_points"
+        }
+      },
       "problem.notification.channel_unsupported": {
         "summary": "notification.channel_unsupported",
         "value": {
@@ -2373,6 +2384,13 @@
               "string",
               "null"
             ]
+          },
+          "redeemPoints": {
+            "description": "Points to redeem (D-133): capped at 20 % of the order value, the margin floor and the balance; min THB 10",
+            "example": 40,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
           },
           "taxProfileId": {
             "description": "Buyer for a full-form tax invoice; its withholding flag sets the expected cash (D-174)",
@@ -6448,6 +6466,13 @@
               "string",
               "null"
             ]
+          },
+          "redeemPoints": {
+            "description": "Points to redeem (D-133): capped at 20 % of the order value, the margin floor and the balance; min THB 10",
+            "example": 40,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
           },
           "taxProfileId": {
             "description": "Buyer for a full-form tax invoice; its withholding flag sets the expected cash (D-174)",
@@ -11266,6 +11291,24 @@
         ],
         "type": "string"
       },
+      "ExpiringPointsDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2027-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "points": {
+            "example": 20,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "points",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
       "FactoryAccessDto": {
         "properties": {
           "factoryId": {
@@ -14825,6 +14868,78 @@
         ],
         "type": "string"
       },
+      "LoyaltySummaryDto": {
+        "properties": {
+          "availablePoints": {
+            "description": "Points that can be redeemed now",
+            "example": 128,
+            "type": "integer"
+          },
+          "availableValue": {
+            "example": "320.00",
+            "type": "string"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "expiringSoon": {
+            "description": "Points expiring within the reminder window (30 days)",
+            "items": {
+              "$ref": "#/components/schemas/ExpiringPointsDto"
+            },
+            "type": "array"
+          },
+          "multiplier": {
+            "description": "Earn multiplier of the tier (D-134)",
+            "example": "1.25",
+            "type": "string"
+          },
+          "pendingPoints": {
+            "description": "Earned on completed orders, credited after the claim window (D-132)",
+            "example": 25,
+            "type": "integer"
+          },
+          "pointValue": {
+            "description": "THB per point (D-131)",
+            "example": "2.50",
+            "type": "string"
+          },
+          "spend12m": {
+            "description": "Spend of the last 12 months (before VAT, excluding shipping)",
+            "example": "62500.00",
+            "type": "string"
+          },
+          "tier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LoyaltyTier"
+              }
+            ],
+            "example": "silver"
+          }
+        },
+        "required": [
+          "tier",
+          "multiplier",
+          "spend12m",
+          "availablePoints",
+          "pendingPoints",
+          "pointValue",
+          "availableValue",
+          "expiringSoon",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "LoyaltyTier": {
+        "enum": [
+          "member",
+          "silver",
+          "gold"
+        ],
+        "type": "string"
+      },
       "MachineDto": {
         "properties": {
           "details": {
@@ -16954,6 +17069,122 @@
           "none",
           "after_pod",
           "after_pod_and_claim_window"
+        ],
+        "type": "string"
+      },
+      "PointsEntryDto": {
+        "properties": {
+          "availableAt": {
+            "example": "2026-10-28T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bahtValue": {
+            "example": "62.50",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-10-21T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "entryType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PointsEntryType"
+              }
+            ],
+            "example": "earn_order"
+          },
+          "expiresAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groupCode": {
+            "example": "OG-2610-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "orderCode": {
+            "example": "OR-2610-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "points": {
+            "description": "Signed: earnings positive, redemptions and expiry negative",
+            "example": 25,
+            "type": "integer"
+          },
+          "reason": {
+            "description": "Reason of a staff adjustment",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PointsStatus"
+              }
+            ],
+            "example": "pending"
+          }
+        },
+        "required": [
+          "id",
+          "entryType",
+          "points",
+          "bahtValue",
+          "status",
+          "availableAt",
+          "expiresAt",
+          "orderCode",
+          "groupCode",
+          "reason",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "PointsEntryType": {
+        "enum": [
+          "earn_order",
+          "earn_signup",
+          "earn_line_link",
+          "earn_review",
+          "earn_referral",
+          "earn_bonus",
+          "redeem",
+          "redeem_reversal",
+          "reversal_claim_refund",
+          "expire",
+          "adjust"
+        ],
+        "type": "string"
+      },
+      "PointsStatus": {
+        "enum": [
+          "pending",
+          "available",
+          "expired",
+          "reversed"
         ],
         "type": "string"
       },
@@ -82977,6 +83208,9 @@
                   "idempotency.in_progress": {
                     "$ref": "#/components/examples/problem.idempotency.in_progress"
                   },
+                  "loyalty.insufficient_points": {
+                    "$ref": "#/components/examples/problem.loyalty.insufficient_points"
+                  },
                   "numbering.series_missing": {
                     "$ref": "#/components/examples/problem.numbering.series_missing"
                   },
@@ -82992,7 +83226,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `loyalty.insufficient_points`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -83363,6 +83597,9 @@
                   "checkout.price_expired": {
                     "$ref": "#/components/examples/problem.checkout.price_expired"
                   },
+                  "loyalty.insufficient_points": {
+                    "$ref": "#/components/examples/problem.loyalty.insufficient_points"
+                  },
                   "promotions.budget_exhausted": {
                     "$ref": "#/components/examples/problem.promotions.budget_exhausted"
                   },
@@ -83375,7 +83612,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `promotions.budget_exhausted`, `promotions.limit_reached`",
+            "description": "Problem: `checkout.price_expired`, `loyalty.insufficient_points`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -158907,6 +159144,9 @@
                   "idempotency.in_progress": {
                     "$ref": "#/components/examples/problem.idempotency.in_progress"
                   },
+                  "loyalty.insufficient_points": {
+                    "$ref": "#/components/examples/problem.loyalty.insufficient_points"
+                  },
                   "numbering.series_missing": {
                     "$ref": "#/components/examples/problem.numbering.series_missing"
                   },
@@ -158922,7 +159162,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `loyalty.insufficient_points`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -159282,6 +159522,9 @@
                   "checkout.price_expired": {
                     "$ref": "#/components/examples/problem.checkout.price_expired"
                   },
+                  "loyalty.insufficient_points": {
+                    "$ref": "#/components/examples/problem.loyalty.insufficient_points"
+                  },
                   "promotions.budget_exhausted": {
                     "$ref": "#/components/examples/problem.promotions.budget_exhausted"
                   },
@@ -159294,7 +159537,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `promotions.budget_exhausted`, `promotions.limit_reached`",
+            "description": "Problem: `checkout.price_expired`, `loyalty.insufficient_points`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -160916,6 +161159,407 @@
         "summary": "Short-lived download URL",
         "tags": [
           "store.files"
+        ]
+      }
+    },
+    "/v1/store/loyalty": {
+      "get": {
+        "description": "Available points (redeemable at checkout with `redeemPoints`, D-133), pending points from completed orders (credited after the claim window, D-132), points expiring within 30 days, the point value (D-131) and my tier from 12-month spend (D-134).\n\nImplements: D-130, D-131, D-132, D-133, D-134.",
+        "operationId": "store.loyalty.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "availablePoints": 128,
+                  "availableValue": "320.00",
+                  "currency": "THB",
+                  "expiringSoon": [
+                    {
+                      "expiresAt": "2027-10-20T10:00:00+07:00",
+                      "points": 20
+                    }
+                  ],
+                  "multiplier": "1.25",
+                  "pendingPoints": 25,
+                  "pointValue": "2.50",
+                  "spend12m": "62500.00",
+                  "tier": "silver"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/LoyaltySummaryDto"
+                }
+              }
+            },
+            "description": "Points and tier",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my points and tier",
+        "tags": [
+          "store.loyalty"
+        ]
+      }
+    },
+    "/v1/store/loyalty/ledger": {
+      "get": {
+        "description": "Every earning, redemption, reversal and expiry, newest first (D-130…D-133).\n\nImplements: D-130, D-131, D-132, D-133, D-134.",
+        "operationId": "store.loyalty.ledger",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "availableAt": "2026-10-28T10:00:00+07:00",
+                      "bahtValue": "62.50",
+                      "createdAt": "2026-10-21T10:00:00+07:00",
+                      "entryType": "earn_order",
+                      "expiresAt": null,
+                      "groupCode": "OG-2610-0001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
+                      "orderCode": "OR-2610-0001",
+                      "points": 25,
+                      "reason": null,
+                      "status": "pending"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PointsEntryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my points history",
+        "tags": [
+          "store.loyalty"
         ]
       }
     },
@@ -173103,6 +173747,10 @@
     {
       "description": "Customer uploads (artwork, slips…): presign → PUT → complete → signed download.",
       "name": "store.files"
+    },
+    {
+      "description": "My points, tier and points history (D-130…D-134); redeem at checkout with `redeemPoints` (D-133).",
+      "name": "store.loyalty"
     },
     {
       "description": "The signed-in customer.",

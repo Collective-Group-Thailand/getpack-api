@@ -8,6 +8,7 @@ import { CartsModule } from '@modules/carts/carts.module';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { IamModule } from '@modules/iam/iam.module';
+import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PartnersModule } from '@modules/partners/partners.module';
 import { PaymentSchedulesModule } from '@modules/payment-schedules/payment-schedules.module';
@@ -70,6 +71,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     OrdersModule,
     PaymentSchedulesModule,
     PromotionsModule,
+    LoyaltyModule,
     PaymentsModule,
     DomainEventsWorkerModule,
   ],
