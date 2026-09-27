@@ -16,6 +16,9 @@ export const API_TAGS: Record<string, string> = {
   'admin.orderOperations': 'CS operations on orders: edit & re-price, change customer, remarks, notes, work queues.',
   'store.paymentSchedules': 'The instalments of my order group and its production / shipping gates (D-020, D-073).',
   'admin.paymentSchedules': 'Payment schedules and their templates: views with allocations per order, CS override (D-020, ADR-0008).',
+  'store.payments': 'Pay instalments by SCB QR, 2C2P or bank transfer with a slip (D-061, D-176).',
+  'admin.payments': 'Payments, the Finance slip queue and unidentified receipts (D-061).',
+  'webhooks.payments': 'SCB, 2C2P and slip-verification callbacks, confirmed before any payment is accepted (D-061).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',

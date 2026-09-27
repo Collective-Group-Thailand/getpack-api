@@ -141,6 +141,15 @@ export const ERROR_CODES = {
   'order.reprice_below_paid': HttpStatus.CONFLICT,
   'payments.no_schedule_template': HttpStatus.SERVICE_UNAVAILABLE,
   'payments.schedule_has_payments': HttpStatus.CONFLICT,
+  'payments.method_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'payments.group_not_payable': HttpStatus.CONFLICT,
+  'payments.nothing_to_pay': HttpStatus.CONFLICT,
+  'payments.not_a_slip_payment': HttpStatus.CONFLICT,
+  'payments.not_awaiting_slip': HttpStatus.CONFLICT,
+  'payments.slip_not_scanned': HttpStatus.CONFLICT,
+  'payments.slip_not_in_review': HttpStatus.CONFLICT,
+  'payments.slip_duplicate': HttpStatus.CONFLICT,
+  'payments.not_unidentified': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

@@ -1,9 +1,14 @@
 import { PrismaService } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
+import { type FakeObjectStorage } from '@integrations/s3/fake-object-storage';
+import { OBJECT_STORAGE } from '@integrations/s3/object-storage.port';
 import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
 import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';
+import { FileProcessingJobs } from '@platform/files/file-processing.jobs';
+import { SettingsService } from '@platform/settings/settings.service';
 import { type Redis } from 'ioredis';
 import request from 'supertest';
 
@@ -279,4 +284,44 @@ export async function placeOrder(
     totals: { grossAmount: string; cashAmount: string };
     orders: { id: string; orderCode: string; status: string; totals: { grossAmount: string } }[];
   };
+}
+
+/** Switches a feature flag and drops the flag cache. */
+export async function setFlag(ctx: CommerceApp, key: string, enabled: boolean): Promise<void> {
+  await ctx.prisma.featureFlag.update({ where: { key }, data: { enabled } });
+  ctx.app.get(FeatureFlagsService).invalidate();
+}
+
+/** A new approved version of a setting, effective now (test fixture: the admin flow is covered elsewhere). */
+export async function setSetting(ctx: CommerceApp, key: string, value: unknown): Promise<void> {
+  const setting = await ctx.prisma.setting.findFirstOrThrow({ where: { key, scopeType: 'platform' } });
+  const last = await ctx.prisma.settingVersion.findFirst({
+    where: { settingId: setting.id },
+    orderBy: { versionNo: 'desc' },
+  });
+  await ctx.prisma.settingVersion.create({
+    data: {
+      settingId: setting.id,
+      versionNo: (last?.versionNo ?? 0) + 1,
+      effectiveFrom: new Date(Date.now() - 1000),
+      status: 'approved',
+      value: value as never,
+      reason: 'e2e (fake)',
+      decidedAt: new Date(),
+    },
+  });
+  ctx.app.get(SettingsService).invalidate(key);
+}
+
+/** Uploads a slip file (the fake verifier reads `FAKESLIP;transRef=…;amount=…;date=…;receiver=ok`) and scans it. */
+export async function uploadSlipFile(ctx: CommerceApp, token: string, text: string, surface: 'store' | 'admin' = 'store') {
+  const body = Buffer.from(text);
+  const presigned = await as(ctx, token)
+    .post(`/v1/${surface}/files/presign`, { purpose: 'slip', fileName: 'slip.png', mimeType: 'image/png', sizeBytes: body.length })
+    .expect(201);
+  const row = await ctx.prisma.fileObject.findUniqueOrThrow({ where: { publicId: presigned.body.fileId as string } });
+  ctx.app.get<FakeObjectStorage>(OBJECT_STORAGE).putDirect(row.storageKey, body, 'image/png');
+  await as(ctx, token).post(`/v1/${surface}/files/${presigned.body.fileId}/actions/complete`, {}).expect(200);
+  await ctx.app.get(FileProcessingJobs).processOne(await ctx.prisma.fileObject.findUniqueOrThrow({ where: { id: row.id } }));
+  return presigned.body.fileId as string;
 }

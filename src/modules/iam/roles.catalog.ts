@@ -57,6 +57,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'quotes.read',
       'rfqs.read',
       'orders.read',
+      'payments.read',
     ],
   },
   {
@@ -122,6 +123,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'orders.manage',
       'orders.reprice',
       'payment_schedules.override',
+      'payments.read',
     ],
   },
   {
@@ -146,6 +148,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'orders.read',
       'orders.cancel',
       'orders.manage',
+      'payments.read',
     ],
   },
   {
@@ -172,6 +175,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'orders.manage',
       'orders.reprice',
       'payment_schedules.override',
+      'payments.read',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -204,6 +208,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'document_series.read',
       'customers.read',
       'orders.read',
+      'payments.read',
+      'payments.verify_slip',
+      'payments.allocate',
     ],
   },
   {
@@ -226,6 +233,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'customers.read',
       'orders.read',
       'payment_schedules.override',
+      'payments.read',
+      'payments.verify_slip',
+      'payments.allocate',
     ],
   },
   {
@@ -298,6 +308,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'document_series.read',
       'customers.read',
       'orders.read',
+      'payments.read',
     ],
   },
 

@@ -76,6 +76,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `orders.reprice` — Edit & re-price an order before production (D-051) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
 | `payment_schedules.override` — Choose or replace the payment schedule of an order group, with a reason (D-020) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |
 | `payment_schedule_templates.manage` — Add effective-dated versions of payment schedule templates (D-020, D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `payments.read` — Read payments, slips and unidentified receipts (D-061) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
+| `payments.verify_slip` — Approve or reject slips that failed automatic verification (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `payments.allocate` — Attach unidentified receipts to order groups (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

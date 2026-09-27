@@ -62,6 +62,40 @@ export class WorkingDayCalendar {
     throw new RangeError('working-time span exceeds the scan bound');
   }
 
+  /**
+   * `start` moved forward by `minutes` of **business time**: only minutes inside `window` (Bangkok
+   * `HH:mm`–`HH:mm`, D-175) on working days count. A start outside the window counts from the next
+   * window opening.
+   */
+  addBusinessMinutes(start: Date, minutes: number, window: { from: string; to: string }): Date {
+    if (!Number.isInteger(minutes) || minutes < 0)
+      throw new RangeError('minutes must be a non-negative integer');
+    const offset = (hhmm: string) => {
+      const m = /^(\d{2}):(\d{2})$/.exec(hhmm);
+      if (!m) throw new RangeError(`not a time of day: ${hhmm}`);
+      return (Number(m[1]) * 60 + Number(m[2])) * 60_000;
+    };
+    const open = offset(window.from);
+    const close = offset(window.to);
+    if (close <= open) throw new RangeError('the business-hours window must end after it starts');
+    let remaining = minutes * 60_000;
+    let cursor = start.getTime();
+    for (let scanned = 0; scanned < MAX_SCAN_DAYS; scanned++) {
+      const day = bangkokDate(new Date(cursor));
+      const dayStart = startOfBangkokDay(day).getTime();
+      if (this.isWorkingDay(day)) {
+        const from = Math.max(cursor, dayStart + open);
+        const to = dayStart + close;
+        if (from < to) {
+          if (remaining <= to - from) return new Date(from + remaining);
+          remaining -= to - from;
+        }
+      }
+      cursor = dayStart + MS_PER_DAY;
+    }
+    throw new RangeError('business-time span exceeds the scan bound');
+  }
+
   nextWorkingDay(day: string): string {
     let next = day;
     for (let scanned = 0; scanned < MAX_SCAN_DAYS; scanned++) {

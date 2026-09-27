@@ -589,6 +589,42 @@
     "schedule_has_payments": {
       "title": "Schedule already paid",
       "detail": "Something is already paid on this schedule; it cannot be replaced."
+    },
+    "method_unavailable": {
+      "title": "Payment method unavailable",
+      "detail": "Payment by {method} is not available yet; please choose another method."
+    },
+    "group_not_payable": {
+      "title": "Not payable",
+      "detail": "An order group in {status} does not take payments."
+    },
+    "nothing_to_pay": {
+      "title": "Nothing to pay",
+      "detail": "There is no open instalment to pay for this selection."
+    },
+    "not_a_slip_payment": {
+      "title": "Not a transfer payment",
+      "detail": "This payment is not a bank transfer with a slip."
+    },
+    "not_awaiting_slip": {
+      "title": "Slip not expected",
+      "detail": "A payment in {status} no longer takes a slip."
+    },
+    "slip_not_scanned": {
+      "title": "File not scanned yet",
+      "detail": "The slip file has not passed the malware scan yet; try again shortly."
+    },
+    "slip_not_in_review": {
+      "title": "Slip not in review",
+      "detail": "A slip in {status} is not in the Finance queue."
+    },
+    "slip_duplicate": {
+      "title": "Duplicate slip",
+      "detail": "This bank transfer reference has already been accepted (D-061)."
+    },
+    "not_unidentified": {
+      "title": "Not an unidentified receipt",
+      "detail": "This payment already belongs to an order group."
     }
   }
 }

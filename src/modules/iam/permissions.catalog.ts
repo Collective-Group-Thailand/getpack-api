@@ -338,6 +338,25 @@ export const PERMISSIONS = [
     decisionRefs: ['D-020', 'D-063'],
   },
 
+  {
+    key: 'payments.read',
+    audience: 'staff',
+    description: 'Read payments, slips and unidentified receipts',
+    decisionRefs: ['D-061'],
+  },
+  {
+    key: 'payments.verify_slip',
+    audience: 'staff',
+    description: 'Approve or reject slips that failed automatic verification',
+    decisionRefs: ['D-061'],
+  },
+  {
+    key: 'payments.allocate',
+    audience: 'staff',
+    description: 'Attach unidentified receipts to order groups',
+    decisionRefs: ['D-061'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },
