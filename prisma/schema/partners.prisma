@@ -348,6 +348,8 @@ model Factory {
   rfqQuoteLines    RfqQuoteLine[]           @relation("RfqQuoteLineFactory")
 
   // --- end Quotes & RFQ
+  ordersSelected Order[] @relation("OrderSelectedFactory")
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")

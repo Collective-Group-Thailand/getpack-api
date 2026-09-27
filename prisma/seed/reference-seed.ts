@@ -4,6 +4,7 @@ import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { APPROVAL_POLICIES } from './data/approval-policies';
 import { PRODUCT_TYPES } from './data/catalog';
+import { ORDER_CANCEL_REASONS } from './data/commerce';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { UNMET_DEMAND_REASONS } from './data/quotes';
@@ -64,6 +65,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureTaxRates(tx, count);
       await ensureShipping(tx, count);
       await ensureUnmetDemandReasons(tx, count);
+      await ensureOrderCancelReasons(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -446,5 +448,14 @@ async function ensureUnmetDemandReasons(tx: Tx, count: (what: string) => void): 
     if (await tx.unmetDemandReason.findUnique({ where: { code: reason.code } })) continue;
     await tx.unmetDemandReason.create({ data: { ...reason } });
     count('unmet_demand_reasons');
+  }
+}
+
+/** Order cancel reasons (B3.1). */
+async function ensureOrderCancelReasons(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const [index, reason] of ORDER_CANCEL_REASONS.entries()) {
+    if (await tx.orderCancelReason.findUnique({ where: { code: reason.code } })) continue;
+    await tx.orderCancelReason.create({ data: { ...reason, sort: (index + 1) * 10 } });
+    count('order_cancel_reasons');
   }
 }

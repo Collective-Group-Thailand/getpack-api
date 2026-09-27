@@ -551,6 +551,10 @@ model Quote {
   acceptedRfq    Rfq?            @relation("RfqAcceptedQuote")
   calculateLogs  CalculateLog[]  @relation("CalculateLogQuote")
 
+  cartItems        CartItem[] @relation("CartItemQuote")
+  cartItemsPending CartItem[] @relation("CartItemPendingQuote")
+  orders           Order[]    @relation("OrderQuote")
+
   @@index([customerUserId, createdAt(sort: Desc)], map: "ix_quotes__customer_user_id__created_at")
   @@index([status, validUntil], map: "ix_quotes__status__valid_until")
   @@index([anonymousId], map: "ix_quotes__anonymous_id")
@@ -595,6 +599,10 @@ model QuoteOption {
   quote            Quote             @relation(fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_options__quote_id")
   selectedFactory  Factory?          @relation("QuoteOptionFactory", fields: [selectedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_options__selected_factory_id")
   priceListVersion PriceListVersion? @relation("QuoteOptionPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quote_options__price_list_version_id")
+
+  cartItems        CartItem[] @relation("CartItemQuoteOption")
+  cartItemsPending CartItem[] @relation("CartItemPendingQuoteOption")
+  orders           Order[]    @relation("OrderQuoteOption")
 
   @@unique([quoteId, quantity], map: "ux_quote_options__quote_id__quantity")
   @@index([selectedFactoryId], map: "ix_quote_options__selected_factory_id")

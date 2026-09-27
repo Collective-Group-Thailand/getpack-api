@@ -80,7 +80,7 @@ For every proposal the admin screen shows: current value, proposed value, sugges
 ## Payments
 | ID | Decision | Status |
 |---|---|---|
-| D-060 | Unpaid-order expiry uses the **legacy rule**: `expired_at` set at order creation, fallback 7 days when missing, auto-cancel job every minute. The agent extracts the exact `expired_at` computation from the legacy code in B2.3 and records it here. | Accepted (exact value to extract) |
+| D-060 | Unpaid-order expiry uses the **legacy rule**: `expired_at` set at order creation, fallback 7 days when missing, auto-cancel job every minute. **Legacy rule as extracted (B3.1, 2026-09-27):** every order creation path (`Api/OrderAPIController@storev2:1574`, `@store:1044`, `OrderController@store:324`) sets `expired_at = now() + AMOUNT_DATE_ORDER_EXPIRED` **calendar days** — no branch per payment method, product type or channel; the value lives in an AWS secret that is not in the repository. Choosing SCB QR / direct debit overwrites it with `created_at + SCB_DAYS_UNTIL_EXPIRATION` (sample secret: 1 day). The cron `orders:cancel-expired` runs every minute, cancels 1 minute before `expired_at` (or after > 7 days when it is NULL) and skips orders whose payment awaits approval or is paid. **Packio:** setting `orders.unpaid_expiry_days` = **7** (the legacy fallback, proposed) on the order group from placement; a QR's lifetime applies to that payment attempt only and never shortens the order's expiry; a group with a slip awaiting verification is not cancelled; cancellation releases reserved promotions and points (legacy did not). | Accepted (value 7 proposed — confirm) |
 | D-061 | Bank-transfer slips are verified **automatically** through a slip-verification adapter (e.g. Slip2Go or SCB slip verify: receiver account, amount, date, duplicate transaction reference). Only failures go to **Finance**, SLA **4 business hours**. Gateways (2C2P, SCB) confirm automatically. | Accepted |
 
 ## Artwork & production
@@ -205,6 +205,13 @@ Consequences: all 7 calculators are ported with golden tests before launch; the 
 | D-171 | **Factories enter Packio through the Partner team at launch**: staff create the factory (self-service or assisted onboarding mode) and invite its owner, who completes the onboarding steps in the partner zone. There is no public application form in R1; one can be added later. | Accepted (2026-09-25) |
 | D-172 | **No default deviation band for price suggestions** (D-040 "flag when the proposal deviates more than a configurable band"): suggestions always show the value, basis and deviation %, but raise the `above_band` flag only once a superadmin sets `partners.suggestion_deviation_band_pct` (D-063). | Accepted (2026-09-25) |
 | D-173 | **Factory-specific tolerance (D-021/D-163) and payout-policy (D-022/D-164) overrides are approved by a Superadmin** (policies `factory_tolerance_change`, `factory_payout_policy_change`; requester Partner Manager, or Finance for payout). Seeded as a proposed default, changeable as new policy versions (D-063). | Accepted (2026-09-25) — approver Proposed |
+
+## Commerce planning answers (2026-09-27)
+| ID | Decision | Status |
+|---|---|---|
+| D-174 | **Customer withholding rates are seeded from the accounting-design §2 design defaults** — hire of work 3 %, transport 1 %, services 3 % (`tax_rates` `wht_customer_*`), used at checkout to show the expected cash for customers whose tax profile withholds; government customers use the same rates until Finance says otherwise. Changes follow `tax_setting_change` (D-169). | Accepted (2026-09-27) — rates ⚖ pending CPA |
+| D-175 | **Business hours for SLA clocks: 09:00–18:00 on working days** (national calendar, D-161), setting `calendar.business_hours`; drives the 4-business-hour slip review SLA (D-061) and any later business-hour SLA. | Accepted (2026-09-27) — value proposed |
+| D-176 | **Slip verification provider: Slip2Go first** behind the slip-verification adapter (D-061); others (e.g. SCB slip verify) can be added as adapters. SCB (QR) and 2C2P adapters are built from the providers' public documentation, disabled by feature flag until Packio's own merchant accounts exist (D-005). | Accepted (2026-09-27) |
 
 ## Still open
 Approval tier boundaries in D-052 (proposed 5–10 % Director, 10–15 % VP, > 15 % C-Level) · carrier choice in D-114 (proposed Flash Express + Deliveree) · all ⚖ items in `accounting-design.md` §10 (CPA review; defaults are in place). · ~~D-161 geography entry method~~ → D-170

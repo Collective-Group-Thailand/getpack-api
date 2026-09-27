@@ -257,6 +257,8 @@ model ProductType {
   unmetDemandRecords UnmetDemandRecord[] @relation("UnmetDemandProductType")
 
   // --- end Quotes & RFQ
+  orders Order[] @relation("OrderProductType")
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }
@@ -353,6 +355,8 @@ model CatalogProduct {
   quotes Quote[] @relation("QuoteCatalogProduct")
 
   // --- end Quotes & RFQ
+  orders Order[] @relation("OrderCatalogProduct")
+
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_th_trgm")
@@ -1036,6 +1040,8 @@ model StockProduct {
   quotes Quote[] @relation("QuoteStockProduct")
 
   // --- end Quotes & RFQ
+  orders Order[] @relation("OrderStockProduct")
+
   @@index([productTypeId], map: "ix_stock_products__product_type_id")
   @@index([seoPageId], map: "ix_stock_products__seo_page_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_stock_products__name_th_trgm")
@@ -1097,7 +1103,7 @@ model StockLevel {
   @@map("stock_levels")
 }
 
-/// Append-only (trigger). order_id FK: commerce (B3.1).
+/// Append-only (trigger).
 model StockMovement {
   id             BigInt            @id(map: "pk_stock_movements") @default(autoincrement())
   stockProductId BigInt            @map("stock_product_id")
@@ -1114,6 +1120,7 @@ model StockMovement {
   stockProduct StockProduct @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__stock_product_id")
   factory      Factory      @relation("StockMovementFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__factory_id")
   createdBy    User?        @relation("StockMovementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__created_by")
+  order        Order?       @relation("StockMovementOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_movements__order_id")
 
   @@index([stockProductId, factoryId, createdAt], map: "ix_stock_movements__product__factory__created_at")
   @@index([factoryId], map: "ix_stock_movements__factory_id")
@@ -1569,6 +1576,10 @@ model GeoProvince {
   unmetDemandRecords UnmetDemandRecord[] @relation("UnmetDemandProvince")
 
   // --- end Quotes & RFQ
+  customerAddresses CustomerAddress[]  @relation("CustomerAddressProvince")
+  taxProfiles       TaxProfile[]       @relation("TaxProfileProvince")
+  orderDestinations OrderDestination[] @relation("OrderDestinationProvince")
+
   @@map("geo_provinces")
 }
 
@@ -1619,6 +1630,10 @@ model GeoSubdistrict {
   // --- Finance (generated back-relations)
   vendorsSubdistrict Vendor[] @relation("VendorSubdistrict")
   // --- end Finance
+
+  customerAddresses CustomerAddress[]  @relation("CustomerAddressSubdistrict")
+  taxProfiles       TaxProfile[]       @relation("TaxProfileSubdistrict")
+  orderDestinations OrderDestination[] @relation("OrderDestinationSubdistrict")
 
   @@index([districtId], map: "ix_geo_subdistricts__district_id")
   @@index([postcode], map: "ix_geo_subdistricts__postcode")

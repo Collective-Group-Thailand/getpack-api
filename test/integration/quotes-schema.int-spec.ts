@@ -24,7 +24,7 @@ describe('quotes, RFQ and shipping schema (PostgreSQL 18)', () => {
       prisma,
       new EntitiesService(prisma),
       new AuditService(prisma),
-      new DomainEvents(prisma),
+      new DomainEvents(),
     );
   });
 

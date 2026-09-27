@@ -129,8 +129,10 @@ export interface TaxRateSeed {
 }
 
 /**
- * Statutory rates the calculators need before B5 (schema-design §7 A-22). Withholding rates are
- * seeded with the finance context (B5).
+ * Statutory rates the calculators and checkout need before B5 (schema-design §7 A-22). Customer
+ * withholding rates are the accounting-design §2 design defaults (⚖, pending the CPA's confirmation —
+ * D-174); government customers use the same rates until Finance says otherwise.
+ * Factory-side withholding rates are seeded with the finance context (B5).
  */
 export const TAX_RATES: readonly TaxRateSeed[] = [
   {
@@ -141,5 +143,32 @@ export const TAX_RATES: readonly TaxRateSeed[] = [
       'Output VAT on sales; rate changes are dated, never edited in place (accounting-design.md §2)',
     decisions: ['D-033'],
     ratePct: '7',
+  },
+  {
+    code: 'wht_customer_hire_of_work',
+    nameTh: 'ภาษีหัก ณ ที่จ่ายโดยลูกค้า ค่าจ้างทำของ',
+    nameEn: 'Customer withholding tax, hire of work',
+    description:
+      'Withheld by juristic / government customers on hire-of-work lines (accounting-design §2 ⚖ design default 3 %, pending CPA confirmation)',
+    decisions: ['D-033', 'D-174'],
+    ratePct: '3',
+  },
+  {
+    code: 'wht_customer_transport',
+    nameTh: 'ภาษีหัก ณ ที่จ่ายโดยลูกค้า ค่าขนส่ง',
+    nameEn: 'Customer withholding tax, transport',
+    description:
+      'Withheld by juristic / government customers on the shipping line (accounting-design §2 ⚖ design default 1 %, pending CPA confirmation)',
+    decisions: ['D-033', 'D-174'],
+    ratePct: '1',
+  },
+  {
+    code: 'wht_customer_service',
+    nameTh: 'ภาษีหัก ณ ที่จ่ายโดยลูกค้า ค่าบริการ',
+    nameEn: 'Customer withholding tax, services',
+    description:
+      'Withheld by juristic / government customers on design and other service lines (accounting-design §2 ⚖ design default 3 %, pending CPA confirmation)',
+    decisions: ['D-033', 'D-174'],
+    ratePct: '3',
   },
 ];

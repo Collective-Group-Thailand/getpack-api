@@ -353,6 +353,12 @@ model Entity {
   documentSeries DocumentSeries[] @relation("DocumentSeriesEntity")
 
   // --- end Quotes & RFQ
+  // --- Commerce (generated back-relations)
+  carts       Cart[]       @relation("CartEntity")
+  orderGroups OrderGroup[] @relation("OrderGroupEntity")
+  orders      Order[]      @relation("OrderEntity")
+  // --- end Commerce
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -1178,6 +1184,8 @@ enum DocumentType {
   claim
   shipment
   rfq
+  order
+  customer
 
   @@map("document_type")
 }

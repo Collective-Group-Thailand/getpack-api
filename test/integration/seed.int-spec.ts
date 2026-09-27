@@ -67,12 +67,22 @@ describe('seeds (PostgreSQL 18)', () => {
     }
   });
 
-  it('seeds the standard VAT rate as a dated, approved version (accounting-design §2, A-22)', async () => {
+  it('seeds VAT and the customer withholding design defaults as dated, approved versions (accounting-design §2, A-22)', async () => {
     const { rows } = await db.client.query<{ code: string; rate: string; status: string; versions: string }>(`
       SELECT t.code, min(v.rate_pct)::text AS rate, min(v.status::text) AS status, count(v.id) AS versions
         FROM tax_rates t JOIN tax_rate_versions v ON v.tax_rate_id = t.id
-       GROUP BY t.id`);
-    expect(rows).toEqual([{ code: 'vat_standard', rate: '7.0000', status: 'approved', versions: '1' }]);
+       GROUP BY t.id ORDER BY t.code`);
+    expect(rows).toEqual([
+      { code: 'vat_standard', rate: '7.0000', status: 'approved', versions: '1' },
+      { code: 'wht_customer_hire_of_work', rate: '3.0000', status: 'approved', versions: '1' },
+      { code: 'wht_customer_service', rate: '3.0000', status: 'approved', versions: '1' },
+      { code: 'wht_customer_transport', rate: '1.0000', status: 'approved', versions: '1' },
+    ]);
+  });
+
+  it('seeds the order cancel reasons lookup (B3.1)', async () => {
+    expect(await count('order_cancel_reasons')).toBe(7);
+    expect(await count("order_cancel_reasons WHERE code = 'payment_expired' AND applies_to = 'system'")).toBe(1);
   });
 
   it('keeps the issuing entity data in entity-scoped settings, not in code (D-092)', async () => {

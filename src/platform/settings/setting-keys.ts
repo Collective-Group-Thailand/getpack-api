@@ -37,6 +37,16 @@ export interface SettingValues {
   'shipping.pallet_spec': { lengthCm: number; widthCm: number; maxHeightCm: number; maxWeightKg: number };
   /** Not seeded (B2.4): no D-040 group-5 suggestion until set. */
   'shipping.target_margin_pct': string;
+  /** D-060 calendar days until an unpaid order group is cancelled (proposed, B3.1). */
+  'orders.unpaid_expiry_days': number;
+  /** accounting-design §2 nature of the sale per product type code (⚖ pending CPA). */
+  'tax.nature_by_product_type': {
+    default: 'sale_of_goods' | 'hire_of_work';
+    overrides: Record<string, 'sale_of_goods' | 'hire_of_work'>;
+  };
+  'orders.auto_complete_days': number;
+  'claims.window_days': number;
+  'discounts.cs_limit_pct': string;
 }
 
 export type SettingKey = keyof SettingValues;

@@ -1,7 +1,7 @@
 /**
  * Settings defaults from docs/decisions.md (B1.2 step 3, ADR-0005). Every value cites its decision;
  * Proposed / ⚖ values are flagged with `confirmation`. Values a decision leaves open are NOT seeded:
- * unpaid-order expiry (D-060, extracted in B3.1) and human code formats (schema-design Q-2).
+ * human code formats (schema-design Q-2).
  * Money and percentages are decimal strings (CLAUDE.md); percentages are in percent (10 = 10 %).
  */
 export type Confirmation = 'confirmed' | 'proposed' | 'pending_cpa' | 'pending_business';
@@ -271,6 +271,36 @@ export const SETTINGS: readonly SettingSeed[] = [
     value: { reminderDaysBeforeDue: 7, blockCreditOrdersAfterDaysOverdue: 7 },
     description: 'D-122 overdue reminders and credit-order blocking',
     decisions: ['D-122'],
+  },
+
+  // --- Orders & tax (B3.1)
+  {
+    key: 'orders.unpaid_expiry_days',
+    valueType: 'integer',
+    value: 7,
+    valueSchema: { minimum: 1, maximum: 90 },
+    description:
+      'D-060 calendar days after placement until an unpaid order group is cancelled; legacy reads the value from a secret not in the repository, so its 7-day fallback is seeded (B3.1, 2026-09-27)',
+    decisions: ['D-060'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'tax.nature_by_product_type',
+    valueType: 'json',
+    value: { default: 'hire_of_work', overrides: { standard_product: 'sale_of_goods' } },
+    valueSchema: {
+      type: 'object',
+      required: ['default', 'overrides'],
+      properties: {
+        default: { enum: ['sale_of_goods', 'hire_of_work'] },
+        overrides: { type: 'object', additionalProperties: { enum: ['sale_of_goods', 'hire_of_work'] } },
+      },
+    },
+    description:
+      'D-033 / accounting-design §2 nature of the sale per product type code (⚖): hire of work for made-to-order packaging, sale of goods for standard products; snapshotted on every order',
+    decisions: ['D-033'],
+    confirmation: 'pending_cpa',
+    ownerRole: 'finance_manager',
   },
 
   // --- Notifications (D-144)

@@ -50,12 +50,21 @@ describe('seed data (B1.2 step 3)', () => {
       'shipping.target_margin_pct': 'pending_business',
       // B2.5: no decision gives the RFQ SLA.
       'rfq.sla_business_hours': 'pending_business',
+      // B3.1: D-060's legacy value is a secret not in the repository — its 7-day fallback, proposed.
+      'orders.unpaid_expiry_days': 'proposed',
+      // B3.1: nature of the sale per product type (accounting-design §2 ⚖).
+      'tax.nature_by_product_type': 'pending_cpa',
     });
   });
 
   it('does not seed values a decision leaves open', () => {
     const keys = SETTINGS.map((s) => s.key);
-    expect(keys.filter((k) => /unpaid|expir(y|ed)_at|code_format/.test(k))).toEqual([]);
+    expect(keys.filter((k) => /expir(y|ed)_at|code_format/.test(k))).toEqual([]);
+  });
+
+  it('seeds the D-060 unpaid expiry as the legacy 7-day fallback, flagged proposed (B3.1)', () => {
+    const expiry = SETTINGS.find((s) => s.key === 'orders.unpaid_expiry_days');
+    expect(expiry).toMatchObject({ value: 7, decisions: ['D-060'], confirmation: 'proposed' });
   });
 
   it('rejects values that do not match their type', () => {

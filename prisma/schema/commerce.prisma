@@ -1,0 +1,711 @@
+// Commerce (docs/schema-design.md §3.6): customers, carts, order groups & orders (B3.1); payment
+// schedules & payments (B3.2); promotions, campaigns & referral (B3.3); loyalty (B3.4); B2B companies &
+// discount memos (B3.5). Hand-written checks, triggers and partial indexes live in the migrations.
+
+// --- Enums (B3.1) ----------------------------------------------------------------------------------
+
+enum CustomerType {
+  individual
+  juristic
+  government
+
+  @@map("customer_type")
+}
+
+enum TaxType {
+  individual
+  juristic
+  government
+
+  @@map("tax_type")
+}
+
+enum CreationChannel {
+  self
+  cs
+  line_liff
+
+  @@map("creation_channel")
+}
+
+enum AddressKind {
+  delivery
+  billing
+
+  @@map("address_kind")
+}
+
+enum BranchType {
+  head_office
+  branch
+
+  @@map("branch_type")
+}
+
+enum CartStatus {
+  active
+  checked_out
+  abandoned
+
+  @@map("cart_status")
+}
+
+enum CartCodeStatus {
+  validated
+  rejected
+
+  @@map("cart_code_status")
+}
+
+enum DesignOption {
+  own_file
+  online_designer
+  hired_design
+  free_design
+
+  @@map("design_option")
+}
+
+enum MockupOption {
+  none
+  with_print
+  without_print
+
+  @@map("mockup_option")
+}
+
+enum OrderGroupStatus {
+  pending_company_approval
+  waiting_payment
+  in_progress
+  completed
+  cancelled
+
+  @@map("order_group_status")
+}
+
+enum OrderStatus {
+  waiting_payment
+  paid_for_production
+  artwork_approved
+  in_production
+  shipping
+  completed
+  cancelled
+
+  @@map("order_status")
+}
+
+enum ArtworkStatus {
+  awaiting_template
+  awaiting_upload
+  uploaded
+  in_review
+  proof_sent
+  changes_requested
+  approved
+
+  @@map("artwork_status")
+}
+
+enum ProductionStartMode {
+  auto
+  manual_exception
+
+  @@map("production_start_mode")
+}
+
+enum CompletionMode {
+  auto_after_days
+  customer_confirmed
+
+  @@map("completion_mode")
+}
+
+enum OrderLineType {
+  product
+  design_fee
+  structure_design_fee
+  mockup
+  plate
+  die_block
+  shipping
+  service
+  extra_revision
+
+  @@map("order_line_type")
+}
+
+enum RevenueCategory {
+  made_to_order
+  standard_product
+  design_service
+  mockup
+  shipping
+  other_service
+
+  @@map("revenue_category")
+}
+
+enum TaxNature {
+  sale_of_goods
+  hire_of_work
+
+  @@map("tax_nature")
+}
+
+enum DiscountSource {
+  coupon
+  automatic_promotion
+  referral
+  cs_discount
+  discount_memo
+  company_discount
+  points_redemption
+
+  @@map("discount_source")
+}
+
+enum CancelReasonAppliesTo {
+  customer
+  staff
+  system
+
+  @@map("cancel_reason_applies_to")
+}
+
+// --- Customers (B3.1) ------------------------------------------------------------------------------
+
+/// One per customer user (`users.kind = customer`), created on first use. `customer_code` is assigned
+/// from the `customer` series when the customer first orders or CS creates the account (Q-2).
+model CustomerProfile {
+  userId       BigInt          @id(map: "pk_customer_profiles") @map("user_id")
+  customerCode String?         @unique(map: "ux_customer_profiles__customer_code") @map("customer_code")
+  customerType CustomerType    @default(individual) @map("customer_type")
+  /// UTM / channel of the first touch (D-102 acquisition); no PII.
+  firstTouch   Json?           @map("first_touch")
+  createdVia   CreationChannel @map("created_via")
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?         @map("created_by")
+  updatedAt    DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById  BigInt?         @map("updated_by")
+  rowVersion   Int             @default(1) @map("row_version")
+
+  user      User  @relation("CustomerProfileUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__user_id")
+  createdBy User? @relation("CustomerProfileCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__created_by")
+  updatedBy User? @relation("CustomerProfileUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__updated_by")
+
+  @@index([createdById], map: "ix_customer_profiles__created_by")
+  @@index([updatedById], map: "ix_customer_profiles__updated_by")
+  @@map("customer_profiles")
+}
+
+/// Customer-owned convenience data (soft delete, schema-design §1.6); orders keep a snapshot. PII.
+model CustomerAddress {
+  id            BigInt      @id(map: "pk_customer_addresses") @default(autoincrement())
+  publicId      String      @unique(map: "ux_customer_addresses__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId        BigInt      @map("user_id")
+  kind          AddressKind
+  label         String
+  recipientName String      @map("recipient_name")
+  /// E.164 (+66…).
+  phone         String
+  line1         String
+  line2         String?
+  subdistrictId BigInt?     @map("subdistrict_id")
+  postcode      String      @db.Char(5)
+  provinceId    BigInt      @map("province_id")
+  lat           Decimal?    @db.Decimal(9, 6)
+  lng           Decimal?    @db.Decimal(9, 6)
+  isDefault     Boolean     @default(false) @map("is_default")
+  deletedAt     DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?     @map("created_by")
+  updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?     @map("updated_by")
+  rowVersion    Int         @default(1) @map("row_version")
+
+  user              User                  @relation("CustomerAddressUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_addresses__user_id")
+  subdistrict       GeoSubdistrict?       @relation("CustomerAddressSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_addresses__subdistrict_id")
+  province          GeoProvince           @relation("CustomerAddressProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_addresses__province_id")
+  createdBy         User?                 @relation("CustomerAddressCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_addresses__created_by")
+  updatedBy         User?                 @relation("CustomerAddressUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_addresses__updated_by")
+  cartDestinations  CartItemDestination[]
+  orderDestinations OrderDestination[]
+
+  @@unique([userId, kind], map: "ux_customer_addresses__one_default", where: raw("(is_default AND (deleted_at IS NULL))"))
+  @@index([userId, kind], map: "ix_customer_addresses__user_id__kind")
+  @@index([subdistrictId], map: "ix_customer_addresses__subdistrict_id")
+  @@index([provinceId], map: "ix_customer_addresses__province_id")
+  @@index([createdById], map: "ix_customer_addresses__created_by")
+  @@index([updatedById], map: "ix_customer_addresses__updated_by")
+  @@map("customer_addresses")
+}
+
+/// Buyer data for full-form tax invoices (accounting-design §2): tax type, head office / branch and the
+/// customer WHT flag. Soft delete (A-31): issued documents and orders keep their own snapshot. PII.
+model TaxProfile {
+  id            BigInt     @id(map: "pk_tax_profiles") @default(autoincrement())
+  publicId      String     @unique(map: "ux_tax_profiles__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId        BigInt     @map("user_id")
+  taxType       TaxType    @map("tax_type")
+  name          String
+  taxId         String     @map("tax_id") @db.Char(13)
+  branchType    BranchType @map("branch_type")
+  branchCode    String     @map("branch_code") @db.Char(5)
+  line1         String
+  line2         String?
+  subdistrictId BigInt?    @map("subdistrict_id")
+  postcode      String     @db.Char(5)
+  provinceId    BigInt     @map("province_id")
+  /// The customer withholds tax on payments (accounting-design §2, P03).
+  withholdsTax  Boolean    @default(false) @map("withholds_tax")
+  documentEmail String?    @map("document_email") @db.Citext
+  isDefault     Boolean    @default(false) @map("is_default")
+  deletedAt     DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?    @map("created_by")
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?    @map("updated_by")
+  rowVersion    Int        @default(1) @map("row_version")
+
+  user        User            @relation("TaxProfileUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_profiles__user_id")
+  subdistrict GeoSubdistrict? @relation("TaxProfileSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_profiles__subdistrict_id")
+  province    GeoProvince     @relation("TaxProfileProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_profiles__province_id")
+  createdBy   User?           @relation("TaxProfileCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_profiles__created_by")
+  updatedBy   User?           @relation("TaxProfileUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_profiles__updated_by")
+
+  @@unique([userId], map: "ux_tax_profiles__one_default", where: raw("(is_default AND (deleted_at IS NULL))"))
+  @@index([userId], map: "ix_tax_profiles__user_id")
+  @@index([subdistrictId], map: "ix_tax_profiles__subdistrict_id")
+  @@index([provinceId], map: "ix_tax_profiles__province_id")
+  @@index([createdById], map: "ix_tax_profiles__created_by")
+  @@index([updatedById], map: "ix_tax_profiles__updated_by")
+  @@map("tax_profiles")
+}
+
+// --- Carts (B3.1) ----------------------------------------------------------------------------------
+
+/// One active cart per customer and channel (partial unique index). CS carts carry the CS user.
+model Cart {
+  id                BigInt       @id(map: "pk_carts") @default(autoincrement())
+  publicId          String       @unique(map: "ux_carts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId          BigInt       @map("entity_id")
+  customerUserId    BigInt       @map("customer_user_id")
+  createdByCsUserId BigInt?      @map("created_by_cs_user_id")
+  channel           SalesChannel
+  status            CartStatus   @default(active)
+  utm               Json?
+  lastActivityAt    DateTime     @default(now()) @map("last_activity_at") @db.Timestamptz(6)
+  checkedOutAt      DateTime?    @map("checked_out_at") @db.Timestamptz(6)
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion        Int          @default(1) @map("row_version")
+
+  entity      Entity       @relation("CartEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carts__entity_id")
+  customer    User         @relation("CartCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carts__customer_user_id")
+  createdByCs User?        @relation("CartCreatedByCs", fields: [createdByCsUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carts__created_by_cs_user_id")
+  items       CartItem[]
+  codes       CartCode[]
+  orderGroups OrderGroup[] @relation("OrderGroupCart")
+
+  @@unique([customerUserId, channel], map: "ux_carts__one_active", where: raw("(status = 'active'::cart_status)"))
+  @@index([customerUserId, status], map: "ix_carts__customer_user_id__status")
+  @@index([entityId], map: "ix_carts__entity_id")
+  @@index([createdByCsUserId], map: "ix_carts__created_by_cs_user_id")
+  @@map("carts")
+}
+
+/// One configuration (a saved quote option, instant or accepted RFQ) with its price lock (D-051).
+model CartItem {
+  id                   BigInt       @id(map: "pk_cart_items") @default(autoincrement())
+  publicId             String       @unique(map: "ux_cart_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  cartId               BigInt       @map("cart_id")
+  quoteId              BigInt       @map("quote_id")
+  quoteOptionId        BigInt       @map("quote_option_id")
+  reorderOfOrderId     BigInt?      @map("reorder_of_order_id")
+  quantity             Int
+  designOption         DesignOption @map("design_option")
+  /// Free-text design reference until design documents exist (B4.1).
+  designNote           String?      @map("design_note")
+  mockupOption         MockupOption @default(none) @map("mockup_option")
+  netAmount            Decimal      @map("net_amount") @db.Decimal(14, 2)
+  vatAmount            Decimal      @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount          Decimal      @map("gross_amount") @db.Decimal(14, 2)
+  shippingAmount       Decimal?     @map("shipping_amount") @db.Decimal(14, 2)
+  unitPrice            Decimal      @map("unit_price") @db.Decimal(18, 6)
+  priceLockedUntil     DateTime     @map("price_locked_until") @db.Timestamptz(6)
+  repricedAt           DateTime?    @map("repriced_at") @db.Timestamptz(6)
+  /// Re-priced quote option waiting for the client's confirmation (B3.1).
+  pendingQuoteId       BigInt?      @map("pending_quote_id")
+  pendingQuoteOptionId BigInt?      @map("pending_quote_option_id")
+  pendingPriceDiff     Json?        @map("pending_price_diff")
+  sort                 Int          @default(0) @db.SmallInt
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion           Int          @default(1) @map("row_version")
+
+  cart               Cart                  @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_cart_items__cart_id")
+  quote              Quote                 @relation("CartItemQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__quote_id")
+  quoteOption        QuoteOption           @relation("CartItemQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__quote_option_id")
+  reorderOfOrder     Order?                @relation("CartItemReorderOf", fields: [reorderOfOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reorder_of_order_id")
+  pendingQuote       Quote?                @relation("CartItemPendingQuote", fields: [pendingQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__pending_quote_id")
+  pendingQuoteOption QuoteOption?          @relation("CartItemPendingQuoteOption", fields: [pendingQuoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__pending_quote_option_id")
+  destinations       CartItemDestination[]
+
+  @@index([cartId], map: "ix_cart_items__cart_id")
+  @@index([quoteId], map: "ix_cart_items__quote_id")
+  @@index([quoteOptionId], map: "ix_cart_items__quote_option_id")
+  @@index([reorderOfOrderId], map: "ix_cart_items__reorder_of_order_id")
+  @@index([pendingQuoteId], map: "ix_cart_items__pending_quote_id")
+  @@index([pendingQuoteOptionId], map: "ix_cart_items__pending_quote_option_id")
+  @@map("cart_items")
+}
+
+/// Split of a cart item's quantity over delivery addresses (sum = item quantity, checked at checkout).
+model CartItemDestination {
+  id                BigInt   @id(map: "pk_cart_item_destinations") @default(autoincrement())
+  publicId          String   @unique(map: "ux_cart_item_destinations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  cartItemId        BigInt   @map("cart_item_id")
+  customerAddressId BigInt?  @map("customer_address_id")
+  addressSnapshot   Json     @map("address_snapshot")
+  quantity          Int
+  sort              Int      @default(0) @db.SmallInt
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  cartItem        CartItem         @relation(fields: [cartItemId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_cart_item_destinations__cart_item_id")
+  customerAddress CustomerAddress? @relation(fields: [customerAddressId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_item_destinations__customer_address_id")
+
+  @@index([cartItemId], map: "ix_cart_item_destinations__cart_item_id")
+  @@index([customerAddressId], map: "ix_cart_item_destinations__customer_address_id")
+  @@map("cart_item_destinations")
+}
+
+/// Codes entered on a cart (promotion link added with B3.3).
+model CartCode {
+  id           BigInt         @id(map: "pk_cart_codes") @default(autoincrement())
+  cartId       BigInt         @map("cart_id")
+  code         String         @db.Citext
+  status       CartCodeStatus
+  rejectReason String?        @map("reject_reason")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_cart_codes__cart_id")
+
+  @@unique([cartId, code], map: "ux_cart_codes__cart_id__code")
+  @@map("cart_codes")
+}
+
+// --- Order groups & orders (B3.1) ------------------------------------------------------------------
+
+/// One per checkout (A-6). Money: `net_amount` is every line's net incl. shipping; `gross_amount` =
+/// net − discount + VAT; `cash_amount` = gross − expected customer WHT (P03).
+model OrderGroup {
+  id                     BigInt           @id(map: "pk_order_groups") @default(autoincrement())
+  publicId               String           @unique(map: "ux_order_groups__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupCode              String           @unique(map: "ux_order_groups__group_code") @map("group_code")
+  entityId               BigInt           @map("entity_id")
+  customerUserId         BigInt           @map("customer_user_id")
+  placedByUserId         BigInt           @map("placed_by_user_id")
+  onBehalfOfUserId       BigInt?          @map("on_behalf_of_user_id")
+  cartId                 BigInt?          @map("cart_id")
+  channel                SalesChannel
+  status                 OrderGroupStatus
+  taxProfileSnapshot     Json?            @map("tax_profile_snapshot")
+  billingAddressSnapshot Json?            @map("billing_address_snapshot")
+  poNumber               String?          @map("po_number")
+  netAmount              Decimal          @map("net_amount") @db.Decimal(14, 2)
+  discountAmount         Decimal          @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  shippingNetAmount      Decimal          @default(0) @map("shipping_net_amount") @db.Decimal(14, 2)
+  vatAmount              Decimal          @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount            Decimal          @map("gross_amount") @db.Decimal(14, 2)
+  whtAmount              Decimal          @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  cashAmount             Decimal          @map("cash_amount") @db.Decimal(14, 2)
+  pointsRedeemed         Int              @default(0) @map("points_redeemed")
+  pointsValue            Decimal          @default(0) @map("points_value") @db.Decimal(14, 2)
+  /// Unpaid expiry (D-060); cleared once the group is no longer waiting for payment.
+  expiresAt              DateTime?        @map("expires_at") @db.Timestamptz(6)
+  placedAt               DateTime         @default(now()) @map("placed_at") @db.Timestamptz(6)
+  cancelledAt            DateTime?        @map("cancelled_at") @db.Timestamptz(6)
+  cancelReasonId         BigInt?          @map("cancel_reason_id")
+  cancelNote             String?          @map("cancel_note")
+  /// Lower-cased by the service (text[], not citext[]: Prisma 7 cannot map citext arrays, A-31).
+  ccEmails               String[]         @default([]) @map("cc_emails")
+  /// Internal only, never on the store surface.
+  csRemarks              String?          @map("cs_remarks")
+  utm                    Json?
+  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById            BigInt?          @map("updated_by")
+  rowVersion             Int              @default(1) @map("row_version")
+
+  entity       Entity             @relation("OrderGroupEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__entity_id")
+  customer     User               @relation("OrderGroupCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__customer_user_id")
+  placedBy     User               @relation("OrderGroupPlacedBy", fields: [placedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__placed_by_user_id")
+  onBehalfOf   User?              @relation("OrderGroupOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__on_behalf_of_user_id")
+  cart         Cart?              @relation("OrderGroupCart", fields: [cartId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cart_id")
+  cancelReason OrderCancelReason? @relation("OrderGroupCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cancel_reason_id")
+  updatedBy    User?              @relation("OrderGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__updated_by")
+  orders       Order[]
+
+  @@index([customerUserId, placedAt(sort: Desc)], map: "ix_order_groups__customer_user_id__placed_at")
+  @@index([status, placedAt(sort: Desc)], map: "ix_order_groups__status__placed_at")
+  @@index([entityId], map: "ix_order_groups__entity_id")
+  @@index([placedByUserId], map: "ix_order_groups__placed_by_user_id")
+  @@index([onBehalfOfUserId], map: "ix_order_groups__on_behalf_of_user_id")
+  @@index([cartId], map: "ix_order_groups__cart_id")
+  @@index([cancelReasonId], map: "ix_order_groups__cancel_reason_id")
+  @@index([updatedById], map: "ix_order_groups__updated_by")
+  @@index([expiresAt], map: "ix_order_groups__expires_at", where: raw("(status = 'waiting_payment'::order_group_status)"))
+  @@map("order_groups")
+}
+
+/// One per configuration (legacy rule, A-6). Status is driven by facts (B3.1 state machine). The
+/// pricing snapshot is write-once except an audited re-price before production (`order_price_revisions`).
+model Order {
+  id                      BigInt               @id(map: "pk_orders") @default(autoincrement())
+  publicId                String               @unique(map: "ux_orders__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderCode               String               @unique(map: "ux_orders__order_code") @map("order_code")
+  entityId                BigInt               @map("entity_id")
+  orderGroupId            BigInt               @map("order_group_id")
+  customerUserId          BigInt               @map("customer_user_id")
+  productTypeId           BigInt               @map("product_type_id")
+  catalogProductId        BigInt?              @map("catalog_product_id")
+  stockProductId          BigInt?              @map("stock_product_id")
+  quoteId                 BigInt               @map("quote_id")
+  quoteOptionId           BigInt               @map("quote_option_id")
+  reorderOfOrderId        BigInt?              @map("reorder_of_order_id")
+  status                  OrderStatus          @default(waiting_payment)
+  statusChangedAt         DateTime             @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  artworkStatus           ArtworkStatus        @map("artwork_status")
+  designOption            DesignOption         @map("design_option")
+  designNote              String?              @map("design_note")
+  mockupOption            MockupOption         @default(none) @map("mockup_option")
+  quantityOrdered         Int                  @map("quantity_ordered")
+  quantityDelivered       Int?                 @map("quantity_delivered")
+  unit                    ProductUnit
+  toleranceShortagePct    Decimal?             @map("tolerance_shortage_pct") @db.Decimal(7, 4)
+  toleranceOveragePct     Decimal?             @map("tolerance_overage_pct") @db.Decimal(7, 4)
+  taxNature               TaxNature            @map("tax_nature")
+  pricingSnapshot         Json                 @map("pricing_snapshot")
+  configRefs              Json                 @map("config_refs")
+  snapshotSha256          Bytes                @map("snapshot_sha256")
+  pricingRevision         Int                  @default(1) @map("pricing_revision")
+  netAmount               Decimal              @map("net_amount") @db.Decimal(14, 2)
+  discountAmount          Decimal              @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  shippingNetAmount       Decimal              @default(0) @map("shipping_net_amount") @db.Decimal(14, 2)
+  vatAmount               Decimal              @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount             Decimal              @map("gross_amount") @db.Decimal(14, 2)
+  whtAmount               Decimal              @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  cashAmount              Decimal              @map("cash_amount") @db.Decimal(14, 2)
+  leadTimeDays            Int?                 @map("lead_time_days") @db.SmallInt
+  promisedShipDate        DateTime?            @map("promised_ship_date") @db.Date
+  confirmedProductionDate DateTime?            @map("confirmed_production_date") @db.Date
+  paidForProductionAt     DateTime?            @map("paid_for_production_at") @db.Timestamptz(6)
+  artworkApprovedAt       DateTime?            @map("artwork_approved_at") @db.Timestamptz(6)
+  productionStartedAt     DateTime?            @map("production_started_at") @db.Timestamptz(6)
+  startMode               ProductionStartMode? @map("start_mode")
+  shippedAt               DateTime?            @map("shipped_at") @db.Timestamptz(6)
+  deliveredAt             DateTime?            @map("delivered_at") @db.Timestamptz(6)
+  completedAt             DateTime?            @map("completed_at") @db.Timestamptz(6)
+  completionMode          CompletionMode?      @map("completion_mode")
+  claimWindowEndsAt       DateTime?            @map("claim_window_ends_at") @db.Timestamptz(6)
+  cancelledAt             DateTime?            @map("cancelled_at") @db.Timestamptz(6)
+  cancelReasonId          BigInt?              @map("cancel_reason_id")
+  cancelNote              String?              @map("cancel_note")
+  /// Staff-only (D-044, D-050, D-141).
+  selectedFactoryId       BigInt?              @map("selected_factory_id")
+  buyCostNet              Decimal?             @map("buy_cost_net") @db.Decimal(14, 2)
+  marginAmount            Decimal?             @map("margin_amount") @db.Decimal(14, 2)
+  marginPct               Decimal?             @map("margin_pct") @db.Decimal(9, 4)
+  belowMarginFloor        Boolean              @default(false) @map("below_margin_floor")
+  createdAt               DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById             BigInt?              @map("updated_by")
+  rowVersion              Int                  @default(1) @map("row_version")
+
+  entity          Entity               @relation("OrderEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__entity_id")
+  orderGroup      OrderGroup           @relation(fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__order_group_id")
+  customer        User                 @relation("OrderCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__customer_user_id")
+  productType     ProductType          @relation("OrderProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__product_type_id")
+  catalogProduct  CatalogProduct?      @relation("OrderCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__catalog_product_id")
+  stockProduct    StockProduct?        @relation("OrderStockProduct", fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__stock_product_id")
+  quote           Quote                @relation("OrderQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__quote_id")
+  quoteOption     QuoteOption          @relation("OrderQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__quote_option_id")
+  reorderOfOrder  Order?               @relation("OrderReorderOf", fields: [reorderOfOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reorder_of_order_id")
+  reorders        Order[]              @relation("OrderReorderOf")
+  cancelReason    OrderCancelReason?   @relation("OrderCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__cancel_reason_id")
+  selectedFactory Factory?             @relation("OrderSelectedFactory", fields: [selectedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__selected_factory_id")
+  updatedBy       User?                @relation("OrderUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__updated_by")
+  lines           OrderLine[]
+  discounts       OrderDiscount[]
+  destinations    OrderDestination[]
+  notes           OrderNote[]
+  priceRevisions  OrderPriceRevision[]
+  cartReorders    CartItem[]           @relation("CartItemReorderOf")
+  stockMovements  StockMovement[]      @relation("StockMovementOrder")
+
+  @@index([orderGroupId], map: "ix_orders__order_group_id")
+  @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
+  @@index([customerUserId, createdAt(sort: Desc)], map: "ix_orders__customer_user_id__created_at")
+  @@index([artworkStatus], map: "ix_orders__artwork_status")
+  @@index([entityId], map: "ix_orders__entity_id")
+  @@index([productTypeId], map: "ix_orders__product_type_id")
+  @@index([catalogProductId], map: "ix_orders__catalog_product_id")
+  @@index([stockProductId], map: "ix_orders__stock_product_id")
+  @@index([quoteId], map: "ix_orders__quote_id")
+  @@index([quoteOptionId], map: "ix_orders__quote_option_id")
+  @@index([reorderOfOrderId], map: "ix_orders__reorder_of_order_id")
+  @@index([cancelReasonId], map: "ix_orders__cancel_reason_id")
+  @@index([selectedFactoryId], map: "ix_orders__selected_factory_id")
+  @@index([updatedById], map: "ix_orders__updated_by")
+  @@map("orders")
+}
+
+/// Charge lines of an order (§2.9 amount set). Replaced only by a re-price before production.
+model OrderLine {
+  id                BigInt          @id(map: "pk_order_lines") @default(autoincrement())
+  publicId          String          @unique(map: "ux_order_lines__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId           BigInt          @map("order_id")
+  lineNo            Int             @map("line_no") @db.SmallInt
+  lineType          OrderLineType   @map("line_type")
+  descriptionTh     String          @map("description_th")
+  descriptionEn     String          @map("description_en")
+  quantity          Decimal         @db.Decimal(14, 3)
+  unit              ProductUnit
+  unitPrice         Decimal         @map("unit_price") @db.Decimal(18, 6)
+  netAmount         Decimal         @map("net_amount") @db.Decimal(14, 2)
+  discountAmount    Decimal         @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  vatRatePct        Decimal         @map("vat_rate_pct") @db.Decimal(7, 4)
+  vatAmount         Decimal         @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount       Decimal         @map("gross_amount") @db.Decimal(14, 2)
+  whtCategory       WhtCategory     @map("wht_category")
+  whtRatePct        Decimal         @default(0) @map("wht_rate_pct") @db.Decimal(7, 4)
+  whtAmount         Decimal         @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  revenueCategory   RevenueCategory @map("revenue_category")
+  taxNature         TaxNature       @map("tax_nature")
+  isReusableTooling Boolean         @default(false) @map("is_reusable_tooling")
+  waivedReason      String?         @map("waived_reason")
+  /// Staff-only.
+  buyCostNet        Decimal?        @map("buy_cost_net") @db.Decimal(14, 2)
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_lines__order_id")
+  discounts OrderDiscount[]
+
+  @@unique([orderId, lineNo], map: "ux_order_lines__order_id__line_no")
+  @@map("order_lines")
+}
+
+/// Every discount applied to an order (feeds P09/P11 with its source dimension). Promotion, coupon,
+/// campaign and memo references are added by B3.3 and B3.5.
+model OrderDiscount {
+  id              BigInt         @id(map: "pk_order_discounts") @default(autoincrement())
+  orderId         BigInt         @map("order_id")
+  orderLineId     BigInt?        @map("order_line_id")
+  source          DiscountSource
+  grantedByUserId BigInt?        @map("granted_by_user_id")
+  pct             Decimal?       @db.Decimal(7, 4)
+  amount          Decimal        @db.Decimal(14, 2)
+  /// Amount the margin guard removed (D-053).
+  cappedAmount    Decimal        @default(0) @map("capped_amount") @db.Decimal(14, 2)
+  capReason       String?        @map("cap_reason")
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__order_id")
+  orderLine OrderLine? @relation(fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__order_line_id")
+  grantedBy User?      @relation("OrderDiscountGrantedBy", fields: [grantedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__granted_by_user_id")
+
+  @@index([orderId], map: "ix_order_discounts__order_id")
+  @@index([orderLineId], map: "ix_order_discounts__order_line_id")
+  @@index([grantedByUserId], map: "ix_order_discounts__granted_by_user_id")
+  @@map("order_discounts")
+}
+
+/// Delivery destination snapshot: the only customer data a factory sees (D-142). PII.
+model OrderDestination {
+  id                BigInt   @id(map: "pk_order_destinations") @default(autoincrement())
+  publicId          String   @unique(map: "ux_order_destinations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId           BigInt   @map("order_id")
+  customerAddressId BigInt?  @map("customer_address_id")
+  recipientName     String   @map("recipient_name")
+  phone             String
+  line1             String
+  line2             String?
+  subdistrictId     BigInt?  @map("subdistrict_id")
+  postcode          String   @db.Char(5)
+  provinceId        BigInt   @map("province_id")
+  quantity          Int
+  /// Shipping priced for this destination (net of VAT), part of the order's shipping line.
+  shippingNetAmount Decimal  @default(0) @map("shipping_net_amount") @db.Decimal(14, 2)
+  sort              Int      @default(0) @db.SmallInt
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_destinations__order_id")
+  customerAddress CustomerAddress? @relation(fields: [customerAddressId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_destinations__customer_address_id")
+  subdistrict     GeoSubdistrict?  @relation("OrderDestinationSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_destinations__subdistrict_id")
+  province        GeoProvince      @relation("OrderDestinationProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_destinations__province_id")
+
+  @@index([orderId], map: "ix_order_destinations__order_id")
+  @@index([customerAddressId], map: "ix_order_destinations__customer_address_id")
+  @@index([subdistrictId], map: "ix_order_destinations__subdistrict_id")
+  @@index([provinceId], map: "ix_order_destinations__province_id")
+  @@map("order_destinations")
+}
+
+/// Internal notes (append-only); @mentions are used by B4.4.
+model OrderNote {
+  id           BigInt   @id(map: "pk_order_notes") @default(autoincrement())
+  publicId     String   @unique(map: "ux_order_notes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId      BigInt   @map("order_id")
+  authorUserId BigInt   @map("author_user_id")
+  body         String
+  mentions     BigInt[] @default([])
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_notes__order_id")
+  author User  @relation("OrderNoteAuthor", fields: [authorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_notes__author_user_id")
+
+  @@index([orderId, createdAt], map: "ix_order_notes__order_id__created_at")
+  @@index([authorUserId], map: "ix_order_notes__author_user_id")
+  @@map("order_notes")
+}
+
+/// Previous pricing of an order kept by an edit & re-price before production (A-31). Append-only.
+model OrderPriceRevision {
+  id               BigInt   @id(map: "pk_order_price_revisions") @default(autoincrement())
+  orderId          BigInt   @map("order_id")
+  revision         Int
+  previousSnapshot Json     @map("previous_snapshot")
+  previousLines    Json     @map("previous_lines")
+  previousGross    Decimal  @map("previous_gross") @db.Decimal(14, 2)
+  newGross         Decimal  @map("new_gross") @db.Decimal(14, 2)
+  reason           String
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt   @map("created_by")
+
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_price_revisions__order_id")
+  createdBy User  @relation("OrderPriceRevisionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_price_revisions__created_by")
+
+  @@unique([orderId, revision], map: "ux_order_price_revisions__order_id__revision")
+  @@index([createdById], map: "ix_order_price_revisions__created_by")
+  @@map("order_price_revisions")
+}
+
+/// Editable lookup of cancel reasons (credit-note mapping added by B5.2).
+model OrderCancelReason {
+  id                 BigInt                @id(map: "pk_order_cancel_reasons") @default(autoincrement())
+  code               String                @unique(map: "ux_order_cancel_reasons__code")
+  nameTh             String                @map("name_th")
+  nameEn             String                @map("name_en")
+  appliesTo          CancelReasonAppliesTo @map("applies_to")
+  requiresCreditNote Boolean               @default(false) @map("requires_credit_note")
+  active             Boolean               @default(true)
+  sort               Int                   @default(0) @db.SmallInt
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  orderGroups OrderGroup[] @relation("OrderGroupCancelReason")
+  orders      Order[]      @relation("OrderCancelReason")
+
+  @@map("order_cancel_reasons")
+}

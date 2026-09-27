@@ -270,6 +270,56 @@ const CHECKS = [
   'ck_pl_print_type_terms__digital_methods',
   'ck_pl_print_type_terms__digital_values',
   'ck_pl_print_type_terms__bulk_lead_time',
+
+  // --- B3.1 customers, carts, order groups & orders
+  'ck_cart_item_destinations__quantity',
+  'ck_cart_items__amounts',
+  'ck_cart_items__gross',
+  'ck_cart_items__pending',
+  'ck_cart_items__quantity',
+  'ck_carts__checked_out',
+  'ck_customer_addresses__lat_lng',
+  'ck_customer_addresses__phone_e164',
+  'ck_customer_addresses__postcode',
+  'ck_customer_addresses__text',
+  'ck_customer_profiles__customer_code',
+  'ck_document_series__gapless',
+  'ck_order_cancel_reasons__code',
+  'ck_order_destinations__phone_e164',
+  'ck_order_destinations__postcode',
+  'ck_order_destinations__quantity',
+  'ck_order_destinations__shipping',
+  'ck_order_discounts__amounts',
+  'ck_order_discounts__cap',
+  'ck_order_groups__amounts',
+  'ck_order_groups__cancelled',
+  'ck_order_groups__cc_emails',
+  'ck_order_groups__cash',
+  'ck_order_groups__gross',
+  'ck_order_groups__po_number',
+  'ck_order_lines__amounts',
+  'ck_order_lines__gross',
+  'ck_order_lines__line_no',
+  'ck_order_lines__quantity',
+  'ck_order_lines__wht',
+  'ck_order_notes__body',
+  'ck_order_price_revisions__reason',
+  'ck_order_price_revisions__revision',
+  'ck_orders__amounts',
+  'ck_orders__cancelled',
+  'ck_orders__cash',
+  'ck_orders__completed',
+  'ck_orders__gross',
+  'ck_orders__pricing_revision',
+  'ck_orders__quantity',
+  'ck_orders__sha',
+  'ck_orders__started',
+  'ck_orders__tolerance',
+  'ck_tax_profiles__branch',
+  'ck_tax_profiles__branch_code',
+  'ck_tax_profiles__postcode',
+  'ck_tax_profiles__tax_id',
+  'ck_tax_profiles__text',
 ];
 
 const TRIGGERS = [
@@ -336,6 +386,15 @@ const TRIGGERS = [
   'tg_pl_print_prices__version_frozen',
   'tg_pl_print_wastes__version_frozen',
   'tg_pl_process_exclusions__version_frozen',
+
+  // --- B3.1 customers, carts, order groups & orders
+  'tg_order_destinations__before_production',
+  'tg_order_discounts__before_production',
+  'tg_order_groups__no_delete',
+  'tg_order_lines__before_production',
+  'tg_order_notes__append_only',
+  'tg_order_price_revisions__append_only',
+  'tg_orders__snapshot_write_once',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -386,6 +445,12 @@ const INDEXES = [
 
   // --- B2.3 folding geometry
   'ux_pattern_geometry_conditions__slot',
+
+  // --- B3.1 customers, carts, order groups & orders
+  'ix_order_groups__expires_at',
+  'ux_carts__one_active',
+  'ux_customer_addresses__one_default',
+  'ux_tax_profiles__one_default',
 ];
 
 const EXPRESSION_INDEXES = [
