@@ -298,7 +298,7 @@ export class MilestonesService {
           checklist: input.checklist as Prisma.InputJsonValue,
           result: input.result,
           isFirstPass: earlier === 0 && input.result === 'pass',
-          defects: (input.defects ?? []),
+          defects: input.defects ?? [],
           quantityChecked: input.quantityChecked ?? null,
           quantityDefective: input.quantityDefective ?? null,
           note: input.note ?? null,

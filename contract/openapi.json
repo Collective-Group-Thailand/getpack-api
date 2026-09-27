@@ -17973,6 +17973,150 @@
         ],
         "type": "object"
       },
+      "InspectionDto": {
+        "properties": {
+          "accept": {
+            "additionalProperties": true,
+            "description": "Acceptance numbers per class",
+            "example": {
+              "critical": 0,
+              "major": 5,
+              "minor": 7
+            },
+            "type": "object"
+          },
+          "factoryCode": {
+            "example": "F9001",
+            "type": "string"
+          },
+          "found": {
+            "additionalProperties": true,
+            "description": "Defects found per class",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "inspector": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "jobId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "jobNo": {
+            "example": "JOB-2609-00001",
+            "type": "string"
+          },
+          "lotSize": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "notes": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ratePct": {
+            "description": "Probability the reasons gave (percent)",
+            "example": "100.0000",
+            "type": "string"
+          },
+          "reasons": {
+            "example": [
+              "trial_factory"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/InspectionReason"
+            },
+            "type": "array"
+          },
+          "resultAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sampleSize": {
+            "description": "ISO 2859-1 level II sample",
+            "example": 80,
+            "type": "integer"
+          },
+          "scheduledAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "selected": {
+            "description": "Drawn for inspection",
+            "example": true,
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InspectionStatus"
+              }
+            ],
+            "example": "planned"
+          }
+        },
+        "required": [
+          "id",
+          "jobId",
+          "jobNo",
+          "factoryCode",
+          "status",
+          "reasons",
+          "ratePct",
+          "selected",
+          "lotSize",
+          "sampleSize",
+          "accept",
+          "found",
+          "scheduledAt",
+          "inspector",
+          "resultAt",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "InspectionReason": {
+        "enum": [
+          "value_100_pct",
+          "value_band_sample",
+          "trial_factory",
+          "high_defect_factory",
+          "special_finish_or_food"
+        ],
+        "type": "string"
+      },
+      "InspectionStatus": {
+        "enum": [
+          "planned",
+          "in_progress",
+          "passed",
+          "failed",
+          "waived"
+        ],
+        "type": "string"
+      },
       "InstalmentAllocationDto": {
         "properties": {
           "cashAmount": {
@@ -25259,6 +25403,19 @@
         ],
         "type": "object"
       },
+      "RecomputeScorecardDto": {
+        "properties": {
+          "month": {
+            "example": "2026-09-01",
+            "pattern": "^\\d{4}-\\d{2}-01$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month"
+        ],
+        "type": "object"
+      },
       "RecordConsentDto": {
         "properties": {
           "granted": {
@@ -25283,6 +25440,45 @@
         "required": [
           "purpose",
           "granted"
+        ],
+        "type": "object"
+      },
+      "RecordInspectionDto": {
+        "properties": {
+          "foundCritical": {
+            "example": 0,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "foundMajor": {
+            "example": 1,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "foundMinor": {
+            "example": 2,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "notes": {
+            "example": "สุ่มตรวจ 80 ชิ้น พบตำหนิเล็กน้อย 2 ชิ้น",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "photoFileIds": {
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          }
+        },
+        "required": [
+          "foundCritical",
+          "foundMajor",
+          "foundMinor"
         ],
         "type": "object"
       },
@@ -27508,6 +27704,25 @@
         ],
         "type": "object"
       },
+      "ScheduleInspectionDto": {
+        "properties": {
+          "inspectorUserId": {
+            "description": "Defaults to you",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "scheduledAt": {
+            "example": "2026-10-08T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduledAt"
+        ],
+        "type": "object"
+      },
       "ScheduleOverrideDto": {
         "properties": {
           "reason": {
@@ -27534,6 +27749,72 @@
           "company"
         ],
         "type": "string"
+      },
+      "ScorecardDto": {
+        "properties": {
+          "claimRatePct": {
+            "example": "0.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "computedAt": {
+            "example": "2026-10-01T02:00:00+07:00",
+            "type": "string"
+          },
+          "jobsCount": {
+            "example": 20,
+            "type": "integer"
+          },
+          "month": {
+            "description": "First day of the month",
+            "example": "2026-09-01",
+            "type": "string"
+          },
+          "onTimeAcceptancePct": {
+            "description": "Accepted within the SLA, % of released jobs",
+            "example": "95.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onTimeShippingPct": {
+            "description": "Finished by the promised date, % of completed jobs",
+            "example": "90.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onTimeUpdatesPct": {
+            "description": "Milestones completed by their due time",
+            "example": "92.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "qcFirstPassPct": {
+            "example": "98.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "month",
+          "onTimeAcceptancePct",
+          "onTimeShippingPct",
+          "qcFirstPassPct",
+          "claimRatePct",
+          "onTimeUpdatesPct",
+          "jobsCount",
+          "computedAt"
+        ],
+        "type": "object"
       },
       "SellMarginKind": {
         "enum": [
@@ -108390,6 +108671,433 @@
         ]
       }
     },
+    "/v1/admin/factories/{factoryId}/scorecards": {
+      "get": {
+        "description": "Latest 12 months (D-155).\n\nImplements: D-155.",
+        "operationId": "admin.inspections.scorecards",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "claimRatePct": "0.0000",
+                    "computedAt": "2026-10-01T02:00:00+07:00",
+                    "jobsCount": 20,
+                    "month": "2026-09-01",
+                    "onTimeAcceptancePct": "95.0000",
+                    "onTimeShippingPct": "90.0000",
+                    "onTimeUpdatesPct": "92.0000",
+                    "qcFirstPassPct": "98.0000"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScorecardDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Scorecards",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "A factory’s monthly scorecards",
+        "tags": [
+          "admin.inspections"
+        ],
+        "x-required-permissions": [
+          "production.read"
+        ]
+      }
+    },
+    "/v1/admin/factories/{factoryId}/scorecards/actions/recompute": {
+      "post": {
+        "description": "After corrections; the monthly job computes last month on the 1st (D-155).\n\nImplements: D-155.",
+        "operationId": "admin.inspections.recomputeScorecard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "month": "2026-09-01"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RecomputeScorecardDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "claimRatePct": "0.0000",
+                  "computedAt": "2026-10-01T02:00:00+07:00",
+                  "jobsCount": 20,
+                  "month": "2026-09-01",
+                  "onTimeAcceptancePct": "95.0000",
+                  "onTimeShippingPct": "90.0000",
+                  "onTimeUpdatesPct": "92.0000",
+                  "qcFirstPassPct": "98.0000"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ScorecardDto"
+                }
+              }
+            },
+            "description": "Scorecard",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Recompute a month’s scorecard",
+        "tags": [
+          "admin.inspections"
+        ],
+        "x-required-permissions": [
+          "production.manage"
+        ]
+      }
+    },
     "/v1/admin/factories/{factoryId}/shipping-rate-card": {
       "get": {
         "description": "The version in force, the next scheduled one and the open draft or version awaiting the factory. Buy prices: D-141 roles only; every read is audited (D-044, D-013).\n\nImplements: D-013, D-042, D-044.",
@@ -116989,6 +117697,775 @@
         ],
         "x-required-permissions": [
           "index_series.manage"
+        ]
+      }
+    },
+    "/v1/admin/inspections": {
+      "get": {
+        "description": "Planned at release from the risk rules (D-076: value ≥ THB 300,000 → 100 %, 100,000–299,999 → 20 %, the first 3 jobs of a factory → 100 %, a factory above 3 % defects over 90 days → 50 %, special finishes or food contact +20 pp) with an ISO 2859-1 level II sample; `waived` = not drawn.\n\nImplements: D-076.",
+        "operationId": "admin.inspections.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InspectionStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "accept": {
+                        "critical": 0,
+                        "major": 5,
+                        "minor": 7
+                      },
+                      "factoryCode": "F9001",
+                      "found": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                      "inspector": null,
+                      "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "jobNo": "JOB-2609-00001",
+                      "lotSize": 1000,
+                      "notes": null,
+                      "ratePct": "100.0000",
+                      "reasons": [
+                        "trial_factory"
+                      ],
+                      "resultAt": null,
+                      "sampleSize": 80,
+                      "scheduledAt": null,
+                      "selected": true,
+                      "status": "planned"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/InspectionDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List Packio inspections",
+        "tags": [
+          "admin.inspections"
+        ],
+        "x-required-permissions": [
+          "production.read"
+        ]
+      }
+    },
+    "/v1/admin/inspections/{inspectionId}/actions/record": {
+      "post": {
+        "description": "Defects found in the sample per class; passed when each is within its acceptance number (AQL 0 / 2.5 / 4.0, ISO 2859-1). A failure puts the job on hold for a decision. Feeds the scorecard (D-076, D-155).\n\nImplements: D-076, D-155.",
+        "operationId": "admin.inspections.record",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspectionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "foundCritical": 0,
+                    "foundMajor": 1,
+                    "foundMinor": 2,
+                    "notes": "สุ่มตรวจ 80 ชิ้น"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RecordInspectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accept": {
+                    "critical": 0,
+                    "major": 5,
+                    "minor": 7
+                  },
+                  "factoryCode": "F9001",
+                  "found": {
+                    "critical": 0,
+                    "major": 1,
+                    "minor": 2
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                  "inspector": null,
+                  "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "jobNo": "JOB-2609-00001",
+                  "lotSize": 1000,
+                  "notes": null,
+                  "ratePct": "100.0000",
+                  "reasons": [
+                    "trial_factory"
+                  ],
+                  "resultAt": null,
+                  "sampleSize": 80,
+                  "scheduledAt": null,
+                  "selected": true,
+                  "status": "passed"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionDto"
+                }
+              }
+            },
+            "description": "Recorded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "production.invalid_status": {
+                    "$ref": "#/components/examples/problem.production.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `production.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Record an inspection result",
+        "tags": [
+          "admin.inspections"
+        ],
+        "x-required-permissions": [
+          "inspections.perform"
+        ]
+      }
+    },
+    "/v1/admin/inspections/{inspectionId}/actions/schedule": {
+      "post": {
+        "description": "Inspector and date (D-076).\n\nImplements: D-076.",
+        "operationId": "admin.inspections.schedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inspectionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "scheduledAt": "2026-10-08T10:00:00+07:00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleInspectionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accept": {
+                    "critical": 0,
+                    "major": 5,
+                    "minor": 7
+                  },
+                  "factoryCode": "F9001",
+                  "found": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1004",
+                  "inspector": "ผู้ตรวจ ทดสอบ",
+                  "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                  "jobNo": "JOB-2609-00001",
+                  "lotSize": 1000,
+                  "notes": null,
+                  "ratePct": "100.0000",
+                  "reasons": [
+                    "trial_factory"
+                  ],
+                  "resultAt": null,
+                  "sampleSize": 80,
+                  "scheduledAt": "2026-10-08T10:00:00+07:00",
+                  "selected": true,
+                  "status": "planned"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionDto"
+                }
+              }
+            },
+            "description": "Scheduled",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "production.invalid_status": {
+                    "$ref": "#/components/examples/problem.production.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `production.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Schedule an inspection",
+        "tags": [
+          "admin.inspections"
+        ],
+        "x-required-permissions": [
+          "inspections.perform"
         ]
       }
     },
@@ -169351,6 +170828,202 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/scorecards": {
+      "get": {
+        "description": "On-time acceptance, on-time shipping, QC first pass, claim rate and on-time updates (D-155); used in allocation when several factories serve a type (D-075).\n\nImplements: D-155, D-075.",
+        "operationId": "partner.production.scorecards",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "claimRatePct": "0.0000",
+                    "computedAt": "2026-10-01T02:00:00+07:00",
+                    "jobsCount": 20,
+                    "month": "2026-09-01",
+                    "onTimeAcceptancePct": "95.0000",
+                    "onTimeShippingPct": "90.0000",
+                    "onTimeUpdatesPct": "92.0000",
+                    "qcFirstPassPct": "98.0000"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScorecardDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Scorecards",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "My factory’s monthly scorecards",
+        "tags": [
+          "partner.production"
+        ],
+        "x-required-permissions": [
+          "factory_scorecard.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/shipping-rate-card": {
       "get": {
         "description": "What Packio pays the factory for delivering with its own fleet: in force, scheduled, awaiting an answer (D-013).\n\nImplements: D-013, D-042, D-044.",
@@ -208766,6 +210439,10 @@
     {
       "description": "Material price indices and cost-driver series behind the price suggestions (D-040).",
       "name": "admin.indexSeries"
+    },
+    {
+      "description": "Packio risk-based inspections (D-076, ISO 2859-1) and factory scorecards (D-155).",
+      "name": "admin.inspections"
     },
     {
       "description": "A customer’s points, tier and history; audited staff adjustments (D-130…D-134).",

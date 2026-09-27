@@ -15,6 +15,7 @@ import {
   IsString,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
   Min,
   MinLength,
@@ -1000,4 +1001,222 @@ export const ADD_ROUTE_VERSION_EXAMPLE = {
     { key: 'printing', nameTh: 'พิมพ์', nameEn: 'Printing', evidence: 'photo', tracksQuantity: true },
     { key: 'ready_to_ship', nameTh: 'พร้อมส่ง', nameEn: 'Ready to ship', customerLabelTh: 'พร้อมจัดส่ง' },
   ],
+};
+
+// --- inspections & scorecards (B4.2 slice 4) ---------------------------------------------------------
+
+export const INSPECTION_STATUSES = ['planned', 'in_progress', 'passed', 'failed', 'waived'] as const;
+export const INSPECTION_REASONS = [
+  'value_100_pct',
+  'value_band_sample',
+  'trial_factory',
+  'high_defect_factory',
+  'special_finish_or_food',
+] as const;
+
+export class InspectionListQuery {
+  @ApiPropertyOptional({ enum: INSPECTION_STATUSES, enumName: 'InspectionStatus' })
+  @IsOptional()
+  @IsIn(INSPECTION_STATUSES)
+  status?: (typeof INSPECTION_STATUSES)[number];
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page: number = 1;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, maximum: 100, default: 25 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  perPage: number = 25;
+}
+
+export class ScheduleInspectionDto {
+  @ApiPropertyOptional({ format: 'uuid', example: JOB_IDS.factory, description: 'Defaults to you' })
+  @IsOptional()
+  @IsUUID()
+  inspectorUserId?: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-08T10:00:00+07:00' })
+  @IsISO8601()
+  scheduledAt!: string;
+}
+
+export class RecordInspectionDto {
+  @ApiProperty({ type: 'integer', minimum: 0, example: 0 })
+  @IsInt()
+  @Min(0)
+  foundCritical!: number;
+
+  @ApiProperty({ type: 'integer', minimum: 0, example: 1 })
+  @IsInt()
+  @Min(0)
+  foundMajor!: number;
+
+  @ApiProperty({ type: 'integer', minimum: 0, example: 2 })
+  @IsInt()
+  @Min(0)
+  foundMinor!: number;
+
+  @ApiPropertyOptional({ example: 'สุ่มตรวจ 80 ชิ้น พบตำหนิเล็กน้อย 2 ชิ้น', maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  notes?: string;
+
+  @ApiPropertyOptional({ type: [String], format: 'uuid', example: [] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('all', { each: true })
+  photoFileIds?: string[];
+}
+
+export class InspectionDto {
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.milestone })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.job })
+  jobId!: string;
+
+  @ApiProperty({ example: 'JOB-2609-00001' })
+  jobNo!: string;
+
+  @ApiProperty({ example: 'F9001' })
+  factoryCode!: string;
+
+  @ApiProperty({ enum: INSPECTION_STATUSES, enumName: 'InspectionStatus', example: 'planned' })
+  status!: string;
+
+  @ApiProperty({
+    enum: INSPECTION_REASONS,
+    enumName: 'InspectionReason',
+    isArray: true,
+    example: ['trial_factory'],
+  })
+  reasons!: string[];
+
+  @ApiProperty({ example: '100.0000', description: 'Probability the reasons gave (percent)' })
+  ratePct!: string;
+
+  @ApiProperty({ example: true, description: 'Drawn for inspection' })
+  selected!: boolean;
+
+  @ApiProperty({ type: 'integer', example: 1000 })
+  lotSize!: number;
+
+  @ApiProperty({ type: 'integer', example: 80, description: 'ISO 2859-1 level II sample' })
+  sampleSize!: number;
+
+  @ApiProperty({
+    example: { critical: 0, major: 5, minor: 7 },
+    type: 'object',
+    additionalProperties: true,
+    description: 'Acceptance numbers per class',
+  })
+  accept!: Record<string, number>;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: null,
+    description: 'Defects found per class',
+  })
+  found!: Record<string, number> | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  scheduledAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  inspector!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  resultAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  notes!: string | null;
+}
+
+export class ScorecardDto {
+  @ApiProperty({ example: '2026-09-01', description: 'First day of the month' })
+  month!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '95.0000',
+    description: 'Accepted within the SLA, % of released jobs',
+  })
+  onTimeAcceptancePct!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '90.0000',
+    description: 'Finished by the promised date, % of completed jobs',
+  })
+  onTimeShippingPct!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '98.0000' })
+  qcFirstPassPct!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '0.0000' })
+  claimRatePct!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '92.0000',
+    description: 'Milestones completed by their due time',
+  })
+  onTimeUpdatesPct!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 20 })
+  jobsCount!: number;
+
+  @ApiProperty({ example: '2026-10-01T02:00:00+07:00' })
+  computedAt!: string;
+}
+
+export class RecomputeScorecardDto {
+  @ApiProperty({ example: '2026-09-01', pattern: '^\\d{4}-\\d{2}-01$' })
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-01$/)
+  month!: string;
+}
+
+export const INSPECTION_EXAMPLE: InspectionDto = {
+  id: JOB_IDS.milestone,
+  jobId: JOB_IDS.job,
+  jobNo: 'JOB-2609-00001',
+  factoryCode: 'F9001',
+  status: 'planned',
+  reasons: ['trial_factory'],
+  ratePct: '100.0000',
+  selected: true,
+  lotSize: 1000,
+  sampleSize: 80,
+  accept: { critical: 0, major: 5, minor: 7 },
+  found: null,
+  scheduledAt: null,
+  inspector: null,
+  resultAt: null,
+  notes: null,
+};
+
+export const SCORECARD_EXAMPLE: ScorecardDto = {
+  month: '2026-09-01',
+  onTimeAcceptancePct: '95.0000',
+  onTimeShippingPct: '90.0000',
+  qcFirstPassPct: '98.0000',
+  claimRatePct: '0.0000',
+  onTimeUpdatesPct: '92.0000',
+  jobsCount: 20,
+  computedAt: '2026-10-01T02:00:00+07:00',
 };
