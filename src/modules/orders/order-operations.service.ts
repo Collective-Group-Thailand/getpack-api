@@ -297,9 +297,10 @@ export class OrderOperationsService {
           rowVersion: { increment: 1 },
         },
       });
+      // CS remarks, cc e-mails and PO numbers are back-office edits (remarks are internal only).
       await this.orders.record(tx, 'order_group', group.publicId, 'order_group.updated', {
         fields: Object.keys(body),
-      }, actor);
+      }, actor, ['internal']);
       return tx.orderGroup.findUniqueOrThrow({ where: { id: group.id }, include: GROUP_INCLUDE });
     });
   }
@@ -318,10 +319,11 @@ export class OrderOperationsService {
         data: { orderId: order.id, authorUserId: actor.userId, body, mentions: mentioned.map((m) => m.id) },
         include: { author: true },
       });
+      // Internal notes stay internal: the customer's timeline never learns of them.
       await this.orders.record(tx, 'order', order.publicId, 'order.note_added', {
         noteId: note.publicId,
         mentionIds: mentioned.map((m) => m.publicId),
-      }, actor);
+      }, actor, ['internal']);
       return note;
     });
   }

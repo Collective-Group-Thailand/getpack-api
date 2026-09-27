@@ -2443,6 +2443,14 @@
         ],
         "type": "object"
       },
+      "ActivityVisibility": {
+        "enum": [
+          "internal",
+          "customer",
+          "partner"
+        ],
+        "type": "string"
+      },
       "ActorType": {
         "enum": [
           "user",
@@ -20771,6 +20779,103 @@
         ],
         "type": "object"
       },
+      "OrderProgressDto": {
+        "properties": {
+          "artworkApprovedAt": {
+            "example": "2026-10-11T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveredAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "paidForProductionAt": {
+            "example": "2026-10-10T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productionStartedAt": {
+            "example": "2026-10-11T10:05:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "promisedShipDate": {
+            "example": "2026-10-20",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippedAt": {
+            "example": "2026-10-19T08:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippedOnTime": {
+            "description": "Shipped on or before the promised date; null until shipped or without a promise",
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "status": {
+            "example": "shipping",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ProgressStepDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "orderId",
+          "status",
+          "promisedShipDate",
+          "paidForProductionAt",
+          "artworkApprovedAt",
+          "productionStartedAt",
+          "shippedAt",
+          "shippedOnTime",
+          "deliveredAt",
+          "completedAt",
+          "steps"
+        ],
+        "type": "object"
+      },
       "OrderQueue": {
         "enum": [
           "waiting_payment",
@@ -24326,6 +24431,46 @@
         ],
         "type": "string"
       },
+      "ProgressStepDto": {
+        "properties": {
+          "completedAt": {
+            "example": "2026-10-14T16:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "key": {
+            "example": "printing",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "Printing",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "กำลังพิมพ์",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MilestoneStatus"
+              }
+            ],
+            "example": "completed"
+          }
+        },
+        "required": [
+          "key",
+          "labelTh",
+          "labelEn",
+          "status",
+          "completedAt"
+        ],
+        "type": "object"
+      },
       "PromotionAction": {
         "enum": [
           "activate",
@@ -25093,6 +25238,59 @@
           "bankCode",
           "accountName",
           "accountNo"
+        ],
+        "type": "object"
+      },
+      "PublicTrackingDto": {
+        "properties": {
+          "deliveredAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "promisedShipDate": {
+            "example": "2026-10-20",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shipments": {
+            "items": {
+              "$ref": "#/components/schemas/TrackingShipmentDto"
+            },
+            "type": "array"
+          },
+          "shippedAt": {
+            "example": "2026-10-19T08:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "example": "shipping",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ProgressStepDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "promisedShipDate",
+          "shippedAt",
+          "deliveredAt",
+          "steps",
+          "shipments"
         ],
         "type": "object"
       },
@@ -31487,6 +31685,118 @@
         ],
         "type": "object"
       },
+      "StaffTimelineEntryDto": {
+        "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimelineActorDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "body": {
+            "description": "Internal note text (source `note`)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "description": "Stable id of the entry within the timeline",
+            "example": "a:1042",
+            "type": "string"
+          },
+          "mentions": {
+            "description": "Staff @mentioned in a note",
+            "items": {
+              "$ref": "#/components/schemas/UserRefDto"
+            },
+            "type": "array"
+          },
+          "messageKey": {
+            "description": "i18n key the client renders",
+            "example": "activity.production.milestone_reached",
+            "type": "string"
+          },
+          "occurredAt": {
+            "example": "2026-10-12T10:15:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "example": {
+              "labelEn": "Printing",
+              "labelTh": "กำลังพิมพ์",
+              "stepKey": "printing"
+            },
+            "type": "object"
+          },
+          "photoFileIds": {
+            "description": "Photos shared with the customer (milestones, proof of delivery)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000f2005"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "shipment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimelineShipmentRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TimelineSource"
+              }
+            ],
+            "example": "production_job"
+          },
+          "type": {
+            "description": "What happened: an activity action or `shipment.<status>`",
+            "example": "production.milestone_reached",
+            "type": "string"
+          },
+          "visibility": {
+            "example": [
+              "internal",
+              "partner"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ActivityVisibility"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "type",
+          "messageKey",
+          "params",
+          "photoFileIds",
+          "shipment",
+          "source",
+          "visibility",
+          "actor",
+          "body",
+          "mentions"
+        ],
+        "type": "object"
+      },
       "StandardSizeDto": {
         "properties": {
           "calcHeightMm": {
@@ -34134,6 +34444,139 @@
         ],
         "type": "object"
       },
+      "TimelineActorDto": {
+        "properties": {
+          "displayName": {
+            "example": "CS ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ActorType"
+              }
+            ],
+            "example": "user"
+          }
+        },
+        "required": [
+          "type",
+          "displayName"
+        ],
+        "type": "object"
+      },
+      "TimelineEntryDto": {
+        "properties": {
+          "id": {
+            "description": "Stable id of the entry within the timeline",
+            "example": "a:1042",
+            "type": "string"
+          },
+          "messageKey": {
+            "description": "i18n key the client renders",
+            "example": "activity.production.milestone_reached",
+            "type": "string"
+          },
+          "occurredAt": {
+            "example": "2026-10-12T10:15:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "example": {
+              "labelEn": "Printing",
+              "labelTh": "กำลังพิมพ์",
+              "stepKey": "printing"
+            },
+            "type": "object"
+          },
+          "photoFileIds": {
+            "description": "Photos shared with the customer (milestones, proof of delivery)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000f2005"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "shipment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimelineShipmentRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": {
+            "description": "What happened: an activity action or `shipment.<status>`",
+            "example": "production.milestone_reached",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "type",
+          "messageKey",
+          "params",
+          "photoFileIds",
+          "shipment"
+        ],
+        "type": "object"
+      },
+      "TimelineShipmentRefDto": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreCarrier"
+              }
+            ],
+            "example": "packio"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "shipmentNo": {
+            "example": "SH-2610-0001",
+            "type": "string"
+          },
+          "trackingNo": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "shipmentNo",
+          "carrier",
+          "trackingNo"
+        ],
+        "type": "object"
+      },
+      "TimelineSource": {
+        "enum": [
+          "order",
+          "order_group",
+          "production_job",
+          "shipment",
+          "note"
+        ],
+        "type": "string"
+      },
       "TokenAudience": {
         "enum": [
           "customer",
@@ -34336,6 +34779,116 @@
           "approvalRequestId",
           "shortagePct",
           "overagePct"
+        ],
+        "type": "object"
+      },
+      "TrackingLinkDto": {
+        "properties": {
+          "token": {
+            "example": "q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh",
+            "type": "string"
+          },
+          "url": {
+            "description": "Shown once; only its hash is kept",
+            "example": "https://www.packio.example/track/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "token"
+        ],
+        "type": "object"
+      },
+      "TrackingShipmentDto": {
+        "properties": {
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreCarrier"
+              }
+            ],
+            "example": "packio"
+          },
+          "cartonsCount": {
+            "example": 3,
+            "type": "integer"
+          },
+          "shipmentNo": {
+            "example": "SH-2610-0001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrackingStatus"
+              }
+            ],
+            "example": "in_transit"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/TrackingStepDto"
+            },
+            "type": "array"
+          },
+          "trackingNo": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "trackingUrl": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "shipmentNo",
+          "status",
+          "carrier",
+          "trackingNo",
+          "trackingUrl",
+          "cartonsCount",
+          "steps"
+        ],
+        "type": "object"
+      },
+      "TrackingStatus": {
+        "enum": [
+          "ready",
+          "picked_up",
+          "in_transit",
+          "out_for_delivery",
+          "delivered",
+          "failed",
+          "returned"
+        ],
+        "type": "string"
+      },
+      "TrackingStepDto": {
+        "properties": {
+          "occurredAt": {
+            "example": "2026-10-19T12:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrackingStatus"
+              }
+            ],
+            "example": "in_transit"
+          }
+        },
+        "required": [
+          "status",
+          "occurredAt"
         ],
         "type": "object"
       },
@@ -129062,6 +129615,208 @@
         ]
       }
     },
+    "/v1/admin/orders/{orderId}/progress": {
+      "get": {
+        "description": "The promised ship date against the actual facts and the customer-visible production steps.\n\nImplements: D-075, D-081.",
+        "operationId": "admin.timeline.progress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "artworkApprovedAt": "2026-10-11T10:00:00+07:00",
+                  "completedAt": null,
+                  "deliveredAt": null,
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "paidForProductionAt": "2026-10-10T09:00:00+07:00",
+                  "productionStartedAt": "2026-10-11T10:05:00+07:00",
+                  "promisedShipDate": "2026-10-20",
+                  "shippedAt": "2026-10-19T08:00:00+07:00",
+                  "shippedOnTime": true,
+                  "status": "shipping",
+                  "steps": [
+                    {
+                      "completedAt": "2026-10-14T16:00:00+07:00",
+                      "key": "printing",
+                      "labelEn": "Printing",
+                      "labelTh": "กำลังพิมพ์",
+                      "status": "completed"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OrderProgressDto"
+                }
+              }
+            },
+            "description": "Progress",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Promised vs actual for an order",
+        "tags": [
+          "admin.timeline"
+        ],
+        "x-required-permissions": [
+          "orders.read"
+        ]
+      }
+    },
     "/v1/admin/orders/{orderId}/proofs": {
       "get": {
         "description": "Newest first (D-070).\n\nImplements: D-070, D-073.",
@@ -130035,6 +130790,255 @@
         ],
         "x-required-permissions": [
           "prepress.review"
+        ]
+      }
+    },
+    "/v1/admin/orders/{orderId}/timeline": {
+      "get": {
+        "description": "Everything that happened to the order, its group, its production jobs and shipments (internal and factory steps included), with internal notes and their @mentions. Chronological, cursor-paged.\n\nImplements: D-143, D-075.",
+        "operationId": "admin.timeline.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "actor": {
+                        "displayName": "ผู้ปฏิบัติงาน (fake)",
+                        "type": "user"
+                      },
+                      "body": null,
+                      "id": "a:1042",
+                      "mentions": [],
+                      "messageKey": "activity.production.milestone_reached",
+                      "occurredAt": "2026-10-14T16:00:00+07:00",
+                      "params": {
+                        "labelEn": "Printing",
+                        "labelTh": "กำลังพิมพ์",
+                        "stepKey": "printing"
+                      },
+                      "photoFileIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-0000000f2005"
+                      ],
+                      "shipment": null,
+                      "source": "order",
+                      "type": "production.milestone_reached",
+                      "visibility": [
+                        "internal",
+                        "customer"
+                      ]
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/StaffTimelineEntryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "An order’s full timeline",
+        "tags": [
+          "admin.timeline"
+        ],
+        "x-required-permissions": [
+          "orders.read"
         ]
       }
     },
@@ -205685,6 +206689,205 @@
         ]
       }
     },
+    "/v1/store/orders/{orderId}/progress": {
+      "get": {
+        "description": "The promised ship date against the actual facts and the customer-visible production steps.\n\nImplements: D-075, D-081.",
+        "operationId": "store.timeline.progress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "artworkApprovedAt": "2026-10-11T10:00:00+07:00",
+                  "completedAt": null,
+                  "deliveredAt": null,
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "paidForProductionAt": "2026-10-10T09:00:00+07:00",
+                  "productionStartedAt": "2026-10-11T10:05:00+07:00",
+                  "promisedShipDate": "2026-10-20",
+                  "shippedAt": "2026-10-19T08:00:00+07:00",
+                  "shippedOnTime": true,
+                  "status": "shipping",
+                  "steps": [
+                    {
+                      "completedAt": "2026-10-14T16:00:00+07:00",
+                      "key": "printing",
+                      "labelEn": "Printing",
+                      "labelTh": "กำลังพิมพ์",
+                      "status": "completed"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OrderProgressDto"
+                }
+              }
+            },
+            "description": "Progress",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Promised vs actual for my order",
+        "tags": [
+          "store.timeline"
+        ]
+      }
+    },
     "/v1/store/orders/{orderId}/proofs": {
       "get": {
         "description": "Newest version first, with annotations and the compare data of the version each one answers (D-070).\n\nImplements: D-070, D-073.",
@@ -206770,6 +207973,475 @@
         "summary": "List the templates sent for my order",
         "tags": [
           "store.artwork"
+        ]
+      }
+    },
+    "/v1/store/orders/{orderId}/timeline": {
+      "get": {
+        "description": "Chronological, cursor-paged: ordered → paid instalments → artwork and proofs → production steps with their labels and shared photos → shipments and carrier steps → proof of delivery → completed. No factory identity or costs (D-050).\n\nImplements: D-050, D-075, D-143.",
+        "operationId": "store.timeline.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "id": "a:1042",
+                      "messageKey": "activity.production.milestone_reached",
+                      "occurredAt": "2026-10-14T16:00:00+07:00",
+                      "params": {
+                        "labelEn": "Printing",
+                        "labelTh": "กำลังพิมพ์",
+                        "stepKey": "printing"
+                      },
+                      "photoFileIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-0000000f2005"
+                      ],
+                      "shipment": null,
+                      "type": "production.milestone_reached"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/TimelineEntryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My order’s timeline",
+        "tags": [
+          "store.timeline"
+        ]
+      }
+    },
+    "/v1/store/orders/{orderId}/tracking-links": {
+      "post": {
+        "description": "A link anyone can open without signing in; it shows progress and shipment steps but no personal data. The token is shown once (only its hash is kept).\n\nImplements: D-143.",
+        "operationId": "store.timeline.createTrackingLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "token": "q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh",
+                  "url": "https://www.packio.example/track/q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TrackingLinkDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Create a shareable tracking link",
+        "tags": [
+          "store.timeline"
         ]
       }
     },
@@ -214846,6 +216518,195 @@
         ]
       }
     },
+    "/v1/store/track/{token}": {
+      "get": {
+        "description": "From a carton label QR or a shared link. Status, promised and actual dates, production steps and shipment steps only — no names, addresses, phones, locations or photos. Unknown, revoked or expired tokens are 404. Rate-limited per client.\n\nImplements: D-143, D-142.",
+        "operationId": "store.tracking.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "example": "q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "deliveredAt": null,
+                  "promisedShipDate": "2026-10-20",
+                  "shipments": [
+                    {
+                      "carrier": "packio",
+                      "cartonsCount": 3,
+                      "shipmentNo": "SH-2610-0001",
+                      "status": "in_transit",
+                      "steps": [
+                        {
+                          "occurredAt": "2026-10-19T08:00:00+07:00",
+                          "status": "picked_up"
+                        },
+                        {
+                          "occurredAt": "2026-10-19T12:00:00+07:00",
+                          "status": "in_transit"
+                        }
+                      ],
+                      "trackingNo": null,
+                      "trackingUrl": null
+                    }
+                  ],
+                  "shippedAt": "2026-10-19T08:00:00+07:00",
+                  "status": "shipping",
+                  "steps": [
+                    {
+                      "completedAt": "2026-10-14T16:00:00+07:00",
+                      "key": "printing",
+                      "labelEn": "Printing",
+                      "labelTh": "กำลังพิมพ์",
+                      "status": "completed"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PublicTrackingDto"
+                }
+              }
+            },
+            "description": "Tracking",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Track an order or a shipment",
+        "tags": [
+          "store.tracking"
+        ]
+      }
+    },
     "/v1/store/web-push/subscriptions": {
       "post": {
         "description": "One subscription per endpoint; the auth secret is stored encrypted. Sent only when the user permits it (D-143).\n\nImplements: D-143.",
@@ -216725,6 +218586,10 @@
       "name": "admin.shippingZones"
     },
     {
+      "description": "An order’s full timeline with internal notes and @mentions, promised vs actual.",
+      "name": "admin.timeline"
+    },
+    {
       "description": "Staff, partner and customer accounts, role grants and sessions (D-140, D-168).",
       "name": "admin.users"
     },
@@ -216915,6 +218780,14 @@
     {
       "description": "Buyer data for full-form tax invoices: tax id, head office / branch, withholding flag (D-092, D-174).",
       "name": "store.taxProfiles"
+    },
+    {
+      "description": "My order’s story, promised vs actual and shareable tracking links (D-050, D-143).",
+      "name": "store.timeline"
+    },
+    {
+      "description": "Public tracking from a carton label or a shared link — no personal data, rate-limited.",
+      "name": "store.tracking"
     },
     {
       "description": "Web push subscriptions of the signed-in customer (D-143).",

@@ -35,6 +35,7 @@ import { QuotesModule } from '@modules/quotes/quotes.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
+import { TimelineModule } from '@modules/timeline/timeline.module';
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -107,6 +108,7 @@ import { LoggerModule } from 'nestjs-pino';
     DesignsModule,
     ProductionModule,
     LogisticsModule,
+    TimelineModule,
     HealthModule,
     SurfacesModule,
   ],

@@ -394,6 +394,7 @@ export class OrdersService {
     type: string,
     data: Record<string, unknown>,
     actor: Actor,
+    visibility: ('internal' | 'customer')[] = ['internal', 'customer'],
   ): Promise<void> {
     const key = aggregateType === 'order' ? 'orderId' : 'groupId';
     const event = await this.events.record(
@@ -407,7 +408,7 @@ export class OrdersService {
       action: type,
       messageKey: `activity.${type}`,
       messageParams: data,
-      visibility: ['internal', 'customer'],
+      visibility,
       domainEventId: event.id,
       actor,
     });

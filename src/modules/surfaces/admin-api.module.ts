@@ -22,6 +22,7 @@ import { PRODUCTION_ADMIN_CONTROLLERS } from '@modules/production/production.reg
 import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
+import { TIMELINE_ADMIN_CONTROLLERS } from '@modules/timeline/timeline.registry';
 import { Module } from '@nestjs/common';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
 import { AuditLogsController } from '@platform/audit/audit.controller';
@@ -86,6 +87,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...DESIGNS_ADMIN_CONTROLLERS,
     ...PRODUCTION_ADMIN_CONTROLLERS,
     ...LOGISTICS_ADMIN_CONTROLLERS,
+    ...TIMELINE_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

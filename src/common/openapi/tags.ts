@@ -82,6 +82,9 @@ export const API_TAGS: Record<string, string> = {
   'admin.logistics':
     'Shipments for staff: fallback carrier booking (D-114), status corrections, PODs on behalf, delivery reconciliation (D-021, D-080, D-165).',
   'store.logistics': 'The shipments of my orders and confirming receipt (D-050, D-081).',
+  'store.timeline': 'My order’s story, promised vs actual and shareable tracking links (D-050, D-143).',
+  'store.tracking': 'Public tracking from a carton label or a shared link — no personal data, rate-limited.',
+  'admin.timeline': 'An order’s full timeline with internal notes and @mentions, promised vs actual.',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',
   'admin.roles': 'The role and permission catalogue (D-140, D-141).',
   'admin.approvals': 'Generic approval engine: inbox, approve, reject, withdraw (ADR-0006).',

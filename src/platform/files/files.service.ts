@@ -5,7 +5,7 @@ import { bytes } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type AttachmentSubject, type FileObject, type FileRetentionClass } from '@generated/prisma/client';
+import { type Attachment, type AttachmentSubject, type FileObject, type FileRetentionClass } from '@generated/prisma/client';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { parseScopeClaim, ScopeDirectory } from '@modules/iam/scope-directory';
@@ -31,7 +31,8 @@ const PENDING_TTL_MS = 24 * 60 * 60_000;
  * Decides whether an actor may read a file through one of its attachments; owning modules register
  * one per attachment subject (e.g. claims: the claim's customer and the liable factory).
  */
-export type AttachmentAccessPolicy = (actor: Actor, subjectId: bigint) => Promise<boolean>;
+/** `attachment` lets a policy honour per-file flags (e.g. photos shared with the customer). */
+export type AttachmentAccessPolicy = (actor: Actor, subjectId: bigint, attachment?: Attachment) => Promise<boolean>;
 
 /**
  * Decides whether an actor may read a file that a domain row references directly (schema-design §2.8:
@@ -361,7 +362,7 @@ export class FilesService {
     const attachments = await this.prisma.attachment.findMany({ where: { fileObjectId: file.id } });
     for (const attachment of attachments) {
       const policy = this.policies.get(attachment.subjectType);
-      if (policy && (await policy(actor, attachment.subjectId))) return true;
+      if (policy && (await policy(actor, attachment.subjectId, attachment))) return true;
     }
     for (const reader of this.readers.values()) {
       if (await reader(actor, file)) return true;

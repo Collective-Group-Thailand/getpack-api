@@ -25,6 +25,7 @@ import { PromotionsModule } from '@modules/promotions/promotions.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
+import { TimelineModule } from '@modules/timeline/timeline.module';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ApprovalsModule } from '@platform/approvals/approvals.module';
@@ -87,6 +88,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     DesignsModule,
     ProductionModule,
     LogisticsModule,
+    TimelineModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],
