@@ -141,6 +141,22 @@ export interface FactoryQuoteView {
   }[];
 }
 
+/** One destination of a checkout (B3.1): customer price and Packio's cost of delivering it. */
+export type DestinationShipping =
+  | {
+      available: true;
+      /** Customer shipping, VAT-exclusive (D-013). */
+      net: MoneyValue;
+      /** Packio's cost for the selected factory (fleet payout or carrier quote). */
+      cost: MoneyValue;
+      method: 'factory_fleet' | 'flash_express' | 'deliveree';
+      customerRateVersionId: string | null;
+      factoryPayoutVersionId: string | null;
+      weightG: number;
+      settingVersionIds: Record<string, string>;
+    }
+  | { available: false; reason: RateMissReason | 'delivery_unavailable' };
+
 /** Keeps the network part only (schema-design §2.11): /24 for IPv4, /48 for IPv6. */
 export function ipPrefix(ip: string | undefined): string | null {
   if (!ip) return null;
@@ -202,19 +218,7 @@ export class QuoteEngineService {
     const byKey = new Map(loaded.map((l) => [l.option.optionKey, l]));
     const factoryIds = new Map(candidates.map((c) => [c.factoryPublicId, c.factoryId]));
     const vatPct = loaded[0] ? await this.vatPct(loaded[0].vatRateVersionId, db) : null;
-    const shipParts: ShipmentPart[] = resolved.parts.map((p) => {
-      const blank = p.pattern.standardBlanks?.find(
-        (b) => b.wMm === p.geometry.w && b.lMm === p.geometry.l && b.dMm === p.geometry.d,
-      );
-      return {
-        formula: p.pattern.formula,
-        w: p.geometry.w,
-        l: p.geometry.l,
-        d: p.geometry.d,
-        gsm: resolved.materialGsm,
-        standardBlank: blank ? { dw: blank.dwMm, dl: blank.dlMm } : null,
-      };
-    });
+    const shipParts = this.shipmentParts(resolved);
     let customerRateVersionId: string | null = null;
     const payoutVersionIds: Record<string, string> = {};
 
@@ -498,6 +502,63 @@ export class QuoteEngineService {
     const calendar = await this.calendars.calendar(factory.calendar?.code);
     const start = new Date(`${availability.earliestDate}T00:00:00+07:00`);
     return bangkokDate(calendar.addWorkingDays(start, step.leadTimeDays));
+  }
+
+  /**
+   * Shipping of a saved folding configuration split over destinations (checkout, B3.1): each leg is
+   * packed for its own quantity and priced on the customer rate card for its postcode (VAT-exclusive,
+   * D-013), and costed for the factory the quotation selected (its fleet payout or a fallback carrier).
+   * A leg without a customer price or without a delivery path for that factory is not available.
+   */
+  async destinationShipping(
+    cfg: FoldingConfiguration,
+    factoryId: bigint,
+    legs: readonly { postcode: string; quantity: number }[],
+    at: Date,
+    db: Tx = this.prisma,
+  ): Promise<DestinationShipping[]> {
+    const resolved = await this.loader.resolve(cfg, db);
+    const parts = this.shipmentParts(resolved);
+    const out: DestinationShipping[] = [];
+    for (const leg of legs) {
+      const prepared = await this.shipping.prepare(parts, leg.quantity, leg.postcode, at, db);
+      if (!prepared.customer.priced) {
+        out.push({ available: false, reason: ShippingQuoteService.missReason(prepared.customer) ?? 'no_rate_card' });
+        continue;
+      }
+      const delivery = await this.shipping.delivery(factoryId, prepared, at, db);
+      if (!delivery.available) {
+        out.push({ available: false, reason: 'delivery_unavailable' });
+        continue;
+      }
+      out.push({
+        available: true,
+        net: prepared.customer.net,
+        cost: delivery.cost,
+        method: delivery.method,
+        customerRateVersionId: prepared.customer.versionId?.toString() ?? null,
+        factoryPayoutVersionId: delivery.factoryPayoutVersionId?.toString() ?? null,
+        weightG: prepared.pack.weightG,
+        settingVersionIds: prepared.settingVersionIds,
+      });
+    }
+    return out;
+  }
+
+  private shipmentParts(resolved: ResolvedFolding): ShipmentPart[] {
+    return resolved.parts.map((p) => {
+      const blank = p.pattern.standardBlanks?.find(
+        (b) => b.wMm === p.geometry.w && b.lMm === p.geometry.l && b.dMm === p.geometry.d,
+      );
+      return {
+        formula: p.pattern.formula,
+        w: p.geometry.w,
+        l: p.geometry.l,
+        d: p.geometry.d,
+        gsm: resolved.materialGsm,
+        standardBlank: blank ? { dw: blank.dwMm, dl: blank.dlMm } : null,
+      };
+    });
   }
 
   private async vatPct(versionId: bigint, db: Tx): Promise<MoneyValue> {

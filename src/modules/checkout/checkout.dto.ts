@@ -1,0 +1,183 @@
+import { RefField, TextField } from '@modules/catalog/crud/dto-fields';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsEmail,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
+
+import { MONEY_EXAMPLE, MoneyTotalsDto, ORDER_IDS, OrderLineDto } from '../orders/orders.dto';
+
+/** Checkout (B3.1): preview and place the order group. */
+
+export class UtmDto {
+  @ApiPropertyOptional({ example: 'google' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  source?: string;
+
+  @ApiPropertyOptional({ example: 'cpc' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  medium?: string;
+
+  @ApiPropertyOptional({ example: 'launch-2026' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  campaign?: string;
+
+  @ApiPropertyOptional({ example: 'กล่องพิมพ์ลาย' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  term?: string;
+
+  @ApiPropertyOptional({ example: 'banner-a' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  content?: string;
+}
+
+export class CheckoutDto {
+  @RefField({
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c0003',
+    optional: true,
+    nullable: true,
+    description: 'Buyer for a full-form tax invoice; its withholding flag sets the expected cash (D-174)',
+  })
+  taxProfileId?: string | null;
+
+  @TextField({ example: 'PO-0001', max: 60, optional: true, nullable: true, description: 'Customer PO number (D-125)' })
+  poNumber?: string | null;
+
+  @ApiPropertyOptional({ type: [String], example: ['account@example.com'], description: 'Copies of order e-mails (max 10)' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsEmail({}, { each: true })
+  ccEmails?: string[];
+
+  @ApiPropertyOptional({ type: UtmDto, description: 'Campaign attribution of this order (D-102)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UtmDto)
+  utm?: UtmDto;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: '14182.80',
+    pattern: '^\\d{1,12}\\.\\d{2}$',
+    description: 'The total the client showed; a different server total is refused (`checkout.total_changed`)',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{1,12}\.\d{2}$/)
+  expectedGrossAmount?: string;
+}
+
+export class AdminCheckoutDto extends CheckoutDto {
+  @TextField({ example: 'ลูกค้าขอส่งด่วน', max: 2000, optional: true, nullable: true, description: 'Internal only' })
+  csRemarks?: string | null;
+}
+
+export class PreviewDestinationDto {
+  @ApiProperty({ example: '10110' })
+  postcode!: string;
+
+  @ApiProperty({ type: 'integer', example: 1000 })
+  quantity!: number;
+
+  @ApiProperty({ example: '120.00', description: 'Before VAT' })
+  shippingNetAmount!: string;
+}
+
+export class PreviewOrderDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca002' })
+  cartItemId!: string;
+
+  @ApiProperty({ example: 'folding_carton' })
+  productTypeCode!: string;
+
+  @ApiProperty({ type: 'integer', example: 1000 })
+  quantity!: number;
+
+  @ApiProperty({ type: MoneyTotalsDto })
+  totals!: MoneyTotalsDto;
+
+  @ApiProperty({ type: [OrderLineDto], description: 'Lines as they will be written (ids are placeholders)' })
+  lines!: OrderLineDto[];
+
+  @ApiProperty({ type: [PreviewDestinationDto] })
+  destinations!: PreviewDestinationDto[];
+}
+
+export class CheckoutNoticeDto {
+  @ApiProperty({ example: 'promotion.capped' })
+  code!: string;
+
+  @ApiPropertyOptional({ type: Object, example: { cappedAmount: '120.00' } })
+  params?: Record<string, unknown>;
+}
+
+export class CheckoutPreviewDto {
+  @ApiProperty({ type: MoneyTotalsDto })
+  totals!: MoneyTotalsDto;
+
+  @ApiProperty({ type: [PreviewOrderDto] })
+  orders!: PreviewOrderDto[];
+
+  @ApiProperty({ example: false, description: 'The chosen tax profile withholds tax (D-174)' })
+  withholding!: boolean;
+
+  @ApiProperty({ type: [CheckoutNoticeDto] })
+  notices!: CheckoutNoticeDto[];
+}
+
+export const CHECKOUT_EXAMPLE = {
+  taxProfileId: '0192f3a0-7c1e-7d2a-9b1f-0000000c0003',
+  ccEmails: ['account@example.com'],
+  expectedGrossAmount: '14182.80',
+};
+
+export const PREVIEW_EXAMPLE: CheckoutPreviewDto = {
+  totals: MONEY_EXAMPLE,
+  orders: [
+    {
+      cartItemId: '0192f3a0-7c1e-7d2a-9b1f-0000000ca002',
+      productTypeCode: 'folding_carton',
+      quantity: 1000,
+      totals: MONEY_EXAMPLE,
+      lines: [
+        {
+          id: ORDER_IDS.line,
+          lineNo: 1,
+          lineType: 'product',
+          descriptionTh: 'สินค้า',
+          descriptionEn: 'Product',
+          quantity: '1000',
+          unitPrice: '12.504206',
+          netAmount: '12504.21',
+          discountAmount: '0.00',
+          vatRatePct: '7.0000',
+          vatAmount: '875.79',
+          grossAmount: '13380.00',
+          whtCategory: 'hire_of_work',
+          whtAmount: '0.00',
+        },
+      ],
+      destinations: [{ postcode: '10110', quantity: 1000, shippingNetAmount: '120.00' }],
+    },
+  ],
+  withholding: false,
+  notices: [],
+};

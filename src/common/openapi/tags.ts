@@ -9,6 +9,8 @@ export const API_TAGS: Record<string, string> = {
     'Buyer data for full-form tax invoices: tax id, head office / branch, withholding flag (D-092, D-174).',
   'store.cart': 'The signed-in customer’s cart: price-locked quotation options split over addresses (D-051, D-142).',
   'admin.cart': 'CS works a customer’s cart on their behalf (channel `cs`, D-051).',
+  'store.checkout': 'Preview and place the order group from the cart (D-051, D-060, D-013, D-174).',
+  'admin.checkout': 'CS places a customer’s order on their behalf (channel `cs`).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',

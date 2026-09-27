@@ -532,5 +532,35 @@
       "title": "Nothing to confirm",
       "detail": "This item has no re-priced option waiting for confirmation."
     }
+  },
+  "checkout": {
+    "cart_empty": {
+      "title": "Cart is empty",
+      "detail": "Add a quotation to the cart before checking out."
+    },
+    "price_expired": {
+      "title": "Price expired",
+      "detail": "Some items passed their price lock or wait for a confirmed re-price: {items} (D-051)."
+    },
+    "destinations_incomplete": {
+      "title": "Destinations incomplete",
+      "detail": "Each item's destinations must add up to its quantity."
+    },
+    "shipping_unavailable": {
+      "title": "Shipping unavailable",
+      "detail": "There is no shipping price or delivery path for this address; please contact customer service (D-013)."
+    },
+    "rfq_destination_fixed": {
+      "title": "Destination fixed by the quotation",
+      "detail": "An RFQ quotation priced delivery to its own postcode only."
+    },
+    "total_changed": {
+      "title": "Total changed",
+      "detail": "The total you saw ({expected}) differs from the current total ({actual}); please review."
+    },
+    "wht_rate_missing": {
+      "title": "Withholding rate missing",
+      "detail": "The withholding rate {code} is not set; please contact customer service (D-174)."
+    }
   }
 }

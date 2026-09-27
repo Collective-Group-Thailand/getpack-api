@@ -430,6 +430,83 @@
           "type": "https://errors.packio/catalog.slug_taken"
         }
       },
+      "problem.checkout.cart_empty": {
+        "summary": "checkout.cart_empty",
+        "value": {
+          "code": "checkout.cart_empty",
+          "detail": "กรุณาเพิ่มสินค้าลงตะกร้าก่อนสั่งซื้อ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ตะกร้าว่าง",
+          "type": "https://errors.packio/checkout.cart_empty"
+        }
+      },
+      "problem.checkout.destinations_incomplete": {
+        "summary": "checkout.destinations_incomplete",
+        "value": {
+          "code": "checkout.destinations_incomplete",
+          "detail": "จำนวนที่จัดส่งแต่ละที่อยู่ต้องรวมเท่ากับจำนวนที่สั่ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ที่อยู่จัดส่งไม่ครบ",
+          "type": "https://errors.packio/checkout.destinations_incomplete"
+        }
+      },
+      "problem.checkout.price_expired": {
+        "summary": "checkout.price_expired",
+        "value": {
+          "code": "checkout.price_expired",
+          "detail": "มีรายการที่ราคาหมดอายุหรือรอยืนยันราคาใหม่: {items}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ราคาหมดอายุ",
+          "type": "https://errors.packio/checkout.price_expired"
+        }
+      },
+      "problem.checkout.rfq_destination_fixed": {
+        "summary": "checkout.rfq_destination_fixed",
+        "value": {
+          "code": "checkout.rfq_destination_fixed",
+          "detail": "ใบเสนอราคาจาก RFQ คิดค่าจัดส่งถึงรหัสไปรษณีย์ที่ระบุไว้เท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ที่อยู่จัดส่งต้องตรงกับใบเสนอราคา",
+          "type": "https://errors.packio/checkout.rfq_destination_fixed"
+        }
+      },
+      "problem.checkout.shipping_unavailable": {
+        "summary": "checkout.shipping_unavailable",
+        "value": {
+          "code": "checkout.shipping_unavailable",
+          "detail": "ยังไม่มีราคาจัดส่งหรือเส้นทางจัดส่งสำหรับที่อยู่นี้ กรุณาติดต่อฝ่ายบริการลูกค้า",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "คำนวณค่าจัดส่งไม่ได้",
+          "type": "https://errors.packio/checkout.shipping_unavailable"
+        }
+      },
+      "problem.checkout.total_changed": {
+        "summary": "checkout.total_changed",
+        "value": {
+          "code": "checkout.total_changed",
+          "detail": "ยอดรวมที่แสดง {expected} ไม่ตรงกับยอดปัจจุบัน {actual} กรุณาตรวจสอบอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยอดรวมเปลี่ยนแปลง",
+          "type": "https://errors.packio/checkout.total_changed"
+        }
+      },
+      "problem.checkout.wht_rate_missing": {
+        "summary": "checkout.wht_rate_missing",
+        "value": {
+          "code": "checkout.wht_rate_missing",
+          "detail": "ยังไม่ได้ตั้งอัตราภาษีหัก ณ ที่จ่าย {code} กรุณาติดต่อฝ่ายบริการลูกค้า",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 503,
+          "title": "ไม่พบอัตราภาษีหัก ณ ที่จ่าย",
+          "type": "https://errors.packio/checkout.wht_rate_missing"
+        }
+      },
       "problem.concurrency.precondition_required": {
         "summary": "concurrency.precondition_required",
         "value": {
@@ -1878,6 +1955,62 @@
         ],
         "type": "object"
       },
+      "AdminCheckoutDto": {
+        "properties": {
+          "ccEmails": {
+            "description": "Copies of order e-mails (max 10)",
+            "example": [
+              "account@example.com"
+            ],
+            "items": {
+              "format": "email",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "csRemarks": {
+            "description": "Internal only",
+            "example": "ลูกค้าขอส่งด่วน",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expectedGrossAmount": {
+            "description": "The total the client showed; a different server total is refused (`checkout.total_changed`)",
+            "example": "14182.80",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": "string"
+          },
+          "poNumber": {
+            "description": "Customer PO number (D-125)",
+            "example": "PO-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxProfileId": {
+            "description": "Buyer for a full-form tax invoice; its withholding flag sets the expected cash (D-174)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utm": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UtmDto"
+              }
+            ],
+            "description": "Campaign attribution of this order (D-102)"
+          }
+        },
+        "type": "object"
+      },
       "AdminCustomerDto": {
         "properties": {
           "createdAt": {
@@ -2041,6 +2174,318 @@
           "permissions",
           "menu",
           "featureFlags"
+        ],
+        "type": "object"
+      },
+      "AdminOrderDto": {
+        "properties": {
+          "artworkStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArtworkStatus"
+              }
+            ],
+            "example": "awaiting_template"
+          },
+          "cancelledAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "designOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignOption"
+              }
+            ],
+            "example": "own_file"
+          },
+          "destinations": {
+            "items": {
+              "$ref": "#/components/schemas/OrderDestinationDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "internal": {
+            "$ref": "#/components/schemas/AdminOrderInternalDto"
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineDto"
+            },
+            "type": "array"
+          },
+          "mockupOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MockupOption"
+              }
+            ],
+            "example": "none"
+          },
+          "orderCode": {
+            "example": "OR-2610-00042",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "promisedShipDate": {
+            "example": "2026-10-12",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantityOrdered": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "quoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            ],
+            "example": "waiting_payment"
+          },
+          "statusChangedAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "toleranceOveragePct": {
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceShortagePct": {
+            "description": "Frozen tolerance (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MoneyTotalsDto"
+          }
+        },
+        "required": [
+          "id",
+          "orderCode",
+          "status",
+          "artworkStatus",
+          "productTypeCode",
+          "quoteId",
+          "quantityOrdered",
+          "designOption",
+          "mockupOption",
+          "toleranceShortagePct",
+          "toleranceOveragePct",
+          "leadTimeDays",
+          "promisedShipDate",
+          "totals",
+          "lines",
+          "destinations",
+          "statusChangedAt",
+          "cancelledAt",
+          "internal"
+        ],
+        "type": "object"
+      },
+      "AdminOrderGroupDto": {
+        "properties": {
+          "cancelledAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ccEmails": {
+            "example": [
+              "account@example.com"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesChannel"
+              }
+            ],
+            "example": "web"
+          },
+          "csRemarks": {
+            "example": "ลูกค้าขอส่งด่วน",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "Unpaid groups are cancelled at this instant (D-060)",
+            "example": "2026-10-08T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groupCode": {
+            "example": "OG-2610-00042",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/AdminOrderDto"
+            },
+            "type": "array"
+          },
+          "placedAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "placedById": {
+            "description": "Who placed it (customer or CS)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "poNumber": {
+            "example": "PO-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderGroupStatus"
+              }
+            ],
+            "example": "waiting_payment"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MoneyTotalsDto"
+          },
+          "utm": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "medium": "cpc",
+              "source": "google"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "groupCode",
+          "status",
+          "channel",
+          "customerId",
+          "poNumber",
+          "totals",
+          "expiresAt",
+          "placedAt",
+          "cancelledAt",
+          "ccEmails",
+          "orders",
+          "csRemarks",
+          "placedById"
+        ],
+        "type": "object"
+      },
+      "AdminOrderInternalDto": {
+        "properties": {
+          "belowMarginFloor": {
+            "example": false,
+            "type": "boolean"
+          },
+          "buyCostNet": {
+            "description": "Masked without `factory_cost.read` (D-141)",
+            "example": "10150.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marginAmount": {
+            "description": "Masked without `margin.read`",
+            "example": "3104.95",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marginPct": {
+            "example": "23.4254",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "selectedFactoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "selectedFactoryId",
+          "buyCostNet",
+          "marginAmount",
+          "marginPct",
+          "belowMarginFloor"
         ],
         "type": "object"
       },
@@ -3185,6 +3630,18 @@
           "updatedAt"
         ],
         "type": "object"
+      },
+      "ArtworkStatus": {
+        "enum": [
+          "awaiting_template",
+          "awaiting_upload",
+          "uploaded",
+          "in_review",
+          "proof_sent",
+          "changes_requested",
+          "approved"
+        ],
+        "type": "string"
       },
       "AssemblyDto": {
         "properties": {
@@ -5011,6 +5468,104 @@
           "value",
           "effectiveFrom",
           "reason"
+        ],
+        "type": "object"
+      },
+      "CheckoutDto": {
+        "properties": {
+          "ccEmails": {
+            "description": "Copies of order e-mails (max 10)",
+            "example": [
+              "account@example.com"
+            ],
+            "items": {
+              "format": "email",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "expectedGrossAmount": {
+            "description": "The total the client showed; a different server total is refused (`checkout.total_changed`)",
+            "example": "14182.80",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": "string"
+          },
+          "poNumber": {
+            "description": "Customer PO number (D-125)",
+            "example": "PO-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxProfileId": {
+            "description": "Buyer for a full-form tax invoice; its withholding flag sets the expected cash (D-174)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utm": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UtmDto"
+              }
+            ],
+            "description": "Campaign attribution of this order (D-102)"
+          }
+        },
+        "type": "object"
+      },
+      "CheckoutNoticeDto": {
+        "properties": {
+          "code": {
+            "example": "promotion.capped",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": true,
+            "example": {
+              "cappedAmount": "120.00"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "CheckoutPreviewDto": {
+        "properties": {
+          "notices": {
+            "items": {
+              "$ref": "#/components/schemas/CheckoutNoticeDto"
+            },
+            "type": "array"
+          },
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewOrderDto"
+            },
+            "type": "array"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MoneyTotalsDto"
+          },
+          "withholding": {
+            "description": "The chosen tax profile withholds tax (D-174)",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "totals",
+          "orders",
+          "withholding",
+          "notices"
         ],
         "type": "object"
       },
@@ -12959,6 +13514,58 @@
         ],
         "type": "string"
       },
+      "MoneyTotalsDto": {
+        "properties": {
+          "cashAmount": {
+            "description": "gross − withholding: what the customer transfers",
+            "example": "14182.80",
+            "type": "string"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "discountAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "grossAmount": {
+            "description": "net − discount + VAT",
+            "example": "14182.80",
+            "type": "string"
+          },
+          "netAmount": {
+            "description": "Sum of line nets incl. shipping, before VAT",
+            "example": "13254.95",
+            "type": "string"
+          },
+          "shippingNetAmount": {
+            "description": "Shipping part of the net",
+            "example": "120.00",
+            "type": "string"
+          },
+          "vatAmount": {
+            "example": "927.85",
+            "type": "string"
+          },
+          "whtAmount": {
+            "description": "Expected customer withholding (tax profile withholds, D-174)",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "netAmount",
+          "discountAmount",
+          "shippingNetAmount",
+          "vatAmount",
+          "grossAmount",
+          "whtAmount",
+          "cashAmount",
+          "currency"
+        ],
+        "type": "object"
+      },
       "MultipartUploadDto": {
         "properties": {
           "partSize": {
@@ -13327,6 +13934,391 @@
           "optionId"
         ],
         "type": "object"
+      },
+      "OrderDestinationDto": {
+        "properties": {
+          "address": {
+            "$ref": "#/components/schemas/AddressSnapshotDto"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "shippingNetAmount": {
+            "description": "Shipping of this destination, before VAT",
+            "example": "120.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "address",
+          "quantity",
+          "shippingNetAmount"
+        ],
+        "type": "object"
+      },
+      "OrderDto": {
+        "properties": {
+          "artworkStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArtworkStatus"
+              }
+            ],
+            "example": "awaiting_template"
+          },
+          "cancelledAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "designOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignOption"
+              }
+            ],
+            "example": "own_file"
+          },
+          "destinations": {
+            "items": {
+              "$ref": "#/components/schemas/OrderDestinationDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/OrderLineDto"
+            },
+            "type": "array"
+          },
+          "mockupOption": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MockupOption"
+              }
+            ],
+            "example": "none"
+          },
+          "orderCode": {
+            "example": "OR-2610-00042",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "promisedShipDate": {
+            "example": "2026-10-12",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantityOrdered": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "quoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderStatus"
+              }
+            ],
+            "example": "waiting_payment"
+          },
+          "statusChangedAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "toleranceOveragePct": {
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toleranceShortagePct": {
+            "description": "Frozen tolerance (D-021)",
+            "example": "5.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MoneyTotalsDto"
+          }
+        },
+        "required": [
+          "id",
+          "orderCode",
+          "status",
+          "artworkStatus",
+          "productTypeCode",
+          "quoteId",
+          "quantityOrdered",
+          "designOption",
+          "mockupOption",
+          "toleranceShortagePct",
+          "toleranceOveragePct",
+          "leadTimeDays",
+          "promisedShipDate",
+          "totals",
+          "lines",
+          "destinations",
+          "statusChangedAt",
+          "cancelledAt"
+        ],
+        "type": "object"
+      },
+      "OrderGroupDto": {
+        "properties": {
+          "cancelledAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ccEmails": {
+            "example": [
+              "account@example.com"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesChannel"
+              }
+            ],
+            "example": "web"
+          },
+          "customerId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "Unpaid groups are cancelled at this instant (D-060)",
+            "example": "2026-10-08T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groupCode": {
+            "example": "OG-2610-00042",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/OrderDto"
+            },
+            "type": "array"
+          },
+          "placedAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "poNumber": {
+            "example": "PO-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderGroupStatus"
+              }
+            ],
+            "example": "waiting_payment"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MoneyTotalsDto"
+          }
+        },
+        "required": [
+          "id",
+          "groupCode",
+          "status",
+          "channel",
+          "customerId",
+          "poNumber",
+          "totals",
+          "expiresAt",
+          "placedAt",
+          "cancelledAt",
+          "ccEmails",
+          "orders"
+        ],
+        "type": "object"
+      },
+      "OrderGroupStatus": {
+        "enum": [
+          "pending_company_approval",
+          "waiting_payment",
+          "in_progress",
+          "completed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "OrderLineDto": {
+        "properties": {
+          "descriptionEn": {
+            "example": "Product",
+            "type": "string"
+          },
+          "descriptionTh": {
+            "example": "สินค้า",
+            "type": "string"
+          },
+          "discountAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "grossAmount": {
+            "example": "13380.00",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lineNo": {
+            "example": 1,
+            "type": "integer"
+          },
+          "lineType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OrderLineType"
+              }
+            ],
+            "example": "product"
+          },
+          "netAmount": {
+            "example": "12504.21",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Quantity (decimal string, up to 3 decimals)",
+            "example": "1000",
+            "type": "string"
+          },
+          "unitPrice": {
+            "description": "Net per unit (6 decimals)",
+            "example": "12.504206",
+            "type": "string"
+          },
+          "vatAmount": {
+            "example": "875.79",
+            "type": "string"
+          },
+          "vatRatePct": {
+            "example": "7.0000",
+            "type": "string"
+          },
+          "whtAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "whtCategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WhtCategory"
+              }
+            ],
+            "example": "hire_of_work"
+          }
+        },
+        "required": [
+          "id",
+          "lineNo",
+          "lineType",
+          "descriptionTh",
+          "descriptionEn",
+          "quantity",
+          "unitPrice",
+          "netAmount",
+          "discountAmount",
+          "vatRatePct",
+          "vatAmount",
+          "grossAmount",
+          "whtCategory",
+          "whtAmount"
+        ],
+        "type": "object"
+      },
+      "OrderLineType": {
+        "enum": [
+          "product",
+          "design_fee",
+          "structure_design_fee",
+          "mockup",
+          "plate",
+          "die_block",
+          "shipping",
+          "service",
+          "extra_revision"
+        ],
+        "type": "string"
+      },
+      "OrderStatus": {
+        "enum": [
+          "waiting_payment",
+          "paid_for_production",
+          "artwork_approved",
+          "in_production",
+          "shipping",
+          "completed",
+          "cancelled"
+        ],
+        "type": "string"
       },
       "OtpChallengeDto": {
         "properties": {
@@ -14109,6 +15101,71 @@
           "headers",
           "multipart",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "PreviewDestinationDto": {
+        "properties": {
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "shippingNetAmount": {
+            "description": "Before VAT",
+            "example": "120.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "postcode",
+          "quantity",
+          "shippingNetAmount"
+        ],
+        "type": "object"
+      },
+      "PreviewOrderDto": {
+        "properties": {
+          "cartItemId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "destinations": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewDestinationDto"
+            },
+            "type": "array"
+          },
+          "lines": {
+            "description": "Lines as they will be written (ids are placeholders)",
+            "items": {
+              "$ref": "#/components/schemas/OrderLineDto"
+            },
+            "type": "array"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/MoneyTotalsDto"
+          }
+        },
+        "required": [
+          "cartItemId",
+          "productTypeCode",
+          "quantity",
+          "totals",
+          "lines",
+          "destinations"
         ],
         "type": "object"
       },
@@ -25113,6 +26170,36 @@
         ],
         "type": "string"
       },
+      "UtmDto": {
+        "properties": {
+          "campaign": {
+            "example": "launch-2026",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "content": {
+            "example": "banner-a",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "medium": {
+            "example": "cpc",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "source": {
+            "example": "google",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "term": {
+            "example": "กล่องพิมพ์ลาย",
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "VapidKeyDto": {
         "properties": {
           "vapidPublicKey": {
@@ -25319,6 +26406,15 @@
           "received"
         ],
         "type": "object"
+      },
+      "WhtCategory": {
+        "enum": [
+          "hire_of_work",
+          "transport",
+          "service",
+          "none"
+        ],
+        "type": "string"
       },
       "WithdrawDto": {
         "properties": {
@@ -76357,6 +77453,765 @@
         "summary": "Split an item over delivery addresses",
         "tags": [
           "admin.cart"
+        ],
+        "x-required-permissions": [
+          "carts.manage_on_behalf"
+        ]
+      }
+    },
+    "/v1/admin/customers/{customerId}/checkout": {
+      "post": {
+        "description": "Re-prices the cart on the server and writes one order group with one order per cart item (legacy rule), lines, destinations (snapshot, D-142), the pricing snapshot with every version id, the expected withholding (D-174) and the unpaid expiry (`orders.unpaid_expiry_days`, D-060). The cart is checked out and its quotations converted. Requires `Idempotency-Key`; a replay returns the same group. `expectedGrossAmount` guards against a total that changed since the preview.\n\nImplements: D-051, D-060, D-013, D-142, D-174, D-010.",
+        "operationId": "admin.checkout.place",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "ccEmails": [
+                      "account@example.com"
+                    ],
+                    "expectedGrossAmount": "14182.80",
+                    "taxProfileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AdminCheckoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cancelledAt": null,
+                  "ccEmails": [],
+                  "channel": "web",
+                  "csRemarks": null,
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "expiresAt": "2026-10-08T10:00:00+07:00",
+                  "groupCode": "OG-2610-00042",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                  "orders": [
+                    {
+                      "artworkStatus": "awaiting_template",
+                      "cancelledAt": null,
+                      "designOption": "own_file",
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0004",
+                          "quantity": 1000,
+                          "shippingNetAmount": "120.00"
+                        }
+                      ],
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyCostNet": "10150.00",
+                        "marginAmount": "3104.95",
+                        "marginPct": "23.4254",
+                        "selectedFactoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0001"
+                      },
+                      "leadTimeDays": 7,
+                      "lines": [
+                        {
+                          "descriptionEn": "Product",
+                          "descriptionTh": "สินค้า",
+                          "discountAmount": "0.00",
+                          "grossAmount": "13380.00",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                          "lineNo": 1,
+                          "lineType": "product",
+                          "netAmount": "12504.21",
+                          "quantity": "1000",
+                          "unitPrice": "12.504206",
+                          "vatAmount": "875.79",
+                          "vatRatePct": "7.0000",
+                          "whtAmount": "0.00",
+                          "whtCategory": "hire_of_work"
+                        }
+                      ],
+                      "mockupOption": "none",
+                      "orderCode": "OR-2610-00042",
+                      "productTypeCode": "folding_carton",
+                      "promisedShipDate": "2026-10-12",
+                      "quantityOrdered": 1000,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "status": "waiting_payment",
+                      "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "totals": {
+                        "cashAmount": "14182.80",
+                        "currency": "THB",
+                        "discountAmount": "0.00",
+                        "grossAmount": "14182.80",
+                        "netAmount": "13254.95",
+                        "shippingNetAmount": "120.00",
+                        "vatAmount": "927.85",
+                        "whtAmount": "0.00"
+                      }
+                    }
+                  ],
+                  "placedAt": "2026-10-01T10:00:00+07:00",
+                  "placedById": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "poNumber": null,
+                  "status": "waiting_payment",
+                  "totals": {
+                    "cashAmount": "14182.80",
+                    "currency": "THB",
+                    "discountAmount": "0.00",
+                    "grossAmount": "14182.80",
+                    "netAmount": "13254.95",
+                    "shippingNetAmount": "120.00",
+                    "vatAmount": "927.85",
+                    "whtAmount": "0.00"
+                  },
+                  "utm": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOrderGroupDto"
+                }
+              }
+            },
+            "description": "Order group placed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.price_expired": {
+                    "$ref": "#/components/examples/problem.checkout.price_expired"
+                  },
+                  "checkout.total_changed": {
+                    "$ref": "#/components/examples/problem.checkout.total_changed"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `numbering.series_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.cart_empty": {
+                    "$ref": "#/components/examples/problem.checkout.cart_empty"
+                  },
+                  "checkout.destinations_incomplete": {
+                    "$ref": "#/components/examples/problem.checkout.destinations_incomplete"
+                  },
+                  "checkout.rfq_destination_fixed": {
+                    "$ref": "#/components/examples/problem.checkout.rfq_destination_fixed"
+                  },
+                  "checkout.shipping_unavailable": {
+                    "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.wht_rate_missing": {
+                    "$ref": "#/components/examples/problem.checkout.wht_rate_missing"
+                  },
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.wht_rate_missing`, `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Place a customer’s order (CS)",
+        "tags": [
+          "admin.checkout"
+        ],
+        "x-required-permissions": [
+          "carts.manage_on_behalf"
+        ]
+      }
+    },
+    "/v1/admin/customers/{customerId}/checkout/actions/preview": {
+      "post": {
+        "description": "Prices the cart exactly as checkout would: locked quotation prices (D-051), shipping per destination on the customer rate card (D-013), VAT per line and the expected withholding of the chosen tax profile (D-174). Nothing is written.\n\nImplements: D-051, D-060, D-013, D-142, D-174, D-010.",
+        "operationId": "admin.checkout.preview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "ccEmails": [
+                      "account@example.com"
+                    ],
+                    "expectedGrossAmount": "14182.80",
+                    "taxProfileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AdminCheckoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "notices": [],
+                  "orders": [
+                    {
+                      "cartItemId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "destinations": [
+                        {
+                          "postcode": "10110",
+                          "quantity": 1000,
+                          "shippingNetAmount": "120.00"
+                        }
+                      ],
+                      "lines": [
+                        {
+                          "descriptionEn": "Product",
+                          "descriptionTh": "สินค้า",
+                          "discountAmount": "0.00",
+                          "grossAmount": "13380.00",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                          "lineNo": 1,
+                          "lineType": "product",
+                          "netAmount": "12504.21",
+                          "quantity": "1000",
+                          "unitPrice": "12.504206",
+                          "vatAmount": "875.79",
+                          "vatRatePct": "7.0000",
+                          "whtAmount": "0.00",
+                          "whtCategory": "hire_of_work"
+                        }
+                      ],
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "totals": {
+                        "cashAmount": "14182.80",
+                        "currency": "THB",
+                        "discountAmount": "0.00",
+                        "grossAmount": "14182.80",
+                        "netAmount": "13254.95",
+                        "shippingNetAmount": "120.00",
+                        "vatAmount": "927.85",
+                        "whtAmount": "0.00"
+                      }
+                    }
+                  ],
+                  "totals": {
+                    "cashAmount": "14182.80",
+                    "currency": "THB",
+                    "discountAmount": "0.00",
+                    "grossAmount": "14182.80",
+                    "netAmount": "13254.95",
+                    "shippingNetAmount": "120.00",
+                    "vatAmount": "927.85",
+                    "whtAmount": "0.00"
+                  },
+                  "withholding": false
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutPreviewDto"
+                }
+              }
+            },
+            "description": "Priced checkout",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.price_expired": {
+                    "$ref": "#/components/examples/problem.checkout.price_expired"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.price_expired`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.cart_empty": {
+                    "$ref": "#/components/examples/problem.checkout.cart_empty"
+                  },
+                  "checkout.destinations_incomplete": {
+                    "$ref": "#/components/examples/problem.checkout.destinations_incomplete"
+                  },
+                  "checkout.rfq_destination_fixed": {
+                    "$ref": "#/components/examples/problem.checkout.rfq_destination_fixed"
+                  },
+                  "checkout.shipping_unavailable": {
+                    "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.wht_rate_missing": {
+                    "$ref": "#/components/examples/problem.checkout.wht_rate_missing"
+                  },
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.wht_rate_missing`, `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Preview checkout",
+        "tags": [
+          "admin.checkout"
         ],
         "x-required-permissions": [
           "carts.manage_on_behalf"
@@ -140491,6 +142346,733 @@
         ]
       }
     },
+    "/v1/store/checkout": {
+      "post": {
+        "description": "Re-prices the cart on the server and writes one order group with one order per cart item (legacy rule), lines, destinations (snapshot, D-142), the pricing snapshot with every version id, the expected withholding (D-174) and the unpaid expiry (`orders.unpaid_expiry_days`, D-060). The cart is checked out and its quotations converted. Requires `Idempotency-Key`; a replay returns the same group. `expectedGrossAmount` guards against a total that changed since the preview.\n\nImplements: D-051, D-060, D-013, D-142, D-174, D-010.",
+        "operationId": "store.checkout.place",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "ccEmails": [
+                      "account@example.com"
+                    ],
+                    "expectedGrossAmount": "14182.80",
+                    "taxProfileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cancelledAt": null,
+                  "ccEmails": [],
+                  "channel": "web",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "expiresAt": "2026-10-08T10:00:00+07:00",
+                  "groupCode": "OG-2610-00042",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                  "orders": [
+                    {
+                      "artworkStatus": "awaiting_template",
+                      "cancelledAt": null,
+                      "designOption": "own_file",
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0004",
+                          "quantity": 1000,
+                          "shippingNetAmount": "120.00"
+                        }
+                      ],
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                      "leadTimeDays": 7,
+                      "lines": [
+                        {
+                          "descriptionEn": "Product",
+                          "descriptionTh": "สินค้า",
+                          "discountAmount": "0.00",
+                          "grossAmount": "13380.00",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                          "lineNo": 1,
+                          "lineType": "product",
+                          "netAmount": "12504.21",
+                          "quantity": "1000",
+                          "unitPrice": "12.504206",
+                          "vatAmount": "875.79",
+                          "vatRatePct": "7.0000",
+                          "whtAmount": "0.00",
+                          "whtCategory": "hire_of_work"
+                        }
+                      ],
+                      "mockupOption": "none",
+                      "orderCode": "OR-2610-00042",
+                      "productTypeCode": "folding_carton",
+                      "promisedShipDate": "2026-10-12",
+                      "quantityOrdered": 1000,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "status": "waiting_payment",
+                      "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "totals": {
+                        "cashAmount": "14182.80",
+                        "currency": "THB",
+                        "discountAmount": "0.00",
+                        "grossAmount": "14182.80",
+                        "netAmount": "13254.95",
+                        "shippingNetAmount": "120.00",
+                        "vatAmount": "927.85",
+                        "whtAmount": "0.00"
+                      }
+                    }
+                  ],
+                  "placedAt": "2026-10-01T10:00:00+07:00",
+                  "poNumber": null,
+                  "status": "waiting_payment",
+                  "totals": {
+                    "cashAmount": "14182.80",
+                    "currency": "THB",
+                    "discountAmount": "0.00",
+                    "grossAmount": "14182.80",
+                    "netAmount": "13254.95",
+                    "shippingNetAmount": "120.00",
+                    "vatAmount": "927.85",
+                    "whtAmount": "0.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OrderGroupDto"
+                }
+              }
+            },
+            "description": "Order group placed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.price_expired": {
+                    "$ref": "#/components/examples/problem.checkout.price_expired"
+                  },
+                  "checkout.total_changed": {
+                    "$ref": "#/components/examples/problem.checkout.total_changed"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `numbering.series_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.cart_empty": {
+                    "$ref": "#/components/examples/problem.checkout.cart_empty"
+                  },
+                  "checkout.destinations_incomplete": {
+                    "$ref": "#/components/examples/problem.checkout.destinations_incomplete"
+                  },
+                  "checkout.rfq_destination_fixed": {
+                    "$ref": "#/components/examples/problem.checkout.rfq_destination_fixed"
+                  },
+                  "checkout.shipping_unavailable": {
+                    "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.wht_rate_missing": {
+                    "$ref": "#/components/examples/problem.checkout.wht_rate_missing"
+                  },
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.wht_rate_missing`, `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Place my order",
+        "tags": [
+          "store.checkout"
+        ]
+      }
+    },
+    "/v1/store/checkout/actions/preview": {
+      "post": {
+        "description": "Prices the cart exactly as checkout would: locked quotation prices (D-051), shipping per destination on the customer rate card (D-013), VAT per line and the expected withholding of the chosen tax profile (D-174). Nothing is written.\n\nImplements: D-051, D-060, D-013, D-142, D-174, D-010.",
+        "operationId": "store.checkout.preview",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "ccEmails": [
+                      "account@example.com"
+                    ],
+                    "expectedGrossAmount": "14182.80",
+                    "taxProfileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0003"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "notices": [],
+                  "orders": [
+                    {
+                      "cartItemId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "destinations": [
+                        {
+                          "postcode": "10110",
+                          "quantity": 1000,
+                          "shippingNetAmount": "120.00"
+                        }
+                      ],
+                      "lines": [
+                        {
+                          "descriptionEn": "Product",
+                          "descriptionTh": "สินค้า",
+                          "discountAmount": "0.00",
+                          "grossAmount": "13380.00",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                          "lineNo": 1,
+                          "lineType": "product",
+                          "netAmount": "12504.21",
+                          "quantity": "1000",
+                          "unitPrice": "12.504206",
+                          "vatAmount": "875.79",
+                          "vatRatePct": "7.0000",
+                          "whtAmount": "0.00",
+                          "whtCategory": "hire_of_work"
+                        }
+                      ],
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "totals": {
+                        "cashAmount": "14182.80",
+                        "currency": "THB",
+                        "discountAmount": "0.00",
+                        "grossAmount": "14182.80",
+                        "netAmount": "13254.95",
+                        "shippingNetAmount": "120.00",
+                        "vatAmount": "927.85",
+                        "whtAmount": "0.00"
+                      }
+                    }
+                  ],
+                  "totals": {
+                    "cashAmount": "14182.80",
+                    "currency": "THB",
+                    "discountAmount": "0.00",
+                    "grossAmount": "14182.80",
+                    "netAmount": "13254.95",
+                    "shippingNetAmount": "120.00",
+                    "vatAmount": "927.85",
+                    "whtAmount": "0.00"
+                  },
+                  "withholding": false
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutPreviewDto"
+                }
+              }
+            },
+            "description": "Priced checkout",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.price_expired": {
+                    "$ref": "#/components/examples/problem.checkout.price_expired"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.price_expired`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.cart_empty": {
+                    "$ref": "#/components/examples/problem.checkout.cart_empty"
+                  },
+                  "checkout.destinations_incomplete": {
+                    "$ref": "#/components/examples/problem.checkout.destinations_incomplete"
+                  },
+                  "checkout.rfq_destination_fixed": {
+                    "$ref": "#/components/examples/problem.checkout.rfq_destination_fixed"
+                  },
+                  "checkout.shipping_unavailable": {
+                    "$ref": "#/components/examples/problem.checkout.shipping_unavailable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.cart_empty`, `checkout.destinations_incomplete`, `checkout.rfq_destination_fixed`, `checkout.shipping_unavailable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "checkout.wht_rate_missing": {
+                    "$ref": "#/components/examples/problem.checkout.wht_rate_missing"
+                  },
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `checkout.wht_rate_missing`, `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Preview checkout",
+        "tags": [
+          "store.checkout"
+        ]
+      }
+    },
     "/v1/store/customer-profile": {
       "get": {
         "description": "Customer type (individual / juristic / government drives payment schedules, D-020) and the customer code, assigned at the first checkout.\n\nImplements: D-020, D-092.",
@@ -150263,6 +152845,10 @@
       "name": "admin.catalogSubPatterns"
     },
     {
+      "description": "CS places a customer’s order on their behalf (channel `cs`).",
+      "name": "admin.checkout"
+    },
+    {
       "description": "Article categories (D-005).",
       "name": "admin.cmsArticleCategories"
     },
@@ -150501,6 +153087,10 @@
     {
       "description": "Public catalogue and CMS reads for the storefront: products, stock products, showcase, articles, FAQs, SEO, geography, search, images and the Merchant feed — no prices or factory data (D-100, D-050).",
       "name": "store.catalog"
+    },
+    {
+      "description": "Preview and place the order group from the cart (D-051, D-060, D-013, D-174).",
+      "name": "store.checkout"
     },
     {
       "description": "The signed-in customer’s profile: customer type and customer code (D-020).",

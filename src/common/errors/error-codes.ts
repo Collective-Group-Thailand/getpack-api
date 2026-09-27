@@ -128,6 +128,13 @@ export const ERROR_CODES = {
   'cart.price_locked': HttpStatus.CONFLICT,
   'cart.reprice_unavailable': HttpStatus.CONFLICT,
   'cart.no_pending_reprice': HttpStatus.CONFLICT,
+  'checkout.cart_empty': HttpStatus.UNPROCESSABLE_ENTITY,
+  'checkout.price_expired': HttpStatus.CONFLICT,
+  'checkout.destinations_incomplete': HttpStatus.UNPROCESSABLE_ENTITY,
+  'checkout.shipping_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'checkout.rfq_destination_fixed': HttpStatus.UNPROCESSABLE_ENTITY,
+  'checkout.total_changed': HttpStatus.CONFLICT,
+  'checkout.wht_rate_missing': HttpStatus.SERVICE_UNAVAILABLE,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

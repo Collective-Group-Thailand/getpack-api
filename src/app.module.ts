@@ -14,6 +14,7 @@ import { IntegrationsModule } from '@integrations/integrations.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
+import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { PartnersModule } from '@modules/partners/partners.module';
@@ -81,6 +82,7 @@ import { LoggerModule } from 'nestjs-pino';
     RfqModule,
     CustomersModule,
     CartsModule,
+    CheckoutModule,
     HealthModule,
     SurfacesModule,
   ],
