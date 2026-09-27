@@ -626,6 +626,10 @@ model Order {
   trackingLinks          TrackingLink[]          @relation("TrackingLinkOrder")
   // --- end Fulfilment B4.3
 
+  // --- Fulfilment B4.5 (generated back-relations)
+  claims Claim[] @relation("ClaimOrder")
+  // --- end Fulfilment B4.5
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -1253,6 +1257,10 @@ model Refund {
   approvalRequest ApprovalRequest?   @relation("RefundApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__approval_request_id")
   requestedBy     User               @relation("RefundRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__requested_by")
   completedBy     User?              @relation("RefundCompletedBy", fields: [completedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_refunds__completed_by")
+
+  // --- Fulfilment B4.5 (generated back-relations)
+  claimResolutions ClaimResolution[] @relation("ClaimResolutionRefund")
+  // --- end Fulfilment B4.5
 
   @@index([paymentId], map: "ix_refunds__payment_id")
   @@index([status], map: "ix_refunds__status")

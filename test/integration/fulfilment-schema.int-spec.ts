@@ -592,17 +592,104 @@ describe('fulfilment schema (PostgreSQL 18)', () => {
           o.id,
         ]),
       ).toBe(SQLSTATE.restrictViolation);
+      const [first, second] = [await claim(o.id), await claim(o.id)];
       expect(
-        await state('UPDATE delivery_reconciliations SET claim_id = 1 WHERE order_id = $1', [o.id]),
+        await state('UPDATE delivery_reconciliations SET claim_id = $2 WHERE order_id = $1', [
+          o.id,
+          first.id,
+        ]),
       ).toBeNull();
       expect(
-        await state('UPDATE delivery_reconciliations SET claim_id = 2 WHERE order_id = $1', [o.id]),
+        await state('UPDATE delivery_reconciliations SET claim_id = $2 WHERE order_id = $1', [
+          o.id,
+          second.id,
+        ]),
       ).toBe(SQLSTATE.restrictViolation);
       expect(
         await state("INSERT INTO tracking_links (token_hash, order_id) VALUES (decode('00', 'hex'), $1)", [
           o.id,
         ]),
       ).toBe(SQLSTATE.checkViolation);
+    });
+  });
+
+  async function claim(orderId: bigint, extra: Record<string, unknown> = {}) {
+    seq += 1;
+    const now = Date.now();
+    return prisma.claim.create({
+      data: {
+        claimNo: `INT-CL-${seq}`,
+        entityId: fx.entityId,
+        orderId,
+        customerUserId: fx.customerId,
+        type: 'damaged',
+        origin: 'customer',
+        description: 'กล่องบุบ',
+        receivedAt: new Date(now - 86_400_000),
+        windowEndsAt: new Date(now + 6 * 86_400_000),
+        requestedResolution: 'reprint',
+        liabilityByRule: 'factory',
+        ...extra,
+      },
+    });
+  }
+
+  describe('claims (B4.5)', () => {
+    it('keeps the claim window, liability overrides and decisions consistent', async () => {
+      const o = await order();
+      // D-082: a customer claim after the window is refused; an automatic one is not bound by it.
+      const late = {
+        receivedAt: new Date(Date.now() - 10 * 86_400_000),
+        windowEndsAt: new Date(Date.now() - 3 * 86_400_000),
+      };
+      await expect(claim(o.id, late)).rejects.toThrow();
+      await claim(o.id, { ...late, origin: 'tolerance_auto' });
+      const c = await claim(o.id);
+      expect(await state("UPDATE claims SET liability = 'factory' WHERE id = $1", [c.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(await state("UPDATE claims SET override_reason = 'x' WHERE id = $1", [c.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(await state("UPDATE claims SET status = 'approved' WHERE id = $1", [c.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(await state("UPDATE claims SET status = 'closed' WHERE id = $1", [c.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(await state("UPDATE claims SET factory_response = 'accepted' WHERE id = $1", [c.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(await state('DELETE FROM claims WHERE id = $1', [c.id])).toBe(SQLSTATE.restrictViolation);
+    });
+
+    it('records resolutions write-once with their targets', async () => {
+      const o = await order();
+      const c = await claim(o.id);
+      expect(
+        await state(
+          "INSERT INTO claim_resolutions (claim_id, action, executed_by) VALUES ($1, 'reproduction_job', $2)",
+          [c.id, fx.staffId],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state(
+          "INSERT INTO claim_resolutions (claim_id, action, executed_by) VALUES ($1, 'credit_note', $2)",
+          [c.id, fx.staffId],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      const r = await prisma.claimResolution.create({
+        data: { claimId: c.id, action: 'credit_note', amount: '100.00', executedById: fx.staffId },
+      });
+      expect(await state('UPDATE claim_resolutions SET amount = 1 WHERE id = $1', [r.id])).toBe(
+        SQLSTATE.restrictViolation,
+      );
+      expect(
+        await state('UPDATE claim_resolutions SET customer_document_id = 7 WHERE id = $1', [r.id]),
+      ).toBeNull();
+      expect(await state('UPDATE claim_resolutions SET customer_document_id = 8 WHERE id = $1', [r.id])).toBe(
+        SQLSTATE.restrictViolation,
+      );
     });
   });
 });

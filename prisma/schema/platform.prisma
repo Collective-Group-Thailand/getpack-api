@@ -375,6 +375,10 @@ model Entity {
   shipments Shipment[] @relation("ShipmentEntity")
   // --- end Fulfilment B4.3
 
+  // --- Fulfilment B4.5 (generated back-relations)
+  claims Claim[] @relation("ClaimEntity")
+  // --- end Fulfilment B4.5
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }

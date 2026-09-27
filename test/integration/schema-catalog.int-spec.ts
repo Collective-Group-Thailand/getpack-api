@@ -539,6 +539,23 @@ const CHECKS = [
   'ck_shipments__shipment_no',
   'ck_tracking_links__token_hash',
   'ck_tracking_links__views',
+  // --- B4.5 claims
+  'ck_claim_resolutions__amount',
+  'ck_claim_resolutions__money',
+  'ck_claim_resolutions__quantity',
+  'ck_claim_resolutions__refund',
+  'ck_claim_resolutions__reproduction',
+  'ck_claims__claim_no',
+  'ck_claims__claimed',
+  'ck_claims__closed',
+  'ck_claims__decided',
+  'ck_claims__description',
+  'ck_claims__factory_liable',
+  'ck_claims__factory_response',
+  'ck_claims__override',
+  'ck_claims__resolved',
+  'ck_claims__window',
+  'ck_claims__window_order',
 ];
 
 const TRIGGERS = [
@@ -669,6 +686,9 @@ const TRIGGERS = [
   'tg_shipment_items__no_delete',
   'tg_shipment_items__same_order',
   'tg_shipments__no_delete',
+  // --- B4.5 claims
+  'tg_claim_resolutions__write_once',
+  'tg_claims__no_delete',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */

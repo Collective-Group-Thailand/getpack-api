@@ -729,7 +729,7 @@ model ProductionJob {
   factoryId            BigInt              @map("factory_id")
   jobKind              JobKind             @map("job_kind")
   reproductionOfJobId  BigInt?             @map("reproduction_of_job_id")
-  /// P24 re-production for a claim (FK added with claims, B4.5).
+  /// P24 re-production for a claim.
   claimId              BigInt?             @map("claim_id")
   /// The factory PO (FK added with purchase orders, B5.3).
   purchaseOrderId      BigInt?             @map("purchase_order_id")
@@ -797,10 +797,16 @@ model ProductionJob {
   inspections      Inspection[]
   issues           JobIssue[]
   capacityBooking  CapacityBooking?      @relation("CapacityBookingJob")
+  claim            Claim?                @relation("ProductionJobClaim", fields: [claimId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__claim_id")
 
   // --- Fulfilment B4.3 (generated back-relations)
   shipmentItems ShipmentItem[] @relation("ShipmentItemJob")
   // --- end Fulfilment B4.3
+
+  // --- Fulfilment B4.5 (generated back-relations)
+  claims           Claim[]           @relation("ClaimProductionJob")
+  claimResolutions ClaimResolution[] @relation("ClaimResolutionJob")
+  // --- end Fulfilment B4.5
 
   @@unique([orderId], map: "ux_production_jobs__one_live_production", where: raw("((job_kind = 'production'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
@@ -1114,6 +1120,10 @@ model Shipment {
   proofOfDelivery      ProofOfDelivery?
   trackingLinks        TrackingLink[]
 
+  // --- Fulfilment B4.5 (generated back-relations)
+  claims Claim[] @relation("ClaimShipment")
+  // --- end Fulfilment B4.5
+
   @@index([factoryId, status], map: "ix_shipments__factory_id__status")
   @@index([trackingNo], map: "ix_shipments__tracking_no")
   @@index([carrierId, carrierBookingRef], map: "ix_shipments__carrier_id__carrier_booking_ref")
@@ -1238,12 +1248,13 @@ model DeliveryReconciliation {
   creditVatAmount      Decimal?         @map("credit_vat_amount") @db.Decimal(14, 2)
   /// Gross pro-rata credit (net + VAT), shortage within tolerance only.
   creditAmount         Decimal?         @map("credit_amount") @db.Decimal(14, 2)
-  /// The automatic claim (FK added with claims, B4.5).
+  /// The automatic claim (B4.5).
   claimId              BigInt?          @map("claim_id")
   evaluatedAt          DateTime         @map("evaluated_at") @db.Timestamptz(6)
   domainEventId        String?          @map("domain_event_id") @db.Uuid
 
   order       Order        @relation("DeliveryReconciliationOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_delivery_reconciliations__order_id")
+  claim       Claim?       @relation("DeliveryReconciliationClaim", fields: [claimId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_delivery_reconciliations__claim_id")
   domainEvent DomainEvent? @relation("DeliveryReconciliationEvent", fields: [domainEventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_delivery_reconciliations__domain_event_id")
 
   @@index([claimId], map: "ix_delivery_reconciliations__claim_id")
@@ -1269,4 +1280,183 @@ model TrackingLink {
   @@index([orderId], map: "ix_tracking_links__order_id")
   @@index([shipmentId], map: "ix_tracking_links__shipment_id")
   @@map("tracking_links")
+}
+
+// =====================================================================================================
+// Claims (D-082, D-083, D-080; B4.5)
+// =====================================================================================================
+
+enum ClaimType {
+  damaged
+  wrong_spec
+  print_defect
+  quantity_short
+  late
+  other
+
+  @@map("claim_type")
+}
+
+enum ClaimOrigin {
+  customer
+  tolerance_auto
+  staff
+
+  @@map("claim_origin")
+}
+
+enum ClaimStatus {
+  submitted
+  under_review
+  need_info
+  factory_review
+  approved
+  rejected
+  resolved
+  closed
+
+  @@map("claim_status")
+}
+
+enum ClaimResolutionKind {
+  reprint
+  partial_refund
+  full_refund
+  credit
+
+  @@map("claim_resolution_kind")
+}
+
+enum ClaimLiability {
+  factory
+  customer
+  carrier
+  packio
+  undetermined
+
+  @@map("claim_liability")
+}
+
+enum FactoryClaimResponse {
+  accepted
+  disputed
+
+  @@map("factory_claim_response")
+}
+
+enum ClaimAction {
+  reproduction_job
+  refund
+  credit_note
+  store_credit
+  factory_deduction
+  carrier_recovery
+
+  @@map("claim_action")
+}
+
+/// A customer's claim within the window after receipt (D-082), an automatic one from a tolerance breach
+/// (D-080) or one staff open. Evidence photos are attachments (`claim.product_photo`, `claim.carton_photo`).
+/// Liability follows the rules (D-083) unless overridden with a reason by permission.
+model Claim {
+  id                      BigInt                @id(map: "pk_claims") @default(autoincrement())
+  publicId                String                @unique(map: "ux_claims__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  claimNo                 String                @unique(map: "ux_claims__claim_no") @map("claim_no")
+  entityId                BigInt                @map("entity_id")
+  orderId                 BigInt                @map("order_id")
+  shipmentId              BigInt?               @map("shipment_id")
+  /// The job whose goods are claimed (liable factory's job).
+  productionJobId         BigInt?               @map("production_job_id")
+  customerUserId          BigInt                @map("customer_user_id")
+  type                    ClaimType
+  origin                  ClaimOrigin
+  status                  ClaimStatus           @default(submitted)
+  statusChangedAt         DateTime              @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  description             String
+  receivedAt              DateTime              @map("received_at") @db.Timestamptz(6)
+  windowEndsAt            DateTime              @map("window_ends_at") @db.Timestamptz(6)
+  submittedAt             DateTime              @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  requestedResolution     ClaimResolutionKind   @map("requested_resolution")
+  claimedQuantity         Int?                  @map("claimed_quantity")
+  claimedAmount           Decimal?              @map("claimed_amount") @db.Decimal(14, 2)
+  liability               ClaimLiability        @default(undetermined)
+  liabilityByRule         ClaimLiability        @map("liability_by_rule")
+  liabilityOverriddenById BigInt?               @map("liability_overridden_by")
+  overrideReason          String?               @map("override_reason")
+  factoryId               BigInt?               @map("factory_id")
+  factoryResponse         FactoryClaimResponse? @map("factory_response")
+  factoryResponseNote     String?               @map("factory_response_note")
+  factoryRespondedAt      DateTime?             @map("factory_responded_at") @db.Timestamptz(6)
+  factoryRespondedById    BigInt?               @map("factory_responded_by")
+  infoRequest             String?               @map("info_request")
+  infoResponse            String?               @map("info_response")
+  decisionNote            String?               @map("decision_note")
+  decidedById             BigInt?               @map("decided_by")
+  decidedAt               DateTime?             @map("decided_at") @db.Timestamptz(6)
+  resolvedAt              DateTime?             @map("resolved_at") @db.Timestamptz(6)
+  closedAt                DateTime?             @map("closed_at") @db.Timestamptz(6)
+  createdById             BigInt?               @map("created_by")
+  createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion              Int                   @default(1) @map("row_version")
+
+  entity                Entity                   @relation("ClaimEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__entity_id")
+  order                 Order                    @relation("ClaimOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__order_id")
+  shipment              Shipment?                @relation("ClaimShipment", fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__shipment_id")
+  productionJob         ProductionJob?           @relation("ClaimProductionJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__production_job_id")
+  customer              User                     @relation("ClaimCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__customer_user_id")
+  factory               Factory?                 @relation("ClaimFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__factory_id")
+  liabilityOverriddenBy User?                    @relation("ClaimLiabilityOverriddenBy", fields: [liabilityOverriddenById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__liability_overridden_by")
+  factoryRespondedBy    User?                    @relation("ClaimFactoryRespondedBy", fields: [factoryRespondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__factory_responded_by")
+  decidedBy             User?                    @relation("ClaimDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__decided_by")
+  createdBy             User?                    @relation("ClaimCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claims__created_by")
+  resolutions           ClaimResolution[]
+  reproductionJobs      ProductionJob[]          @relation("ProductionJobClaim")
+  reconciliations       DeliveryReconciliation[] @relation("DeliveryReconciliationClaim")
+
+  @@index([orderId], map: "ix_claims__order_id")
+  @@index([status, statusChangedAt], map: "ix_claims__status__status_changed_at")
+  @@index([factoryId, status], map: "ix_claims__factory_id__status")
+  @@index([customerUserId, createdAt(sort: Desc)], map: "ix_claims__customer_user_id__created_at")
+  @@index([entityId], map: "ix_claims__entity_id")
+  @@index([shipmentId], map: "ix_claims__shipment_id")
+  @@index([productionJobId], map: "ix_claims__production_job_id")
+  @@index([liabilityOverriddenById], map: "ix_claims__liability_overridden_by")
+  @@index([factoryRespondedById], map: "ix_claims__factory_responded_by")
+  @@index([decidedById], map: "ix_claims__decided_by")
+  @@index([createdById], map: "ix_claims__created_by")
+  @@map("claims")
+}
+
+/// What was done to resolve an approved claim, through existing mechanisms only (re-production PO, refund,
+/// credit note / store credit, factory deduction, carrier recovery — the finance documents in B5).
+model ClaimResolution {
+  id                 BigInt      @id(map: "pk_claim_resolutions") @default(autoincrement())
+  publicId           String      @unique(map: "ux_claim_resolutions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  claimId            BigInt      @map("claim_id")
+  action             ClaimAction
+  amount             Decimal?    @db.Decimal(14, 2)
+  quantity           Int?
+  productionJobId    BigInt?     @map("production_job_id")
+  refundId           BigInt?     @map("refund_id")
+  /// The customer credit note / store credit document (FK with customer documents, B5).
+  customerDocumentId BigInt?     @map("customer_document_id")
+  /// The factory deduction (FK with vendor deductions, B5).
+  vendorDeductionId  BigInt?     @map("vendor_deduction_id")
+  note               String?
+  executedAt         DateTime    @default(now()) @map("executed_at") @db.Timestamptz(6)
+  executedById       BigInt      @map("executed_by")
+
+  claim         Claim          @relation(fields: [claimId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claim_resolutions__claim_id")
+  productionJob ProductionJob? @relation("ClaimResolutionJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claim_resolutions__production_job_id")
+  refund        Refund?        @relation("ClaimResolutionRefund", fields: [refundId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claim_resolutions__refund_id")
+  executedBy    User           @relation("ClaimResolutionExecutedBy", fields: [executedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claim_resolutions__executed_by")
+
+  @@index([claimId], map: "ix_claim_resolutions__claim_id")
+  @@index([productionJobId], map: "ix_claim_resolutions__production_job_id")
+  @@index([refundId], map: "ix_claim_resolutions__refund_id")
+  @@index([customerDocumentId], map: "ix_claim_resolutions__customer_document_id")
+  @@index([vendorDeductionId], map: "ix_claim_resolutions__vendor_deduction_id")
+  @@index([executedById], map: "ix_claim_resolutions__executed_by")
+  @@map("claim_resolutions")
 }

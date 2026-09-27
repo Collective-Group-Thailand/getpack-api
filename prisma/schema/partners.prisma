@@ -364,6 +364,10 @@ model Factory {
   shipments Shipment[] @relation("ShipmentFactory")
   // --- end Fulfilment B4.3
 
+  // --- Fulfilment B4.5 (generated back-relations)
+  claims Claim[] @relation("ClaimFactory")
+  // --- end Fulfilment B4.5
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
