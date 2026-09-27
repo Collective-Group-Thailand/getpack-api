@@ -13,6 +13,7 @@ import { PartnersModule } from '@modules/partners/partners.module';
 import { PaymentSchedulesModule } from '@modules/payment-schedules/payment-schedules.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
+import { PromotionsModule } from '@modules/promotions/promotions.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
@@ -68,6 +69,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     CheckoutModule,
     OrdersModule,
     PaymentSchedulesModule,
+    PromotionsModule,
     PaymentsModule,
     DomainEventsWorkerModule,
   ],

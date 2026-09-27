@@ -48,18 +48,45 @@ const sum = (r: ReturnType<typeof evaluatePromotions>) =>
 describe('promotion engine (D-053)', () => {
   it('applies percent with a cap, and fixed amounts spread over matching lines', () => {
     const lines = [line(0, 0, '10000.00'), line(0, 1, '120.00', { lineType: 'shipping' })];
-    expect(sum(evaluatePromotions([promo('p', { benefit: { type: 'percent', pct: '10', maxAmount: '500.00' } })], lines, orders, ctx))).toBe('500.00');
-    expect(sum(evaluatePromotions([promo('f', { benefit: { type: 'fixed', amount: '300.00' } })], lines, orders, ctx))).toBe('300.00');
+    expect(
+      sum(
+        evaluatePromotions(
+          [promo('p', { benefit: { type: 'percent', pct: '10', maxAmount: '500.00' } })],
+          lines,
+          orders,
+          ctx,
+        ),
+      ),
+    ).toBe('500.00');
+    expect(
+      sum(
+        evaluatePromotions(
+          [promo('f', { benefit: { type: 'fixed', amount: '300.00' } })],
+          lines,
+          orders,
+          ctx,
+        ),
+      ),
+    ).toBe('300.00');
     const ship = evaluatePromotions([promo('s', { benefit: { type: 'free_shipping' } })], lines, orders, ctx);
     expect(ship.discounts).toEqual([expect.objectContaining({ line: 1, amount: '120.00' })]);
   });
 
   it('picks the tier the quantity reaches', () => {
     const tiered = promo('t', {
-      benefit: { type: 'tiered', basis: 'quantity', tiers: [{ min: '500', pct: '5' }, { min: '1000', pct: '8' }] },
+      benefit: {
+        type: 'tiered',
+        basis: 'quantity',
+        tiers: [
+          { min: '500', pct: '5' },
+          { min: '1000', pct: '8' },
+        ],
+      },
     });
     expect(sum(evaluatePromotions([tiered], [line(0, 0, '10000.00')], orders, ctx))).toBe('800.00');
-    expect(sum(evaluatePromotions([tiered], [line(0, 0, '10000.00', { quantity: 600 })], orders, ctx))).toBe('500.00');
+    expect(sum(evaluatePromotions([tiered], [line(0, 0, '10000.00', { quantity: 600 })], orders, ctx))).toBe(
+      '500.00',
+    );
   });
 
   it('checks conditions and says which one failed', () => {
@@ -112,14 +139,33 @@ describe('promotion engine (D-053)', () => {
 
   it('caps discounts at the margin floor and reports the capped amount; unknown cost → nothing', () => {
     // net 10,000, buy 8,500, floor 10 % → allowed = 10,000 − 8,500 / 0.9 = 555.56
-    const r = evaluatePromotions([promo('big', { benefit: { type: 'fixed', amount: '2000.00' } })], [line(0, 0, '10000.00')], [{ order: 0, buyCostNet: '8500.00' }], ctx);
-    expect(r.discounts[0]).toMatchObject({ amount: '555.56', cappedAmount: '1444.44', capReason: 'margin_floor' });
-    const unknown = evaluatePromotions([promo('x', { benefit: { type: 'fixed', amount: '10.00' } })], [line(0, 0, '100.00')], [{ order: 0, buyCostNet: null }], ctx);
+    const r = evaluatePromotions(
+      [promo('big', { benefit: { type: 'fixed', amount: '2000.00' } })],
+      [line(0, 0, '10000.00')],
+      [{ order: 0, buyCostNet: '8500.00' }],
+      ctx,
+    );
+    expect(r.discounts[0]).toMatchObject({
+      amount: '555.56',
+      cappedAmount: '1444.44',
+      capReason: 'margin_floor',
+    });
+    const unknown = evaluatePromotions(
+      [promo('x', { benefit: { type: 'fixed', amount: '10.00' } })],
+      [line(0, 0, '100.00')],
+      [{ order: 0, buyCostNet: null }],
+      ctx,
+    );
     expect(unknown.discounts[0]).toMatchObject({ amount: '0.00', capReason: 'margin_floor' });
   });
 
   it('caps a promotion at its campaign budget', () => {
-    const r = evaluatePromotions([promo('b', { benefit: { type: 'fixed', amount: '300.00' }, budgetLeft: '120.00' })], [line(0, 0, '10000.00')], orders, ctx);
+    const r = evaluatePromotions(
+      [promo('b', { benefit: { type: 'fixed', amount: '300.00' }, budgetLeft: '120.00' })],
+      [line(0, 0, '10000.00')],
+      orders,
+      ctx,
+    );
     expect(r.discounts[0]).toMatchObject({ amount: '120.00', cappedAmount: '180.00', capReason: 'budget' });
   });
 
@@ -145,7 +191,10 @@ describe('promotion engine (D-053)', () => {
         fc.integer({ min: 0, max: 30 }),
         (raw, nets, costPct, floor) => {
           const candidates = raw.map((c) => promo(c.id, c));
-          const lines = nets.flatMap((net, order) => [line(order, 0, net), line(order, 1, '100.00', { lineType: 'shipping' })]);
+          const lines = nets.flatMap((net, order) => [
+            line(order, 0, net),
+            line(order, 1, '100.00', { lineType: 'shipping' }),
+          ]);
           const os = nets.map((net, order) => ({
             order,
             buyCostNet: new MoneyDecimal(net).mul(costPct).div(100).toFixed(2),
@@ -161,8 +210,12 @@ describe('promotion engine (D-053)', () => {
             expect(taken.lte(l.net)).toBe(true);
           }
           for (const o of os) {
-            const net = lines.filter((l) => l.order === o.order).reduce((a, l) => a.add(l.net), new MoneyDecimal(0));
-            const disc = r.discounts.filter((d) => d.order === o.order).reduce((a, d) => a.add(d.amount), new MoneyDecimal(0));
+            const net = lines
+              .filter((l) => l.order === o.order)
+              .reduce((a, l) => a.add(l.net), new MoneyDecimal(0));
+            const disc = r.discounts
+              .filter((d) => d.order === o.order)
+              .reduce((a, d) => a.add(d.amount), new MoneyDecimal(0));
             const payable = net.sub(disc);
             if (disc.gt(0)) {
               const margin = payable.sub(o.buyCostNet).div(payable).mul(100);
@@ -177,11 +230,14 @@ describe('promotion engine (D-053)', () => {
   it('property: best_of gives at least what any single best_of promotion gives alone', () => {
     fc.assert(
       fc.property(fc.array(cents(1, 100_000), { minLength: 1, maxLength: 5 }), (amounts) => {
-        const candidates = amounts.map((a, i) => promo(`b${i}`, { stacking: 'best_of', benefit: { type: 'fixed', amount: a } }));
+        const candidates = amounts.map((a, i) =>
+          promo(`b${i}`, { stacking: 'best_of', benefit: { type: 'fixed', amount: a } }),
+        );
         const lines = [line(0, 0, '1000000.00')];
         const os = [{ order: 0, buyCostNet: '0.00' }];
         const together = new MoneyDecimal(sum(evaluatePromotions(candidates, lines, os, ctx)));
-        for (const c of candidates) expect(together.gte(sum(evaluatePromotions([c], lines, os, ctx)))).toBe(true);
+        for (const c of candidates)
+          expect(together.gte(sum(evaluatePromotions([c], lines, os, ctx)))).toBe(true);
       }),
     );
   });

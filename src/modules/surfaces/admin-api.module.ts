@@ -11,6 +11,7 @@ import { PARTNERS_ADMIN_CONTROLLERS } from '@modules/partners/partners.registry'
 import { PAYMENT_SCHEDULES_ADMIN_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PAYMENTS_ADMIN_CONTROLLERS } from '@modules/payments/payments.registry';
 import { PRICING_ADMIN_CONTROLLERS } from '@modules/pricing/pricing.registry';
+import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
 import { Module } from '@nestjs/common';
@@ -67,6 +68,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...CHECKOUT_ADMIN_CONTROLLERS,
     ...ORDERS_ADMIN_CONTROLLERS,
     ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,
+    ...PROMOTIONS_ADMIN_CONTROLLERS,
     ...PAYMENTS_ADMIN_CONTROLLERS,
   ],
 })

@@ -640,5 +640,27 @@
       "title": "Refund not approved",
       "detail": "A refund in {status} cannot be marked completed."
     }
+  },
+  "promotions": {
+    "code_taken": {
+      "title": "Code already used",
+      "detail": "The code {code} already exists."
+    },
+    "ended": {
+      "title": "Ended",
+      "detail": "This campaign or promotion has ended and cannot change."
+    },
+    "invalid_transition": {
+      "title": "Invalid transition",
+      "detail": "A {from} item cannot {action}."
+    },
+    "no_codes": {
+      "title": "No coupon codes",
+      "detail": "Generate coupon codes before activating a coupon promotion."
+    },
+    "not_a_coupon": {
+      "title": "Not a coupon promotion",
+      "detail": "This promotion does not use coupon codes."
+    }
   }
 }

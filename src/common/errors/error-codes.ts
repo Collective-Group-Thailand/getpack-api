@@ -153,6 +153,11 @@ export const ERROR_CODES = {
   'refunds.not_refundable': HttpStatus.CONFLICT,
   'refunds.channel_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
   'refunds.not_approved': HttpStatus.CONFLICT,
+  'promotions.code_taken': HttpStatus.CONFLICT,
+  'promotions.ended': HttpStatus.CONFLICT,
+  'promotions.invalid_transition': HttpStatus.CONFLICT,
+  'promotions.no_codes': HttpStatus.CONFLICT,
+  'promotions.not_a_coupon': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

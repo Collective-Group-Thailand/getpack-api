@@ -81,6 +81,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `payments.allocate` — Attach unidentified receipts to order groups (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 | `refunds.request` — Request refunds (approved by the Finance Manager, maker-checker) (D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |
 | `refunds.complete` — Record that an approved refund was paid out (bank transfer) (D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `promotions.read` — Read campaigns, promotions, coupon codes and the redemption report (D-053, D-154) | ● | ● |  |  | ● |  | ● |  |  | ● |  | ● |  | ● |
+| `promotions.manage` — Create, edit, activate and end promotions; generate, disable and export coupon codes (D-053) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
+| `campaigns.manage` — Create campaigns, set their THB budget, activate, pause and end them (D-154) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

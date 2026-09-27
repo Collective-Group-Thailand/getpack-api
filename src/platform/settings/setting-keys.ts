@@ -48,6 +48,13 @@ export interface SettingValues {
   'claims.window_days': number;
   'discounts.cs_limit_pct': string;
   'payments.schedule_split_threshold': string;
+  'campaigns.budget_alert_pct': string;
+  'referral.rules': {
+    refereeDiscountPct: string;
+    refereeDiscountMaxBaht: string;
+    referrerRewardBaht: string;
+    maxRewardedReferralsPerMonth: number;
+  };
   'payments.slip_review_sla_business_hours': number;
   /** D-175 business hours of working days (proposed). */
   'calendar.business_hours': { from: string; to: string; timezone?: string };

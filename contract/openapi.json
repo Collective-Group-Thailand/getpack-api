@@ -1244,6 +1244,61 @@
           "type": "https://errors.packio/pricing.vat_rate_missing"
         }
       },
+      "problem.promotions.code_taken": {
+        "summary": "promotions.code_taken",
+        "value": {
+          "code": "promotions.code_taken",
+          "detail": "รหัส {code} ถูกใช้แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "รหัสนี้ถูกใช้แล้ว",
+          "type": "https://errors.packio/promotions.code_taken"
+        }
+      },
+      "problem.promotions.ended": {
+        "summary": "promotions.ended",
+        "value": {
+          "code": "promotions.ended",
+          "detail": "แคมเปญหรือโปรโมชันนี้สิ้นสุดแล้ว แก้ไขไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "สิ้นสุดแล้ว",
+          "type": "https://errors.packio/promotions.ended"
+        }
+      },
+      "problem.promotions.invalid_transition": {
+        "summary": "promotions.invalid_transition",
+        "value": {
+          "code": "promotions.invalid_transition",
+          "detail": "สถานะ {from} ทำ {action} ไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เปลี่ยนสถานะไม่ได้",
+          "type": "https://errors.packio/promotions.invalid_transition"
+        }
+      },
+      "problem.promotions.no_codes": {
+        "summary": "promotions.no_codes",
+        "value": {
+          "code": "promotions.no_codes",
+          "detail": "สร้างรหัสคูปองก่อนเปิดใช้โปรโมชันแบบคูปอง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่มีรหัสคูปอง",
+          "type": "https://errors.packio/promotions.no_codes"
+        }
+      },
+      "problem.promotions.not_a_coupon": {
+        "summary": "promotions.not_a_coupon",
+        "value": {
+          "code": "promotions.not_a_coupon",
+          "detail": "โปรโมชันนี้ไม่ใช้รหัสคูปอง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่ใช่โปรโมชันแบบคูปอง",
+          "type": "https://errors.packio/promotions.not_a_coupon"
+        }
+      },
       "problem.provider.unavailable": {
         "summary": "provider.unavailable",
         "value": {
@@ -4629,6 +4684,34 @@
         ],
         "type": "string"
       },
+      "BenefitTierBasis": {
+        "enum": [
+          "quantity",
+          "value"
+        ],
+        "type": "string"
+      },
+      "BenefitTierDto": {
+        "properties": {
+          "amount": {
+            "example": "300.00",
+            "type": "string"
+          },
+          "min": {
+            "description": "Pieces or THB (basis)",
+            "example": "1000",
+            "type": "string"
+          },
+          "pct": {
+            "example": "8",
+            "type": "string"
+          }
+        },
+        "required": [
+          "min"
+        ],
+        "type": "object"
+      },
       "BranchType": {
         "enum": [
           "head_office",
@@ -4669,6 +4752,105 @@
           "pouch",
           "standard_product",
           "service"
+        ],
+        "type": "string"
+      },
+      "CampaignDto": {
+        "properties": {
+          "alertThresholdPct": {
+            "description": "Marketing is alerted at this share of the budget (D-154)",
+            "example": "80.0000",
+            "type": "string"
+          },
+          "alertedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "budgetAmount": {
+            "example": "50000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "example": "launch-2026",
+            "type": "string"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "endsAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "goals": {
+            "additionalProperties": true,
+            "example": {
+              "newCustomers": 100
+            },
+            "type": "object"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "เปิดตัว Packio",
+            "type": "string"
+          },
+          "spentAmount": {
+            "example": "12500.00",
+            "type": "string"
+          },
+          "startsAt": {
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CampaignStatus"
+              }
+            ],
+            "example": "active"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "status",
+          "startsAt",
+          "endsAt",
+          "budgetAmount",
+          "spentAmount",
+          "alertThresholdPct",
+          "alertedAt",
+          "goals",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "CampaignStatus": {
+        "enum": [
+          "draft",
+          "scheduled",
+          "active",
+          "paused",
+          "exhausted",
+          "ended"
         ],
         "type": "string"
       },
@@ -6419,6 +6601,137 @@
         ],
         "type": "object"
       },
+      "CouponAction": {
+        "enum": [
+          "disable",
+          "enable"
+        ],
+        "type": "string"
+      },
+      "CouponBatchResultDto": {
+        "properties": {
+          "batchId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "count": {
+            "example": 500,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "batchId",
+          "count"
+        ],
+        "type": "object"
+      },
+      "CouponCodeDto": {
+        "properties": {
+          "assignedCustomerId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "example": "PKAB23CD45",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CouponStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "usageLimit": {
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "usedCount": {
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "usageLimit",
+          "usedCount",
+          "assignedCustomerId"
+        ],
+        "type": "object"
+      },
+      "CouponExportDto": {
+        "properties": {
+          "codes": {
+            "example": 500,
+            "type": "integer"
+          },
+          "expiresAt": {
+            "example": "2026-11-01T10:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f11f",
+            "format": "uuid",
+            "type": "string"
+          },
+          "url": {
+            "description": "Signed for 5 minutes",
+            "example": "https://packio-files.s3.example.com/…&X-Amz-Expires=300",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "url",
+          "codes",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "CouponExportQuery": {
+        "properties": {
+          "batchId": {
+            "description": "Only the codes of one batch",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CouponKind": {
+        "enum": [
+          "single",
+          "bulk_unique",
+          "per_customer"
+        ],
+        "type": "string"
+      },
+      "CouponStatus": {
+        "enum": [
+          "active",
+          "used_up",
+          "disabled"
+        ],
+        "type": "string"
+      },
       "CoverageFactoryDto": {
         "properties": {
           "capabilityStatus": {
@@ -6750,6 +7063,55 @@
           "position",
           "title",
           "desktopFileId"
+        ],
+        "type": "object"
+      },
+      "CreateCampaignDto": {
+        "properties": {
+          "budgetAmount": {
+            "description": "THB budget (D-154); null = none",
+            "example": "50000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "example": "launch-2026",
+            "pattern": "^[a-z0-9][a-z0-9_-]{1,39}$",
+            "type": "string"
+          },
+          "endsAt": {
+            "example": "2026-12-31T23:59:59+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "goals": {
+            "additionalProperties": true,
+            "description": "Free-form goals shown on the dashboard",
+            "example": {
+              "newCustomers": 100
+            },
+            "type": "object"
+          },
+          "name": {
+            "example": "เปิดตัว Packio",
+            "maxLength": 120,
+            "type": "string"
+          },
+          "startsAt": {
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "startsAt"
         ],
         "type": "object"
       },
@@ -8469,6 +8831,126 @@
           "categoryId",
           "nameTh",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreatePromotionDto": {
+        "properties": {
+          "benefit": {
+            "additionalProperties": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionBenefitDto"
+              }
+            ]
+          },
+          "budgetAmount": {
+            "description": "Budget of this promotion alone",
+            "example": "10000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "campaignId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conditions": {
+            "additionalProperties": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionConditionsDto"
+              }
+            ]
+          },
+          "description": {
+            "example": "สำหรับคำสั่งซื้อแรก",
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endsAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionKind"
+              }
+            ],
+            "example": "coupon"
+          },
+          "name": {
+            "example": "ลด 10% ลูกค้าใหม่",
+            "maxLength": 120,
+            "type": "string"
+          },
+          "priority": {
+            "description": "Lower applies first",
+            "example": 100,
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "stackGroup": {
+            "description": "Stackable promotions in one group: only the best applies",
+            "example": null,
+            "maxLength": 40,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stacking": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StackingMode"
+              }
+            ],
+            "example": "stackable"
+          },
+          "startsAt": {
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "usageLimitPerCustomer": {
+            "example": 1,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "usageLimitTotal": {
+            "example": 1000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "priority",
+          "stacking",
+          "startsAt",
+          "conditions",
+          "benefit"
         ],
         "type": "object"
       },
@@ -12404,6 +12886,62 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "GenerateCouponsDto": {
+        "properties": {
+          "code": {
+            "description": "`single`: the code customers type",
+            "example": "WELCOME10",
+            "pattern": "^[A-Za-z0-9-]{3,40}$",
+            "type": "string"
+          },
+          "count": {
+            "description": "`bulk_unique`: how many codes",
+            "example": 500,
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "customerIds": {
+            "description": "`per_customer`: one code each",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000e0001"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "type": "array"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CouponKind"
+              }
+            ],
+            "example": "bulk_unique"
+          },
+          "prefix": {
+            "description": "Prefix of generated codes (A–Z, 0–9)",
+            "example": "PK",
+            "pattern": "^[A-Za-z0-9]{1,12}$",
+            "type": "string"
+          },
+          "usageLimit": {
+            "description": "Uses per code (generated codes: 1)",
+            "example": null,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
         "type": "object"
       },
       "GeoDistrictDto": {
@@ -17787,6 +18325,379 @@
         ],
         "type": "string"
       },
+      "PromotionAction": {
+        "enum": [
+          "activate",
+          "pause",
+          "end"
+        ],
+        "type": "string"
+      },
+      "PromotionBenefitDto": {
+        "properties": {
+          "amount": {
+            "example": "300.00",
+            "type": "string"
+          },
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BenefitTierBasis"
+              }
+            ],
+            "example": "quantity"
+          },
+          "maxAmount": {
+            "example": "500.00",
+            "type": "string"
+          },
+          "multiplier": {
+            "example": "2",
+            "type": "string"
+          },
+          "pct": {
+            "example": "10",
+            "type": "string"
+          },
+          "points": {
+            "example": 100,
+            "type": "integer"
+          },
+          "rounds": {
+            "example": 2,
+            "type": "integer"
+          },
+          "tiers": {
+            "items": {
+              "$ref": "#/components/schemas/BenefitTierDto"
+            },
+            "type": "array"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionBenefitType"
+              }
+            ],
+            "example": "percent"
+          },
+          "unitPrice": {
+            "description": "Per piece incl. VAT",
+            "example": "9.500000",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "PromotionBenefitType": {
+        "enum": [
+          "percent",
+          "fixed",
+          "tiered",
+          "free_shipping",
+          "unit_price_override",
+          "free_design",
+          "free_revision_rounds",
+          "free_mockup",
+          "points_multiplier",
+          "bonus_points"
+        ],
+        "type": "string"
+      },
+      "PromotionConditionsDto": {
+        "properties": {
+          "catalogProductIds": {
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "categoryCodes": {
+            "example": [
+              "folding_carton"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "channels": {
+            "example": [
+              "web",
+              "line"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SalesChannel"
+            },
+            "type": "array"
+          },
+          "firstOrderOnly": {
+            "example": true,
+            "type": "boolean"
+          },
+          "minOrderValue": {
+            "description": "Gross of the matching lines, incl. VAT",
+            "example": "5000.00",
+            "type": "string"
+          },
+          "minQuantity": {
+            "description": "Pieces on a matching line",
+            "example": 500,
+            "type": "integer"
+          },
+          "paymentMethods": {
+            "description": "Enforced when paying",
+            "example": [
+              "scb_qr"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "productTypeCodes": {
+            "example": [
+              "folding_carton"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "segments": {
+            "description": "new | returning | b2b",
+            "example": [
+              "new"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "zoneCodes": {
+            "description": "Shipping zone codes of every destination",
+            "example": [
+              "bkk"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PromotionDto": {
+        "properties": {
+          "benefit": {
+            "additionalProperties": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionBenefitDto"
+              }
+            ]
+          },
+          "budgetAmount": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "campaignId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conditions": {
+            "additionalProperties": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionConditionsDto"
+              }
+            ]
+          },
+          "description": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endsAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionKind"
+              }
+            ],
+            "example": "coupon"
+          },
+          "name": {
+            "example": "ลด 10% ลูกค้าใหม่",
+            "type": "string"
+          },
+          "priority": {
+            "example": 100,
+            "type": "integer"
+          },
+          "spentAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "stackGroup": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stacking": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StackingMode"
+              }
+            ],
+            "example": "stackable"
+          },
+          "startsAt": {
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "usageLimitPerCustomer": {
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "usageLimitTotal": {
+            "example": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "campaignId",
+          "kind",
+          "priority",
+          "stacking",
+          "stackGroup",
+          "status",
+          "startsAt",
+          "endsAt",
+          "conditions",
+          "benefit",
+          "usageLimitTotal",
+          "usageLimitPerCustomer",
+          "budgetAmount",
+          "spentAmount"
+        ],
+        "type": "object"
+      },
+      "PromotionKind": {
+        "enum": [
+          "coupon",
+          "automatic",
+          "referral"
+        ],
+        "type": "string"
+      },
+      "PromotionReportDto": {
+        "properties": {
+          "appliedRedemptions": {
+            "description": "On paid order groups",
+            "example": 30,
+            "type": "integer"
+          },
+          "cappedAmount": {
+            "description": "Removed by the margin guard or the budget",
+            "example": "800.00",
+            "type": "string"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "customers": {
+            "example": 38,
+            "type": "integer"
+          },
+          "discountAmount": {
+            "description": "Cost of the promotion (discounts given, before VAT)",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "grossAmount": {
+            "description": "Gross of the order groups that used it",
+            "example": "420000.00",
+            "type": "string"
+          },
+          "orderGroups": {
+            "example": 40,
+            "type": "integer"
+          },
+          "redemptions": {
+            "description": "Reserved and applied redemptions",
+            "example": 42,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "redemptions",
+          "appliedRedemptions",
+          "discountAmount",
+          "cappedAmount",
+          "orderGroups",
+          "grossAmount",
+          "customers",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "PromotionStatus": {
+        "enum": [
+          "draft",
+          "active",
+          "paused",
+          "ended"
+        ],
+        "type": "string"
+      },
       "ProposalDirection": {
         "description": "`factory_to_packio` = factory price list (mode b); `packio_to_factory` = rate card (mode a), D-042",
         "enum": [
@@ -22358,6 +23269,14 @@
         ],
         "type": "object"
       },
+      "StackingMode": {
+        "enum": [
+          "exclusive",
+          "stackable",
+          "best_of"
+        ],
+        "type": "string"
+      },
       "StaffDeclineRfqDto": {
         "properties": {
           "note": {
@@ -25698,6 +26617,43 @@
         },
         "type": "object"
       },
+      "UpdateCampaignDto": {
+        "properties": {
+          "budgetAmount": {
+            "example": "80000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endsAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "goals": {
+            "additionalProperties": true,
+            "example": {
+              "newCustomers": 150
+            },
+            "type": "object"
+          },
+          "name": {
+            "example": "เปิดตัว Packio",
+            "maxLength": 120,
+            "type": "string"
+          },
+          "startsAt": {
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateCapabilityDto": {
         "properties": {
           "maxOrderQty": {
@@ -27128,6 +28084,98 @@
             ],
             "description": "`archived` replaces deletion (schema-design §1.6)",
             "example": "active"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePromotionDto": {
+        "properties": {
+          "benefit": {
+            "additionalProperties": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionBenefitDto"
+              }
+            ]
+          },
+          "budgetAmount": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conditions": {
+            "additionalProperties": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionConditionsDto"
+              }
+            ]
+          },
+          "description": {
+            "example": null,
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endsAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "ลด 10% ลูกค้าใหม่",
+            "maxLength": 120,
+            "type": "string"
+          },
+          "priority": {
+            "example": 50,
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "stackGroup": {
+            "example": null,
+            "maxLength": 40,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stacking": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StackingMode"
+              }
+            ],
+            "example": "exclusive"
+          },
+          "startsAt": {
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "usageLimitPerCustomer": {
+            "example": 1,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "usageLimitTotal": {
+            "example": 2000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         },
         "type": "object"
@@ -31613,6 +32661,1231 @@
         ],
         "x-required-permissions": [
           "audit_logs.export"
+        ]
+      }
+    },
+    "/v1/admin/campaigns": {
+      "get": {
+        "description": "Newest first, with budget and spend (D-154).\n\nImplements: D-154.",
+        "operationId": "admin.campaigns.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CampaignStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "alertThresholdPct": "80.0000",
+                      "alertedAt": null,
+                      "budgetAmount": "50000.00",
+                      "code": "launch-2026",
+                      "currency": "THB",
+                      "endsAt": null,
+                      "goals": {
+                        "newCustomers": 100
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                      "name": "เปิดตัว Packio",
+                      "spentAmount": "12500.00",
+                      "startsAt": "2026-11-01T00:00:00+07:00",
+                      "status": "active"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/CampaignDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List campaigns",
+        "tags": [
+          "admin.campaigns"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      },
+      "post": {
+        "description": "Marketing creates a campaign as a draft with an optional THB budget; the alert threshold is the `campaigns.budget_alert_pct` setting in force (80 %, D-154), kept on the campaign.\n\nImplements: D-154.",
+        "operationId": "admin.campaigns.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "budgetAmount": "50000.00",
+                    "code": "launch-2026",
+                    "name": "เปิดตัว Packio",
+                    "startsAt": "2026-11-01T00:00:00+07:00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateCampaignDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alertThresholdPct": "80.0000",
+                  "alertedAt": null,
+                  "budgetAmount": "50000.00",
+                  "code": "launch-2026",
+                  "currency": "THB",
+                  "endsAt": null,
+                  "goals": {
+                    "newCustomers": 100
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                  "name": "เปิดตัว Packio",
+                  "spentAmount": "0.00",
+                  "startsAt": "2026-11-01T00:00:00+07:00",
+                  "status": "draft"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignDto"
+                }
+              }
+            },
+            "description": "Campaign",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "promotions.code_taken": {
+                    "$ref": "#/components/examples/problem.promotions.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `promotions.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a campaign",
+        "tags": [
+          "admin.campaigns"
+        ],
+        "x-required-permissions": [
+          "campaigns.manage"
+        ]
+      }
+    },
+    "/v1/admin/campaigns/{campaignId}": {
+      "get": {
+        "description": "With its budget, spend and alert (D-154).\n\nImplements: D-154.",
+        "operationId": "admin.campaigns.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaignId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alertThresholdPct": "80.0000",
+                  "alertedAt": null,
+                  "budgetAmount": "50000.00",
+                  "code": "launch-2026",
+                  "currency": "THB",
+                  "endsAt": null,
+                  "goals": {
+                    "newCustomers": 100
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                  "name": "เปิดตัว Packio",
+                  "spentAmount": "12500.00",
+                  "startsAt": "2026-11-01T00:00:00+07:00",
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignDto"
+                }
+              }
+            },
+            "description": "Campaign",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a campaign",
+        "tags": [
+          "admin.campaigns"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      },
+      "patch": {
+        "description": "Name, window, goals or budget; the budget never goes below what is already spent. Raising the budget of an exhausted campaign reopens it (D-154). Guarded by `If-Match`.\n\nImplements: D-154.",
+        "operationId": "admin.campaigns.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaignId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "budgetAmount": "80000.00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCampaignDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alertThresholdPct": "80.0000",
+                  "alertedAt": null,
+                  "budgetAmount": "50000.00",
+                  "code": "launch-2026",
+                  "currency": "THB",
+                  "endsAt": null,
+                  "goals": {
+                    "newCustomers": 100
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                  "name": "เปิดตัว Packio",
+                  "spentAmount": "12500.00",
+                  "startsAt": "2026-11-01T00:00:00+07:00",
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignDto"
+                }
+              }
+            },
+            "description": "Campaign",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "promotions.ended": {
+                    "$ref": "#/components/examples/problem.promotions.ended"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `promotions.ended`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Update a campaign",
+        "tags": [
+          "admin.campaigns"
+        ],
+        "x-required-permissions": [
+          "campaigns.manage"
+        ]
+      }
+    },
+    "/v1/admin/campaigns/{campaignId}/actions/{action}": {
+      "post": {
+        "description": "`activate` makes it active (or scheduled before its start); `pause` stops its promotions applying; `end` is final. A campaign whose budget is spent stops by itself (`exhausted`, D-154).\n\nImplements: D-154.",
+        "operationId": "admin.campaigns.action",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaignId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PromotionAction"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alertThresholdPct": "80.0000",
+                  "alertedAt": null,
+                  "budgetAmount": "50000.00",
+                  "code": "launch-2026",
+                  "currency": "THB",
+                  "endsAt": null,
+                  "goals": {
+                    "newCustomers": 100
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                  "name": "เปิดตัว Packio",
+                  "spentAmount": "12500.00",
+                  "startsAt": "2026-11-01T00:00:00+07:00",
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignDto"
+                }
+              }
+            },
+            "description": "Campaign",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "promotions.invalid_transition": {
+                    "$ref": "#/components/examples/problem.promotions.invalid_transition"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `promotions.invalid_transition`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Activate, pause or end a campaign",
+        "tags": [
+          "admin.campaigns"
+        ],
+        "x-required-permissions": [
+          "campaigns.manage"
         ]
       }
     },
@@ -111538,6 +113811,2515 @@
         ]
       }
     },
+    "/v1/admin/promotions": {
+      "get": {
+        "description": "Filter by status, kind or campaign; ordered by status then priority (D-053).\n\nImplements: D-053.",
+        "operationId": "admin.promotions.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PromotionStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PromotionKind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "campaignId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "benefit": {
+                        "maxAmount": "500.00",
+                        "pct": "10",
+                        "type": "percent"
+                      },
+                      "budgetAmount": null,
+                      "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                      "conditions": {
+                        "productTypeCodes": [
+                          "folding_carton"
+                        ],
+                        "segments": [
+                          "new"
+                        ]
+                      },
+                      "description": null,
+                      "endsAt": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-000000090002",
+                      "kind": "coupon",
+                      "name": "ลด 10% ลูกค้าใหม่",
+                      "priority": 100,
+                      "spentAmount": "0.00",
+                      "stackGroup": null,
+                      "stacking": "stackable",
+                      "startsAt": "2026-11-01T00:00:00+07:00",
+                      "status": "active",
+                      "usageLimitPerCustomer": 1,
+                      "usageLimitTotal": 1000
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PromotionDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List promotions",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      },
+      "post": {
+        "description": "A draft coupon or automatic promotion. Conditions and the benefit are validated against JSON schema v1 (D-053); the margin guard applies whatever the benefit (`pricing.margin_floor_pct`).\n\nImplements: D-053.",
+        "operationId": "admin.promotions.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "benefit": {
+                      "maxAmount": "500.00",
+                      "pct": "10",
+                      "type": "percent"
+                    },
+                    "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                    "conditions": {
+                      "productTypeCodes": [
+                        "folding_carton"
+                      ],
+                      "segments": [
+                        "new"
+                      ]
+                    },
+                    "kind": "coupon",
+                    "name": "ลด 10% ลูกค้าใหม่",
+                    "priority": 100,
+                    "stacking": "stackable",
+                    "startsAt": "2026-11-01T00:00:00+07:00",
+                    "usageLimitPerCustomer": 1,
+                    "usageLimitTotal": 1000
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreatePromotionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "benefit": {
+                    "maxAmount": "500.00",
+                    "pct": "10",
+                    "type": "percent"
+                  },
+                  "budgetAmount": null,
+                  "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                  "conditions": {
+                    "productTypeCodes": [
+                      "folding_carton"
+                    ],
+                    "segments": [
+                      "new"
+                    ]
+                  },
+                  "description": null,
+                  "endsAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090002",
+                  "kind": "coupon",
+                  "name": "ลด 10% ลูกค้าใหม่",
+                  "priority": 100,
+                  "spentAmount": "0.00",
+                  "stackGroup": null,
+                  "stacking": "stackable",
+                  "startsAt": "2026-11-01T00:00:00+07:00",
+                  "status": "draft",
+                  "usageLimitPerCustomer": 1,
+                  "usageLimitTotal": 1000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionDto"
+                }
+              }
+            },
+            "description": "Promotion",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a promotion",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.manage"
+        ]
+      }
+    },
+    "/v1/admin/promotions/report": {
+      "get": {
+        "description": "Reserved and applied redemptions of a campaign or promotion (or all) in a period: discounts given, amounts capped by the margin guard or budget, order groups, their gross and customers (D-053).\n\nImplements: D-053, D-154.",
+        "operationId": "admin.promotions.report",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "campaignId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "promotionId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-000000090002",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Reserved from (inclusive)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01T00:00:00+07:00",
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Reserved before",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-12-01T00:00:00+07:00",
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "appliedRedemptions": 30,
+                  "cappedAmount": "800.00",
+                  "currency": "THB",
+                  "customers": 38,
+                  "discountAmount": "12500.00",
+                  "grossAmount": "420000.00",
+                  "orderGroups": 40,
+                  "redemptions": 42
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionReportDto"
+                }
+              }
+            },
+            "description": "Report",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Redemption and cost report",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      }
+    },
+    "/v1/admin/promotions/{promotionId}": {
+      "get": {
+        "description": "Conditions, benefit, limits and spend (D-053).\n\nImplements: D-053.",
+        "operationId": "admin.promotions.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "promotionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "benefit": {
+                    "maxAmount": "500.00",
+                    "pct": "10",
+                    "type": "percent"
+                  },
+                  "budgetAmount": null,
+                  "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                  "conditions": {
+                    "productTypeCodes": [
+                      "folding_carton"
+                    ],
+                    "segments": [
+                      "new"
+                    ]
+                  },
+                  "description": null,
+                  "endsAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090002",
+                  "kind": "coupon",
+                  "name": "ลด 10% ลูกค้าใหม่",
+                  "priority": 100,
+                  "spentAmount": "0.00",
+                  "stackGroup": null,
+                  "stacking": "stackable",
+                  "startsAt": "2026-11-01T00:00:00+07:00",
+                  "status": "active",
+                  "usageLimitPerCustomer": 1,
+                  "usageLimitTotal": 1000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionDto"
+                }
+              }
+            },
+            "description": "Promotion",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a promotion",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      },
+      "patch": {
+        "description": "Anything but its kind and campaign, until it ends; orders already placed keep the redemption they reserved (D-053). Guarded by `If-Match`.\n\nImplements: D-053.",
+        "operationId": "admin.promotions.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "promotionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "priority": 50,
+                    "usageLimitTotal": 2000
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePromotionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "benefit": {
+                    "maxAmount": "500.00",
+                    "pct": "10",
+                    "type": "percent"
+                  },
+                  "budgetAmount": null,
+                  "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                  "conditions": {
+                    "productTypeCodes": [
+                      "folding_carton"
+                    ],
+                    "segments": [
+                      "new"
+                    ]
+                  },
+                  "description": null,
+                  "endsAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090002",
+                  "kind": "coupon",
+                  "name": "ลด 10% ลูกค้าใหม่",
+                  "priority": 100,
+                  "spentAmount": "0.00",
+                  "stackGroup": null,
+                  "stacking": "stackable",
+                  "startsAt": "2026-11-01T00:00:00+07:00",
+                  "status": "active",
+                  "usageLimitPerCustomer": 1,
+                  "usageLimitTotal": 1000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionDto"
+                }
+              }
+            },
+            "description": "Promotion",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "promotions.ended": {
+                    "$ref": "#/components/examples/problem.promotions.ended"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `promotions.ended`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Update a promotion",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.manage"
+        ]
+      }
+    },
+    "/v1/admin/promotions/{promotionId}/actions/{action}": {
+      "post": {
+        "description": "A coupon promotion needs at least one code before it is activated; `end` is final (D-053).\n\nImplements: D-053.",
+        "operationId": "admin.promotions.action",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "promotionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PromotionAction"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "benefit": {
+                    "maxAmount": "500.00",
+                    "pct": "10",
+                    "type": "percent"
+                  },
+                  "budgetAmount": null,
+                  "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                  "conditions": {
+                    "productTypeCodes": [
+                      "folding_carton"
+                    ],
+                    "segments": [
+                      "new"
+                    ]
+                  },
+                  "description": null,
+                  "endsAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090002",
+                  "kind": "coupon",
+                  "name": "ลด 10% ลูกค้าใหม่",
+                  "priority": 100,
+                  "spentAmount": "0.00",
+                  "stackGroup": null,
+                  "stacking": "stackable",
+                  "startsAt": "2026-11-01T00:00:00+07:00",
+                  "status": "active",
+                  "usageLimitPerCustomer": 1,
+                  "usageLimitTotal": 1000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionDto"
+                }
+              }
+            },
+            "description": "Promotion",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "promotions.invalid_transition": {
+                    "$ref": "#/components/examples/problem.promotions.invalid_transition"
+                  },
+                  "promotions.no_codes": {
+                    "$ref": "#/components/examples/problem.promotions.no_codes"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `promotions.invalid_transition`, `promotions.no_codes`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Activate, pause or end a promotion",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.manage"
+        ]
+      }
+    },
+    "/v1/admin/promotions/{promotionId}/coupons": {
+      "get": {
+        "description": "In generation order, with uses and the assigned customer (D-053).\n\nImplements: D-053.",
+        "operationId": "admin.promotions.listCoupons",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "promotionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "assignedCustomerId": null,
+                      "code": "PKAB23CD45",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-000000090003",
+                      "status": "active",
+                      "usageLimit": 1,
+                      "usedCount": 0
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/CouponCodeDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List coupon codes of a promotion",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      },
+      "post": {
+        "description": "`single`: one shared code; `bulk_unique`: up to 10,000 one-use codes with a prefix; `per_customer`: one code assigned to each listed customer (D-053). Codes are unique regardless of case. Needs `Idempotency-Key`.\n\nImplements: D-053.",
+        "operationId": "admin.promotions.generateCoupons",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "promotionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "bulk": {
+                  "value": {
+                    "count": 500,
+                    "kind": "bulk_unique",
+                    "prefix": "PK"
+                  }
+                },
+                "single": {
+                  "value": {
+                    "code": "WELCOME10",
+                    "kind": "single"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/GenerateCouponsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "batchId": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
+                  "count": 500
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CouponBatchResultDto"
+                }
+              }
+            },
+            "description": "Batch generated",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "promotions.code_taken": {
+                    "$ref": "#/components/examples/problem.promotions.code_taken"
+                  },
+                  "promotions.ended": {
+                    "$ref": "#/components/examples/problem.promotions.ended"
+                  },
+                  "promotions.not_a_coupon": {
+                    "$ref": "#/components/examples/problem.promotions.not_a_coupon"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `promotions.code_taken`, `promotions.ended`, `promotions.not_a_coupon`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Generate coupon codes",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.manage"
+        ]
+      }
+    },
+    "/v1/admin/promotions/{promotionId}/coupons/exports": {
+      "post": {
+        "description": "All codes of the promotion, or of one batch, as UTF-8 CSV (formula-safe) behind a 5-minute signed URL. Codes are bearer values: the export is audited (`export.generated`, D-053, D-033).\n\nImplements: D-053, D-033.",
+        "operationId": "admin.promotions.exportCoupons",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "promotionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "batchId": "0192f3a0-7c1e-7d2a-9b1f-000000090004"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CouponExportQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "codes": 500,
+                  "expiresAt": "2026-11-01T10:05:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f11f",
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CouponExportDto"
+                }
+              }
+            },
+            "description": "Export ready",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "promotions.not_a_coupon": {
+                    "$ref": "#/components/examples/problem.promotions.not_a_coupon"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `promotions.not_a_coupon`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export coupon codes as CSV",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.manage"
+        ]
+      }
+    },
+    "/v1/admin/promotions/{promotionId}/coupons/{couponId}/actions/{action}": {
+      "post": {
+        "description": "A disabled code is refused at the cart; re-enabling restores `active` or `used_up` (D-053).\n\nImplements: D-053.",
+        "operationId": "admin.promotions.setCouponStatus",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "promotionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "couponId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "action",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/CouponAction"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignedCustomerId": null,
+                  "code": "PKAB23CD45",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000090003",
+                  "status": "active",
+                  "usageLimit": 1,
+                  "usedCount": 0
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CouponCodeDto"
+                }
+              }
+            },
+            "description": "Coupon code",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Disable or re-enable a coupon code",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.manage"
+        ]
+      }
+    },
     "/v1/admin/quotes": {
       "get": {
         "description": "`q` matches the QT number; filter by status or customer (D-051).\n\nImplements: D-051, D-010, D-050.",
@@ -165187,6 +169969,10 @@
       "name": "admin.auditLogs"
     },
     {
+      "description": "Marketing campaigns with a THB budget: 80 % alert and auto-stop when spent (D-154).",
+      "name": "admin.campaigns"
+    },
+    {
       "description": "Delivery methods: the factory fleet and Packio-booked fallback carriers (D-013, D-114).",
       "name": "admin.carriers"
     },
@@ -165457,6 +170243,10 @@
     {
       "description": "Staff-only suggested buy prices with their basis and impact simulations — never shown to factories (D-040, D-044).",
       "name": "admin.priceSuggestions"
+    },
+    {
+      "description": "Promotions with validated conditions and benefits, coupon codes (single, bulk-unique, per-customer), CSV export and the redemption report (D-053).",
+      "name": "admin.promotions"
     },
     {
       "description": "Saved quotations with the staff view; CS saves, shares and exports them (D-051, D-141).",

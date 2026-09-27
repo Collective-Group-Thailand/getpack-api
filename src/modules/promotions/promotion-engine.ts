@@ -123,15 +123,21 @@ const round2 = (v: MoneyValue) => v.toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_U
 const ZERO = D(0);
 
 /** The first condition a promotion fails, or null when every condition holds. */
-export function failedCondition(c: PromotionConditions, lines: readonly CartLine[], ctx: PromotionContext): string | null {
+export function failedCondition(
+  c: PromotionConditions,
+  lines: readonly CartLine[],
+  ctx: PromotionContext,
+): string | null {
   if (c.channels && !c.channels.includes(ctx.channel)) return 'channel';
   if (c.segments) {
     const ok = c.segments.some((s) => (s === 'b2b' ? ctx.b2b : s === ctx.segment));
     if (!ok) return 'segment';
   }
   if (c.firstOrderOnly && !ctx.firstOrder) return 'first_order';
-  if (c.paymentMethods && ctx.paymentMethod && !c.paymentMethods.includes(ctx.paymentMethod)) return 'payment_method';
-  if (c.zoneCodes && (ctx.zoneCodes.length === 0 || !ctx.zoneCodes.every((z) => c.zoneCodes!.includes(z)))) return 'zone';
+  if (c.paymentMethods && ctx.paymentMethod && !c.paymentMethods.includes(ctx.paymentMethod))
+    return 'payment_method';
+  if (c.zoneCodes && (ctx.zoneCodes.length === 0 || !ctx.zoneCodes.every((z) => c.zoneCodes!.includes(z))))
+    return 'zone';
   const matching = matchingLines(c, lines);
   if (matching.length === 0) return 'product';
   if (c.minQuantity && !matching.some((l) => l.quantity >= c.minQuantity!)) return 'quantity';
@@ -149,7 +155,8 @@ export function matchingLines(c: PromotionConditions, lines: readonly CartLine[]
       l.lineType === 'product' &&
       (!c.productTypeCodes || c.productTypeCodes.includes(l.productTypeCode)) &&
       (!c.categoryCodes || (l.categoryCode !== null && c.categoryCodes.includes(l.categoryCode))) &&
-      (!c.catalogProductIds || (l.catalogProductId !== null && c.catalogProductIds.includes(l.catalogProductId))),
+      (!c.catalogProductIds ||
+        (l.catalogProductId !== null && c.catalogProductIds.includes(l.catalogProductId))),
   );
 }
 
@@ -195,7 +202,8 @@ export function standalone(p: PromotionCandidate, lines: readonly CartLine[]): M
     }
     case 'free_shipping': {
       const orders = new Set(targets.map((l) => l.order));
-      for (const l of lines.filter((x) => x.lineType === 'shipping' && orders.has(x.order))) out.set(key(l), D(l.net));
+      for (const l of lines.filter((x) => x.lineType === 'shipping' && orders.has(x.order)))
+        out.set(key(l), D(l.net));
       break;
     }
     case 'unit_price_override':
@@ -251,7 +259,8 @@ export function evaluatePromotions(
     chosen = [...(bestOf ? [bestOf] : []), ...[...byGroup.values()].map((g) => best(g)!)];
     chosen.sort((a, b) => a.p.priority - b.p.priority || a.p.id.localeCompare(b.p.id));
   }
-  for (const e of eligible) if (!chosen.includes(e)) rejected.push({ promotionId: e.p.id, reason: 'not_combinable' });
+  for (const e of eligible)
+    if (!chosen.includes(e)) rejected.push({ promotionId: e.p.id, reason: 'not_combinable' });
 
   // Apply in priority order on what is left of each line; the campaign budget caps each promotion.
   const left = new Map(lines.map((l) => [`${l.order}:${l.line}`, D(l.net)]));
@@ -300,12 +309,18 @@ export function evaluatePromotions(
         return [];
     }
   });
-  const requiredPaymentMethods = [
-    ...new Set(chosen.flatMap((e) => e.p.conditions.paymentMethods ?? [])),
-  ];
+  const requiredPaymentMethods = [...new Set(chosen.flatMap((e) => e.p.conditions.paymentMethods ?? []))];
   const withMoney = new Set(discounts.filter((d) => D(d.amount).gt(0)).map((d) => d.promotionId));
-  const applied = chosen.filter((e) => withMoney.has(e.p.id) || perks.some((x) => x.promotionId === e.p.id)).map((e) => e.p.id);
-  return { applied, rejected, discounts: discounts.filter((d) => D(d.amount).gt(0) || D(d.cappedAmount).gt(0)), perks, requiredPaymentMethods };
+  const applied = chosen
+    .filter((e) => withMoney.has(e.p.id) || perks.some((x) => x.promotionId === e.p.id))
+    .map((e) => e.p.id);
+  return {
+    applied,
+    rejected,
+    discounts: discounts.filter((d) => D(d.amount).gt(0) || D(d.cappedAmount).gt(0)),
+    perks,
+    requiredPaymentMethods,
+  };
 }
 
 /**
@@ -324,7 +339,10 @@ export function guardMargins(
     const own = discounts.filter((d) => d.order === o.order);
     if (own.length === 0) continue;
     const net = lines.filter((l) => l.order === o.order).reduce((a, l) => a.add(l.net), ZERO);
-    const allowed = o.buyCostNet === null || keep.lte(0) ? ZERO : MoneyDecimal.max(ZERO, round2(net.sub(D(o.buyCostNet).div(keep))));
+    const allowed =
+      o.buyCostNet === null || keep.lte(0)
+        ? ZERO
+        : MoneyDecimal.max(ZERO, round2(net.sub(D(o.buyCostNet).div(keep))));
     let excess = own.reduce((a, d) => a.add(d.amount), ZERO).sub(allowed);
     for (const d of [...own].reverse()) {
       if (excess.lte(0)) break;

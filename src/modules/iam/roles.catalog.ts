@@ -58,6 +58,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'rfqs.read',
       'orders.read',
       'payments.read',
+      'promotions.read',
     ],
   },
   {
@@ -124,6 +125,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'orders.reprice',
       'payment_schedules.override',
       'payments.read',
+      'promotions.read',
+      'promotions.manage',
+      'campaigns.manage',
     ],
   },
   {
@@ -177,6 +181,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'payment_schedules.override',
       'payments.read',
       'refunds.request',
+      'promotions.read',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -241,6 +246,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'payments.allocate',
       'refunds.request',
       'refunds.complete',
+      'promotions.read',
     ],
   },
   {
@@ -265,7 +271,16 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายการตลาด',
     nameEn: 'Marketing',
     // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
-    permissions: [...EVERY_STAFF_MEMBER, 'approvals.act', 'catalog.read', 'cms.manage', 'seo.manage'],
+    permissions: [
+      ...EVERY_STAFF_MEMBER,
+      'approvals.act',
+      'catalog.read',
+      'cms.manage',
+      'seo.manage',
+      'promotions.read',
+      'promotions.manage',
+      'campaigns.manage',
+    ],
   },
   {
     key: 'partner_manager',
@@ -314,6 +329,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'customers.read',
       'orders.read',
       'payments.read',
+      'promotions.read',
     ],
   },
 

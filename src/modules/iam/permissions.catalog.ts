@@ -370,6 +370,25 @@ export const PERMISSIONS = [
     decisionRefs: ['D-169'],
   },
 
+  {
+    key: 'promotions.read',
+    audience: 'staff',
+    description: 'Read campaigns, promotions, coupon codes and the redemption report',
+    decisionRefs: ['D-053', 'D-154'],
+  },
+  {
+    key: 'promotions.manage',
+    audience: 'staff',
+    description: 'Create, edit, activate and end promotions; generate, disable and export coupon codes',
+    decisionRefs: ['D-053'],
+  },
+  {
+    key: 'campaigns.manage',
+    audience: 'staff',
+    description: 'Create campaigns, set their THB budget, activate, pause and end them',
+    decisionRefs: ['D-154'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

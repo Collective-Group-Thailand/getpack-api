@@ -159,7 +159,7 @@ const CSV_COLUMNS = [
   'data',
 ];
 
-function csvCell(value: unknown): string {
+export function csvCell(value: unknown): string {
   const text =
     value === null || value === undefined ? '' : typeof value === 'string' ? value : JSON.stringify(value);
   // Neutralise spreadsheet formulas (CSV injection) and quote every cell.
