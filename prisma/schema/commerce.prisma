@@ -179,24 +179,29 @@ enum CancelReasonAppliesTo {
 /// One per customer user (`users.kind = customer`), created on first use. `customer_code` is assigned
 /// from the `customer` series when the customer first orders or CS creates the account (Q-2).
 model CustomerProfile {
-  userId       BigInt          @id(map: "pk_customer_profiles") @map("user_id")
-  customerCode String?         @unique(map: "ux_customer_profiles__customer_code") @map("customer_code")
-  customerType CustomerType    @default(individual) @map("customer_type")
+  userId           BigInt          @id(map: "pk_customer_profiles") @map("user_id")
+  customerCode     String?         @unique(map: "ux_customer_profiles__customer_code") @map("customer_code")
+  customerType     CustomerType    @default(individual) @map("customer_type")
   /// UTM / channel of the first touch (D-102 acquisition); no PII.
-  firstTouch   Json?           @map("first_touch")
-  createdVia   CreationChannel @map("created_via")
-  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById  BigInt?         @map("created_by")
-  updatedAt    DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById  BigInt?         @map("updated_by")
-  rowVersion   Int             @default(1) @map("row_version")
+  firstTouch       Json?           @map("first_touch")
+  createdVia       CreationChannel @map("created_via")
+  /// Shared by the customer to invite others (D-136); generated on first use.
+  referralCode     String?         @unique(map: "ux_customer_profiles__referral_code") @map("referral_code")
+  referredByUserId BigInt?         @map("referred_by_user_id")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?         @map("created_by")
+  updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?         @map("updated_by")
+  rowVersion       Int             @default(1) @map("row_version")
 
-  user      User  @relation("CustomerProfileUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__user_id")
-  createdBy User? @relation("CustomerProfileCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__created_by")
-  updatedBy User? @relation("CustomerProfileUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__updated_by")
+  user       User  @relation("CustomerProfileUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__user_id")
+  createdBy  User? @relation("CustomerProfileCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__created_by")
+  updatedBy  User? @relation("CustomerProfileUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__updated_by")
+  referredBy User? @relation("CustomerProfileReferredBy", fields: [referredByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__referred_by_user_id")
 
   @@index([createdById], map: "ix_customer_profiles__created_by")
   @@index([updatedById], map: "ix_customer_profiles__updated_by")
+  @@index([referredByUserId], map: "ix_customer_profiles__referred_by_user_id")
   @@map("customer_profiles")
 }
 
@@ -388,11 +393,17 @@ model CartCode {
   code         String         @db.Citext
   status       CartCodeStatus
   rejectReason String?        @map("reject_reason")
+  promotionId  BigInt?        @map("promotion_id")
+  couponCodeId BigInt?        @map("coupon_code_id")
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  cart Cart @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_cart_codes__cart_id")
+  cart       Cart        @relation(fields: [cartId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_cart_codes__cart_id")
+  promotion  Promotion?  @relation("CartCodePromotion", fields: [promotionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_codes__promotion_id")
+  couponCode CouponCode? @relation("CartCodeCoupon", fields: [couponCodeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_codes__coupon_code_id")
 
   @@unique([cartId, code], map: "ux_cart_codes__cart_id__code")
+  @@index([promotionId], map: "ix_cart_codes__promotion_id")
+  @@index([couponCodeId], map: "ix_cart_codes__coupon_code_id")
   @@map("cart_codes")
 }
 
@@ -439,16 +450,18 @@ model OrderGroup {
   updatedById            BigInt?          @map("updated_by")
   rowVersion             Int              @default(1) @map("row_version")
 
-  entity          Entity             @relation("OrderGroupEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__entity_id")
-  customer        User               @relation("OrderGroupCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__customer_user_id")
-  placedBy        User               @relation("OrderGroupPlacedBy", fields: [placedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__placed_by_user_id")
-  onBehalfOf      User?              @relation("OrderGroupOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__on_behalf_of_user_id")
-  cart            Cart?              @relation("OrderGroupCart", fields: [cartId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cart_id")
-  cancelReason    OrderCancelReason? @relation("OrderGroupCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cancel_reason_id")
-  updatedBy       User?              @relation("OrderGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__updated_by")
+  entity          Entity                @relation("OrderGroupEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__entity_id")
+  customer        User                  @relation("OrderGroupCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__customer_user_id")
+  placedBy        User                  @relation("OrderGroupPlacedBy", fields: [placedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__placed_by_user_id")
+  onBehalfOf      User?                 @relation("OrderGroupOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__on_behalf_of_user_id")
+  cart            Cart?                 @relation("OrderGroupCart", fields: [cartId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cart_id")
+  cancelReason    OrderCancelReason?    @relation("OrderGroupCancelReason", fields: [cancelReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__cancel_reason_id")
+  updatedBy       User?                 @relation("OrderGroupUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__updated_by")
   orders          Order[]
   paymentSchedule PaymentSchedule?
   payments        Payment[]
+  redemptions     PromotionRedemption[] @relation("PromotionRedemptionGroup")
+  referralFirstOf ReferralAttribution[] @relation("ReferralFirstOrderGroup")
 
   @@index([customerUserId, placedAt(sort: Desc)], map: "ix_order_groups__customer_user_id__placed_at")
   @@index([status, placedAt(sort: Desc)], map: "ix_order_groups__status__placed_at")
@@ -614,15 +627,27 @@ model OrderDiscount {
   /// Amount the margin guard removed (D-053).
   cappedAmount    Decimal        @default(0) @map("capped_amount") @db.Decimal(14, 2)
   capReason       String?        @map("cap_reason")
+  promotionId     BigInt?        @map("promotion_id")
+  couponCodeId    BigInt?        @map("coupon_code_id")
+  campaignId      BigInt?        @map("campaign_id")
+  redemptionId    BigInt?        @map("redemption_id")
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  order     Order      @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__order_id")
-  orderLine OrderLine? @relation(fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__order_line_id")
-  grantedBy User?      @relation("OrderDiscountGrantedBy", fields: [grantedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__granted_by_user_id")
+  order      Order                @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__order_id")
+  orderLine  OrderLine?           @relation(fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__order_line_id")
+  grantedBy  User?                @relation("OrderDiscountGrantedBy", fields: [grantedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__granted_by_user_id")
+  promotion  Promotion?           @relation("OrderDiscountPromotion", fields: [promotionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__promotion_id")
+  couponCode CouponCode?          @relation("OrderDiscountCoupon", fields: [couponCodeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__coupon_code_id")
+  campaign   Campaign?            @relation("OrderDiscountCampaign", fields: [campaignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__campaign_id")
+  redemption PromotionRedemption? @relation("OrderDiscountRedemption", fields: [redemptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__redemption_id")
 
   @@index([orderId], map: "ix_order_discounts__order_id")
   @@index([orderLineId], map: "ix_order_discounts__order_line_id")
   @@index([grantedByUserId], map: "ix_order_discounts__granted_by_user_id")
+  @@index([promotionId], map: "ix_order_discounts__promotion_id")
+  @@index([couponCodeId], map: "ix_order_discounts__coupon_code_id")
+  @@index([campaignId], map: "ix_order_discounts__campaign_id")
+  @@index([redemptionId], map: "ix_order_discounts__redemption_id")
   @@map("order_discounts")
 }
 
@@ -1144,4 +1169,320 @@ model Refund {
   @@index([requestedById], map: "ix_refunds__requested_by")
   @@index([completedById], map: "ix_refunds__completed_by")
   @@map("refunds")
+}
+
+// --- Enums (B3.3) ----------------------------------------------------------------------------------
+
+enum CampaignStatus {
+  draft
+  scheduled
+  active
+  paused
+  exhausted
+  ended
+
+  @@map("campaign_status")
+}
+
+enum PromotionKind {
+  coupon
+  automatic
+  referral
+
+  @@map("promotion_kind")
+}
+
+enum StackingMode {
+  exclusive
+  stackable
+  best_of
+
+  @@map("stacking_mode")
+}
+
+enum PromotionStatus {
+  draft
+  active
+  paused
+  ended
+
+  @@map("promotion_status")
+}
+
+enum CouponKind {
+  single
+  bulk_unique
+  per_customer
+
+  @@map("coupon_kind")
+}
+
+enum CouponStatus {
+  active
+  used_up
+  disabled
+
+  @@map("coupon_status")
+}
+
+enum RedemptionStatus {
+  reserved
+  applied
+  reversed
+
+  @@map("redemption_status")
+}
+
+enum FingerprintKind {
+  phone
+  address
+  card_token
+  device
+
+  @@map("fingerprint_kind")
+}
+
+enum ReferralStatus {
+  pending
+  qualified
+  rewarded
+  rejected_fraud
+  under_review
+
+  @@map("referral_status")
+}
+
+// --- Promotions, campaigns, referral (D-053, D-136, D-154, B3.3) ----------------------------------
+
+/// A time-boxed container with a THB budget (D-154): auto-stop when spent, Marketing alerted at 80 %.
+model Campaign {
+  id                BigInt         @id(map: "pk_campaigns") @default(autoincrement())
+  publicId          String         @unique(map: "ux_campaigns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId          BigInt         @map("entity_id")
+  code              String         @unique(map: "ux_campaigns__code")
+  name              String
+  startsAt          DateTime       @map("starts_at") @db.Timestamptz(6)
+  endsAt            DateTime?      @map("ends_at") @db.Timestamptz(6)
+  budgetAmount      Decimal?       @map("budget_amount") @db.Decimal(14, 2)
+  spentAmount       Decimal        @default(0) @map("spent_amount") @db.Decimal(14, 2)
+  /// Snapshot of `campaigns.budget_alert_pct` when the campaign was created (D-154).
+  alertThresholdPct Decimal        @map("alert_threshold_pct") @db.Decimal(7, 4)
+  alertedAt         DateTime?      @map("alerted_at") @db.Timestamptz(6)
+  status            CampaignStatus @default(draft)
+  goals             Json           @default("{}")
+  ownerUserId       BigInt         @map("owner_user_id")
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?        @map("created_by")
+  updatedAt         DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion        Int            @default(1) @map("row_version")
+
+  entity      Entity                @relation("CampaignEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_campaigns__entity_id")
+  owner       User                  @relation("CampaignOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_campaigns__owner_user_id")
+  createdBy   User?                 @relation("CampaignCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_campaigns__created_by")
+  promotions  Promotion[]
+  redemptions PromotionRedemption[]
+  discounts   OrderDiscount[]       @relation("OrderDiscountCampaign")
+
+  @@index([status, startsAt], map: "ix_campaigns__status__starts_at")
+  @@index([entityId], map: "ix_campaigns__entity_id")
+  @@index([ownerUserId], map: "ix_campaigns__owner_user_id")
+  @@index([createdById], map: "ix_campaigns__created_by")
+  @@map("campaigns")
+}
+
+/// A promotion (D-053): conditions and benefit as versioned JSON; redemptions snapshot what was used.
+model Promotion {
+  id                      BigInt          @id(map: "pk_promotions") @default(autoincrement())
+  publicId                String          @unique(map: "ux_promotions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId                BigInt          @map("entity_id")
+  campaignId              BigInt?         @map("campaign_id")
+  name                    String
+  description             String?
+  kind                    PromotionKind
+  priority                Int             @db.SmallInt
+  stacking                StackingMode
+  stackGroup              String?         @map("stack_group")
+  startsAt                DateTime        @map("starts_at") @db.Timestamptz(6)
+  endsAt                  DateTime?       @map("ends_at") @db.Timestamptz(6)
+  conditions              Json
+  conditionsSchemaVersion Int             @default(1) @map("conditions_schema_version") @db.SmallInt
+  benefit                 Json
+  benefitSchemaVersion    Int             @default(1) @map("benefit_schema_version") @db.SmallInt
+  usageLimitTotal         Int?            @map("usage_limit_total")
+  usageLimitPerCustomer   Int?            @map("usage_limit_per_customer")
+  budgetAmount            Decimal?        @map("budget_amount") @db.Decimal(14, 2)
+  spentAmount             Decimal         @default(0) @map("spent_amount") @db.Decimal(14, 2)
+  status                  PromotionStatus @default(draft)
+  createdAt               DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById             BigInt?         @map("created_by")
+  updatedAt               DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById             BigInt?         @map("updated_by")
+  rowVersion              Int             @default(1) @map("row_version")
+
+  entity      Entity                  @relation("PromotionEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotions__entity_id")
+  campaign    Campaign?               @relation(fields: [campaignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotions__campaign_id")
+  createdBy   User?                   @relation("PromotionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotions__created_by")
+  updatedBy   User?                   @relation("PromotionUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotions__updated_by")
+  batches     CouponBatch[]
+  codes       CouponCode[]
+  counters    PromotionUsageCounter[]
+  redemptions PromotionRedemption[]
+  cartCodes   CartCode[]              @relation("CartCodePromotion")
+  discounts   OrderDiscount[]         @relation("OrderDiscountPromotion")
+
+  @@index([status, kind, startsAt], map: "ix_promotions__status__kind__starts_at")
+  @@index([entityId], map: "ix_promotions__entity_id")
+  @@index([campaignId], map: "ix_promotions__campaign_id")
+  @@index([createdById], map: "ix_promotions__created_by")
+  @@index([updatedById], map: "ix_promotions__updated_by")
+  @@map("promotions")
+}
+
+/// A batch of codes generated for a coupon promotion.
+model CouponBatch {
+  id          BigInt     @id(map: "pk_coupon_batches") @default(autoincrement())
+  publicId    String     @unique(map: "ux_coupon_batches__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  promotionId BigInt     @map("promotion_id")
+  kind        CouponKind
+  count       Int
+  prefix      String?
+  generatedAt DateTime   @default(now()) @map("generated_at") @db.Timestamptz(6)
+  createdById BigInt?    @map("created_by")
+
+  promotion Promotion    @relation(fields: [promotionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_coupon_batches__promotion_id")
+  createdBy User?        @relation("CouponBatchCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_coupon_batches__created_by")
+  codes     CouponCode[]
+
+  @@index([promotionId], map: "ix_coupon_batches__promotion_id")
+  @@index([createdById], map: "ix_coupon_batches__created_by")
+  @@map("coupon_batches")
+}
+
+/// A coupon code (case-insensitive, unique); per-customer codes are assigned to one customer.
+model CouponCode {
+  id             BigInt       @id(map: "pk_coupon_codes") @default(autoincrement())
+  publicId       String       @unique(map: "ux_coupon_codes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  promotionId    BigInt       @map("promotion_id")
+  batchId        BigInt?      @map("batch_id")
+  code           String       @unique(map: "ux_coupon_codes__code") @db.Citext
+  assignedUserId BigInt?      @map("assigned_user_id")
+  usageLimit     Int?         @map("usage_limit")
+  usedCount      Int          @default(0) @map("used_count")
+  status         CouponStatus @default(active)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  promotion    Promotion             @relation(fields: [promotionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_coupon_codes__promotion_id")
+  batch        CouponBatch?          @relation(fields: [batchId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_coupon_codes__batch_id")
+  assignedUser User?                 @relation("CouponCodeAssignedUser", fields: [assignedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_coupon_codes__assigned_user_id")
+  redemptions  PromotionRedemption[]
+  savedBy      CustomerSavedCoupon[]
+  cartCodes    CartCode[]            @relation("CartCodeCoupon")
+  discounts    OrderDiscount[]       @relation("OrderDiscountCoupon")
+
+  @@index([promotionId], map: "ix_coupon_codes__promotion_id")
+  @@index([batchId], map: "ix_coupon_codes__batch_id")
+  @@index([assignedUserId], map: "ix_coupon_codes__assigned_user_id")
+  @@map("coupon_codes")
+}
+
+/// Usage of a promotion: `customer_key` 0 counts every use, a user id counts that customer (row-locked).
+model PromotionUsageCounter {
+  id          BigInt @id(map: "pk_promotion_usage_counters") @default(autoincrement())
+  promotionId BigInt @map("promotion_id")
+  customerKey BigInt @default(0) @map("customer_key")
+  usedCount   Int    @default(0) @map("used_count")
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotion_usage_counters__promotion_id")
+
+  @@unique([promotionId, customerKey], map: "ux_promotion_usage_counters__promotion_id__customer_key")
+  @@map("promotion_usage_counters")
+}
+
+/// A promotion used on an order group: reserved at checkout, applied once paid, reversed on cancel.
+model PromotionRedemption {
+  id             BigInt           @id(map: "pk_promotion_redemptions") @default(autoincrement())
+  publicId       String           @unique(map: "ux_promotion_redemptions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  promotionId    BigInt           @map("promotion_id")
+  couponCodeId   BigInt?          @map("coupon_code_id")
+  campaignId     BigInt?          @map("campaign_id")
+  orderGroupId   BigInt           @map("order_group_id")
+  customerUserId BigInt           @map("customer_user_id")
+  amount         Decimal          @db.Decimal(14, 2)
+  cappedAmount   Decimal          @default(0) @map("capped_amount") @db.Decimal(14, 2)
+  status         RedemptionStatus @default(reserved)
+  snapshot       Json
+  reservedAt     DateTime         @default(now()) @map("reserved_at") @db.Timestamptz(6)
+  appliedAt      DateTime?        @map("applied_at") @db.Timestamptz(6)
+  reversedAt     DateTime?        @map("reversed_at") @db.Timestamptz(6)
+
+  promotion  Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotion_redemptions__promotion_id")
+  couponCode CouponCode?     @relation(fields: [couponCodeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotion_redemptions__coupon_code_id")
+  campaign   Campaign?       @relation(fields: [campaignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotion_redemptions__campaign_id")
+  orderGroup OrderGroup      @relation("PromotionRedemptionGroup", fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotion_redemptions__order_group_id")
+  customer   User            @relation("PromotionRedemptionCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_promotion_redemptions__customer_user_id")
+  discounts  OrderDiscount[] @relation("OrderDiscountRedemption")
+
+  @@unique([promotionId, orderGroupId], map: "ux_promotion_redemptions__promotion_id__order_group_id")
+  @@index([orderGroupId], map: "ix_promotion_redemptions__order_group_id")
+  @@index([couponCodeId], map: "ix_promotion_redemptions__coupon_code_id")
+  @@index([campaignId], map: "ix_promotion_redemptions__campaign_id")
+  @@index([customerUserId], map: "ix_promotion_redemptions__customer_user_id")
+  @@map("promotion_redemptions")
+}
+
+/// Coupons a customer keeps in their wallet.
+model CustomerSavedCoupon {
+  userId       BigInt   @map("user_id")
+  couponCodeId BigInt   @map("coupon_code_id")
+  savedAt      DateTime @default(now()) @map("saved_at") @db.Timestamptz(6)
+
+  user       User       @relation("CustomerSavedCouponUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_saved_coupons__user_id")
+  couponCode CouponCode @relation(fields: [couponCodeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_saved_coupons__coupon_code_id")
+
+  @@id([userId, couponCodeId], map: "pk_customer_saved_coupons")
+  @@index([couponCodeId], map: "ix_customer_saved_coupons__coupon_code_id")
+  @@map("customer_saved_coupons")
+}
+
+/// Hashed identity traits for abuse controls (D-053, D-136): phone, delivery address, card token, device.
+model IdentityFingerprint {
+  id          BigInt          @id(map: "pk_identity_fingerprints") @default(autoincrement())
+  userId      BigInt          @map("user_id")
+  kind        FingerprintKind
+  valueHash   Bytes           @map("value_hash")
+  firstSeenAt DateTime        @default(now()) @map("first_seen_at") @db.Timestamptz(6)
+  lastSeenAt  DateTime        @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+
+  user User @relation("IdentityFingerprintUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_identity_fingerprints__user_id")
+
+  @@unique([userId, kind, valueHash], map: "ux_identity_fingerprints__user_id__kind__value_hash")
+  @@index([kind, valueHash], map: "ix_identity_fingerprints__kind__value_hash")
+  @@map("identity_fingerprints")
+}
+
+/// Referee → referrer (D-136); rewarded after the referee's first order passes the claim window.
+model ReferralAttribution {
+  id                BigInt         @id(map: "pk_referral_attributions") @default(autoincrement())
+  publicId          String         @unique(map: "ux_referral_attributions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  referrerUserId    BigInt         @map("referrer_user_id")
+  refereeUserId     BigInt         @unique(map: "ux_referral_attributions__referee_user_id") @map("referee_user_id")
+  referralCode      String         @map("referral_code")
+  attributedAt      DateTime       @default(now()) @map("attributed_at") @db.Timestamptz(6)
+  firstOrderGroupId BigInt?        @map("first_order_group_id")
+  status            ReferralStatus @default(pending)
+  fraudFlags        String[]       @default([]) @map("fraud_flags")
+  approvalRequestId BigInt?        @map("approval_request_id")
+  qualifiedAt       DateTime?      @map("qualified_at") @db.Timestamptz(6)
+  decidedAt         DateTime?      @map("decided_at") @db.Timestamptz(6)
+  rewardedAt        DateTime?      @map("rewarded_at") @db.Timestamptz(6)
+
+  referrer        User             @relation("ReferralReferrer", fields: [referrerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_referral_attributions__referrer_user_id")
+  referee         User             @relation("ReferralReferee", fields: [refereeUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_referral_attributions__referee_user_id")
+  firstOrderGroup OrderGroup?      @relation("ReferralFirstOrderGroup", fields: [firstOrderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_referral_attributions__first_order_group_id")
+  approvalRequest ApprovalRequest? @relation("ReferralApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_referral_attributions__approval_request_id")
+
+  @@index([referrerUserId, status], map: "ix_referral_attributions__referrer_user_id__status")
+  @@index([firstOrderGroupId], map: "ix_referral_attributions__first_order_group_id")
+  @@index([approvalRequestId], map: "ix_referral_attributions__approval_request_id")
+  @@map("referral_attributions")
 }

@@ -359,6 +359,8 @@ model Entity {
   orders      Order[]      @relation("OrderEntity")
   payments    Payment[]    @relation("PaymentEntity")
   refunds     Refund[]     @relation("RefundEntity")
+  campaigns   Campaign[]   @relation("CampaignEntity")
+  promotions  Promotion[]  @relation("PromotionEntity")
   // --- end Commerce
 
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
@@ -575,6 +577,8 @@ model ApprovalRequest {
 
   paymentScheduleTemplateVersions PaymentScheduleTemplateVersion[] @relation("PaymentScheduleTemplateVersionApprovalRequest")
   refunds                         Refund[]                         @relation("RefundApprovalRequest")
+
+  referralAttributions ReferralAttribution[] @relation("ReferralApprovalRequest")
 
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")

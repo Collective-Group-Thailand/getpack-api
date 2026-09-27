@@ -355,6 +355,35 @@ const CHECKS = [
   'ck_refunds__reason',
   'ck_slips__declared_amount',
   'ck_slips__reviewed',
+
+  // --- B3.3 promotions, campaigns, referral
+  'ck_campaigns__alert',
+  'ck_campaigns__amounts',
+  'ck_campaigns__code',
+  'ck_campaigns__exhausted',
+  'ck_campaigns__name',
+  'ck_campaigns__window',
+  'ck_coupon_batches__count',
+  'ck_coupon_batches__prefix',
+  'ck_coupon_codes__code',
+  'ck_coupon_codes__usage',
+  'ck_customer_profiles__referral_code',
+  'ck_customer_profiles__referred_by',
+  'ck_identity_fingerprints__hash',
+  'ck_promotion_redemptions__amounts',
+  'ck_promotion_redemptions__applied',
+  'ck_promotion_redemptions__reversed',
+  'ck_promotion_usage_counters__values',
+  'ck_promotions__amounts',
+  'ck_promotions__limits',
+  'ck_promotions__name',
+  'ck_promotions__priority',
+  'ck_promotions__schema_versions',
+  'ck_promotions__window',
+  'ck_referral_attributions__code',
+  'ck_referral_attributions__qualified',
+  'ck_referral_attributions__rewarded',
+  'ck_referral_attributions__self',
 ];
 
 const TRIGGERS = [
@@ -442,6 +471,10 @@ const TRIGGERS = [
   'tg_refunds__no_delete',
   'tg_slip_verifications__append_only',
   'tg_slips__no_delete',
+
+  // --- B3.3 promotions, campaigns, referral
+  'tg_coupon_batches__append_only',
+  'tg_promotion_redemptions__no_delete',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */

@@ -435,4 +435,49 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
     ).toBe(SQLSTATE.restrictViolation);
     expect(await state('DELETE FROM payments WHERE id = $1', [payment.id])).toBe(SQLSTATE.restrictViolation);
   });
+
+  // --- B3.3 ------------------------------------------------------------------------------------------
+
+  it('keeps coupon usage within its limit and one redemption per promotion and group (D-053)', async () => {
+    const promotion = await prisma.promotion.create({
+      data: {
+        entityId: fx.entityId,
+        name: '[INT] coupon',
+        kind: 'coupon',
+        priority: 1,
+        stacking: 'stackable',
+        startsAt: new Date(),
+        conditions: {},
+        benefit: { type: 'fixed', amount: '10.00' },
+      },
+    });
+    const code = await prisma.couponCode.create({
+      data: { promotionId: promotion.id, code: `INT-${seq++}`, usageLimit: 1 },
+    });
+    await prisma.couponCode.update({ where: { id: code.id }, data: { usedCount: 1 } });
+    await expect(prisma.couponCode.update({ where: { id: code.id }, data: { usedCount: 2 } })).rejects.toThrow(
+      /ck_coupon_codes__usage/,
+    );
+    const o = await order();
+    const redemption = {
+      promotionId: promotion.id,
+      orderGroupId: o.orderGroupId,
+      customerUserId: fx.customerId,
+      amount: '10.00',
+      snapshot: {},
+    };
+    await prisma.promotionRedemption.create({ data: redemption });
+    await expect(prisma.promotionRedemption.create({ data: redemption })).rejects.toThrow();
+  });
+
+  it('refuses self-referral and short fingerprint hashes (D-136)', async () => {
+    await expect(
+      prisma.referralAttribution.create({
+        data: { referrerUserId: fx.customerId, refereeUserId: fx.customerId, referralCode: 'SELF01' },
+      }),
+    ).rejects.toThrow(/ck_referral_attributions__self/);
+    await expect(
+      prisma.identityFingerprint.create({ data: { userId: fx.customerId, kind: 'phone', valueHash: Buffer.from('x') } }),
+    ).rejects.toThrow(/ck_identity_fingerprints__hash/);
+  });
 });

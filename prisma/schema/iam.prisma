@@ -466,6 +466,18 @@ model User {
   slipsCreated                           Slip[]                           @relation("SlipCreatedBy")
   refundsRequested                       Refund[]                         @relation("RefundRequestedBy")
   refundsCompleted                       Refund[]                         @relation("RefundCompletedBy")
+  customerProfilesReferred               CustomerProfile[]                @relation("CustomerProfileReferredBy")
+  campaignsOwned                         Campaign[]                       @relation("CampaignOwner")
+  campaignsCreated                       Campaign[]                       @relation("CampaignCreatedBy")
+  promotionsCreated                      Promotion[]                      @relation("PromotionCreatedBy")
+  promotionsUpdated                      Promotion[]                      @relation("PromotionUpdatedBy")
+  couponBatchesCreated                   CouponBatch[]                    @relation("CouponBatchCreatedBy")
+  couponCodesAssigned                    CouponCode[]                     @relation("CouponCodeAssignedUser")
+  promotionRedemptions                   PromotionRedemption[]            @relation("PromotionRedemptionCustomer")
+  savedCoupons                           CustomerSavedCoupon[]            @relation("CustomerSavedCouponUser")
+  identityFingerprints                   IdentityFingerprint[]            @relation("IdentityFingerprintUser")
+  referralsMade                          ReferralAttribution[]            @relation("ReferralReferrer")
+  referralOf                             ReferralAttribution?             @relation("ReferralReferee")
   // --- end Commerce
 
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
