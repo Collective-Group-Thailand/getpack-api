@@ -297,3 +297,112 @@ export class ScbCallbackAckDto {
   @ApiProperty({ example: '46a0e0c00f114482991414ef26654ace' })
   transactionId!: string;
 }
+
+// --- refunds -----------------------------------------------------------------------------------------
+
+export const REFUND_CHANNELS = ['original_gateway', 'bank_transfer', 'store_credit'] as const;
+export const REFUND_STATUSES = ['requested', 'pending_approval', 'approved', 'processing', 'succeeded', 'failed', 'rejected'] as const;
+
+export class RequestRefundDto {
+  @ApiProperty({ example: '7091.40' })
+  @IsString()
+  @Matches(MONEY)
+  amount!: string;
+
+  @ApiProperty({ example: 'ยกเลิกคำสั่งซื้อก่อนผลิต', maxLength: 500 })
+  @IsString()
+  @MaxLength(500)
+  reasonNote!: string;
+
+  @ApiPropertyOptional({
+    enum: REFUND_CHANNELS,
+    enumName: 'RefundChannel',
+    example: 'bank_transfer',
+    description: 'Default: the gateway when it refunds by API (2C2P), otherwise a bank transfer; store credit arrives with B5',
+  })
+  @IsOptional()
+  @IsIn(REFUND_CHANNELS)
+  channel?: (typeof REFUND_CHANNELS)[number];
+
+  @ApiPropertyOptional({ example: 'customer_changed_mind' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z][a-z0-9_]*$/)
+  cancelReasonCode?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d0002' })
+  @IsOptional()
+  @IsUUID()
+  orderId?: string;
+}
+
+export class CompleteRefundDto {
+  @ApiProperty({ example: 'TRF20261001-0001', description: 'Bank or provider reference of the money sent back' })
+  @IsString()
+  @MaxLength(64)
+  providerRef!: string;
+}
+
+export class RefundDto {
+  @IdField('0192f3a0-7c1e-7d2a-9b1f-0000000a0010')
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', example: IDS.payment })
+  paymentId!: string;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.group })
+  groupId!: string | null;
+
+  @ApiProperty({ example: '7091.40' })
+  amount!: string;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+
+  @ApiProperty({ enum: REFUND_CHANNELS, enumName: 'RefundChannel', example: 'bank_transfer' })
+  channel!: string;
+
+  @ApiProperty({ enum: REFUND_STATUSES, enumName: 'RefundStatus', example: 'pending_approval' })
+  status!: string;
+
+  @ApiProperty({ example: 'ยกเลิกคำสั่งซื้อก่อนผลิต' })
+  reasonNote!: string;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: '0192f3a0-7c1e-7d2a-9b1f-0000000f0101', description: 'Approval request (Finance Manager)' })
+  approvalRequestId!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  providerRef!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  failureReason!: string | null;
+
+  @TimestampField()
+  createdAt!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  completedAt!: string | null;
+}
+
+export const REFUND_EXAMPLE: RefundDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-0000000a0010',
+  paymentId: IDS.payment,
+  groupId: IDS.group,
+  amount: '7091.40',
+  currency: 'THB',
+  channel: 'bank_transfer',
+  status: 'pending_approval',
+  reasonNote: 'ยกเลิกคำสั่งซื้อก่อนผลิต',
+  approvalRequestId: '0192f3a0-7c1e-7d2a-9b1f-0000000f0101',
+  providerRef: null,
+  failureReason: null,
+  createdAt: '2026-10-01T10:00:00+07:00',
+  completedAt: null,
+};
+
+export class RefundListQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: REFUND_STATUSES, enumName: 'RefundStatus' })
+  @IsOptional()
+  @IsIn(REFUND_STATUSES)
+  status?: (typeof REFUND_STATUSES)[number];
+}

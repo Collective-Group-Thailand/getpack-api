@@ -626,5 +626,19 @@
       "title": "Not an unidentified receipt",
       "detail": "This payment already belongs to an order group."
     }
+  },
+  "refunds": {
+    "not_refundable": {
+      "title": "Not refundable",
+      "detail": "This amount cannot be refunded: {reason}."
+    },
+    "channel_unavailable": {
+      "title": "Refund channel unavailable",
+      "detail": "A refund by {channel} is not available for this payment."
+    },
+    "not_approved": {
+      "title": "Refund not approved",
+      "detail": "A refund in {status} cannot be marked completed."
+    }
   }
 }

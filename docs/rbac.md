@@ -79,6 +79,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `payments.read` — Read payments, slips and unidentified receipts (D-061) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
 | `payments.verify_slip` — Approve or reject slips that failed automatic verification (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 | `payments.allocate` — Attach unidentified receipts to order groups (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `refunds.request` — Request refunds (approved by the Finance Manager, maker-checker) (D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |
+| `refunds.complete` — Record that an approved refund was paid out (bank transfer) (D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

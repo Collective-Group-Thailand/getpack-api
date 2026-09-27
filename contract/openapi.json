@@ -1299,6 +1299,39 @@
           "type": "https://errors.packio/quotes.still_valid"
         }
       },
+      "problem.refunds.channel_unavailable": {
+        "summary": "refunds.channel_unavailable",
+        "value": {
+          "code": "refunds.channel_unavailable",
+          "detail": "ยังคืนเงินผ่าน {channel} สำหรับการชำระนี้ไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ช่องทางคืนเงินไม่พร้อม",
+          "type": "https://errors.packio/refunds.channel_unavailable"
+        }
+      },
+      "problem.refunds.not_approved": {
+        "summary": "refunds.not_approved",
+        "value": {
+          "code": "refunds.not_approved",
+          "detail": "การคืนเงินสถานะ {status} ยังบันทึกว่าคืนแล้วไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่อนุมัติ",
+          "type": "https://errors.packio/refunds.not_approved"
+        }
+      },
+      "problem.refunds.not_refundable": {
+        "summary": "refunds.not_refundable",
+        "value": {
+          "code": "refunds.not_refundable",
+          "detail": "คืนเงินจำนวนนี้ไม่ได้: {reason}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "คืนเงินไม่ได้",
+          "type": "https://errors.packio/refunds.not_refundable"
+        }
+      },
       "problem.rfq.closed": {
         "summary": "rfq.closed",
         "value": {
@@ -6119,6 +6152,20 @@
           "token_type",
           "expires_in",
           "scope"
+        ],
+        "type": "object"
+      },
+      "CompleteRefundDto": {
+        "properties": {
+          "providerRef": {
+            "description": "Bank or provider reference of the money sent back",
+            "example": "TRF20261001-0001",
+            "maxLength": 64,
+            "type": "string"
+          }
+        },
+        "required": [
+          "providerRef"
         ],
         "type": "object"
       },
@@ -18787,6 +18834,128 @@
         ],
         "type": "object"
       },
+      "RefundChannel": {
+        "enum": [
+          "original_gateway",
+          "bank_transfer",
+          "store_credit"
+        ],
+        "type": "string"
+      },
+      "RefundDto": {
+        "properties": {
+          "amount": {
+            "example": "7091.40",
+            "type": "string"
+          },
+          "approvalRequestId": {
+            "description": "Approval request (Finance Manager)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f0101",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundChannel"
+              }
+            ],
+            "example": "bank_transfer"
+          },
+          "completedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-09-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "failureReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groupId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0010",
+            "format": "uuid",
+            "type": "string"
+          },
+          "paymentId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "providerRef": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reasonNote": {
+            "example": "ยกเลิกคำสั่งซื้อก่อนผลิต",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundStatus"
+              }
+            ],
+            "example": "pending_approval"
+          }
+        },
+        "required": [
+          "id",
+          "paymentId",
+          "groupId",
+          "amount",
+          "currency",
+          "channel",
+          "status",
+          "reasonNote",
+          "approvalRequestId",
+          "providerRef",
+          "failureReason",
+          "createdAt",
+          "completedAt"
+        ],
+        "type": "object"
+      },
+      "RefundStatus": {
+        "enum": [
+          "requested",
+          "pending_approval",
+          "approved",
+          "processing",
+          "succeeded",
+          "failed",
+          "rejected"
+        ],
+        "type": "string"
+      },
       "RejectDto": {
         "properties": {
           "comment": {
@@ -19110,6 +19279,43 @@
         "required": [
           "factoryId",
           "dueAt"
+        ],
+        "type": "object"
+      },
+      "RequestRefundDto": {
+        "properties": {
+          "amount": {
+            "example": "7091.40",
+            "type": "string"
+          },
+          "cancelReasonCode": {
+            "example": "customer_changed_mind",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RefundChannel"
+              }
+            ],
+            "description": "Default: the gateway when it refunds by API (2C2P), otherwise a bank transfer; store credit arrives with B5",
+            "example": "bank_transfer"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reasonNote": {
+            "example": "ยกเลิกคำสั่งซื้อก่อนผลิต",
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "amount",
+          "reasonNote"
         ],
         "type": "object"
       },
@@ -107803,6 +108009,288 @@
         ]
       }
     },
+    "/v1/admin/payments/{paymentId}/refunds": {
+      "post": {
+        "description": "Only money the schedule no longer needs: a cancelled / completed group, an unidentified receipt or the payment’s unallocated cash. Routed to the Finance Manager (policy `refund`, maker-checker, D-169); executed through 2C2P or recorded by Finance as a bank transfer once approved. Requires `Idempotency-Key`.\n\nImplements: D-169, D-061.",
+        "operationId": "admin.refunds.request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "paymentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "amount": "7091.40",
+                    "cancelReasonCode": "customer_changed_mind",
+                    "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RequestRefundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "amount": "7091.40",
+                  "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0101",
+                  "channel": "bank_transfer",
+                  "completedAt": null,
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "currency": "THB",
+                  "failureReason": null,
+                  "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0010",
+                  "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                  "providerRef": null,
+                  "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต",
+                  "status": "pending_approval"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RefundDto"
+                }
+              }
+            },
+            "description": "Refund awaiting approval",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "refunds.not_refundable": {
+                    "$ref": "#/components/examples/problem.refunds.not_refundable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `refunds.not_refundable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "approval.no_matching_step": {
+                    "$ref": "#/components/examples/problem.approval.no_matching_step"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "refunds.channel_unavailable": {
+                    "$ref": "#/components/examples/problem.refunds.channel_unavailable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `approval.no_matching_step`, `idempotency.key_reused`, `refunds.channel_unavailable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Request a refund",
+        "tags": [
+          "admin.refunds"
+        ],
+        "x-required-permissions": [
+          "refunds.request"
+        ]
+      }
+    },
     "/v1/admin/payments/{paymentId}/slips": {
       "post": {
         "description": "Same checks as the customer’s own slip (D-061); recorded as uploaded by CS.\n\nImplements: D-061, D-020, D-176.",
@@ -113454,6 +113942,728 @@
         "summary": "Server-sent events for the signed-in principal",
         "tags": [
           "admin.realtime"
+        ]
+      }
+    },
+    "/v1/admin/refunds": {
+      "get": {
+        "description": "Newest first; filter by status.\n\nImplements: D-169, D-061.",
+        "operationId": "admin.refunds.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RefundStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "amount": "7091.40",
+                      "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0101",
+                      "channel": "bank_transfer",
+                      "completedAt": null,
+                      "createdAt": "2026-10-01T10:00:00+07:00",
+                      "currency": "THB",
+                      "failureReason": null,
+                      "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0010",
+                      "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                      "providerRef": null,
+                      "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต",
+                      "status": "pending_approval"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/RefundDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List refunds",
+        "tags": [
+          "admin.refunds"
+        ],
+        "x-required-permissions": [
+          "payments.read"
+        ]
+      }
+    },
+    "/v1/admin/refunds/{refundId}": {
+      "get": {
+        "description": "With its approval request and execution state.\n\nImplements: D-169, D-061.",
+        "operationId": "admin.refunds.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "refundId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "amount": "7091.40",
+                  "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0101",
+                  "channel": "bank_transfer",
+                  "completedAt": null,
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "currency": "THB",
+                  "failureReason": null,
+                  "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0010",
+                  "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                  "providerRef": null,
+                  "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต",
+                  "status": "pending_approval"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RefundDto"
+                }
+              }
+            },
+            "description": "Refund",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a refund",
+        "tags": [
+          "admin.refunds"
+        ],
+        "x-required-permissions": [
+          "payments.read"
+        ]
+      }
+    },
+    "/v1/admin/refunds/{refundId}/actions/complete": {
+      "post": {
+        "description": "Finance records the bank reference of an approved bank-transfer refund (or confirms a pending gateway one); the requester cannot complete their own refund. Publishes `refund.succeeded` (ledger P22). Requires `Idempotency-Key`.\n\nImplements: D-169, D-061.",
+        "operationId": "admin.refunds.complete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "refundId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "providerRef": "TRF20261001-0001"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CompleteRefundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "amount": "7091.40",
+                  "approvalRequestId": "0192f3a0-7c1e-7d2a-9b1f-0000000f0101",
+                  "channel": "bank_transfer",
+                  "completedAt": null,
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "currency": "THB",
+                  "failureReason": null,
+                  "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0010",
+                  "paymentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                  "providerRef": null,
+                  "reasonNote": "ยกเลิกคำสั่งซื้อก่อนผลิต",
+                  "status": "succeeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RefundDto"
+                }
+              }
+            },
+            "description": "Refund",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "iam.sod_conflict": {
+                    "$ref": "#/components/examples/problem.iam.sod_conflict"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "refunds.not_approved": {
+                    "$ref": "#/components/examples/problem.refunds.not_approved"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `iam.sod_conflict`, `idempotency.in_progress`, `refunds.not_approved`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Record a refund as paid out",
+        "tags": [
+          "admin.refunds"
+        ],
+        "x-required-permissions": [
+          "refunds.complete"
         ]
       }
     },
@@ -164255,6 +165465,10 @@
     {
       "description": "Realtime signals over SSE for staff (ids + type only, contract §6).",
       "name": "admin.realtime"
+    },
+    {
+      "description": "Refunds: request, Finance Manager approval (maker-checker), gateway or bank-transfer execution (D-169).",
+      "name": "admin.refunds"
     },
     {
       "description": "Work requests for quote: assign, ask, consult factories, quote, decline (D-100, D-102).",

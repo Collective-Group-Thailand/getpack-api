@@ -357,6 +357,19 @@ export const PERMISSIONS = [
     decisionRefs: ['D-061'],
   },
 
+  {
+    key: 'refunds.request',
+    audience: 'staff',
+    description: 'Request refunds (approved by the Finance Manager, maker-checker)',
+    decisionRefs: ['D-169'],
+  },
+  {
+    key: 'refunds.complete',
+    audience: 'staff',
+    description: 'Record that an approved refund was paid out (bank transfer)',
+    decisionRefs: ['D-169'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

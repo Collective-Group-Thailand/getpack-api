@@ -1,7 +1,8 @@
 import { toBangkokIso } from '@common/time/bangkok';
 
-import { type AdminPaymentDto, type PaymentDto, type SlipDto, type SlipQueueItemDto } from './payments.dto';
+import { type AdminPaymentDto, type PaymentDto, type RefundDto, type SlipDto, type SlipQueueItemDto } from './payments.dto';
 import { type PaymentRow, type PaymentsService } from './payments.service';
+import { type RefundRow } from './refunds.service';
 
 type SlipRow = PaymentRow['slips'][number];
 type QueueRow = Awaited<ReturnType<PaymentsService['slipQueue']>>['rows'][number];
@@ -57,5 +58,23 @@ export function slipQueueDto(s: QueueRow, now = new Date()): SlipQueueItemDto {
     groupCode: s.payment.orderGroup?.groupCode ?? null,
     expectedAmount: s.payment.cashAmount.toFixed(2),
     overdue: s.slaDueAt !== null && s.slaDueAt < now,
+  };
+}
+
+export function refundDto(r: RefundRow): RefundDto {
+  return {
+    id: r.publicId,
+    paymentId: r.payment.publicId,
+    groupId: r.payment.orderGroup?.publicId ?? null,
+    amount: r.amount.toFixed(2),
+    currency: 'THB',
+    channel: r.channel,
+    status: r.status,
+    reasonNote: r.reasonNote,
+    approvalRequestId: r.approvalRequest?.publicId ?? null,
+    providerRef: r.providerRef,
+    failureReason: r.failureReason,
+    createdAt: toBangkokIso(r.createdAt),
+    completedAt: r.completedAt ? toBangkokIso(r.completedAt) : null,
   };
 }
