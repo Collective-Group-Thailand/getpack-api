@@ -620,6 +620,12 @@ model Order {
   productionJobs ProductionJob[] @relation("ProductionJobOrder")
   // --- end Fulfilment B4.2
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipmentItems          ShipmentItem[]          @relation("ShipmentItemOrder")
+  deliveryReconciliation DeliveryReconciliation? @relation("DeliveryReconciliationOrder")
+  trackingLinks          TrackingLink[]          @relation("TrackingLinkOrder")
+  // --- end Fulfilment B4.3
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -748,6 +754,10 @@ model OrderDestination {
   customerAddress CustomerAddress? @relation(fields: [customerAddressId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_destinations__customer_address_id")
   subdistrict     GeoSubdistrict?  @relation("OrderDestinationSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_destinations__subdistrict_id")
   province        GeoProvince      @relation("OrderDestinationProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_destinations__province_id")
+
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipmentItems ShipmentItem[] @relation("ShipmentItemDestination")
+  // --- end Fulfilment B4.3
 
   @@index([orderId], map: "ix_order_destinations__order_id")
   @@index([customerAddressId], map: "ix_order_destinations__customer_address_id")

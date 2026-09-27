@@ -1605,6 +1605,10 @@ model GeoProvince {
 
   companyBranches CompanyBranch[] @relation("CompanyBranchProvince")
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipments Shipment[] @relation("ShipmentProvince")
+  // --- end Fulfilment B4.3
+
   @@map("geo_provinces")
 }
 
@@ -1661,6 +1665,10 @@ model GeoSubdistrict {
   orderDestinations OrderDestination[] @relation("OrderDestinationSubdistrict")
 
   companyBranches CompanyBranch[] @relation("CompanyBranchSubdistrict")
+
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipments Shipment[] @relation("ShipmentSubdistrict")
+  // --- end Fulfilment B4.3
 
   @@index([districtId], map: "ix_geo_subdistricts__district_id")
   @@index([postcode], map: "ix_geo_subdistricts__postcode")

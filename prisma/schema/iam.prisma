@@ -529,6 +529,13 @@ model User {
   jobIssuesResolved             JobIssue[]              @relation("JobIssueResolvedBy")
   // --- end Fulfilment B4.2
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipmentsCreated       Shipment[]        @relation("ShipmentCreatedBy")
+  shipmentsUpdated       Shipment[]        @relation("ShipmentUpdatedBy")
+  shipmentEventsRecorded ShipmentEvent[]   @relation("ShipmentEventRecordedBy")
+  podsCaptured           ProofOfDelivery[] @relation("ProofOfDeliveryCapturedBy")
+  // --- end Fulfilment B4.3
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

@@ -360,6 +360,10 @@ model Factory {
   scorecards         FactoryScorecard[] @relation("FactoryScorecardFactory")
   // --- end Fulfilment B4.2
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipments Shipment[] @relation("ShipmentFactory")
+  // --- end Fulfilment B4.3
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")

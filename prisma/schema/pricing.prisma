@@ -311,6 +311,10 @@ model CustomerShippingRateCardVersion {
   createdBy       User?                    @relation("CustomerShippingRateCardVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rate_card_versions__created_by")
   decidedBy       User?                    @relation("CustomerShippingRateCardVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_shipping_rate_card_versions__decided_by")
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipments Shipment[] @relation("ShipmentCustomerRateVersion")
+  // --- end Fulfilment B4.3
+
   @@unique([cardId, versionNo], map: "ux_customer_shipping_rate_card_versions__card_id__version_no")
   /// Target of the composite FK from customer_shipping_rates.
   @@unique([id, schemeId], map: "ux_customer_shipping_rate_card_versions__id__scheme_id")
@@ -391,6 +395,10 @@ model FactoryShippingRateCardVersion {
   createdBy         User?                   @relation("FactoryShippingRateCardVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_card_versions__created_by")
   decidedBy         User?                   @relation("FactoryShippingRateCardVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_shipping_rate_card_versions__decided_by")
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipments Shipment[] @relation("ShipmentFactoryPayoutVersion")
+  // --- end Fulfilment B4.3
+
   @@unique([cardId, versionNo], map: "ux_factory_shipping_rate_card_versions__card_id__version_no")
   @@unique([id, schemeId], map: "ux_factory_shipping_rate_card_versions__id__scheme_id")
   /// One open version (draft or awaiting the factory) per card.
@@ -446,6 +454,10 @@ model Carrier {
 
   accounts  CarrierAccount[]
   updatedBy User?            @relation("CarrierUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carriers__updated_by")
+
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipments Shipment[] @relation("ShipmentCarrier")
+  // --- end Fulfilment B4.3
 
   @@map("carriers")
 }

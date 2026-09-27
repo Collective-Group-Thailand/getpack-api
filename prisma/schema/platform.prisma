@@ -371,6 +371,10 @@ model Entity {
   productionJobs ProductionJob[] @relation("ProductionJobEntity")
   // --- end Fulfilment B4.2
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipments Shipment[] @relation("ShipmentEntity")
+  // --- end Fulfilment B4.3
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -763,6 +767,12 @@ model FileObject {
   drawingOutputs     DrawingJob[]            @relation("DrawingJobOutputFile")
   // --- end Fulfilment B4.1
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipmentLabels       Shipment[]        @relation("ShipmentLabelFile")
+  shipmentPackingLists Shipment[]        @relation("ShipmentPackingListFile")
+  podSignatures        ProofOfDelivery[] @relation("ProofOfDeliverySignature")
+  // --- end Fulfilment B4.3
+
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
   @@index([ownerUserId], map: "ix_file_objects__owner_user_id")
@@ -884,6 +894,10 @@ model DomainEvent {
   activityLogs   ActivityLog[]
   webhooks       WebhookInbox[]
   notifications  Notification[]
+
+  // --- Fulfilment B4.3 (generated back-relations)
+  deliveryReconciliations DeliveryReconciliation[] @relation("DeliveryReconciliationEvent")
+  // --- end Fulfilment B4.3
 
   @@index([aggregateType, aggregateId, occurredAt], map: "ix_domain_events__aggregate")
   @@index([type, occurredAt], map: "ix_domain_events__type__occurred_at")

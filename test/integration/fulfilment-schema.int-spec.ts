@@ -325,30 +325,30 @@ describe('fulfilment schema (PostgreSQL 18)', () => {
     });
   });
 
-  describe('production (B4.2)', () => {
-    async function job(orderId: bigint, extra: Record<string, unknown> = {}) {
-      seq += 1;
-      const factory = await prisma.factory.findFirstOrThrow();
-      const version = await prisma.milestoneRouteVersion.findFirstOrThrow({ where: { status: 'approved' } });
-      return prisma.productionJob.create({
-        data: {
-          jobNo: `INT-JOB-${seq}`,
-          entityId: fx.entityId,
-          orderId,
-          factoryId: factory.id,
-          jobKind: 'production',
-          releaseMode: 'auto',
-          acceptDueAt: new Date(Date.now() + 86_400_000),
-          quantityOrdered: 1000,
-          specSnapshot: {},
-          routeVersionId: version.id,
-          routeSnapshot: {},
-          buyPriceSnapshot: {},
-          ...extra,
-        },
-      });
-    }
+  async function job(orderId: bigint, extra: Record<string, unknown> = {}) {
+    seq += 1;
+    const factory = await prisma.factory.findFirstOrThrow();
+    const version = await prisma.milestoneRouteVersion.findFirstOrThrow({ where: { status: 'approved' } });
+    return prisma.productionJob.create({
+      data: {
+        jobNo: `INT-JOB-${seq}`,
+        entityId: fx.entityId,
+        orderId,
+        factoryId: factory.id,
+        jobKind: 'production',
+        releaseMode: 'auto',
+        acceptDueAt: new Date(Date.now() + 86_400_000),
+        quantityOrdered: 1000,
+        specSnapshot: {},
+        routeVersionId: version.id,
+        routeSnapshot: {},
+        buyPriceSnapshot: {},
+        ...extra,
+      },
+    });
+  }
 
+  describe('production (B4.2)', () => {
     it('keeps one live production job per order, write-once snapshots and consistent statuses', async () => {
       const o = await order();
       const first = await job(o.id);
@@ -436,6 +436,172 @@ describe('fulfilment schema (PostgreSQL 18)', () => {
           `INSERT INTO factory_scorecards (factory_id, month, jobs_count, inputs, qc_first_pass_pct) VALUES ($1, '2026-09-01', 1, '{}', 120)`,
           [j.factoryId],
         ),
+      ).toBe(SQLSTATE.checkViolation);
+    });
+  });
+
+  describe('logistics (B4.3)', () => {
+    async function shipment(factoryId: bigint, extra: Record<string, unknown> = {}) {
+      seq += 1;
+      const carrier = await prisma.carrier.findUniqueOrThrow({ where: { code: 'factory_fleet' } });
+      const province = await prisma.geoProvince.findFirstOrThrow();
+      return prisma.shipment.create({
+        data: {
+          shipmentNo: `INT-SH-${seq}`,
+          entityId: fx.entityId,
+          factoryId,
+          carrierId: carrier.id,
+          recipientName: 'ผู้รับทดสอบ',
+          phone: '+66800000000',
+          line1: '1 ถนนทดสอบ',
+          postcode: '10110',
+          provinceId: province.id,
+          cartonsCount: 1,
+          weightG: 1000,
+          ...extra,
+        },
+      });
+    }
+
+    async function destination(orderId: bigint) {
+      const province = await prisma.geoProvince.findFirstOrThrow();
+      return prisma.orderDestination.create({
+        data: {
+          orderId,
+          recipientName: 'ผู้รับทดสอบ',
+          phone: '+66800000000',
+          line1: '1 ถนนทดสอบ',
+          postcode: '10110',
+          provinceId: province.id,
+          quantity: 1000,
+        },
+      });
+    }
+
+    it('keeps shipment items within one order and shipment statuses consistent', async () => {
+      const o = await order();
+      const other = await order();
+      const j = await job(o.id);
+      const d = await destination(o.id);
+      const foreign = await destination(other.id);
+      const sh = await shipment(j.factoryId);
+      expect(
+        await state(
+          'INSERT INTO shipment_items (shipment_id, order_id, order_destination_id, production_job_id, quantity) VALUES ($1, $2, $3, $4, 10)',
+          [sh.id, o.id, foreign.id, j.id],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state(
+          'INSERT INTO shipment_items (shipment_id, order_id, order_destination_id, production_job_id, quantity) VALUES ($1, $2, $3, $4, 0)',
+          [sh.id, o.id, d.id, j.id],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state(
+          'INSERT INTO shipment_items (shipment_id, order_id, order_destination_id, production_job_id, quantity) VALUES ($1, $2, $3, $4, 10)',
+          [sh.id, o.id, d.id, j.id],
+        ),
+      ).toBeNull();
+      expect(await state("UPDATE shipments SET status = 'picked_up' WHERE id = $1", [sh.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(
+        await state(
+          "UPDATE shipments SET status = 'delivered', ready_at = now(), picked_up_at = now() WHERE id = $1",
+          [sh.id],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state("UPDATE shipments SET status = 'cancelled', cancelled_at = now() WHERE id = $1", [sh.id]),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(await state("UPDATE shipments SET carrier_booking_ref = 'X' WHERE id = $1", [sh.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(
+        await state(
+          "INSERT INTO shipment_cartons (shipment_id, seq, label_code) VALUES ($1, 1, 'bad code')",
+          [sh.id],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(await state('DELETE FROM shipments WHERE id = $1', [sh.id])).toBe(SQLSTATE.restrictViolation);
+      await prisma.shipmentEvent.create({
+        data: {
+          shipmentId: sh.id,
+          occurredAt: new Date(),
+          status: 'ready',
+          source: 'factory',
+          carrierEventId: 'e1',
+        },
+      });
+      await expect(
+        prisma.shipmentEvent.create({
+          data: {
+            shipmentId: sh.id,
+            occurredAt: new Date(),
+            status: 'ready',
+            source: 'carrier_webhook',
+            carrierEventId: 'e1',
+          },
+        }),
+      ).rejects.toThrow();
+      expect(await state("UPDATE shipment_events SET note = 'x' WHERE shipment_id = $1", [sh.id])).toBe(
+        SQLSTATE.restrictViolation,
+      );
+    });
+
+    it('requires delivery evidence and keeps reconciliations write-once and consistent', async () => {
+      const o = await order();
+      const j = await job(o.id);
+      const sh = await shipment(j.factoryId);
+      expect(
+        await state(
+          "INSERT INTO proofs_of_delivery (shipment_id, kind, receiver_name, delivered_quantity, captured_at) VALUES ($1, 'factory_photo_signature', 'ผู้รับ', 10, now())",
+          [sh.id],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state(
+          "INSERT INTO proofs_of_delivery (shipment_id, kind, receiver_name, delivered_quantity, captured_at, signature_file_id, lat) VALUES ($1, 'factory_photo_signature', 'ผู้รับ', 10, now(), $2, 13.7)",
+          [sh.id, fx.fileId],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state(
+          "INSERT INTO proofs_of_delivery (shipment_id, kind, receiver_name, delivered_quantity, captured_at, signature_file_id) VALUES ($1, 'factory_photo_signature', 'ผู้รับ', 10, now(), $2)",
+          [sh.id, fx.fileId],
+        ),
+      ).toBeNull();
+      expect(
+        await state("UPDATE proofs_of_delivery SET receiver_name = 'x' WHERE shipment_id = $1", [sh.id]),
+      ).toBe(SQLSTATE.restrictViolation);
+
+      const insert = (delivered: number, payable: number, outcome: string, credit: string | null) =>
+        state(
+          `INSERT INTO delivery_reconciliations (order_id, ordered_quantity, delivered_quantity, payable_quantity, tolerance_shortage_pct,
+             tolerance_overage_pct, deviation_pct, outcome, credit_net_amount, credit_vat_amount, credit_amount, evaluated_at)
+           VALUES ($1, 1000, $2, $3, 5, 5, 0, $4, $5, $6, $7, now())`,
+          [o.id, delivered, payable, outcome, credit, credit === null ? null : '0.00', credit],
+        );
+      expect(await insert(1050, 1050, 'overage_within', null)).toBe(SQLSTATE.checkViolation); // D-165: min(delivered, ordered)
+      expect(await insert(980, 980, 'shortage_within', null)).toBe(SQLSTATE.checkViolation); // credit required
+      expect(await insert(980, 980, 'overage_within', null)).toBe(SQLSTATE.checkViolation);
+      expect(await insert(1000, 1000, 'exact', null)).toBeNull();
+      expect(
+        await state('UPDATE delivery_reconciliations SET delivered_quantity = 999 WHERE order_id = $1', [
+          o.id,
+        ]),
+      ).toBe(SQLSTATE.restrictViolation);
+      expect(
+        await state('UPDATE delivery_reconciliations SET claim_id = 1 WHERE order_id = $1', [o.id]),
+      ).toBeNull();
+      expect(
+        await state('UPDATE delivery_reconciliations SET claim_id = 2 WHERE order_id = $1', [o.id]),
+      ).toBe(SQLSTATE.restrictViolation);
+      expect(
+        await state("INSERT INTO tracking_links (token_hash, order_id) VALUES (decode('00', 'hex'), $1)", [
+          o.id,
+        ]),
       ).toBe(SQLSTATE.checkViolation);
     });
   });

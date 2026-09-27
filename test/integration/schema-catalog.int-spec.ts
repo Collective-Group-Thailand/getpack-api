@@ -512,6 +512,33 @@ const CHECKS = [
   'ck_production_jobs__tolerance',
   'ck_qc_checks__quantities',
   'ck_qc_checks__version',
+  // --- B4.3 logistics
+  'ck_delivery_reconciliations__credit',
+  'ck_delivery_reconciliations__outcome',
+  'ck_delivery_reconciliations__quantities',
+  'ck_delivery_reconciliations__tolerance',
+  'ck_proofs_of_delivery__coordinates',
+  'ck_proofs_of_delivery__evidence',
+  'ck_proofs_of_delivery__quantity',
+  'ck_proofs_of_delivery__receiver',
+  'ck_shipment_cartons__label_code',
+  'ck_shipment_cartons__seq',
+  'ck_shipment_cartons__weight',
+  'ck_shipment_items__delivered',
+  'ck_shipment_items__quantity',
+  'ck_shipments__amounts',
+  'ck_shipments__booking',
+  'ck_shipments__cancelled',
+  'ck_shipments__delivered',
+  'ck_shipments__destination',
+  'ck_shipments__measures',
+  'ck_shipments__payout_version',
+  'ck_shipments__phone_e164',
+  'ck_shipments__picked_up',
+  'ck_shipments__ready',
+  'ck_shipments__shipment_no',
+  'ck_tracking_links__token_hash',
+  'ck_tracking_links__views',
 ];
 
 const TRIGGERS = [
@@ -635,6 +662,13 @@ const TRIGGERS = [
   'tg_milestone_route_versions__frozen',
   'tg_production_jobs__snapshot_write_once',
   'tg_qc_checks__append_only',
+  // --- B4.3 logistics
+  'tg_delivery_reconciliations__write_once',
+  'tg_proofs_of_delivery__append_only',
+  'tg_shipment_events__append_only',
+  'tg_shipment_items__no_delete',
+  'tg_shipment_items__same_order',
+  'tg_shipments__no_delete',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -721,6 +755,8 @@ const INDEXES = [
   'ux_production_jobs__one_live_production',
   'ux_production_jobs__one_live_mockup',
   'ux_job_milestones__job_id__client_ref',
+  // --- B4.3 logistics
+  'ux_shipment_events__shipment_id__carrier_event_id',
 ];
 
 const EXPRESSION_INDEXES = [

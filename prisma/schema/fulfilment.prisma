@@ -798,6 +798,10 @@ model ProductionJob {
   issues           JobIssue[]
   capacityBooking  CapacityBooking?      @relation("CapacityBookingJob")
 
+  // --- Fulfilment B4.3 (generated back-relations)
+  shipmentItems ShipmentItem[] @relation("ShipmentItemJob")
+  // --- end Fulfilment B4.3
+
   @@unique([orderId], map: "ux_production_jobs__one_live_production", where: raw("((job_kind = 'production'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@index([orderId], map: "ix_production_jobs__order_id")
@@ -999,4 +1003,270 @@ model FactoryScorecard {
 
   @@unique([factoryId, month], map: "ux_factory_scorecards__factory_id__month")
   @@map("factory_scorecards")
+}
+
+// =====================================================================================================
+// Logistics (D-013, D-021, D-080, D-081, D-114, D-142, D-165; B4.3)
+// =====================================================================================================
+
+enum ShipmentStatus {
+  draft
+  ready
+  picked_up
+  in_transit
+  out_for_delivery
+  delivered
+  failed
+  returned
+  cancelled
+
+  @@map("shipment_status")
+}
+
+enum ShipmentEventSource {
+  factory
+  carrier_webhook
+  carrier_poll
+  staff
+
+  @@map("shipment_event_source")
+}
+
+enum PodKind {
+  factory_photo_signature
+  carrier_pod
+
+  @@map("pod_kind")
+}
+
+enum ToleranceOutcome {
+  exact
+  shortage_within
+  overage_within
+  shortage_outside
+  overage_outside
+
+  @@map("tolerance_outcome")
+}
+
+/// One trip to one address. The destination is a snapshot of the order destination(s) it serves, so the
+/// partner projection never reads users or customer addresses (D-142). Items may come from several
+/// orders of the same factory when they go to the same address.
+model Shipment {
+  id                     BigInt         @id(map: "pk_shipments") @default(autoincrement())
+  publicId               String         @unique(map: "ux_shipments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  shipmentNo             String         @unique(map: "ux_shipments__shipment_no") @map("shipment_no")
+  entityId               BigInt         @map("entity_id")
+  factoryId              BigInt         @map("factory_id")
+  /// `factory_fleet` by default (D-013); a Packio-booked carrier as fallback (D-114).
+  carrierId              BigInt         @map("carrier_id")
+  carrierBookingRef      String?        @map("carrier_booking_ref")
+  trackingNo             String?        @map("tracking_no")
+  trackingUrl            String?        @map("tracking_url")
+  bookedAt               DateTime?      @map("booked_at") @db.Timestamptz(6)
+  status                 ShipmentStatus @default(draft)
+  statusChangedAt        DateTime       @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  recipientName          String         @map("recipient_name")
+  phone                  String
+  line1                  String
+  line2                  String?
+  subdistrictId          BigInt?        @map("subdistrict_id")
+  postcode               String         @db.Char(5)
+  provinceId             BigInt         @map("province_id")
+  cartonsCount           Int            @map("cartons_count")
+  weightG                Int            @map("weight_g")
+  volumeCm3              BigInt?        @map("volume_cm3")
+  plannedShipOn          DateTime?      @map("planned_ship_on") @db.Date
+  readyAt                DateTime?      @map("ready_at") @db.Timestamptz(6)
+  pickedUpAt             DateTime?      @map("picked_up_at") @db.Timestamptz(6)
+  deliveredAt            DateTime?      @map("delivered_at") @db.Timestamptz(6)
+  cancelledAt            DateTime?      @map("cancelled_at") @db.Timestamptz(6)
+  cancelReason           String?        @map("cancel_reason")
+  labelFileId            BigInt?        @map("label_file_id")
+  packingListFileId      BigInt?        @map("packing_list_file_id")
+  customerRateVersionId  BigInt?        @map("customer_rate_version_id")
+  /// Staff-only (P15): the factory's shipping payout for this trip, frozen when it is ready.
+  factoryPayoutVersionId BigInt?        @map("factory_payout_version_id")
+  payoutAmount           Decimal?       @map("payout_amount") @db.Decimal(14, 2)
+  /// Staff-only (P25): what the fallback carrier charges Packio.
+  carrierCostAmount      Decimal?       @map("carrier_cost_amount") @db.Decimal(14, 2)
+  note                   String?
+  createdAt              DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById            BigInt?        @map("created_by")
+  updatedAt              DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById            BigInt?        @map("updated_by")
+  rowVersion             Int            @default(1) @map("row_version")
+
+  entity               Entity                           @relation("ShipmentEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__entity_id")
+  factory              Factory                          @relation("ShipmentFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__factory_id")
+  carrier              Carrier                          @relation("ShipmentCarrier", fields: [carrierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__carrier_id")
+  subdistrict          GeoSubdistrict?                  @relation("ShipmentSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__subdistrict_id")
+  province             GeoProvince                      @relation("ShipmentProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__province_id")
+  labelFile            FileObject?                      @relation("ShipmentLabelFile", fields: [labelFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__label_file_id")
+  packingListFile      FileObject?                      @relation("ShipmentPackingListFile", fields: [packingListFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__packing_list_file_id")
+  customerRateVersion  CustomerShippingRateCardVersion? @relation("ShipmentCustomerRateVersion", fields: [customerRateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__customer_rate_version_id")
+  factoryPayoutVersion FactoryShippingRateCardVersion?  @relation("ShipmentFactoryPayoutVersion", fields: [factoryPayoutVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__factory_payout_version_id")
+  createdBy            User?                            @relation("ShipmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__created_by")
+  updatedBy            User?                            @relation("ShipmentUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__updated_by")
+  items                ShipmentItem[]
+  cartons              ShipmentCarton[]
+  events               ShipmentEvent[]
+  proofOfDelivery      ProofOfDelivery?
+  trackingLinks        TrackingLink[]
+
+  @@index([factoryId, status], map: "ix_shipments__factory_id__status")
+  @@index([trackingNo], map: "ix_shipments__tracking_no")
+  @@index([carrierId, carrierBookingRef], map: "ix_shipments__carrier_id__carrier_booking_ref")
+  @@index([status, statusChangedAt], map: "ix_shipments__status__status_changed_at")
+  @@index([entityId], map: "ix_shipments__entity_id")
+  @@index([subdistrictId], map: "ix_shipments__subdistrict_id")
+  @@index([provinceId], map: "ix_shipments__province_id")
+  @@index([labelFileId], map: "ix_shipments__label_file_id")
+  @@index([packingListFileId], map: "ix_shipments__packing_list_file_id")
+  @@index([customerRateVersionId], map: "ix_shipments__customer_rate_version_id")
+  @@index([factoryPayoutVersionId], map: "ix_shipments__factory_payout_version_id")
+  @@index([createdById], map: "ix_shipments__created_by")
+  @@index([updatedById], map: "ix_shipments__updated_by")
+  @@map("shipments")
+}
+
+/// What a shipment carries for one order destination, from the job that made it. The delivered
+/// quantity is reported with the proof of delivery and drives tolerance (D-021, D-080).
+model ShipmentItem {
+  id                 BigInt   @id(map: "pk_shipment_items") @default(autoincrement())
+  shipmentId         BigInt   @map("shipment_id")
+  orderId            BigInt   @map("order_id")
+  orderDestinationId BigInt   @map("order_destination_id")
+  productionJobId    BigInt   @map("production_job_id")
+  quantity           Int
+  deliveredQuantity  Int?     @map("delivered_quantity")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  shipment         Shipment         @relation(fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipment_items__shipment_id")
+  order            Order            @relation("ShipmentItemOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipment_items__order_id")
+  orderDestination OrderDestination @relation("ShipmentItemDestination", fields: [orderDestinationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipment_items__order_destination_id")
+  productionJob    ProductionJob    @relation("ShipmentItemJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipment_items__production_job_id")
+
+  @@unique([shipmentId, orderDestinationId], map: "ux_shipment_items__shipment_id__order_destination_id")
+  @@index([orderId], map: "ix_shipment_items__order_id")
+  @@index([orderDestinationId], map: "ix_shipment_items__order_destination_id")
+  @@index([productionJobId], map: "ix_shipment_items__production_job_id")
+  @@map("shipment_items")
+}
+
+/// One 100×150 mm label per carton; its QR carries the public tracking token (B4.4).
+model ShipmentCarton {
+  id         BigInt   @id(map: "pk_shipment_cartons") @default(autoincrement())
+  shipmentId BigInt   @map("shipment_id")
+  seq        Int      @db.SmallInt
+  labelCode  String   @unique(map: "ux_shipment_cartons__label_code") @map("label_code")
+  weightG    Int?     @map("weight_g")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipment_cartons__shipment_id")
+
+  @@unique([shipmentId, seq], map: "ux_shipment_cartons__shipment_id__seq")
+  @@map("shipment_cartons")
+}
+
+/// Append-only status history from the factory, the carrier (webhook or poll) or staff.
+model ShipmentEvent {
+  id             BigInt              @id(map: "pk_shipment_events") @default(autoincrement())
+  shipmentId     BigInt              @map("shipment_id")
+  occurredAt     DateTime            @map("occurred_at") @db.Timestamptz(6)
+  status         ShipmentStatus
+  source         ShipmentEventSource
+  location       String?
+  note           String?
+  carrierEventId String?             @map("carrier_event_id")
+  providerStatus String?             @map("provider_status")
+  raw            Json?
+  recordedById   BigInt?             @map("recorded_by")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipment_events__shipment_id")
+  recordedBy User?    @relation("ShipmentEventRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipment_events__recorded_by")
+
+  @@unique([shipmentId, carrierEventId], map: "ux_shipment_events__shipment_id__carrier_event_id", where: raw("(carrier_event_id IS NOT NULL)"))
+  @@index([shipmentId, occurredAt], map: "ix_shipment_events__shipment_id__occurred_at")
+  @@index([recordedById], map: "ix_shipment_events__recorded_by")
+  @@map("shipment_events")
+}
+
+/// Mandatory for factory deliveries (D-013): photo(s) + receiver name + signature, or the carrier's POD.
+/// Photos are attachments (`proof_of_delivery`). Unlocks payout eligibility (B5).
+model ProofOfDelivery {
+  id                BigInt   @id(map: "pk_proofs_of_delivery") @default(autoincrement())
+  publicId          String   @unique(map: "ux_proofs_of_delivery__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  shipmentId        BigInt   @unique(map: "ux_proofs_of_delivery__shipment_id") @map("shipment_id")
+  kind              PodKind
+  /// PII (receiver).
+  receiverName      String   @map("receiver_name")
+  signatureFileId   BigInt?  @map("signature_file_id")
+  deliveredQuantity Int      @map("delivered_quantity")
+  capturedAt        DateTime @map("captured_at") @db.Timestamptz(6)
+  capturedById      BigInt?  @map("captured_by")
+  lat               Decimal? @db.Decimal(9, 6)
+  lng               Decimal? @db.Decimal(9, 6)
+  carrierPodRef     String?  @map("carrier_pod_ref")
+  note              String?
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  shipment      Shipment    @relation(fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__shipment_id")
+  signatureFile FileObject? @relation("ProofOfDeliverySignature", fields: [signatureFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__signature_file_id")
+  capturedBy    User?       @relation("ProofOfDeliveryCapturedBy", fields: [capturedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__captured_by")
+
+  @@index([signatureFileId], map: "ix_proofs_of_delivery__signature_file_id")
+  @@index([capturedById], map: "ix_proofs_of_delivery__captured_by")
+  @@map("proofs_of_delivery")
+}
+
+/// Delivered vs ordered once the order is delivered, with the tolerance frozen in the quote (D-021,
+/// D-080): shortage within → pro-rata credit (P19); overage within → no charge; outside → automatic
+/// claim (B4.5). The factory is paid min(delivered, ordered) (D-165).
+model DeliveryReconciliation {
+  id                   BigInt           @id(map: "pk_delivery_reconciliations") @default(autoincrement())
+  orderId              BigInt           @unique(map: "ux_delivery_reconciliations__order_id") @map("order_id")
+  orderedQuantity      Int              @map("ordered_quantity")
+  deliveredQuantity    Int              @map("delivered_quantity")
+  payableQuantity      Int              @map("payable_quantity")
+  toleranceShortagePct Decimal          @map("tolerance_shortage_pct") @db.Decimal(7, 4)
+  toleranceOveragePct  Decimal          @map("tolerance_overage_pct") @db.Decimal(7, 4)
+  deviationPct         Decimal          @map("deviation_pct") @db.Decimal(9, 4)
+  outcome              ToleranceOutcome
+  creditNetAmount      Decimal?         @map("credit_net_amount") @db.Decimal(14, 2)
+  creditVatAmount      Decimal?         @map("credit_vat_amount") @db.Decimal(14, 2)
+  /// Gross pro-rata credit (net + VAT), shortage within tolerance only.
+  creditAmount         Decimal?         @map("credit_amount") @db.Decimal(14, 2)
+  /// The automatic claim (FK added with claims, B4.5).
+  claimId              BigInt?          @map("claim_id")
+  evaluatedAt          DateTime         @map("evaluated_at") @db.Timestamptz(6)
+  domainEventId        String?          @map("domain_event_id") @db.Uuid
+
+  order       Order        @relation("DeliveryReconciliationOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_delivery_reconciliations__order_id")
+  domainEvent DomainEvent? @relation("DeliveryReconciliationEvent", fields: [domainEventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_delivery_reconciliations__domain_event_id")
+
+  @@index([claimId], map: "ix_delivery_reconciliations__claim_id")
+  @@index([domainEventId], map: "ix_delivery_reconciliations__domain_event_id")
+  @@map("delivery_reconciliations")
+}
+
+/// Public tracking (B4.4): only the SHA-256 of the token is stored; the page shows no PII.
+model TrackingLink {
+  id           BigInt    @id(map: "pk_tracking_links") @default(autoincrement())
+  tokenHash    Bytes     @unique(map: "ux_tracking_links__token_hash") @map("token_hash")
+  orderId      BigInt    @map("order_id")
+  shipmentId   BigInt?   @map("shipment_id")
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz(6)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(6)
+  views        Int       @default(0)
+  lastViewedAt DateTime? @map("last_viewed_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  order    Order     @relation("TrackingLinkOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tracking_links__order_id")
+  shipment Shipment? @relation(fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tracking_links__shipment_id")
+
+  @@index([orderId], map: "ix_tracking_links__order_id")
+  @@index([shipmentId], map: "ix_tracking_links__shipment_id")
+  @@map("tracking_links")
 }
