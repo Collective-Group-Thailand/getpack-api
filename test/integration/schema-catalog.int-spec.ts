@@ -397,6 +397,31 @@ const CHECKS = [
   'ck_points_ledger__values',
   'ck_points_lot_consumptions__points',
   'ck_points_lots__remaining',
+  // --- B3.5 companies, credit, discount memos
+  'ck_companies__active_kyc',
+  'ck_companies__credit_needs_active',
+  'ck_companies__legal_name',
+  'ck_companies__paid_orders',
+  'ck_companies__tax_id',
+  'ck_companies__threshold',
+  'ck_company_branches__code',
+  'ck_company_branches__head_office',
+  'ck_company_branches__name',
+  'ck_company_credit_limit_versions__amount',
+  'ck_company_credit_limit_versions__decided',
+  'ck_company_credit_limit_versions__reason',
+  'ck_company_credit_limit_versions__term',
+  'ck_company_discount_versions__pct',
+  'ck_company_discount_versions__window',
+  'ck_company_members__joined',
+  'ck_company_members__removed',
+  'ck_discount_memos__amounts',
+  'ck_discount_memos__applied',
+  'ck_discount_memos__approved_pct',
+  'ck_discount_memos__decided',
+  'ck_discount_memos__reason',
+  'ck_discount_memos__scope',
+  'ck_discount_memos__subject',
 ];
 
 const TRIGGERS = [
@@ -493,6 +518,13 @@ const TRIGGERS = [
   'tg_points_ledger__guard',
   'tg_points_lot_consumptions__append_only',
   'tg_points_lots__no_delete',
+  // --- B3.5 companies, credit, discount memos
+  'tg_companies__no_delete',
+  'tg_company_credit_limit_versions__frozen',
+  'tg_company_discount_versions__frozen',
+  'tg_company_kyc_documents__no_delete',
+  'tg_company_members__no_delete',
+  'tg_discount_memos__no_delete',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -562,6 +594,12 @@ const INDEXES = [
   'ux_points_ledger__order_earning',
   'ux_points_ledger__referral_reward',
   'ux_points_ledger__review_reward',
+  // --- B3.5 companies, credit, discount memos
+  'ix_company_credit_limit_versions__resolution',
+  'ix_company_discount_versions__resolution',
+  'ux_companies__tax_id',
+  'ux_company_branches__company_id__branch_code',
+  'ux_company_branches__one_default',
 ];
 
 const EXPRESSION_INDEXES = [

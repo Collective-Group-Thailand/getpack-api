@@ -229,6 +229,7 @@ model CustomerAddress {
   updatedAt     DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   updatedById   BigInt?     @map("updated_by")
   rowVersion    Int         @default(1) @map("row_version")
+  companyId     BigInt?     @map("company_id")
 
   user              User                  @relation("CustomerAddressUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_addresses__user_id")
   subdistrict       GeoSubdistrict?       @relation("CustomerAddressSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_addresses__subdistrict_id")
@@ -238,7 +239,10 @@ model CustomerAddress {
   cartDestinations  CartItemDestination[]
   orderDestinations OrderDestination[]
 
+  company Company? @relation("CustomerAddressCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_addresses__company_id")
+
   @@unique([userId, kind], map: "ux_customer_addresses__one_default", where: raw("(is_default AND (deleted_at IS NULL))"))
+  @@index([companyId], map: "ix_customer_addresses__company_id")
   @@index([userId, kind], map: "ix_customer_addresses__user_id__kind")
   @@index([subdistrictId], map: "ix_customer_addresses__subdistrict_id")
   @@index([provinceId], map: "ix_customer_addresses__province_id")
@@ -306,6 +310,7 @@ model Cart {
   createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion        Int          @default(1) @map("row_version")
+  companyId         BigInt?      @map("company_id")
 
   entity      Entity       @relation("CartEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carts__entity_id")
   customer    User         @relation("CartCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carts__customer_user_id")
@@ -314,7 +319,11 @@ model Cart {
   codes       CartCode[]
   orderGroups OrderGroup[] @relation("OrderGroupCart")
 
+  company       Company?       @relation("CartCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_carts__company_id")
+  discountMemos DiscountMemo[] @relation("DiscountMemoCart")
+
   @@unique([customerUserId, channel], map: "ux_carts__one_active", where: raw("(status = 'active'::cart_status)"))
+  @@index([companyId], map: "ix_carts__company_id")
   @@index([customerUserId, status], map: "ix_carts__customer_user_id__status")
   @@index([entityId], map: "ix_carts__entity_id")
   @@index([createdByCsUserId], map: "ix_carts__created_by_cs_user_id")
@@ -412,43 +421,47 @@ model CartCode {
 /// One per checkout (A-6). Money: `net_amount` is every line's net incl. shipping; `gross_amount` =
 /// net − discount + VAT; `cash_amount` = gross − expected customer WHT (P03).
 model OrderGroup {
-  id                     BigInt           @id(map: "pk_order_groups") @default(autoincrement())
-  publicId               String           @unique(map: "ux_order_groups__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  groupCode              String           @unique(map: "ux_order_groups__group_code") @map("group_code")
-  entityId               BigInt           @map("entity_id")
-  customerUserId         BigInt           @map("customer_user_id")
-  placedByUserId         BigInt           @map("placed_by_user_id")
-  onBehalfOfUserId       BigInt?          @map("on_behalf_of_user_id")
-  cartId                 BigInt?          @map("cart_id")
-  channel                SalesChannel
-  status                 OrderGroupStatus
-  taxProfileSnapshot     Json?            @map("tax_profile_snapshot")
-  billingAddressSnapshot Json?            @map("billing_address_snapshot")
-  poNumber               String?          @map("po_number")
-  netAmount              Decimal          @map("net_amount") @db.Decimal(14, 2)
-  discountAmount         Decimal          @default(0) @map("discount_amount") @db.Decimal(14, 2)
-  shippingNetAmount      Decimal          @default(0) @map("shipping_net_amount") @db.Decimal(14, 2)
-  vatAmount              Decimal          @map("vat_amount") @db.Decimal(14, 2)
-  grossAmount            Decimal          @map("gross_amount") @db.Decimal(14, 2)
-  whtAmount              Decimal          @default(0) @map("wht_amount") @db.Decimal(14, 2)
-  cashAmount             Decimal          @map("cash_amount") @db.Decimal(14, 2)
-  pointsRedeemed         Int              @default(0) @map("points_redeemed")
-  pointsValue            Decimal          @default(0) @map("points_value") @db.Decimal(14, 2)
+  id                       BigInt           @id(map: "pk_order_groups") @default(autoincrement())
+  publicId                 String           @unique(map: "ux_order_groups__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupCode                String           @unique(map: "ux_order_groups__group_code") @map("group_code")
+  entityId                 BigInt           @map("entity_id")
+  customerUserId           BigInt           @map("customer_user_id")
+  placedByUserId           BigInt           @map("placed_by_user_id")
+  onBehalfOfUserId         BigInt?          @map("on_behalf_of_user_id")
+  cartId                   BigInt?          @map("cart_id")
+  channel                  SalesChannel
+  status                   OrderGroupStatus
+  taxProfileSnapshot       Json?            @map("tax_profile_snapshot")
+  billingAddressSnapshot   Json?            @map("billing_address_snapshot")
+  poNumber                 String?          @map("po_number")
+  netAmount                Decimal          @map("net_amount") @db.Decimal(14, 2)
+  discountAmount           Decimal          @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  shippingNetAmount        Decimal          @default(0) @map("shipping_net_amount") @db.Decimal(14, 2)
+  vatAmount                Decimal          @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount              Decimal          @map("gross_amount") @db.Decimal(14, 2)
+  whtAmount                Decimal          @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  cashAmount               Decimal          @map("cash_amount") @db.Decimal(14, 2)
+  pointsRedeemed           Int              @default(0) @map("points_redeemed")
+  pointsValue              Decimal          @default(0) @map("points_value") @db.Decimal(14, 2)
   /// Unpaid expiry (D-060); cleared once the group is no longer waiting for payment.
-  expiresAt              DateTime?        @map("expires_at") @db.Timestamptz(6)
-  placedAt               DateTime         @default(now()) @map("placed_at") @db.Timestamptz(6)
-  cancelledAt            DateTime?        @map("cancelled_at") @db.Timestamptz(6)
-  cancelReasonId         BigInt?          @map("cancel_reason_id")
-  cancelNote             String?          @map("cancel_note")
+  expiresAt                DateTime?        @map("expires_at") @db.Timestamptz(6)
+  placedAt                 DateTime         @default(now()) @map("placed_at") @db.Timestamptz(6)
+  cancelledAt              DateTime?        @map("cancelled_at") @db.Timestamptz(6)
+  cancelReasonId           BigInt?          @map("cancel_reason_id")
+  cancelNote               String?          @map("cancel_note")
   /// Lower-cased by the service (text[], not citext[]: Prisma 7 cannot map citext arrays, A-31).
-  ccEmails               String[]         @default([]) @map("cc_emails")
+  ccEmails                 String[]         @default([]) @map("cc_emails")
   /// Internal only, never on the store surface.
-  csRemarks              String?          @map("cs_remarks")
-  utm                    Json?
-  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById            BigInt?          @map("updated_by")
-  rowVersion             Int              @default(1) @map("row_version")
+  csRemarks                String?          @map("cs_remarks")
+  utm                      Json?
+  createdAt                DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById              BigInt?          @map("updated_by")
+  rowVersion               Int              @default(1) @map("row_version")
+  companyId                BigInt?          @map("company_id")
+  companyBranchId          BigInt?          @map("company_branch_id")
+  companyApprovalRequestId BigInt?          @map("company_approval_request_id")
+  discountMemoId           BigInt?          @map("discount_memo_id")
 
   entity          Entity                @relation("OrderGroupEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__entity_id")
   customer        User                  @relation("OrderGroupCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__customer_user_id")
@@ -465,6 +478,16 @@ model OrderGroup {
 
   pointsEntries PointsEntry[] @relation("PointsEntryOrderGroup")
 
+  company                Company?         @relation("OrderGroupCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__company_id")
+  companyBranch          CompanyBranch?   @relation("OrderGroupCompanyBranch", fields: [companyBranchId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__company_branch_id")
+  companyApprovalRequest ApprovalRequest? @relation("OrderGroupCompanyApproval", fields: [companyApprovalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__company_approval_request_id")
+  discountMemo           DiscountMemo?    @relation("OrderGroupDiscountMemo", fields: [discountMemoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__discount_memo_id")
+  appliedMemos           DiscountMemo[]   @relation("DiscountMemoAppliedGroup")
+
+  @@index([companyId, createdAt(sort: Desc)], map: "ix_order_groups__company_id__created_at")
+  @@index([companyBranchId], map: "ix_order_groups__company_branch_id")
+  @@index([companyApprovalRequestId], map: "ix_order_groups__company_approval_request_id")
+  @@index([discountMemoId], map: "ix_order_groups__discount_memo_id")
   @@index([customerUserId, placedAt(sort: Desc)], map: "ix_order_groups__customer_user_id__placed_at")
   @@index([status, placedAt(sort: Desc)], map: "ix_order_groups__status__placed_at")
   @@index([entityId], map: "ix_order_groups__entity_id")
@@ -540,6 +563,7 @@ model Order {
   updatedAt               DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   updatedById             BigInt?              @map("updated_by")
   rowVersion              Int                  @default(1) @map("row_version")
+  companyId               BigInt?              @map("company_id")
 
   entity                Entity                 @relation("OrderEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__entity_id")
   orderGroup            OrderGroup             @relation(fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__order_group_id")
@@ -567,6 +591,9 @@ model Order {
   pointsEntries PointsEntry[] @relation("PointsEntryOrder")
   review        OrderReview?  @relation("OrderReviewOrder")
 
+  company Company? @relation("OrderCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__company_id")
+
+  @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
   @@index([customerUserId, createdAt(sort: Desc)], map: "ix_orders__customer_user_id__created_at")
@@ -637,6 +664,7 @@ model OrderDiscount {
   campaignId      BigInt?        @map("campaign_id")
   redemptionId    BigInt?        @map("redemption_id")
   createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  discountMemoId  BigInt?        @map("discount_memo_id")
 
   order      Order                @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__order_id")
   orderLine  OrderLine?           @relation(fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__order_line_id")
@@ -646,6 +674,9 @@ model OrderDiscount {
   campaign   Campaign?            @relation("OrderDiscountCampaign", fields: [campaignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__campaign_id")
   redemption PromotionRedemption? @relation("OrderDiscountRedemption", fields: [redemptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__redemption_id")
 
+  discountMemo DiscountMemo? @relation("OrderDiscountMemo", fields: [discountMemoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_discounts__discount_memo_id")
+
+  @@index([discountMemoId], map: "ix_order_discounts__discount_memo_id")
   @@index([orderId], map: "ix_order_discounts__order_id")
   @@index([orderLineId], map: "ix_order_discounts__order_line_id")
   @@index([grantedByUserId], map: "ix_order_discounts__granted_by_user_id")
@@ -1667,4 +1698,325 @@ model OrderReview {
   @@index([userId], map: "ix_order_reviews__user_id")
   @@index([moderatedById], map: "ix_order_reviews__moderated_by")
   @@map("order_reviews")
+}
+
+// --- B2B companies & discount memos (D-120…D-125, D-052, B3.5; schema-design §3.6) -----------------
+
+enum CompanyStatus {
+  applied
+  kyc_review
+  active
+  suspended
+  closed
+
+  @@map("company_status")
+}
+
+enum CreditStatus {
+  prepaid
+  eligible
+  credit
+  blocked_overdue
+
+  @@map("credit_status")
+}
+
+enum PoNumberPolicy {
+  required
+  optional
+  none
+
+  @@map("po_number_policy")
+}
+
+enum MemberStatus {
+  invited
+  active
+  removed
+
+  @@map("member_status")
+}
+
+enum MemoStatus {
+  draft
+  pending_approval
+  approved
+  rejected
+  withdrawn
+  expired
+  applied
+
+  @@map("memo_status")
+}
+
+/// A B2B customer company (D-120…D-125). Members act for it through company-scoped roles.
+model Company {
+  id                     BigInt         @id(map: "pk_companies") @default(autoincrement())
+  publicId               String         @unique(map: "ux_companies__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId               BigInt         @map("entity_id")
+  companyCode            String?        @unique(map: "ux_companies__company_code") @map("company_code")
+  legalName              String         @map("legal_name")
+  tradeName              String?        @map("trade_name")
+  taxId                  String         @map("tax_id") @db.Char(13)
+  isVatRegistered        Boolean        @default(true) @map("is_vat_registered")
+  /// The company withholds tax on payments to Packio (accounting-design §2, P03).
+  withholdsTax           Boolean        @default(false) @map("withholds_tax")
+  documentEmail          String?        @map("document_email") @db.Citext
+  status                 CompanyStatus  @default(applied)
+  creditStatus           CreditStatus   @default(prepaid) @map("credit_status")
+  poNumberPolicy         PoNumberPolicy @default(optional) @map("po_number_policy")
+  /// Orders above this value wait for the company's approver (D-123); null = never.
+  orderApprovalThreshold Decimal?       @map("order_approval_threshold") @db.Decimal(14, 2)
+  /// Cache of paid order groups for credit eligibility (D-121).
+  paidOrdersCount        Int            @default(0) @map("paid_orders_count")
+  appliedById            BigInt         @map("applied_by")
+  kycReviewedById        BigInt?        @map("kyc_reviewed_by")
+  kycApprovedAt          DateTime?      @map("kyc_approved_at") @db.Timestamptz(6)
+  statusReason           String?        @map("status_reason")
+  createdAt              DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById            BigInt?        @map("updated_by")
+  rowVersion             Int            @default(1) @map("row_version")
+
+  entity        Entity               @relation("CompanyEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_companies__entity_id")
+  appliedBy     User                 @relation("CompanyAppliedBy", fields: [appliedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_companies__applied_by")
+  kycReviewedBy User?                @relation("CompanyKycReviewedBy", fields: [kycReviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_companies__kyc_reviewed_by")
+  updatedBy     User?                @relation("CompanyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_companies__updated_by")
+  branches      CompanyBranch[]
+  members       CompanyMember[]
+  kycDocuments  CompanyKycDocument[]
+  creditLimit   CompanyCreditLimit?
+  discount      CompanyDiscount?
+  discountMemos DiscountMemo[]
+  carts         Cart[]               @relation("CartCompany")
+  orderGroups   OrderGroup[]         @relation("OrderGroupCompany")
+  orders        Order[]              @relation("OrderCompany")
+  addresses     CustomerAddress[]    @relation("CustomerAddressCompany")
+  quotes        Quote[]              @relation("QuoteCompany")
+  files         FileObject[]         @relation("FileObjectOwnerCompany")
+
+  @@unique([taxId], map: "ux_companies__tax_id", where: raw("(status <> 'closed'::company_status)"))
+  @@index([status], map: "ix_companies__status")
+  @@index([entityId], map: "ix_companies__entity_id")
+  @@index([appliedById], map: "ix_companies__applied_by")
+  @@index([kycReviewedById], map: "ix_companies__kyc_reviewed_by")
+  @@index([updatedById], map: "ix_companies__updated_by")
+  @@map("companies")
+}
+
+/// Head office and branches: the tax invoice names the branch (D-125).
+model CompanyBranch {
+  id            BigInt     @id(map: "pk_company_branches") @default(autoincrement())
+  publicId      String     @unique(map: "ux_company_branches__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  companyId     BigInt     @map("company_id")
+  branchType    BranchType @map("branch_type")
+  branchCode    String     @map("branch_code") @db.Char(5)
+  name          String
+  line1         String
+  line2         String?
+  subdistrictId BigInt?    @map("subdistrict_id")
+  postcode      String     @db.Char(5)
+  provinceId    BigInt     @map("province_id")
+  isDefault     Boolean    @default(false) @map("is_default")
+  deletedAt     DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?    @map("created_by")
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion    Int        @default(1) @map("row_version")
+
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_branches__company_id")
+  subdistrict GeoSubdistrict? @relation("CompanyBranchSubdistrict", fields: [subdistrictId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_branches__subdistrict_id")
+  province    GeoProvince     @relation("CompanyBranchProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_branches__province_id")
+  createdBy   User?           @relation("CompanyBranchCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_branches__created_by")
+  orderGroups OrderGroup[]    @relation("OrderGroupCompanyBranch")
+
+  @@unique([companyId, branchCode], map: "ux_company_branches__company_id__branch_code", where: raw("(deleted_at IS NULL)"))
+  @@unique([companyId], map: "ux_company_branches__one_default", where: raw("(is_default AND (deleted_at IS NULL))"))
+  @@index([companyId], map: "ix_company_branches__company_id")
+  @@index([subdistrictId], map: "ix_company_branches__subdistrict_id")
+  @@index([provinceId], map: "ix_company_branches__province_id")
+  @@index([createdById], map: "ix_company_branches__created_by")
+  @@map("company_branches")
+}
+
+/// Membership of a customer account in a company; company roles are `user_roles` in scope `company`.
+model CompanyMember {
+  id          BigInt       @id(map: "pk_company_members") @default(autoincrement())
+  publicId    String       @unique(map: "ux_company_members__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  companyId   BigInt       @map("company_id")
+  userId      BigInt       @map("user_id")
+  status      MemberStatus @default(invited)
+  roleKeys    String[]     @default([]) @map("role_keys")
+  invitedById BigInt?      @map("invited_by")
+  invitedAt   DateTime     @default(now()) @map("invited_at") @db.Timestamptz(6)
+  joinedAt    DateTime?    @map("joined_at") @db.Timestamptz(6)
+  removedAt   DateTime?    @map("removed_at") @db.Timestamptz(6)
+  rowVersion  Int          @default(1) @map("row_version")
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_members__company_id")
+  user      User    @relation("CompanyMemberUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_members__user_id")
+  invitedBy User?   @relation("CompanyMemberInvitedBy", fields: [invitedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_members__invited_by")
+
+  @@unique([companyId, userId], map: "ux_company_members__company_id__user_id")
+  @@index([userId], map: "ix_company_members__user_id")
+  @@index([invitedById], map: "ix_company_members__invited_by")
+  @@map("company_members")
+}
+
+/// KYC documents reviewed by staff (D-120: certificate ≤ 6 months old, ภ.พ.20 if VAT-registered, signatory).
+model CompanyKycDocument {
+  id           BigInt     @id(map: "pk_company_kyc_documents") @default(autoincrement())
+  publicId     String     @unique(map: "ux_company_kyc_documents__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  companyId    BigInt     @map("company_id")
+  docType      KycDocType @map("doc_type")
+  fileObjectId BigInt     @map("file_object_id")
+  issuedOn     DateTime?  @map("issued_on") @db.Date
+  status       KycStatus  @default(pending)
+  verifiedById BigInt?    @map("verified_by")
+  verifiedAt   DateTime?  @map("verified_at") @db.Timestamptz(6)
+  note         String?
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?    @map("created_by")
+  updatedAt    DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion   Int        @default(1) @map("row_version")
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__company_id")
+  fileObject FileObject @relation("CompanyKycDocumentFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__file_object_id")
+  verifiedBy User?      @relation("CompanyKycDocumentVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__verified_by")
+  createdBy  User?      @relation("CompanyKycDocumentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_kyc_documents__created_by")
+
+  @@index([companyId, docType], map: "ix_company_kyc_documents__company_id__doc_type")
+  @@index([fileObjectId], map: "ix_company_kyc_documents__file_object_id")
+  @@index([verifiedById], map: "ix_company_kyc_documents__verified_by")
+  @@index([createdById], map: "ix_company_kyc_documents__created_by")
+  @@map("company_kyc_documents")
+}
+
+/// Credit limit identity per company; limits and terms are effective-dated versions (D-121).
+model CompanyCreditLimit {
+  id        BigInt   @id(map: "pk_company_credit_limits") @default(autoincrement())
+  publicId  String   @unique(map: "ux_company_credit_limits__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  companyId BigInt   @unique(map: "ux_company_credit_limits__company_id") @map("company_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company  Company                     @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_credit_limits__company_id")
+  versions CompanyCreditLimitVersion[]
+
+  @@map("company_credit_limits")
+}
+
+model CompanyCreditLimitVersion {
+  id                BigInt              @id(map: "pk_company_credit_limit_versions") @default(autoincrement())
+  publicId          String              @unique(map: "ux_company_credit_limit_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  creditLimitId     BigInt              @map("credit_limit_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  limitAmount       Decimal             @map("limit_amount") @db.Decimal(14, 2)
+  termDays          Int                 @map("term_days") @db.SmallInt
+  /// Why the company is eligible (D-121): paid orders or a financial-statement review.
+  eligibilityBasis  String              @map("eligibility_basis")
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+
+  creditLimit     CompanyCreditLimit @relation(fields: [creditLimitId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_credit_limit_versions__credit_limit_id")
+  approvalRequest ApprovalRequest?   @relation("CompanyCreditLimitVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_credit_limit_versions__approval_request_id")
+  createdBy       User?              @relation("CompanyCreditLimitVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_credit_limit_versions__created_by")
+
+  @@unique([creditLimitId, versionNo], map: "ux_company_credit_limit_versions__credit_limit_id__version_no")
+  @@index([creditLimitId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_company_credit_limit_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_company_credit_limit_versions__approval_request_id")
+  @@index([createdById], map: "ix_company_credit_limit_versions__created_by")
+  @@map("company_credit_limit_versions")
+}
+
+/// Company-level discount identity; each % is a version granted through a discount memo (D-124).
+model CompanyDiscount {
+  id        BigInt   @id(map: "pk_company_discounts") @default(autoincrement())
+  publicId  String   @unique(map: "ux_company_discounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  companyId BigInt   @unique(map: "ux_company_discounts__company_id") @map("company_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  company  Company                  @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_discounts__company_id")
+  versions CompanyDiscountVersion[]
+
+  @@map("company_discounts")
+}
+
+model CompanyDiscountVersion {
+  id             BigInt              @id(map: "pk_company_discount_versions") @default(autoincrement())
+  publicId       String              @unique(map: "ux_company_discount_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  discountId     BigInt              @map("discount_id")
+  versionNo      Int                 @map("version_no")
+  effectiveFrom  DateTime            @map("effective_from") @db.Timestamptz(6)
+  validTo        DateTime?           @map("valid_to") @db.Timestamptz(6)
+  status         ConfigVersionStatus @default(draft)
+  discountPct    Decimal             @map("discount_pct") @db.Decimal(7, 4)
+  discountMemoId BigInt              @map("discount_memo_id")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  discount     CompanyDiscount @relation(fields: [discountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_discount_versions__discount_id")
+  discountMemo DiscountMemo    @relation("CompanyDiscountVersionMemo", fields: [discountMemoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_discount_versions__discount_memo_id")
+
+  @@unique([discountId, versionNo], map: "ux_company_discount_versions__discount_id__version_no")
+  @@index([discountId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_company_discount_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([discountMemoId], map: "ix_company_discount_versions__discount_memo_id")
+  @@map("company_discount_versions")
+}
+
+/// A discount above the CS limit, routed by the approval matrix (D-052, D-162); a company memo sets the
+/// company discount (D-124). Evidence files are attachments of the memo.
+model DiscountMemo {
+  id                  BigInt     @id(map: "pk_discount_memos") @default(autoincrement())
+  publicId            String     @unique(map: "ux_discount_memos__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId            BigInt     @map("entity_id")
+  scope               String
+  requestedById       BigInt     @map("requested_by")
+  customerUserId      BigInt?    @map("customer_user_id")
+  companyId           BigInt?    @map("company_id")
+  quoteId             BigInt?    @map("quote_id")
+  cartId              BigInt?    @map("cart_id")
+  orderValue          Decimal    @map("order_value") @db.Decimal(14, 2)
+  requestedPct        Decimal    @map("requested_pct") @db.Decimal(7, 4)
+  requestedAmount     Decimal    @map("requested_amount") @db.Decimal(14, 2)
+  resultingMarginPct  Decimal?   @map("resulting_margin_pct") @db.Decimal(9, 4)
+  belowMarginFloor    Boolean    @default(false) @map("below_margin_floor")
+  reason              String
+  evidenceFileIds     BigInt[]   @default([]) @map("evidence_file_ids")
+  status              MemoStatus @default(pending_approval)
+  approvalRequestId   BigInt?    @map("approval_request_id")
+  approvedPct         Decimal?   @map("approved_pct") @db.Decimal(7, 4)
+  validUntil          DateTime   @map("valid_until") @db.Timestamptz(6)
+  decidedAt           DateTime?  @map("decided_at") @db.Timestamptz(6)
+  appliedOrderGroupId BigInt?    @map("applied_order_group_id")
+  appliedAt           DateTime?  @map("applied_at") @db.Timestamptz(6)
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion          Int        @default(1) @map("row_version")
+
+  entity            Entity                   @relation("DiscountMemoEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__entity_id")
+  requestedBy       User                     @relation("DiscountMemoRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__requested_by")
+  customer          User?                    @relation("DiscountMemoCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__customer_user_id")
+  company           Company?                 @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__company_id")
+  quote             Quote?                   @relation("DiscountMemoQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__quote_id")
+  cart              Cart?                    @relation("DiscountMemoCart", fields: [cartId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__cart_id")
+  approvalRequest   ApprovalRequest?         @relation("DiscountMemoApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__approval_request_id")
+  appliedOrderGroup OrderGroup?              @relation("DiscountMemoAppliedGroup", fields: [appliedOrderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_discount_memos__applied_order_group_id")
+  companyDiscounts  CompanyDiscountVersion[] @relation("CompanyDiscountVersionMemo")
+  orderDiscounts    OrderDiscount[]          @relation("OrderDiscountMemo")
+  orderGroups       OrderGroup[]             @relation("OrderGroupDiscountMemo")
+
+  @@index([status, validUntil], map: "ix_discount_memos__status__valid_until")
+  @@index([entityId], map: "ix_discount_memos__entity_id")
+  @@index([requestedById], map: "ix_discount_memos__requested_by")
+  @@index([customerUserId], map: "ix_discount_memos__customer_user_id")
+  @@index([companyId], map: "ix_discount_memos__company_id")
+  @@index([quoteId], map: "ix_discount_memos__quote_id")
+  @@index([cartId], map: "ix_discount_memos__cart_id")
+  @@index([approvalRequestId], map: "ix_discount_memos__approval_request_id")
+  @@index([appliedOrderGroupId], map: "ix_discount_memos__applied_order_group_id")
+  @@map("discount_memos")
 }

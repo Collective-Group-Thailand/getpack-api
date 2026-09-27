@@ -484,6 +484,17 @@ model User {
   pointsLots                             PointsLot[]                      @relation("PointsLotUser")
   orderReviews                           OrderReview[]                    @relation("OrderReviewUser")
   orderReviewsModerated                  OrderReview[]                    @relation("OrderReviewModeratedBy")
+  companiesApplied                       Company[]                        @relation("CompanyAppliedBy")
+  companiesKycReviewed                   Company[]                        @relation("CompanyKycReviewedBy")
+  companiesUpdated                       Company[]                        @relation("CompanyUpdatedBy")
+  companyBranchesCreated                 CompanyBranch[]                  @relation("CompanyBranchCreatedBy")
+  companyMemberships                     CompanyMember[]                  @relation("CompanyMemberUser")
+  companyMembersInvited                  CompanyMember[]                  @relation("CompanyMemberInvitedBy")
+  companyKycVerified                     CompanyKycDocument[]             @relation("CompanyKycDocumentVerifiedBy")
+  companyKycCreated                      CompanyKycDocument[]             @relation("CompanyKycDocumentCreatedBy")
+  companyCreditLimitVersionsCreated      CompanyCreditLimitVersion[]      @relation("CompanyCreditLimitVersionCreatedBy")
+  discountMemosRequested                 DiscountMemo[]                   @relation("DiscountMemoRequestedBy")
+  discountMemosAsCustomer                DiscountMemo[]                   @relation("DiscountMemoCustomer")
   // --- end Commerce
 
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))

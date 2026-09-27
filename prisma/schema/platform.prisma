@@ -354,13 +354,15 @@ model Entity {
 
   // --- end Quotes & RFQ
   // --- Commerce (generated back-relations)
-  carts       Cart[]       @relation("CartEntity")
-  orderGroups OrderGroup[] @relation("OrderGroupEntity")
-  orders      Order[]      @relation("OrderEntity")
-  payments    Payment[]    @relation("PaymentEntity")
-  refunds     Refund[]     @relation("RefundEntity")
-  campaigns   Campaign[]   @relation("CampaignEntity")
-  promotions  Promotion[]  @relation("PromotionEntity")
+  carts         Cart[]         @relation("CartEntity")
+  orderGroups   OrderGroup[]   @relation("OrderGroupEntity")
+  orders        Order[]        @relation("OrderEntity")
+  payments      Payment[]      @relation("PaymentEntity")
+  refunds       Refund[]       @relation("RefundEntity")
+  campaigns     Campaign[]     @relation("CampaignEntity")
+  promotions    Promotion[]    @relation("PromotionEntity")
+  companies     Company[]      @relation("CompanyEntity")
+  discountMemos DiscountMemo[] @relation("DiscountMemoEntity")
   // --- end Commerce
 
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
@@ -583,6 +585,10 @@ model ApprovalRequest {
 
   referralAttributions ReferralAttribution[] @relation("ReferralApprovalRequest")
 
+  companyCreditLimitVersions CompanyCreditLimitVersion[] @relation("CompanyCreditLimitVersionApprovalRequest")
+  discountMemos              DiscountMemo[]              @relation("DiscountMemoApprovalRequest")
+  companyApprovedGroups      OrderGroup[]                @relation("OrderGroupCompanyApproval")
+
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")
   @@index([status, expiresAt], map: "ix_approval_requests__status__expires_at")
@@ -732,6 +738,9 @@ model FileObject {
 
   // --- end Quotes & RFQ
   slips Slip[] @relation("SlipFile")
+
+  ownerCompany        Company?             @relation("FileObjectOwnerCompany", fields: [ownerCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_company_id")
+  companyKycDocuments CompanyKycDocument[] @relation("CompanyKycDocumentFile")
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
@@ -1200,6 +1209,7 @@ enum DocumentType {
   rfq
   order
   customer
+  company
 
   @@map("document_type")
 }

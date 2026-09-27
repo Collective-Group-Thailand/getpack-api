@@ -536,6 +536,7 @@ model Quote {
   createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion         Int          @default(1) @map("row_version")
+  companyId          BigInt?      @map("company_id")
 
   entity         Entity          @relation("QuoteEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__entity_id")
   rfqQuote       RfqQuote?       @relation("QuoteRfqQuote", fields: [rfqQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__rfq_quote_id")
@@ -555,6 +556,10 @@ model Quote {
   cartItemsPending CartItem[] @relation("CartItemPendingQuote")
   orders           Order[]    @relation("OrderQuote")
 
+  company       Company?       @relation("QuoteCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_quotes__company_id")
+  discountMemos DiscountMemo[] @relation("DiscountMemoQuote")
+
+  @@index([companyId], map: "ix_quotes__company_id")
   @@index([customerUserId, createdAt(sort: Desc)], map: "ix_quotes__customer_user_id__created_at")
   @@index([status, validUntil], map: "ix_quotes__status__valid_until")
   @@index([anonymousId], map: "ix_quotes__anonymous_id")

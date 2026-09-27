@@ -1580,6 +1580,8 @@ model GeoProvince {
   taxProfiles       TaxProfile[]       @relation("TaxProfileProvince")
   orderDestinations OrderDestination[] @relation("OrderDestinationProvince")
 
+  companyBranches CompanyBranch[] @relation("CompanyBranchProvince")
+
   @@map("geo_provinces")
 }
 
@@ -1634,6 +1636,8 @@ model GeoSubdistrict {
   customerAddresses CustomerAddress[]  @relation("CustomerAddressSubdistrict")
   taxProfiles       TaxProfile[]       @relation("TaxProfileSubdistrict")
   orderDestinations OrderDestination[] @relation("OrderDestinationSubdistrict")
+
+  companyBranches CompanyBranch[] @relation("CompanyBranchSubdistrict")
 
   @@index([districtId], map: "ix_geo_subdistricts__district_id")
   @@index([postcode], map: "ix_geo_subdistricts__postcode")
