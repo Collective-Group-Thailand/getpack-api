@@ -467,6 +467,51 @@ const CHECKS = [
   'ck_drawing_jobs__attempts',
   'ck_drawing_jobs__succeeded',
   'ck_drawing_jobs__failed',
+  // --- B4.2 production
+  'ck_factory_scorecards__jobs',
+  'ck_factory_scorecards__month',
+  'ck_factory_scorecards__pcts',
+  'ck_inspections__accept',
+  'ck_inspections__aql',
+  'ck_inspections__found',
+  'ck_inspections__rate',
+  'ck_inspections__result',
+  'ck_inspections__sample',
+  'ck_inspections__waived',
+  'ck_job_assignments__escalated',
+  'ck_job_assignments__factories',
+  'ck_job_issues__resolved',
+  'ck_job_issues__text',
+  'ck_job_milestones__completed',
+  'ck_job_milestones__quantities',
+  'ck_job_milestones__reporter',
+  'ck_job_milestones__seq',
+  'ck_job_milestones__started',
+  'ck_milestone_route_steps__key',
+  'ck_milestone_route_steps__label',
+  'ck_milestone_route_steps__names',
+  'ck_milestone_route_steps__seq',
+  'ck_milestone_route_steps__share',
+  'ck_milestone_route_versions__decided',
+  'ck_milestone_route_versions__no_acceptance',
+  'ck_milestone_route_versions__reason',
+  'ck_milestone_route_versions__version_no',
+  'ck_milestone_routes__name',
+  'ck_milestone_routes__variant',
+  'ck_production_jobs__accepted',
+  'ck_production_jobs__cancelled',
+  'ck_production_jobs__completed',
+  'ck_production_jobs__job_no',
+  'ck_production_jobs__manual_reason',
+  'ck_production_jobs__mockup_line',
+  'ck_production_jobs__not_self',
+  'ck_production_jobs__on_hold',
+  'ck_production_jobs__quantities',
+  'ck_production_jobs__rejected',
+  'ck_production_jobs__reproduction',
+  'ck_production_jobs__tolerance',
+  'ck_qc_checks__quantities',
+  'ck_qc_checks__version',
 ];
 
 const TRIGGERS = [
@@ -581,6 +626,15 @@ const TRIGGERS = [
   'tg_design_rounds__no_delete',
   'tg_design_document_versions__immutable',
   'tg_drawing_jobs__no_delete',
+  // --- B4.2 production
+  'tg_inspections__no_delete',
+  'tg_job_assignments__append_only',
+  'tg_job_issues__no_delete',
+  'tg_job_milestones__no_delete',
+  'tg_milestone_route_steps__draft_only',
+  'tg_milestone_route_versions__frozen',
+  'tg_production_jobs__snapshot_write_once',
+  'tg_qc_checks__append_only',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -661,6 +715,12 @@ const INDEXES = [
   'ux_proofs__one_approved',
   'ux_dieline_deliveries__one_auto',
   'ix_drawing_jobs__queue',
+  // --- B4.2 production
+  'ux_milestone_routes__type__print__variant',
+  'ix_milestone_route_versions__resolution',
+  'ux_production_jobs__one_live_production',
+  'ux_production_jobs__one_live_mockup',
+  'ux_job_milestones__job_id__client_ref',
 ];
 
 const EXPRESSION_INDEXES = [
@@ -676,6 +736,8 @@ const EXPRESSION_INDEXES = [
 
   // --- B2.3 folding geometry
   'ux_pattern_geometry_conditions__slot',
+  // --- B4.2 production
+  'ux_milestone_routes__type__print__variant',
 ];
 
 const PARTIAL_INDEXES = INDEXES.filter((name) => !EXPRESSION_INDEXES.includes(name));

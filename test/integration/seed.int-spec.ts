@@ -96,6 +96,21 @@ describe('seeds (PostgreSQL 18)', () => {
     expect(await count("feature_flags WHERE key LIKE 'payments.%'")).toBe(5);
   });
 
+  it('seeds approved standard and mockup milestone routes for every produced product type (B4.2, D-075)', async () => {
+    expect(await count("milestone_routes WHERE variant = 'standard'")).toBe(13);
+    expect(await count("milestone_routes WHERE variant = 'mockup'")).toBe(13);
+    expect(await count("milestone_route_versions WHERE status = 'approved'")).toBe(26);
+    const { rows } = await db.client.query<{ key: string }>(`
+      SELECT s.key FROM milestone_route_steps s
+        JOIN milestone_route_versions v ON v.id = s.version_id
+        JOIN milestone_routes r ON r.id = v.route_id
+        JOIN product_types t ON t.id = r.product_type_id
+       WHERE t.code = 'folding_carton' AND r.variant = 'standard' ORDER BY s.seq`);
+    expect(rows.map((r) => r.key)).toEqual([
+      'job_received', 'prepress_ready', 'materials_ready', 'printing', 'finishing', 'die_cut', 'gluing', 'qc', 'packing', 'ready_to_ship',
+    ]);
+  });
+
   it('seeds the drawing engine flag off until @packio/dieline is published (B4.1)', async () => {
     expect(await count("feature_flags WHERE key = 'drawing.engine' AND NOT enabled")).toBe(1);
   });

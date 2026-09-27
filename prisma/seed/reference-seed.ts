@@ -10,7 +10,7 @@ import {
   PAYMENT_SCHEDULE_TEMPLATES,
   REFERRAL_PROMOTION,
 } from './data/commerce';
-import { FULFILMENT_FEATURE_FLAGS } from './data/fulfilment';
+import { FULFILMENT_FEATURE_FLAGS, MILESTONE_ROUTE_FAMILIES, MILESTONE_ROUTE_FAMILY_BY_TYPE } from './data/fulfilment';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { UNMET_DEMAND_REASONS } from './data/quotes';
@@ -74,6 +74,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureOrderCancelReasons(tx, count);
       await ensurePaymentScheduleTemplates(tx, count);
       await ensurePaymentFeatureFlags(tx, count);
+      await ensureMilestoneRoutes(tx, count);
       await ensureReferralPromotion(tx, count);
 
       if (Object.keys(report).length > 0) {
@@ -512,6 +513,51 @@ async function ensurePaymentScheduleTemplates(tx: Tx, count: (what: string) => v
       data: { status: 'approved', decidedAt: new Date() },
     });
     count('payment_schedule_templates');
+  }
+}
+
+/**
+ * Default milestone routes (D-075, B4.2): a `standard` and a `mockup` route per produced product type, one
+ * approved v1 each (steps are written while the version is a draft, then it is approved). Never changed later.
+ */
+async function ensureMilestoneRoutes(tx: Tx, count: (what: string) => void): Promise<void> {
+  for (const [typeCode, family] of Object.entries(MILESTONE_ROUTE_FAMILY_BY_TYPE)) {
+    const type = await tx.productType.findUnique({ where: { code: typeCode } });
+    if (!type) continue;
+    for (const variant of ['standard', 'mockup'] as const) {
+      const existing = await tx.milestoneRoute.findFirst({ where: { productTypeId: type.id, printTypeId: null, variant } });
+      if (existing) continue;
+      const steps = MILESTONE_ROUTE_FAMILIES[variant === 'mockup' ? 'mockup' : family]!;
+      const route = await tx.milestoneRoute.create({
+        data: { productTypeId: type.id, variant, name: `${type.nameTh} (${variant})` },
+      });
+      const version = await tx.milestoneRouteVersion.create({
+        data: {
+          routeId: route.id,
+          versionNo: 1,
+          effectiveFrom: SEED_EFFECTIVE_FROM,
+          reason: 'B4.2 default route from the prompt example (D-075); edit as new versions',
+          steps: {
+            create: steps.map((s, i) => ({
+              seq: i + 1,
+              key: s.key,
+              nameTh: s.nameTh,
+              nameEn: s.nameEn,
+              customerVisible: s.customerLabelTh !== undefined,
+              customerLabelTh: s.customerLabelTh ?? null,
+              customerLabelEn: s.customerLabelEn ?? null,
+              evidence: s.evidence ?? 'none',
+              tracksQuantity: s.tracksQuantity ?? false,
+            })),
+          },
+        },
+      });
+      await tx.milestoneRouteVersion.update({
+        where: { id: version.id },
+        data: { status: 'approved', decidedAt: new Date() },
+      });
+      count('milestone_routes');
+    }
   }
 }
 

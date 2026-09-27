@@ -551,3 +551,452 @@ model DrawingJob {
   @@index([status, lockedUntil], map: "ix_drawing_jobs__queue", where: raw("(status = ANY (ARRAY['queued'::drawing_status, 'running'::drawing_status]))"))
   @@map("drawing_jobs")
 }
+
+// --- Production (D-073…D-076, D-012, D-101, B4.2) ---------------------------------------------------
+
+enum EvidenceRequirement {
+  none
+  photo
+  qc_form
+  photo_and_qc_form
+
+  @@map("evidence_requirement")
+}
+
+enum JobKind {
+  production
+  mockup
+  reproduction
+
+  @@map("job_kind")
+}
+
+enum ProductionJobStatus {
+  released
+  accepted
+  rejected
+  in_progress
+  on_hold
+  completed
+  cancelled
+
+  @@map("production_job_status")
+}
+
+enum AssignmentReason {
+  initial
+  rejected
+  acceptance_overdue
+  manual
+
+  @@map("assignment_reason")
+}
+
+enum AssignmentMode {
+  auto
+  manual
+  escalated
+
+  @@map("assignment_mode")
+}
+
+enum MilestoneStatus {
+  pending
+  in_progress
+  completed
+  skipped
+
+  @@map("milestone_status")
+}
+
+enum QcResult {
+  pass
+  fail
+  conditional
+
+  @@map("qc_result")
+}
+
+enum InspectionReason {
+  value_100_pct
+  value_band_sample
+  trial_factory
+  high_defect_factory
+  special_finish_or_food
+
+  @@map("inspection_reason")
+}
+
+enum InspectionStatus {
+  planned
+  in_progress
+  passed
+  failed
+  waived
+
+  @@map("inspection_status")
+}
+
+enum IssueStatus {
+  open
+  resolved
+
+  @@map("issue_status")
+}
+
+/// Identity of an editable milestone route (D-075): per product type, optional print type and a variant.
+model MilestoneRoute {
+  id            BigInt   @id(map: "pk_milestone_routes") @default(autoincrement())
+  publicId      String   @unique(map: "ux_milestone_routes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId BigInt   @map("product_type_id")
+  printTypeId   BigInt?  @map("print_type_id")
+  /// `standard`, `mockup`, `digital`… (lower snake case).
+  variant       String
+  name          String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?  @map("created_by")
+
+  productType ProductType             @relation("MilestoneRouteProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_milestone_routes__product_type_id")
+  printType   PrintType?              @relation("MilestoneRoutePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_milestone_routes__print_type_id")
+  createdBy   User?                   @relation("MilestoneRouteCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_milestone_routes__created_by")
+  versions    MilestoneRouteVersion[]
+
+  // ux (product_type_id, coalesce(print_type_id, 0), variant) is an expression index in the migration SQL.
+  @@index([productTypeId], map: "ix_milestone_routes__product_type_id")
+  @@index([printTypeId], map: "ix_milestone_routes__print_type_id")
+  @@index([createdById], map: "ix_milestone_routes__created_by")
+  @@map("milestone_routes")
+}
+
+model MilestoneRouteVersion {
+  id                BigInt              @id(map: "pk_milestone_route_versions") @default(autoincrement())
+  publicId          String              @unique(map: "ux_milestone_route_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  routeId           BigInt              @map("route_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  route           MilestoneRoute       @relation(fields: [routeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_milestone_route_versions__route_id")
+  approvalRequest ApprovalRequest?     @relation("MilestoneRouteVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_milestone_route_versions__approval_request_id")
+  createdBy       User?                @relation("MilestoneRouteVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_milestone_route_versions__created_by")
+  decidedBy       User?                @relation("MilestoneRouteVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_milestone_route_versions__decided_by")
+  steps           MilestoneRouteStep[]
+  jobs            ProductionJob[]
+
+  @@unique([routeId, versionNo], map: "ux_milestone_route_versions__route_id__version_no")
+  @@index([routeId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_milestone_route_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_milestone_route_versions__approval_request_id")
+  @@index([createdById], map: "ix_milestone_route_versions__created_by")
+  @@index([decidedById], map: "ix_milestone_route_versions__decided_by")
+  @@map("milestone_route_versions")
+}
+
+model MilestoneRouteStep {
+  id              BigInt              @id(map: "pk_milestone_route_steps") @default(autoincrement())
+  versionId       BigInt              @map("version_id")
+  seq             Int                 @db.SmallInt
+  key             String
+  nameTh          String              @map("name_th")
+  nameEn          String              @map("name_en")
+  customerVisible Boolean             @default(false) @map("customer_visible")
+  customerLabelTh String?             @map("customer_label_th")
+  customerLabelEn String?             @map("customer_label_en")
+  evidence        EvidenceRequirement @default(none)
+  tracksQuantity  Boolean             @default(false) @map("tracks_quantity")
+  /// Share of the planned production time (for due dates); null = spread evenly.
+  plannedSharePct Decimal?            @map("planned_share_pct") @db.Decimal(7, 4)
+
+  version MilestoneRouteVersion @relation(fields: [versionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_milestone_route_steps__version_id")
+
+  @@unique([versionId, seq], map: "ux_milestone_route_steps__version_id__seq")
+  @@unique([versionId, key], map: "ux_milestone_route_steps__version_id__key")
+  @@map("milestone_route_steps")
+}
+
+/// One job per (order, factory) and kind (D-073): what the factory is asked to make, with its snapshots.
+model ProductionJob {
+  id                   BigInt              @id(map: "pk_production_jobs") @default(autoincrement())
+  publicId             String              @unique(map: "ux_production_jobs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  jobNo                String              @unique(map: "ux_production_jobs__job_no") @map("job_no")
+  entityId             BigInt              @map("entity_id")
+  orderId              BigInt              @map("order_id")
+  factoryId            BigInt              @map("factory_id")
+  jobKind              JobKind             @map("job_kind")
+  reproductionOfJobId  BigInt?             @map("reproduction_of_job_id")
+  /// P24 re-production for a claim (FK added with claims, B4.5).
+  claimId              BigInt?             @map("claim_id")
+  /// The factory PO (FK added with purchase orders, B5.3).
+  purchaseOrderId      BigInt?             @map("purchase_order_id")
+  /// The add-on line a mockup job makes (D-072).
+  orderLineId          BigInt?             @map("order_line_id")
+  status               ProductionJobStatus @default(released)
+  statusChangedAt      DateTime            @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  releasedAt           DateTime            @default(now()) @map("released_at") @db.Timestamptz(6)
+  releaseMode          ProductionStartMode @map("release_mode")
+  releaseReason        String?             @map("release_reason")
+  releasedById         BigInt?             @map("released_by")
+  acceptDueAt          DateTime            @map("accept_due_at") @db.Timestamptz(6)
+  acceptedAt           DateTime?           @map("accepted_at") @db.Timestamptz(6)
+  acceptedById         BigInt?             @map("accepted_by")
+  rejectedAt           DateTime?           @map("rejected_at") @db.Timestamptz(6)
+  rejectedById         BigInt?             @map("rejected_by")
+  rejectReasonCode     String?             @map("reject_reason_code")
+  rejectNote           String?             @map("reject_note")
+  /// Set once the acceptance SLA passed and the job was escalated (D-074).
+  escalatedAt          DateTime?           @map("escalated_at") @db.Timestamptz(6)
+  plannedStartOn       DateTime?           @map("planned_start_on") @db.Date
+  plannedFinishOn      DateTime?           @map("planned_finish_on") @db.Date
+  promisedShipDate     DateTime?           @map("promised_ship_date") @db.Date
+  predictedFinishOn    DateTime?           @map("predicted_finish_on") @db.Date
+  atRiskSince          DateTime?           @map("at_risk_since") @db.Timestamptz(6)
+  actualStartAt        DateTime?           @map("actual_start_at") @db.Timestamptz(6)
+  actualFinishAt       DateTime?           @map("actual_finish_at") @db.Timestamptz(6)
+  priority             Int                 @default(0) @db.SmallInt
+  lotNo                String?             @map("lot_no")
+  quantityOrdered      Int                 @map("quantity_ordered")
+  quantityGood         Int?                @map("quantity_good")
+  quantityScrap        Int?                @map("quantity_scrap")
+  specSnapshot         Json                @map("spec_snapshot")
+  routeVersionId       BigInt              @map("route_version_id")
+  routeSnapshot        Json                @map("route_snapshot")
+  priceListVersionId   BigInt?             @map("price_list_version_id")
+  /// Staff-only (D-141): the factory's buy price for this job.
+  buyPriceSnapshot     Json                @map("buy_price_snapshot")
+  toleranceShortagePct Decimal?            @map("tolerance_shortage_pct") @db.Decimal(7, 4)
+  toleranceOveragePct  Decimal?            @map("tolerance_overage_pct") @db.Decimal(7, 4)
+  inspectionRequired   Boolean             @default(false) @map("inspection_required")
+  inspectionReasons    String[]            @default([]) @map("inspection_reasons")
+  holdReason           String?             @map("hold_reason")
+  cancelReason         String?             @map("cancel_reason")
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById          BigInt?             @map("updated_by")
+  rowVersion           Int                 @default(1) @map("row_version")
+
+  entity           Entity                @relation("ProductionJobEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__entity_id")
+  order            Order                 @relation("ProductionJobOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__order_id")
+  factory          Factory               @relation("ProductionJobFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__factory_id")
+  reproductionOf   ProductionJob?        @relation("ProductionJobReproduction", fields: [reproductionOfJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__reproduction_of_job_id")
+  reproductions    ProductionJob[]       @relation("ProductionJobReproduction")
+  orderLine        OrderLine?            @relation("ProductionJobOrderLine", fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__order_line_id")
+  releasedBy       User?                 @relation("ProductionJobReleasedBy", fields: [releasedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__released_by")
+  acceptedBy       User?                 @relation("ProductionJobAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__accepted_by")
+  rejectedBy       User?                 @relation("ProductionJobRejectedBy", fields: [rejectedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__rejected_by")
+  updatedBy        User?                 @relation("ProductionJobUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__updated_by")
+  routeVersion     MilestoneRouteVersion @relation(fields: [routeVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__route_version_id")
+  priceListVersion PriceListVersion?     @relation("ProductionJobPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_production_jobs__price_list_version_id")
+  assignments      JobAssignment[]
+  milestones       JobMilestone[]
+  qcChecks         QcCheck[]
+  inspections      Inspection[]
+  issues           JobIssue[]
+  capacityBooking  CapacityBooking?      @relation("CapacityBookingJob")
+
+  @@unique([orderId], map: "ux_production_jobs__one_live_production", where: raw("((job_kind = 'production'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
+  @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
+  @@index([orderId], map: "ix_production_jobs__order_id")
+  @@index([factoryId, status], map: "ix_production_jobs__factory_id__status")
+  @@index([status, acceptDueAt], map: "ix_production_jobs__status__accept_due_at")
+  @@index([factoryId, promisedShipDate], map: "ix_production_jobs__factory_id__promised_ship_date")
+  @@index([entityId], map: "ix_production_jobs__entity_id")
+  @@index([reproductionOfJobId], map: "ix_production_jobs__reproduction_of_job_id")
+  @@index([claimId], map: "ix_production_jobs__claim_id")
+  @@index([purchaseOrderId], map: "ix_production_jobs__purchase_order_id")
+  @@index([orderLineId], map: "ix_production_jobs__order_line_id")
+  @@index([releasedById], map: "ix_production_jobs__released_by")
+  @@index([acceptedById], map: "ix_production_jobs__accepted_by")
+  @@index([rejectedById], map: "ix_production_jobs__rejected_by")
+  @@index([updatedById], map: "ix_production_jobs__updated_by")
+  @@index([routeVersionId], map: "ix_production_jobs__route_version_id")
+  @@index([priceListVersionId], map: "ix_production_jobs__price_list_version_id")
+  @@map("production_jobs")
+}
+
+/// Assignment history (D-012): who the job went to and why.
+model JobAssignment {
+  id             BigInt           @id(map: "pk_job_assignments") @default(autoincrement())
+  jobId          BigInt           @map("job_id")
+  fromFactoryId  BigInt?          @map("from_factory_id")
+  toFactoryId    BigInt?          @map("to_factory_id")
+  reason         AssignmentReason
+  /// Staff-only (D-141): the margin the new factory leaves.
+  marginAfterPct Decimal?         @map("margin_after_pct") @db.Decimal(9, 4)
+  mode           AssignmentMode
+  note           String?
+  decidedById    BigInt?          @map("decided_by")
+  decidedAt      DateTime         @default(now()) @map("decided_at") @db.Timestamptz(6)
+
+  job         ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_assignments__job_id")
+  fromFactory Factory?      @relation("JobAssignmentFrom", fields: [fromFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_assignments__from_factory_id")
+  toFactory   Factory?      @relation("JobAssignmentTo", fields: [toFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_assignments__to_factory_id")
+  decidedBy   User?         @relation("JobAssignmentDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_assignments__decided_by")
+
+  @@index([jobId], map: "ix_job_assignments__job_id")
+  @@index([fromFactoryId], map: "ix_job_assignments__from_factory_id")
+  @@index([toFactoryId], map: "ix_job_assignments__to_factory_id")
+  @@index([decidedById], map: "ix_job_assignments__decided_by")
+  @@map("job_assignments")
+}
+
+model JobMilestone {
+  id                 BigInt              @id(map: "pk_job_milestones") @default(autoincrement())
+  publicId           String              @unique(map: "ux_job_milestones__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  jobId              BigInt              @map("job_id")
+  /// Denormalised for partner scoping (schema-design §2.5).
+  factoryId          BigInt              @map("factory_id")
+  seq                Int                 @db.SmallInt
+  stepKey            String              @map("step_key")
+  evidence           EvidenceRequirement @default(none)
+  tracksQuantity     Boolean             @default(false) @map("tracks_quantity")
+  customerVisible    Boolean             @default(false) @map("customer_visible")
+  status             MilestoneStatus     @default(pending)
+  dueAt              DateTime?           @map("due_at") @db.Timestamptz(6)
+  startedAt          DateTime?           @map("started_at") @db.Timestamptz(6)
+  completedAt        DateTime?           @map("completed_at") @db.Timestamptz(6)
+  quantityIn         Int?                @map("quantity_in")
+  quantityOut        Int?                @map("quantity_out")
+  quantityScrap      Int?                @map("quantity_scrap")
+  reportedById       BigInt?             @map("reported_by")
+  reportedByClientId BigInt?             @map("reported_by_client_id")
+  /// Idempotent partner updates: the device's id of its last update (server wins on conflict).
+  clientRef          String?             @map("client_ref") @db.Uuid
+  clientReportedAt   DateTime?           @map("client_reported_at") @db.Timestamptz(6)
+  /// Completed (or started) on time, for the scorecard's on-time updates (D-075, D-155).
+  onTime             Boolean?            @map("on_time")
+  note               String?
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                 @default(1) @map("row_version")
+
+  job              ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__job_id")
+  factory          Factory       @relation("JobMilestoneFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__factory_id")
+  reportedBy       User?         @relation("JobMilestoneReportedBy", fields: [reportedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__reported_by")
+  reportedByClient ApiClient?    @relation("JobMilestoneReportedByClient", fields: [reportedByClientId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_milestones__reported_by_client_id")
+
+  @@unique([jobId, seq], map: "ux_job_milestones__job_id__seq")
+  @@unique([jobId, clientRef], map: "ux_job_milestones__job_id__client_ref", where: raw("(client_ref IS NOT NULL)"))
+  @@index([factoryId, status], map: "ix_job_milestones__factory_id__status")
+  @@index([reportedById], map: "ix_job_milestones__reported_by")
+  @@index([reportedByClientId], map: "ix_job_milestones__reported_by_client_id")
+  @@map("job_milestones")
+}
+
+/// Factory QC with photo evidence (D-076).
+model QcCheck {
+  id                BigInt   @id(map: "pk_qc_checks") @default(autoincrement())
+  publicId          String   @unique(map: "ux_qc_checks__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  jobId             BigInt   @map("job_id")
+  factoryId         BigInt   @map("factory_id")
+  checklistVersion  String   @map("checklist_version")
+  checklist         Json
+  result            QcResult
+  isFirstPass       Boolean  @map("is_first_pass")
+  defects           Json     @default("[]")
+  quantityChecked   Int?     @map("quantity_checked")
+  quantityDefective Int?     @map("quantity_defective")
+  note              String?
+  performedById     BigInt?  @map("performed_by")
+  performedAt       DateTime @default(now()) @map("performed_at") @db.Timestamptz(6)
+
+  job         ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_qc_checks__job_id")
+  factory     Factory       @relation("QcCheckFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_qc_checks__factory_id")
+  performedBy User?         @relation("QcCheckPerformedBy", fields: [performedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_qc_checks__performed_by")
+
+  @@index([jobId, performedAt], map: "ix_qc_checks__job_id__performed_at")
+  @@index([factoryId, performedAt], map: "ix_qc_checks__factory_id__performed_at")
+  @@index([performedById], map: "ix_qc_checks__performed_by")
+  @@map("qc_checks")
+}
+
+/// Packio risk-based inspection (D-076).
+model Inspection {
+  id              BigInt             @id(map: "pk_inspections") @default(autoincrement())
+  publicId        String             @unique(map: "ux_inspections__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  jobId           BigInt             @unique(map: "ux_inspections__job_id") @map("job_id")
+  reasons         InspectionReason[]
+  /// Setting versions and the sampling maths used (`qc.inspection_sampling`).
+  samplingRefs    Json               @map("sampling_refs")
+  /// Probability the reasons give (percent) and the random draw's outcome.
+  ratePct         Decimal            @map("rate_pct") @db.Decimal(7, 4)
+  selected        Boolean
+  lotSize         Int                @map("lot_size")
+  sampleSize      Int                @map("sample_size")
+  aqlCritical     Decimal            @map("aql_critical") @db.Decimal(5, 2)
+  aqlMajor        Decimal            @map("aql_major") @db.Decimal(5, 2)
+  aqlMinor        Decimal            @map("aql_minor") @db.Decimal(5, 2)
+  acceptCritical  Int                @map("accept_critical")
+  acceptMajor     Int                @map("accept_major")
+  acceptMinor     Int                @map("accept_minor")
+  foundCritical   Int?               @map("found_critical")
+  foundMajor      Int?               @map("found_major")
+  foundMinor      Int?               @map("found_minor")
+  inspectorUserId BigInt?            @map("inspector_user_id")
+  scheduledAt     DateTime?          @map("scheduled_at") @db.Timestamptz(6)
+  status          InspectionStatus   @default(planned)
+  resultAt        DateTime?          @map("result_at") @db.Timestamptz(6)
+  notes           String?
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int                @default(1) @map("row_version")
+
+  job       ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_inspections__job_id")
+  inspector User?         @relation("InspectionInspector", fields: [inspectorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_inspections__inspector_user_id")
+
+  @@index([status, scheduledAt], map: "ix_inspections__status__scheduled_at")
+  @@index([inspectorUserId], map: "ix_inspections__inspector_user_id")
+  @@map("inspections")
+}
+
+model JobIssue {
+  id             BigInt      @id(map: "pk_job_issues") @default(autoincrement())
+  publicId       String      @unique(map: "ux_job_issues__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  jobId          BigInt      @map("job_id")
+  factoryId      BigInt      @map("factory_id")
+  kind           String
+  description    String
+  raisedById     BigInt?     @map("raised_by")
+  status         IssueStatus @default(open)
+  resolvedAt     DateTime?   @map("resolved_at") @db.Timestamptz(6)
+  resolvedById   BigInt?     @map("resolved_by")
+  resolutionNote String?     @map("resolution_note")
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  job        ProductionJob @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__job_id")
+  factory    Factory       @relation("JobIssueFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__factory_id")
+  raisedBy   User?         @relation("JobIssueRaisedBy", fields: [raisedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__raised_by")
+  resolvedBy User?         @relation("JobIssueResolvedBy", fields: [resolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_job_issues__resolved_by")
+
+  @@index([jobId], map: "ix_job_issues__job_id")
+  @@index([factoryId, status], map: "ix_job_issues__factory_id__status")
+  @@index([raisedById], map: "ix_job_issues__raised_by")
+  @@index([resolvedById], map: "ix_job_issues__resolved_by")
+  @@map("job_issues")
+}
+
+/// Monthly factory scorecard (D-155), visible to the factory.
+model FactoryScorecard {
+  id                  BigInt   @id(map: "pk_factory_scorecards") @default(autoincrement())
+  factoryId           BigInt   @map("factory_id")
+  /// First day of the Bangkok month.
+  month               DateTime @db.Date
+  onTimeAcceptancePct Decimal? @map("on_time_acceptance_pct") @db.Decimal(7, 4)
+  onTimeShippingPct   Decimal? @map("on_time_shipping_pct") @db.Decimal(7, 4)
+  qcFirstPassPct      Decimal? @map("qc_first_pass_pct") @db.Decimal(7, 4)
+  claimRatePct        Decimal? @map("claim_rate_pct") @db.Decimal(7, 4)
+  onTimeUpdatesPct    Decimal? @map("on_time_updates_pct") @db.Decimal(7, 4)
+  jobsCount           Int      @map("jobs_count")
+  inputs              Json
+  computedAt          DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  factory Factory @relation("FactoryScorecardFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_scorecards__factory_id")
+
+  @@unique([factoryId, month], map: "ux_factory_scorecards__factory_id__month")
+  @@map("factory_scorecards")
+}

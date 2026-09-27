@@ -616,6 +616,10 @@ model Order {
   drawingJobs          DrawingJob[]          @relation("DrawingJobOrder")
   // --- end Fulfilment B4.1
 
+  // --- Fulfilment B4.2 (generated back-relations)
+  productionJobs ProductionJob[] @relation("ProductionJobOrder")
+  // --- end Fulfilment B4.2
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -671,6 +675,10 @@ model OrderLine {
   designRounds     DesignRound[] @relation("DesignRoundOrderLine")
   addOnInstalments Instalment[]  @relation("InstalmentAddOnLine")
   // --- end Fulfilment B4.1
+
+  // --- Fulfilment B4.2 (generated back-relations)
+  productionJobs ProductionJob[] @relation("ProductionJobOrderLine")
+  // --- end Fulfilment B4.2
 
   @@unique([orderId, lineNo], map: "ux_order_lines__order_id__line_no")
   @@map("order_lines")

@@ -259,6 +259,10 @@ model ProductType {
   // --- end Quotes & RFQ
   orders Order[] @relation("OrderProductType")
 
+  // --- Fulfilment B4.2 (generated back-relations)
+  milestoneRoutes MilestoneRoute[] @relation("MilestoneRouteProductType")
+  // --- end Fulfilment B4.2
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }
@@ -309,6 +313,10 @@ model PrintType {
   plDiecutBlockPricesPrintType PlDiecutBlockPrice[] @relation("PlDiecutBlockPricePrintType")
   plAssemblyPricesPrintType    PlAssemblyPrice[]    @relation("PlAssemblyPricePrintType")
   // --- end Folding price components
+
+  // --- Fulfilment B4.2 (generated back-relations)
+  milestoneRoutes MilestoneRoute[] @relation("MilestoneRoutePrintType")
+  // --- end Fulfilment B4.2
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
   @@map("print_types")

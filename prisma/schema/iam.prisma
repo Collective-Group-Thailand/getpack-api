@@ -513,6 +513,22 @@ model User {
   drawingJobsRequested     DrawingJob[]            @relation("DrawingJobRequestedBy")
   // --- end Fulfilment B4.1
 
+  // --- Fulfilment B4.2 (generated back-relations)
+  milestoneRoutesCreated        MilestoneRoute[]        @relation("MilestoneRouteCreatedBy")
+  milestoneRouteVersionsCreated MilestoneRouteVersion[] @relation("MilestoneRouteVersionCreatedBy")
+  milestoneRouteVersionsDecided MilestoneRouteVersion[] @relation("MilestoneRouteVersionDecidedBy")
+  jobsReleased                  ProductionJob[]         @relation("ProductionJobReleasedBy")
+  jobsAccepted                  ProductionJob[]         @relation("ProductionJobAcceptedBy")
+  jobsRejected                  ProductionJob[]         @relation("ProductionJobRejectedBy")
+  jobsUpdated                   ProductionJob[]         @relation("ProductionJobUpdatedBy")
+  jobAssignmentsDecided         JobAssignment[]         @relation("JobAssignmentDecidedBy")
+  milestonesReported            JobMilestone[]          @relation("JobMilestoneReportedBy")
+  qcChecksPerformed             QcCheck[]               @relation("QcCheckPerformedBy")
+  inspectionsAssigned           Inspection[]            @relation("InspectionInspector")
+  jobIssuesRaised               JobIssue[]              @relation("JobIssueRaisedBy")
+  jobIssuesResolved             JobIssue[]              @relation("JobIssueResolvedBy")
+  // --- end Fulfilment B4.2
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")
@@ -692,6 +708,10 @@ model ApiClient {
   auditLogs    AuditLog[]
   activityLogs ActivityLog[]
   domainEvents DomainEvent[]
+
+  // --- Fulfilment B4.2 (generated back-relations)
+  milestonesReported JobMilestone[] @relation("JobMilestoneReportedByClient")
+  // --- end Fulfilment B4.2
 
   @@index([factoryId], map: "ix_api_clients__factory_id")
   @@map("api_clients")

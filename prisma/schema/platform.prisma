@@ -156,6 +156,7 @@ enum AttachmentSubject {
   vendor_invoice
   other
   design_service_request
+  job_issue
 
   @@map("attachment_subject")
 }
@@ -365,6 +366,10 @@ model Entity {
   companies     Company[]      @relation("CompanyEntity")
   discountMemos DiscountMemo[] @relation("DiscountMemoEntity")
   // --- end Commerce
+
+  // --- Fulfilment B4.2 (generated back-relations)
+  productionJobs ProductionJob[] @relation("ProductionJobEntity")
+  // --- end Fulfilment B4.2
 
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
@@ -589,6 +594,10 @@ model ApprovalRequest {
   companyCreditLimitVersions CompanyCreditLimitVersion[] @relation("CompanyCreditLimitVersionApprovalRequest")
   discountMemos              DiscountMemo[]              @relation("DiscountMemoApprovalRequest")
   companyApprovedGroups      OrderGroup[]                @relation("OrderGroupCompanyApproval")
+
+  // --- Fulfilment B4.2 (generated back-relations)
+  milestoneRouteVersions MilestoneRouteVersion[] @relation("MilestoneRouteVersionApprovalRequest")
+  // --- end Fulfilment B4.2
 
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")

@@ -4,6 +4,7 @@ import { type AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
 import { Client } from 'pg';
 
+import { seedDevFolding } from '../../prisma/seed/dev-folding';
 import { seedDev } from '../../prisma/seed/dev-seed';
 import { startTestInfra, stopTestInfra, type TestInfra } from '../support/containers';
 import { migrateDeploy, SQLSTATE } from '../support/database';
@@ -33,6 +34,7 @@ describe('fulfilment schema (PostgreSQL 18)', () => {
     client = new Client({ connectionString: infra.env.DATABASE_URL });
     await client.connect();
     await seedDev(prisma);
+    await prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 });
     const entity = await prisma.entity.findFirstOrThrow({ where: { isDefault: true } });
     const customer = await prisma.user.findFirstOrThrow({ where: { kind: 'customer' } });
     const staff = await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } });
@@ -320,6 +322,121 @@ describe('fulfilment schema (PostgreSQL 18)', () => {
       expect(await state(job, [pattern.id, 'succeeded', null])).toBe(SQLSTATE.checkViolation);
       expect(await state(job, [pattern.id, 'engine_unavailable', null])).toBe(SQLSTATE.checkViolation);
       expect(await state(job, [pattern.id, 'engine_unavailable', 'drawing.engine_unavailable'])).toBeNull();
+    });
+  });
+
+  describe('production (B4.2)', () => {
+    async function job(orderId: bigint, extra: Record<string, unknown> = {}) {
+      seq += 1;
+      const factory = await prisma.factory.findFirstOrThrow();
+      const version = await prisma.milestoneRouteVersion.findFirstOrThrow({ where: { status: 'approved' } });
+      return prisma.productionJob.create({
+        data: {
+          jobNo: `INT-JOB-${seq}`,
+          entityId: fx.entityId,
+          orderId,
+          factoryId: factory.id,
+          jobKind: 'production',
+          releaseMode: 'auto',
+          acceptDueAt: new Date(Date.now() + 86_400_000),
+          quantityOrdered: 1000,
+          specSnapshot: {},
+          routeVersionId: version.id,
+          routeSnapshot: {},
+          buyPriceSnapshot: {},
+          ...extra,
+        },
+      });
+    }
+
+    it('keeps one live production job per order, write-once snapshots and consistent statuses', async () => {
+      const o = await order();
+      const first = await job(o.id);
+      await expect(job(o.id)).rejects.toThrow();
+      expect(await state("UPDATE production_jobs SET status = 'accepted' WHERE id = $1", [first.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(await state("UPDATE production_jobs SET status = 'rejected' WHERE id = $1", [first.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(await state('UPDATE production_jobs SET quantity_ordered = 5 WHERE id = $1', [first.id])).toBe(
+        SQLSTATE.restrictViolation,
+      );
+      expect(
+        await state(`UPDATE production_jobs SET spec_snapshot = '{"x":1}' WHERE id = $1`, [first.id]),
+      ).toBe(SQLSTATE.restrictViolation);
+      expect(
+        await state(
+          "UPDATE production_jobs SET status = 'rejected', rejected_at = now(), reject_reason_code = 'capacity' WHERE id = $1",
+          [first.id],
+        ),
+      ).toBeNull();
+      const second = await job(o.id);
+      expect(await state('DELETE FROM production_jobs WHERE id = $1', [second.id])).toBe(
+        SQLSTATE.restrictViolation,
+      );
+      expect(
+        await state(
+          `INSERT INTO production_jobs (job_no, entity_id, order_id, factory_id, job_kind, release_mode, accept_due_at, quantity_ordered,
+                       spec_snapshot, route_version_id, route_snapshot, buy_price_snapshot)
+                     SELECT 'INT-X', entity_id, order_id, factory_id, 'production', 'manual_exception', accept_due_at, 1, '{}', route_version_id, '{}', '{}'
+                       FROM production_jobs WHERE id = $1`,
+          [first.id],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+    });
+
+    it('freezes route steps with their version and keeps milestones, QC and scorecards consistent', async () => {
+      const version = await prisma.milestoneRouteVersion.findFirstOrThrow({
+        where: { status: 'approved' },
+        include: { steps: true },
+      });
+      expect(
+        await state("UPDATE milestone_route_steps SET name_th = 'x' WHERE id = $1", [version.steps[0]!.id]),
+      ).toBe(SQLSTATE.restrictViolation);
+      expect(
+        await state("UPDATE milestone_route_versions SET reason = 'x' WHERE id = $1", [version.id]),
+      ).toBe(SQLSTATE.restrictViolation);
+
+      const o = await order();
+      const j = await job(o.id);
+      const milestone = await prisma.jobMilestone.create({
+        data: { jobId: j.id, factoryId: j.factoryId, seq: 1, stepKey: 'job_received' },
+      });
+      expect(
+        await state("UPDATE job_milestones SET status = 'completed' WHERE id = $1", [milestone.id]),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state(
+          "UPDATE job_milestones SET status = 'completed', started_at = now(), completed_at = now() WHERE id = $1",
+          [milestone.id],
+        ),
+      ).toBeNull();
+      const qc = await prisma.qcCheck.create({
+        data: {
+          jobId: j.id,
+          factoryId: j.factoryId,
+          checklistVersion: 'v1',
+          checklist: {},
+          result: 'pass',
+          isFirstPass: true,
+        },
+      });
+      expect(await state("UPDATE qc_checks SET result = 'fail' WHERE id = $1", [qc.id])).toBe(
+        SQLSTATE.restrictViolation,
+      );
+      expect(
+        await state(
+          `INSERT INTO factory_scorecards (factory_id, month, jobs_count, inputs) VALUES ($1, '2026-09-15', 0, '{}')`,
+          [j.factoryId],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state(
+          `INSERT INTO factory_scorecards (factory_id, month, jobs_count, inputs, qc_first_pass_pct) VALUES ($1, '2026-09-01', 1, '{}', 120)`,
+          [j.factoryId],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
     });
   });
 });

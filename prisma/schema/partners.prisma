@@ -350,6 +350,16 @@ model Factory {
   // --- end Quotes & RFQ
   ordersSelected Order[] @relation("OrderSelectedFactory")
 
+  // --- Fulfilment B4.2 (generated back-relations)
+  productionJobs     ProductionJob[]    @relation("ProductionJobFactory")
+  jobAssignmentsFrom JobAssignment[]    @relation("JobAssignmentFrom")
+  jobAssignmentsTo   JobAssignment[]    @relation("JobAssignmentTo")
+  jobMilestones      JobMilestone[]     @relation("JobMilestoneFactory")
+  qcChecks           QcCheck[]          @relation("QcCheckFactory")
+  jobIssues          JobIssue[]         @relation("JobIssueFactory")
+  scorecards         FactoryScorecard[] @relation("FactoryScorecardFactory")
+  // --- end Fulfilment B4.2
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
@@ -880,8 +890,9 @@ model CapacityBooking {
   releasedAt      DateTime? @map("released_at") @db.Timestamptz(6)
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  factory     Factory     @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_capacity_bookings__factory_id")
-  productType ProductType @relation("CapacityBookingProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_capacity_bookings__product_type_id")
+  factory     Factory       @relation(fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_capacity_bookings__factory_id")
+  productType ProductType   @relation("CapacityBookingProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_capacity_bookings__product_type_id")
+  job         ProductionJob @relation("CapacityBookingJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_capacity_bookings__production_job_id")
 
   @@index([factoryId, productTypeId, weekStart], map: "ix_capacity_bookings__factory__type__week")
   @@index([productTypeId], map: "ix_capacity_bookings__product_type_id")
@@ -1068,6 +1079,11 @@ model PriceListVersion {
   quoteOptions QuoteOption[] @relation("QuoteOptionPriceListVersion")
 
   // --- end Quotes & RFQ
+
+  // --- Fulfilment B4.2 (generated back-relations)
+  productionJobs ProductionJob[] @relation("ProductionJobPriceListVersion")
+  // --- end Fulfilment B4.2
+
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
   @@index([priceListId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_price_list_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
   @@index([basedOnVersionId], map: "ix_price_list_versions__based_on_version_id")

@@ -86,6 +86,30 @@ const DEV_SERIES = [
     isGapless: false,
     description: '[DEV] fake company code series',
   },
+  {
+    docType: 'job',
+    prefix: 'DEVJOB',
+    format: '{prefix}-{yy}{mm}-{seq:5}',
+    resetPeriod: 'monthly',
+    isGapless: false,
+    description: '[DEV] fake production job series',
+  },
+  {
+    docType: 'shipment',
+    prefix: 'DEVSH',
+    format: '{prefix}-{yy}{mm}-{seq:5}',
+    resetPeriod: 'monthly',
+    isGapless: false,
+    description: '[DEV] fake shipment series',
+  },
+  {
+    docType: 'claim',
+    prefix: 'DEVCL',
+    format: '{prefix}-{yy}{mm}-{seq:4}',
+    resetPeriod: 'monthly',
+    isGapless: false,
+    description: '[DEV] fake claim series',
+  },
 ] as const;
 
 export async function seedDev(prisma: PrismaClient, devPassword?: string): Promise<SeedReport> {
