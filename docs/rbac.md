@@ -90,6 +90,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `companies.read` — Read B2B companies, their members, branches and KYC documents (D-120, D-125) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
 | `companies.manage` — Suspend, reactivate or close B2B companies (D-120) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
 | `companies.kyc_review` — Verify company KYC documents and approve or reject applications (D-120) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |
+| `company_credit.manage` — Request B2B credit limits and terms (approved by Finance / C-Level) (D-121) | ● |  |  |  | ● |  | ● |  | ● | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

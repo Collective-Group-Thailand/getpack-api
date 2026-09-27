@@ -761,6 +761,10 @@
     "po_required": {
       "title": "PO number required",
       "detail": "This company requires a PO number on every order"
+    },
+    "credit_not_eligible": {
+      "title": "Not eligible for credit",
+      "detail": "The company needs the required paid orders or a verified financial statement"
     }
   }
 }

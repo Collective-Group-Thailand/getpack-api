@@ -427,6 +427,13 @@ export const PERMISSIONS = [
     decisionRefs: ['D-120'],
   },
 
+  {
+    key: 'company_credit.manage',
+    audience: 'staff',
+    description: 'Request B2B credit limits and terms (approved by Finance / C-Level)',
+    decisionRefs: ['D-121'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

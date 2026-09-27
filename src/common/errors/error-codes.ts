@@ -181,6 +181,7 @@ export const ERROR_CODES = {
   'companies.already_member': HttpStatus.CONFLICT,
   'companies.cannot_remove_self': HttpStatus.CONFLICT,
   'companies.po_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'companies.credit_not_eligible': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

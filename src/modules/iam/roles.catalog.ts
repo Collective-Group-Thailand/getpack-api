@@ -136,6 +136,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'companies.read',
       'companies.manage',
       'companies.kyc_review',
+      'company_credit.manage',
     ],
   },
   {
@@ -198,6 +199,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'companies.read',
       'companies.manage',
       'companies.kyc_review',
+      'company_credit.manage',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -237,6 +239,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'refunds.complete',
       'loyalty.read',
       'companies.read',
+      'company_credit.manage',
     ],
   },
   {
@@ -268,6 +271,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'loyalty.read',
       'companies.read',
       'companies.kyc_review',
+      'company_credit.manage',
     ],
   },
   {

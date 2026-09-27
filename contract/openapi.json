@@ -562,6 +562,17 @@
           "type": "https://errors.packio/companies.certificate_too_old"
         }
       },
+      "problem.companies.credit_not_eligible": {
+        "summary": "companies.credit_not_eligible",
+        "value": {
+          "code": "companies.credit_not_eligible",
+          "detail": "บริษัทต้องมีคำสั่งซื้อที่ชำระแล้วครบตามเกณฑ์ หรือมีงบการเงินที่ตรวจแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่มีสิทธิ์เครดิต",
+          "type": "https://errors.packio/companies.credit_not_eligible"
+        }
+      },
       "problem.companies.head_office_required": {
         "summary": "companies.head_office_required",
         "value": {
@@ -7337,6 +7348,68 @@
         ],
         "type": "object"
       },
+      "CompanyCreditDto": {
+        "properties": {
+          "availableAmount": {
+            "description": "Limit − exposure (never below 0)",
+            "example": "75000.00",
+            "type": "string"
+          },
+          "creditStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditStatus"
+              }
+            ],
+            "example": "credit"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "exposureAmount": {
+            "description": "Open credit-term instalments",
+            "example": "25000.00",
+            "type": "string"
+          },
+          "limitAmount": {
+            "example": "100000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pendingRequest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CreditRequestSummaryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A limit waiting for approval"
+          },
+          "termDays": {
+            "description": "Payment term in days after delivery",
+            "example": 30,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "creditStatus",
+          "limitAmount",
+          "termDays",
+          "exposureAmount",
+          "availableAmount",
+          "pendingRequest",
+          "currency"
+        ],
+        "type": "object"
+      },
       "CompanyDto": {
         "properties": {
           "branches": {
@@ -11302,6 +11375,36 @@
           "line_liff"
         ],
         "type": "string"
+      },
+      "CreditEligibilityBasis": {
+        "enum": [
+          "paid_orders",
+          "financial_statement"
+        ],
+        "type": "string"
+      },
+      "CreditRequestSummaryDto": {
+        "properties": {
+          "limitAmount": {
+            "example": "150000.00",
+            "type": "string"
+          },
+          "requestedAt": {
+            "example": "2026-10-05T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "termDays": {
+            "example": 30,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limitAmount",
+          "termDays",
+          "requestedAt"
+        ],
+        "type": "object"
       },
       "CreditStatus": {
         "description": "D-121 / D-122",
@@ -21987,6 +22090,41 @@
         ],
         "type": "object"
       },
+      "RequestCreditLimitDto": {
+        "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditEligibilityBasis"
+              }
+            ],
+            "example": "paid_orders"
+          },
+          "limitAmount": {
+            "description": "THB; above 100,000 goes to C-Level (D-121)",
+            "example": "100000.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "reason": {
+            "example": "สั่งซื้อสม่ำเสมอ ชำระตรงเวลา 3 ครั้ง",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "termDays": {
+            "description": "One of `b2b.credit_terms.allowedDays`; default `defaultDays`",
+            "example": 30,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limitAmount",
+          "basis",
+          "reason"
+        ],
+        "type": "object"
+      },
       "RequestRefundDto": {
         "properties": {
           "amount": {
@@ -25826,6 +25964,110 @@
           "sort",
           "status",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "StatementDto": {
+        "properties": {
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/StatementLineDto"
+            },
+            "type": "array"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "openBalance": {
+            "description": "Everything still open at the end of the month",
+            "example": "42800.00",
+            "type": "string"
+          },
+          "totalGrossAmount": {
+            "example": "42800.00",
+            "type": "string"
+          },
+          "totalPaidAmount": {
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "lines",
+          "totalGrossAmount",
+          "totalPaidAmount",
+          "openBalance",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "StatementLineDto": {
+        "properties": {
+          "branchCode": {
+            "example": "00000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueAt": {
+            "example": "2026-11-15T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossAmount": {
+            "example": "42800.00",
+            "type": "string"
+          },
+          "groupCode": {
+            "example": "OG-2610-00001",
+            "type": "string"
+          },
+          "groupId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1011",
+            "format": "uuid",
+            "type": "string"
+          },
+          "openAmount": {
+            "example": "42800.00",
+            "type": "string"
+          },
+          "paidAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "placedAt": {
+            "example": "2026-10-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "poNumber": {
+            "example": "PO-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "groupId",
+          "groupCode",
+          "placedAt",
+          "branchCode",
+          "poNumber",
+          "grossAmount",
+          "paidAmount",
+          "openAmount",
+          "dueAt"
         ],
         "type": "object"
       },
@@ -80355,6 +80597,459 @@
         ]
       }
     },
+    "/v1/admin/companies/{companyId}/credit": {
+      "get": {
+        "description": "Status, limit, term, exposure, available and a pending request (D-121).\n\nImplements: D-121.",
+        "operationId": "admin.companyCredit.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "availableAmount": "75000.00",
+                  "creditStatus": "credit",
+                  "currency": "THB",
+                  "exposureAmount": "25000.00",
+                  "limitAmount": "100000.00",
+                  "pendingRequest": null,
+                  "termDays": 30
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCreditDto"
+                }
+              }
+            },
+            "description": "Credit",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a company’s credit",
+        "tags": [
+          "admin.companyCredit"
+        ],
+        "x-required-permissions": [
+          "companies.read"
+        ]
+      }
+    },
+    "/v1/admin/companies/{companyId}/credit-limits": {
+      "post": {
+        "description": "For an eligible company (3 paid orders) or after a verified financial statement (D-121). Routed by `credit_limit`: Finance up to THB 100,000, C-Level above; the requester cannot approve. Terms from `b2b.credit_terms` (15 / 30 / 45 / 60, default 30).\n\nImplements: D-121.",
+        "operationId": "admin.companyCredit.requestLimit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "basis": "paid_orders",
+                    "limitAmount": "100000.00",
+                    "reason": "ชำระตรงเวลา 3 ครั้ง",
+                    "termDays": 30
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RequestCreditLimitDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "availableAmount": "75000.00",
+                  "creditStatus": "eligible",
+                  "currency": "THB",
+                  "exposureAmount": "25000.00",
+                  "limitAmount": null,
+                  "pendingRequest": {
+                    "limitAmount": "100000.00",
+                    "requestedAt": "2026-10-05T10:00:00+07:00",
+                    "termDays": 30
+                  },
+                  "termDays": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCreditDto"
+                }
+              }
+            },
+            "description": "Credit with the pending request",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "approval.already_pending": {
+                    "$ref": "#/components/examples/problem.approval.already_pending"
+                  },
+                  "companies.credit_not_eligible": {
+                    "$ref": "#/components/examples/problem.companies.credit_not_eligible"
+                  },
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `approval.already_pending`, `companies.credit_not_eligible`, `companies.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Request a credit limit and term",
+        "tags": [
+          "admin.companyCredit"
+        ],
+        "x-required-permissions": [
+          "company_credit.manage"
+        ]
+      }
+    },
     "/v1/admin/companies/{companyId}/kyc-documents/{documentId}/actions/review": {
       "post": {
         "description": "A company certificate older than `b2b.kyc_certificate_max_age_months` (6) cannot be verified (D-120).\n\nImplements: D-120.",
@@ -80640,6 +81335,218 @@
         ],
         "x-required-permissions": [
           "companies.kyc_review"
+        ]
+      }
+    },
+    "/v1/admin/companies/{companyId}/statement": {
+      "get": {
+        "description": "Orders of the month, paid and open amounts, open balance (D-125).\n\nImplements: D-125.",
+        "operationId": "admin.companyCredit.statement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Month in Bangkok time",
+            "in": "query",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "example": "2026-10",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "lines": [
+                    {
+                      "branchCode": "00000",
+                      "dueAt": "2026-11-15T10:00:00+07:00",
+                      "grossAmount": "42800.00",
+                      "groupCode": "OG-2610-00001",
+                      "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1011",
+                      "openAmount": "42800.00",
+                      "paidAmount": "0.00",
+                      "placedAt": "2026-10-03T10:00:00+07:00",
+                      "poNumber": "PO-0001"
+                    }
+                  ],
+                  "month": "2026-10",
+                  "openBalance": "42800.00",
+                  "totalGrossAmount": "42800.00",
+                  "totalPaidAmount": "0.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StatementDto"
+                }
+              }
+            },
+            "description": "Statement",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a company’s monthly statement",
+        "tags": [
+          "admin.companyCredit"
+        ],
+        "x-required-permissions": [
+          "companies.read"
         ]
       }
     },
@@ -166059,6 +166966,193 @@
         ]
       }
     },
+    "/v1/store/companies/{companyId}/credit": {
+      "get": {
+        "description": "Company Admin / Accountant: status, limit, term, what is open and available (D-121, D-122).\n\nImplements: D-121, D-122.",
+        "operationId": "store.companyCredit.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "availableAmount": "75000.00",
+                  "creditStatus": "credit",
+                  "currency": "THB",
+                  "exposureAmount": "25000.00",
+                  "limitAmount": "100000.00",
+                  "pendingRequest": null,
+                  "termDays": 30
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCreditDto"
+                }
+              }
+            },
+            "description": "Credit",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my company’s credit",
+        "tags": [
+          "store.companyCredit"
+        ]
+      }
+    },
     "/v1/store/companies/{companyId}/kyc-documents": {
       "post": {
         "description": "Company Admin, with a file I uploaded: company certificate (≤ 6 months), ภ.พ.20 if VAT-registered, signatory id (D-120).\n\nImplements: D-120.",
@@ -166906,6 +168000,215 @@
         "summary": "Remove a member",
         "tags": [
           "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/statement": {
+      "get": {
+        "description": "Company Admin / Accountant: the month’s orders with paid and open amounts and the open balance, for consolidated payment (D-125). The PDF arrives with B5.2.\n\nImplements: D-125.",
+        "operationId": "store.companyCredit.statement",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Month in Bangkok time",
+            "in": "query",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "example": "2026-10",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "lines": [
+                    {
+                      "branchCode": "00000",
+                      "dueAt": "2026-11-15T10:00:00+07:00",
+                      "grossAmount": "42800.00",
+                      "groupCode": "OG-2610-00001",
+                      "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1011",
+                      "openAmount": "42800.00",
+                      "paidAmount": "0.00",
+                      "placedAt": "2026-10-03T10:00:00+07:00",
+                      "poNumber": "PO-0001"
+                    }
+                  ],
+                  "month": "2026-10",
+                  "openBalance": "42800.00",
+                  "totalGrossAmount": "42800.00",
+                  "totalPaidAmount": "0.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StatementDto"
+                }
+              }
+            },
+            "description": "Statement",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my company’s monthly statement",
+        "tags": [
+          "store.companyCredit"
         ]
       }
     },
@@ -181593,6 +182896,10 @@
       "name": "admin.companies"
     },
     {
+      "description": "Company credit: limit requests through the approval matrix, exposure, statements (D-121, D-125).",
+      "name": "admin.companyCredit"
+    },
+    {
       "description": "PDPA consent purposes and their versioned texts (D-005, D-144).",
       "name": "admin.consentPurposes"
     },
@@ -181847,6 +183154,10 @@
     {
       "description": "Company approvers decide orders above the company threshold before placement (D-123).",
       "name": "store.companyApprovals"
+    },
+    {
+      "description": "My company’s credit and monthly statement (D-121, D-122, D-125).",
+      "name": "store.companyCredit"
     },
     {
       "description": "The signed-in customer’s profile: customer type and customer code (D-020).",
