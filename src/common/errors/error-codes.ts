@@ -208,6 +208,10 @@ export const ERROR_CODES = {
   'production.factory_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
   'production.no_price_path': HttpStatus.UNPROCESSABLE_ENTITY,
   'production.below_margin_floor': HttpStatus.UNPROCESSABLE_ENTITY,
+  'production.milestone_out_of_order': HttpStatus.CONFLICT,
+  'production.evidence_missing': HttpStatus.CONFLICT,
+  'production.quantity_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'factory_users.role_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

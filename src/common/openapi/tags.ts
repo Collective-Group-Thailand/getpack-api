@@ -74,6 +74,8 @@ export const API_TAGS: Record<string, string> = {
     'Production jobs: automatic release (D-073), manual exceptions, acceptance SLA and escalations (D-074), reassignment within the margin floor (D-012, D-101).',
   'partner.production':
     'My factory’s jobs: accept / reject, milestones with photos and quantities, QC, issues, capacity and scorecard (D-074…D-076, D-142, D-155).',
+  'admin.milestoneRoutes': 'Milestone routes per product type and variant, versioned (D-075).',
+  'partner.factoryUsers': 'The users of my factory and their factory roles (factory owner, D-140).',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',
   'admin.roles': 'The role and permission catalogue (D-140, D-141).',
   'admin.approvals': 'Generic approval engine: inbox, approve, reject, withdraw (ADR-0006).',

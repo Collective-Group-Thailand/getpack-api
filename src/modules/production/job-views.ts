@@ -1,7 +1,14 @@
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 
-import { type AdminJobDto, type MilestoneDto, type PartnerJobDto } from './production.dto';
+import {
+  type AdminJobDto,
+  type JobIssueDto,
+  type MilestoneDto,
+  type PartnerJobDto,
+  type QcCheckDto,
+  type QcDefectDto,
+} from './production.dto';
 import { type RouteSnapshot } from './production.service';
 
 export const JOB_INCLUDE = {
@@ -113,5 +120,53 @@ export function adminJobDto(
       note: a.note,
       decidedAt: toBangkokIso(a.decidedAt),
     })),
+  };
+}
+
+export function qcDto(q: {
+  publicId: string;
+  checklistVersion: string;
+  checklist: Prisma.JsonValue;
+  result: string;
+  isFirstPass: boolean;
+  defects: Prisma.JsonValue;
+  quantityChecked: number | null;
+  quantityDefective: number | null;
+  note: string | null;
+  performedAt: Date;
+  photoFileIds: string[];
+}): QcCheckDto {
+  return {
+    id: q.publicId,
+    checklistVersion: q.checklistVersion,
+    checklist: q.checklist as Record<string, unknown>,
+    result: q.result,
+    isFirstPass: q.isFirstPass,
+    defects: q.defects as unknown as QcDefectDto[],
+    quantityChecked: q.quantityChecked,
+    quantityDefective: q.quantityDefective,
+    note: q.note,
+    performedAt: toBangkokIso(q.performedAt),
+    photoFileIds: q.photoFileIds,
+  };
+}
+
+export function issueDto(i: {
+  publicId: string;
+  kind: string;
+  description: string;
+  status: string;
+  createdAt: Date;
+  resolvedAt: Date | null;
+  resolutionNote: string | null;
+}): JobIssueDto {
+  return {
+    id: i.publicId,
+    kind: i.kind,
+    description: i.description,
+    status: i.status,
+    createdAt: toBangkokIso(i.createdAt),
+    resolvedAt: i.resolvedAt ? toBangkokIso(i.resolvedAt) : null,
+    resolutionNote: i.resolutionNote,
   };
 }

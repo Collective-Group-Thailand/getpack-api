@@ -579,8 +579,7 @@ export class ProductionService {
   private async moveOrEscalate(tx: Tx, jobId: bigint, reason: AssignmentReason, actor: Actor): Promise<void> {
     const job = await tx.productionJob.findUniqueOrThrow({ where: { id: jobId } });
     const order = await this.loadOrder(tx, job.orderId);
-    const minFactories = (await this.settings.at('partners.auto_selection_min_factories', { tx }))
-      .value;
+    const minFactories = (await this.settings.at('partners.auto_selection_min_factories', { tx })).value;
     const serving = await this.servingFactories(tx, order.productTypeId);
     const tried = (await tx.jobAssignment.findMany({ where: { job: { orderId: order.id } } })).flatMap(
       (a) => [a.fromFactoryId, a.toFactoryId],

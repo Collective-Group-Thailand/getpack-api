@@ -851,6 +851,35 @@ export class PartnerFactoryOperationsController extends FactoryReads {
     return this.weeks(actor, factoryId, query);
   }
 
+  @Put('capacity-overrides')
+  @Can('factory_capacity.manage')
+  @factoryParam
+  @ApiEndpoint({
+    id: 'partner.factories.setCapacityOverride',
+    summary: 'Override my factory’s capacity for one week',
+    description:
+      'Maintenance, holidays or extra shifts (D-101); `weekStart` is a Monday (Bangkok). Lead-time promises and ' +
+      'production releases read it.',
+    implements: ['D-101'],
+  })
+  @ApiBody({
+    type: SetCapacityOverrideDto,
+    examples: {
+      default: {
+        value: { productTypeId: CAPABILITY_IDS.productType, weekStart: '2026-10-12', capacity: 6000, reason: 'ปิดซ่อมเครื่องจักร' },
+      },
+    },
+  })
+  @ApiSuccess(200, { description: 'The week', type: [CapacityWeekDto], example: [{ ...WEEK, weekStart: '2026-10-12', source: 'override' }] })
+  @ApiStandardErrors(...WRITE)
+  async setCapacityOverride(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: SetCapacityOverrideDto,
+  ) {
+    return (await this.capacity.setOverride(staffOrPartner(actor), factoryId, body)).map(weekDto);
+  }
+
   @Get('agreements')
   @Can('factory_profile.read')
   @factoryParam

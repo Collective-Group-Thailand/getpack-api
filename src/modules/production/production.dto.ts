@@ -1,6 +1,25 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsIn,
+  IsInt,
+  IsISO8601,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 
 /** Production jobs and milestones (D-073…D-076, D-012, D-101, D-142). */
 
@@ -417,5 +436,568 @@ export const ADMIN_JOB_EXAMPLE: AdminJobDto = {
       note: null,
       decidedAt: '2026-09-27T10:00:00+07:00',
     },
+  ],
+};
+
+// --- milestones, QC, issues (B4.2 slice 3) ----------------------------------------------------------
+
+export class UpdateMilestoneDto {
+  @ApiProperty({ enum: ['start', 'complete'], enumName: 'MilestoneAction', example: 'complete' })
+  @IsIn(['start', 'complete'])
+  action!: 'start' | 'complete';
+
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 0,
+    example: 1050,
+    description: 'Pieces that entered the step',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityIn?: number;
+
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 0,
+    example: 1020,
+    description: 'Good pieces out (required to complete a step that tracks quantities)',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityOut?: number;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 0, example: 30 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityScrap?: number;
+
+  @ApiPropertyOptional({ example: 'พิมพ์เสร็จ สีตรงตามพรูฟ', maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  note?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    example: [JOB_IDS.file],
+    description: 'Photos uploaded through `partner.files`',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('all', { each: true })
+  photoFileIds?: string[];
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Let the customer see these photos (customer-visible steps only)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  shareWithCustomer?: boolean;
+
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000f1101',
+    description: 'The device’s id of this update (replays change nothing)',
+  })
+  @IsUUID()
+  clientRef!: string;
+
+  @ApiPropertyOptional({
+    format: 'date-time',
+    example: '2026-10-01T15:04:00+07:00',
+    description: 'When the device recorded it',
+  })
+  @IsOptional()
+  @IsISO8601()
+  clientReportedAt?: string;
+}
+
+export class MilestoneUpdateResultDto {
+  @ApiProperty({ example: true, description: 'false when the server’s state won (replay or stale update)' })
+  applied!: boolean;
+
+  @ApiProperty({
+    enum: ['duplicate', 'already_started', 'already_completed', 'skipped'],
+    enumName: 'MilestoneUpdateOutcome',
+    nullable: true,
+    example: null,
+  })
+  reason!: string | null;
+
+  @ApiProperty({ type: PartnerJobDto })
+  job!: PartnerJobDto;
+}
+
+export class QcDefectDto {
+  @ApiProperty({ example: 'color_shift', maxLength: 64 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
+  code!: string;
+
+  @ApiProperty({ enum: ['critical', 'major', 'minor'], enumName: 'DefectSeverity', example: 'minor' })
+  @IsIn(['critical', 'major', 'minor'])
+  severity!: 'critical' | 'major' | 'minor';
+
+  @ApiProperty({ type: 'integer', minimum: 0, example: 3 })
+  @IsInt()
+  @Min(0)
+  count!: number;
+
+  @ApiPropertyOptional({ example: 'สีเพี้ยนเล็กน้อย', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
+}
+
+export class RecordQcDto {
+  @ApiProperty({ example: 'folding-v1', maxLength: 64, description: 'Which checklist the factory used' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
+  checklistVersion!: string;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    example: { colour: 'ok', dimensions: 'ok', gluing: 'ok' },
+  })
+  @IsObject()
+  checklist!: Record<string, unknown>;
+
+  @ApiProperty({ enum: ['pass', 'fail', 'conditional'], enumName: 'QcResult', example: 'pass' })
+  @IsIn(['pass', 'fail', 'conditional'])
+  result!: 'pass' | 'fail' | 'conditional';
+
+  @ApiPropertyOptional({ type: [QcDefectDto] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => QcDefectDto)
+  defects?: QcDefectDto[];
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 0, example: 80 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityChecked?: number;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 0, example: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantityDefective?: number;
+
+  @ApiPropertyOptional({ example: 'ผ่าน', maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  note?: string;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    example: [JOB_IDS.file],
+    description: 'At least one photo (D-076)',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(20)
+  @IsUUID('all', { each: true })
+  photoFileIds!: string[];
+}
+
+export class QcCheckDto {
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.milestone })
+  id!: string;
+
+  @ApiProperty({ example: 'folding-v1' })
+  checklistVersion!: string;
+
+  @ApiProperty({ type: 'object', additionalProperties: true, example: { colour: 'ok' } })
+  checklist!: Record<string, unknown>;
+
+  @ApiProperty({ enum: ['pass', 'fail', 'conditional'], enumName: 'QcResult', example: 'pass' })
+  result!: string;
+
+  @ApiProperty({ example: true, description: 'The job’s first QC and it passed (scorecard, D-155)' })
+  isFirstPass!: boolean;
+
+  @ApiProperty({ type: [QcDefectDto] })
+  defects!: QcDefectDto[];
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 80 })
+  quantityChecked!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 1 })
+  quantityDefective!: number | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  note!: string | null;
+
+  @ApiProperty({ example: '2026-10-05T10:00:00+07:00' })
+  performedAt!: string;
+
+  @ApiProperty({ type: [String], format: 'uuid', example: [JOB_IDS.file] })
+  photoFileIds!: string[];
+}
+
+export class RaiseIssueDto {
+  @ApiProperty({
+    example: 'material_shortage',
+    maxLength: 64,
+    description: 'Short code, e.g. material_shortage, machine_down, artwork_question',
+  })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
+  kind!: string;
+
+  @ApiProperty({ example: 'กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน', minLength: 3, maxLength: 2000 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(2000)
+  description!: string;
+
+  @ApiPropertyOptional({ type: [String], format: 'uuid', example: [] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  photoFileIds?: string[];
+}
+
+export class JobIssueDto {
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.milestone })
+  id!: string;
+
+  @ApiProperty({ example: 'material_shortage' })
+  kind!: string;
+
+  @ApiProperty({ example: 'กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน' })
+  description!: string;
+
+  @ApiProperty({ enum: ['open', 'resolved'], enumName: 'IssueStatus', example: 'open' })
+  status!: string;
+
+  @ApiProperty({ example: '2026-10-02T10:00:00+07:00' })
+  createdAt!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  resolvedAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  resolutionNote!: string | null;
+}
+
+export class ResolveIssueDto {
+  @ApiProperty({ example: 'เลื่อนวันส่งกับลูกค้าแล้ว', minLength: 3, maxLength: 1500 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(1500)
+  note!: string;
+}
+
+export class HoldJobDto {
+  @ApiProperty({ example: 'ลูกค้าขอพักงานเพื่อแก้ไฟล์', minLength: 3, maxLength: 700 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(700)
+  reason!: string;
+}
+
+// --- milestone routes (D-075) ------------------------------------------------------------------------
+
+export class RouteStepInputDto {
+  @ApiProperty({ example: 'printing', pattern: '^[a-z][a-z0-9_]*$' })
+  @IsString()
+  @Matches(/^[a-z][a-z0-9_]*$/)
+  @MaxLength(64)
+  key!: string;
+
+  @ApiProperty({ example: 'พิมพ์' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Printing' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  nameEn!: string;
+
+  @ApiPropertyOptional({ example: 'กำลังพิมพ์', description: 'Set to show the step to customers' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  customerLabelTh?: string;
+
+  @ApiPropertyOptional({ example: 'Printing' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  customerLabelEn?: string;
+
+  @ApiPropertyOptional({ enum: EVIDENCE, enumName: 'EvidenceRequirement', example: 'photo' })
+  @IsOptional()
+  @IsIn(EVIDENCE)
+  evidence?: (typeof EVIDENCE)[number];
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  tracksQuantity?: boolean;
+
+  @ApiPropertyOptional({
+    example: '20',
+    description: 'Share of the planned time (percent); omit to spread evenly',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{1,3}(\.\d{1,4})?$/)
+  plannedSharePct?: string;
+}
+
+export class CreateMilestoneRouteDto {
+  @ApiProperty({ example: 'folding_carton' })
+  @IsString()
+  @Matches(/^[a-z][a-z0-9_]*$/)
+  productTypeCode!: string;
+
+  @ApiPropertyOptional({ format: 'uuid', example: JOB_IDS.proof })
+  @IsOptional()
+  @IsUUID()
+  printTypeId?: string;
+
+  @ApiProperty({ example: 'digital', pattern: '^[a-z][a-z0-9_]*$' })
+  @IsString()
+  @Matches(/^[a-z][a-z0-9_]*$/)
+  @MaxLength(32)
+  variant!: string;
+
+  @ApiProperty({ example: 'กล่องพิมพ์ดิจิทัล' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  name!: string;
+}
+
+export class AddRouteVersionDto {
+  @ApiProperty({ format: 'date-time', example: '2026-10-01T00:00:00+07:00' })
+  @IsISO8601()
+  effectiveFrom!: string;
+
+  @ApiProperty({ example: 'เพิ่มขั้นตอนเคลือบ UV', minLength: 3, maxLength: 1000 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(1000)
+  reason!: string;
+
+  @ApiProperty({ type: [RouteStepInputDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(30)
+  @ValidateNested({ each: true })
+  @Type(() => RouteStepInputDto)
+  steps!: RouteStepInputDto[];
+}
+
+export class RouteStepDto {
+  @ApiProperty({ type: 'integer', example: 4 })
+  seq!: number;
+
+  @ApiProperty({ example: 'printing' })
+  key!: string;
+
+  @ApiProperty({ example: 'พิมพ์' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Printing' })
+  nameEn!: string;
+
+  @ApiProperty({ example: true })
+  customerVisible!: boolean;
+
+  @ApiProperty({ type: String, nullable: true, example: 'กำลังพิมพ์' })
+  customerLabelTh!: string | null;
+
+  @ApiProperty({ enum: EVIDENCE, enumName: 'EvidenceRequirement', example: 'photo' })
+  evidence!: string;
+
+  @ApiProperty({ example: true })
+  tracksQuantity!: boolean;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  plannedSharePct!: string | null;
+}
+
+export class RouteVersionDto {
+  @ApiProperty({ type: 'integer', example: 1 })
+  versionNo!: number;
+
+  @ApiProperty({
+    enum: ['draft', 'proposed', 'pending_acceptance', 'approved', 'rejected', 'withdrawn'],
+    enumName: 'ConfigVersionStatus',
+    example: 'approved',
+  })
+  status!: string;
+
+  @ApiProperty({ example: '2026-01-01T00:00:00+07:00' })
+  effectiveFrom!: string;
+
+  @ApiProperty({ example: 'B4.2 default route' })
+  reason!: string;
+
+  @ApiProperty({ type: [RouteStepDto] })
+  steps!: RouteStepDto[];
+}
+
+export class MilestoneRouteDto {
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.job })
+  id!: string;
+
+  @ApiProperty({ example: 'folding_carton' })
+  productTypeCode!: string;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
+  printTypeId!: string | null;
+
+  @ApiProperty({ example: 'standard' })
+  variant!: string;
+
+  @ApiProperty({ example: 'กล่องกระดาษแข็ง (standard)' })
+  name!: string;
+
+  @ApiProperty({ type: [RouteVersionDto], description: 'Newest first' })
+  versions!: RouteVersionDto[];
+}
+
+// --- factory users (owner) ------------------------------------------------------------------------------
+
+export const FACTORY_STAFF_ROLES = [
+  'factory_planner',
+  'factory_operator',
+  'factory_qc',
+  'factory_shipping',
+  'factory_accountant',
+] as const;
+
+export class CreateFactoryUserDto {
+  @ApiProperty({ example: 'planner@factory.example.invalid' })
+  @IsEmail()
+  @MaxLength(254)
+  email!: string;
+
+  @ApiProperty({ example: 'ผู้วางแผน ทดสอบ' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  displayName!: string;
+
+  @ApiProperty({
+    example: 'correct-horse-battery',
+    minLength: 12,
+    description: 'Handed over out of band; changed at first sign-in',
+  })
+  @IsString()
+  @MinLength(12)
+  @MaxLength(200)
+  initialPassword!: string;
+
+  @ApiProperty({
+    enum: FACTORY_STAFF_ROLES,
+    enumName: 'FactoryStaffRole',
+    isArray: true,
+    example: ['factory_planner'],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsIn(FACTORY_STAFF_ROLES, { each: true })
+  roles!: (typeof FACTORY_STAFF_ROLES)[number][];
+}
+
+export class FactoryUserDto {
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.factory })
+  id!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'planner@factory.example.invalid' })
+  email!: string | null;
+
+  @ApiProperty({ example: 'ผู้วางแผน ทดสอบ' })
+  displayName!: string;
+
+  @ApiProperty({ type: [String], example: ['factory_planner'] })
+  roles!: string[];
+}
+
+export const QC_EXAMPLE: QcCheckDto = {
+  id: JOB_IDS.milestone,
+  checklistVersion: 'folding-v1',
+  checklist: { colour: 'ok' },
+  result: 'pass',
+  isFirstPass: true,
+  defects: [],
+  quantityChecked: 80,
+  quantityDefective: 0,
+  note: null,
+  performedAt: '2026-10-05T10:00:00+07:00',
+  photoFileIds: [JOB_IDS.file],
+};
+
+export const ISSUE_EXAMPLE: JobIssueDto = {
+  id: JOB_IDS.milestone,
+  kind: 'material_shortage',
+  description: 'กระดาษอาร์ตการ์ดขาดสต็อก รอของ 2 วัน',
+  status: 'open',
+  createdAt: '2026-10-02T10:00:00+07:00',
+  resolvedAt: null,
+  resolutionNote: null,
+};
+
+export const ROUTE_EXAMPLE: MilestoneRouteDto = {
+  id: JOB_IDS.job,
+  productTypeCode: 'folding_carton',
+  printTypeId: null,
+  variant: 'standard',
+  name: 'กล่องกระดาษแข็ง (standard)',
+  versions: [
+    {
+      versionNo: 1,
+      status: 'approved',
+      effectiveFrom: '2026-01-01T00:00:00+07:00',
+      reason: 'B4.2 default route',
+      steps: [
+        {
+          seq: 1,
+          key: 'job_received',
+          nameTh: 'รับงาน',
+          nameEn: 'Job received',
+          customerVisible: true,
+          customerLabelTh: 'โรงงานรับงานแล้ว',
+          evidence: 'none',
+          tracksQuantity: false,
+          plannedSharePct: null,
+        },
+      ],
+    },
+  ],
+};
+
+export const ADD_ROUTE_VERSION_EXAMPLE = {
+  effectiveFrom: '2026-10-01T00:00:00+07:00',
+  reason: 'เพิ่มขั้นตอนเคลือบ UV',
+  steps: [
+    { key: 'job_received', nameTh: 'รับงาน', nameEn: 'Job received', customerLabelTh: 'โรงงานรับงานแล้ว' },
+    { key: 'printing', nameTh: 'พิมพ์', nameEn: 'Printing', evidence: 'photo', tracksQuantity: true },
+    { key: 'ready_to_ship', nameTh: 'พร้อมส่ง', nameEn: 'Ready to ship', customerLabelTh: 'พร้อมจัดส่ง' },
   ],
 };

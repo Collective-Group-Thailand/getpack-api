@@ -1,3 +1,4 @@
+import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { CapacityService, mondayOf } from '@modules/partners/capacity/capacity.service';
 import { ConfigurationService } from '@modules/partners/configuration/configuration.service';
@@ -217,7 +218,7 @@ describe('partner configuration (e2e, B2.2)', () => {
         reason: 'Agreed',
       })
       .expect(201);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = bangkokDate(new Date());
     const thisWeek = mondayOf(today);
     const nextWeek = new Date(new Date(thisWeek).getTime() + 7 * 86_400_000).toISOString().slice(0, 10);
     await pm()
@@ -234,14 +235,18 @@ describe('partner configuration (e2e, B2.2)', () => {
 
     const factory = await prisma.factory.findUniqueOrThrow({ where: { publicId: factoryId } });
     const type = await prisma.productType.findUniqueOrThrow({ where: { publicId: productTypeId } });
-    await prisma.capacityBooking.create({
-      data: {
-        factoryId: factory.id,
-        productTypeId: type.id,
-        weekStart: new Date(nextWeek),
-        productionJobId: BigInt(run),
-        load: 900,
-      },
+    // A booking normally comes from an accepted production job (B4.2); this fixture has no job, so the
+    // row is written with the job FK switched off for the statement (test only).
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(`SET LOCAL session_replication_role = replica`);
+      await tx.$executeRawUnsafe(
+        `INSERT INTO capacity_bookings (factory_id, product_type_id, week_start, production_job_id, load)
+         VALUES ($1, $2, $3::date, $4, 900)`,
+        factory.id,
+        type.id,
+        nextWeek,
+        BigInt(run),
+      );
     });
     const weeks = await pm()
       .get(url(`/capacity?productTypeId=${productTypeId}&weeks=3`))

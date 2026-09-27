@@ -887,6 +887,24 @@
     "below_margin_floor": {
       "title": "Below the margin floor",
       "detail": "Moving the job there leaves less than {floor}% margin"
+    },
+    "milestone_out_of_order": {
+      "title": "Out of order",
+      "detail": "Earlier milestones must be started first"
+    },
+    "evidence_missing": {
+      "title": "Evidence missing",
+      "detail": "This step needs its evidence ({evidence})"
+    },
+    "quantity_invalid": {
+      "title": "Quantity invalid",
+      "detail": "Good plus scrap exceeds what is available ({available})"
+    }
+  },
+  "factory_users": {
+    "role_not_allowed": {
+      "title": "Role not allowed",
+      "detail": "Owners grant factory staff roles only (not owner)"
     }
   }
 }
