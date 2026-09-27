@@ -10,6 +10,7 @@ import { CustomersModule } from '@modules/customers/customers.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PartnersModule } from '@modules/partners/partners.module';
+import { PaymentSchedulesModule } from '@modules/payment-schedules/payment-schedules.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
@@ -65,6 +66,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     CartsModule,
     CheckoutModule,
     OrdersModule,
+    PaymentSchedulesModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

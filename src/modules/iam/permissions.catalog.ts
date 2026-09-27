@@ -325,6 +325,19 @@ export const PERMISSIONS = [
     decisionRefs: ['D-051'],
   },
 
+  {
+    key: 'payment_schedules.override',
+    audience: 'staff',
+    description: 'Choose or replace the payment schedule of an order group, with a reason',
+    decisionRefs: ['D-020'],
+  },
+  {
+    key: 'payment_schedule_templates.manage',
+    audience: 'staff',
+    description: 'Add effective-dated versions of payment schedule templates',
+    decisionRefs: ['D-020', 'D-063'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

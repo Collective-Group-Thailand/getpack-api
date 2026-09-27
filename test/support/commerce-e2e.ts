@@ -24,7 +24,7 @@ export interface CommerceApp {
 
 export async function bootCommerceApp(): Promise<CommerceApp> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app = moduleRef.createNestApplication({ logger: false });
+  const app = moduleRef.createNestApplication({ logger: process.env['E2E_LOG'] ? ['error'] : false });
   configureApp(app);
   await app.listen(0, '127.0.0.1');
   const prisma = app.get(PrismaService);

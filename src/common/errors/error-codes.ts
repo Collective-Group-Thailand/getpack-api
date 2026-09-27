@@ -139,6 +139,8 @@ export const ERROR_CODES = {
   'order.cancel_not_allowed': HttpStatus.CONFLICT,
   'order.reprice_has_discounts': HttpStatus.CONFLICT,
   'order.reprice_below_paid': HttpStatus.CONFLICT,
+  'payments.no_schedule_template': HttpStatus.SERVICE_UNAVAILABLE,
+  'payments.schedule_has_payments': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

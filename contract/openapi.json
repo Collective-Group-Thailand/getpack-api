@@ -1101,6 +1101,28 @@
           "type": "https://errors.packio/partners.wrong_pricing_mode"
         }
       },
+      "problem.payments.no_schedule_template": {
+        "summary": "payments.no_schedule_template",
+        "value": {
+          "code": "payments.no_schedule_template",
+          "detail": "ยังไม่มีรูปแบบการชำระเงินที่ใช้กับคำสั่งซื้อนี้ได้ กรุณาติดต่อฝ่ายบริการลูกค้า",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 503,
+          "title": "ไม่พบรูปแบบการชำระเงิน",
+          "type": "https://errors.packio/payments.no_schedule_template"
+        }
+      },
+      "problem.payments.schedule_has_payments": {
+        "summary": "payments.schedule_has_payments",
+        "value": {
+          "code": "payments.schedule_has_payments",
+          "detail": "มีการชำระเงินแล้ว จึงเปลี่ยนรูปแบบการชำระเงินไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เปลี่ยนรูปแบบการชำระไม่ได้",
+          "type": "https://errors.packio/payments.schedule_has_payments"
+        }
+      },
       "problem.pricing.not_instant": {
         "summary": "pricing.not_instant",
         "value": {
@@ -2050,6 +2072,14 @@
             "pattern": "^\\d{1,12}\\.\\d{2}$",
             "type": "string"
           },
+          "paymentSchedule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleOverrideDto"
+              }
+            ],
+            "description": "Another schedule than the one the rules pick (`payment_schedules.override`, D-020)"
+          },
           "poNumber": {
             "description": "Customer PO number (D-125)",
             "example": "PO-0001",
@@ -2553,6 +2583,72 @@
           "marginAmount",
           "marginPct",
           "belowMarginFloor"
+        ],
+        "type": "object"
+      },
+      "AdminPaymentScheduleDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "instalments": {
+            "items": {
+              "$ref": "#/components/schemas/InstalmentDto"
+            },
+            "type": "array"
+          },
+          "isOverride": {
+            "example": false,
+            "type": "boolean"
+          },
+          "openAmount": {
+            "description": "Cash still to pay on open instalments",
+            "example": "7091.40",
+            "type": "string"
+          },
+          "overrideReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productionGateOpen": {
+            "description": "The instalments required before production are paid (D-073)",
+            "example": true,
+            "type": "boolean"
+          },
+          "shippingGateOpen": {
+            "description": "The instalments required before shipping are paid",
+            "example": false,
+            "type": "boolean"
+          },
+          "templateKey": {
+            "example": "deposit_50_before_shipping_50",
+            "type": "string"
+          },
+          "templateNameEn": {
+            "example": "50 % deposit, 50 % before shipping",
+            "type": "string"
+          },
+          "templateNameTh": {
+            "example": "มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "templateKey",
+          "templateNameEn",
+          "templateNameTh",
+          "isOverride",
+          "productionGateOpen",
+          "shippingGateOpen",
+          "openAmount",
+          "instalments",
+          "overrideReason"
         ],
         "type": "object"
       },
@@ -5654,6 +5750,17 @@
             },
             "type": "array"
           },
+          "paymentSchedule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreviewScheduleDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The payment schedule the order will get (D-020)"
+          },
           "totals": {
             "$ref": "#/components/schemas/MoneyTotalsDto"
           },
@@ -5664,6 +5771,7 @@
           }
         },
         "required": [
+          "paymentSchedule",
           "totals",
           "orders",
           "withholding",
@@ -8885,6 +8993,61 @@
         ],
         "type": "object"
       },
+      "CreateTemplateVersionDto": {
+        "properties": {
+          "effectiveFrom": {
+            "description": "Never in the past",
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "instalments": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateInstalmentDto"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "type": "array"
+          },
+          "priority": {
+            "description": "Lower is tried first",
+            "example": 100,
+            "maximum": 10000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "reason": {
+            "example": "สามงวด 30/40/30 สำหรับงานใหญ่",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "requiresPermissionToSelect": {
+            "description": "Selected only by CS with `payment_schedules.override`",
+            "example": false,
+            "type": "boolean"
+          },
+          "selectionRule": {
+            "additionalProperties": true,
+            "description": "orderValue.gte / lt (amount or {setting}), customerTypes, productTypeCodes, creditApproved",
+            "example": {
+              "orderValue": {
+                "gte": {
+                  "setting": "payments.schedule_split_threshold"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "effectiveFrom",
+          "selectionRule",
+          "priority",
+          "instalments",
+          "reason"
+        ],
+        "type": "object"
+      },
       "CreateUserDto": {
         "properties": {
           "displayName": {
@@ -10007,6 +10170,16 @@
           "lines"
         ],
         "type": "object"
+      },
+      "DueTrigger": {
+        "enum": [
+          "at_checkout",
+          "before_production",
+          "before_shipping",
+          "on_delivery",
+          "days_after_delivery"
+        ],
+        "type": "string"
       },
       "FactoryAccessDto": {
         "properties": {
@@ -13065,6 +13238,160 @@
         ],
         "type": "object"
       },
+      "InstalmentAllocationDto": {
+        "properties": {
+          "cashAmount": {
+            "example": "7091.40",
+            "type": "string"
+          },
+          "grossAmount": {
+            "example": "7091.40",
+            "type": "string"
+          },
+          "orderCode": {
+            "example": "OR-2610-00042",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "orderCode",
+          "grossAmount",
+          "cashAmount"
+        ],
+        "type": "object"
+      },
+      "InstalmentDto": {
+        "properties": {
+          "allocations": {
+            "description": "Staff only: share of each order (ADR-0008)",
+            "items": {
+              "$ref": "#/components/schemas/InstalmentAllocationDto"
+            },
+            "type": "array"
+          },
+          "cashAmount": {
+            "description": "What the customer transfers",
+            "example": "7091.40",
+            "type": "string"
+          },
+          "dueAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueTrigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DueTrigger"
+              }
+            ],
+            "example": "at_checkout"
+          },
+          "grossAmount": {
+            "description": "Incl. VAT",
+            "example": "7091.40",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000b0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "50 % deposit",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "มัดจำ 50%",
+            "type": "string"
+          },
+          "openAmount": {
+            "description": "cash − paid",
+            "example": "7091.40",
+            "type": "string"
+          },
+          "paidAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "paidAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pct": {
+            "example": "50.0000",
+            "type": "string"
+          },
+          "requiredBefore": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequiredBefore"
+              }
+            ],
+            "example": "production"
+          },
+          "seq": {
+            "example": 1,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstalmentStatus"
+              }
+            ],
+            "example": "due"
+          },
+          "whtAmount": {
+            "description": "Expected customer withholding (D-174)",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "labelTh",
+          "labelEn",
+          "pct",
+          "dueTrigger",
+          "requiredBefore",
+          "dueAt",
+          "status",
+          "grossAmount",
+          "whtAmount",
+          "cashAmount",
+          "paidAmount",
+          "openAmount",
+          "paidAt"
+        ],
+        "type": "object"
+      },
+      "InstalmentStatus": {
+        "enum": [
+          "pending",
+          "due",
+          "partially_paid",
+          "paid",
+          "overdue",
+          "cancelled",
+          "refunded"
+        ],
+        "type": "string"
+      },
       "JobStatus": {
         "enum": [
           "queued",
@@ -15110,6 +15437,64 @@
         ],
         "type": "object"
       },
+      "PaymentScheduleDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "instalments": {
+            "items": {
+              "$ref": "#/components/schemas/InstalmentDto"
+            },
+            "type": "array"
+          },
+          "isOverride": {
+            "example": false,
+            "type": "boolean"
+          },
+          "openAmount": {
+            "description": "Cash still to pay on open instalments",
+            "example": "7091.40",
+            "type": "string"
+          },
+          "productionGateOpen": {
+            "description": "The instalments required before production are paid (D-073)",
+            "example": true,
+            "type": "boolean"
+          },
+          "shippingGateOpen": {
+            "description": "The instalments required before shipping are paid",
+            "example": false,
+            "type": "boolean"
+          },
+          "templateKey": {
+            "example": "deposit_50_before_shipping_50",
+            "type": "string"
+          },
+          "templateNameEn": {
+            "example": "50 % deposit, 50 % before shipping",
+            "type": "string"
+          },
+          "templateNameTh": {
+            "example": "มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "templateKey",
+          "templateNameEn",
+          "templateNameTh",
+          "isOverride",
+          "productionGateOpen",
+          "shippingGateOpen",
+          "openAmount",
+          "instalments"
+        ],
+        "type": "object"
+      },
       "PayoutPolicyDto": {
         "properties": {
           "current": {
@@ -15353,6 +15738,61 @@
         ],
         "type": "object"
       },
+      "PreviewInstalmentDto": {
+        "properties": {
+          "cashAmount": {
+            "example": "7091.40",
+            "type": "string"
+          },
+          "dueTrigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DueTrigger"
+              }
+            ],
+            "example": "at_checkout"
+          },
+          "grossAmount": {
+            "example": "7091.40",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "50 % deposit",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "มัดจำ 50%",
+            "type": "string"
+          },
+          "pct": {
+            "example": "50.0000",
+            "type": "string"
+          },
+          "requiredBefore": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequiredBefore"
+              }
+            ],
+            "example": "production"
+          },
+          "seq": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "labelEn",
+          "labelTh",
+          "pct",
+          "dueTrigger",
+          "requiredBefore",
+          "grossAmount",
+          "cashAmount"
+        ],
+        "type": "object"
+      },
       "PreviewOrderDto": {
         "properties": {
           "cartItemId": {
@@ -15395,6 +15835,25 @@
           "totals",
           "lines",
           "destinations"
+        ],
+        "type": "object"
+      },
+      "PreviewScheduleDto": {
+        "properties": {
+          "instalments": {
+            "items": {
+              "$ref": "#/components/schemas/PreviewInstalmentDto"
+            },
+            "type": "array"
+          },
+          "templateKey": {
+            "example": "deposit_50_before_shipping_50",
+            "type": "string"
+          }
+        },
+        "required": [
+          "templateKey",
+          "instalments"
         ],
         "type": "object"
       },
@@ -18219,6 +18678,14 @@
         ],
         "type": "object"
       },
+      "RequiredBefore": {
+        "enum": [
+          "none",
+          "production",
+          "shipping"
+        ],
+        "type": "string"
+      },
       "RespondConsultationDto": {
         "properties": {
           "lines": {
@@ -19202,6 +19669,26 @@
           "toleranceOveragePct",
           "shippingPending",
           "shippingPendingReason"
+        ],
+        "type": "object"
+      },
+      "ScheduleOverrideDto": {
+        "properties": {
+          "reason": {
+            "example": "ลูกค้าขอชำระเต็มจำนวน",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "templateKey": {
+            "description": "A payment schedule template in force",
+            "example": "full_upfront",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "templateKey",
+          "reason"
         ],
         "type": "object"
       },
@@ -23648,6 +24135,126 @@
           "drawing"
         ],
         "type": "string"
+      },
+      "TemplateDto": {
+        "properties": {
+          "instalments": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateInstalmentDto"
+            },
+            "type": "array"
+          },
+          "key": {
+            "example": "deposit_50_before_shipping_50",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "50 % deposit, 50 % before shipping",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง",
+            "type": "string"
+          },
+          "priority": {
+            "example": 100,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "requiresPermissionToSelect": {
+            "example": false,
+            "type": "boolean"
+          },
+          "selectionRule": {
+            "additionalProperties": true,
+            "example": {
+              "orderValue": {
+                "gte": {
+                  "setting": "payments.schedule_split_threshold"
+                }
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "versionNo": {
+            "description": "Version in force; null when none",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "nameTh",
+          "nameEn",
+          "versionNo",
+          "priority",
+          "selectionRule",
+          "requiresPermissionToSelect",
+          "instalments"
+        ],
+        "type": "object"
+      },
+      "TemplateInstalmentDto": {
+        "properties": {
+          "dueOffsetDays": {
+            "description": "Days after delivery",
+            "example": null,
+            "maximum": 365,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "dueTrigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DueTrigger"
+              }
+            ],
+            "example": "at_checkout"
+          },
+          "labelEn": {
+            "example": "50 % deposit",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "มัดจำ 50%",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "pct": {
+            "description": "Percent of the group total; instalments add up to 100",
+            "example": "50",
+            "pattern": "^\\d{1,3}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "requiredBefore": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequiredBefore"
+              }
+            ],
+            "example": "production"
+          }
+        },
+        "required": [
+          "labelTh",
+          "labelEn",
+          "pct",
+          "dueTrigger",
+          "requiredBefore"
+        ],
+        "type": "object"
       },
       "TemplateVersionDto": {
         "properties": {
@@ -78154,6 +78761,9 @@
                   "checkout.wht_rate_missing": {
                     "$ref": "#/components/examples/problem.checkout.wht_rate_missing"
                   },
+                  "payments.no_schedule_template": {
+                    "$ref": "#/components/examples/problem.payments.no_schedule_template"
+                  },
                   "pricing.vat_rate_missing": {
                     "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
                   }
@@ -78163,7 +78773,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.wht_rate_missing`, `pricing.vat_rate_missing`",
+            "description": "Problem: `checkout.wht_rate_missing`, `payments.no_schedule_template`, `pricing.vat_rate_missing`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -78271,6 +78881,21 @@
                       }
                     }
                   ],
+                  "paymentSchedule": {
+                    "instalments": [
+                      {
+                        "cashAmount": "14182.80",
+                        "dueTrigger": "at_checkout",
+                        "grossAmount": "14182.80",
+                        "labelEn": "Full payment",
+                        "labelTh": "ชำระเต็มจำนวน",
+                        "pct": "100.0000",
+                        "requiredBefore": "production",
+                        "seq": 1
+                      }
+                    ],
+                    "templateKey": "full_upfront"
+                  },
                   "totals": {
                     "cashAmount": "14182.80",
                     "currency": "THB",
@@ -78489,6 +79114,9 @@
                   "checkout.wht_rate_missing": {
                     "$ref": "#/components/examples/problem.checkout.wht_rate_missing"
                   },
+                  "payments.no_schedule_template": {
+                    "$ref": "#/components/examples/problem.payments.no_schedule_template"
+                  },
                   "pricing.vat_rate_missing": {
                     "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
                   }
@@ -78498,7 +79126,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.wht_rate_missing`, `pricing.vat_rate_missing`",
+            "description": "Problem: `checkout.wht_rate_missing`, `payments.no_schedule_template`, `pricing.vat_rate_missing`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -101990,6 +102618,604 @@
         ]
       }
     },
+    "/v1/admin/order-groups/{groupId}/payment-schedule": {
+      "get": {
+        "description": "Staff view with each instalment’s share per order (ADR-0008) and cancelled instalments.\n\nImplements: D-020, D-073.",
+        "operationId": "admin.paymentSchedules.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
+                  "instalments": [
+                    {
+                      "allocations": [
+                        {
+                          "cashAmount": "7091.40",
+                          "grossAmount": "7091.40",
+                          "orderCode": "OR-2610-00042",
+                          "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002"
+                        }
+                      ],
+                      "cashAmount": "7091.40",
+                      "dueAt": "2026-10-01T10:00:00+07:00",
+                      "dueTrigger": "at_checkout",
+                      "grossAmount": "7091.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0002",
+                      "labelEn": "50 % deposit",
+                      "labelTh": "มัดจำ 50%",
+                      "openAmount": "7091.40",
+                      "paidAmount": "0.00",
+                      "paidAt": null,
+                      "pct": "50.0000",
+                      "requiredBefore": "production",
+                      "seq": 1,
+                      "status": "due",
+                      "whtAmount": "0.00"
+                    },
+                    {
+                      "allocations": [
+                        {
+                          "cashAmount": "7091.40",
+                          "grossAmount": "7091.40",
+                          "orderCode": "OR-2610-00042",
+                          "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002"
+                        }
+                      ],
+                      "cashAmount": "7091.40",
+                      "dueAt": null,
+                      "dueTrigger": "before_shipping",
+                      "grossAmount": "7091.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0003",
+                      "labelEn": "Balance before shipping",
+                      "labelTh": "ส่วนที่เหลือก่อนจัดส่ง",
+                      "openAmount": "7091.40",
+                      "paidAmount": "0.00",
+                      "paidAt": null,
+                      "pct": "50.0000",
+                      "requiredBefore": "shipping",
+                      "seq": 2,
+                      "status": "pending",
+                      "whtAmount": "0.00"
+                    }
+                  ],
+                  "isOverride": false,
+                  "openAmount": "14182.80",
+                  "overrideReason": null,
+                  "productionGateOpen": false,
+                  "shippingGateOpen": false,
+                  "templateKey": "deposit_50_before_shipping_50",
+                  "templateNameEn": "50 % deposit, 50 % before shipping",
+                  "templateNameTh": "มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPaymentScheduleDto"
+                }
+              }
+            },
+            "description": "Schedule",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get the payment schedule of an order group",
+        "tags": [
+          "admin.paymentSchedules"
+        ],
+        "x-required-permissions": [
+          "orders.read"
+        ]
+      }
+    },
+    "/v1/admin/order-groups/{groupId}/payment-schedule/actions/override": {
+      "post": {
+        "description": "CS chooses another template in force with a reason (D-020 \"overridden with permission\"); only while nothing is paid. Open instalments are cancelled and the template’s instalments written. Guarded by `If-Match`.\n\nImplements: D-020, D-073.",
+        "operationId": "admin.paymentSchedules.override",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้าขอชำระเต็มจำนวน",
+                    "templateKey": "full_upfront"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleOverrideDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
+                  "instalments": [
+                    {
+                      "allocations": [
+                        {
+                          "cashAmount": "7091.40",
+                          "grossAmount": "7091.40",
+                          "orderCode": "OR-2610-00042",
+                          "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002"
+                        }
+                      ],
+                      "cashAmount": "7091.40",
+                      "dueAt": "2026-10-01T10:00:00+07:00",
+                      "dueTrigger": "at_checkout",
+                      "grossAmount": "7091.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0002",
+                      "labelEn": "50 % deposit",
+                      "labelTh": "มัดจำ 50%",
+                      "openAmount": "7091.40",
+                      "paidAmount": "0.00",
+                      "paidAt": null,
+                      "pct": "50.0000",
+                      "requiredBefore": "production",
+                      "seq": 1,
+                      "status": "due",
+                      "whtAmount": "0.00"
+                    },
+                    {
+                      "allocations": [
+                        {
+                          "cashAmount": "7091.40",
+                          "grossAmount": "7091.40",
+                          "orderCode": "OR-2610-00042",
+                          "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002"
+                        }
+                      ],
+                      "cashAmount": "7091.40",
+                      "dueAt": null,
+                      "dueTrigger": "before_shipping",
+                      "grossAmount": "7091.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0003",
+                      "labelEn": "Balance before shipping",
+                      "labelTh": "ส่วนที่เหลือก่อนจัดส่ง",
+                      "openAmount": "7091.40",
+                      "paidAmount": "0.00",
+                      "paidAt": null,
+                      "pct": "50.0000",
+                      "requiredBefore": "shipping",
+                      "seq": 2,
+                      "status": "pending",
+                      "whtAmount": "0.00"
+                    }
+                  ],
+                  "isOverride": false,
+                  "openAmount": "14182.80",
+                  "overrideReason": null,
+                  "productionGateOpen": false,
+                  "shippingGateOpen": false,
+                  "templateKey": "deposit_50_before_shipping_50",
+                  "templateNameEn": "50 % deposit, 50 % before shipping",
+                  "templateNameTh": "มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPaymentScheduleDto"
+                }
+              }
+            },
+            "description": "New schedule",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "payments.schedule_has_payments": {
+                    "$ref": "#/components/examples/problem.payments.schedule_has_payments"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `payments.schedule_has_payments`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replace the payment schedule of an unpaid group",
+        "tags": [
+          "admin.paymentSchedules"
+        ],
+        "x-required-permissions": [
+          "payment_schedules.override"
+        ]
+      }
+    },
     "/v1/admin/order-queues/{queue}": {
       "get": {
         "description": "`waiting_payment` (รอชำระ, oldest first), `artwork_review` (รอตรวจไฟล์: uploaded / in review), `waiting_production` (รอเริ่มผลิต: paid, not started), `due_soon` (ใกล้ครบกำหนดส่ง: promised ship date within `withinDays`, not shipped), `late` (ล่าช้า: promised ship date passed, not shipped).\n\nImplements: D-060, D-073.",
@@ -104343,6 +105569,477 @@
         ],
         "x-required-permissions": [
           "partners.read"
+        ]
+      }
+    },
+    "/v1/admin/payment-schedule-templates": {
+      "get": {
+        "description": "Each template with its version in force: selection rule, priority, instalments (D-020).\n\nImplements: D-020.",
+        "operationId": "admin.paymentSchedules.listTemplates",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "instalments": [
+                      {
+                        "dueOffsetDays": null,
+                        "dueTrigger": "at_checkout",
+                        "labelEn": "50 % deposit",
+                        "labelTh": "มัดจำ 50%",
+                        "pct": "50.0000",
+                        "requiredBefore": "production"
+                      },
+                      {
+                        "dueOffsetDays": null,
+                        "dueTrigger": "before_shipping",
+                        "labelEn": "Balance before shipping",
+                        "labelTh": "ส่วนที่เหลือก่อนจัดส่ง",
+                        "pct": "50.0000",
+                        "requiredBefore": "shipping"
+                      }
+                    ],
+                    "key": "deposit_50_before_shipping_50",
+                    "nameEn": "50 % deposit, 50 % before shipping",
+                    "nameTh": "มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง",
+                    "priority": 100,
+                    "requiresPermissionToSelect": false,
+                    "selectionRule": {
+                      "orderValue": {
+                        "gte": {
+                          "setting": "payments.schedule_split_threshold"
+                        }
+                      }
+                    },
+                    "versionNo": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Templates",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List payment schedule templates",
+        "tags": [
+          "admin.paymentSchedules"
+        ],
+        "x-required-permissions": [
+          "orders.read"
+        ]
+      }
+    },
+    "/v1/admin/payment-schedule-templates/{key}/versions": {
+      "post": {
+        "description": "Superadmin changes schedules as new effective-dated versions (D-063, ADR-0005): any number of instalments adding up to 100 %, each with a due trigger and what it gates. Never back-dated.\n\nImplements: D-020, D-063.",
+        "operationId": "admin.paymentSchedules.createTemplateVersion",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "effectiveFrom": "2026-11-01T00:00:00+07:00",
+                    "instalments": [
+                      {
+                        "dueOffsetDays": null,
+                        "dueTrigger": "at_checkout",
+                        "labelEn": "50 % deposit",
+                        "labelTh": "มัดจำ 50%",
+                        "pct": "50.0000",
+                        "requiredBefore": "production"
+                      },
+                      {
+                        "dueOffsetDays": null,
+                        "dueTrigger": "before_shipping",
+                        "labelEn": "Balance before shipping",
+                        "labelTh": "ส่วนที่เหลือก่อนจัดส่ง",
+                        "pct": "50.0000",
+                        "requiredBefore": "shipping"
+                      }
+                    ],
+                    "priority": 100,
+                    "reason": "ปรับข้อความงวด",
+                    "selectionRule": {
+                      "orderValue": {
+                        "gte": {
+                          "setting": "payments.schedule_split_threshold"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateVersionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "instalments": [
+                    {
+                      "dueOffsetDays": null,
+                      "dueTrigger": "at_checkout",
+                      "labelEn": "50 % deposit",
+                      "labelTh": "มัดจำ 50%",
+                      "pct": "50.0000",
+                      "requiredBefore": "production"
+                    },
+                    {
+                      "dueOffsetDays": null,
+                      "dueTrigger": "before_shipping",
+                      "labelEn": "Balance before shipping",
+                      "labelTh": "ส่วนที่เหลือก่อนจัดส่ง",
+                      "pct": "50.0000",
+                      "requiredBefore": "shipping"
+                    }
+                  ],
+                  "key": "deposit_50_before_shipping_50",
+                  "nameEn": "50 % deposit, 50 % before shipping",
+                  "nameTh": "มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง",
+                  "priority": 100,
+                  "requiresPermissionToSelect": false,
+                  "selectionRule": {
+                    "orderValue": {
+                      "gte": {
+                        "setting": "payments.schedule_split_threshold"
+                      }
+                    }
+                  },
+                  "versionNo": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateDto"
+                }
+              }
+            },
+            "description": "Template with its version in force",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Add a version of a payment schedule template",
+        "tags": [
+          "admin.paymentSchedules"
+        ],
+        "x-required-permissions": [
+          "payment_schedule_templates.manage"
         ]
       }
     },
@@ -146467,6 +148164,9 @@
                   "checkout.wht_rate_missing": {
                     "$ref": "#/components/examples/problem.checkout.wht_rate_missing"
                   },
+                  "payments.no_schedule_template": {
+                    "$ref": "#/components/examples/problem.payments.no_schedule_template"
+                  },
                   "pricing.vat_rate_missing": {
                     "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
                   }
@@ -146476,7 +148176,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.wht_rate_missing`, `pricing.vat_rate_missing`",
+            "description": "Problem: `checkout.wht_rate_missing`, `payments.no_schedule_template`, `pricing.vat_rate_missing`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -146573,6 +148273,21 @@
                       }
                     }
                   ],
+                  "paymentSchedule": {
+                    "instalments": [
+                      {
+                        "cashAmount": "14182.80",
+                        "dueTrigger": "at_checkout",
+                        "grossAmount": "14182.80",
+                        "labelEn": "Full payment",
+                        "labelTh": "ชำระเต็มจำนวน",
+                        "pct": "100.0000",
+                        "requiredBefore": "production",
+                        "seq": 1
+                      }
+                    ],
+                    "templateKey": "full_upfront"
+                  },
                   "totals": {
                     "cashAmount": "14182.80",
                     "currency": "THB",
@@ -146791,6 +148506,9 @@
                   "checkout.wht_rate_missing": {
                     "$ref": "#/components/examples/problem.checkout.wht_rate_missing"
                   },
+                  "payments.no_schedule_template": {
+                    "$ref": "#/components/examples/problem.payments.no_schedule_template"
+                  },
                   "pricing.vat_rate_missing": {
                     "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
                   }
@@ -146800,7 +148518,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.wht_rate_missing`, `pricing.vat_rate_missing`",
+            "description": "Problem: `checkout.wht_rate_missing`, `payments.no_schedule_template`, `pricing.vat_rate_missing`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -150576,6 +152294,230 @@
         "summary": "Cancel my unpaid order group",
         "tags": [
           "store.orders"
+        ]
+      }
+    },
+    "/v1/store/order-groups/{groupId}/payment-schedule": {
+      "get": {
+        "description": "Instalments with due dates, amounts (cash after the expected withholding) and whether the production and shipping gates are open (D-020, D-073).\n\nImplements: D-020, D-073.",
+        "operationId": "store.paymentSchedules.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
+                  "instalments": [
+                    {
+                      "cashAmount": "7091.40",
+                      "dueAt": "2026-10-01T10:00:00+07:00",
+                      "dueTrigger": "at_checkout",
+                      "grossAmount": "7091.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0002",
+                      "labelEn": "50 % deposit",
+                      "labelTh": "มัดจำ 50%",
+                      "openAmount": "7091.40",
+                      "paidAmount": "0.00",
+                      "paidAt": null,
+                      "pct": "50.0000",
+                      "requiredBefore": "production",
+                      "seq": 1,
+                      "status": "due",
+                      "whtAmount": "0.00"
+                    },
+                    {
+                      "cashAmount": "7091.40",
+                      "dueAt": null,
+                      "dueTrigger": "before_shipping",
+                      "grossAmount": "7091.40",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0003",
+                      "labelEn": "Balance before shipping",
+                      "labelTh": "ส่วนที่เหลือก่อนจัดส่ง",
+                      "openAmount": "7091.40",
+                      "paidAmount": "0.00",
+                      "paidAt": null,
+                      "pct": "50.0000",
+                      "requiredBefore": "shipping",
+                      "seq": 2,
+                      "status": "pending",
+                      "whtAmount": "0.00"
+                    }
+                  ],
+                  "isOverride": false,
+                  "openAmount": "14182.80",
+                  "productionGateOpen": false,
+                  "shippingGateOpen": false,
+                  "templateKey": "deposit_50_before_shipping_50",
+                  "templateNameEn": "50 % deposit, 50 % before shipping",
+                  "templateNameTh": "มัดจำ 50% ส่วนที่เหลือก่อนจัดส่ง"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentScheduleDto"
+                }
+              }
+            },
+            "description": "Schedule",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get the payment schedule of my order group",
+        "tags": [
+          "store.paymentSchedules"
         ]
       }
     },
@@ -158139,6 +160081,10 @@
       "name": "admin.partnerCoverage"
     },
     {
+      "description": "Payment schedules and their templates: views with allocations per order, CS override (D-020, ADR-0008).",
+      "name": "admin.paymentSchedules"
+    },
+    {
       "description": "Factory price lists: versions, lines (every read audited, D-044) and the supported price components (D-040).",
       "name": "admin.priceLists"
     },
@@ -158293,6 +160239,10 @@
     {
       "description": "My order groups and orders: status driven by payment, artwork, production and shipping (D-060, D-073).",
       "name": "store.orders"
+    },
+    {
+      "description": "The instalments of my order group and its production / shipping gates (D-020, D-073).",
+      "name": "store.paymentSchedules"
     },
     {
       "description": "Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).",

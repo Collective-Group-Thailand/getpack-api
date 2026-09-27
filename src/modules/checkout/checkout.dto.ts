@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 
 import { MONEY_EXAMPLE, MoneyTotalsDto, ORDER_IDS, OrderLineDto } from '../orders/orders.dto';
+import { ScheduleOverrideDto } from '../payment-schedules/payment-schedules.dto';
 
 /** Checkout (B3.1): preview and place the order group. */
 
@@ -86,6 +87,15 @@ export class CheckoutDto {
 }
 
 export class AdminCheckoutDto extends CheckoutDto {
+  @ApiPropertyOptional({
+    type: ScheduleOverrideDto,
+    description: 'Another schedule than the one the rules pick (`payment_schedules.override`, D-020)',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ScheduleOverrideDto)
+  paymentSchedule?: ScheduleOverrideDto;
+
   @TextField({ example: 'ลูกค้าขอส่งด่วน', max: 2000, optional: true, nullable: true, description: 'Internal only' })
   csRemarks?: string | null;
 }
@@ -129,7 +139,44 @@ export class CheckoutNoticeDto {
   params?: Record<string, unknown>;
 }
 
+export class PreviewInstalmentDto {
+  @ApiProperty({ type: 'integer', example: 1 })
+  seq!: number;
+
+  @ApiProperty({ example: '50 % deposit' })
+  labelEn!: string;
+
+  @ApiProperty({ example: 'มัดจำ 50%' })
+  labelTh!: string;
+
+  @ApiProperty({ example: '50.0000' })
+  pct!: string;
+
+  @ApiProperty({ enum: ['at_checkout', 'before_production', 'before_shipping', 'on_delivery', 'days_after_delivery'], enumName: 'DueTrigger', example: 'at_checkout' })
+  dueTrigger!: string;
+
+  @ApiProperty({ enum: ['none', 'production', 'shipping'], enumName: 'RequiredBefore', example: 'production' })
+  requiredBefore!: string;
+
+  @ApiProperty({ example: '7091.40' })
+  grossAmount!: string;
+
+  @ApiProperty({ example: '7091.40' })
+  cashAmount!: string;
+}
+
+export class PreviewScheduleDto {
+  @ApiProperty({ example: 'deposit_50_before_shipping_50' })
+  templateKey!: string;
+
+  @ApiProperty({ type: [PreviewInstalmentDto] })
+  instalments!: PreviewInstalmentDto[];
+}
+
 export class CheckoutPreviewDto {
+  @ApiProperty({ type: PreviewScheduleDto, nullable: true, description: 'The payment schedule the order will get (D-020)' })
+  paymentSchedule!: PreviewScheduleDto | null;
+
   @ApiProperty({ type: MoneyTotalsDto })
   totals!: MoneyTotalsDto;
 
@@ -180,4 +227,19 @@ export const PREVIEW_EXAMPLE: CheckoutPreviewDto = {
   ],
   withholding: false,
   notices: [],
+  paymentSchedule: {
+    templateKey: 'full_upfront',
+    instalments: [
+      {
+        seq: 1,
+        labelEn: 'Full payment',
+        labelTh: 'ชำระเต็มจำนวน',
+        pct: '100.0000',
+        dueTrigger: 'at_checkout',
+        requiredBefore: 'production',
+        grossAmount: '14182.80',
+        cashAmount: '14182.80',
+      },
+    ],
+  },
 };

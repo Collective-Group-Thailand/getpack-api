@@ -74,6 +74,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `orders.cancel` — Cancel order groups or orders before production, with a reason (D-060) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
 | `orders.manage` — CS operations on orders: change customer, remarks, cc e-mails, PO number, notes (D-125) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
 | `orders.reprice` — Edit & re-price an order before production (D-051) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
+| `payment_schedules.override` — Choose or replace the payment schedule of an order group, with a reason (D-020) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |
+| `payment_schedule_templates.manage` — Add effective-dated versions of payment schedule templates (D-020, D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

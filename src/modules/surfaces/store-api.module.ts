@@ -5,6 +5,7 @@ import { CHECKOUT_STORE_CONTROLLERS } from '@modules/checkout/checkout.registry'
 import { CUSTOMERS_STORE_CONTROLLERS } from '@modules/customers/customers.registry';
 import { ORDERS_STORE_CONTROLLERS } from '@modules/orders/orders.registry';
 import { StoreQuotePathController } from '@modules/partners/quote-path/quote-path.controller';
+import { PAYMENT_SCHEDULES_STORE_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PRICING_STORE_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { Module } from '@nestjs/common';
@@ -36,6 +37,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...CARTS_STORE_CONTROLLERS,
     ...CHECKOUT_STORE_CONTROLLERS,
     ...ORDERS_STORE_CONTROLLERS,
+    ...PAYMENT_SCHEDULES_STORE_CONTROLLERS,
   ],
 })
 export class StoreApiModule {}

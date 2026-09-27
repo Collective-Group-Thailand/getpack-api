@@ -8,6 +8,7 @@ import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
 import { ORDERS_ADMIN_CONTROLLERS } from '@modules/orders/orders.registry';
 import { FactoryOwnersService } from '@modules/partners/factories/factory-owners.service';
 import { PARTNERS_ADMIN_CONTROLLERS } from '@modules/partners/partners.registry';
+import { PAYMENT_SCHEDULES_ADMIN_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PRICING_ADMIN_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
@@ -64,6 +65,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...CARTS_ADMIN_CONTROLLERS,
     ...CHECKOUT_ADMIN_CONTROLLERS,
     ...ORDERS_ADMIN_CONTROLLERS,
+    ...PAYMENT_SCHEDULES_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

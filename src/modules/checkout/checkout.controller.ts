@@ -28,7 +28,7 @@ import {
   CheckoutPreviewDto,
   PREVIEW_EXAMPLE,
 } from './checkout.dto';
-import { type CheckoutDraft } from './checkout.extensions';
+import { type CheckoutDraft, type CheckoutInput } from './checkout.extensions';
 import { CheckoutService } from './checkout.service';
 
 const DECISIONS = ['D-051', 'D-060', 'D-013', 'D-142', 'D-174', 'D-010'];
@@ -44,8 +44,47 @@ const ERRORS = [
   'checkout.rfq_destination_fixed',
   'checkout.wht_rate_missing',
   'pricing.vat_rate_missing',
+  'payments.no_schedule_template',
 ] as const;
 const named = <T>(cls: T, name: string): T => Object.defineProperty(cls, 'name', { value: name });
+
+interface ProposedLike {
+  templateKey: string;
+  instalments: {
+    seq: number;
+    labelTh: string;
+    labelEn: string;
+    pct: string;
+    dueTrigger: string;
+    requiredBefore: string;
+    amounts: { gross: string; cash: string };
+  }[];
+}
+
+function scheduleOf(draft: CheckoutDraft): CheckoutPreviewDto['paymentSchedule'] {
+  const proposed = draft.state['paymentSchedule'] as ProposedLike | undefined;
+  if (!proposed) return null;
+  return {
+    templateKey: proposed.templateKey,
+    instalments: proposed.instalments.map((i) => ({
+      seq: i.seq,
+      labelTh: i.labelTh,
+      labelEn: i.labelEn,
+      pct: i.pct,
+      dueTrigger: i.dueTrigger,
+      requiredBefore: i.requiredBefore,
+      grossAmount: i.amounts.gross,
+      cashAmount: i.amounts.cash,
+    })),
+  };
+}
+
+/** Controller body → checkout input (the CS schedule choice is an extension input). */
+function inputOf(body: AdminCheckoutDto, admin: boolean): CheckoutInput {
+  const { paymentSchedule, csRemarks, ...rest } = body;
+  if (!admin) return rest;
+  return { ...rest, csRemarks, ...(paymentSchedule && { extensions: { paymentSchedule } }) };
+}
 
 export function previewDto(draft: CheckoutDraft): CheckoutPreviewDto {
   const money = (t: CheckoutDraft['totals']) => ({ ...t, currency: 'THB' });
@@ -80,6 +119,7 @@ export function previewDto(draft: CheckoutDraft): CheckoutPreviewDto {
     })),
     withholding: draft.orders.some((o) => o.lines.some((l) => l.whtAmount !== '0.00')),
     notices: draft.notices,
+    paymentSchedule: scheduleOf(draft),
   };
 }
 
@@ -135,7 +175,7 @@ function checkoutController(surface: 'store' | 'admin'): Type<unknown> {
       @Param('customerId', new ParseUUIDPipe({ optional: true })) customerId: string | undefined,
       @Body() body: AdminCheckoutDto,
     ): Promise<CheckoutPreviewDto> {
-      const input = admin ? body : { ...body, csRemarks: undefined };
+      const input = inputOf(body, admin);
       return previewDto(await this.checkout.price(await this.who(actor, customerId), input));
     }
 
@@ -167,7 +207,7 @@ function checkoutController(surface: 'store' | 'admin'): Type<unknown> {
       @Body() body: AdminCheckoutDto,
       @Res({ passthrough: true }) res: Response,
     ) {
-      const input = admin ? body : { ...body, csRemarks: undefined };
+      const input = inputOf(body, admin);
       const group = await this.checkout.checkout(await this.who(actor, customerId), input);
       res.setHeader(
         'Location',

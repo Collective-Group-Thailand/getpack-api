@@ -580,5 +580,15 @@
       "title": "New total below the amount paid",
       "detail": "The new total {total} is below what was already paid ({paid}); that needs a credit note (B5)."
     }
+  },
+  "payments": {
+    "no_schedule_template": {
+      "title": "No payment schedule",
+      "detail": "No payment schedule template applies to this order; please contact customer service (D-020)."
+    },
+    "schedule_has_payments": {
+      "title": "Schedule already paid",
+      "detail": "Something is already paid on this schedule; it cannot be replaced."
+    }
   }
 }

@@ -11,13 +11,14 @@ So every instalment amount must be split across the orders — deterministically
 survives a cancelled order or a CS re-price.
 
 ## Decision
-1. **Instalment amounts of the group.** For each amount column of §2.9 (net, VAT, gross, withholding, cash) an
-   instalment gets `round_half_up(group amount × pct / 100, 2)`; the **last instalment takes the remainder**, so the
-   instalments always add up to the group exactly. Gross, VAT and withholding are split independently and
-   `cash = gross − withholding` is recomputed per instalment (never rounded separately).
+1. **Instalment amounts of the group.** Gross, VAT and withholding are each split as
+   `round_half_up(group amount × pct / 100, 2)`, the **last instalment taking the remainder**, so the instalments
+   always add up to the group exactly. Net and cash are **derived** per row (`net = gross − VAT`,
+   `cash = gross − withholding`), never rounded separately, so every row keeps the §2.9 arithmetic.
 2. **Allocation to orders.** Each instalment is split across the group's active orders **in proportion to each
    order's gross** (`instalment_allocations`), rounded half-up to the satang, with the rounding remainder on the
-   order with the **largest gross** (ties: the lowest order id). Withholding and cash are allocated the same way.
+   order with the **largest gross** (ties: the first order). VAT and withholding are allocated the same way; net
+   and cash are derived as above.
 3. **Payments** are applied to instalments oldest-`seq` first (FIFO) and follow the instalments' allocations to
    orders; an instalment is `paid` when its cash is fully covered, `partially_paid` otherwise.
 4. **Changes after placement** re-allocate **only the unpaid part**: a cancelled order or a CS re-price

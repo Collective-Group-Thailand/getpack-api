@@ -132,6 +132,22 @@ export class OrdersService {
         rowVersion: { increment: 1 },
       },
     });
+    // Every fact is published (payment schedules make instalments due on artwork, production and delivery).
+    await this.events.record(
+      tx,
+      {
+        type: 'order.fact_recorded',
+        aggregateType: 'order',
+        aggregateId: order.publicId,
+        payload: {
+          orderId: order.publicId,
+          fact: fact.kind,
+          ...(fact.kind === 'production_started' || fact.kind === 'completed' ? { mode: fact.mode } : {}),
+          at: at.toISOString(),
+        },
+      },
+      actor,
+    );
     if (result.status !== order.status) {
       await this.record(tx, 'order', order.publicId, 'order.status_changed', {
         from: order.status,
