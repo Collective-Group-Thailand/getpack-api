@@ -26,6 +26,8 @@ export interface DiscountDraft {
   promotionId?: bigint | null;
   couponCodeId?: bigint | null;
   campaignId?: bigint | null;
+  /** The discount memo behind a memo or company discount (D-052, D-124). */
+  discountMemoId?: bigint | null;
   /** Extension data kept on the order discount row or in the pricing snapshot. */
   meta?: Record<string, unknown>;
 }

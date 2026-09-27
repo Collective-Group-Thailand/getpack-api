@@ -61,6 +61,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'promotions.read',
       'loyalty.read',
       'companies.read',
+      'discount_memos.read',
     ],
   },
   {
@@ -74,6 +75,7 @@ export const ROLES: readonly RoleDefinition[] = [
       ...COST_AND_MARGIN,
       'partners.read',
       'orders.read',
+      'discount_memos.read',
     ],
   },
   {
@@ -85,6 +87,7 @@ export const ROLES: readonly RoleDefinition[] = [
     permissions: [
       ...APPROVER,
       'orders.read',
+      'discount_memos.read',
     ],
   },
   {
@@ -137,6 +140,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'companies.manage',
       'companies.kyc_review',
       'company_credit.manage',
+      'discount_memos.read',
     ],
   },
   {
@@ -164,6 +168,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'payments.read',
       'loyalty.read',
       'companies.read',
+      'discount_memos.request',
+      'discount_memos.read',
     ],
   },
   {
@@ -200,6 +206,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'companies.manage',
       'companies.kyc_review',
       'company_credit.manage',
+      'discount_memos.request',
+      'discount_memos.read',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -240,6 +248,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'loyalty.read',
       'companies.read',
       'company_credit.manage',
+      'discount_memos.read',
     ],
   },
   {
@@ -272,6 +281,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'companies.read',
       'companies.kyc_review',
       'company_credit.manage',
+      'discount_memos.read',
     ],
   },
   {
@@ -360,6 +370,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'promotions.read',
       'loyalty.read',
       'companies.read',
+      'discount_memos.read',
     ],
   },
 

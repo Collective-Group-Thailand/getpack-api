@@ -4,6 +4,7 @@ import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry';
 import { COMPANIES_ADMIN_CONTROLLERS } from '@modules/companies/companies.registry';
 import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.registry';
+import { DISCOUNT_MEMOS_ADMIN_CONTROLLERS } from '@modules/discount-memos/discount-memos.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
 import { LOYALTY_ADMIN_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
@@ -73,6 +74,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...PROMOTIONS_ADMIN_CONTROLLERS,
     ...LOYALTY_ADMIN_CONTROLLERS,
     ...COMPANIES_ADMIN_CONTROLLERS,
+    ...DISCOUNT_MEMOS_ADMIN_CONTROLLERS,
     ...PAYMENTS_ADMIN_CONTROLLERS,
   ],
 })

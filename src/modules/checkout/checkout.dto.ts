@@ -128,6 +128,21 @@ export class AdminCheckoutDto extends CheckoutDto {
 
   @TextField({ example: 'ลูกค้าขอส่งด่วน', max: 2000, optional: true, nullable: true, description: 'Internal only' })
   csRemarks?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    example: '5',
+    description: 'CS discount % on the non-shipping lines, up to `discounts.cs_limit_pct` (D-052); above it raise a discount memo',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{1,3}(\.\d{1,4})?$/)
+  csDiscountPct?: string;
+
+  @ApiPropertyOptional({ type: String, format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d1001', description: 'An approved discount memo of this customer (D-052), used once' })
+  @IsOptional()
+  @IsUUID()
+  discountMemoId?: string;
 }
 
 export class PreviewDestinationDto {

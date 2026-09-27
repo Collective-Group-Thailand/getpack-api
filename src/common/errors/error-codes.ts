@@ -182,6 +182,9 @@ export const ERROR_CODES = {
   'companies.cannot_remove_self': HttpStatus.CONFLICT,
   'companies.po_required': HttpStatus.UNPROCESSABLE_ENTITY,
   'companies.credit_not_eligible': HttpStatus.CONFLICT,
+  'discounts.cs_limit_exceeded': HttpStatus.UNPROCESSABLE_ENTITY,
+  'discount_memos.within_cs_limit': HttpStatus.UNPROCESSABLE_ENTITY,
+  'discount_memos.not_usable': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

@@ -17,6 +17,7 @@ import { CatalogModule } from '@modules/catalog/catalog.module';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { CompaniesModule } from '@modules/companies/companies.module';
 import { CustomersModule } from '@modules/customers/customers.module';
+import { DiscountMemosModule } from '@modules/discount-memos/discount-memos.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
 import { OrdersModule } from '@modules/orders/orders.module';
@@ -94,6 +95,7 @@ import { LoggerModule } from 'nestjs-pino';
     PromotionsModule,
     LoyaltyModule,
     CompaniesModule,
+    DiscountMemosModule,
     PaymentsModule,
     HealthModule,
     SurfacesModule,

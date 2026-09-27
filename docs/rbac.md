@@ -91,6 +91,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `companies.manage` — Suspend, reactivate or close B2B companies (D-120) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
 | `companies.kyc_review` — Verify company KYC documents and approve or reject applications (D-120) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |
 | `company_credit.manage` — Request B2B credit limits and terms (approved by Finance / C-Level) (D-121) | ● |  |  |  | ● |  | ● |  | ● | ● |  |  |  |  |
+| `discount_memos.request` — Give CS discounts within the limit and raise discount memos above it (D-052, D-124) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |
+| `discount_memos.read` — Read discount memos and where they were used (D-052) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |  |  |  | ● |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

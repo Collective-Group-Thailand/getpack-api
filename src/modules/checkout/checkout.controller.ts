@@ -50,6 +50,8 @@ const ERRORS = [
   'loyalty.insufficient_points',
   'companies.po_required',
   'companies.invalid_status',
+  'discounts.cs_limit_exceeded',
+  'discount_memos.not_usable',
 ] as const;
 const named = <T>(cls: T, name: string): T => Object.defineProperty(cls, 'name', { value: name });
 
@@ -86,9 +88,11 @@ function scheduleOf(draft: CheckoutDraft): CheckoutPreviewDto['paymentSchedule']
 
 /** Controller body → checkout input (the CS schedule choice is an extension input). */
 function inputOf(body: AdminCheckoutDto, admin: boolean): CheckoutInput {
-  const { paymentSchedule, csRemarks, redeemPoints, companyId, companyBranchId, ...rest } = body;
+  const { paymentSchedule, csRemarks, redeemPoints, companyId, companyBranchId, csDiscountPct, discountMemoId, ...rest } = body;
   const extensions = {
     ...(redeemPoints && { points: redeemPoints }),
+    ...(admin && csDiscountPct && { csDiscountPct }),
+    ...(admin && discountMemoId && { discountMemoId }),
     ...(companyId && { company: { companyId, branchId: companyBranchId ?? null } }),
     ...(admin && paymentSchedule && { paymentSchedule }),
   };

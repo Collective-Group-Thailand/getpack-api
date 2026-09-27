@@ -34,6 +34,7 @@ export const API_TAGS: Record<string, string> = {
   'store.companyCredit': 'My company’s credit and monthly statement (D-121, D-122, D-125).',
   'admin.companyCredit': 'Company credit: limit requests through the approval matrix, exposure, statements (D-121, D-125).',
   'admin.companies': 'B2B companies for staff: KYC review and activation, suspension and closure (D-120).',
+  'admin.discountMemos': 'Discounts above the CS limit, routed to the matching tier only; company discounts (D-052, D-124, D-162).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',

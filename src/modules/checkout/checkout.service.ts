@@ -284,6 +284,7 @@ export class CheckoutService {
                 promotionId: d.promotionId ?? null,
                 couponCodeId: d.couponCodeId ?? null,
                 campaignId: d.campaignId ?? null,
+                discountMemoId: d.discountMemoId ?? null,
               },
             });
           }
@@ -582,7 +583,7 @@ export class CheckoutService {
       })),
       lines: o.lines,
       // Internal ids stay out of the snapshot; promotions carry their public ids in `meta`.
-      discounts: o.discounts.map(({ promotionId: _p, couponCodeId: _c, campaignId: _k, ...d }) => ({
+      discounts: o.discounts.map(({ promotionId: _p, couponCodeId: _c, campaignId: _k, discountMemoId: _m, ...d }) => ({
         ...d,
         grantedByUserId: d.grantedByUserId?.toString() ?? null,
       })),

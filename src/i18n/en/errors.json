@@ -766,5 +766,21 @@
       "title": "Not eligible for credit",
       "detail": "The company needs the required paid orders or a verified financial statement"
     }
+  },
+  "discounts": {
+    "cs_limit_exceeded": {
+      "title": "Above the CS discount limit",
+      "detail": "Discounts above {limit}% need a discount memo"
+    }
+  },
+  "discount_memos": {
+    "within_cs_limit": {
+      "title": "Within the CS limit",
+      "detail": "Discounts up to {limit}% need no memo; give them at checkout"
+    },
+    "not_usable": {
+      "title": "Memo cannot be used",
+      "detail": "This discount memo cannot be used (status {status})"
+    }
   }
 }

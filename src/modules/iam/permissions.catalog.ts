@@ -434,6 +434,19 @@ export const PERMISSIONS = [
     decisionRefs: ['D-121'],
   },
 
+  {
+    key: 'discount_memos.request',
+    audience: 'staff',
+    description: 'Give CS discounts within the limit and raise discount memos above it',
+    decisionRefs: ['D-052', 'D-124'],
+  },
+  {
+    key: 'discount_memos.read',
+    audience: 'staff',
+    description: 'Read discount memos and where they were used',
+    decisionRefs: ['D-052'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },
