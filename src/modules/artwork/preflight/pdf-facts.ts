@@ -89,7 +89,7 @@ function boxOf(doc: PDFDocument, obj: PDFObject | undefined): Box | null {
   if (!(arr instanceof PDFArray) || arr.size() !== 4) return null;
   const values = arr.asArray().map((v) => lookup(doc, v));
   if (!values.every((v) => v instanceof PDFNumber)) return null;
-  return normaliseBox(values.map((v) => (v).asNumber()));
+  return normaliseBox(values.map((v) => v.asNumber()));
 }
 
 function streamBytes(stream: PDFObject | undefined): Uint8Array {

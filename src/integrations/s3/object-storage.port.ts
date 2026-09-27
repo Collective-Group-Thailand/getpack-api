@@ -35,6 +35,8 @@ export interface ObjectStorage {
   head(key: string): Promise<StoredObjectInfo | null>;
   getStream(key: string): Promise<Readable>;
   put(key: string, body: Buffer, contentType: string): Promise<void>;
+  /** Server-side copy inside the bucket (locked copies of approved proofs, B4.1). */
+  copy(sourceKey: string, targetKey: string): Promise<void>;
   delete(key: string): Promise<void>;
   presignGet(
     key: string,

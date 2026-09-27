@@ -3,6 +3,7 @@ import { type Readable } from 'node:stream';
 import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
+  CopyObjectCommand,
   CreateMultipartUploadCommand,
   DeleteObjectCommand,
   GetObjectCommand,
@@ -119,6 +120,16 @@ export class S3ObjectStorage implements ObjectStorage {
   async put(key: string, body: Buffer, contentType: string): Promise<void> {
     await this.client.send(
       new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType }),
+    );
+  }
+
+  async copy(sourceKey: string, targetKey: string): Promise<void> {
+    await this.client.send(
+      new CopyObjectCommand({
+        Bucket: this.bucket,
+        Key: targetKey,
+        CopySource: `${this.bucket}/${sourceKey.split('/').map(encodeURIComponent).join('/')}`,
+      }),
     );
   }
 

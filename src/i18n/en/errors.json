@@ -804,5 +804,19 @@
       "title": "Preflight blocked",
       "detail": "The file is blocked by preflight (size mismatch or missing bleed); a new file is needed"
     }
+  },
+  "proofs": {
+    "no_accepted_artwork": {
+      "title": "No accepted artwork",
+      "detail": "Accept an artwork submission for a proof before sending one"
+    },
+    "not_pending": {
+      "title": "Proof already decided",
+      "detail": "This proof is {status} and no longer waits for a decision"
+    },
+    "annotation_closed": {
+      "title": "Annotations closed",
+      "detail": "This proof is {status}; annotations are closed"
+    }
   }
 }

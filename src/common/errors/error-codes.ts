@@ -190,6 +190,9 @@ export const ERROR_CODES = {
   'artwork.invalid_status': HttpStatus.CONFLICT,
   'artwork.preflight_pending': HttpStatus.CONFLICT,
   'artwork.preflight_blocked': HttpStatus.CONFLICT,
+  'proofs.no_accepted_artwork': HttpStatus.CONFLICT,
+  'proofs.not_pending': HttpStatus.CONFLICT,
+  'proofs.annotation_closed': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

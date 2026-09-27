@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { AppConfig } from '@config/app-config';
-import { PrismaService } from '@database/prisma.service';
+import { PrismaService, type Tx } from '@database/prisma.service';
 import { type AttachmentSubject, type FileObject, type FileRetentionClass } from '@generated/prisma/client';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
@@ -235,6 +235,41 @@ export class FilesService {
       url,
       expiresAt: new Date(now.getTime() + DOWNLOAD_URL_TTL_SECONDS * 1000),
     };
+  }
+
+  /**
+   * A locked copy of a clean, hashed file (the approved proof, B4.1): a new object under its own key with the
+   * same SHA-256, under legal hold, that no workflow edits or replaces. Written in the caller's transaction;
+   * the S3 copy happens first (a rolled-back approval leaves only an unreferenced object).
+   */
+  async lockedCopy(db: Tx, file: FileObject): Promise<FileObject> {
+    if (file.uploadStatus !== 'uploaded' || file.scanStatus !== 'clean' || !file.sha256)
+      throw new DomainException('file.not_ready');
+    const now = new Date();
+    const created = await db.fileObject.create({
+      data: {
+        bucket: file.bucket,
+        storageKey: `pending/${randomUUID()}`,
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        sizeBytes: file.sizeBytes,
+        sha256: file.sha256,
+        widthPx: file.widthPx,
+        heightPx: file.heightPx,
+        pageCount: file.pageCount,
+        uploadStatus: 'uploaded',
+        scanStatus: 'clean',
+        scannedAt: now,
+        retentionClass: file.retentionClass,
+        legalHold: true,
+        ownerUserId: file.ownerUserId,
+        ownerFactoryId: file.ownerFactoryId,
+        ownerCompanyId: file.ownerCompanyId,
+      },
+    });
+    const storageKey = `${file.retentionClass}/locked/${now.getUTCFullYear()}/${created.publicId}`;
+    await this.storage.copy(file.storageKey, storageKey);
+    return db.fileObject.update({ where: { id: created.id }, data: { storageKey } });
   }
 
   /** Metadata, after the same access check as downloads. */

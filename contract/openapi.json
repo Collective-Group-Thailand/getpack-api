@@ -1574,6 +1574,39 @@
           "type": "https://errors.packio/promotions.too_many_attempts"
         }
       },
+      "problem.proofs.annotation_closed": {
+        "summary": "proofs.annotation_closed",
+        "value": {
+          "code": "proofs.annotation_closed",
+          "detail": "พรูฟนี้อยู่ในสถานะ {status} จึงเพิ่มความเห็นไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ปิดรับความเห็นแล้ว",
+          "type": "https://errors.packio/proofs.annotation_closed"
+        }
+      },
+      "problem.proofs.no_accepted_artwork": {
+        "summary": "proofs.no_accepted_artwork",
+        "value": {
+          "code": "proofs.no_accepted_artwork",
+          "detail": "ต้องรับไฟล์งานเข้าทำพรูฟ (accept) ก่อนส่งพรูฟ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่มีไฟล์งานที่ผ่านการตรวจ",
+          "type": "https://errors.packio/proofs.no_accepted_artwork"
+        }
+      },
+      "problem.proofs.not_pending": {
+        "summary": "proofs.not_pending",
+        "value": {
+          "code": "proofs.not_pending",
+          "detail": "พรูฟนี้อยู่ในสถานะ {status} ไม่รอการตัดสินใจแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "พรูฟนี้ตัดสินแล้ว",
+          "type": "https://errors.packio/proofs.not_pending"
+        }
+      },
       "problem.provider.unavailable": {
         "summary": "provider.unavailable",
         "value": {
@@ -4401,6 +4434,159 @@
           "groupId"
         ],
         "type": "object"
+      },
+      "AnnotateProofDto": {
+        "properties": {
+          "comment": {
+            "example": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "geometry": {
+            "additionalProperties": true,
+            "description": "Page-relative (0–1) coordinates: pin `{x,y}`, rect `{x,y,w,h}`, draw `{points:[[x,y],…]}` (≤ 500 points)",
+            "example": {
+              "x": 0.42,
+              "y": 0.31
+            },
+            "type": "object"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnotationKind"
+              }
+            ],
+            "example": "pin"
+          },
+          "page": {
+            "example": 1,
+            "maximum": 999,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "parentId": {
+            "description": "Reply to this annotation",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "page",
+          "kind",
+          "geometry",
+          "comment"
+        ],
+        "type": "object"
+      },
+      "AnnotationAuthorDto": {
+        "properties": {
+          "displayName": {
+            "description": "Customer name, or \"Packio\" on the store surface for staff",
+            "example": "ลูกค้า ทดสอบ",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnotationAuthorKind"
+              }
+            ],
+            "example": "customer"
+          }
+        },
+        "required": [
+          "kind",
+          "displayName"
+        ],
+        "type": "object"
+      },
+      "AnnotationAuthorKind": {
+        "enum": [
+          "customer",
+          "staff"
+        ],
+        "type": "string"
+      },
+      "AnnotationDto": {
+        "properties": {
+          "author": {
+            "$ref": "#/components/schemas/AnnotationAuthorDto"
+          },
+          "comment": {
+            "example": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-09-27T11:00:00+07:00",
+            "type": "string"
+          },
+          "geometry": {
+            "additionalProperties": true,
+            "example": {
+              "x": 0.42,
+              "y": 0.31
+            },
+            "type": "object"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnotationKind"
+              }
+            ],
+            "example": "pin"
+          },
+          "page": {
+            "example": 1,
+            "type": "integer"
+          },
+          "parentId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolvedAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "parentId",
+          "page",
+          "kind",
+          "geometry",
+          "comment",
+          "author",
+          "resolvedAt",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "AnnotationKind": {
+        "enum": [
+          "pin",
+          "rect",
+          "draw"
+        ],
+        "type": "string"
       },
       "AnswerCountersDto": {
         "properties": {
@@ -11770,6 +11956,16 @@
         ],
         "type": "object"
       },
+      "CustomerConfirmationChannel": {
+        "description": "How the customer confirmed",
+        "enum": [
+          "phone",
+          "line",
+          "email",
+          "in_person"
+        ],
+        "type": "string"
+      },
       "CustomerProfileDto": {
         "properties": {
           "createdAt": {
@@ -12247,6 +12443,44 @@
         ],
         "type": "object"
       },
+      "DecideOnBehalfDto": {
+        "properties": {
+          "comment": {
+            "description": "Required when requesting changes",
+            "example": "สีพื้นหลังเข้มเกินไป",
+            "maxLength": 4000,
+            "type": "string"
+          },
+          "confirmedVia": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerConfirmationChannel"
+              }
+            ],
+            "description": "How the customer confirmed",
+            "example": "phone"
+          },
+          "reason": {
+            "example": "ลูกค้ายืนยันทางโทรศัพท์ว่าอนุมัติแบบ",
+            "maxLength": 1000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "confirmedVia"
+        ],
+        "type": "object"
+      },
+      "DecisionChannel": {
+        "enum": [
+          "web",
+          "line_liff",
+          "cs_on_behalf"
+        ],
+        "type": "string"
+      },
       "DeclineConsultationDto": {
         "properties": {
           "note": {
@@ -12544,6 +12778,57 @@
           "updatedAt"
         ],
         "type": "object"
+      },
+      "DielineDeliveryDto": {
+        "properties": {
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e200a",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "example": "แบบแปลนกล่องขนาด 100×100×50 มม.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sentAt": {
+            "example": "2026-09-27T09:00:00+07:00",
+            "type": "string"
+          },
+          "trigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DielineTrigger"
+              }
+            ],
+            "example": "manual"
+          }
+        },
+        "required": [
+          "id",
+          "trigger",
+          "fileId",
+          "note",
+          "sentAt"
+        ],
+        "type": "object"
+      },
+      "DielineTrigger": {
+        "enum": [
+          "auto_after_payment",
+          "manual"
+        ],
+        "type": "string"
       },
       "DifficultyLevelDto": {
         "properties": {
@@ -21291,6 +21576,241 @@
         ],
         "type": "string"
       },
+      "ProofCompareDto": {
+        "properties": {
+          "openAnnotationsOnPrevious": {
+            "description": "Annotations on the previous version not marked resolved",
+            "example": 1,
+            "type": "integer"
+          },
+          "previousDecisionComment": {
+            "example": "สีพื้นหลังเข้มเกินไป",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previousProofFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "previousProofId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "previousStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProofStatus"
+              }
+            ],
+            "example": "changes_requested"
+          },
+          "previousVersionNo": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "previousProofId",
+          "previousVersionNo",
+          "previousProofFileId",
+          "previousStatus",
+          "previousDecisionComment",
+          "openAnnotationsOnPrevious"
+        ],
+        "type": "object"
+      },
+      "ProofDto": {
+        "properties": {
+          "annotations": {
+            "items": {
+              "$ref": "#/components/schemas/AnnotationDto"
+            },
+            "type": "array"
+          },
+          "approvedFileId": {
+            "description": "The locked copy of the approved file",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedFileSha256": {
+            "description": "SHA-256 (hex) of the approved file",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changeNote": {
+            "example": "ขยายโลโก้ตามที่ลูกค้าขอ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "compare": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProofCompareDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version this one answers"
+          },
+          "decidedAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionChannel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DecisionChannel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "decisionComment": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dielineFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "onBehalfReason": {
+            "description": "CS approvals on behalf: the reason given",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderCode": {
+            "example": "OR2609270001",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "proofFile": {
+            "$ref": "#/components/schemas/ProofFileDto"
+          },
+          "sentAt": {
+            "example": "2026-09-27T11:00:00+07:00",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProofStatus"
+              }
+            ],
+            "example": "pending_customer"
+          },
+          "submissionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "orderCode",
+          "versionNo",
+          "status",
+          "submissionId",
+          "proofFile",
+          "dielineFileId",
+          "changeNote",
+          "sentAt",
+          "decidedAt",
+          "decisionChannel",
+          "decisionComment",
+          "onBehalfReason",
+          "approvedFileId",
+          "approvedFileSha256",
+          "compare",
+          "annotations"
+        ],
+        "type": "object"
+      },
+      "ProofFileDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "mimeType": {
+            "example": "application/pdf",
+            "type": "string"
+          },
+          "originalName": {
+            "example": "proof-v2.pdf",
+            "type": "string"
+          },
+          "pageCount": {
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "originalName",
+          "mimeType",
+          "pageCount"
+        ],
+        "type": "object"
+      },
+      "ProofStatus": {
+        "enum": [
+          "pending_customer",
+          "approved",
+          "changes_requested",
+          "superseded"
+        ],
+        "type": "string"
+      },
       "ProposalDirection": {
         "description": "`factory_to_packio` = factory price list (mode b); `packio_to_factory` = rate card (mode a), D-042",
         "enum": [
@@ -22940,6 +23460,20 @@
         ],
         "type": "object"
       },
+      "RequestChangesDto": {
+        "properties": {
+          "comment": {
+            "example": "สีพื้นหลังเข้มเกินไป ขอโทนอ่อนลง",
+            "maxLength": 4000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "comment"
+        ],
+        "type": "object"
+      },
       "RequestConsultationDto": {
         "properties": {
           "dueAt": {
@@ -24490,6 +25024,57 @@
           "fontIds",
           "status",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SendProofDto": {
+        "properties": {
+          "changeNote": {
+            "description": "What changed since the previous version",
+            "example": "ขยายโลโก้ตามที่ลูกค้าขอ",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "dielineFileId": {
+            "description": "The dieline overlay, if separate",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "proofFileId": {
+            "description": "The proof (PDF or image) Prepress uploaded",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "submissionId": {
+            "description": "The accepted submission this proof answers; defaults to the latest accepted one",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "proofFileId"
+        ],
+        "type": "object"
+      },
+      "SendTemplateDto": {
+        "properties": {
+          "fileId": {
+            "description": "The template / dieline file Prepress uploaded",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "example": "แบบแปลนกล่องขนาด 100×100×50 มม. พร้อมระยะตัดตก 3 มม.",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId"
         ],
         "type": "object"
       },
@@ -118108,6 +118693,982 @@
         ]
       }
     },
+    "/v1/admin/orders/{orderId}/proofs": {
+      "get": {
+        "description": "Newest first (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.listProofs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "annotations": [
+                      {
+                        "author": {
+                          "displayName": "ลูกค้า ทดสอบ",
+                          "kind": "customer"
+                        },
+                        "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                        "createdAt": "2026-09-27T11:05:00+07:00",
+                        "geometry": {
+                          "x": 0.42,
+                          "y": 0.31
+                        },
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                        "kind": "pin",
+                        "page": 1,
+                        "parentId": null,
+                        "resolvedAt": null
+                      }
+                    ],
+                    "approvedFileId": null,
+                    "approvedFileSha256": null,
+                    "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                    "compare": {
+                      "openAnnotationsOnPrevious": 0,
+                      "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                      "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                      "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                      "previousStatus": "changes_requested",
+                      "previousVersionNo": 1
+                    },
+                    "decidedAt": null,
+                    "decisionChannel": null,
+                    "decisionComment": null,
+                    "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                    "onBehalfReason": null,
+                    "orderCode": "OR2609270001",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                    "proofFile": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                      "mimeType": "application/pdf",
+                      "originalName": "proof-v2.pdf",
+                      "pageCount": 1
+                    },
+                    "sentAt": "2026-09-27T11:00:00+07:00",
+                    "status": "pending_customer",
+                    "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                    "versionNo": 2
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProofDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Proofs",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the proofs of an order",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
+        ]
+      },
+      "post": {
+        "description": "Answers the latest accepted submission (or the one given); a proof still waiting is superseded; the order artwork status becomes `proof_sent` and the customer is notified (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.sendProof",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                    "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                    "proofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SendProofDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": null,
+                  "decisionChannel": null,
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "pending_customer",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "Sent",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  },
+                  "proofs.no_accepted_artwork": {
+                    "$ref": "#/components/examples/problem.proofs.no_accepted_artwork"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`, `proofs.no_accepted_artwork`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Send a proof version to the customer",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
+        ]
+      }
+    },
+    "/v1/admin/orders/{orderId}/templates": {
+      "get": {
+        "description": "Automatic and manual (D-070).\n\nImplements: D-070.",
+        "operationId": "admin.artwork.listTemplates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e200a",
+                    "note": "แบบแปลนกล่องขนาด 100×100×50 มม.",
+                    "sentAt": "2026-09-27T09:00:00+07:00",
+                    "trigger": "manual"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DielineDeliveryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Templates",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the templates sent for an order",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
+        ]
+      },
+      "post": {
+        "description": "A file Prepress uploaded; the customer is notified and designs on it. Its trim box becomes the size the preflight checks against (ADR-0009, D-070).\n\nImplements: D-070.",
+        "operationId": "admin.artwork.sendTemplate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                    "note": "แบบแปลนกล่องขนาด 100×100×50 มม."
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SendTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e200a",
+                  "note": "แบบแปลนกล่องขนาด 100×100×50 มม.",
+                  "sentAt": "2026-09-27T09:00:00+07:00",
+                  "trigger": "manual"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DielineDeliveryDto"
+                }
+              }
+            },
+            "description": "Sent",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Send a template / dieline to the customer",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
+        ]
+      }
+    },
     "/v1/admin/outbox": {
       "get": {
         "description": "Domain events and their relay status; `status=dead` lists events a subscriber could not process after all retries.\n\nImplements: ADR-0006, ADR-0005.",
@@ -126280,6 +127841,1378 @@
         ],
         "x-required-permissions": [
           "promotions.manage"
+        ]
+      }
+    },
+    "/v1/admin/proof-annotations/{annotationId}/actions/resolve": {
+      "post": {
+        "description": "Prepress closes a note once handled (D-070).\n\nImplements: D-070.",
+        "operationId": "admin.artwork.resolveAnnotation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "annotationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": null,
+                  "decisionChannel": null,
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "pending_customer",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "The proof",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Mark an annotation resolved",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
+        ]
+      }
+    },
+    "/v1/admin/proofs/{proofId}": {
+      "get": {
+        "description": "With annotations and compare data (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.getProof",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proofId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": null,
+                  "decisionChannel": null,
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "pending_customer",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "Proof",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a proof",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
+        ]
+      }
+    },
+    "/v1/admin/proofs/{proofId}/actions/approve-on-behalf": {
+      "post": {
+        "description": "CS records the customer’s approval given by phone, LINE, e-mail or in person, with a reason (audited, channel `cs_on_behalf`). Same effects as the customer’s own approval (D-073).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.approveProofOnBehalf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proofId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "confirmedVia": "phone",
+                    "reason": "ลูกค้ายืนยันทางโทรศัพท์ว่าอนุมัติแบบ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DecideOnBehalfDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2009",
+                  "approvedFileSha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": "2026-09-27T12:00:00+07:00",
+                  "decisionChannel": "cs_on_behalf",
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": "ลูกค้ายืนยันทางโทรศัพท์ว่าอนุมัติแบบ (phone)",
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "approved",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "Approved",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "proofs.not_pending": {
+                    "$ref": "#/components/examples/problem.proofs.not_pending"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`, `file.not_ready`, `idempotency.in_progress`, `proofs.not_pending`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Approve a proof for the customer",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "proofs.decide_on_behalf"
+        ]
+      }
+    },
+    "/v1/admin/proofs/{proofId}/actions/request-changes-on-behalf": {
+      "post": {
+        "description": "CS records the customer’s change request with a reason and how they gave it (audited, D-070).\n\nImplements: D-070.",
+        "operationId": "admin.artwork.requestProofChangesOnBehalf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proofId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "comment": "สีพื้นหลังเข้มเกินไป",
+                    "confirmedVia": "line",
+                    "reason": "ลูกค้าแจ้งทาง LINE"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DecideOnBehalfDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": "2026-09-27T12:00:00+07:00",
+                  "decisionChannel": "cs_on_behalf",
+                  "decisionComment": "สีพื้นหลังเข้มเกินไป ขอโทนอ่อนลง",
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "changes_requested",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "Changes requested",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  },
+                  "proofs.not_pending": {
+                    "$ref": "#/components/examples/problem.proofs.not_pending"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`, `proofs.not_pending`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Request proof changes for the customer",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "proofs.decide_on_behalf"
+        ]
+      }
+    },
+    "/v1/admin/proofs/{proofId}/annotations": {
+      "post": {
+        "description": "Prepress replies to the customer’s notes (`parentId`) or marks a page, also after changes were requested (D-070).\n\nImplements: D-070.",
+        "operationId": "admin.artwork.annotate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proofId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "comment": "ปรับให้แล้วในฉบับถัดไป",
+                    "geometry": {
+                      "x": 0.42,
+                      "y": 0.31
+                    },
+                    "kind": "pin",
+                    "page": 1,
+                    "parentId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AnnotateProofDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": null,
+                  "decisionChannel": null,
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "pending_customer",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "The proof with its annotations",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "proofs.annotation_closed": {
+                    "$ref": "#/components/examples/problem.proofs.annotation_closed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `proofs.annotation_closed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Answer or add a proof annotation",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
         ]
       }
     },
@@ -178801,6 +181734,239 @@
         ]
       }
     },
+    "/v1/store/orders/{orderId}/proofs": {
+      "get": {
+        "description": "Newest version first, with annotations and the compare data of the version each one answers (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "store.artwork.listProofs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "annotations": [
+                      {
+                        "author": {
+                          "displayName": "ลูกค้า ทดสอบ",
+                          "kind": "customer"
+                        },
+                        "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                        "createdAt": "2026-09-27T11:05:00+07:00",
+                        "geometry": {
+                          "x": 0.42,
+                          "y": 0.31
+                        },
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                        "kind": "pin",
+                        "page": 1,
+                        "parentId": null,
+                        "resolvedAt": null
+                      }
+                    ],
+                    "approvedFileId": null,
+                    "approvedFileSha256": null,
+                    "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                    "compare": {
+                      "openAnnotationsOnPrevious": 0,
+                      "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                      "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                      "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                      "previousStatus": "changes_requested",
+                      "previousVersionNo": 1
+                    },
+                    "decidedAt": null,
+                    "decisionChannel": null,
+                    "decisionComment": null,
+                    "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                    "onBehalfReason": null,
+                    "orderCode": "OR2609270001",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                    "proofFile": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                      "mimeType": "application/pdf",
+                      "originalName": "proof-v2.pdf",
+                      "pageCount": 1
+                    },
+                    "sentAt": "2026-09-27T11:00:00+07:00",
+                    "status": "pending_customer",
+                    "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                    "versionNo": 2
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProofDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Proofs",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List the proofs of my order",
+        "tags": [
+          "store.artwork"
+        ]
+      }
+    },
     "/v1/store/orders/{orderId}/review": {
       "get": {
         "description": "With the points it earned (D-135).\n\nImplements: D-135.",
@@ -179236,6 +182402,196 @@
         "summary": "Review my delivered order",
         "tags": [
           "store.reviews"
+        ]
+      }
+    },
+    "/v1/store/orders/{orderId}/templates": {
+      "get": {
+        "description": "Dieline templates to design on, newest first; download each file through `store.files.download`.\n\nImplements: D-070.",
+        "operationId": "store.artwork.listTemplates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e200a",
+                    "note": "แบบแปลนกล่องขนาด 100×100×50 มม.",
+                    "sentAt": "2026-09-27T09:00:00+07:00",
+                    "trigger": "manual"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DielineDeliveryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Templates",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List the templates sent for my order",
+        "tags": [
+          "store.artwork"
         ]
       }
     },
@@ -179712,6 +183068,1336 @@
         "summary": "Send the slip of a bank transfer",
         "tags": [
           "store.payments"
+        ]
+      }
+    },
+    "/v1/store/proof-annotations/{annotationId}/actions/resolve": {
+      "post": {
+        "description": "Only the author’s own notes (D-070).\n\nImplements: D-070.",
+        "operationId": "store.artwork.resolveAnnotation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "annotationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": null,
+                  "decisionChannel": null,
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "pending_customer",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "The proof",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Mark my annotation resolved",
+        "tags": [
+          "store.artwork"
+        ]
+      }
+    },
+    "/v1/store/proofs/{proofId}": {
+      "get": {
+        "description": "With annotations and version compare data (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "store.artwork.getProof",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proofId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": null,
+                  "decisionChannel": null,
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "pending_customer",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "Proof",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get one of my proofs",
+        "tags": [
+          "store.artwork"
+        ]
+      }
+    },
+    "/v1/store/proofs/{proofId}/actions/approve": {
+      "post": {
+        "description": "Irreversible: locks a copy of the proof file with its SHA-256 and the decision evidence (who, when, channel, IP, user agent) and records the artwork as approved — production starts automatically once the instalments required before production are paid (D-073).\n\nImplements: D-070, D-073.",
+        "operationId": "store.artwork.approveProof",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proofId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2009",
+                  "approvedFileSha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": "2026-09-27T12:00:00+07:00",
+                  "decisionChannel": "web",
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "approved",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "Approved",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "proofs.not_pending": {
+                    "$ref": "#/components/examples/problem.proofs.not_pending"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`, `file.not_ready`, `idempotency.in_progress`, `proofs.not_pending`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Approve my proof",
+        "tags": [
+          "store.artwork"
+        ]
+      }
+    },
+    "/v1/store/proofs/{proofId}/actions/request-changes": {
+      "post": {
+        "description": "With a comment (and annotations on the pages); Prepress answers with a new version (D-070).\n\nImplements: D-070.",
+        "operationId": "store.artwork.requestProofChanges",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proofId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "comment": "สีพื้นหลังเข้มเกินไป ขอโทนอ่อนลง"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RequestChangesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": "2026-09-27T12:00:00+07:00",
+                  "decisionChannel": "web",
+                  "decisionComment": "สีพื้นหลังเข้มเกินไป ขอโทนอ่อนลง",
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "changes_requested",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "Changes requested",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  },
+                  "proofs.not_pending": {
+                    "$ref": "#/components/examples/problem.proofs.not_pending"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`, `proofs.not_pending`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Request changes to my proof",
+        "tags": [
+          "store.artwork"
+        ]
+      }
+    },
+    "/v1/store/proofs/{proofId}/annotations": {
+      "post": {
+        "description": "A pin, rectangle or drawing on a page with a comment, or a reply (`parentId`), while the proof waits for me.\n\nImplements: D-070.",
+        "operationId": "store.artwork.annotate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proofId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                    "geometry": {
+                      "x": 0.42,
+                      "y": 0.31
+                    },
+                    "kind": "pin",
+                    "page": 1
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AnnotateProofDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "annotations": [
+                    {
+                      "author": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "kind": "customer"
+                      },
+                      "comment": "ขอโลโก้ใหญ่ขึ้นอีกนิด",
+                      "createdAt": "2026-09-27T11:05:00+07:00",
+                      "geometry": {
+                        "x": 0.42,
+                        "y": 0.31
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2007",
+                      "kind": "pin",
+                      "page": 1,
+                      "parentId": null,
+                      "resolvedAt": null
+                    }
+                  ],
+                  "approvedFileId": null,
+                  "approvedFileSha256": null,
+                  "changeNote": "ขยายโลโก้ตามที่ลูกค้าขอ",
+                  "compare": {
+                    "openAnnotationsOnPrevious": 0,
+                    "previousDecisionComment": "สีพื้นหลังเข้มเกินไป",
+                    "previousProofFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "previousProofId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2003",
+                    "previousStatus": "changes_requested",
+                    "previousVersionNo": 1
+                  },
+                  "decidedAt": null,
+                  "decisionChannel": null,
+                  "decisionComment": null,
+                  "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
+                  "onBehalfReason": null,
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2001",
+                  "proofFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2004",
+                    "mimeType": "application/pdf",
+                    "originalName": "proof-v2.pdf",
+                    "pageCount": 1
+                  },
+                  "sentAt": "2026-09-27T11:00:00+07:00",
+                  "status": "pending_customer",
+                  "submissionId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2006",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProofDto"
+                }
+              }
+            },
+            "description": "The proof with its annotations",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "proofs.annotation_closed": {
+                    "$ref": "#/components/examples/problem.proofs.annotation_closed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `proofs.annotation_closed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Annotate my proof",
+        "tags": [
+          "store.artwork"
         ]
       }
     },

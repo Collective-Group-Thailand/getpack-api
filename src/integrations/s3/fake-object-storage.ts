@@ -89,6 +89,13 @@ export class FakeObjectStorage implements ObjectStorage {
     return Promise.resolve();
   }
 
+  copy(sourceKey: string, targetKey: string): Promise<void> {
+    const object = this.objects.get(sourceKey);
+    if (!object) return Promise.reject(new Error(`no object ${sourceKey}`));
+    this.objects.set(targetKey, { body: Buffer.from(object.body), contentType: object.contentType });
+    return Promise.resolve();
+  }
+
   delete(key: string): Promise<void> {
     this.objects.delete(key);
     return Promise.resolve();
