@@ -389,6 +389,25 @@ export const PERMISSIONS = [
     decisionRefs: ['D-154'],
   },
 
+  {
+    key: 'loyalty.read',
+    audience: 'staff',
+    description: 'Read customers’ points, tiers and points history',
+    decisionRefs: ['D-130', 'D-134'],
+  },
+  {
+    key: 'loyalty.adjust',
+    audience: 'staff',
+    description: 'Add or remove a customer’s points with a reason (audited)',
+    decisionRefs: ['D-131', 'D-132'],
+  },
+  {
+    key: 'reviews.moderate',
+    audience: 'staff',
+    description: 'Hide or re-publish order reviews',
+    decisionRefs: ['D-135'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

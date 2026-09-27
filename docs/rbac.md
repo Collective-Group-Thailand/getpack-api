@@ -84,6 +84,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `promotions.read` — Read campaigns, promotions, coupon codes and the redemption report (D-053, D-154) | ● | ● |  |  | ● |  | ● |  |  | ● |  | ● |  | ● |
 | `promotions.manage` — Create, edit, activate and end promotions; generate, disable and export coupon codes (D-053) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
 | `campaigns.manage` — Create campaigns, set their THB budget, activate, pause and end them (D-154) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
+| `loyalty.read` — Read customers’ points, tiers and points history (D-130, D-134) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  | ● |  | ● |
+| `loyalty.adjust` — Add or remove a customer’s points with a reason (audited) (D-131, D-132) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |
+| `reviews.moderate` — Hide or re-publish order reviews (D-135) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

@@ -19,6 +19,8 @@ import {
   postcodes,
   saveQuote,
   seedShipping,
+  setSetting,
+  staffToken,
 } from '../support/commerce-e2e';
 
 const DAY = 86_400_000;
@@ -29,6 +31,8 @@ describe('loyalty points (e2e, B3.4)', () => {
   let fixture: DevFolding;
   let postcode: string;
   let loyalty: LoyaltyService;
+  /** The customer and order completed in the earning test (reused by reviews and tiers). */
+  let completed: { token: string; phone: string; orderId: string };
 
   beforeAll(async () => {
     ctx = await bootCommerceApp();
@@ -123,6 +127,7 @@ describe('loyalty points (e2e, B3.4)', () => {
     const orderId = placed.body.orders[0].id as string;
     await payAll(placed.body.id as string);
     await complete(orderId);
+    completed = { token, phone, orderId };
     await deliver('order.fact_recorded', orderId, (e, tx) => loyalty.onFact(e, tx));
 
     const order = await ctx.prisma.order.findUniqueOrThrow({ where: { publicId: orderId } });
@@ -198,5 +203,66 @@ describe('loyalty points (e2e, B3.4)', () => {
     expect(entry).toMatchObject({ points: -20 });
     expect(entry.bahtValue.toFixed(2)).toBe('50.00');
     expect(await ctx.prisma.domainEvent.count({ where: { type: 'points.expired', aggregateId: user.publicId } })).toBe(1);
+  });
+
+  it('rewards one review of a delivered order (D-135) and lets CS hide it', async () => {
+    const { token, orderId } = completed;
+    const review = await as(ctx, token).post(`/v1/store/orders/${orderId}/review`, { rating: 5, comment: 'ดีมาก' }).expect(201);
+    expect(review.body).toMatchObject({ rating: 5, status: 'published', rewardPoints: 4 });
+    await as(ctx, token).post(`/v1/store/orders/${orderId}/review`, { rating: 4 }).expect(409).expect((r) => expect(r.body.code).toBe('reviews.exists'));
+    await as(ctx, token).post(`/v1/store/orders/${orderId}/review`, { rating: 9 }).expect(422);
+    await as(ctx, token).get(`/v1/store/orders/${orderId}/review`).expect(200).expect((r) => expect(r.body.id).toBe(review.body.id));
+
+    // An order that is not delivered cannot be reviewed.
+    await cart(token);
+    const other = await as(ctx, token).post('/v1/store/checkout', {}).set('Idempotency-Key', randomUUID()).expect(201);
+    await as(ctx, token).post(`/v1/store/orders/${other.body.orders[0].id as string}/review`, { rating: 5 }).expect(409);
+
+    const csLead = await staffToken(ctx, 'cs-lead');
+    const hidden = await as(ctx, csLead).post(`/v1/admin/reviews/${review.body.id as string}/actions/hide`).expect(200);
+    expect(hidden.body).toMatchObject({ status: 'hidden', rewardPoints: 4 });
+    await as(ctx, await staffToken(ctx, 'cs')).post(`/v1/admin/reviews/${review.body.id as string}/actions/publish`).expect(403);
+  });
+
+  it('recalculates tiers from 12-month spend and changes the earn multiplier (D-134)', async () => {
+    const setting = await ctx.prisma.setting.findFirstOrThrow({ where: { key: 'loyalty.tiers', scopeType: 'platform' } });
+    const current = await ctx.prisma.settingVersion.findFirstOrThrow({ where: { settingId: setting.id, status: 'approved' }, orderBy: { versionNo: 'desc' } });
+    await setSetting(ctx, 'loyalty.tiers', [
+      { tier: 'member', minSpend12m: '0.00', multiplier: '1' },
+      { tier: 'silver', minSpend12m: '100.00', multiplier: '1.25' },
+      { tier: 'gold', minSpend12m: '999999999.00', multiplier: '1.5' },
+    ]);
+    try {
+      await loyalty.recalculateTiers();
+      const user = await userOf(completed.phone);
+      const membership = await ctx.prisma.loyaltyMembership.findUniqueOrThrow({ where: { userId: user.id } });
+      expect(membership).toMatchObject({ tier: 'silver' });
+      expect(membership.multiplier.toFixed(2)).toBe('1.25');
+      expect(await ctx.prisma.domainEvent.count({ where: { type: 'loyalty.tier_changed', aggregateId: user.publicId } })).toBe(1);
+      const summary = await as(ctx, completed.token).get('/v1/store/loyalty').expect(200);
+      expect(summary.body).toMatchObject({ tier: 'silver', multiplier: '1.25' });
+    } finally {
+      await setSetting(ctx, 'loyalty.tiers', current.value);
+    }
+  });
+
+  it('lets Marketing adjust points with a reason, audited; never below zero', async () => {
+    const user = await userOf(completed.phone);
+    const marketing = await staffToken(ctx, 'marketing');
+    const key = randomUUID();
+    const url = `/v1/admin/customers/${user.publicId}/loyalty/adjustments`;
+    const added = await as(ctx, marketing).post(url, { points: 40, reason: 'ชดเชยงานล่าช้า' }).set('Idempotency-Key', key).expect(201);
+    expect(added.body).toMatchObject({ entryType: 'adjust', points: 40, reason: 'ชดเชยงานล่าช้า' });
+    const replay = await as(ctx, marketing).post(url, { points: 40, reason: 'ชดเชยงานล่าช้า' }).set('Idempotency-Key', key).expect(201);
+    expect(replay.body.id).toBe(added.body.id);
+    await as(ctx, marketing).post(url, { points: -1_000_000, reason: 'ทดสอบ' }).set('Idempotency-Key', randomUUID()).expect(409);
+    await as(ctx, marketing).post(url, { points: 0, reason: 'ทดสอบ' }).set('Idempotency-Key', randomUUID()).expect(422);
+    await as(ctx, await staffToken(ctx, 'cs')).post(url, { points: 5, reason: 'ทดสอบ' }).set('Idempotency-Key', randomUUID()).expect(403);
+    const audit = await ctx.prisma.auditLog.findFirstOrThrow({ where: { action: 'loyalty.points_adjusted', resourcePublicId: user.publicId } });
+    expect(audit.category).toBe('finance');
+    const ledger = await as(ctx, marketing).get(`/v1/admin/customers/${user.publicId}/loyalty/ledger`).expect(200);
+    expect(ledger.body.data[0]).toMatchObject({ entryType: 'adjust', points: 40 });
+    const summary = await as(ctx, marketing).get(`/v1/admin/customers/${user.publicId}/loyalty`).expect(200);
+    expect(summary.body.availablePoints).toBeGreaterThanOrEqual(44);
   });
 });

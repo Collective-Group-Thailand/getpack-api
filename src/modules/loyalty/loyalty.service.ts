@@ -1,16 +1,17 @@
-import { type Actor, systemActor } from '@common/context/actor';
+import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type PointsEntry, type PointsEntryType, type Prisma } from '@generated/prisma/client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
+import { AuditService } from '@platform/audit/audit.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { SettingsService } from '@platform/settings/settings.service';
 
-import { earnPoints, pointsAfterRefund, pointsForBaht } from './points-math';
+import { earnPoints, pointsAfterRefund, pointsForBaht, tierFor } from './points-math';
 
 const D = (v: { toString(): string } | string | number) => new MoneyDecimal(v.toString());
 const DAY_MS = 86_400_000;
@@ -49,6 +50,7 @@ export class LoyaltyService {
     private readonly settings: SettingsService,
     private readonly events: DomainEvents,
     private readonly activity: ActivityLogService,
+    private readonly audit: AuditService,
   ) {}
 
   // --- reads --------------------------------------------------------------------------------------------
@@ -471,6 +473,112 @@ export class LoyaltyService {
       });
     }
     return byUser.size;
+  }
+
+  // --- tiers (D-134) ------------------------------------------------------------------------------------
+
+  /**
+   * Nightly: every customer's tier from the spend of the last 12 months — completed orders, net before VAT,
+   * excluding shipping, after discounts (the earning basis). Tier changes publish `loyalty.tier_changed`.
+   */
+  async recalculateTiers(now = new Date()): Promise<number> {
+    const since = addMonths(now, -12);
+    const tiers = await this.settings.at('loyalty.tiers', { at: now });
+    const spends = await this.prisma.$queryRaw<{ user_id: bigint; spend: string }[]>`
+      SELECT o.customer_user_id AS user_id, sum(l.net_amount - l.discount_amount)::text AS spend
+        FROM orders o JOIN order_lines l ON l.order_id = o.id
+       WHERE o.status = 'completed' AND o.completed_at > ${since} AND o.completed_at <= ${now}
+         AND l.line_type <> 'shipping'
+       GROUP BY o.customer_user_id`;
+    const spendOf = new Map(spends.map((r) => [r.user_id, D(r.spend)]));
+    const members = await this.prisma.loyaltyMembership.findMany({ select: { userId: true } });
+    const users = new Set<bigint>([...spendOf.keys(), ...members.map((m) => m.userId)]);
+    let changed = 0;
+    for (const userId of users) {
+      const spend = spendOf.get(userId) ?? D(0);
+      const rule = tierFor(spend, tiers.value);
+      await this.prisma.withTx(async (tx) => {
+        const before = await tx.loyaltyMembership.findUnique({ where: { userId } });
+        const data = {
+          tier: rule.tier,
+          spend12m: formatMoney(spend),
+          multiplier: D(rule.multiplier).toFixed(2),
+          tiersSettingVersionId: tiers.versionId,
+          evaluatedAt: now,
+        };
+        await tx.loyaltyMembership.upsert({
+          where: { userId },
+          create: { userId, ...data },
+          update: { ...data, rowVersion: { increment: 1 } },
+        });
+        if ((before?.tier ?? 'member') === rule.tier) return;
+        const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { publicId: true } });
+        const payload = { from: before?.tier ?? 'member', to: rule.tier, spend12m: formatMoney(spend), multiplier: data.multiplier };
+        const event = await this.events.record(
+          tx,
+          { type: 'loyalty.tier_changed', aggregateType: 'user', aggregateId: user.publicId, payload: { userId: user.publicId, ...payload } },
+          systemActor('loyalty.tiers'),
+        );
+        await this.activity.record(tx, {
+          aggregateType: 'user',
+          aggregatePublicId: user.publicId,
+          action: 'loyalty.tier_changed',
+          messageKey: 'activity.loyalty.tier_changed',
+          messageParams: payload,
+          visibility: ['internal', 'customer'],
+          domainEventId: event.id,
+          actor: systemActor('loyalty.tiers'),
+        });
+        changed += 1;
+      });
+    }
+    return changed;
+  }
+
+  // --- staff adjustments -------------------------------------------------------------------------------
+
+  /**
+   * Adds (a lot expiring 12 months later) or removes (FIFO from the lots) points with a reason; audited
+   * as a finance action. Removing more than the balance is refused.
+   */
+  async adjust(actor: UserActor, userId: bigint, points: number, reason: string, now = new Date()): Promise<PointsEntry> {
+    return this.prisma.withTx(async (tx) => {
+      const value = await this.settings.at('loyalty.point_value', { at: now, tx });
+      const expiry = await this.settings.at('loyalty.points_expiry', { at: now, tx });
+      const positive = points > 0;
+      const expiresAt = positive ? addMonths(now, expiry.value.monthsPerEarning) : null;
+      const entry = await tx.pointsEntry.create({
+        data: {
+          userId,
+          entryType: 'adjust',
+          points,
+          pointValue: D(value.value).toFixed(6),
+          pointValueSettingVersionId: value.versionId,
+          bahtValue: formatMoney(D(Math.abs(points)).mul(value.value)),
+          status: 'available',
+          expiresAt,
+          reason,
+          createdById: actor.userId,
+        },
+      });
+      if (positive) {
+        await tx.pointsLot.create({ data: { earnEntryId: entry.id, userId, points, remaining: points, expiresAt: expiresAt! } });
+      } else {
+        const taken = await this.consume(tx, userId, -points, entry.id);
+        if (taken < -points) throw new DomainException('loyalty.insufficient_points', { params: { requested: -points, available: taken } });
+      }
+      const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { publicId: true } });
+      await this.audit.record(tx, {
+        category: 'finance',
+        action: 'loyalty.points_adjusted',
+        actor,
+        resourceType: 'user',
+        resourcePublicId: user.publicId,
+        data: { points, reason, entryId: entry.publicId },
+      });
+      await this.record(tx, userId, entry, 'points.adjusted', { points, reason }, actor);
+      return entry;
+    });
   }
 
   // --- lots -------------------------------------------------------------------------------------------

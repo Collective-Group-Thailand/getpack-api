@@ -710,5 +710,15 @@
       "title": "Not enough points",
       "detail": "Not enough points to redeem; preview the checkout again"
     }
+  },
+  "reviews": {
+    "not_delivered": {
+      "title": "Not delivered yet",
+      "detail": "An order can be reviewed once it is delivered"
+    },
+    "exists": {
+      "title": "Already reviewed",
+      "detail": "This order has already been reviewed"
+    }
   }
 }

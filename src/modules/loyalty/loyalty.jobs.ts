@@ -25,4 +25,10 @@ export class LoyaltyJobs {
   remind(): Promise<number> {
     return this.loyalty.remindExpiring();
   }
+
+  /** Tiers from 12-month spend, nightly (D-134). */
+  @ScheduledJob({ name: 'loyalty.recalculate_tiers', every: 86_400_000 })
+  recalculateTiers(): Promise<number> {
+    return this.loyalty.recalculateTiers();
+  }
 }

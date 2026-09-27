@@ -1,4 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { PageQuery } from '@common/pagination/pagination.dto';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
+import { Type } from 'class-transformer';
+import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, NotEquals } from 'class-validator';
 
 /** Loyalty points and tiers (D-130…D-135). */
 
@@ -114,3 +118,92 @@ export const ENTRY_EXAMPLE: PointsEntryDto = {
   reason: null,
   createdAt: '2026-10-21T10:00:00+07:00',
 };
+
+// --- reviews (D-135) ------------------------------------------------------------------------------------
+
+export class SubmitReviewDto {
+  @ApiProperty({ type: 'integer', minimum: 1, maximum: 5, example: 5 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating!: number;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'กล่องสวย ส่งตรงเวลา', maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  comment?: string | null;
+}
+
+export class ReviewDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000b0010' })
+  id!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000b0011' })
+  orderId!: string;
+
+  @ApiProperty({ example: 'OR-2610-0001' })
+  orderCode!: string;
+
+  @ApiProperty({ type: 'integer', example: 5 })
+  rating!: number;
+
+  @ApiProperty({ type: String, nullable: true, example: 'กล่องสวย ส่งตรงเวลา' })
+  comment!: string | null;
+
+  @ApiProperty({ enum: ['pending', 'published', 'hidden'], enumName: 'ReviewStatus', example: 'published' })
+  status!: string;
+
+  @ApiProperty({ type: 'integer', example: 4, description: 'Points the review earned (D-135)' })
+  rewardPoints!: number;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-25T10:00:00+07:00' })
+  createdAt!: string;
+}
+
+export class AdminReviewDto extends ReviewDto {
+  @ApiProperty({ type: UserRefDto })
+  customer!: UserRefDto;
+}
+
+export const REVIEW_EXAMPLE: ReviewDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-0000000b0010',
+  orderId: '0192f3a0-7c1e-7d2a-9b1f-0000000b0011',
+  orderCode: 'OR-2610-0001',
+  rating: 5,
+  comment: 'กล่องสวย ส่งตรงเวลา',
+  status: 'published',
+  rewardPoints: 4,
+  createdAt: '2026-10-25T10:00:00+07:00',
+};
+
+export const ADMIN_REVIEW_EXAMPLE: AdminReviewDto = {
+  ...REVIEW_EXAMPLE,
+  customer: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000e0009', displayName: 'สมหญิง ทดสอบ' },
+};
+
+export class ReviewListQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: ['pending', 'published', 'hidden'], enumName: 'ReviewStatus' })
+  @IsOptional()
+  @IsIn(['pending', 'published', 'hidden'])
+  status?: 'pending' | 'published' | 'hidden';
+}
+
+// --- staff adjustments ----------------------------------------------------------------------------------
+
+export class AdjustPointsDto {
+  @ApiProperty({ type: 'integer', example: 40, description: 'Points to add (positive) or remove (negative), never 0' })
+  @Type(() => Number)
+  @IsInt()
+  @Min(-1_000_000)
+  @Max(1_000_000)
+  @NotEquals(0)
+  points!: number;
+
+  @ApiProperty({ example: 'ชดเชยงานล่าช้า', maxLength: 500 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
+  reason!: string;
+}

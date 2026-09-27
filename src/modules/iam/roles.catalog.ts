@@ -59,6 +59,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'orders.read',
       'payments.read',
       'promotions.read',
+      'loyalty.read',
     ],
   },
   {
@@ -128,6 +129,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'promotions.read',
       'promotions.manage',
       'campaigns.manage',
+      'loyalty.read',
+      'loyalty.adjust',
+      'reviews.moderate',
     ],
   },
   {
@@ -153,6 +157,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'orders.cancel',
       'orders.manage',
       'payments.read',
+      'loyalty.read',
     ],
   },
   {
@@ -182,6 +187,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'payments.read',
       'refunds.request',
       'promotions.read',
+      'loyalty.read',
+      'loyalty.adjust',
+      'reviews.moderate',
     ],
   },
   // Prepress and Logistics see neither cost nor margin (D-141).
@@ -219,6 +227,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'payments.allocate',
       'refunds.request',
       'refunds.complete',
+      'loyalty.read',
     ],
   },
   {
@@ -247,6 +256,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'refunds.request',
       'refunds.complete',
       'promotions.read',
+      'loyalty.read',
     ],
   },
   {
@@ -280,6 +290,9 @@ export const ROLES: readonly RoleDefinition[] = [
       'promotions.read',
       'promotions.manage',
       'campaigns.manage',
+      'loyalty.read',
+      'loyalty.adjust',
+      'reviews.moderate',
     ],
   },
   {
@@ -330,6 +343,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'orders.read',
       'payments.read',
       'promotions.read',
+      'loyalty.read',
     ],
   },
 

@@ -169,6 +169,8 @@ export const ERROR_CODES = {
   'referrals.not_new_customer': HttpStatus.CONFLICT,
   'promotions.system_managed': HttpStatus.CONFLICT,
   'loyalty.insufficient_points': HttpStatus.CONFLICT,
+  'reviews.not_delivered': HttpStatus.CONFLICT,
+  'reviews.exists': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;
