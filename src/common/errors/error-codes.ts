@@ -163,6 +163,11 @@ export const ERROR_CODES = {
   'promotions.limit_reached': HttpStatus.CONFLICT,
   'promotions.budget_exhausted': HttpStatus.CONFLICT,
   'promotions.payment_method_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'referrals.code_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'referrals.self_referral': HttpStatus.UNPROCESSABLE_ENTITY,
+  'referrals.already_attributed': HttpStatus.CONFLICT,
+  'referrals.not_new_customer': HttpStatus.CONFLICT,
+  'promotions.system_managed': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

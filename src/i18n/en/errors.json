@@ -681,6 +681,28 @@
     "payment_method_required": {
       "title": "Payment method not allowed",
       "detail": "A promotion on this order requires paying by {methods}"
+    },
+    "system_managed": {
+      "title": "Managed by the system",
+      "detail": "This promotion is managed by the system; its values are the referral settings"
+    }
+  },
+  "referrals": {
+    "code_invalid": {
+      "title": "Unknown referral code",
+      "detail": "This referral code does not exist"
+    },
+    "self_referral": {
+      "title": "Own referral code",
+      "detail": "You cannot use your own referral code"
+    },
+    "already_attributed": {
+      "title": "Already referred",
+      "detail": "This account has already used a referral code"
+    },
+    "not_new_customer": {
+      "title": "New customers only",
+      "detail": "A referral code can only be used before the first order"
     }
   }
 }

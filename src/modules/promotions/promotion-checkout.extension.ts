@@ -22,6 +22,7 @@ import {
   type PromotionContext,
 } from './promotion-engine';
 import { type AppliedPromotion, PromotionRedemptions } from './promotion-redemptions.service';
+import { ReferralsService } from './referrals.service';
 
 const D = (v: { toString(): string } | string) => new MoneyDecimal(v.toString());
 /** Scheme of the customer rate cards; its zones are the ones promotions name (D-053 "shipping zone"). */
@@ -78,6 +79,7 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
     private readonly settings: SettingsService,
     private readonly identity: IdentityFingerprints,
     private readonly redemptions: PromotionRedemptions,
+    private readonly referrals: ReferralsService,
   ) {}
 
   onModuleInit(): void {
@@ -125,7 +127,7 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
         order.lines[d.line] = discountLine(order.lines[d.line]!, d.amount);
         order.discounts.push({
           lineIndex: d.line,
-          source: c.row.kind === 'coupon' ? 'coupon' : 'automatic_promotion',
+          source: c.row.kind === 'coupon' ? 'coupon' : c.row.kind === 'referral' ? 'referral' : 'automatic_promotion',
           amount: d.amount,
           pct: c.row.benefit && (c.row.benefit as { type?: string }).type === 'percent' ? D((c.row.benefit as { pct: string }).pct).toFixed(4) : null,
           cappedAmount: d.cappedAmount,
@@ -176,6 +178,7 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
 
   async placed(tx: Tx, draft: CheckoutDraft, placed: PlacedGroup): Promise<void> {
     await this.recordFingerprints(tx, draft);
+    await this.referrals.markFirstOrder(tx, draft.customerUserId, placed.groupId);
     const state = draft.state[this.key] as PromotionState | undefined;
     if (!state?.applied.length) return;
     await this.redemptions.reserve(tx, draft, placed, state.applied);
@@ -192,6 +195,24 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
       include: { couponCode: { include: { promotion: { include: PROMOTION_WITH } } } },
       orderBy: { id: 'asc' },
     });
+    // D-136: a referred new customer gets the referee discount on the first order (system promotion,
+    // values from `referral.rules`).
+    const attribution = await db.referralAttribution.findUnique({ where: { refereeUserId: draft.customerUserId } });
+    if (attribution?.status === 'pending' && attribution.firstOrderGroupId === null) {
+      const referral = await db.promotion.findFirst({ where: { kind: 'referral', status: 'active' }, include: PROMOTION_WITH });
+      if (referral) {
+        const rules = (await this.settings.at('referral.rules', { at: draft.at })).value;
+        out.push({
+          row: {
+            ...referral,
+            conditions: { firstOrderOnly: true },
+            benefit: { type: 'percent', pct: rules.refereeDiscountPct, maxAmount: rules.refereeDiscountMaxBaht },
+          },
+          couponCodeId: null,
+          code: null,
+        });
+      }
+    }
     const seen = new Set<bigint>();
     for (const cc of codes) {
       const coupon = cc.couponCode!;

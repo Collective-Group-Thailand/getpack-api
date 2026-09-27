@@ -304,6 +304,7 @@ export class PromotionsAdminService {
     return this.prisma.withTx(async (tx) => {
       const current = await this.promotion(publicId, tx);
       assertIfMatch(ifMatch, promotionEtag(current));
+      if (current.kind === 'referral') throw new DomainException('promotions.system_managed');
       if (current.status === 'ended') throw new DomainException('promotions.ended');
       const conditions = input.conditions ?? (current.conditions as Record<string, unknown>);
       const benefit = input.benefit ?? (current.benefit as Record<string, unknown>);
@@ -350,6 +351,7 @@ export class PromotionsAdminService {
     return this.prisma.withTx(async (tx) => {
       const current = await this.promotion(publicId, tx);
       assertIfMatch(ifMatch, promotionEtag(current), { required: false });
+      if (current.kind === 'referral') throw new DomainException('promotions.system_managed');
       if (!rule.from.includes(current.status))
         throw new DomainException('promotions.invalid_transition', {
           params: { from: current.status, action },

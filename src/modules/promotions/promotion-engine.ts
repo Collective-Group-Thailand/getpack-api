@@ -342,7 +342,8 @@ export function guardMargins(
     const allowed =
       o.buyCostNet === null || keep.lte(0)
         ? ZERO
-        : MoneyDecimal.max(ZERO, round2(net.sub(D(o.buyCostNet).div(keep))));
+        : // Rounded down: rounding half-up could leave the order a satang below the floor.
+          MoneyDecimal.max(ZERO, net.sub(D(o.buyCostNet).div(keep)).toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN));
     let excess = own.reduce((a, d) => a.add(d.amount), ZERO).sub(allowed);
     for (const d of [...own].reverse()) {
       if (excess.lte(0)) break;

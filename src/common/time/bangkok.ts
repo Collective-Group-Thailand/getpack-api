@@ -24,6 +24,11 @@ export function startOfBangkokDay(day: string): Date {
 }
 
 /** `day` shifted by `days` calendar days (`YYYY-MM-DD` in, out). */
+/** Midnight in Bangkok on the first day of the instant's Bangkok month. */
+export function startOfBangkokMonth(instant: Date): Date {
+  return startOfBangkokDay(`${bangkokDate(instant).slice(0, 8)}01`);
+}
+
 export function addCalendarDays(day: string, days: number): string {
   return new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 }

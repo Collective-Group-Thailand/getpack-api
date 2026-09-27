@@ -4,7 +4,12 @@ import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { APPROVAL_POLICIES } from './data/approval-policies';
 import { PRODUCT_TYPES } from './data/catalog';
-import { ORDER_CANCEL_REASONS, PAYMENT_FEATURE_FLAGS, PAYMENT_SCHEDULE_TEMPLATES } from './data/commerce';
+import {
+  ORDER_CANCEL_REASONS,
+  PAYMENT_FEATURE_FLAGS,
+  PAYMENT_SCHEDULE_TEMPLATES,
+  REFERRAL_PROMOTION,
+} from './data/commerce';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { UNMET_DEMAND_REASONS } from './data/quotes';
@@ -68,6 +73,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensureOrderCancelReasons(tx, count);
       await ensurePaymentScheduleTemplates(tx, count);
       await ensurePaymentFeatureFlags(tx, count);
+      await ensureReferralPromotion(tx, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -517,4 +523,26 @@ async function ensurePaymentFeatureFlags(tx: Tx, count: (what: string) => void):
     });
     count('feature_flags');
   }
+}
+
+/** The system promotion of the referee discount (D-136), active from the seed date. */
+async function ensureReferralPromotion(tx: Tx, count: (what: string) => void): Promise<void> {
+  if (await tx.promotion.findFirst({ where: { kind: 'referral' } })) return;
+  const entity = await tx.entity.findFirstOrThrow({ where: { isDefault: true } });
+  await tx.promotion.create({
+    data: {
+      entityId: entity.id,
+      name: REFERRAL_PROMOTION.name,
+      description: REFERRAL_PROMOTION.description,
+      kind: 'referral',
+      priority: REFERRAL_PROMOTION.priority,
+      stacking: REFERRAL_PROMOTION.stacking,
+      startsAt: SEED_EFFECTIVE_FROM,
+      conditions: REFERRAL_PROMOTION.conditions,
+      benefit: REFERRAL_PROMOTION.benefit,
+      usageLimitPerCustomer: REFERRAL_PROMOTION.usageLimitPerCustomer,
+      status: 'active',
+    },
+  });
+  count('promotions');
 }

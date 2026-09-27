@@ -7,6 +7,7 @@ import { PromotionCodes } from './promotion-codes.service';
 import { PromotionRedemptions } from './promotion-redemptions.service';
 import { PromotionsJobs } from './promotions.jobs';
 import { PromotionsAdminService } from './promotions-admin.service';
+import { ReferralsService } from './referrals.service';
 
 /**
  * Promotions, campaigns and coupons (D-053, D-154): Marketing admin, coupon codes on the cart, the
@@ -21,8 +22,9 @@ import { PromotionsAdminService } from './promotions-admin.service';
     PromotionCodes,
     PromotionRedemptions,
     PromotionCheckout,
+    ReferralsService,
     PromotionsJobs,
   ],
-  exports: [PromotionsAdminService, PromotionCodes, PromotionRedemptions, IdentityFingerprints],
+  exports: [PromotionsAdminService, PromotionCodes, PromotionRedemptions, IdentityFingerprints, ReferralsService],
 })
 export class PromotionsModule {}

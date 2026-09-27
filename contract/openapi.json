@@ -1409,6 +1409,50 @@
           "type": "https://errors.packio/quotes.still_valid"
         }
       },
+      "problem.referrals.already_attributed": {
+        "summary": "referrals.already_attributed",
+        "value": {
+          "code": "referrals.already_attributed",
+          "detail": "บัญชีนี้ใช้รหัสแนะนำเพื่อนไปแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ใช้รหัสแนะนำแล้ว",
+          "type": "https://errors.packio/referrals.already_attributed"
+        }
+      },
+      "problem.referrals.code_invalid": {
+        "summary": "referrals.code_invalid",
+        "value": {
+          "code": "referrals.code_invalid",
+          "detail": "ไม่พบรหัสแนะนำเพื่อนนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "รหัสแนะนำไม่ถูกต้อง",
+          "type": "https://errors.packio/referrals.code_invalid"
+        }
+      },
+      "problem.referrals.not_new_customer": {
+        "summary": "referrals.not_new_customer",
+        "value": {
+          "code": "referrals.not_new_customer",
+          "detail": "รหัสแนะนำใช้ได้ก่อนสั่งซื้อครั้งแรกเท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "สำหรับลูกค้าใหม่เท่านั้น",
+          "type": "https://errors.packio/referrals.not_new_customer"
+        }
+      },
+      "problem.referrals.self_referral": {
+        "summary": "referrals.self_referral",
+        "value": {
+          "code": "referrals.self_referral",
+          "detail": "ใช้รหัสแนะนำของตัวเองไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ใช้รหัสของตัวเองไม่ได้",
+          "type": "https://errors.packio/referrals.self_referral"
+        }
+      },
       "problem.refunds.channel_unavailable": {
         "summary": "refunds.channel_unavailable",
         "value": {
@@ -3255,6 +3299,111 @@
         ],
         "type": "object"
       },
+      "AdminReferralDto": {
+        "properties": {
+          "approvalId": {
+            "description": "Marketing review (`referral_review`)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "attributedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "code": {
+            "example": "PK7QX2MA",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstOrderGroupCode": {
+            "example": "OG-2610-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstOrderGroupId": {
+            "description": "The referee’s first order group",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fraudFlags": {
+            "description": "Why it was held or rejected: `<kind>_match` (same phone / address / card / device as the referrer), `linked_referees`, `monthly_cap`",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "qualifiedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "referee": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "referrer": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "rewardedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferralStatus"
+              }
+            ],
+            "example": "pending"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "attributedAt",
+          "qualifiedAt",
+          "rewardedAt",
+          "referrer",
+          "referee",
+          "firstOrderGroupId",
+          "firstOrderGroupCode",
+          "fraudFlags",
+          "approvalId",
+          "decidedAt"
+        ],
+        "type": "object"
+      },
       "AdminSavedQuoteDto": {
         "properties": {
           "channel": {
@@ -4314,6 +4463,20 @@
         },
         "required": [
           "userId"
+        ],
+        "type": "object"
+      },
+      "AttributeReferralDto": {
+        "properties": {
+          "code": {
+            "description": "The code from the referral link; case does not matter",
+            "example": "PK7QX2MA",
+            "maxLength": 20,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
         ],
         "type": "object"
       },
@@ -15027,6 +15190,33 @@
         ],
         "type": "object"
       },
+      "MyReferralDto": {
+        "properties": {
+          "code": {
+            "example": "PK7QX2MA",
+            "pattern": "^[A-Z0-9]{6,12}$",
+            "type": "string"
+          },
+          "link": {
+            "example": "https://www.packio.invalid/r/PK7QX2MA",
+            "type": "string"
+          },
+          "referrals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferralCountsDto"
+              }
+            ],
+            "description": "People who used my code, by status"
+          }
+        },
+        "required": [
+          "code",
+          "link",
+          "referrals"
+        ],
+        "type": "object"
+      },
       "NotificationAudience": {
         "enum": [
           "customer",
@@ -19936,6 +20126,99 @@
           "calledNumber"
         ],
         "type": "object"
+      },
+      "ReferralCountsDto": {
+        "properties": {
+          "pending": {
+            "example": 2,
+            "type": "integer"
+          },
+          "qualified": {
+            "example": 1,
+            "type": "integer"
+          },
+          "rejected": {
+            "example": 0,
+            "type": "integer"
+          },
+          "rewarded": {
+            "example": 3,
+            "type": "integer"
+          },
+          "underReview": {
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pending",
+          "underReview",
+          "qualified",
+          "rewarded",
+          "rejected"
+        ],
+        "type": "object"
+      },
+      "ReferralDto": {
+        "properties": {
+          "attributedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "code": {
+            "example": "PK7QX2MA",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "qualifiedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rewardedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferralStatus"
+              }
+            ],
+            "example": "pending"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "attributedAt",
+          "qualifiedAt",
+          "rewardedAt"
+        ],
+        "type": "object"
+      },
+      "ReferralStatus": {
+        "enum": [
+          "pending",
+          "under_review",
+          "qualified",
+          "rewarded",
+          "rejected_fraud"
+        ],
+        "type": "string"
       },
       "RefreshDto": {
         "properties": {
@@ -119626,6 +119909,463 @@
         ]
       }
     },
+    "/v1/admin/referrals": {
+      "get": {
+        "description": "Newest first; `status=under_review` is Marketing’s review queue (decided through the approval, `referral_review`, D-136).\n\nImplements: D-136.",
+        "operationId": "admin.referrals.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReferralStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "approvalId": null,
+                      "attributedAt": "2026-10-01T10:00:00+07:00",
+                      "code": "PK7QX2MA",
+                      "decidedAt": null,
+                      "firstOrderGroupCode": "OG-2610-0001",
+                      "firstOrderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0004",
+                      "fraudFlags": [],
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                      "qualifiedAt": null,
+                      "referee": {
+                        "displayName": "สมหญิง ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0003"
+                      },
+                      "referrer": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002"
+                      },
+                      "rewardedAt": null,
+                      "status": "pending"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminReferralDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List referrals",
+        "tags": [
+          "admin.referrals"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      }
+    },
+    "/v1/admin/referrals/{referralId}": {
+      "get": {
+        "description": "Referrer, referee, first order, fraud flags and the review (D-136).\n\nImplements: D-136.",
+        "operationId": "admin.referrals.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "referralId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "approvalId": null,
+                  "attributedAt": "2026-10-01T10:00:00+07:00",
+                  "code": "PK7QX2MA",
+                  "decidedAt": null,
+                  "firstOrderGroupCode": "OG-2610-0001",
+                  "firstOrderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0004",
+                  "fraudFlags": [],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                  "qualifiedAt": null,
+                  "referee": {
+                    "displayName": "สมหญิง ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0003"
+                  },
+                  "referrer": {
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002"
+                  },
+                  "rewardedAt": null,
+                  "status": "pending"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReferralDto"
+                }
+              }
+            },
+            "description": "Referral",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a referral",
+        "tags": [
+          "admin.referrals"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      }
+    },
     "/v1/admin/refunds": {
       "get": {
         "description": "Newest first; filter by status.\n\nImplements: D-169, D-061.",
@@ -167115,6 +167855,412 @@
         ]
       }
     },
+    "/v1/store/referral": {
+      "get": {
+        "description": "The code (created on first use) and link to share, with how many people used it by status. A friend who orders gets the referee discount on the first order; the reward follows once that order passed the claim window (D-136).\n\nImplements: D-136.",
+        "operationId": "store.referral.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "PK7QX2MA",
+                  "link": "https://www.packio.invalid/r/PK7QX2MA",
+                  "referrals": {
+                    "pending": 2,
+                    "qualified": 1,
+                    "rejected": 0,
+                    "rewarded": 3,
+                    "underReview": 0
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/MyReferralDto"
+                }
+              }
+            },
+            "description": "My referral",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my referral code and link",
+        "tags": [
+          "store.referral"
+        ]
+      }
+    },
+    "/v1/store/referral/attribution": {
+      "post": {
+        "description": "Once per account, before the first order (D-136): the first order then gets the referee discount (`referral.rules`). Own codes are refused. The web client calls this right after sign-up when the customer arrived through a referral link.\n\nImplements: D-136.",
+        "operationId": "store.referral.attribute",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "code": "PK7QX2MA"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AttributeReferralDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "attributedAt": "2026-10-01T10:00:00+07:00",
+                  "code": "PK7QX2MA",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
+                  "qualifiedAt": null,
+                  "rewardedAt": null,
+                  "status": "pending"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralDto"
+                }
+              }
+            },
+            "description": "Referral recorded",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "referrals.already_attributed": {
+                    "$ref": "#/components/examples/problem.referrals.already_attributed"
+                  },
+                  "referrals.not_new_customer": {
+                    "$ref": "#/components/examples/problem.referrals.not_new_customer"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `referrals.already_attributed`, `referrals.not_new_customer`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "referrals.code_invalid": {
+                    "$ref": "#/components/examples/problem.referrals.code_invalid"
+                  },
+                  "referrals.self_referral": {
+                    "$ref": "#/components/examples/problem.referrals.self_referral"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `referrals.code_invalid`, `referrals.self_referral`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Use a friend’s referral code",
+        "tags": [
+          "store.referral"
+        ]
+      }
+    },
     "/v1/store/rfqs": {
       "get": {
         "description": "Newest first (D-100).\n\nImplements: D-100, D-043, D-102.",
@@ -171827,6 +172973,10 @@
       "name": "admin.realtime"
     },
     {
+      "description": "Referrals with their fraud flags; `under_review` is Marketing’s queue (D-136).",
+      "name": "admin.referrals"
+    },
+    {
       "description": "Refunds: request, Finance Manager approval (maker-checker), gateway or bank-transfer execution (D-169).",
       "name": "admin.refunds"
     },
@@ -171981,6 +173131,10 @@
     {
       "description": "Realtime signals over SSE for customers (ids + type only, contract §6).",
       "name": "store.realtime"
+    },
+    {
+      "description": "My referral code and link; use a friend’s code before the first order (D-136).",
+      "name": "store.referral"
     },
     {
       "description": "Requests for quote: submit, talk to Packio, accept or decline a quotation (D-100, D-043).",

@@ -155,3 +155,17 @@ export const PAYMENT_FEATURE_FLAGS = [
   { key: 'payments.twoc2p_ipp', description: '2C2P card instalments (IPP) — R2 (D-111), adapter stubbed' },
   { key: 'payments.scb_direct_debit', description: 'SCB direct debit — R2 (D-111), adapter stubbed' },
 ] as const;
+
+/**
+ * The system promotion behind the referee discount (D-136). Its benefit is informational: checkout takes
+ * the percentage and cap from the `referral.rules` setting in force; Marketing cannot edit it.
+ */
+export const REFERRAL_PROMOTION = {
+  name: 'แนะนำเพื่อน — ส่วนลดคำสั่งซื้อแรก',
+  description: 'D-136 referee discount on the first order; values from the referral.rules setting',
+  priority: 50,
+  stacking: 'stackable',
+  conditions: { firstOrderOnly: true },
+  benefit: { type: 'percent', pct: '5', maxAmount: '500.00' },
+  usageLimitPerCustomer: 1,
+} as const;

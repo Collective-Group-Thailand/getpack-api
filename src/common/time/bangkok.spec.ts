@@ -4,6 +4,7 @@ import {
   bangkokDayOfWeek,
   bangkokMinuteOfDay,
   startOfBangkokDay,
+  startOfBangkokMonth,
   toBangkokIso,
 } from './bangkok';
 
@@ -32,5 +33,11 @@ describe('Bangkok time helpers', () => {
   it('renders ISO 8601 with the +07:00 offset (contract §3)', () => {
     expect(toBangkokIso(new Date('2026-09-22T07:05:00Z'))).toBe('2026-09-22T14:05:00+07:00');
     expect(bangkokMinuteOfDay(new Date('2026-09-22T07:05:00Z'))).toBe(14 * 60 + 5);
+  });
+
+  it('starts the Bangkok month at local midnight on the 1st', () => {
+    // 2026-10-31T18:30Z is already 1 November in Bangkok.
+    expect(startOfBangkokMonth(new Date('2026-10-31T18:30:00Z')).toISOString()).toBe('2026-10-31T17:00:00.000Z');
+    expect(startOfBangkokMonth(new Date('2026-10-15T05:00:00Z')).toISOString()).toBe('2026-09-30T17:00:00.000Z');
   });
 });

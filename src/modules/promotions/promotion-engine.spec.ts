@@ -138,7 +138,7 @@ describe('promotion engine (D-053)', () => {
   });
 
   it('caps discounts at the margin floor and reports the capped amount; unknown cost → nothing', () => {
-    // net 10,000, buy 8,500, floor 10 % → allowed = 10,000 − 8,500 / 0.9 = 555.56
+    // net 10,000, buy 8,500, floor 10 % → allowed = 10,000 − 8,500 / 0.9 = 555.555… → 555.55 (rounded down)
     const r = evaluatePromotions(
       [promo('big', { benefit: { type: 'fixed', amount: '2000.00' } })],
       [line(0, 0, '10000.00')],
@@ -146,8 +146,8 @@ describe('promotion engine (D-053)', () => {
       ctx,
     );
     expect(r.discounts[0]).toMatchObject({
-      amount: '555.56',
-      cappedAmount: '1444.44',
+      amount: '555.55',
+      cappedAmount: '1444.45',
       capReason: 'margin_floor',
     });
     const unknown = evaluatePromotions(
@@ -217,9 +217,10 @@ describe('promotion engine (D-053)', () => {
               .filter((d) => d.order === o.order)
               .reduce((a, d) => a.add(d.amount), new MoneyDecimal(0));
             const payable = net.sub(disc);
+            // Margin ≥ floor without dividing by a payable that may be zero: payable × (1 − floor) ≥ cost.
             if (disc.gt(0)) {
-              const margin = payable.sub(o.buyCostNet).div(payable).mul(100);
-              expect(margin.gte(new MoneyDecimal(floor).sub('0.01'))).toBe(true);
+              const keep = new MoneyDecimal(1).sub(new MoneyDecimal(floor).div(100));
+              expect(payable.mul(keep).gte(o.buyCostNet)).toBe(true);
             }
           }
         },
