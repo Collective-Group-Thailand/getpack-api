@@ -4,6 +4,7 @@ import { AppConfigModule } from '@config/app-config.module';
 import { DatabaseModule } from '@database/database.module';
 import { BULLMQ_REDIS, RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
+import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { CompaniesModule } from '@modules/companies/companies.module';
@@ -77,6 +78,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     CompaniesModule,
     DiscountMemosModule,
     PaymentsModule,
+    ArtworkModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

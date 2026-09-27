@@ -11,6 +11,7 @@ import { AppConfigModule } from '@config/app-config.module';
 import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
+import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
@@ -97,6 +98,7 @@ import { LoggerModule } from 'nestjs-pino';
     CompaniesModule,
     DiscountMemosModule,
     PaymentsModule,
+    ArtworkModule,
     HealthModule,
     SurfacesModule,
   ],

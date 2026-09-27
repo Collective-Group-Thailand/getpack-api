@@ -782,5 +782,27 @@
       "title": "Memo cannot be used",
       "detail": "This discount memo cannot be used (status {status})"
     }
+  },
+  "artwork": {
+    "not_accepting": {
+      "title": "Artwork not accepted",
+      "detail": "This order does not take artwork now (status {status})"
+    },
+    "file_not_usable": {
+      "title": "File cannot be used",
+      "detail": "The file must be fully uploaded, yours and not infected"
+    },
+    "invalid_status": {
+      "title": "Wrong submission status",
+      "detail": "This submission is {status}"
+    },
+    "preflight_pending": {
+      "title": "Preflight running",
+      "detail": "The automatic preflight has not finished yet"
+    },
+    "preflight_blocked": {
+      "title": "Preflight blocked",
+      "detail": "The file is blocked by preflight (size mismatch or missing bleed); a new file is needed"
+    }
   }
 }

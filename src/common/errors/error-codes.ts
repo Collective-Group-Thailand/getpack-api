@@ -185,6 +185,11 @@ export const ERROR_CODES = {
   'discounts.cs_limit_exceeded': HttpStatus.UNPROCESSABLE_ENTITY,
   'discount_memos.within_cs_limit': HttpStatus.UNPROCESSABLE_ENTITY,
   'discount_memos.not_usable': HttpStatus.CONFLICT,
+  'artwork.not_accepting': HttpStatus.CONFLICT,
+  'artwork.file_not_usable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'artwork.invalid_status': HttpStatus.CONFLICT,
+  'artwork.preflight_pending': HttpStatus.CONFLICT,
+  'artwork.preflight_blocked': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

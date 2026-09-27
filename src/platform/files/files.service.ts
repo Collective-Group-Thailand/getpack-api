@@ -32,6 +32,12 @@ const PENDING_TTL_MS = 24 * 60 * 60_000;
  */
 export type AttachmentAccessPolicy = (actor: Actor, subjectId: bigint) => Promise<boolean>;
 
+/**
+ * Decides whether an actor may read a file that a domain row references directly (schema-design §2.8:
+ * `proofs.proof_file_id`, artwork submission files…); owning modules register one each.
+ */
+export type FileReadPolicy = (actor: Actor, file: FileObject) => Promise<boolean>;
+
 export interface PresignResult {
   file: FileObject;
   upload: { url: string; headers: Record<string, string> } | null;
@@ -48,6 +54,7 @@ export interface PresignResult {
 @Injectable()
 export class FilesService {
   private readonly policies = new Map<AttachmentSubject, AttachmentAccessPolicy>();
+  private readonly readers = new Map<string, FileReadPolicy>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -62,6 +69,11 @@ export class FilesService {
 
   registerAttachmentPolicy(subject: AttachmentSubject, policy: AttachmentAccessPolicy): void {
     this.policies.set(subject, policy);
+  }
+
+  /** A module whose rows reference files directly decides who else may read them (by the owning row). */
+  registerFileReader(key: string, policy: FileReadPolicy): void {
+    this.readers.set(key, policy);
   }
 
   async presign(
@@ -279,6 +291,9 @@ export class FilesService {
     for (const attachment of attachments) {
       const policy = this.policies.get(attachment.subjectType);
       if (policy && (await policy(actor, attachment.subjectId))) return true;
+    }
+    for (const reader of this.readers.values()) {
+      if (await reader(actor, file)) return true;
     }
     return false;
   }

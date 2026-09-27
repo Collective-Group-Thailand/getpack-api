@@ -93,6 +93,13 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `company_credit.manage` — Request B2B credit limits and terms (approved by Finance / C-Level) (D-121) | ● |  |  |  | ● |  | ● |  | ● | ● |  |  |  |  |
 | `discount_memos.request` — Give CS discounts within the limit and raise discount memos above it (D-052, D-124) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |
 | `discount_memos.read` — Read discount memos and where they were used (D-052) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |  |  |  | ● |
+| `artwork.read` — Read artwork submissions, preflight reports, proofs and design services of orders (D-070, D-071) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  | ● |
+| `artwork.submit_on_behalf` — Upload artwork for a customer’s order (D-070) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  |  |
+| `prepress.review` — Accept or reject submissions, send proofs and templates, answer proof annotations (D-070) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |
+| `proofs.decide_on_behalf` — Approve a proof or request changes for the customer, with a reason (audited) (D-070, D-073) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |
+| `design_services.manage` — Assign designers, deliver design rounds and re-quote structure or concept changes (D-071) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |
+| `mockups.manage` — Add a paid mockup / physical proof to an order at a CS-quoted price (audited) (D-072) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
+| `drawings.generate` — Generate dieline drawings and send templates to customers (D-070) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

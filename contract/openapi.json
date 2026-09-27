@@ -89,6 +89,61 @@
           "type": "https://errors.packio/approval.self_approval"
         }
       },
+      "problem.artwork.file_not_usable": {
+        "summary": "artwork.file_not_usable",
+        "value": {
+          "code": "artwork.file_not_usable",
+          "detail": "ไฟล์ต้องอัปโหลดสำเร็จ เป็นของคุณ และไม่ติดไวรัส",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ใช้ไฟล์นี้ไม่ได้",
+          "type": "https://errors.packio/artwork.file_not_usable"
+        }
+      },
+      "problem.artwork.invalid_status": {
+        "summary": "artwork.invalid_status",
+        "value": {
+          "code": "artwork.invalid_status",
+          "detail": "ไฟล์งานฉบับนี้อยู่ในสถานะ {status}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "สถานะไฟล์งานไม่ถูกต้อง",
+          "type": "https://errors.packio/artwork.invalid_status"
+        }
+      },
+      "problem.artwork.not_accepting": {
+        "summary": "artwork.not_accepting",
+        "value": {
+          "code": "artwork.not_accepting",
+          "detail": "คำสั่งซื้อนี้ไม่รับไฟล์งานในขณะนี้ (สถานะ {status})",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "คำสั่งซื้อนี้รับไฟล์งานไม่ได้",
+          "type": "https://errors.packio/artwork.not_accepting"
+        }
+      },
+      "problem.artwork.preflight_blocked": {
+        "summary": "artwork.preflight_blocked",
+        "value": {
+          "code": "artwork.preflight_blocked",
+          "detail": "ไฟล์ไม่ผ่านการตรวจ (ขนาดไม่ตรงแบบแปลนหรือไม่มีระยะตัดตก) ต้องให้ลูกค้าส่งไฟล์ใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไฟล์ไม่ผ่านการตรวจ",
+          "type": "https://errors.packio/artwork.preflight_blocked"
+        }
+      },
+      "problem.artwork.preflight_pending": {
+        "summary": "artwork.preflight_pending",
+        "value": {
+          "code": "artwork.preflight_pending",
+          "detail": "ระบบยังตรวจไฟล์ (preflight) ไม่เสร็จ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "กำลังตรวจไฟล์",
+          "type": "https://errors.packio/artwork.preflight_pending"
+        }
+      },
       "problem.auth.account_inactive": {
         "summary": "auth.account_inactive",
         "value": {
@@ -4903,6 +4958,110 @@
         ],
         "type": "object"
       },
+      "ArtworkFileDto": {
+        "properties": {
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "linkUrl": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mimeType": {
+            "example": "application/pdf",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "originalName": {
+            "example": "box-artwork.pdf",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArtworkFileRole"
+              }
+            ],
+            "example": "artwork"
+          },
+          "sizeBytes": {
+            "description": "Bytes",
+            "example": 2400000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "fileId",
+          "linkUrl",
+          "originalName",
+          "mimeType",
+          "sizeBytes"
+        ],
+        "type": "object"
+      },
+      "ArtworkFileInputDto": {
+        "properties": {
+          "fileId": {
+            "description": "An upload with purpose `artwork`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArtworkUploadRole"
+              }
+            ],
+            "default": "artwork",
+            "example": "artwork"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
+      "ArtworkFileRole": {
+        "enum": [
+          "artwork",
+          "font",
+          "link",
+          "reference"
+        ],
+        "type": "string"
+      },
+      "ArtworkSource": {
+        "enum": [
+          "upload",
+          "designer",
+          "design_service"
+        ],
+        "type": "string"
+      },
       "ArtworkStatus": {
         "enum": [
           "awaiting_template",
@@ -4912,6 +5071,134 @@
           "proof_sent",
           "changes_requested",
           "approved"
+        ],
+        "type": "string"
+      },
+      "ArtworkSubmissionDto": {
+        "properties": {
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UploadChannel"
+              }
+            ],
+            "example": "web"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/ArtworkFileDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "note": {
+            "example": "ใช้โลโก้สีทอง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderCode": {
+            "example": "OR2609270001",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "preflightCompletedAt": {
+            "example": "2026-09-27T10:01:00+07:00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "preflightReport": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreflightReportDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preflightStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightStatus"
+              }
+            ],
+            "example": "blocked"
+          },
+          "rejectReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reviewedAt": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArtworkSource"
+              }
+            ],
+            "example": "upload"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SubmissionStatus"
+              }
+            ],
+            "example": "submitted"
+          },
+          "submittedAt": {
+            "example": "2026-09-27T10:00:00+07:00",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "orderId",
+          "orderCode",
+          "versionNo",
+          "source",
+          "channel",
+          "status",
+          "note",
+          "submittedAt",
+          "files",
+          "preflightStatus",
+          "preflightCompletedAt",
+          "preflightReport",
+          "rejectReason",
+          "reviewedAt"
+        ],
+        "type": "object"
+      },
+      "ArtworkUploadRole": {
+        "enum": [
+          "artwork",
+          "font",
+          "reference"
         ],
         "type": "string"
       },
@@ -18560,6 +18847,313 @@
         ],
         "type": "string"
       },
+      "PreflightCheck": {
+        "enum": [
+          "size_mismatch",
+          "missing_bleed",
+          "low_resolution",
+          "rgb_colour",
+          "fonts_not_embedded",
+          "safe_zone",
+          "thin_lines",
+          "overprint",
+          "ink_coverage"
+        ],
+        "type": "string"
+      },
+      "PreflightCheckResultDto": {
+        "properties": {
+          "check": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightCheck"
+              }
+            ],
+            "example": "missing_bleed"
+          },
+          "measurements": {
+            "additionalProperties": true,
+            "description": "Measurements of the check (mm, pt, ppi as named)",
+            "example": {
+              "leastBleedMm": 1,
+              "requiredMm": 3
+            },
+            "type": "object"
+          },
+          "messageEn": {
+            "example": "Bleed 1 mm is less than 3 mm on some side",
+            "type": "string"
+          },
+          "messageTh": {
+            "example": "ระยะตัดตก (bleed) 1 มม. ไม่ถึง 3 มม. ทุกด้าน",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightOutcome"
+              }
+            ],
+            "example": "fail"
+          },
+          "page": {
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightSeverity"
+              }
+            ],
+            "example": "block"
+          }
+        },
+        "required": [
+          "check",
+          "outcome",
+          "severity",
+          "page",
+          "messageTh",
+          "messageEn",
+          "measurements"
+        ],
+        "type": "object"
+      },
+      "PreflightFileKind": {
+        "enum": [
+          "pdf",
+          "raster",
+          "unsupported",
+          "error"
+        ],
+        "type": "string"
+      },
+      "PreflightFileReportDto": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/PreflightCheckResultDto"
+            },
+            "type": "array"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightFileKind"
+              }
+            ],
+            "example": "pdf"
+          },
+          "name": {
+            "example": "box-artwork.pdf",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pageCount": {
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "submissionFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "thumbnailFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1006",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "submissionFileId",
+          "name",
+          "kind",
+          "pageCount",
+          "thumbnailFileId",
+          "checks"
+        ],
+        "type": "object"
+      },
+      "PreflightOutcome": {
+        "enum": [
+          "pass",
+          "fail",
+          "not_evaluated"
+        ],
+        "type": "string"
+      },
+      "PreflightReportDto": {
+        "properties": {
+          "blockCount": {
+            "description": "Failing checks that block",
+            "example": 1,
+            "type": "integer"
+          },
+          "expectedSize": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreflightSizeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Finished size from the dieline template sent to the customer; null when none was sent"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/PreflightFileReportDto"
+            },
+            "type": "array"
+          },
+          "run": {
+            "example": 1,
+            "type": "integer"
+          },
+          "warnCount": {
+            "description": "Failing checks that warn",
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run",
+          "expectedSize",
+          "files",
+          "blockCount",
+          "warnCount"
+        ],
+        "type": "object"
+      },
+      "PreflightSeverity": {
+        "enum": [
+          "block",
+          "warn",
+          "info"
+        ],
+        "type": "string"
+      },
+      "PreflightSizeDto": {
+        "properties": {
+          "heightMm": {
+            "description": "mm",
+            "example": 100,
+            "type": "number"
+          },
+          "widthMm": {
+            "description": "mm",
+            "example": 100,
+            "type": "number"
+          }
+        },
+        "required": [
+          "widthMm",
+          "heightMm"
+        ],
+        "type": "object"
+      },
+      "PreflightStatus": {
+        "enum": [
+          "pending",
+          "running",
+          "passed",
+          "passed_with_warnings",
+          "blocked",
+          "error"
+        ],
+        "type": "string"
+      },
+      "PrepressQueueItemDto": {
+        "properties": {
+          "dueAt": {
+            "description": "SLA due time (`artwork.prepress_sla_business_hours`); null while no SLA is set",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "itemId": {
+            "description": "The submission or proof waiting",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrepressQueueKind"
+              }
+            ],
+            "example": "submissions"
+          },
+          "orderCode": {
+            "example": "OR2609270001",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "overdue": {
+            "example": false,
+            "type": "boolean"
+          },
+          "preflightStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreflightStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "passed_with_warnings"
+          },
+          "since": {
+            "description": "When it entered the queue",
+            "example": "2026-09-27T10:00:00+07:00",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "orderId",
+          "orderCode",
+          "kind",
+          "itemId",
+          "versionNo",
+          "preflightStatus",
+          "since",
+          "dueAt",
+          "overdue"
+        ],
+        "type": "object"
+      },
+      "PrepressQueueKind": {
+        "enum": [
+          "submissions",
+          "proofs_waiting",
+          "changes_requested"
+        ],
+        "type": "string"
+      },
       "PresignFileDto": {
         "properties": {
           "companyId": {
@@ -22040,6 +22634,21 @@
         },
         "required": [
           "comment"
+        ],
+        "type": "object"
+      },
+      "RejectSubmissionDto": {
+        "properties": {
+          "reason": {
+            "description": "Shown to the customer: what to change in the next version",
+            "example": "ขนาดไฟล์ไม่ตรงกับแบบแปลน กรุณาจัดหน้าใหม่ตามเทมเพลต",
+            "maxLength": 2000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ],
         "type": "object"
       },
@@ -27960,6 +28569,45 @@
         ],
         "type": "object"
       },
+      "SubmissionStatus": {
+        "enum": [
+          "submitted",
+          "superseded",
+          "accepted_for_proof",
+          "rejected"
+        ],
+        "type": "string"
+      },
+      "SubmitArtworkDto": {
+        "properties": {
+          "files": {
+            "description": "Uploaded files (presign → PUT → complete first)",
+            "items": {
+              "$ref": "#/components/schemas/ArtworkFileInputDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "links": {
+            "description": "Shared-drive links (https) for files too large to upload",
+            "example": [
+              "https://drive.example.invalid/artwork"
+            ],
+            "items": {
+              "pattern": "^https:\\/\\/\\S{3,500}$",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "note": {
+            "example": "ใช้โลโก้สีทอง",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "SubmitReviewDto": {
         "properties": {
           "comment": {
@@ -31320,6 +31968,14 @@
         },
         "type": "object"
       },
+      "UploadChannel": {
+        "enum": [
+          "web",
+          "line_liff",
+          "cs"
+        ],
+        "type": "string"
+      },
       "UploadPartDto": {
         "properties": {
           "partNumber": {
@@ -34616,6 +35272,1077 @@
         ],
         "x-required-permissions": [
           "approvals.read"
+        ]
+      }
+    },
+    "/v1/admin/artwork-submissions/{submissionId}": {
+      "get": {
+        "description": "With its preflight report (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "files": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                      "linkUrl": null,
+                      "mimeType": "application/pdf",
+                      "originalName": "box-artwork.pdf",
+                      "role": "artwork",
+                      "sizeBytes": 2400000
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                  "note": "ใช้โลโก้สีทอง",
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                  "preflightCompletedAt": "2026-09-27T10:01:00+07:00",
+                  "preflightReport": {
+                    "blockCount": 1,
+                    "expectedSize": {
+                      "heightMm": 100,
+                      "widthMm": 100
+                    },
+                    "files": [
+                      {
+                        "checks": [
+                          {
+                            "check": "missing_bleed",
+                            "measurements": {
+                              "leastBleedMm": 1,
+                              "requiredMm": 3
+                            },
+                            "messageEn": "Bleed 1 mm is less than 3 mm on some side",
+                            "messageTh": "ระยะตัดตก (bleed) 1 มม. ไม่ถึง 3 มม. ทุกด้าน",
+                            "outcome": "fail",
+                            "page": 1,
+                            "severity": "block"
+                          }
+                        ],
+                        "kind": "pdf",
+                        "name": "box-artwork.pdf",
+                        "pageCount": 1,
+                        "submissionFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                        "thumbnailFileId": null
+                      }
+                    ],
+                    "run": 1,
+                    "warnCount": 0
+                  },
+                  "preflightStatus": "blocked",
+                  "rejectReason": null,
+                  "reviewedAt": null,
+                  "source": "upload",
+                  "status": "submitted",
+                  "submittedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                }
+              }
+            },
+            "description": "Submission",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get an artwork submission",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
+        ]
+      }
+    },
+    "/v1/admin/artwork-submissions/{submissionId}/actions/accept": {
+      "post": {
+        "description": "Prepress takes the version into proof preparation (order artwork status `in_review`). Refused while preflight runs or when it blocked — D-070 blocks on size mismatch or missing bleed.\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "files": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                      "linkUrl": null,
+                      "mimeType": "application/pdf",
+                      "originalName": "box-artwork.pdf",
+                      "role": "artwork",
+                      "sizeBytes": 2400000
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                  "note": "ใช้โลโก้สีทอง",
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                  "preflightCompletedAt": "2026-09-27T10:01:00+07:00",
+                  "preflightReport": {
+                    "blockCount": 1,
+                    "expectedSize": {
+                      "heightMm": 100,
+                      "widthMm": 100
+                    },
+                    "files": [
+                      {
+                        "checks": [
+                          {
+                            "check": "missing_bleed",
+                            "measurements": {
+                              "leastBleedMm": 1,
+                              "requiredMm": 3
+                            },
+                            "messageEn": "Bleed 1 mm is less than 3 mm on some side",
+                            "messageTh": "ระยะตัดตก (bleed) 1 มม. ไม่ถึง 3 มม. ทุกด้าน",
+                            "outcome": "fail",
+                            "page": 1,
+                            "severity": "block"
+                          }
+                        ],
+                        "kind": "pdf",
+                        "name": "box-artwork.pdf",
+                        "pageCount": 1,
+                        "submissionFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                        "thumbnailFileId": null
+                      }
+                    ],
+                    "run": 1,
+                    "warnCount": 0
+                  },
+                  "preflightStatus": "passed",
+                  "rejectReason": null,
+                  "reviewedAt": null,
+                  "source": "upload",
+                  "status": "accepted_for_proof",
+                  "submittedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                }
+              }
+            },
+            "description": "Accepted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.invalid_status": {
+                    "$ref": "#/components/examples/problem.artwork.invalid_status"
+                  },
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  },
+                  "artwork.preflight_blocked": {
+                    "$ref": "#/components/examples/problem.artwork.preflight_blocked"
+                  },
+                  "artwork.preflight_pending": {
+                    "$ref": "#/components/examples/problem.artwork.preflight_pending"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.invalid_status`, `artwork.not_accepting`, `artwork.preflight_blocked`, `artwork.preflight_pending`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Accept a submission for a proof",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
+        ]
+      }
+    },
+    "/v1/admin/artwork-submissions/{submissionId}/actions/reject": {
+      "post": {
+        "description": "The customer is asked for a new version (order artwork status `changes_requested`, D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ขนาดไฟล์ไม่ตรงกับแบบแปลน กรุณาจัดหน้าใหม่ตามเทมเพลต"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RejectSubmissionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "files": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                      "linkUrl": null,
+                      "mimeType": "application/pdf",
+                      "originalName": "box-artwork.pdf",
+                      "role": "artwork",
+                      "sizeBytes": 2400000
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                  "note": "ใช้โลโก้สีทอง",
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                  "preflightCompletedAt": "2026-09-27T10:01:00+07:00",
+                  "preflightReport": {
+                    "blockCount": 1,
+                    "expectedSize": {
+                      "heightMm": 100,
+                      "widthMm": 100
+                    },
+                    "files": [
+                      {
+                        "checks": [
+                          {
+                            "check": "missing_bleed",
+                            "measurements": {
+                              "leastBleedMm": 1,
+                              "requiredMm": 3
+                            },
+                            "messageEn": "Bleed 1 mm is less than 3 mm on some side",
+                            "messageTh": "ระยะตัดตก (bleed) 1 มม. ไม่ถึง 3 มม. ทุกด้าน",
+                            "outcome": "fail",
+                            "page": 1,
+                            "severity": "block"
+                          }
+                        ],
+                        "kind": "pdf",
+                        "name": "box-artwork.pdf",
+                        "pageCount": 1,
+                        "submissionFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                        "thumbnailFileId": null
+                      }
+                    ],
+                    "run": 1,
+                    "warnCount": 0
+                  },
+                  "preflightStatus": "blocked",
+                  "rejectReason": "ขนาดไฟล์ไม่ตรงกับแบบแปลน",
+                  "reviewedAt": null,
+                  "source": "upload",
+                  "status": "rejected",
+                  "submittedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                }
+              }
+            },
+            "description": "Rejected",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.invalid_status": {
+                    "$ref": "#/components/examples/problem.artwork.invalid_status"
+                  },
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.invalid_status`, `artwork.not_accepting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Reject a submission with a reason",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
+        ]
+      }
+    },
+    "/v1/admin/artwork-submissions/{submissionId}/actions/rerun-preflight": {
+      "post": {
+        "description": "After an error, or once the dieline template or the rules in force changed (D-070, ADR-0009).\n\nImplements: D-070.",
+        "operationId": "admin.artwork.rerunPreflight",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "files": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                      "linkUrl": null,
+                      "mimeType": "application/pdf",
+                      "originalName": "box-artwork.pdf",
+                      "role": "artwork",
+                      "sizeBytes": 2400000
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                  "note": "ใช้โลโก้สีทอง",
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                  "preflightCompletedAt": null,
+                  "preflightReport": {
+                    "blockCount": 1,
+                    "expectedSize": {
+                      "heightMm": 100,
+                      "widthMm": 100
+                    },
+                    "files": [
+                      {
+                        "checks": [
+                          {
+                            "check": "missing_bleed",
+                            "measurements": {
+                              "leastBleedMm": 1,
+                              "requiredMm": 3
+                            },
+                            "messageEn": "Bleed 1 mm is less than 3 mm on some side",
+                            "messageTh": "ระยะตัดตก (bleed) 1 มม. ไม่ถึง 3 มม. ทุกด้าน",
+                            "outcome": "fail",
+                            "page": 1,
+                            "severity": "block"
+                          }
+                        ],
+                        "kind": "pdf",
+                        "name": "box-artwork.pdf",
+                        "pageCount": 1,
+                        "submissionFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                        "thumbnailFileId": null
+                      }
+                    ],
+                    "run": 1,
+                    "warnCount": 0
+                  },
+                  "preflightStatus": "pending",
+                  "rejectReason": null,
+                  "reviewedAt": null,
+                  "source": "upload",
+                  "status": "submitted",
+                  "submittedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                }
+              }
+            },
+            "description": "Queued",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.invalid_status": {
+                    "$ref": "#/components/examples/problem.artwork.invalid_status"
+                  },
+                  "artwork.preflight_pending": {
+                    "$ref": "#/components/examples/problem.artwork.preflight_pending"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.invalid_status`, `artwork.preflight_pending`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Run the preflight again",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
         ]
       }
     },
@@ -115370,6 +117097,525 @@
         ]
       }
     },
+    "/v1/admin/orders/{orderId}/artwork-submissions": {
+      "get": {
+        "description": "Newest first, with preflight reports (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "channel": "web",
+                    "files": [
+                      {
+                        "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                        "linkUrl": null,
+                        "mimeType": "application/pdf",
+                        "originalName": "box-artwork.pdf",
+                        "role": "artwork",
+                        "sizeBytes": 2400000
+                      }
+                    ],
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                    "note": "ใช้โลโก้สีทอง",
+                    "orderCode": "OR2609270001",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                    "preflightCompletedAt": "2026-09-27T10:01:00+07:00",
+                    "preflightReport": {
+                      "blockCount": 1,
+                      "expectedSize": {
+                        "heightMm": 100,
+                        "widthMm": 100
+                      },
+                      "files": [
+                        {
+                          "checks": [
+                            {
+                              "check": "missing_bleed",
+                              "measurements": {
+                                "leastBleedMm": 1,
+                                "requiredMm": 3
+                              },
+                              "messageEn": "Bleed 1 mm is less than 3 mm on some side",
+                              "messageTh": "ระยะตัดตก (bleed) 1 มม. ไม่ถึง 3 มม. ทุกด้าน",
+                              "outcome": "fail",
+                              "page": 1,
+                              "severity": "block"
+                            }
+                          ],
+                          "kind": "pdf",
+                          "name": "box-artwork.pdf",
+                          "pageCount": 1,
+                          "submissionFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                          "thumbnailFileId": null
+                        }
+                      ],
+                      "run": 1,
+                      "warnCount": 0
+                    },
+                    "preflightStatus": "blocked",
+                    "rejectReason": null,
+                    "reviewedAt": null,
+                    "source": "upload",
+                    "status": "submitted",
+                    "submittedAt": "2026-09-27T10:00:00+07:00",
+                    "versionNo": 2
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the artwork versions of an order",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
+        ]
+      },
+      "post": {
+        "description": "CS or Prepress uploads the customer’s files (channel `cs`); same rules and preflight as the customer’s own upload (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "files": [
+                      {
+                        "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                        "role": "artwork"
+                      }
+                    ],
+                    "note": "ใช้โลโก้สีทอง"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SubmitArtworkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "cs",
+                  "files": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                      "linkUrl": null,
+                      "mimeType": "application/pdf",
+                      "originalName": "box-artwork.pdf",
+                      "role": "artwork",
+                      "sizeBytes": 2400000
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                  "note": "ใช้โลโก้สีทอง",
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                  "preflightCompletedAt": null,
+                  "preflightReport": null,
+                  "preflightStatus": "pending",
+                  "rejectReason": null,
+                  "reviewedAt": null,
+                  "source": "upload",
+                  "status": "submitted",
+                  "submittedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                }
+              }
+            },
+            "description": "Submitted; preflight pending",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Submit artwork for a customer",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "artwork.submit_on_behalf"
+        ]
+      }
+    },
     "/v1/admin/orders/{orderId}/notes": {
       "get": {
         "description": "Newest first; never shown to the customer or the factory.\n\nImplements: D-142.",
@@ -118321,6 +120567,252 @@
         ],
         "x-required-permissions": [
           "orders.manage"
+        ]
+      }
+    },
+    "/v1/admin/prepress/queue": {
+      "get": {
+        "description": "`submissions`: preflighted files waiting for review, oldest first; `changes_requested`: proofs the customer sent back; `proofs_waiting`: proofs waiting for the customer. `dueAt` follows `artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set.\n\nImplements: D-070, D-175.",
+        "operationId": "admin.artwork.queue",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "`submissions` (files to review, oldest first), `proofs_waiting` (proofs sent, waiting for the customer), `changes_requested` (proofs the customer sent back)",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PrepressQueueKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "dueAt": null,
+                      "itemId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                      "kind": "submissions",
+                      "orderCode": "OR2609270001",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                      "overdue": false,
+                      "preflightStatus": "passed_with_warnings",
+                      "since": "2026-09-27T10:00:00+07:00",
+                      "versionNo": 2
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PrepressQueueItemDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "The prepress work queue",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
         ]
       }
     },
@@ -175551,6 +178043,764 @@
         ]
       }
     },
+    "/v1/store/orders/{orderId}/artwork-submissions": {
+      "get": {
+        "description": "Newest first, each with its preflight report (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "store.artwork.list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "channel": "web",
+                    "files": [
+                      {
+                        "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                        "linkUrl": null,
+                        "mimeType": "application/pdf",
+                        "originalName": "box-artwork.pdf",
+                        "role": "artwork",
+                        "sizeBytes": 2400000
+                      }
+                    ],
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                    "note": "ใช้โลโก้สีทอง",
+                    "orderCode": "OR2609270001",
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                    "preflightCompletedAt": "2026-09-27T10:01:00+07:00",
+                    "preflightReport": {
+                      "blockCount": 1,
+                      "expectedSize": {
+                        "heightMm": 100,
+                        "widthMm": 100
+                      },
+                      "files": [
+                        {
+                          "checks": [
+                            {
+                              "check": "missing_bleed",
+                              "measurements": {
+                                "leastBleedMm": 1,
+                                "requiredMm": 3
+                              },
+                              "messageEn": "Bleed 1 mm is less than 3 mm on some side",
+                              "messageTh": "ระยะตัดตก (bleed) 1 มม. ไม่ถึง 3 มม. ทุกด้าน",
+                              "outcome": "fail",
+                              "page": 1,
+                              "severity": "block"
+                            }
+                          ],
+                          "kind": "pdf",
+                          "name": "box-artwork.pdf",
+                          "pageCount": 1,
+                          "submissionFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                          "thumbnailFileId": null
+                        }
+                      ],
+                      "run": 1,
+                      "warnCount": 0
+                    },
+                    "preflightStatus": "blocked",
+                    "rejectReason": null,
+                    "reviewedAt": null,
+                    "source": "upload",
+                    "status": "submitted",
+                    "submittedAt": "2026-09-27T10:00:00+07:00",
+                    "versionNo": 2
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Versions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List the artwork versions of my order",
+        "tags": [
+          "store.artwork"
+        ]
+      },
+      "post": {
+        "description": "A new version of the order’s artwork: uploaded files (purpose `artwork`, presign → PUT → complete) and/or https links. Replaces the version waiting for review and a proof not yet answered. The automated preflight runs in the background: it **blocks** on a size mismatch or missing bleed and **warns** on low resolution or RGB (D-070); poll `GET …/artwork-submissions/{submissionId}` for the report. Refused once the artwork is approved or production started (D-073).\n\nImplements: D-070, D-073.",
+        "operationId": "store.artwork.submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "files": [
+                      {
+                        "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                        "role": "artwork"
+                      }
+                    ],
+                    "note": "ใช้โลโก้สีทอง"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SubmitArtworkDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "files": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                      "linkUrl": null,
+                      "mimeType": "application/pdf",
+                      "originalName": "box-artwork.pdf",
+                      "role": "artwork",
+                      "sizeBytes": 2400000
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                  "note": "ใช้โลโก้สีทอง",
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                  "preflightCompletedAt": null,
+                  "preflightReport": null,
+                  "preflightStatus": "pending",
+                  "rejectReason": null,
+                  "reviewedAt": null,
+                  "source": "upload",
+                  "status": "submitted",
+                  "submittedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                }
+              }
+            },
+            "description": "Submitted; preflight pending",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.not_accepting": {
+                    "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.not_accepting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Submit artwork for my order",
+        "tags": [
+          "store.artwork"
+        ]
+      }
+    },
+    "/v1/store/orders/{orderId}/artwork-submissions/{submissionId}": {
+      "get": {
+        "description": "With the preflight status and its Thai report (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "store.artwork.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "submissionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "files": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                      "linkUrl": null,
+                      "mimeType": "application/pdf",
+                      "originalName": "box-artwork.pdf",
+                      "role": "artwork",
+                      "sizeBytes": 2400000
+                    }
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
+                  "note": "ใช้โลโก้สีทอง",
+                  "orderCode": "OR2609270001",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+                  "preflightCompletedAt": "2026-09-27T10:01:00+07:00",
+                  "preflightReport": {
+                    "blockCount": 1,
+                    "expectedSize": {
+                      "heightMm": 100,
+                      "widthMm": 100
+                    },
+                    "files": [
+                      {
+                        "checks": [
+                          {
+                            "check": "missing_bleed",
+                            "measurements": {
+                              "leastBleedMm": 1,
+                              "requiredMm": 3
+                            },
+                            "messageEn": "Bleed 1 mm is less than 3 mm on some side",
+                            "messageTh": "ระยะตัดตก (bleed) 1 มม. ไม่ถึง 3 มม. ทุกด้าน",
+                            "outcome": "fail",
+                            "page": 1,
+                            "severity": "block"
+                          }
+                        ],
+                        "kind": "pdf",
+                        "name": "box-artwork.pdf",
+                        "pageCount": 1,
+                        "submissionFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1004",
+                        "thumbnailFileId": null
+                      }
+                    ],
+                    "run": 1,
+                    "warnCount": 0
+                  },
+                  "preflightStatus": "blocked",
+                  "rejectReason": null,
+                  "reviewedAt": null,
+                  "source": "upload",
+                  "status": "submitted",
+                  "submittedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ArtworkSubmissionDto"
+                }
+              }
+            },
+            "description": "Submission",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get one artwork version of my order",
+        "tags": [
+          "store.artwork"
+        ]
+      }
+    },
     "/v1/store/orders/{orderId}/review": {
       "get": {
         "description": "With the points it earned (D-135).\n\nImplements: D-135.",
@@ -184239,6 +187489,10 @@
       "name": "admin.approvals"
     },
     {
+      "description": "Prepress: the work queue with SLA, preflight reports, accept / reject submissions (D-070).",
+      "name": "admin.artwork"
+    },
+    {
       "description": "The audit log: search and CSV export (itself audited).",
       "name": "admin.auditLogs"
     },
@@ -184661,6 +187915,10 @@
     {
       "description": "Delivery and billing addresses of the signed-in customer; orders keep a snapshot (D-142).",
       "name": "store.addresses"
+    },
+    {
+      "description": "Artwork of my orders: versions, automated preflight with a Thai report (D-070), proofs and annotations (D-073).",
+      "name": "store.artwork"
     },
     {
       "description": "The signed-in customer’s cart: price-locked quotation options split over addresses (D-051, D-142).",

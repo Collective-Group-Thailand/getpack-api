@@ -447,6 +447,50 @@ export const PERMISSIONS = [
     decisionRefs: ['D-052'],
   },
 
+  // --- B4.1 artwork, proofs, design services, designs & drawings
+  {
+    key: 'artwork.read',
+    audience: 'staff',
+    description: 'Read artwork submissions, preflight reports, proofs and design services of orders',
+    decisionRefs: ['D-070', 'D-071'],
+  },
+  {
+    key: 'artwork.submit_on_behalf',
+    audience: 'staff',
+    description: 'Upload artwork for a customer’s order',
+    decisionRefs: ['D-070'],
+  },
+  {
+    key: 'prepress.review',
+    audience: 'staff',
+    description: 'Accept or reject submissions, send proofs and templates, answer proof annotations',
+    decisionRefs: ['D-070'],
+  },
+  {
+    key: 'proofs.decide_on_behalf',
+    audience: 'staff',
+    description: 'Approve a proof or request changes for the customer, with a reason (audited)',
+    decisionRefs: ['D-070', 'D-073'],
+  },
+  {
+    key: 'design_services.manage',
+    audience: 'staff',
+    description: 'Assign designers, deliver design rounds and re-quote structure or concept changes',
+    decisionRefs: ['D-071'],
+  },
+  {
+    key: 'mockups.manage',
+    audience: 'staff',
+    description: 'Add a paid mockup / physical proof to an order at a CS-quoted price (audited)',
+    decisionRefs: ['D-072'],
+  },
+  {
+    key: 'drawings.generate',
+    audience: 'staff',
+    description: 'Generate dieline drawings and send templates to customers',
+    decisionRefs: ['D-070'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

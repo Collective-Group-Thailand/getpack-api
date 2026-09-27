@@ -1,3 +1,4 @@
+import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { AdminMeController } from '@modules/auth/controllers/me.controllers';
 import { CARTS_ADMIN_CONTROLLERS } from '@modules/carts/carts.registry';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
@@ -76,6 +77,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...COMPANIES_ADMIN_CONTROLLERS,
     ...DISCOUNT_MEMOS_ADMIN_CONTROLLERS,
     ...PAYMENTS_ADMIN_CONTROLLERS,
+    ...ARTWORK_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

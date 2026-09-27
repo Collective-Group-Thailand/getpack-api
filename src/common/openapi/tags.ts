@@ -57,6 +57,11 @@ export const API_TAGS: Record<string, string> = {
     'Refresh-token rotation, logout, OAuth2 client credentials for factory systems, JWKS. ADR-0004.',
   'store.me': 'The signed-in customer.',
   'admin.me': 'The signed-in staff member, permissions and menu entitlements.',
+  // --- B4.1 artwork, proofs, design services, designs & drawings
+  'store.artwork':
+    'Artwork of my orders: versions, automated preflight with a Thai report (D-070), proofs and annotations (D-073).',
+  'admin.artwork':
+    'Prepress: the work queue with SLA, preflight reports, accept / reject submissions (D-070).',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',
   'admin.roles': 'The role and permission catalogue (D-140, D-141).',
   'admin.approvals': 'Generic approval engine: inbox, approve, reject, withdraw (ADR-0006).',
