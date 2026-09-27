@@ -1,12 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 
+import { OrderOperationsService } from './order-operations.service';
 import { OrdersJobs } from './orders.jobs';
 import { OrderLifecycleHooks, OrdersService } from './orders.service';
 
 /** Orders and order groups (B3.1): reads, fact-driven status, cancellation, unpaid expiry (D-060). */
 @Global()
 @Module({
-  providers: [OrdersService, OrderLifecycleHooks, OrdersJobs],
-  exports: [OrdersService, OrderLifecycleHooks],
+  providers: [OrdersService, OrderLifecycleHooks, OrdersJobs, OrderOperationsService],
+  exports: [OrdersService, OrderLifecycleHooks, OrderOperationsService],
 })
 export class OrdersModule {}

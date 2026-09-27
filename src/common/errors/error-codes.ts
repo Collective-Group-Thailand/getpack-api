@@ -137,6 +137,8 @@ export const ERROR_CODES = {
   'checkout.wht_rate_missing': HttpStatus.SERVICE_UNAVAILABLE,
   'order.invalid_transition': HttpStatus.CONFLICT,
   'order.cancel_not_allowed': HttpStatus.CONFLICT,
+  'order.reprice_has_discounts': HttpStatus.CONFLICT,
+  'order.reprice_below_paid': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

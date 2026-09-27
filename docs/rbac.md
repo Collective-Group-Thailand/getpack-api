@@ -72,6 +72,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `carts.manage_on_behalf` — Build a cart for a customer and check it out on their behalf (CS) (D-051) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
 | `orders.read` — Read order groups, orders and their queues (D-060) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  | ● |
 | `orders.cancel` — Cancel order groups or orders before production, with a reason (D-060) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
+| `orders.manage` — CS operations on orders: change customer, remarks, cc e-mails, PO number, notes (D-125) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
+| `orders.reprice` — Edit & re-price an order before production (D-051) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

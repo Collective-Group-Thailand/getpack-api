@@ -27,7 +27,7 @@ export interface DiscountDraft {
 }
 
 export interface ShippingLeg {
-  cartDestinationId: bigint;
+  cartDestinationId: bigint | null;
   customerAddressId: bigint | null;
   snapshot: Record<string, unknown>;
   postcode: string;
@@ -43,8 +43,8 @@ export interface ShippingLeg {
 }
 
 export interface DraftOrder {
-  cartItemId: bigint;
-  cartItemPublicId: string;
+  cartItemId: bigint | null;
+  cartItemPublicId: string | null;
   quoteId: bigint;
   quotePublicId: string;
   quoteCode: string | null;

@@ -1,9 +1,25 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
+import { Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsEmail,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
-import { AddressSnapshotDto } from '../carts/carts.dto';
+import { AddressSnapshotDto, DestinationInputDto } from '../carts/carts.dto';
 
 /** Order groups and orders (schema-design §3.6, B3.1). Money: decimal strings, THB. */
 
@@ -399,3 +415,159 @@ export class CancelOrderDto {
   note?: string | null;
 }
 
+
+// --- CS operations (B3.1 slice 6) -------------------------------------------------------------------
+
+export class RepriceOrderDto {
+  @ApiProperty({ format: 'uuid', example: ORDER_IDS.quote, description: 'A live quotation of the same customer and product type' })
+  @IsUUID()
+  quoteId!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca005' })
+  @IsUUID()
+  quoteOptionId!: string;
+
+  @ApiProperty({ example: 'ลูกค้าขอเปลี่ยนจำนวน', maxLength: 500 })
+  @IsString()
+  @MaxLength(500)
+  reason!: string;
+
+  @ApiPropertyOptional({ enum: ['own_file', 'online_designer', 'hired_design', 'free_design'], enumName: 'DesignOption' })
+  @IsOptional()
+  @IsIn(['own_file', 'online_designer', 'hired_design', 'free_design'])
+  designOption?: string;
+
+  @ApiPropertyOptional({ type: [DestinationInputDto], description: 'Required when a split order changes quantity' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => DestinationInputDto)
+  destinations?: DestinationInputDto[];
+}
+
+export class ChangeCustomerDto {
+  @ApiProperty({ format: 'uuid', example: ORDER_IDS.customer })
+  @IsUUID()
+  customerId!: string;
+}
+
+export class UpdateOrderGroupDto {
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'ลูกค้าขอส่งด่วน', maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  csRemarks?: string | null;
+
+  @ApiPropertyOptional({ type: [String], example: ['account@example.com'] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsEmail({}, { each: true })
+  ccEmails?: string[];
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'PO-0001', maxLength: 60 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  poNumber?: string | null;
+}
+
+export class AddOrderNoteDto {
+  @ApiProperty({ example: 'โทรยืนยันกับลูกค้าแล้ว', maxLength: 4000 })
+  @IsString()
+  @MaxLength(4000)
+  body!: string;
+
+  @ApiPropertyOptional({ type: [String], format: 'uuid', example: [], description: 'Staff users mentioned' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('all', { each: true })
+  mentions?: string[];
+}
+
+export class OrderNoteDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d0005' })
+  id!: string;
+
+  @ApiProperty({ example: 'โทรยืนยันกับลูกค้าแล้ว' })
+  body!: string;
+
+  @ApiProperty({ type: UserRefDto })
+  author!: UserRefDto;
+
+  @TimestampField()
+  createdAt!: string;
+}
+
+export const ORDER_QUEUES = ['waiting_payment', 'artwork_review', 'waiting_production', 'due_soon', 'late'] as const;
+
+export class OrderQueueQuery extends PageQuery {
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 3,
+    minimum: 1,
+    maximum: 30,
+    description: '`due_soon` only: promised ship date within this many days (view filter)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  withinDays?: number;
+}
+
+export class OrderQueueItemDto {
+  @ApiProperty({ format: 'uuid', example: ORDER_IDS.order })
+  orderId!: string;
+
+  @ApiProperty({ example: 'OR-2610-00042' })
+  orderCode!: string;
+
+  @ApiProperty({ format: 'uuid', example: ORDER_IDS.group })
+  groupId!: string;
+
+  @ApiProperty({ example: 'OG-2610-00042' })
+  groupCode!: string;
+
+  @ApiProperty({ example: 'สมชาย ทดสอบ' })
+  customerName!: string;
+
+  @ApiProperty({ enum: ORDER_STATUSES, enumName: 'OrderStatus', example: 'paid_for_production' })
+  status!: string;
+
+  @ApiProperty({ enum: ARTWORK_STATUSES, enumName: 'ArtworkStatus', example: 'uploaded' })
+  artworkStatus!: string;
+
+  @ApiProperty({ example: 'folding_carton' })
+  productTypeCode!: string;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-10-12' })
+  promisedShipDate!: string | null;
+
+  @ApiProperty({ example: '14182.80' })
+  grossAmount!: string;
+
+  @TimestampField()
+  placedAt!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-08T10:00:00+07:00' })
+  groupExpiresAt!: string | null;
+}
+
+export const QUEUE_ITEM_EXAMPLE: OrderQueueItemDto = {
+  orderId: ORDER_IDS.order,
+  orderCode: 'OR-2610-00042',
+  groupId: ORDER_IDS.group,
+  groupCode: 'OG-2610-00042',
+  customerName: 'สมชาย ทดสอบ',
+  status: 'paid_for_production',
+  artworkStatus: 'uploaded',
+  productTypeCode: 'folding_carton',
+  promisedShipDate: '2026-10-12',
+  grossAmount: '14182.80',
+  placedAt: '2026-10-01T10:00:00+07:00',
+  groupExpiresAt: null,
+};

@@ -102,8 +102,8 @@ export class PreviewDestinationDto {
 }
 
 export class PreviewOrderDto {
-  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca002' })
-  cartItemId!: string;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca002' })
+  cartItemId!: string | null;
 
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;

@@ -12,6 +12,7 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { type Response } from 'express';
 
+import { orderEtag } from './order-operations.service';
 import { adminOrderDto, adminOrderGroupDto, type CostGrants, orderDto, orderGroupDto } from './order-views';
 import {
   ADMIN_ORDER_GROUP_EXAMPLE,
@@ -220,10 +221,17 @@ export class AdminOrdersController {
     description: 'Staff view of one order (D-141 masking).',
     implements: [...DECISIONS, 'D-141'],
   })
+  @ApiEtag()
   @ApiSuccess(200, { description: 'Order', type: AdminOrderDto, example: ADMIN_ORDER_GROUP_EXAMPLE.orders[0] })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async getOrder(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string) {
-    return adminOrderDto(await this.orders.order({ publicId: orderId }), await this.grants(actor));
+  async getOrder(
+    @CurrentActor() actor: Actor,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.orders.order({ publicId: orderId });
+    res.setHeader('ETag', orderEtag(row));
+    return adminOrderDto(row, await this.grants(actor));
   }
 
   @Post('order-groups/:groupId/actions/cancel')

@@ -312,6 +312,19 @@ export const PERMISSIONS = [
     decisionRefs: ['D-060'],
   },
 
+  {
+    key: 'orders.manage',
+    audience: 'staff',
+    description: 'CS operations on orders: change customer, remarks, cc e-mails, PO number, notes',
+    decisionRefs: ['D-125'],
+  },
+  {
+    key: 'orders.reprice',
+    audience: 'staff',
+    description: 'Edit & re-price an order before production',
+    decisionRefs: ['D-051'],
+  },
+
   // --- Partner zone (factory-scoped)
   { key: 'factory_profile.read', audience: 'partner', description: 'Read the own factory profile' },
   { key: 'factory_users.manage', audience: 'partner', description: 'Manage users of the own factory' },

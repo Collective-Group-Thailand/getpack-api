@@ -1,8 +1,10 @@
 import { PrismaService } from '@database/prisma.service';
+import { REDIS } from '@database/redis.module';
 import { type FakeSmsSender } from '@integrations/sms/fake-sms-sender';
 import { SMS_SENDER } from '@integrations/sms/sms-sender.port';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { type Redis } from 'ioredis';
 import request from 'supertest';
 
 import { type DevFolding, seedDevFolding } from '../../prisma/seed/dev-folding';
@@ -48,6 +50,11 @@ export async function customerToken(ctx: CommerceApp, n: number): Promise<{ toke
     .post('/v1/auth/customer/otp/verify')
     .send({ challengeId: requested.body.challengeId, code })
     .expect(200);
+  // Give the per-IP hourly OTP budget back: every e2e suite signs in from 127.0.0.1, and the commerce
+  // suites create many customers (auth.otp_policy.maxPerIpPerHour stays enforced for real clients).
+  const redis = ctx.app.get<Redis>(REDIS);
+  const hour = Math.floor(Date.now() / 3_600_000);
+  for (const key of await redis.keys(`packio:otp:ip:*:${hour}`)) await redis.decr(key);
   return { token: verified.body.accessToken as string, phone: `+66${phone.slice(1)}` };
 }
 

@@ -16,6 +16,7 @@ import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
+import { type SettingValues } from '@platform/settings/setting-keys';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { GROUP_INCLUDE, type OrderGroupRow } from '../orders/order-views';
@@ -38,6 +39,24 @@ const LINE_UNITS: Record<LineType, ProductUnit | null> = {
   structure_design_fee: 'job',
   shipping: 'trip',
 };
+
+/** What `priceItem` needs: a cart item satisfies it; CS re-pricing builds one from an order. */
+export interface PricingItem {
+  id: bigint | null;
+  publicId: string | null;
+  quote: CartItemRow['quote'];
+  quoteOption: CartItemRow['quoteOption'];
+  destinations: {
+    id: bigint | null;
+    customerAddressId: bigint | null;
+    addressSnapshot: Prisma.JsonValue;
+    quantity: number;
+  }[];
+  designOption: string;
+  designNote: string | null;
+  mockupOption: string;
+  reorderOfOrderId: bigint | null;
+}
 
 function invalid(path: string, message: string, code = 'invalid'): never {
   throw new DomainException('validation.failed', { errors: [{ path, code, message }] });
@@ -81,78 +100,9 @@ export class CheckoutService {
     const orders: DraftOrder[] = [];
     let vatPct = '7';
     for (const [index, item] of cart.items.entries()) {
-      const option = item.quoteOption;
-      const configRefs = (item.quote.configRefs ?? {}) as { vatRateVersionId?: string | null };
-      vatPct = await this.vatPct(configRefs.vatRateVersionId ?? null, at);
-      const legs = await this.legs(item, index, at);
-      const productTypeCode = item.quote.productType.code;
-      const natureOf = nature.value.overrides[productTypeCode] ?? nature.value.default;
-      const optionInput: QuoteOptionInput = {
-        source: item.quote.source,
-        quantity: option.quantity,
-        netAmount: option.netAmount.toFixed(2),
-        vatAmount: option.vatAmount.toFixed(2),
-        grossAmount: option.grossAmount.toFixed(2),
-        shippingAmount: option.shippingAmount?.toFixed(2) ?? null,
-        result: (option.result ?? {}) as QuoteOptionInput['result'],
-      };
-      const shippingNet =
-        item.quote.source === 'instant' ? legs.reduce((a, l) => a.add(l.net), D(0)) : null;
-      const lines = priceOrderLines(optionInput, shippingNet, {
-        vatPct,
-        nature: natureOf,
-        productRevenue: productTypeCode === 'standard_product' ? 'standard_product' : 'made_to_order',
-        wht: wht?.rates ?? null,
-      });
-      const internal = (option.internalBreakdown ?? null) as { shipping?: { costAmount?: string } | null } | null;
-      const quoteShipCost = D(internal?.shipping?.costAmount ?? '0');
-      const legCost = legs.reduce((a, l) => a.add(l.cost ?? 0), D(0));
-      const buyCostNet = option.buyCostNet
-        ? item.quote.source === 'instant'
-          ? D(option.buyCostNet).sub(quoteShipCost).add(legCost)
-          : D(option.buyCostNet)
-        : null;
-      orders.push({
-        cartItemId: item.id,
-        cartItemPublicId: item.publicId,
-        quoteId: item.quote.id,
-        quotePublicId: item.quote.publicId,
-        quoteCode: item.quote.quoteCode,
-        quoteSource: item.quote.source,
-        quoteOptionId: option.id,
-        productTypeId: item.quote.productTypeId,
-        productTypeCode,
-        catalogProductId: item.quote.catalogProductId,
-        stockProductId: item.quote.stockProductId,
-        quantity: option.quantity,
-        unit: option.unit,
-        designOption: item.designOption,
-        designNote: item.designNote,
-        mockupOption: item.mockupOption,
-        reorderOfOrderId: item.reorderOfOrderId,
-        leadTimeDays: option.leadTimeDays,
-        earliestShipDate: option.earliestShipDate,
-        toleranceShortagePct: option.toleranceShortagePct?.toFixed(4) ?? null,
-        toleranceOveragePct: option.toleranceOveragePct?.toFixed(4) ?? null,
-        selectedFactoryId: option.selectedFactoryId,
-        lines,
-        discounts: [],
-        legs,
-        buyCostNet,
-        totals: totalsOf(lines),
-        snapshot: {},
-        configRefs: {
-          ...(item.quote.configRefs as Record<string, unknown>),
-          checkout: {
-            natureSettingVersionId: String(nature.versionId),
-            whtRateVersionIds: wht?.versionIds ?? null,
-            shippingRateVersionIds: legs.map((l) => ({
-              customer: l.customerRateVersionId,
-              factoryPayout: l.factoryPayoutVersionId,
-            })),
-          },
-        },
-      });
+      const priced = await this.priceItem(item, index, at, nature, wht);
+      vatPct = priced.vatPct;
+      orders.push(priced.order);
     }
 
     const draft: CheckoutDraft = {
@@ -359,6 +309,93 @@ export class CheckoutService {
     );
   }
 
+
+  /**
+   * Prices one configuration (a cart item, or an order being re-priced by CS): locked quotation price,
+   * shipping per destination, VAT and withholding per line. Shared by checkout and the CS re-price.
+   */
+  async priceItem(
+    item: PricingItem,
+    index: number,
+    at: Date,
+    nature: { value: SettingValues['tax.nature_by_product_type']; versionId: bigint },
+    wht: { rates: Record<'hire_of_work' | 'transport' | 'service', string>; versionIds: Record<string, string> } | null,
+  ): Promise<{ order: DraftOrder; vatPct: string }> {
+        const option = item.quoteOption;
+    const configRefs = (item.quote.configRefs ?? {}) as { vatRateVersionId?: string | null };
+    const vatPct = await this.vatPct(configRefs.vatRateVersionId ?? null, at);
+    const legs = await this.legs(item, index, at);
+    const productTypeCode = item.quote.productType.code;
+    const natureOf = nature.value.overrides[productTypeCode] ?? nature.value.default;
+    const optionInput: QuoteOptionInput = {
+      source: item.quote.source,
+      quantity: option.quantity,
+      netAmount: option.netAmount.toFixed(2),
+      vatAmount: option.vatAmount.toFixed(2),
+      grossAmount: option.grossAmount.toFixed(2),
+      shippingAmount: option.shippingAmount?.toFixed(2) ?? null,
+      result: (option.result ?? {}) as QuoteOptionInput['result'],
+    };
+    const shippingNet =
+      item.quote.source === 'instant' ? legs.reduce((a, l) => a.add(l.net), D(0)) : null;
+    const lines = priceOrderLines(optionInput, shippingNet, {
+      vatPct,
+      nature: natureOf,
+      productRevenue: productTypeCode === 'standard_product' ? 'standard_product' : 'made_to_order',
+      wht: wht?.rates ?? null,
+    });
+    const internal = (option.internalBreakdown ?? null) as { shipping?: { costAmount?: string } | null } | null;
+    const quoteShipCost = D(internal?.shipping?.costAmount ?? '0');
+    const legCost = legs.reduce((a, l) => a.add(l.cost ?? 0), D(0));
+    const buyCostNet = option.buyCostNet
+      ? item.quote.source === 'instant'
+        ? D(option.buyCostNet).sub(quoteShipCost).add(legCost)
+        : D(option.buyCostNet)
+      : null;
+    const order: DraftOrder = {
+      cartItemId: item.id,
+      cartItemPublicId: item.publicId,
+      quoteId: item.quote.id,
+      quotePublicId: item.quote.publicId,
+      quoteCode: item.quote.quoteCode,
+      quoteSource: item.quote.source,
+      quoteOptionId: option.id,
+      productTypeId: item.quote.productTypeId,
+      productTypeCode,
+      catalogProductId: item.quote.catalogProductId,
+      stockProductId: item.quote.stockProductId,
+      quantity: option.quantity,
+      unit: option.unit,
+      designOption: item.designOption,
+      designNote: item.designNote,
+      mockupOption: item.mockupOption,
+      reorderOfOrderId: item.reorderOfOrderId,
+      leadTimeDays: option.leadTimeDays,
+      earliestShipDate: option.earliestShipDate,
+      toleranceShortagePct: option.toleranceShortagePct?.toFixed(4) ?? null,
+      toleranceOveragePct: option.toleranceOveragePct?.toFixed(4) ?? null,
+      selectedFactoryId: option.selectedFactoryId,
+      lines,
+      discounts: [],
+      legs,
+      buyCostNet,
+      totals: totalsOf(lines),
+      snapshot: {},
+      configRefs: {
+        ...(item.quote.configRefs as Record<string, unknown>),
+        checkout: {
+          natureSettingVersionId: String(nature.versionId),
+          whtRateVersionIds: wht?.versionIds ?? null,
+          shippingRateVersionIds: legs.map((l) => ({
+            customer: l.customerRateVersionId,
+            factoryPayout: l.factoryPayoutVersionId,
+          })),
+        },
+      },
+    };
+    return { order, vatPct };
+  }
+
   // --- helpers --------------------------------------------------------------------------------------
 
   /** Every item must hold its price lock and have complete destinations. */
@@ -379,7 +416,7 @@ export class CheckoutService {
   }
 
   /** Destinations of an item with their shipping: priced per leg for instant quotations, fixed for RFQ. */
-  private async legs(item: CartItemRow, index: number, at: Date): Promise<ShippingLeg[]> {
+  private async legs(item: PricingItem, index: number, at: Date): Promise<ShippingLeg[]> {
     const rows = await Promise.all(
       item.destinations.map(async (d) => {
         const snap = d.addressSnapshot as { postcode: string; provinceId: string; subdistrictId: string | null };
@@ -477,7 +514,7 @@ export class CheckoutService {
   }
 
   /** Customer withholding rates in force (D-174). */
-  private async whtRates(at: Date) {
+  async whtRates(at: Date) {
     const codes = {
       hire_of_work: 'wht_customer_hire_of_work',
       transport: 'wht_customer_transport',

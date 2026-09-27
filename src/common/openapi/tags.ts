@@ -13,6 +13,7 @@ export const API_TAGS: Record<string, string> = {
   'admin.checkout': 'CS places a customer’s order on their behalf (channel `cs`).',
   'store.orders': 'My order groups and orders: status driven by payment, artwork, production and shipping (D-060, D-073).',
   'admin.orders': 'Order groups and orders for staff: reads with D-141 masking, cancellation with a reason.',
+  'admin.orderOperations': 'CS operations on orders: edit & re-price, change customer, remarks, notes, work queues.',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',
