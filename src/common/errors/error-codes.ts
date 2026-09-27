@@ -198,6 +198,10 @@ export const ERROR_CODES = {
   'design_services.fee_changed': HttpStatus.CONFLICT,
   'design_services.no_extra_round': HttpStatus.CONFLICT,
   'mockups.exists': HttpStatus.CONFLICT,
+  'designs.document_too_large': HttpStatus.UNPROCESSABLE_ENTITY,
+  'designs.template_without_design': HttpStatus.CONFLICT,
+  'drawing.engine_unavailable': HttpStatus.NOT_IMPLEMENTED,
+  'drawing.pattern_not_drawable': HttpStatus.UNPROCESSABLE_ENTITY,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

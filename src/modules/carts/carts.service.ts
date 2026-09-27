@@ -22,6 +22,7 @@ export const CART_INCLUDE = {
       pendingQuote: true,
       pendingQuoteOption: true,
       destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }], include: { customerAddress: true } },
+      designDocument: { select: { publicId: true } },
     },
   },
   codes: { orderBy: { id: 'asc' } },
@@ -119,6 +120,7 @@ export class CartsService {
         throw new DomainException('cart.item_exists');
       const option = await tx.quoteOption.findUniqueOrThrow({ where: { id: snapshot.quoteOptionId } });
       this.checkDesignOption(body.designOption, option.result);
+      const designDocumentId = await this.designDocument(tx, who, body.designDocumentId ?? null, body.designOption);
       const item = await tx.cartItem.create({
         data: {
           cartId: cart.id,
@@ -127,6 +129,7 @@ export class CartsService {
           quantity: snapshot.quantity,
           designOption: body.designOption,
           designNote: body.designNote ?? null,
+          designDocumentId,
           mockupOption: body.mockupOption ?? 'none',
           netAmount: snapshot.netAmount,
           vatAmount: snapshot.vatAmount,
@@ -157,10 +160,15 @@ export class CartsService {
       const { cart, item } = await this.item(tx, who, itemId);
       assertIfMatch(ifMatch, cartEtag(cart));
       if (body.designOption) this.checkDesignOption(body.designOption, item.quoteOption.result);
+      const designDocumentId =
+        body.designDocumentId !== undefined
+          ? await this.designDocument(tx, who, body.designDocumentId, body.designOption ?? item.designOption)
+          : undefined;
       await tx.cartItem.update({
         where: { id: item.id },
         data: {
           ...(body.designOption !== undefined && { designOption: body.designOption }),
+          ...(designDocumentId !== undefined && { designDocumentId }),
           ...(body.designNote !== undefined && { designNote: body.designNote }),
           ...(body.mockupOption !== undefined && { mockupOption: body.mockupOption }),
           rowVersion: { increment: 1 },
@@ -289,6 +297,20 @@ export class CartsService {
   }
 
   /** `hired_design` only on a quotation priced with the design fee; `free_design` needs a promotion (B3.3). */
+  /** The customer's own online design (B4.1), only with `designOption = online_designer`. */
+  private async designDocument(tx: Tx, who: CartActor, publicId: string | null, designOption: string): Promise<bigint | null> {
+    if (publicId === null) return null;
+    const doc = await tx.designDocument.findFirst({
+      where: { publicId, ownerUserId: who.customerUserId, deletedAt: null },
+    });
+    if (!doc) throw new DomainException('http.not_found');
+    if (designOption !== 'online_designer')
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'designDocumentId', code: 'invalid', message: 'a design needs designOption online_designer' }],
+      });
+    return doc.id;
+  }
+
   private checkDesignOption(option: string, result: Prisma.JsonValue) {
     const fee = new MoneyDecimal(((result ?? {}) as { designFeeAmount?: string }).designFeeAmount ?? '0');
     if (option === 'hired_design' && fee.lte(0)) throw new DomainException('cart.design_option_unavailable');

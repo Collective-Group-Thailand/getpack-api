@@ -66,6 +66,8 @@ export interface DraftOrder {
   designNote: string | null;
   mockupOption: string;
   reorderOfOrderId: bigint | null;
+  designDocumentId: bigint | null;
+  reuseArtworkProofId: bigint | null;
   leadTimeDays: number | null;
   earliestShipDate: Date | null;
   toleranceShortagePct: string | null;

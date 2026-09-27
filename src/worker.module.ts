@@ -10,6 +10,7 @@ import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { CompaniesModule } from '@modules/companies/companies.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { DesignServicesModule } from '@modules/design-services/design-services.module';
+import { DesignsModule } from '@modules/designs/designs.module';
 import { DiscountMemosModule } from '@modules/discount-memos/discount-memos.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
@@ -81,6 +82,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     PaymentsModule,
     ArtworkModule,
     DesignServicesModule,
+    DesignsModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

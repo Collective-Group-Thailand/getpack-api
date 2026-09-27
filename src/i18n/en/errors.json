@@ -842,5 +842,25 @@
       "title": "Mockup exists",
       "detail": "This order already has a mockup (physical proof)"
     }
+  },
+  "designs": {
+    "document_too_large": {
+      "title": "Design too large",
+      "detail": "A design document may not exceed {maxMb} MB"
+    },
+    "template_without_design": {
+      "title": "Template has no design",
+      "detail": "This semi-design template has no design to start from"
+    }
+  },
+  "drawing": {
+    "engine_unavailable": {
+      "title": "Drawing engine unavailable",
+      "detail": "Automatic dieline drawings are not available yet; Prepress sends templates"
+    },
+    "pattern_not_drawable": {
+      "title": "Pattern not drawable",
+      "detail": "This box style has no automatic dieline"
+    }
   }
 }

@@ -5,6 +5,9 @@ import { CARRIER_ADAPTERS, type CarrierAdapter } from './carriers/carrier-adapte
 import { DelivereeAdapter } from './carriers/deliveree.adapter';
 import { FakeCarrierAdapter } from './carriers/fake-carrier.adapter';
 import { FlashExpressAdapter } from './carriers/flash-express.adapter';
+import { DIELINE_ENGINE } from './dieline/dieline-engine.port';
+import { FakeDielineEngine } from './dieline/fake-dieline.engine';
+import { PackioDielineEngine } from './dieline/packio-dieline.engine';
 import { EMAIL_SENDER } from './email/email-sender.port';
 import { FakeEmailSender } from './email/fake-email-sender';
 import { SesEmailSender } from './email/ses-email-sender';
@@ -211,6 +214,12 @@ import { WEB_PUSH } from './web-push/web-push.port';
         ),
     },
     {
+      // @packio/dieline (B4.1): unavailable until packio-web publishes it; the `drawing.engine` flag gates use.
+      provide: DIELINE_ENGINE,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) => (config.useFakes ? new FakeDielineEngine() : new PackioDielineEngine()),
+    },
+    {
       provide: VIRUS_SCANNER,
       inject: [AppConfig],
       useFactory: (config: AppConfig) =>
@@ -234,6 +243,7 @@ import { WEB_PUSH } from './web-push/web-push.port';
     SECRETS_PROVIDER,
     CARRIER_ADAPTERS,
     PDF_RENDERER,
+    DIELINE_ENGINE,
   ],
 })
 export class IntegrationsModule {}

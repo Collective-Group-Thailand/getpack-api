@@ -6,6 +6,7 @@ import { CHECKOUT_STORE_CONTROLLERS } from '@modules/checkout/checkout.registry'
 import { COMPANIES_STORE_CONTROLLERS } from '@modules/companies/companies.registry';
 import { CUSTOMERS_STORE_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_STORE_CONTROLLERS } from '@modules/design-services/design-services.registry';
+import { DESIGNS_STORE_CONTROLLERS } from '@modules/designs/designs.registry';
 import { LOYALTY_STORE_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
 import { ORDERS_STORE_CONTROLLERS } from '@modules/orders/orders.registry';
 import { StoreQuotePathController } from '@modules/partners/quote-path/quote-path.controller';
@@ -50,6 +51,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...PAYMENTS_STORE_CONTROLLERS,
     ...ARTWORK_STORE_CONTROLLERS,
     ...DESIGN_SERVICES_STORE_CONTROLLERS,
+    ...DESIGNS_STORE_CONTROLLERS,
   ],
 })
 export class StoreApiModule {}

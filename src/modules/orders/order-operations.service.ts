@@ -95,6 +95,8 @@ export class OrderOperationsService {
       designNote: order.designNote,
       mockupOption: order.mockupOption,
       reorderOfOrderId: order.reorderOfOrderId,
+      designDocumentId: order.designDocumentId,
+      reuseArtworkProofId: order.reuseArtworkProofId,
     };
     const nature = await this.settings.at('tax.nature_by_product_type', { at });
     const snapshot = group.taxProfileSnapshot as TaxProfileSnapshot | null;

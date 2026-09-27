@@ -1,6 +1,7 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import { type Actor, type UserActor } from '@common/context/actor';
+import { bytes } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
@@ -235,6 +236,38 @@ export class FilesService {
       url,
       expiresAt: new Date(now.getTime() + DOWNLOAD_URL_TTL_SECONDS * 1000),
     };
+  }
+
+  /**
+   * Stores a file the system generated in a worker (dieline drawings, B4.1) for `ownerUserId`, with its
+   * SHA-256; nothing to scan (the content is ours). Returns the row; downloads go through the usual check.
+   */
+  async storeSystem(input: {
+    body: Buffer;
+    fileName: string;
+    mimeType: string;
+    retentionClass: FileRetentionClass;
+    ownerUserId: bigint | null;
+  }): Promise<FileObject> {
+    const now = new Date();
+    const file = await this.prisma.fileObject.create({
+      data: {
+        bucket: this.config.get('S3_BUCKET'),
+        storageKey: `pending/${randomUUID()}`,
+        originalName: input.fileName.slice(0, 255),
+        mimeType: input.mimeType,
+        sizeBytes: BigInt(input.body.length),
+        sha256: bytes(createHash('sha256').update(input.body).digest()),
+        uploadStatus: 'uploaded',
+        scanStatus: 'clean',
+        scannedAt: now,
+        retentionClass: input.retentionClass,
+        ownerUserId: input.ownerUserId,
+      },
+    });
+    const storageKey = `${input.retentionClass}/${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}/${file.publicId}`;
+    await this.storage.put(storageKey, input.body, input.mimeType);
+    return this.prisma.fileObject.update({ where: { id: file.id }, data: { storageKey } });
   }
 
   /**

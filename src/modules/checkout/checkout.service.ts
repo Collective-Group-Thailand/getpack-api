@@ -56,6 +56,8 @@ export interface PricingItem {
   designNote: string | null;
   mockupOption: string;
   reorderOfOrderId: bigint | null;
+  designDocumentId: bigint | null;
+  reuseArtworkProofId: bigint | null;
 }
 
 function invalid(path: string, message: string, code = 'invalid'): never {
@@ -219,6 +221,8 @@ export class CheckoutService {
               quoteId: o.quoteId,
               quoteOptionId: o.quoteOptionId,
               reorderOfOrderId: o.reorderOfOrderId,
+              designDocumentId: o.designDocumentId,
+              reuseArtworkProofId: o.reuseArtworkProofId,
               artworkStatus: 'awaiting_template',
               designOption: o.designOption as DesignOption,
               designNote: o.designNote,
@@ -384,6 +388,8 @@ export class CheckoutService {
       designNote: item.designNote,
       mockupOption: item.mockupOption,
       reorderOfOrderId: item.reorderOfOrderId,
+      designDocumentId: item.designDocumentId,
+      reuseArtworkProofId: item.reuseArtworkProofId,
       leadTimeDays: option.leadTimeDays,
       earliestShipDate: option.earliestShipDate,
       toleranceShortagePct: option.toleranceShortagePct?.toFixed(4) ?? null,

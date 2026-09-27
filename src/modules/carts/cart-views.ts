@@ -22,6 +22,7 @@ export function cartItemDto(item: CartItemRow, now = new Date()): CartItemDto {
     quoteShippingAmount: item.shippingAmount ? item.shippingAmount.toFixed(2) : null,
     designOption: item.designOption,
     designNote: item.designNote,
+    designDocumentId: item.designDocument?.publicId ?? null,
     mockupOption: item.mockupOption,
     priceLockedUntil: toBangkokIso(item.priceLockedUntil),
     priceLocked: item.priceLockedUntil > now,

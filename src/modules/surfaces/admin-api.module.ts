@@ -6,6 +6,7 @@ import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry'
 import { COMPANIES_ADMIN_CONTROLLERS } from '@modules/companies/companies.registry';
 import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_ADMIN_CONTROLLERS } from '@modules/design-services/design-services.registry';
+import { DESIGNS_ADMIN_CONTROLLERS } from '@modules/designs/designs.registry';
 import { DISCOUNT_MEMOS_ADMIN_CONTROLLERS } from '@modules/discount-memos/discount-memos.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
@@ -80,6 +81,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...PAYMENTS_ADMIN_CONTROLLERS,
     ...ARTWORK_ADMIN_CONTROLLERS,
     ...DESIGN_SERVICES_ADMIN_CONTROLLERS,
+    ...DESIGNS_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

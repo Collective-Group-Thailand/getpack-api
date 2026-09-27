@@ -6,9 +6,9 @@ import {
   TextField,
   TimestampField,
 } from '@modules/catalog/crud/dto-fields';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsUUID, ValidateNested } from 'class-validator';
 
 /** Carts (schema-design §3.6, B3.1): price-locked quote options with destinations (D-051, D-072). */
 
@@ -53,6 +53,17 @@ export class AddCartItemDto {
   @TextField({ example: 'ใช้โลโก้เดิม', max: 500, optional: true, nullable: true })
   designNote?: string | null;
 
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'My online design for this item (`designOption = online_designer`, B4.1)',
+  })
+  @IsOptional()
+  @IsUUID()
+  designDocumentId?: string | null;
+
   @EnumField(MOCKUP_OPTIONS, 'MockupOption', {
     example: 'none',
     optional: true,
@@ -80,6 +91,11 @@ export class UpdateCartItemDto {
 
   @TextField({ example: 'ใช้โลโก้เดิม', max: 500, optional: true, nullable: true })
   designNote?: string | null;
+
+  @ApiPropertyOptional({ type: String, format: 'uuid', nullable: true, example: null, description: 'My online design (B4.1)' })
+  @IsOptional()
+  @IsUUID()
+  designDocumentId?: string | null;
 
   @EnumField(MOCKUP_OPTIONS, 'MockupOption', { example: 'none', optional: true })
   mockupOption?: (typeof MOCKUP_OPTIONS)[number];
@@ -212,6 +228,9 @@ export class CartItemDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   designNote!: string | null;
 
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null, description: 'The online design used (B4.1)' })
+  designDocumentId!: string | null;
+
   @ApiProperty({ enum: MOCKUP_OPTIONS, enumName: 'MockupOption', example: 'none' })
   mockupOption!: string;
 
@@ -303,6 +322,7 @@ export const CART_ITEM_EXAMPLE: CartItemDto = {
   quoteShippingAmount: '128.40',
   designOption: 'own_file',
   designNote: null,
+  designDocumentId: null,
   mockupOption: 'none',
   priceLockedUntil: '2026-10-16T10:00:00+07:00',
   priceLocked: true,
