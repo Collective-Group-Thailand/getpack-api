@@ -24,7 +24,7 @@ export const CART_INCLUDE = {
       destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }], include: { customerAddress: true } },
     },
   },
-  codes: true,
+  codes: { orderBy: { id: 'asc' } },
   customer: true,
 } as const satisfies Prisma.CartInclude;
 

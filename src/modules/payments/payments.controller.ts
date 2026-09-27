@@ -38,6 +38,7 @@ const INITIATE_ERRORS = [
   'payments.method_unavailable',
   'payments.group_not_payable',
   'payments.nothing_to_pay',
+  'promotions.payment_method_required',
   'provider.unavailable',
 ] as const;
 const SLIP_ERRORS = [

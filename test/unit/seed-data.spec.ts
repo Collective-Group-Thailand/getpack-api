@@ -59,6 +59,7 @@ describe('seed data (B1.2 step 3)', () => {
       'payments.qr_validity_minutes': 'proposed',
       'payments.method_fees': 'pending_business',
       'payments.slip_receiver_accounts': 'pending_business',
+      'promotions.code_attempt_limits': 'proposed',
     });
   });
 

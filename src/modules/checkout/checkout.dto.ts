@@ -111,6 +111,33 @@ export class PreviewDestinationDto {
   shippingNetAmount!: string;
 }
 
+export class PreviewDiscountDto {
+  @ApiProperty({ type: 'integer', nullable: true, example: 1, description: 'Line the discount is on; null = the whole order' })
+  lineNo!: number | null;
+
+  @ApiProperty({
+    enum: ['coupon', 'automatic_promotion', 'referral', 'cs_discount', 'discount_memo', 'company_discount', 'points_redemption'],
+    enumName: 'DiscountSource',
+    example: 'coupon',
+  })
+  source!: string;
+
+  @ApiProperty({ example: '500.00', description: 'Before VAT' })
+  amount!: string;
+
+  @ApiProperty({ example: '0.00', description: 'Removed by the margin guard or the budget (D-053)' })
+  cappedAmount!: string;
+
+  @ApiProperty({ nullable: true, enum: ['margin_floor', 'budget'], enumName: 'DiscountCapReason', example: null })
+  capReason!: string | null;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: '0192f3a0-7c1e-7d2a-9b1f-000000090002' })
+  promotionId!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'WELCOME10' })
+  code!: string | null;
+}
+
 export class PreviewOrderDto {
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca002' })
   cartItemId!: string | null;
@@ -129,6 +156,9 @@ export class PreviewOrderDto {
 
   @ApiProperty({ type: [PreviewDestinationDto] })
   destinations!: PreviewDestinationDto[];
+
+  @ApiProperty({ type: [PreviewDiscountDto], description: 'Discounts on this order (promotions, points, memos)' })
+  discounts!: PreviewDiscountDto[];
 }
 
 export class CheckoutNoticeDto {
@@ -223,6 +253,7 @@ export const PREVIEW_EXAMPLE: CheckoutPreviewDto = {
         },
       ],
       destinations: [{ postcode: '10110', quantity: 1000, shippingNetAmount: '120.00' }],
+      discounts: [],
     },
   ],
   withholding: false,

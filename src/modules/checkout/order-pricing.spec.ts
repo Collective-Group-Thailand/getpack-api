@@ -1,7 +1,7 @@
 import { MoneyDecimal } from '@common/money/money';
 import fc from 'fast-check';
 
-import { priceOrderLines, type PricingContext, type QuoteOptionInput, totalsOf, vatOf } from './order-pricing';
+import { discountLine, priceOrderLines, type PricingContext, type QuoteOptionInput, totalsOf, vatOf } from './order-pricing';
 
 const ctx: PricingContext = { vatPct: '7', nature: 'hire_of_work', productRevenue: 'made_to_order', wht: null };
 
@@ -114,6 +114,34 @@ describe('priceOrderLines', () => {
           expect(new MoneyDecimal(l.netAmount).gte(0)).toBe(true);
           expect(new MoneyDecimal(l.netAmount).add(l.vatAmount).toFixed(2)).toBe(l.grossAmount);
         }
+      }),
+    );
+  });
+});
+
+describe('discountLine', () => {
+  it('lowers VAT by the VAT of the discount and recomputes withholding on the discounted net', () => {
+    const [product] = priceOrderLines(instant, new MoneyDecimal('120.00'), {
+      ...ctx,
+      wht: { hire_of_work: '3', transport: '1', service: '3' },
+    });
+    const d = discountLine(product!, '1000.00');
+    expect(d.discountAmount).toBe('1000.00');
+    expect(new MoneyDecimal(product!.vatAmount).sub(d.vatAmount).toFixed(2)).toBe('70.00');
+    expect(d.grossAmount).toBe(new MoneyDecimal(d.netAmount).sub(d.discountAmount).add(d.vatAmount).toFixed(2));
+    expect(d.whtAmount).toBe(new MoneyDecimal(d.netAmount).sub('1000.00').mul('0.03').toDecimalPlaces(2).toFixed(2));
+    expect(() => discountLine(d, d.netAmount)).toThrow(RangeError);
+  });
+
+  it('property: gross = net − discount + VAT, never negative', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 100 }), (pct) => {
+        const [product] = priceOrderLines(instant, new MoneyDecimal('120.00'), ctx);
+        const amount = new MoneyDecimal(product!.netAmount).mul(pct).div(100).toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN);
+        const d = discountLine(product!, amount);
+        expect(new MoneyDecimal(d.grossAmount).eq(new MoneyDecimal(d.netAmount).sub(d.discountAmount).add(d.vatAmount))).toBe(true);
+        expect(new MoneyDecimal(d.vatAmount).gte(0)).toBe(true);
+        expect(new MoneyDecimal(d.grossAmount).gte(0)).toBe(true);
       }),
     );
   });

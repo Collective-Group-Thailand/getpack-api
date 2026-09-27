@@ -45,6 +45,8 @@ const ERRORS = [
   'checkout.wht_rate_missing',
   'pricing.vat_rate_missing',
   'payments.no_schedule_template',
+  'promotions.limit_reached',
+  'promotions.budget_exhausted',
 ] as const;
 const named = <T>(cls: T, name: string): T => Object.defineProperty(cls, 'name', { value: name });
 
@@ -115,6 +117,15 @@ export function previewDto(draft: CheckoutDraft): CheckoutPreviewDto {
         postcode: l.postcode,
         quantity: l.quantity,
         shippingNetAmount: l.net.toFixed(2),
+      })),
+      discounts: o.discounts.map((d) => ({
+        lineNo: d.lineIndex === null ? null : d.lineIndex + 1,
+        source: d.source,
+        amount: d.amount,
+        cappedAmount: d.cappedAmount ?? '0.00',
+        capReason: d.capReason ?? null,
+        promotionId: (d.meta?.['promotionId'] as string | undefined) ?? null,
+        code: (d.meta?.['code'] as string | null | undefined) ?? null,
       })),
     })),
     withholding: draft.orders.some((o) => o.lines.some((l) => l.whtAmount !== '0.00')),

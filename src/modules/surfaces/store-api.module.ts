@@ -8,6 +8,7 @@ import { StoreQuotePathController } from '@modules/partners/quote-path/quote-pat
 import { PAYMENT_SCHEDULES_STORE_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PAYMENTS_STORE_CONTROLLERS } from '@modules/payments/payments.registry';
 import { PRICING_STORE_CONTROLLERS } from '@modules/pricing/pricing.registry';
+import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { Module } from '@nestjs/common';
 import { StoreFilesController } from '@platform/files/files.controllers';
@@ -39,6 +40,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...CHECKOUT_STORE_CONTROLLERS,
     ...ORDERS_STORE_CONTROLLERS,
     ...PAYMENT_SCHEDULES_STORE_CONTROLLERS,
+    ...PROMOTIONS_STORE_CONTROLLERS,
     ...PAYMENTS_STORE_CONTROLLERS,
   ],
 })

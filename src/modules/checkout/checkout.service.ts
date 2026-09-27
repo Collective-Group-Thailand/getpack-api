@@ -126,11 +126,13 @@ export class CheckoutService {
         'pricing.margin_floor_pct': String(floor.versionId),
       },
     };
+    // Totals are recomputed after each extension, so later ones (the schedule) see the discounted amounts.
     for (const extension of this.extensions.list()) {
-      if (extension.adjust) await extension.adjust(draft, this.prisma);
+      if (!extension.adjust) continue;
+      await extension.adjust(draft, this.prisma);
+      for (const order of draft.orders) order.totals = totalsOf(order.lines);
+      draft.totals = addTotals(draft.orders.map((o) => o.totals));
     }
-    for (const order of draft.orders) order.totals = totalsOf(order.lines);
-    draft.totals = addTotals(draft.orders.map((o) => o.totals));
     draft.state['marginFloorPct'] = String(floor.value);
     return draft;
   }
@@ -271,6 +273,9 @@ export class CheckoutService {
                 amount: d.amount,
                 cappedAmount: d.cappedAmount ?? '0.00',
                 capReason: d.capReason ?? null,
+                promotionId: d.promotionId ?? null,
+                couponCodeId: d.couponCodeId ?? null,
+                campaignId: d.campaignId ?? null,
               },
             });
           }
@@ -568,7 +573,11 @@ export class CheckoutService {
         method: l.method,
       })),
       lines: o.lines,
-      discounts: o.discounts.map((d) => ({ ...d, grantedByUserId: d.grantedByUserId?.toString() ?? null })),
+      // Internal ids stay out of the snapshot; promotions carry their public ids in `meta`.
+      discounts: o.discounts.map(({ promotionId: _p, couponCodeId: _c, campaignId: _k, ...d }) => ({
+        ...d,
+        grantedByUserId: d.grantedByUserId?.toString() ?? null,
+      })),
       totals: o.totals,
       unpaidExpirySettingVersionId: expiryVersionId,
       ...o.snapshot,

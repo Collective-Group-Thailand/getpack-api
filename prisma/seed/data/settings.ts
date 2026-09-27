@@ -62,6 +62,14 @@ export const SETTINGS: readonly SettingSeed[] = [
     description: 'D-154 Marketing is alerted when a campaign has used this share of its budget',
     decisions: ['D-154'],
   },
+  {
+    key: 'promotions.code_attempt_limits',
+    valueType: 'json',
+    value: { perCustomerPerHour: 10, perIpPerHour: 30, perDevicePerHour: 10 },
+    description: 'D-053 abuse control: coupon code attempts allowed per customer, IP and device each hour',
+    decisions: ['D-053'],
+    confirmation: 'proposed',
+  },
 
   // --- Payments & payouts
   {

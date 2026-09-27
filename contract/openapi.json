@@ -1244,6 +1244,28 @@
           "type": "https://errors.packio/pricing.vat_rate_missing"
         }
       },
+      "problem.promotions.budget_exhausted": {
+        "summary": "promotions.budget_exhausted",
+        "value": {
+          "code": "promotions.budget_exhausted",
+          "detail": "งบประมาณของแคมเปญหมดแล้ว กรุณาดูราคาใหม่อีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "งบแคมเปญหมดแล้ว",
+          "type": "https://errors.packio/promotions.budget_exhausted"
+        }
+      },
+      "problem.promotions.code_invalid": {
+        "summary": "promotions.code_invalid",
+        "value": {
+          "code": "promotions.code_invalid",
+          "detail": "รหัสคูปองนี้ใช้ไม่ได้ ({reason})",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ใช้รหัสนี้ไม่ได้",
+          "type": "https://errors.packio/promotions.code_invalid"
+        }
+      },
       "problem.promotions.code_taken": {
         "summary": "promotions.code_taken",
         "value": {
@@ -1277,6 +1299,17 @@
           "type": "https://errors.packio/promotions.invalid_transition"
         }
       },
+      "problem.promotions.limit_reached": {
+        "summary": "promotions.limit_reached",
+        "value": {
+          "code": "promotions.limit_reached",
+          "detail": "สิทธิ์ของโปรโมชันนี้ถูกใช้ครบแล้ว กรุณาดูราคาใหม่อีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "โปรโมชันถูกใช้ครบแล้ว",
+          "type": "https://errors.packio/promotions.limit_reached"
+        }
+      },
       "problem.promotions.no_codes": {
         "summary": "promotions.no_codes",
         "value": {
@@ -1297,6 +1330,28 @@
           "status": 409,
           "title": "ไม่ใช่โปรโมชันแบบคูปอง",
           "type": "https://errors.packio/promotions.not_a_coupon"
+        }
+      },
+      "problem.promotions.payment_method_required": {
+        "summary": "promotions.payment_method_required",
+        "value": {
+          "code": "promotions.payment_method_required",
+          "detail": "โปรโมชันในคำสั่งซื้อนี้ต้องชำระด้วย {methods}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ช่องทางชำระไม่ตรงเงื่อนไข",
+          "type": "https://errors.packio/promotions.payment_method_required"
+        }
+      },
+      "problem.promotions.too_many_attempts": {
+        "summary": "promotions.too_many_attempts",
+        "value": {
+          "code": "promotions.too_many_attempts",
+          "detail": "ลองใส่รหัสคูปองบ่อยเกินไป กรุณาลองใหม่ภายหลัง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 429,
+          "title": "ลองใส่รหัสบ่อยเกินไป",
+          "type": "https://errors.packio/promotions.too_many_attempts"
         }
       },
       "problem.provider.unavailable": {
@@ -3687,6 +3742,20 @@
         ],
         "type": "object"
       },
+      "ApplyCodeDto": {
+        "properties": {
+          "code": {
+            "description": "Case does not matter",
+            "example": "WELCOME10",
+            "pattern": "^[A-Za-z0-9-]{3,40}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
       "ApprovalActionDto": {
         "properties": {
           "action": {
@@ -5431,6 +5500,42 @@
         ],
         "type": "object"
       },
+      "CartCodeDto": {
+        "properties": {
+          "code": {
+            "example": "WELCOME10",
+            "type": "string"
+          },
+          "rejectReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CartCodeStatus"
+              }
+            ],
+            "example": "validated"
+          }
+        },
+        "required": [
+          "code",
+          "status",
+          "rejectReason"
+        ],
+        "type": "object"
+      },
+      "CartCodeStatus": {
+        "enum": [
+          "validated",
+          "rejected"
+        ],
+        "type": "string"
+      },
       "CartDestinationDto": {
         "properties": {
           "address": {
@@ -5472,6 +5577,13 @@
             ],
             "example": "web"
           },
+          "codes": {
+            "description": "Coupon codes entered (D-053); the checkout preview says which apply and why others do not",
+            "items": {
+              "$ref": "#/components/schemas/CartCodeDto"
+            },
+            "type": "array"
+          },
           "currency": {
             "example": "THB",
             "type": "string"
@@ -5509,6 +5621,7 @@
           "channel",
           "items",
           "productGrossAmount",
+          "codes",
           "currency",
           "updatedAt"
         ],
@@ -10837,6 +10950,25 @@
           "updatedAt"
         ],
         "type": "object"
+      },
+      "DiscountCapReason": {
+        "enum": [
+          "margin_floor",
+          "budget"
+        ],
+        "type": "string"
+      },
+      "DiscountSource": {
+        "enum": [
+          "coupon",
+          "automatic_promotion",
+          "referral",
+          "cs_discount",
+          "discount_memo",
+          "company_discount",
+          "points_redemption"
+        ],
+        "type": "string"
       },
       "DocumentSeriesDto": {
         "properties": {
@@ -16758,6 +16890,72 @@
         ],
         "type": "object"
       },
+      "PreviewDiscountDto": {
+        "properties": {
+          "amount": {
+            "description": "Before VAT",
+            "example": "500.00",
+            "type": "string"
+          },
+          "capReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DiscountCapReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "cappedAmount": {
+            "description": "Removed by the margin guard or the budget (D-053)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "code": {
+            "example": "WELCOME10",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineNo": {
+            "description": "Line the discount is on; null = the whole order",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "promotionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090002",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DiscountSource"
+              }
+            ],
+            "example": "coupon"
+          }
+        },
+        "required": [
+          "lineNo",
+          "source",
+          "amount",
+          "cappedAmount",
+          "capReason",
+          "promotionId",
+          "code"
+        ],
+        "type": "object"
+      },
       "PreviewInstalmentDto": {
         "properties": {
           "cashAmount": {
@@ -16829,6 +17027,13 @@
             },
             "type": "array"
           },
+          "discounts": {
+            "description": "Discounts on this order (promotions, points, memos)",
+            "items": {
+              "$ref": "#/components/schemas/PreviewDiscountDto"
+            },
+            "type": "array"
+          },
           "lines": {
             "description": "Lines as they will be written (ids are placeholders)",
             "items": {
@@ -16854,7 +17059,8 @@
           "quantity",
           "totals",
           "lines",
-          "destinations"
+          "destinations",
+          "discounts"
         ],
         "type": "object"
       },
@@ -79525,6 +79731,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -79734,6 +79947,634 @@
         ]
       }
     },
+    "/v1/admin/customers/{customerId}/cart/codes": {
+      "post": {
+        "description": "Checks the code now (status, window, assignment to this customer, uses left) and keeps it on the cart; the checkout preview evaluates its conditions against the cart and shows the discount or why it does not apply (D-053). Attempts are limited per customer, IP and device each hour (`promotions.code_attempt_limits`). Entering a code already on the cart changes nothing.\n\nImplements: D-053.",
+        "operationId": "admin.cart.applyCode",
+        "parameters": [
+          {
+            "description": "App or browser install id; feeds per-device limits (D-053)",
+            "in": "header",
+            "name": "X-Device-Id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "code": "WELCOME10"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ApplyCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
+                  "currency": "THB",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
+                  "items": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "designNote": null,
+                      "designOption": "own_file",
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca003",
+                          "quantity": 1000
+                        }
+                      ],
+                      "destinationsComplete": true,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "mockupOption": "none",
+                      "pendingReprice": null,
+                      "priceLocked": true,
+                      "priceLockedUntil": "2026-10-16T10:00:00+07:00",
+                      "productGrossAmount": "13380.00",
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "quoteCode": null,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
+                      "quoteShippingAmount": "128.40",
+                      "source": "instant",
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "productGrossAmount": "13380.00",
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartDto"
+                }
+              }
+            },
+            "description": "Cart",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "promotions.code_invalid": {
+                    "$ref": "#/components/examples/problem.promotions.code_invalid"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `promotions.code_invalid`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  },
+                  "promotions.too_many_attempts": {
+                    "$ref": "#/components/examples/problem.promotions.too_many_attempts"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`, `promotions.too_many_attempts`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Enter a coupon code",
+        "tags": [
+          "admin.cart"
+        ],
+        "x-required-permissions": [
+          "carts.manage_on_behalf"
+        ]
+      }
+    },
+    "/v1/admin/customers/{customerId}/cart/codes/{code}": {
+      "delete": {
+        "description": "Takes the code off the cart; nothing was reserved yet (usage is reserved at checkout, D-053).\n\nImplements: D-053.",
+        "operationId": "admin.cart.removeCode",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9-]{3,40}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
+                  "currency": "THB",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
+                  "items": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "designNote": null,
+                      "designOption": "own_file",
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca003",
+                          "quantity": 1000
+                        }
+                      ],
+                      "destinationsComplete": true,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "mockupOption": "none",
+                      "pendingReprice": null,
+                      "priceLocked": true,
+                      "priceLockedUntil": "2026-10-16T10:00:00+07:00",
+                      "productGrossAmount": "13380.00",
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "quoteCode": null,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
+                      "quoteShippingAmount": "128.40",
+                      "source": "instant",
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "productGrossAmount": "13380.00",
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartDto"
+                }
+              }
+            },
+            "description": "Cart",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Remove a coupon code",
+        "tags": [
+          "admin.cart"
+        ],
+        "x-required-permissions": [
+          "carts.manage_on_behalf"
+        ]
+      }
+    },
     "/v1/admin/customers/{customerId}/cart/items": {
       "post": {
         "description": "A live saved quotation of this customer (instant or accepted RFQ), one item per option. `hired_design` needs a quotation priced with the design fee; a mockup add-on (D-072) is refused until it can be priced. Destinations default to the default delivery address and must add up to the quantity.\n\nImplements: D-051, D-072, D-142.",
@@ -79785,6 +80626,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -80118,6 +80966,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -80354,6 +81209,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -80667,6 +81529,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -80968,6 +81837,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -81267,6 +82143,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -81813,6 +82696,12 @@
                   },
                   "numbering.series_missing": {
                     "$ref": "#/components/examples/problem.numbering.series_missing"
+                  },
+                  "promotions.budget_exhausted": {
+                    "$ref": "#/components/examples/problem.promotions.budget_exhausted"
+                  },
+                  "promotions.limit_reached": {
+                    "$ref": "#/components/examples/problem.promotions.limit_reached"
                   }
                 },
                 "schema": {
@@ -81820,7 +82709,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `numbering.series_missing`",
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -82020,6 +82909,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "discounts": [],
                       "lines": [
                         {
                           "descriptionEn": "Product",
@@ -82189,6 +83079,12 @@
                 "examples": {
                   "checkout.price_expired": {
                     "$ref": "#/components/examples/problem.checkout.price_expired"
+                  },
+                  "promotions.budget_exhausted": {
+                    "$ref": "#/components/examples/problem.promotions.budget_exhausted"
+                  },
+                  "promotions.limit_reached": {
+                    "$ref": "#/components/examples/problem.promotions.limit_reached"
                   }
                 },
                 "schema": {
@@ -82196,7 +83092,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`",
+            "description": "Problem: `checkout.price_expired`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -106600,6 +107496,9 @@
                   "payments.method_unavailable": {
                     "$ref": "#/components/examples/problem.payments.method_unavailable"
                   },
+                  "promotions.payment_method_required": {
+                    "$ref": "#/components/examples/problem.promotions.payment_method_required"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -106609,7 +107508,7 @@
                 }
               }
             },
-            "description": "Problem: `idempotency.key_reused`, `payments.method_unavailable`, `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `payments.method_unavailable`, `promotions.payment_method_required`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -150930,6 +151829,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -151136,6 +152042,612 @@
         ]
       }
     },
+    "/v1/store/cart/codes": {
+      "post": {
+        "description": "Checks the code now (status, window, assignment to this customer, uses left) and keeps it on the cart; the checkout preview evaluates its conditions against the cart and shows the discount or why it does not apply (D-053). Attempts are limited per customer, IP and device each hour (`promotions.code_attempt_limits`). Entering a code already on the cart changes nothing.\n\nImplements: D-053.",
+        "operationId": "store.cart.applyCode",
+        "parameters": [
+          {
+            "description": "App or browser install id; feeds per-device limits (D-053)",
+            "in": "header",
+            "name": "X-Device-Id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "code": "WELCOME10"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ApplyCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
+                  "currency": "THB",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
+                  "items": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "designNote": null,
+                      "designOption": "own_file",
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca003",
+                          "quantity": 1000
+                        }
+                      ],
+                      "destinationsComplete": true,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "mockupOption": "none",
+                      "pendingReprice": null,
+                      "priceLocked": true,
+                      "priceLockedUntil": "2026-10-16T10:00:00+07:00",
+                      "productGrossAmount": "13380.00",
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "quoteCode": null,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
+                      "quoteShippingAmount": "128.40",
+                      "source": "instant",
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "productGrossAmount": "13380.00",
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartDto"
+                }
+              }
+            },
+            "description": "Cart",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "promotions.code_invalid": {
+                    "$ref": "#/components/examples/problem.promotions.code_invalid"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `promotions.code_invalid`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  },
+                  "promotions.too_many_attempts": {
+                    "$ref": "#/components/examples/problem.promotions.too_many_attempts"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`, `promotions.too_many_attempts`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Enter a coupon code",
+        "tags": [
+          "store.cart"
+        ]
+      }
+    },
+    "/v1/store/cart/codes/{code}": {
+      "delete": {
+        "description": "Takes the code off the cart; nothing was reserved yet (usage is reserved at checkout, D-053).\n\nImplements: D-053.",
+        "operationId": "store.cart.removeCode",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9-]{3,40}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
+                  "currency": "THB",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
+                  "items": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "designNote": null,
+                      "designOption": "own_file",
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca003",
+                          "quantity": 1000
+                        }
+                      ],
+                      "destinationsComplete": true,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "mockupOption": "none",
+                      "pendingReprice": null,
+                      "priceLocked": true,
+                      "priceLockedUntil": "2026-10-16T10:00:00+07:00",
+                      "productGrossAmount": "13380.00",
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "quoteCode": null,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
+                      "quoteShippingAmount": "128.40",
+                      "source": "instant",
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "productGrossAmount": "13380.00",
+                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartDto"
+                }
+              }
+            },
+            "description": "Cart",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove a coupon code",
+        "tags": [
+          "store.cart"
+        ]
+      }
+    },
     "/v1/store/cart/items": {
       "post": {
         "description": "A live saved quotation of this customer (instant or accepted RFQ), one item per option. `hired_design` needs a quotation priced with the design fee; a mockup add-on (D-072) is refused until it can be priced. Destinations default to the default delivery address and must add up to the quantity.\n\nImplements: D-051, D-072, D-142.",
@@ -151179,6 +152691,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -151501,6 +153020,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -151726,6 +153252,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -152028,6 +153561,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -152318,6 +153858,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -152606,6 +154153,13 @@
               "application/json": {
                 "example": {
                   "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
                   "currency": "THB",
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
@@ -156615,6 +158169,12 @@
                   },
                   "numbering.series_missing": {
                     "$ref": "#/components/examples/problem.numbering.series_missing"
+                  },
+                  "promotions.budget_exhausted": {
+                    "$ref": "#/components/examples/problem.promotions.budget_exhausted"
+                  },
+                  "promotions.limit_reached": {
+                    "$ref": "#/components/examples/problem.promotions.limit_reached"
                   }
                 },
                 "schema": {
@@ -156622,7 +158182,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `numbering.series_missing`",
+            "description": "Problem: `checkout.price_expired`, `checkout.total_changed`, `idempotency.in_progress`, `numbering.series_missing`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -156811,6 +158371,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "discounts": [],
                       "lines": [
                         {
                           "descriptionEn": "Product",
@@ -156980,6 +158541,12 @@
                 "examples": {
                   "checkout.price_expired": {
                     "$ref": "#/components/examples/problem.checkout.price_expired"
+                  },
+                  "promotions.budget_exhausted": {
+                    "$ref": "#/components/examples/problem.promotions.budget_exhausted"
+                  },
+                  "promotions.limit_reached": {
+                    "$ref": "#/components/examples/problem.promotions.limit_reached"
                   }
                 },
                 "schema": {
@@ -156987,7 +158554,7 @@
                 }
               }
             },
-            "description": "Problem: `checkout.price_expired`",
+            "description": "Problem: `checkout.price_expired`, `promotions.budget_exhausted`, `promotions.limit_reached`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -161566,6 +163133,9 @@
                   "payments.method_unavailable": {
                     "$ref": "#/components/examples/problem.payments.method_unavailable"
                   },
+                  "promotions.payment_method_required": {
+                    "$ref": "#/components/examples/problem.promotions.payment_method_required"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -161575,7 +163145,7 @@
                 }
               }
             },
-            "description": "Problem: `idempotency.key_reused`, `payments.method_unavailable`, `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `payments.method_unavailable`, `promotions.payment_method_required`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"

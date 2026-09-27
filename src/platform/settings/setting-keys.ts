@@ -49,6 +49,8 @@ export interface SettingValues {
   'discounts.cs_limit_pct': string;
   'payments.schedule_split_threshold': string;
   'campaigns.budget_alert_pct': string;
+  /** D-053 rate limits on coupon code attempts (proposed). */
+  'promotions.code_attempt_limits': { perCustomerPerHour: number; perIpPerHour: number; perDevicePerHour: number };
   'referral.rules': {
     refereeDiscountPct: string;
     refereeDiscountMaxBaht: string;

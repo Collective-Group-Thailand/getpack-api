@@ -22,6 +22,10 @@ export interface DiscountDraft {
   cappedAmount?: string;
   capReason?: string | null;
   grantedByUserId?: bigint | null;
+  /** Promotion references kept on the order discount (D-053, P09 dimension). */
+  promotionId?: bigint | null;
+  couponCodeId?: bigint | null;
+  campaignId?: bigint | null;
   /** Extension data kept on the order discount row or in the pricing snapshot. */
   meta?: Record<string, unknown>;
 }

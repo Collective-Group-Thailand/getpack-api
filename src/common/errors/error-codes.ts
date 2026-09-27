@@ -158,6 +158,11 @@ export const ERROR_CODES = {
   'promotions.invalid_transition': HttpStatus.CONFLICT,
   'promotions.no_codes': HttpStatus.CONFLICT,
   'promotions.not_a_coupon': HttpStatus.CONFLICT,
+  'promotions.code_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'promotions.too_many_attempts': HttpStatus.TOO_MANY_REQUESTS,
+  'promotions.limit_reached': HttpStatus.CONFLICT,
+  'promotions.budget_exhausted': HttpStatus.CONFLICT,
+  'promotions.payment_method_required': HttpStatus.UNPROCESSABLE_ENTITY,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

@@ -55,6 +55,7 @@ export function cartDto(cart: CartRow, now = new Date()): CartDto {
     channel: cart.channel,
     items: cart.items.map((i) => cartItemDto(i, now)),
     productGrossAmount: formatMoney(total),
+    codes: cart.codes.map((c) => ({ code: c.code, status: c.status, rejectReason: c.rejectReason })),
     currency: 'THB',
     updatedAt: toBangkokIso(cart.updatedAt),
   };

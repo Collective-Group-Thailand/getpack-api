@@ -25,6 +25,7 @@ import {
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { OrderLifecycleHooks } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
+import { PromotionRedemptions } from '@modules/promotions/promotion-redemptions.service';
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
@@ -97,6 +98,7 @@ export class PaymentsService implements OnModuleInit {
     @Inject(SLIP_VERIFIER) private readonly slipVerifier: SlipVerifier,
     private readonly events: DomainEvents,
     private readonly activity: ActivityLogService,
+    private readonly promotions: PromotionRedemptions,
   ) {}
 
   onModuleInit(): void {
@@ -144,6 +146,10 @@ export class PaymentsService implements OnModuleInit {
       throw new DomainException('http.not_found');
     if (!['waiting_payment', 'in_progress'].includes(group.status))
       throw new DomainException('payments.group_not_payable', { params: { status: group.status } });
+    // A promotion that names payment methods holds the group to them (D-053 "payment method").
+    const allowed = await this.promotions.requiredPaymentMethods(this.prisma, group.id);
+    if (allowed.length > 0 && !allowed.includes(input.method))
+      throw new DomainException('promotions.payment_method_required', { params: { methods: allowed.join(', ') } });
     const schedule = await this.schedules.forGroup(group.id);
     const open = schedule.instalments.filter((i) => (OPEN as readonly string[]).includes(i.status));
     const chosen = input.instalmentIds?.length

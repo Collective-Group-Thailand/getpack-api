@@ -231,6 +231,17 @@ export class CartItemDto {
   destinationsComplete!: boolean;
 }
 
+export class CartCodeDto {
+  @ApiProperty({ example: 'WELCOME10' })
+  code!: string;
+
+  @ApiProperty({ enum: ['validated', 'rejected'], enumName: 'CartCodeStatus', example: 'validated' })
+  status!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  rejectReason!: string | null;
+}
+
 export class CartDto {
   @IdField(CART_IDS.cart)
   id!: string;
@@ -246,6 +257,12 @@ export class CartDto {
 
   @ApiProperty({ example: '13380.00', description: 'Sum of the items, incl. VAT, excluding shipping' })
   productGrossAmount!: string;
+
+  @ApiProperty({
+    type: [CartCodeDto],
+    description: 'Coupon codes entered (D-053); the checkout preview says which apply and why others do not',
+  })
+  codes!: CartCodeDto[];
 
   @ApiProperty({ example: 'THB' })
   currency!: string;
@@ -300,6 +317,7 @@ export const CART_EXAMPLE: CartDto = {
   channel: 'web',
   items: [CART_ITEM_EXAMPLE],
   productGrossAmount: '13380.00',
+  codes: [{ code: 'WELCOME10', status: 'validated', rejectReason: null }],
   currency: 'THB',
   updatedAt: '2026-10-01T10:00:00+07:00',
 };

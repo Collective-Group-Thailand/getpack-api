@@ -168,6 +168,26 @@ export function priceOrderLines(
   });
 }
 
+/**
+ * The line after a further discount of `amount` on its net (promotions, points, memos): VAT falls by the
+ * VAT of the discount (so the undiscounted part keeps the quotation's VAT exactly), withholding is
+ * recomputed on the discounted net. Never below zero.
+ */
+export function discountLine(line: LineDraft, amount: MoneyValue | string): LineDraft {
+  const net = D(line.netAmount);
+  const discount = D(line.discountAmount).add(amount);
+  if (discount.gt(net)) throw new RangeError('discount exceeds the line net');
+  const vat = MoneyDecimal.max(D(line.vatAmount).sub(vatOf(D(amount), line.vatRatePct)), D(0));
+  const base = net.sub(discount);
+  return {
+    ...line,
+    discountAmount: formatMoney(discount),
+    vatAmount: formatMoney(vat),
+    grossAmount: formatMoney(base.add(vat)),
+    whtAmount: formatMoney(round2(base.mul(line.whtRatePct).div(100))),
+  };
+}
+
 export function totalsOf(lines: readonly LineDraft[]): Totals {
   const sum = (f: (l: LineDraft) => string) => lines.reduce((a, l) => a.add(f(l)), D(0));
   const net = sum((l) => l.netAmount);

@@ -661,6 +661,26 @@
     "not_a_coupon": {
       "title": "Not a coupon promotion",
       "detail": "This promotion does not use coupon codes."
+    },
+    "code_invalid": {
+      "title": "Code cannot be used",
+      "detail": "This coupon code cannot be used ({reason})"
+    },
+    "too_many_attempts": {
+      "title": "Too many code attempts",
+      "detail": "Too many coupon code attempts; try again later"
+    },
+    "limit_reached": {
+      "title": "Promotion limit reached",
+      "detail": "This promotion has been used up; preview the checkout again"
+    },
+    "budget_exhausted": {
+      "title": "Campaign budget used up",
+      "detail": "The campaign budget is used up; preview the checkout again"
+    },
+    "payment_method_required": {
+      "title": "Payment method not allowed",
+      "detail": "A promotion on this order requires paying by {methods}"
     }
   }
 }
