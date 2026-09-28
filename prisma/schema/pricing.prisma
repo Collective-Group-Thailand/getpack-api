@@ -582,6 +582,8 @@ model Quote {
   @@index([createdById], map: "ix_quotes__created_by")
   @@index([pdfFileId], map: "ix_quotes__pdf_file_id")
   @@index([supersededById], map: "ix_quotes__superseded_by_id")
+  @@index([createdAt], map: "ix_quotes__created_at")
+  @@index([convertedAt], map: "ix_quotes__converted_at", where: raw("(converted_at IS NOT NULL)"))
   @@map("quotes")
 }
 
@@ -734,6 +736,8 @@ model Rfq {
   @@index([provinceId], map: "ix_rfqs__province_id")
   @@index([declineReasonId], map: "ix_rfqs__decline_reason_id")
   @@index([createdById], map: "ix_rfqs__created_by")
+  @@index([submittedAt], map: "ix_rfqs__submitted_at")
+  @@index([closedAt], map: "ix_rfqs__closed_at", where: raw("(closed_at IS NOT NULL)"))
   @@map("rfqs")
 }
 
@@ -896,5 +900,6 @@ model UnmetDemandRecord {
   @@index([reasonId], map: "ix_unmet_demand_records__reason_id")
   @@index([provinceId], map: "ix_unmet_demand_records__province_id")
   @@index([rfqId], map: "ix_unmet_demand_records__rfq_id")
+  @@index([occurredAt], map: "ix_unmet_demand_records__occurred_at")
   @@map("unmet_demand_records")
 }

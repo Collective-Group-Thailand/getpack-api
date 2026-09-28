@@ -1012,5 +1012,6 @@ model ConsentRecord {
   @@index([userId, purposeId, recordedAt(sort: Desc)], map: "ix_consent_records__user__purpose__recorded_at")
   @@index([anonymousId, purposeId, recordedAt(sort: Desc)], map: "ix_consent_records__anonymous__purpose__recorded_at")
   @@index([purposeVersionId], map: "ix_consent_records__purpose_version_id")
+  @@index([purposeId], map: "ix_consent_records__purpose_id")
   @@map("consent_records")
 }

@@ -33,6 +33,7 @@ import { IamModule } from '@modules/iam/iam.module';
 import { LedgerModule } from '@modules/ledger/ledger.module';
 import { LogisticsModule } from '@modules/logistics/logistics.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
+import { OpsModule } from '@modules/ops/ops.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PartnersModule } from '@modules/partners/partners.module';
 import { PayablesModule } from '@modules/payables/payables.module';
@@ -137,6 +138,7 @@ import { LoggerModule } from 'nestjs-pino';
     AuditSupportModule,
     AnalyticsModule,
     ReportsModule,
+    OpsModule,
     HealthModule,
     SurfacesModule,
   ],

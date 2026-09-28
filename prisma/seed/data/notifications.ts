@@ -91,8 +91,14 @@ const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
     category: 'transactional',
     description: 'Recipients of a report: the file is ready to download in Packio (B6.2)',
     versions: {
-      th: { subject: 'รายงานพร้อมแล้ว', body: 'รายงาน {{payload.reportNameTh}} พร้อมดาวน์โหลดแล้ว ({{payload.rowCount}} แถว)' },
-      en: { subject: 'Report ready', body: 'The {{payload.reportNameEn}} report is ready to download ({{payload.rowCount}} rows)' },
+      th: {
+        subject: 'รายงานพร้อมแล้ว',
+        body: 'รายงาน {{payload.reportNameTh}} พร้อมดาวน์โหลดแล้ว ({{payload.rowCount}} แถว)',
+      },
+      en: {
+        subject: 'Report ready',
+        body: 'The {{payload.reportNameEn}} report is ready to download ({{payload.rowCount}} rows)',
+      },
     },
   },
   {
@@ -117,8 +123,46 @@ const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
     category: 'transactional',
     description: 'Recipients of a report: the file could not be generated (B6.2)',
     versions: {
-      th: { subject: 'สร้างรายงานไม่สำเร็จ', body: 'สร้างรายงาน {{payload.reportNameTh}} ไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ' },
-      en: { subject: 'Report failed', body: 'The {{payload.reportNameEn}} report could not be generated; please contact an administrator' },
+      th: {
+        subject: 'สร้างรายงานไม่สำเร็จ',
+        body: 'สร้างรายงาน {{payload.reportNameTh}} ไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ',
+      },
+      en: {
+        subject: 'Report failed',
+        body: 'The {{payload.reportNameEn}} report could not be generated; please contact an administrator',
+      },
+    },
+  },
+  {
+    key: 'ops.alert_raised:assignee',
+    channel: 'in_app',
+    category: 'transactional',
+    description: 'Superadmins and admins: an operational signal passed its threshold (B6.3)',
+    versions: {
+      th: {
+        subject: 'แจ้งเตือนระบบ: {{payload.signal}}',
+        body: '{{payload.description}} — ค่า {{payload.value}} (เกณฑ์ {{payload.threshold}})',
+      },
+      en: {
+        subject: 'Ops alert: {{payload.signal}}',
+        body: '{{payload.description}} — value {{payload.value}} (threshold {{payload.threshold}})',
+      },
+    },
+  },
+  {
+    key: 'ops.alert_raised:assignee',
+    channel: 'email',
+    category: 'transactional',
+    description: 'Superadmins and admins: an operational signal passed its threshold (B6.3)',
+    versions: {
+      th: {
+        subject: '[Packio] แจ้งเตือนระบบ: {{payload.signal}}',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>เรียน {{recipient.displayName}}</mj-text><mj-text>{{payload.description}} — ค่า {{payload.value}} (เกณฑ์ {{payload.threshold}}) ดูรายละเอียดและขั้นตอนใน docs/RUNBOOK.md</mj-text></mj-column></mj-section></mj-body></mjml>',
+      },
+      en: {
+        subject: '[Packio] Ops alert: {{payload.signal}}',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>Dear {{recipient.displayName}}</mj-text><mj-text>{{payload.description}} — value {{payload.value}} (threshold {{payload.threshold}}). See docs/RUNBOOK.md for the response.</mj-text></mj-column></mj-section></mj-body></mjml>',
+      },
     },
   },
 ];
@@ -165,6 +209,18 @@ const PLATFORM_ROUTES: readonly NotificationRouteSeed[] = [
     audience: 'assignee',
     templateKey: 'report_run.failed:assignee',
     channel: 'in_app',
+  },
+  {
+    eventType: 'ops.alert_raised',
+    audience: 'assignee',
+    templateKey: 'ops.alert_raised:assignee',
+    channel: 'in_app',
+  },
+  {
+    eventType: 'ops.alert_raised',
+    audience: 'assignee',
+    templateKey: 'ops.alert_raised:assignee',
+    channel: 'email',
   },
 ];
 

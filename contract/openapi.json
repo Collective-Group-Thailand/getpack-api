@@ -26672,6 +26672,78 @@
         ],
         "type": "object"
       },
+      "OpsSignalDto": {
+        "properties": {
+          "description": {
+            "example": "Domain events dead-lettered after every retry (replay from the outbox admin)",
+            "type": "string"
+          },
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OpsSignalKey"
+              }
+            ],
+            "example": "outbox_dead_letters"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OpsSignalStatus"
+              }
+            ],
+            "example": "ok"
+          },
+          "threshold": {
+            "description": "From the setting `ops.alert_thresholds`",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "value": {
+            "description": "Null when the source could not be read",
+            "example": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "description",
+          "value",
+          "threshold",
+          "status"
+        ],
+        "type": "object"
+      },
+      "OpsSignalKey": {
+        "enum": [
+          "outbox_dead_letters",
+          "outbox_backlog_minutes",
+          "queue_depth",
+          "webhook_failures_24h",
+          "payout_item_failures_7d",
+          "ledger_posting_failures",
+          "acceptance_overdue",
+          "production_at_risk",
+          "rfq_first_response_overdue",
+          "approvals_overdue",
+          "slip_verification_wait_hours"
+        ],
+        "type": "string"
+      },
+      "OpsSignalStatus": {
+        "enum": [
+          "ok",
+          "alert",
+          "unknown"
+        ],
+        "type": "string"
+      },
       "OptionInput": {
         "properties": {
           "isDefault": {
@@ -161598,6 +161670,150 @@
         ]
       }
     },
+    "/v1/admin/ops/signals": {
+      "get": {
+        "description": "Launch monitoring (B6.3, single public launch D-113): outbox dead letters and backlog, worker queue depth, webhook failures, payout / bank failures, ledger posting failures and SLA breaches (factory acceptance D-074, production at risk, RFQ first response, approvals, slip verification D-061), each against its threshold (`ops.alert_thresholds`). The worker raises `ops.alert_raised` to superadmins and admins (at most hourly per signal).\n\nImplements: D-113, D-061, D-074.",
+        "operationId": "admin.ops.signals",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "description": "Domain events dead-lettered after every retry (replay from the outbox admin)",
+                    "key": "outbox_dead_letters",
+                    "status": "ok",
+                    "threshold": 1,
+                    "value": 0
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OpsSignalDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Signals",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Operational signals",
+        "tags": [
+          "admin.ops"
+        ],
+        "x-required-permissions": [
+          "ops.read"
+        ]
+      }
+    },
     "/v1/admin/order-groups": {
       "get": {
         "description": "Filter by status; `q` matches a group or order code, or the customer code.\n\nImplements: D-060, D-073, D-142, D-050.",
@@ -276125,6 +276341,10 @@
     {
       "description": "The signed-in staff member's in-app notifications.",
       "name": "admin.notifications"
+    },
+    {
+      "description": "Operational signals for launch monitoring (D-113): outbox, queues, webhooks, payouts, ledger postings and SLA breaches against their alert thresholds.",
+      "name": "admin.ops"
     },
     {
       "description": "CS operations on orders: edit & re-price, change customer, remarks, notes, work queues.",

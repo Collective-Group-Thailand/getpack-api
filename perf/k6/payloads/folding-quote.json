@@ -1,0 +1,25 @@
+{
+  "productTypeCode": "folding_carton",
+  "configuration": {
+    "patternId": "REPLACE-with-a-pattern-public-id-of-the-environment",
+    "w": 60,
+    "l": 40,
+    "d": 120,
+    "materialId": "REPLACE-with-a-material-public-id",
+    "difficultyLevelId": "REPLACE-with-a-difficulty-level-public-id",
+    "quantities": [1000],
+    "parts": [
+      {
+        "printFront": [
+          { "inkColourId": "REPLACE-with-an-ink-colour-public-id", "percent": 100 },
+          { "inkColourId": "REPLACE-with-an-ink-colour-public-id", "percent": 100 },
+          { "inkColourId": "REPLACE-with-an-ink-colour-public-id", "percent": 100 },
+          { "inkColourId": "REPLACE-with-an-ink-colour-public-id", "percent": 100 }
+        ],
+        "finish1FrontId": "REPLACE-with-a-finish-public-id",
+        "diecutTypeId": "REPLACE-with-a-diecut-type-public-id"
+      }
+    ],
+    "design": { "graphic": false, "structure": false }
+  }
+}

@@ -13,6 +13,8 @@ export default tseslint.config(
       'src/generated/**',
       'legacy/**',
       'docs/**',
+      // k6 load scripts run in the k6 runtime (remote jslib imports), not in Node.
+      'perf/**',
       'eslint.config.mjs',
     ],
   },

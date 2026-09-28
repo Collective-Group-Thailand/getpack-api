@@ -691,6 +691,30 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-040', 'D-013'],
     confirmation: 'pending_business',
   },
+  // --- Launch monitoring (B6.3, D-113). Operational thresholds, not business values: proposed, superadmin.
+  {
+    key: 'ops.alert_thresholds',
+    valueType: 'json',
+    value: {
+      outbox_dead_letters: 1,
+      outbox_backlog_minutes: 15,
+      queue_depth: 1000,
+      webhook_failures_24h: 5,
+      payout_item_failures_7d: 1,
+      ledger_posting_failures: 1,
+      acceptance_overdue: 1,
+      production_at_risk: 5,
+      rfq_first_response_overdue: 1,
+      approvals_overdue: 5,
+      slip_verification_wait_hours: 4,
+    },
+    valueSchema: { type: 'object', additionalProperties: { type: 'integer', minimum: 1 } },
+    description:
+      'D-113 launch monitoring: value at which each operational signal raises an alert to superadmins and admins (slip wait mirrors the D-061 4-hour SLA in wall-clock hours; the rest proposed)',
+    decisions: ['D-113', 'D-061', 'D-074'],
+    confirmation: 'proposed',
+    ownerRole: 'superadmin',
+  },
   {
     key: 'analytics.prospectus_min_group_size',
     valueType: 'integer',

@@ -829,6 +829,7 @@ model ProductionJob {
   @@index([updatedById], map: "ix_production_jobs__updated_by")
   @@index([routeVersionId], map: "ix_production_jobs__route_version_id")
   @@index([priceListVersionId], map: "ix_production_jobs__price_list_version_id")
+  @@index([releasedAt], map: "ix_production_jobs__released_at")
   @@map("production_jobs")
 }
 
@@ -1146,6 +1147,8 @@ model Shipment {
   @@index([factoryPayoutVersionId], map: "ix_shipments__factory_payout_version_id")
   @@index([createdById], map: "ix_shipments__created_by")
   @@index([updatedById], map: "ix_shipments__updated_by")
+  @@index([pickedUpAt], map: "ix_shipments__picked_up_at", where: raw("(picked_up_at IS NOT NULL)"))
+  @@index([deliveredAt], map: "ix_shipments__delivered_at", where: raw("(delivered_at IS NOT NULL)"))
   @@map("shipments")
 }
 
@@ -1442,6 +1445,7 @@ model Claim {
   @@index([factoryRespondedById], map: "ix_claims__factory_responded_by")
   @@index([decidedById], map: "ix_claims__decided_by")
   @@index([createdById], map: "ix_claims__created_by")
+  @@index([submittedAt], map: "ix_claims__submitted_at")
   @@map("claims")
 }
 

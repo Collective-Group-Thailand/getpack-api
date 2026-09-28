@@ -1820,6 +1820,7 @@ model VendorDeduction {
   @@index([factoryId], map: "ix_vendor_deductions__factory_id")
   @@index([claimId], map: "ix_vendor_deductions__claim_id")
   @@index([appliedPayableItemId], map: "ix_vendor_deductions__applied_payable_item_id")
+  @@index([entityId], map: "ix_vendor_deductions__entity_id")
   @@map("vendor_deductions")
 }
 
@@ -1868,6 +1869,7 @@ model PayoutRun {
   @@index([approvalRequestId], map: "ix_payout_runs__approval_request_id")
   @@index([bankFileId], map: "ix_payout_runs__bank_file_id")
   @@index([confirmationFileId], map: "ix_payout_runs__confirmation_file_id")
+  @@index([payOn], map: "ix_payout_runs__pay_on")
   @@map("payout_runs")
 }
 

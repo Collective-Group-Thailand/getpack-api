@@ -987,6 +987,13 @@ export const PERMISSIONS = [
     description: 'Schedule operational reports for staff recipients and see every run of the reports the user may read',
     decisionRefs: ['D-111'],
   },
+  // --- B6.3 launch readiness (D-113)
+  {
+    key: 'ops.read',
+    audience: 'staff',
+    description: 'Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches)',
+    decisionRefs: ['D-113'],
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];

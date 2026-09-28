@@ -21,6 +21,7 @@ import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
 import { LEDGER_ADMIN_CONTROLLERS } from '@modules/ledger/ledger.registry';
 import { LOGISTICS_ADMIN_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { LOYALTY_ADMIN_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
+import { OPS_ADMIN_CONTROLLERS } from '@modules/ops/ops.registry';
 import { ORDERS_ADMIN_CONTROLLERS } from '@modules/orders/orders.registry';
 import { FactoryOwnersService } from '@modules/partners/factories/factory-owners.service';
 import { PARTNERS_ADMIN_CONTROLLERS } from '@modules/partners/partners.registry';
@@ -116,6 +117,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...AUDIT_SUPPORT_ADMIN_CONTROLLERS,
     ...ANALYTICS_ADMIN_CONTROLLERS,
     ...REPORTS_ADMIN_CONTROLLERS,
+    ...OPS_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

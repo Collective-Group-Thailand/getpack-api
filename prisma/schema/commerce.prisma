@@ -513,6 +513,7 @@ model OrderGroup {
   @@index([cancelReasonId], map: "ix_order_groups__cancel_reason_id")
   @@index([updatedById], map: "ix_order_groups__updated_by")
   @@index([expiresAt], map: "ix_order_groups__expires_at", where: raw("(status = 'waiting_payment'::order_group_status)"))
+  @@index([placedAt], map: "ix_order_groups__placed_at")
   @@map("order_groups")
 }
 
@@ -674,6 +675,7 @@ model Order {
   @@index([updatedById], map: "ix_orders__updated_by")
   @@index([designDocumentId], map: "ix_orders__design_document_id")
   @@index([reuseArtworkProofId], map: "ix_orders__reuse_artwork_proof_id")
+  @@index([shippedAt], map: "ix_orders__shipped_at", where: raw("(shipped_at IS NOT NULL)"))
   @@map("orders")
 }
 
@@ -1196,6 +1198,7 @@ model Payment {
   @@index([entityId], map: "ix_payments__entity_id")
   @@index([verifiedById], map: "ix_payments__verified_by")
   @@index([initiatedById], map: "ix_payments__initiated_by")
+  @@index([paidAt], map: "ix_payments__paid_at", where: raw("(paid_at IS NOT NULL)"))
   @@map("payments")
 }
 
@@ -1583,6 +1586,7 @@ model PromotionRedemption {
   @@index([couponCodeId], map: "ix_promotion_redemptions__coupon_code_id")
   @@index([campaignId], map: "ix_promotion_redemptions__campaign_id")
   @@index([customerUserId], map: "ix_promotion_redemptions__customer_user_id")
+  @@index([appliedAt], map: "ix_promotion_redemptions__applied_at", where: raw("(applied_at IS NOT NULL)"))
   @@map("promotion_redemptions")
 }
 

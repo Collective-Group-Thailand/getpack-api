@@ -73,6 +73,8 @@ describe('seed data (B1.2 step 3)', () => {
       'tax.gl_accounts': 'proposed',
       'fixed_assets.depreciation_start': 'pending_cpa',
       'audit.business_hours': 'proposed',
+      // B6.3: operational alert thresholds (launch monitoring), no decision gives them.
+      'ops.alert_thresholds': 'proposed',
     });
   });
 

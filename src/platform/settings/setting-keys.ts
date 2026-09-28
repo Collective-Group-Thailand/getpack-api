@@ -65,6 +65,10 @@ export interface SettingValues {
   'fixed_assets.depreciation_start': 'acquisition_month' | 'next_month';
   'tax.gl_accounts': { output_vat: string[]; input_vat: string[]; wht_pnd3: string[]; wht_pnd53: string[]; wht_receivable: string[] };
   'orders.auto_complete_days': number;
+  /** B6.3 alert threshold per operational signal (proposed). */
+  'ops.alert_thresholds': Partial<Record<string, number>>;
+  /** D-160 minimum contributors per prospectus figure. */
+  'analytics.prospectus_min_group_size': number;
   'claims.window_days': number;
   'discounts.cs_limit_pct': string;
   'payments.schedule_split_threshold': string;

@@ -107,6 +107,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ดูแลระบบ',
     nameEn: 'Admin',
     permissions: [
+      'ops.read',
       'reports.export', 'reports.schedule',
       'analytics.read', 'analytics.manage',
       ...EVERY_STAFF_MEMBER,

@@ -31,7 +31,8 @@
     "db:seed": "nest build && node dist/prisma/seed/run.js reference",
     "db:seed:dev": "nest build && node dist/prisma/seed/run.js dev",
     "contract:lint": "spectral lint contract/openapi.json --ruleset contract/spectral/.spectral.yaml --fail-severity warn",
-    "rbac:build": "nest build && node dist/scripts/rbac-build.js"
+    "rbac:build": "nest build && node dist/scripts/rbac-build.js",
+    "launch:settings": "nest build && node dist/scripts/launch-settings-build.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1138.0",
