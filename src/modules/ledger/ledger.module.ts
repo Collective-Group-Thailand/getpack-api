@@ -10,6 +10,7 @@ import { PeriodsService } from './periods.service';
 import { PostingEngine } from './posting/posting-engine.service';
 import { RecurringJournalsService } from './recurring-journals.service';
 import { SourceReversalSubscriber } from './source-reversal.subscriber';
+import { TaxRatesReader } from './tax-rates.reader';
 
 const SERVICES = [
   PeriodsService,
@@ -19,6 +20,7 @@ const SERVICES = [
   RecurringJournalsService,
   LedgerConfigService,
   JournalsQueryService,
+  TaxRatesReader,
 ];
 
 /**

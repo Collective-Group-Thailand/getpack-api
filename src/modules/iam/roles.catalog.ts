@@ -46,6 +46,7 @@ export const ROLES: readonly RoleDefinition[] = [
     permissions: [
       'receivables.read',
       'ledger.read',
+      'payables.read', 'banking.read',
       ...APPROVER,
       ...COST_AND_MARGIN,
       'settings.read_sensitive',
@@ -292,6 +293,8 @@ export const ROLES: readonly RoleDefinition[] = [
     permissions: [
       'receivables.read', 'receivables.manage', 'credit_notes.request', 'receivables.write_off.request',
       'ledger.read', 'ledger.journals.manage', 'ledger.config.propose',
+      'payables.read', 'payables.manage', 'payables.vendors.manage', 'payables.bills.record',
+      'payouts.manage', 'payouts.execute', 'banking.read', 'banking.manage', 'banking.accounts.propose',
       ...APPROVER,
       ...COST_AND_MARGIN,
       'audit_logs.read',
@@ -325,6 +328,8 @@ export const ROLES: readonly RoleDefinition[] = [
     permissions: [
       'receivables.read', 'receivables.manage', 'credit_notes.request', 'receivables.write_off.request', 'receivables.debit_notes.issue',
       'ledger.read', 'ledger.journals.manage', 'ledger.config.propose', 'ledger.periods.manage', 'ledger.post_soft_closed',
+      'payables.read', 'payables.manage', 'payables.vendors.manage', 'payables.bills.record',
+      'payouts.manage', 'payouts.execute', 'banking.read', 'banking.manage', 'banking.accounts.propose',
       ...APPROVER,
       ...COST_AND_MARGIN,
       'settings.read_sensitive',
@@ -436,6 +441,8 @@ export const ROLES: readonly RoleDefinition[] = [
     permissions: [
       'receivables.read',
       'ledger.read',
+      'payables.read',
+      'banking.read',
       'settings.read',
       'approvals.read',
       'audit_logs.read',
@@ -493,6 +500,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_issues.raise',
       'factory_capacity.manage',
       'factory_scorecard.read',
+      'factory_payables.read',
+      'factory_payables.manage',
     ],
   },
   {
@@ -572,6 +581,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'factory_prices.read',
       'factory_bank_account.propose',
       'factory_jobs.read',
+      'factory_payables.read',
+      'factory_payables.manage',
     ],
   },
 

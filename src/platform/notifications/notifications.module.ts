@@ -1,4 +1,3 @@
-import { FieldEncryption } from '@common/crypto/field-encryption';
 import { Global, Module } from '@nestjs/common';
 import { RealtimePublisher } from '@platform/realtime/realtime.publisher';
 
@@ -10,7 +9,6 @@ import { NotificationsAdminService } from './notifications-admin.service';
 import { RecipientDirectory } from './recipients';
 
 const PROVIDERS = [
-  FieldEncryption,
   RealtimePublisher,
   RecipientDirectory,
   NotificationRouter,

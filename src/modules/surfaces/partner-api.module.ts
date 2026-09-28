@@ -2,6 +2,8 @@ import { PartnerMeController } from '@modules/auth/controllers/me.controllers';
 import { CLAIMS_PARTNER_CONTROLLERS } from '@modules/claims/claims.registry';
 import { LOGISTICS_PARTNER_CONTROLLERS } from '@modules/logistics/logistics.registry';
 import { PARTNERS_PARTNER_CONTROLLERS } from '@modules/partners/partners.registry';
+import { PAYABLES_PARTNER_CONTROLLERS } from '@modules/payables/payables.registry';
+import { PAYOUTS_PARTNER_CONTROLLERS } from '@modules/payouts/payouts.registry';
 import { PRICING_PARTNER_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { PRODUCTION_PARTNER_CONTROLLERS } from '@modules/production/production.registry';
 import { QUOTES_PARTNER_CONTROLLERS } from '@modules/quotes/quotes.registry';
@@ -24,6 +26,8 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     PartnerInboxController,
 
     ...PARTNERS_PARTNER_CONTROLLERS,
+    ...PAYABLES_PARTNER_CONTROLLERS,
+    ...PAYOUTS_PARTNER_CONTROLLERS,
     ...PRICING_PARTNER_CONTROLLERS,
     ...SHIPPING_PARTNER_CONTROLLERS,
     ...QUOTES_PARTNER_CONTROLLERS,

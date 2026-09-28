@@ -584,6 +584,19 @@ model User {
   badDebtProvisionsCreated  BadDebtProvision[]       @relation("BadDebtProvisionCreatedBy")
   // --- end Finance B5.2
 
+  // --- Finance B5.3 (generated back-relations)
+  companyBankAccountsCreated CompanyBankAccount[]  @relation("CompanyBankAccountCreatedBy")
+  billingStatementsConfirmed BillingStatement[]    @relation("BillingStatementConfirmedBy")
+  vendorInvoicesValidated    VendorInvoice[]       @relation("VendorInvoiceValidatedBy")
+  vendorInvoicesRecorded     VendorInvoice[]       @relation("VendorInvoiceRecordedBy")
+  payoutRunsProposed         PayoutRun[]           @relation("PayoutRunProposedBy")
+  payoutRunsCreated          PayoutRun[]           @relation("PayoutRunCreatedBy")
+  bankStatementImports       BankStatementImport[] @relation("BankStatementImportImportedBy")
+  bankMatchesMade            BankMatch[]           @relation("BankMatchMatchedBy")
+  gatewaySettlementsCreated  GatewaySettlement[]   @relation("GatewaySettlementCreatedBy")
+  // --- end Finance B5.3
+
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

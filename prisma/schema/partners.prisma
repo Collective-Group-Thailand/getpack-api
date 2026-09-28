@@ -372,6 +372,13 @@ model Factory {
   journalLines JournalLine[] @relation("JournalLineFactory")
   // --- end Finance B5.1
 
+  // --- Finance B5.3 (generated back-relations)
+  purchaseOrders    PurchaseOrder[]    @relation("PurchaseOrderFactory")
+  goodsReceipts     GoodsReceipt[]     @relation("GoodsReceiptFactory")
+  billingStatements BillingStatement[] @relation("BillingStatementFactory")
+  vendorDeductions  VendorDeduction[]  @relation("VendorDeductionFactory")
+  // --- end Finance B5.3
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
@@ -998,6 +1005,10 @@ model FactoryPayoutPolicyVersion {
   createdBy       User?               @relation("FactoryPayoutPolicyVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_payout_policy_versions__created_by")
   decidedBy       User?               @relation("FactoryPayoutPolicyVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_factory_payout_policy_versions__decided_by")
 
+  // --- Finance B5.3 (generated back-relations)
+  purchaseOrders PurchaseOrder[] @relation("PurchaseOrderPayoutPolicyVersion")
+  // --- end Finance B5.3
+
   @@unique([policyId, versionNo], map: "ux_factory_payout_policy_versions__policy_id__version_no")
   @@index([policyId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_factory_payout_policy_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
   @@index([approvalRequestId], map: "ix_factory_payout_policy_versions__approval_request_id")
@@ -1095,6 +1106,10 @@ model PriceListVersion {
   // --- Fulfilment B4.2 (generated back-relations)
   productionJobs ProductionJob[] @relation("ProductionJobPriceListVersion")
   // --- end Fulfilment B4.2
+
+  // --- Finance B5.3 (generated back-relations)
+  purchaseOrders PurchaseOrder[] @relation("PurchaseOrderPriceListVersion")
+  // --- end Finance B5.3
 
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
   @@index([priceListId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_price_list_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))

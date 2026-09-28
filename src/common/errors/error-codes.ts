@@ -246,6 +246,18 @@ export const ERROR_CODES = {
   'receivables.nothing_to_write_off': HttpStatus.CONFLICT,
   'receivables.allowance_rates_unset': HttpStatus.CONFLICT,
   'receivables.certificate_invalid': HttpStatus.CONFLICT,
+  'payables.invoice_duplicate': HttpStatus.CONFLICT,
+  'payables.invoice_mismatch': HttpStatus.UNPROCESSABLE_ENTITY,
+  'payables.statement_not_confirmable': HttpStatus.CONFLICT,
+  'payouts.run_invalid_status': HttpStatus.CONFLICT,
+  'payouts.nothing_eligible': HttpStatus.CONFLICT,
+  'payouts.confirmation_mismatch': HttpStatus.UNPROCESSABLE_ENTITY,
+  'payouts.bank_account_missing': HttpStatus.CONFLICT,
+  'banking.duplicate_import': HttpStatus.CONFLICT,
+  'banking.statement_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'banking.line_already_matched': HttpStatus.CONFLICT,
+  'banking.match_amount_mismatch': HttpStatus.UNPROCESSABLE_ENTITY,
+  'banking.gl_account_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

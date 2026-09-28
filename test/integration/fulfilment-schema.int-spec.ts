@@ -684,12 +684,33 @@ describe('fulfilment schema (PostgreSQL 18)', () => {
       expect(await state('UPDATE claim_resolutions SET amount = 1 WHERE id = $1', [r.id])).toBe(
         SQLSTATE.restrictViolation,
       );
+      // B5.2: the target is a real customer document (FK), set once.
+      const doc = (n: number) =>
+        prisma.customerDocument.create({
+          data: {
+            entityId: o.entityId,
+            docType: 'iv',
+            docKind: 'delivery',
+            docNumber: `INT-IV-${o.id}-${n}`,
+            documentDate: new Date('2026-10-01'),
+            isTaxInvoice: false,
+            customerUserId: o.customerUserId,
+            buyerSnapshot: {},
+            sellerSnapshot: {},
+            netAmount: '0.00',
+            vatRatePct: '7',
+            vatAmount: '0.00',
+            grossAmount: '0.00',
+          },
+        });
+      const [first, second] = [await doc(1), await doc(2)];
+      expect(await state('UPDATE claim_resolutions SET customer_document_id = 987654321 WHERE id = $1', [r.id])).toBe('23503');
       expect(
-        await state('UPDATE claim_resolutions SET customer_document_id = 7 WHERE id = $1', [r.id]),
+        await state('UPDATE claim_resolutions SET customer_document_id = $2 WHERE id = $1', [r.id, first.id]),
       ).toBeNull();
-      expect(await state('UPDATE claim_resolutions SET customer_document_id = 8 WHERE id = $1', [r.id])).toBe(
-        SQLSTATE.restrictViolation,
-      );
+      expect(
+        await state('UPDATE claim_resolutions SET customer_document_id = $2 WHERE id = $1', [r.id, second.id]),
+      ).toBe(SQLSTATE.restrictViolation);
     });
   });
 

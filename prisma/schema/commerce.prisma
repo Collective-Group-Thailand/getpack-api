@@ -650,6 +650,13 @@ model Order {
   storeCreditEntries    StoreCreditEntry[]     @relation("StoreCreditEntryOrder")
   // --- end Finance B5.2
 
+  // --- Finance B5.3 (generated back-relations)
+  purchaseOrders PurchaseOrder[] @relation("PurchaseOrderOrder")
+  goodsReceipts  GoodsReceipt[]  @relation("GoodsReceiptOrder")
+  vendorInvoices VendorInvoice[] @relation("VendorInvoiceOrder")
+  payableItems   PayableItem[]   @relation("PayableItemOrder")
+  // --- end Finance B5.3
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -1177,6 +1184,11 @@ model Payment {
   customerWhtCertificates CustomerWhtCertificate[] @relation("CustomerWhtCertificatePayment")
   receivableApplications  ReceivableApplication[]  @relation("ReceivableApplicationPayment")
   // --- end Finance B5.2
+
+  // --- Finance B5.3 (generated back-relations)
+  gatewaySettlementLines GatewaySettlementLine[] @relation("GatewaySettlementLinePayment")
+  unidentifiedReceipts   UnidentifiedReceipt[]   @relation("UnidentifiedReceiptPayment")
+  // --- end Finance B5.3
 
   @@unique([provider, providerRef], map: "ux_payments__provider__provider_ref", where: raw("(provider_ref IS NOT NULL)"))
   @@index([orderGroupId, status], map: "ix_payments__order_group_id__status")

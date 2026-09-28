@@ -1,4 +1,5 @@
 import { InvalidationBus } from '@common/cache/invalidation-bus';
+import { FieldEncryption } from '@common/crypto/field-encryption';
 import { Global, Module } from '@nestjs/common';
 
 import { ActivityLogService } from './activity/activity-log.service';
@@ -11,7 +12,11 @@ import { FeatureFlagsService } from './feature-flags/feature-flags.service';
 import { DocumentNumberingService } from './numbering/document-numbering.service';
 import { SettingsService } from './settings/settings.service';
 
-/** Writers every state change uses in its transaction (schema-design §2.6), shared by both processes. */
+/**
+ * Writers every state change uses in its transaction (schema-design §2.6), shared by both processes, and the
+ * one field-encryption instance (without `FIELD_ENCRYPTION_KEY` its key is per process — a second instance
+ * could not read what the first sealed).
+ */
 @Global()
 @Module({
   providers: [
@@ -25,6 +30,7 @@ import { SettingsService } from './settings/settings.service';
     FeatureFlagsService,
     OutboxAdminService,
     DocumentNumberingService,
+    FieldEncryption,
   ],
   exports: [
     InvalidationBus,
@@ -37,6 +43,7 @@ import { SettingsService } from './settings/settings.service';
     FeatureFlagsService,
     OutboxAdminService,
     DocumentNumberingService,
+    FieldEncryption,
   ],
 })
 export class PlatformCoreModule {}

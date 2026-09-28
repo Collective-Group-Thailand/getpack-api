@@ -808,6 +808,10 @@ model ProductionJob {
   claimResolutions ClaimResolution[] @relation("ClaimResolutionJob")
   // --- end Fulfilment B4.5
 
+  // --- Finance B5.3 (generated back-relations)
+  purchaseOrder PurchaseOrder? @relation("PurchaseOrderJob")
+  // --- end Finance B5.3
+
   @@unique([orderId], map: "ux_production_jobs__one_live_production", where: raw("((job_kind = 'production'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@unique([orderId], map: "ux_production_jobs__one_live_mockup", where: raw("((job_kind = 'mockup'::job_kind) AND (status <> ALL (ARRAY['rejected'::production_job_status, 'cancelled'::production_job_status])))"))
   @@index([orderId], map: "ix_production_jobs__order_id")
@@ -1124,6 +1128,11 @@ model Shipment {
   claims Claim[] @relation("ClaimShipment")
   // --- end Fulfilment B4.5
 
+  // --- Finance B5.3 (generated back-relations)
+  goodsReceiptLines GoodsReceiptLine[] @relation("GoodsReceiptLineShipment")
+  vendorInvoices    VendorInvoice[]    @relation("VendorInvoiceShipment")
+  // --- end Finance B5.3
+
   @@index([factoryId, status], map: "ix_shipments__factory_id__status")
   @@index([trackingNo], map: "ix_shipments__tracking_no")
   @@index([carrierId, carrierBookingRef], map: "ix_shipments__carrier_id__carrier_booking_ref")
@@ -1418,6 +1427,10 @@ model Claim {
   creditNoteRequests CreditNoteRequest[] @relation("CreditNoteRequestClaim")
   // --- end Finance B5.2
 
+  // --- Finance B5.3 (generated back-relations)
+  vendorDeductions VendorDeduction[] @relation("VendorDeductionClaim")
+  // --- end Finance B5.3
+
   @@index([orderId], map: "ix_claims__order_id")
   @@index([status, statusChangedAt], map: "ix_claims__status__status_changed_at")
   @@index([factoryId, status], map: "ix_claims__factory_id__status")
@@ -1452,6 +1465,7 @@ model ClaimResolution {
   executedById       BigInt      @map("executed_by")
 
   customerDocument CustomerDocument? @relation("ClaimResolutionCustomerDocument", fields: [customerDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claim_resolutions__customer_document_id")
+  vendorDeduction  VendorDeduction?  @relation("ClaimResolutionVendorDeduction", fields: [vendorDeductionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claim_resolutions__vendor_deduction_id")
 
   claim         Claim          @relation(fields: [claimId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claim_resolutions__claim_id")
   productionJob ProductionJob? @relation("ClaimResolutionJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_claim_resolutions__production_job_id")

@@ -1056,5 +1056,59 @@
       "title": "Certificate already settled",
       "detail": "A certificate in {status} cannot change."
     }
+  },
+  "payables": {
+    "invoice_duplicate": {
+      "title": "Invoice already recorded",
+      "detail": "The invoice {number} is already recorded."
+    },
+    "invoice_mismatch": {
+      "title": "Invoice does not match",
+      "detail": "The invoice cannot be validated: {reason}."
+    },
+    "statement_not_confirmable": {
+      "title": "Statement cannot change",
+      "detail": "A billing statement in {status} cannot be confirmed or disputed."
+    }
+  },
+  "payouts": {
+    "run_invalid_status": {
+      "title": "Payout run state",
+      "detail": "A payout run in {status} cannot do this."
+    },
+    "nothing_eligible": {
+      "title": "Nothing to pay",
+      "detail": "No payable is eligible for payment on this date."
+    },
+    "confirmation_mismatch": {
+      "title": "Confirmation does not match",
+      "detail": "The bank confirmation does not match the run: {reason}."
+    },
+    "bank_account_missing": {
+      "title": "No company bank account",
+      "detail": "The payout needs an active company bank account for payouts."
+    }
+  },
+  "banking": {
+    "duplicate_import": {
+      "title": "Already imported",
+      "detail": "This file was already imported."
+    },
+    "statement_invalid": {
+      "title": "Statement not readable",
+      "detail": "The statement cannot be read: {reason}."
+    },
+    "line_already_matched": {
+      "title": "Line already matched",
+      "detail": "This statement line is already {status}."
+    },
+    "match_amount_mismatch": {
+      "title": "Amounts differ",
+      "detail": "The line ({line}) and the target ({target}) do not match."
+    },
+    "gl_account_invalid": {
+      "title": "GL account not usable",
+      "detail": "Account {code} is not a free postable cash account."
+    }
   }
 }

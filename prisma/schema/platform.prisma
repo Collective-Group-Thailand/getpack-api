@@ -401,6 +401,22 @@ model Entity {
   companyStatements       CompanyStatement[]       @relation("CompanyStatementEntity")
   // --- end Finance B5.2
 
+  // --- Finance B5.3 (generated back-relations)
+  companyBankAccounts  CompanyBankAccount[]  @relation("CompanyBankAccountEntity")
+  purchaseOrders       PurchaseOrder[]       @relation("PurchaseOrderEntity")
+  goodsReceipts        GoodsReceipt[]        @relation("GoodsReceiptEntity")
+  billingStatements    BillingStatement[]    @relation("BillingStatementEntity")
+  vendorInvoices       VendorInvoice[]       @relation("VendorInvoiceEntity")
+  payableItems         PayableItem[]         @relation("PayableItemEntity")
+  vendorDeductions     VendorDeduction[]     @relation("VendorDeductionEntity")
+  payoutRuns           PayoutRun[]           @relation("PayoutRunEntity")
+  whtCertificates      WhtCertificate[]      @relation("WhtCertificateEntity")
+  bankStatementImports BankStatementImport[] @relation("BankStatementImportEntity")
+  gatewaySettlements   GatewaySettlement[]   @relation("GatewaySettlementEntity")
+  unidentifiedReceipts UnidentifiedReceipt[] @relation("UnidentifiedReceiptEntity")
+  // --- end Finance B5.3
+
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -642,6 +658,11 @@ model ApprovalRequest {
   receivableWriteOffs ReceivableItem[]    @relation("ReceivableItemWriteOffApproval")
   // --- end Finance B5.2
 
+  // --- Finance B5.3 (generated back-relations)
+  companyBankAccounts CompanyBankAccount[] @relation("CompanyBankAccountApprovalRequest")
+  payoutRuns          PayoutRun[]          @relation("PayoutRunApprovalRequest")
+  // --- end Finance B5.3
+
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")
   @@index([status, expiresAt], map: "ix_approval_requests__status__expires_at")
@@ -822,6 +843,15 @@ model FileObject {
   customerWhtCertificates CustomerWhtCertificate[] @relation("CustomerWhtCertificateFile")
   companyStatements       CompanyStatement[]       @relation("CompanyStatementFile")
   // --- end Finance B5.2
+
+  // --- Finance B5.3 (generated back-relations)
+  vendorInvoices           VendorInvoice[]       @relation("VendorInvoiceFile")
+  payoutBankFiles          PayoutRun[]           @relation("PayoutRunBankFile")
+  payoutConfirmations      PayoutRun[]           @relation("PayoutRunConfirmationFile")
+  whtCertificateFiles      WhtCertificate[]      @relation("WhtCertificateFile")
+  bankStatementImports     BankStatementImport[] @relation("BankStatementImportFile")
+  gatewaySettlementReports GatewaySettlement[]   @relation("GatewaySettlementReport")
+  // --- end Finance B5.3
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")

@@ -219,4 +219,10 @@ export const API_TAGS: Record<string, string> = {
   'admin.receivables':
     'Customer AR: open items, aging, write-offs (maker-checker), allowance for doubtful accounts, 50 ทวิ collection, credit balances, company statements (D-121, D-125).',
   'store.documents': 'My tax invoices, receipts and notes (and my company’s), my credit balance and company statements (D-010, D-125).',
+  // --- B5.3 payables, payouts, banking
+  'admin.payables':
+    'Factory POs, goods receipts, billing statements and the factory’s own tax invoices (D-090, D-165); vendors, vendor bills and vendor bank accounts (§6, §8).',
+  'admin.payouts': 'Payout runs: eligible payables, WHT and retention, approval (D-166), bank files (D-093), confirmation, 50 ทวิ, exceptions.',
+  'admin.banking': 'Company bank accounts, statement imports, auto / manual matching, unidentified receipts, gateway settlements and the cash position (D-061, D-093).',
+  'partner.payables': 'My factory’s POs, goods receipts, billing statements to confirm, tax invoices to submit, payouts and 50 ทวิ (D-090, D-022).',
 };

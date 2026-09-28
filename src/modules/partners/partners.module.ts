@@ -1,4 +1,3 @@
-import { FieldEncryption } from '@common/crypto/field-encryption';
 import { LookupHasher } from '@common/crypto/lookup-hasher';
 import { Global, Module } from '@nestjs/common';
 
@@ -41,7 +40,6 @@ const SERVICES = [
   PriceSuggestionsService,
   PriceSimulationsService,
   QuotePathService,
-  FieldEncryption,
   LookupHasher,
 ];
 

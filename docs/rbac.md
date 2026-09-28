@@ -124,6 +124,15 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `credit_notes.request` — Request credit notes (issued after a Finance Manager approves, §8) (D-033, D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |
 | `receivables.write_off.request` — Request bad-debt write-offs (approved by a Finance Manager, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 | `receivables.debit_notes.issue` — Issue debit notes (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
+| `payables.read` — Read POs, goods receipts, billing statements, vendor invoices, payables, vendors and payout runs (D-022, D-090) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
+| `payables.manage` — Capture and validate factory tax invoices (input VAT only with a valid document, §2) (D-090) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `payables.vendors.manage` — Create non-factory vendors and propose their bank accounts (dual approval, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `payables.bills.record` — Record vendor bills (the recorder cannot change that vendor’s bank account, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `payouts.manage` — Create, propose and cancel payout runs (approved by a C-Level other than the proposer, D-166) (D-022, D-166) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `payouts.execute` — Generate the bank file of an approved run and record the bank’s confirmation (D-093) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `banking.read` — Read company bank accounts, statement lines, unidentified receipts and the cash position (D-061, D-093) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
+| `banking.manage` — Import statements and settlements, match, ignore and identify statement lines (D-061, D-093) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `banking.accounts.propose` — Propose company bank accounts (approved by Finance then Finance Manager, §8) (D-093, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|
@@ -168,6 +177,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_shipments.read` — Read the own factory’s shipments, labels and packing lists (D-013, D-142) | ● | ● |  |  | ● |  |
 | `factory_claims.read` — Read the claims about the own factory’s jobs (D-083) | ● | ● |  | ● |  |  |
 | `factory_claims.respond` — Accept or dispute a claim Packio sent for review (D-083) | ● |  |  | ● |  |  |
+| `factory_payables.read` — Read the own factory’s POs, goods receipts, billing statements, payouts and 50 ทวิ (D-090, D-022) | ● |  |  |  |  | ● |
+| `factory_payables.manage` — Confirm or dispute billing statements and submit the factory’s tax invoices (D-090) | ● |  |  |  |  | ● |
 | `factory_shipments.manage` — Create, pack, dispatch and deliver shipments with proof of delivery (D-013) | ● |  |  |  | ● |  |
 
 | Role | Name (th) | Name (en) |

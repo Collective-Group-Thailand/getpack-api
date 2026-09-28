@@ -75,6 +75,17 @@ model Vendor {
   journalLines JournalLine[] @relation("JournalLineVendor")
   // --- end Finance B5.1
 
+  // --- Finance B5.3 (generated back-relations)
+  purchaseOrders    PurchaseOrder[]    @relation("PurchaseOrderVendor")
+  goodsReceipts     GoodsReceipt[]     @relation("GoodsReceiptVendor")
+  billingStatements BillingStatement[] @relation("BillingStatementVendor")
+  vendorInvoices    VendorInvoice[]    @relation("VendorInvoiceVendor")
+  payableItems      PayableItem[]      @relation("PayableItemVendor")
+  deductions        VendorDeduction[]  @relation("VendorDeductionVendor")
+  payoutItems       PayoutItem[]       @relation("PayoutItemVendor")
+  whtCertificates   WhtCertificate[]   @relation("WhtCertificateVendor")
+  // --- end Finance B5.3
+
   @@index([taxId, branchCode], map: "ix_vendors__tax_id__branch_code")
   @@index([subdistrictId], map: "ix_vendors__subdistrict_id")
   @@map("vendors")
@@ -105,6 +116,10 @@ model VendorBankAccount {
   vendor          Vendor           @relation(fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_bank_accounts__vendor_id")
   approvalRequest ApprovalRequest? @relation("VendorBankAccountApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_bank_accounts__approval_request_id")
   createdBy       User?            @relation("VendorBankAccountCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_bank_accounts__created_by")
+
+  // --- Finance B5.3 (generated back-relations)
+  payoutItems PayoutItem[] @relation("PayoutItemVendorBankAccount")
+  // --- end Finance B5.3
 
   @@unique([vendorId], map: "ux_vendor_bank_accounts__one_active", where: raw("(status = 'active'::bank_account_status)"))
   @@index([vendorId, createdAt(sort: Desc)], map: "ix_vendor_bank_accounts__vendor_id__created_at")
@@ -327,6 +342,7 @@ model FiscalPeriod {
   badDebtProvisions BadDebtProvision[]
   // --- end Finance B5.2
 
+
   @@unique([entityId, startDate], map: "ux_fiscal_periods__entity_id__start_date")
   @@unique([fiscalYearId, periodNo], map: "ux_fiscal_periods__fiscal_year_id__period_no")
   @@index([statusChangedById], map: "ix_fiscal_periods__status_changed_by")
@@ -365,6 +381,11 @@ model Account {
   updatedBy    User?           @relation("AccountUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_accounts__updated_by")
   journalLines JournalLine[]
   changes      AccountChange[]
+
+  // --- Finance B5.3 (generated back-relations)
+  companyBankAccounts CompanyBankAccount[] @relation("CompanyBankAccountGl")
+  vendorInvoiceLines  VendorInvoiceLine[]  @relation("VendorInvoiceLineAccount")
+  // --- end Finance B5.3
 
   @@unique([entityId, code], map: "ux_accounts__entity_id__code")
   @@index([parentId], map: "ix_accounts__parent_id")
@@ -1218,4 +1239,839 @@ model CompanyStatement {
   @@index([entityId], map: "ix_company_statements__entity_id")
   @@index([fileObjectId], map: "ix_company_statements__file_object_id")
   @@map("company_statements")
+}
+
+// ================================================================================================
+// Payables, payouts & banking (B5.3, accounting-design §2, §6, §8; D-022, D-090, D-093, D-164, D-165)
+// ================================================================================================
+
+enum PoKind {
+  production
+  mockup
+  reproduction
+
+  @@map("po_kind")
+}
+
+enum PoStatus {
+  issued
+  accepted
+  cancelled
+  received
+  closed
+
+  @@map("po_status")
+}
+
+enum PoLineType {
+  production
+  shipping
+  mockup
+  design
+  reproduction
+
+  @@map("po_line_type")
+}
+
+enum BillingStatementStatus {
+  generated
+  sent
+  confirmed
+  disputed
+  superseded
+
+  @@map("billing_statement_status")
+}
+
+enum VendorInvoiceSource {
+  e_tax
+  pdf_upload
+  manual
+
+  @@map("vendor_invoice_source")
+}
+
+enum InputVatStatus {
+  claimable
+  pending_document
+  not_claimable
+
+  @@map("input_vat_status")
+}
+
+enum VendorInvoiceStatus {
+  recorded
+  validated
+  rejected
+  void
+
+  @@map("vendor_invoice_status")
+}
+
+enum PayableSource {
+  advance
+  goods_receipt
+  vendor_invoice
+  retention
+
+  @@map("payable_source")
+}
+
+enum PayableStatus {
+  open
+  eligible
+  in_run
+  paid
+  cancelled
+
+  @@map("payable_status")
+}
+
+enum DeductionStatus {
+  pending
+  applied
+  cancelled
+
+  @@map("deduction_status")
+}
+
+enum DeductionOffset {
+  payable
+  receivable
+
+  @@map("deduction_offset")
+}
+
+enum PayoutRunStatus {
+  draft
+  proposed
+  approved
+  file_generated
+  confirmed
+  partially_failed
+  rejected
+  cancelled
+
+  @@map("payout_run_status")
+}
+
+enum PayoutKind {
+  advance
+  balance
+  retention_release
+  vendor_bill
+
+  @@map("payout_kind")
+}
+
+enum PayoutItemStatus {
+  included
+  paid
+  failed
+  excluded
+
+  @@map("payout_item_status")
+}
+
+enum WhtForm {
+  pnd3
+  pnd53
+
+  @@map("wht_form")
+}
+
+enum IssuedCertStatus {
+  issued
+  void
+
+  @@map("issued_cert_status")
+}
+
+enum BankAccountPurpose {
+  collection
+  payout
+  both
+
+  @@map("bank_account_purpose")
+}
+
+enum StatementSource {
+  csv
+  api
+
+  @@map("statement_source")
+}
+
+enum BankMatchStatus {
+  unmatched
+  matched
+  unidentified
+  ignored
+
+  @@map("bank_match_status")
+}
+
+enum BankMatchTarget {
+  payment
+  gateway_settlement
+  payout_run
+  refund
+  unidentified_receipt
+  tax_payment
+
+  @@map("bank_match_target")
+}
+
+enum SettlementStatus {
+  imported
+  posted
+
+  @@map("settlement_status")
+}
+
+enum UnidentifiedStatus {
+  open
+  matched
+  refunded
+
+  @@map("unidentified_status")
+}
+
+/// The entity's own bank accounts (D-093), each tied to its GL account (112x); changes are dual-approved (§8).
+model CompanyBankAccount {
+  id                BigInt             @id(map: "pk_company_bank_accounts") @default(autoincrement())
+  publicId          String             @unique(map: "ux_company_bank_accounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId          BigInt             @map("entity_id")
+  bankCode          String             @map("bank_code")
+  branchName        String?            @map("branch_name")
+  accountName       String             @map("account_name")
+  accountNoEnc      Bytes              @map("account_no_enc")
+  accountNoLast4    String             @map("account_no_last4") @db.Char(4)
+  accountNoHash     Bytes              @map("account_no_hash")
+  glAccountId       BigInt             @map("gl_account_id")
+  purpose           BankAccountPurpose
+  defaultBulkFormat String             @default("generic_csv") @map("default_bulk_format")
+  status            BankAccountStatus  @default(pending_approval)
+  approvalRequestId BigInt?            @map("approval_request_id")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?            @map("created_by")
+  decidedAt         DateTime?          @map("decided_at") @db.Timestamptz(6)
+
+  entity          Entity                @relation("CompanyBankAccountEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_bank_accounts__entity_id")
+  glAccount       Account               @relation("CompanyBankAccountGl", fields: [glAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_bank_accounts__gl_account_id")
+  approvalRequest ApprovalRequest?      @relation("CompanyBankAccountApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_bank_accounts__approval_request_id")
+  createdBy       User?                 @relation("CompanyBankAccountCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_bank_accounts__created_by")
+  payoutRuns      PayoutRun[]
+  imports         BankStatementImport[]
+  lines           BankStatementLine[]
+  settlements     GatewaySettlement[]
+
+  @@unique([glAccountId], map: "ux_company_bank_accounts__gl_account_id", where: raw("(status = 'active'::bank_account_status)"))
+  @@index([entityId], map: "ix_company_bank_accounts__entity_id")
+  @@index([accountNoHash], map: "ix_company_bank_accounts__account_no_hash")
+  @@index([approvalRequestId], map: "ix_company_bank_accounts__approval_request_id")
+  @@index([createdById], map: "ix_company_bank_accounts__created_by")
+  @@index([glAccountId], map: "ix_company_bank_accounts__gl_account")
+  @@map("company_bank_accounts")
+}
+
+/// Factory PO from the job release (§6): the buy-price snapshot, production and shipping separated for WHT.
+model PurchaseOrder {
+  id                    BigInt    @id(map: "pk_purchase_orders") @default(autoincrement())
+  publicId              String    @unique(map: "ux_purchase_orders__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId              BigInt    @map("entity_id")
+  poNumber              String    @map("po_number")
+  poKind                PoKind    @map("po_kind")
+  vendorId              BigInt    @map("vendor_id")
+  factoryId             BigInt    @map("factory_id")
+  productionJobId       BigInt    @unique(map: "ux_purchase_orders__production_job_id") @map("production_job_id")
+  orderId               BigInt    @map("order_id")
+  status                PoStatus  @default(issued)
+  issuedAt              DateTime  @default(now()) @map("issued_at") @db.Timestamptz(6)
+  acceptedAt            DateTime? @map("accepted_at") @db.Timestamptz(6)
+  priceListVersionId    BigInt?   @map("price_list_version_id")
+  priceSnapshot         Json      @map("price_snapshot")
+  payoutPolicyVersionId BigInt?   @map("payout_policy_version_id")
+  payoutPolicy          Json      @map("payout_policy")
+  isVatRegistered       Boolean   @map("is_vat_registered")
+  netAmount             Decimal   @map("net_amount") @db.Decimal(14, 2)
+  vatRatePct            Decimal   @map("vat_rate_pct") @db.Decimal(7, 4)
+  vatAmount             Decimal   @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount           Decimal   @map("gross_amount") @db.Decimal(14, 2)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity              Entity                      @relation("PurchaseOrderEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_purchase_orders__entity_id")
+  vendor              Vendor                      @relation("PurchaseOrderVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_purchase_orders__vendor_id")
+  factory             Factory                     @relation("PurchaseOrderFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_purchase_orders__factory_id")
+  productionJob       ProductionJob               @relation("PurchaseOrderJob", fields: [productionJobId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_purchase_orders__production_job_id")
+  order               Order                       @relation("PurchaseOrderOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_purchase_orders__order_id")
+  priceListVersion    PriceListVersion?           @relation("PurchaseOrderPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_purchase_orders__price_list_version_id")
+  payoutPolicyVersion FactoryPayoutPolicyVersion? @relation("PurchaseOrderPayoutPolicyVersion", fields: [payoutPolicyVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_purchase_orders__payout_policy_version_id")
+  lines               PurchaseOrderLine[]
+  goodsReceipts       GoodsReceipt[]
+  payableItems        PayableItem[]
+
+  @@unique([entityId, poNumber], map: "ux_purchase_orders__entity_id__po_number")
+  @@index([vendorId], map: "ix_purchase_orders__vendor_id")
+  @@index([factoryId, issuedAt], map: "ix_purchase_orders__factory_id__issued_at")
+  @@index([orderId], map: "ix_purchase_orders__order_id")
+  @@index([priceListVersionId], map: "ix_purchase_orders__price_list_version_id")
+  @@index([payoutPolicyVersionId], map: "ix_purchase_orders__payout_policy_version_id")
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderLine {
+  id          BigInt      @id(map: "pk_purchase_order_lines") @default(autoincrement())
+  poId        BigInt      @map("po_id")
+  lineNo      Int         @map("line_no") @db.SmallInt
+  lineType    PoLineType  @map("line_type")
+  description String
+  quantity    Int
+  unitPrice   Decimal     @map("unit_price") @db.Decimal(18, 6)
+  netAmount   Decimal     @map("net_amount") @db.Decimal(14, 2)
+  vatAmount   Decimal     @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount Decimal     @map("gross_amount") @db.Decimal(14, 2)
+  whtCategory WhtCategory @map("wht_category")
+
+  po PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_purchase_order_lines__po_id")
+
+  @@unique([poId, lineNo], map: "ux_purchase_order_lines__po_id__line_no")
+  @@map("purchase_order_lines")
+}
+
+/// GR from POD + reported quantity (P15): payable quantity = min(delivered, ordered) (D-165).
+model GoodsReceipt {
+  id               BigInt   @id(map: "pk_goods_receipts") @default(autoincrement())
+  publicId         String   @unique(map: "ux_goods_receipts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId         BigInt   @map("entity_id")
+  grNumber         String   @map("gr_number")
+  poId             BigInt   @unique(map: "ux_goods_receipts__po_id") @map("po_id")
+  vendorId         BigInt   @map("vendor_id")
+  factoryId        BigInt   @map("factory_id")
+  orderId          BigInt   @map("order_id")
+  receivedQuantity Int      @map("received_quantity")
+  payableQuantity  Int      @map("payable_quantity")
+  receivedOn       DateTime @map("received_on") @db.Date
+  netAmount        Decimal  @map("net_amount") @db.Decimal(14, 2)
+  vatAmount        Decimal  @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount      Decimal  @map("gross_amount") @db.Decimal(14, 2)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity         Entity                 @relation("GoodsReceiptEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_goods_receipts__entity_id")
+  po             PurchaseOrder          @relation(fields: [poId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_goods_receipts__po_id")
+  vendor         Vendor                 @relation("GoodsReceiptVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_goods_receipts__vendor_id")
+  factory        Factory                @relation("GoodsReceiptFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_goods_receipts__factory_id")
+  order          Order                  @relation("GoodsReceiptOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_goods_receipts__order_id")
+  lines          GoodsReceiptLine[]
+  statementLines BillingStatementLine[]
+  payableItems   PayableItem[]
+
+  @@unique([entityId, grNumber], map: "ux_goods_receipts__entity_id__gr_number")
+  @@index([vendorId], map: "ix_goods_receipts__vendor_id")
+  @@index([factoryId], map: "ix_goods_receipts__factory_id")
+  @@index([orderId], map: "ix_goods_receipts__order_id")
+  @@map("goods_receipts")
+}
+
+model GoodsReceiptLine {
+  id          BigInt      @id(map: "pk_goods_receipt_lines") @default(autoincrement())
+  grId        BigInt      @map("gr_id")
+  lineNo      Int         @map("line_no") @db.SmallInt
+  lineType    PoLineType  @map("line_type")
+  description String
+  quantity    Int
+  unitPrice   Decimal     @map("unit_price") @db.Decimal(18, 6)
+  netAmount   Decimal     @map("net_amount") @db.Decimal(14, 2)
+  vatAmount   Decimal     @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount Decimal     @map("gross_amount") @db.Decimal(14, 2)
+  whtCategory WhtCategory @map("wht_category")
+  shipmentId  BigInt?     @map("shipment_id")
+
+  gr       GoodsReceipt @relation(fields: [grId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_goods_receipt_lines__gr_id")
+  shipment Shipment?    @relation("GoodsReceiptLineShipment", fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_goods_receipt_lines__shipment_id")
+
+  @@unique([grId, lineNo], map: "ux_goods_receipt_lines__gr_id__line_no")
+  @@index([shipmentId], map: "ix_goods_receipt_lines__shipment_id")
+  @@map("goods_receipt_lines")
+}
+
+/// Billing statement (ใบวางบิล) generated by the system for the factory to confirm (D-090).
+model BillingStatement {
+  id                BigInt                 @id(map: "pk_billing_statements") @default(autoincrement())
+  publicId          String                 @unique(map: "ux_billing_statements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId          BigInt                 @map("entity_id")
+  bsNumber          String                 @map("bs_number")
+  vendorId          BigInt                 @map("vendor_id")
+  factoryId         BigInt                 @map("factory_id")
+  periodFrom        DateTime               @map("period_from") @db.Date
+  periodTo          DateTime               @map("period_to") @db.Date
+  status            BillingStatementStatus @default(generated)
+  generatedAt       DateTime               @default(now()) @map("generated_at") @db.Timestamptz(6)
+  confirmedByUserId BigInt?                @map("confirmed_by_user_id")
+  confirmedAt       DateTime?              @map("confirmed_at") @db.Timestamptz(6)
+  disputeNote       String?                @map("dispute_note")
+  netAmount         Decimal                @map("net_amount") @db.Decimal(14, 2)
+  vatAmount         Decimal                @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount       Decimal                @map("gross_amount") @db.Decimal(14, 2)
+  deductionAmount   Decimal                @default(0) @map("deduction_amount") @db.Decimal(14, 2)
+  rowVersion        Int                    @default(1) @map("row_version")
+
+  entity         Entity                 @relation("BillingStatementEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__entity_id")
+  vendor         Vendor                 @relation("BillingStatementVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__vendor_id")
+  factory        Factory                @relation("BillingStatementFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__factory_id")
+  confirmedBy    User?                  @relation("BillingStatementConfirmedBy", fields: [confirmedByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statements__confirmed_by_user_id")
+  lines          BillingStatementLine[]
+  vendorInvoices VendorInvoice[]
+
+  @@unique([entityId, bsNumber], map: "ux_billing_statements__entity_id__bs_number")
+  @@index([factoryId, status], map: "ix_billing_statements__factory_id__status")
+  @@index([vendorId], map: "ix_billing_statements__vendor_id")
+  @@index([confirmedByUserId], map: "ix_billing_statements__confirmed_by_user_id")
+  @@map("billing_statements")
+}
+
+model BillingStatementLine {
+  id                BigInt  @id(map: "pk_billing_statement_lines") @default(autoincrement())
+  statementId       BigInt  @map("statement_id")
+  lineNo            Int     @map("line_no") @db.SmallInt
+  goodsReceiptId    BigInt? @map("goods_receipt_id")
+  vendorDeductionId BigInt? @map("vendor_deduction_id")
+  description       String
+  netAmount         Decimal @map("net_amount") @db.Decimal(14, 2)
+  vatAmount         Decimal @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount       Decimal @map("gross_amount") @db.Decimal(14, 2)
+
+  statement       BillingStatement @relation(fields: [statementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statement_lines__statement_id")
+  goodsReceipt    GoodsReceipt?    @relation(fields: [goodsReceiptId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statement_lines__goods_receipt_id")
+  vendorDeduction VendorDeduction? @relation(fields: [vendorDeductionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_billing_statement_lines__vendor_deduction_id")
+
+  @@unique([statementId, lineNo], map: "ux_billing_statement_lines__statement_id__line_no")
+  @@index([goodsReceiptId], map: "ix_billing_statement_lines__goods_receipt_id")
+  @@index([vendorDeductionId], map: "ix_billing_statement_lines__vendor_deduction_id")
+  @@map("billing_statement_lines")
+}
+
+/// The vendor's own tax invoice / bill (factories: captured against the billing statement; other vendors:
+/// carriers, freelancers, services — P25, P26). Input VAT only with a valid document (§2).
+model VendorInvoice {
+  id                 BigInt              @id(map: "pk_vendor_invoices") @default(autoincrement())
+  publicId           String              @unique(map: "ux_vendor_invoices__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId           BigInt              @map("entity_id")
+  vendorId           BigInt              @map("vendor_id")
+  billingStatementId BigInt?             @map("billing_statement_id")
+  vendorInvoiceNo    String              @map("vendor_invoice_no")
+  invoiceDate        DateTime            @map("invoice_date") @db.Date
+  sellerTaxId        String              @map("seller_tax_id") @db.Char(13)
+  sellerBranchCode   String              @map("seller_branch_code") @db.Char(5)
+  isTaxInvoice       Boolean             @map("is_tax_invoice")
+  source             VendorInvoiceSource
+  fileObjectId       BigInt?             @map("file_object_id")
+  netAmount          Decimal             @map("net_amount") @db.Decimal(14, 2)
+  vatAmount          Decimal             @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount        Decimal             @map("gross_amount") @db.Decimal(14, 2)
+  inputVatStatus     InputVatStatus      @map("input_vat_status")
+  status             VendorInvoiceStatus @default(recorded)
+  dueDate            DateTime?           @map("due_date") @db.Date
+  orderId            BigInt?             @map("order_id")
+  shipmentId         BigInt?             @map("shipment_id")
+  validatedById      BigInt?             @map("validated_by")
+  validatedAt        DateTime?           @map("validated_at") @db.Timestamptz(6)
+  rejectionReason    String?             @map("rejection_reason")
+  recordedById       BigInt?             @map("recorded_by")
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity           Entity              @relation("VendorInvoiceEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__entity_id")
+  vendor           Vendor              @relation("VendorInvoiceVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__vendor_id")
+  billingStatement BillingStatement?   @relation(fields: [billingStatementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__billing_statement_id")
+  file             FileObject?         @relation("VendorInvoiceFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__file_object_id")
+  order            Order?              @relation("VendorInvoiceOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__order_id")
+  shipment         Shipment?           @relation("VendorInvoiceShipment", fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__shipment_id")
+  validatedBy      User?               @relation("VendorInvoiceValidatedBy", fields: [validatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__validated_by")
+  recordedBy       User?               @relation("VendorInvoiceRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__recorded_by")
+  lines            VendorInvoiceLine[]
+  payableItems     PayableItem[]
+
+  @@unique([vendorId, vendorInvoiceNo], map: "ux_vendor_invoices__vendor_id__vendor_invoice_no")
+  @@index([billingStatementId], map: "ix_vendor_invoices__billing_statement_id")
+  @@index([entityId, invoiceDate], map: "ix_vendor_invoices__entity_id__invoice_date")
+  @@index([fileObjectId], map: "ix_vendor_invoices__file_object_id")
+  @@index([orderId], map: "ix_vendor_invoices__order_id")
+  @@index([shipmentId], map: "ix_vendor_invoices__shipment_id")
+  @@index([validatedById], map: "ix_vendor_invoices__validated_by")
+  @@index([recordedById], map: "ix_vendor_invoices__recorded_by")
+  @@map("vendor_invoices")
+}
+
+model VendorInvoiceLine {
+  id          BigInt      @id(map: "pk_vendor_invoice_lines") @default(autoincrement())
+  invoiceId   BigInt      @map("invoice_id")
+  lineNo      Int         @map("line_no") @db.SmallInt
+  description String
+  netAmount   Decimal     @map("net_amount") @db.Decimal(14, 2)
+  vatAmount   Decimal     @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount Decimal     @map("gross_amount") @db.Decimal(14, 2)
+  whtCategory WhtCategory @map("wht_category")
+  accountId   BigInt?     @map("account_id")
+
+  invoice VendorInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoice_lines__invoice_id")
+  account Account?      @relation("VendorInvoiceLineAccount", fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoice_lines__account_id")
+
+  @@unique([invoiceId, lineNo], map: "ux_vendor_invoice_lines__invoice_id__line_no")
+  @@index([accountId], map: "ix_vendor_invoice_lines__account_id")
+  @@map("vendor_invoice_lines")
+}
+
+/// AP open item (§6): net and VAT separately (factory payables are carried at net, VAT at payment — P14,
+/// P17); withholding bases per line type; eligible per the payout-policy snapshot (D-022, D-164).
+model PayableItem {
+  id               BigInt        @id(map: "pk_payable_items") @default(autoincrement())
+  publicId         String        @unique(map: "ux_payable_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId         BigInt        @map("entity_id")
+  vendorId         BigInt        @map("vendor_id")
+  source           PayableSource
+  purchaseOrderId  BigInt?       @map("purchase_order_id")
+  goodsReceiptId   BigInt?       @map("goods_receipt_id")
+  vendorInvoiceId  BigInt?       @map("vendor_invoice_id")
+  orderId          BigInt?       @map("order_id")
+  netAmount        Decimal       @map("net_amount") @db.Decimal(14, 2)
+  vatAmount        Decimal       @map("vat_amount") @db.Decimal(14, 2)
+  openNetAmount    Decimal       @map("open_net_amount") @db.Decimal(14, 2)
+  openVatAmount    Decimal       @map("open_vat_amount") @db.Decimal(14, 2)
+  whtBaseHire      Decimal       @default(0) @map("wht_base_hire") @db.Decimal(14, 2)
+  whtBaseTransport Decimal       @default(0) @map("wht_base_transport") @db.Decimal(14, 2)
+  whtBaseService   Decimal       @default(0) @map("wht_base_service") @db.Decimal(14, 2)
+  retentionPct     Decimal       @default(0) @map("retention_pct") @db.Decimal(7, 4)
+  eligibleAt       DateTime?     @map("eligible_at") @db.Timestamptz(6)
+  status           PayableStatus @default(open)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int           @default(1) @map("row_version")
+
+  entity        Entity                 @relation("PayableItemEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payable_items__entity_id")
+  vendor        Vendor                 @relation("PayableItemVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payable_items__vendor_id")
+  purchaseOrder PurchaseOrder?         @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payable_items__purchase_order_id")
+  goodsReceipt  GoodsReceipt?          @relation(fields: [goodsReceiptId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payable_items__goods_receipt_id")
+  vendorInvoice VendorInvoice?         @relation(fields: [vendorInvoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payable_items__vendor_invoice_id")
+  order         Order?                 @relation("PayableItemOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payable_items__order_id")
+  allocations   PayoutItemAllocation[]
+  deductions    VendorDeduction[]
+
+  @@index([vendorId, status, eligibleAt], map: "ix_payable_items__vendor_id__status__eligible_at")
+  @@index([purchaseOrderId], map: "ix_payable_items__purchase_order_id")
+  @@index([goodsReceiptId], map: "ix_payable_items__goods_receipt_id")
+  @@index([vendorInvoiceId], map: "ix_payable_items__vendor_invoice_id")
+  @@index([orderId], map: "ix_payable_items__order_id")
+  @@index([entityId, status], map: "ix_payable_items__entity_id__status")
+  @@map("payable_items")
+}
+
+/// Claim deductions from a liable factory (P20).
+model VendorDeduction {
+  id                   BigInt          @id(map: "pk_vendor_deductions") @default(autoincrement())
+  publicId             String          @unique(map: "ux_vendor_deductions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId             BigInt          @map("entity_id")
+  vendorId             BigInt          @map("vendor_id")
+  factoryId            BigInt?         @map("factory_id")
+  claimId              BigInt?         @map("claim_id")
+  amount               Decimal         @db.Decimal(14, 2)
+  offsetAgainst        DeductionOffset @map("offset_against")
+  status               DeductionStatus @default(applied)
+  vendorCreditNoteNo   String?         @map("vendor_credit_note_no")
+  appliedPayableItemId BigInt?         @map("applied_payable_item_id")
+  recordedAt           DateTime        @default(now()) @map("recorded_at") @db.Timestamptz(6)
+
+  entity           Entity                 @relation("VendorDeductionEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_deductions__entity_id")
+  vendor           Vendor                 @relation("VendorDeductionVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_deductions__vendor_id")
+  factory          Factory?               @relation("VendorDeductionFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_deductions__factory_id")
+  claim            Claim?                 @relation("VendorDeductionClaim", fields: [claimId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_deductions__claim_id")
+  appliedPayable   PayableItem?           @relation(fields: [appliedPayableItemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_deductions__applied_payable_item_id")
+  statementLines   BillingStatementLine[]
+  claimResolutions ClaimResolution[]      @relation("ClaimResolutionVendorDeduction")
+
+  @@index([vendorId], map: "ix_vendor_deductions__vendor_id")
+  @@index([factoryId], map: "ix_vendor_deductions__factory_id")
+  @@index([claimId], map: "ix_vendor_deductions__claim_id")
+  @@index([appliedPayableItemId], map: "ix_vendor_deductions__applied_payable_item_id")
+  @@map("vendor_deductions")
+}
+
+/// Payout run: selection → proposal (Finance) → approval (C-Level, proposer ≠ approver) → bank file →
+/// confirmation → posting (D-022, D-093, D-166).
+model PayoutRun {
+  id                   BigInt          @id(map: "pk_payout_runs") @default(autoincrement())
+  publicId             String          @unique(map: "ux_payout_runs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId             BigInt          @map("entity_id")
+  runNo                String          @map("run_no")
+  companyBankAccountId BigInt          @map("company_bank_account_id")
+  bankFormatAdapter    String          @map("bank_format_adapter")
+  payOn                DateTime        @map("pay_on") @db.Date
+  status               PayoutRunStatus @default(draft)
+  proposedById         BigInt?         @map("proposed_by")
+  proposedAt           DateTime?       @map("proposed_at") @db.Timestamptz(6)
+  approvalRequestId    BigInt?         @map("approval_request_id")
+  approvedAt           DateTime?       @map("approved_at") @db.Timestamptz(6)
+  bankFileId           BigInt?         @map("bank_file_id")
+  bankFileSha256       Bytes?          @map("bank_file_sha256")
+  confirmationFileId   BigInt?         @map("confirmation_file_id")
+  confirmedAt          DateTime?       @map("confirmed_at") @db.Timestamptz(6)
+  apNetAmount          Decimal         @default(0) @map("ap_net_amount") @db.Decimal(14, 2)
+  vatAmount            Decimal         @default(0) @map("vat_amount") @db.Decimal(14, 2)
+  whtAmount            Decimal         @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  retentionAmount      Decimal         @default(0) @map("retention_amount") @db.Decimal(14, 2)
+  cashAmount           Decimal         @default(0) @map("cash_amount") @db.Decimal(14, 2)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt          @map("created_by")
+  rowVersion           Int             @default(1) @map("row_version")
+
+  entity             Entity             @relation("PayoutRunEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_runs__entity_id")
+  companyBankAccount CompanyBankAccount @relation(fields: [companyBankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_runs__company_bank_account_id")
+  proposedBy         User?              @relation("PayoutRunProposedBy", fields: [proposedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_runs__proposed_by")
+  createdBy          User               @relation("PayoutRunCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_runs__created_by")
+  approvalRequest    ApprovalRequest?   @relation("PayoutRunApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_runs__approval_request_id")
+  bankFile           FileObject?        @relation("PayoutRunBankFile", fields: [bankFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_runs__bank_file_id")
+  confirmationFile   FileObject?        @relation("PayoutRunConfirmationFile", fields: [confirmationFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_runs__confirmation_file_id")
+  items              PayoutItem[]
+
+  @@unique([entityId, runNo], map: "ux_payout_runs__entity_id__run_no")
+  @@index([status], map: "ix_payout_runs__status")
+  @@index([companyBankAccountId], map: "ix_payout_runs__company_bank_account_id")
+  @@index([proposedById], map: "ix_payout_runs__proposed_by")
+  @@index([createdById], map: "ix_payout_runs__created_by")
+  @@index([approvalRequestId], map: "ix_payout_runs__approval_request_id")
+  @@index([bankFileId], map: "ix_payout_runs__bank_file_id")
+  @@index([confirmationFileId], map: "ix_payout_runs__confirmation_file_id")
+  @@map("payout_runs")
+}
+
+model PayoutItem {
+  id                  BigInt           @id(map: "pk_payout_items") @default(autoincrement())
+  publicId            String           @unique(map: "ux_payout_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  runId               BigInt           @map("run_id")
+  vendorId            BigInt           @map("vendor_id")
+  vendorBankAccountId BigInt?          @map("vendor_bank_account_id")
+  kind                PayoutKind
+  apNetAmount         Decimal          @map("ap_net_amount") @db.Decimal(14, 2)
+  vatAmount           Decimal          @map("vat_amount") @db.Decimal(14, 2)
+  vatClaimable        Boolean          @map("vat_claimable")
+  whtAmount           Decimal          @map("wht_amount") @db.Decimal(14, 2)
+  whtBase             Decimal          @map("wht_base") @db.Decimal(14, 2)
+  whtForm             WhtForm?         @map("wht_form")
+  retentionAmount     Decimal          @default(0) @map("retention_amount") @db.Decimal(14, 2)
+  cashAmount          Decimal          @map("cash_amount") @db.Decimal(14, 2)
+  pvNumber            String?          @map("pv_number")
+  status              PayoutItemStatus @default(included)
+  bankRef             String?          @map("bank_ref")
+  failureReason       String?          @map("failure_reason")
+  paidOn              DateTime?        @map("paid_on") @db.Date
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  run               PayoutRun              @relation(fields: [runId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_items__run_id")
+  vendor            Vendor                 @relation("PayoutItemVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_items__vendor_id")
+  vendorBankAccount VendorBankAccount?     @relation("PayoutItemVendorBankAccount", fields: [vendorBankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_items__vendor_bank_account_id")
+  allocations       PayoutItemAllocation[]
+  whtCertificates   WhtCertificate[]
+
+  @@unique([pvNumber], map: "ux_payout_items__pv_number", where: raw("(pv_number IS NOT NULL)"))
+  @@index([runId], map: "ix_payout_items__run_id")
+  @@index([vendorId, status], map: "ix_payout_items__vendor_id__status")
+  @@index([vendorBankAccountId], map: "ix_payout_items__vendor_bank_account_id")
+  @@map("payout_items")
+}
+
+model PayoutItemAllocation {
+  id            BigInt  @id(map: "pk_payout_item_allocations") @default(autoincrement())
+  payoutItemId  BigInt  @map("payout_item_id")
+  payableItemId BigInt  @map("payable_item_id")
+  netAmount     Decimal @map("net_amount") @db.Decimal(14, 2)
+  vatAmount     Decimal @map("vat_amount") @db.Decimal(14, 2)
+
+  payoutItem  PayoutItem  @relation(fields: [payoutItemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_item_allocations__payout_item_id")
+  payableItem PayableItem @relation(fields: [payableItemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payout_item_allocations__payable_item_id")
+
+  @@unique([payoutItemId, payableItemId], map: "ux_payout_item_allocations__item__payable")
+  @@index([payableItemId], map: "ix_payout_item_allocations__payable_item_id")
+  @@map("payout_item_allocations")
+}
+
+/// 50 ทวิ issued to a factory / vendor at payment (WT series, §4).
+model WhtCertificate {
+  id             BigInt           @id(map: "pk_wht_certificates") @default(autoincrement())
+  publicId       String           @unique(map: "ux_wht_certificates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId       BigInt           @map("entity_id")
+  wtNumber       String           @map("wt_number")
+  vendorId       BigInt           @map("vendor_id")
+  payoutItemId   BigInt?          @map("payout_item_id")
+  form           WhtForm
+  incomeTypeCode String           @map("income_type_code")
+  paidOn         DateTime         @map("paid_on") @db.Date
+  paidAmount     Decimal          @map("paid_amount") @db.Decimal(14, 2)
+  whtRatePct     Decimal          @map("wht_rate_pct") @db.Decimal(7, 4)
+  whtAmount      Decimal          @map("wht_amount") @db.Decimal(14, 2)
+  status         IssuedCertStatus @default(issued)
+  fileObjectId   BigInt?          @map("file_object_id")
+  voidReason     String?          @map("void_reason")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity     Entity      @relation("WhtCertificateEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_wht_certificates__entity_id")
+  vendor     Vendor      @relation("WhtCertificateVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_wht_certificates__vendor_id")
+  payoutItem PayoutItem? @relation(fields: [payoutItemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_wht_certificates__payout_item_id")
+  file       FileObject? @relation("WhtCertificateFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_wht_certificates__file_object_id")
+
+  @@unique([entityId, wtNumber], map: "ux_wht_certificates__entity_id__wt_number")
+  @@index([vendorId, paidOn], map: "ix_wht_certificates__vendor_id__paid_on")
+  @@index([payoutItemId], map: "ix_wht_certificates__payout_item_id")
+  @@index([fileObjectId], map: "ix_wht_certificates__file_object_id")
+  @@index([entityId, form, paidOn], map: "ix_wht_certificates__entity_id__form__paid_on")
+  @@map("wht_certificates")
+}
+
+model BankStatementImport {
+  id                   BigInt          @id(map: "pk_bank_statement_imports") @default(autoincrement())
+  publicId             String          @unique(map: "ux_bank_statement_imports__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId             BigInt          @map("entity_id")
+  companyBankAccountId BigInt          @map("company_bank_account_id")
+  source               StatementSource
+  fileObjectId         BigInt?         @map("file_object_id")
+  periodFrom           DateTime        @map("period_from") @db.Date
+  periodTo             DateTime        @map("period_to") @db.Date
+  fileSha256           Bytes           @map("file_sha256")
+  lineCount            Int             @map("line_count")
+  importedById         BigInt?         @map("imported_by")
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity             Entity              @relation("BankStatementImportEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bank_statement_imports__entity_id")
+  companyBankAccount CompanyBankAccount  @relation(fields: [companyBankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bank_statement_imports__company_bank_account_id")
+  file               FileObject?         @relation("BankStatementImportFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bank_statement_imports__file_object_id")
+  importedBy         User?               @relation("BankStatementImportImportedBy", fields: [importedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bank_statement_imports__imported_by")
+  lines              BankStatementLine[]
+
+  @@unique([fileSha256], map: "ux_bank_statement_imports__file_sha256")
+  @@index([companyBankAccountId], map: "ix_bank_statement_imports__company_bank_account_id")
+  @@index([entityId], map: "ix_bank_statement_imports__entity_id")
+  @@index([fileObjectId], map: "ix_bank_statement_imports__file_object_id")
+  @@index([importedById], map: "ix_bank_statement_imports__imported_by")
+  @@map("bank_statement_imports")
+}
+
+model BankStatementLine {
+  id                   BigInt          @id(map: "pk_bank_statement_lines") @default(autoincrement())
+  publicId             String          @unique(map: "ux_bank_statement_lines__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  importId             BigInt          @map("import_id")
+  companyBankAccountId BigInt          @map("company_bank_account_id")
+  txnDate              DateTime        @map("txn_date") @db.Date
+  valueDate            DateTime?       @map("value_date") @db.Date
+  /// Signed: money in positive, money out negative.
+  amount               Decimal         @db.Decimal(14, 2)
+  description          String
+  reference            String?
+  counterparty         String?
+  runningBalance       Decimal?        @map("running_balance") @db.Decimal(14, 2)
+  dedupeHash           Bytes           @map("dedupe_hash")
+  matchStatus          BankMatchStatus @default(unmatched) @map("match_status")
+  matchedAt            DateTime?       @map("matched_at") @db.Timestamptz(6)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  import             BankStatementImport  @relation(fields: [importId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bank_statement_lines__import_id")
+  companyBankAccount CompanyBankAccount   @relation(fields: [companyBankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bank_statement_lines__company_bank_account_id")
+  matches            BankMatch[]
+  settlements        GatewaySettlement[]
+  unidentified       UnidentifiedReceipt?
+
+  @@unique([companyBankAccountId, dedupeHash], map: "ux_bank_statement_lines__account__dedupe_hash")
+  @@index([importId], map: "ix_bank_statement_lines__import_id")
+  @@index([companyBankAccountId, matchStatus, txnDate], map: "ix_bank_statement_lines__account__status__txn_date")
+  @@map("bank_statement_lines")
+}
+
+model BankMatch {
+  id              BigInt          @id(map: "pk_bank_matches") @default(autoincrement())
+  statementLineId BigInt          @map("statement_line_id")
+  targetType      BankMatchTarget @map("target_type")
+  targetPublicId  String          @map("target_public_id") @db.Uuid
+  amount          Decimal         @db.Decimal(14, 2)
+  auto            Boolean
+  matchedById     BigInt?         @map("matched_by")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  statementLine BankStatementLine @relation(fields: [statementLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bank_matches__statement_line_id")
+  matchedBy     User?             @relation("BankMatchMatchedBy", fields: [matchedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bank_matches__matched_by")
+
+  @@unique([targetType, targetPublicId], map: "ux_bank_matches__target")
+  @@index([statementLineId], map: "ix_bank_matches__statement_line_id")
+  @@index([matchedById], map: "ix_bank_matches__matched_by")
+  @@map("bank_matches")
+}
+
+/// A gateway settlement report (2C2P, SCB) with its fee (P04).
+model GatewaySettlement {
+  id                   BigInt           @id(map: "pk_gateway_settlements") @default(autoincrement())
+  publicId             String           @unique(map: "ux_gateway_settlements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId             BigInt           @map("entity_id")
+  provider             PaymentProvider
+  settlementDate       DateTime         @map("settlement_date") @db.Date
+  companyBankAccountId BigInt           @map("company_bank_account_id")
+  reportFileId         BigInt?          @map("report_file_id")
+  reportSha256         Bytes            @map("report_sha256")
+  grossAmount          Decimal          @map("gross_amount") @db.Decimal(14, 2)
+  feeAmount            Decimal          @map("fee_amount") @db.Decimal(14, 2)
+  vatOnFee             Decimal          @map("vat_on_fee") @db.Decimal(14, 2)
+  netAmount            Decimal          @map("net_amount") @db.Decimal(14, 2)
+  feeTaxInvoiceNo      String?          @map("fee_tax_invoice_no")
+  status               SettlementStatus @default(imported)
+  statementLineId      BigInt?          @map("statement_line_id")
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?          @map("created_by")
+
+  entity             Entity                  @relation("GatewaySettlementEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_gateway_settlements__entity_id")
+  companyBankAccount CompanyBankAccount      @relation(fields: [companyBankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_gateway_settlements__company_bank_account_id")
+  reportFile         FileObject?             @relation("GatewaySettlementReport", fields: [reportFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_gateway_settlements__report_file_id")
+  statementLine      BankStatementLine?      @relation(fields: [statementLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_gateway_settlements__statement_line_id")
+  createdBy          User?                   @relation("GatewaySettlementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_gateway_settlements__created_by")
+  lines              GatewaySettlementLine[]
+
+  @@unique([reportSha256], map: "ux_gateway_settlements__report_sha256")
+  @@index([entityId, settlementDate], map: "ix_gateway_settlements__entity_id__settlement_date")
+  @@index([companyBankAccountId], map: "ix_gateway_settlements__company_bank_account_id")
+  @@index([reportFileId], map: "ix_gateway_settlements__report_file_id")
+  @@index([statementLineId], map: "ix_gateway_settlements__statement_line_id")
+  @@index([createdById], map: "ix_gateway_settlements__created_by")
+  @@map("gateway_settlements")
+}
+
+model GatewaySettlementLine {
+  id           BigInt  @id(map: "pk_gateway_settlement_lines") @default(autoincrement())
+  settlementId BigInt  @map("settlement_id")
+  paymentId    BigInt? @map("payment_id")
+  providerRef  String  @map("provider_ref")
+  grossAmount  Decimal @map("gross_amount") @db.Decimal(14, 2)
+  feeAmount    Decimal @map("fee_amount") @db.Decimal(14, 2)
+  netAmount    Decimal @map("net_amount") @db.Decimal(14, 2)
+
+  settlement GatewaySettlement @relation(fields: [settlementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_gateway_settlement_lines__settlement_id")
+  payment    Payment?          @relation("GatewaySettlementLinePayment", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_gateway_settlement_lines__payment_id")
+
+  @@index([settlementId], map: "ix_gateway_settlement_lines__settlement_id")
+  @@index([paymentId], map: "ix_gateway_settlement_lines__payment_id")
+  @@map("gateway_settlement_lines")
+}
+
+/// A bank line no order claims yet (P29); identified later into a payment (P02).
+model UnidentifiedReceipt {
+  id               BigInt             @id(map: "pk_unidentified_receipts") @default(autoincrement())
+  publicId         String             @unique(map: "ux_unidentified_receipts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId         BigInt             @map("entity_id")
+  statementLineId  BigInt             @unique(map: "ux_unidentified_receipts__statement_line_id") @map("statement_line_id")
+  amount           Decimal            @db.Decimal(14, 2)
+  status           UnidentifiedStatus @default(open)
+  matchedPaymentId BigInt?            @map("matched_payment_id")
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  entity         Entity            @relation("UnidentifiedReceiptEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unidentified_receipts__entity_id")
+  statementLine  BankStatementLine @relation(fields: [statementLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unidentified_receipts__statement_line_id")
+  matchedPayment Payment?          @relation("UnidentifiedReceiptPayment", fields: [matchedPaymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_unidentified_receipts__matched_payment_id")
+
+  @@index([entityId, status], map: "ix_unidentified_receipts__entity_id__status")
+  @@index([matchedPaymentId], map: "ix_unidentified_receipts__matched_payment_id")
+  @@map("unidentified_receipts")
 }

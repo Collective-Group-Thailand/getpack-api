@@ -1,5 +1,6 @@
 import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { AdminMeController } from '@modules/auth/controllers/me.controllers';
+import { BANKING_ADMIN_CONTROLLERS } from '@modules/banking/banking.registry';
 import { CARTS_ADMIN_CONTROLLERS } from '@modules/carts/carts.registry';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry';
@@ -18,8 +19,10 @@ import { LOYALTY_ADMIN_CONTROLLERS } from '@modules/loyalty/loyalty.registry';
 import { ORDERS_ADMIN_CONTROLLERS } from '@modules/orders/orders.registry';
 import { FactoryOwnersService } from '@modules/partners/factories/factory-owners.service';
 import { PARTNERS_ADMIN_CONTROLLERS } from '@modules/partners/partners.registry';
+import { PAYABLES_ADMIN_CONTROLLERS } from '@modules/payables/payables.registry';
 import { PAYMENT_SCHEDULES_ADMIN_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PAYMENTS_ADMIN_CONTROLLERS } from '@modules/payments/payments.registry';
+import { PAYOUTS_ADMIN_CONTROLLERS } from '@modules/payouts/payouts.registry';
 import { PRICING_ADMIN_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { PRODUCTION_ADMIN_CONTROLLERS } from '@modules/production/production.registry';
 import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.registry';
@@ -96,6 +99,9 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...TIMELINE_ADMIN_CONTROLLERS,
     ...LEDGER_ADMIN_CONTROLLERS,
     ...RECEIVABLES_ADMIN_CONTROLLERS,
+    ...PAYABLES_ADMIN_CONTROLLERS,
+    ...PAYOUTS_ADMIN_CONTROLLERS,
+    ...BANKING_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

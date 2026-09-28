@@ -701,6 +701,18 @@ export const PERMISSIONS = [
     decisionRefs: ['D-083'],
   },
   {
+    key: 'factory_payables.read',
+    audience: 'partner',
+    description: 'Read the own factory’s POs, goods receipts, billing statements, payouts and 50 ทวิ',
+    decisionRefs: ['D-090', 'D-022'],
+  },
+  {
+    key: 'factory_payables.manage',
+    audience: 'partner',
+    description: 'Confirm or dispute billing statements and submit the factory’s tax invoices',
+    decisionRefs: ['D-090'],
+  },
+  {
     key: 'factory_shipments.manage',
     audience: 'partner',
     description: 'Create, pack, dispatch and deliver shipments with proof of delivery',
@@ -796,6 +808,62 @@ export const PERMISSIONS = [
     audience: 'staff',
     description: 'Issue debit notes',
     decisionRefs: ['D-033'],
+  },
+
+  // --- Finance: payables, payouts, banking (B5.3, accounting-design §2, §6, §8)
+  {
+    key: 'payables.read',
+    audience: 'staff',
+    description: 'Read POs, goods receipts, billing statements, vendor invoices, payables, vendors and payout runs',
+    decisionRefs: ['D-022', 'D-090'],
+  },
+  {
+    key: 'payables.manage',
+    audience: 'staff',
+    description: 'Capture and validate factory tax invoices (input VAT only with a valid document, §2)',
+    decisionRefs: ['D-090'],
+  },
+  {
+    key: 'payables.vendors.manage',
+    audience: 'staff',
+    description: 'Create non-factory vendors and propose their bank accounts (dual approval, §8)',
+    decisionRefs: ['D-033', 'D-169'],
+  },
+  {
+    key: 'payables.bills.record',
+    audience: 'staff',
+    description: 'Record vendor bills (the recorder cannot change that vendor’s bank account, §8)',
+    decisionRefs: ['D-033', 'D-169'],
+  },
+  {
+    key: 'payouts.manage',
+    audience: 'staff',
+    description: 'Create, propose and cancel payout runs (approved by a C-Level other than the proposer, D-166)',
+    decisionRefs: ['D-022', 'D-166'],
+  },
+  {
+    key: 'payouts.execute',
+    audience: 'staff',
+    description: 'Generate the bank file of an approved run and record the bank’s confirmation',
+    decisionRefs: ['D-093'],
+  },
+  {
+    key: 'banking.read',
+    audience: 'staff',
+    description: 'Read company bank accounts, statement lines, unidentified receipts and the cash position',
+    decisionRefs: ['D-061', 'D-093'],
+  },
+  {
+    key: 'banking.manage',
+    audience: 'staff',
+    description: 'Import statements and settlements, match, ignore and identify statement lines',
+    decisionRefs: ['D-061', 'D-093'],
+  },
+  {
+    key: 'banking.accounts.propose',
+    audience: 'staff',
+    description: 'Propose company bank accounts (approved by Finance then Finance Manager, §8)',
+    decisionRefs: ['D-093', 'D-169'],
   },
 ] as const satisfies readonly PermissionDefinition[];
 

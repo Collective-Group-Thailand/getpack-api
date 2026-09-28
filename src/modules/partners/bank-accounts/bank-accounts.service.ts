@@ -5,6 +5,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type VendorBankAccount } from '@generated/prisma/client';
+import { sodPartyKey,SodService } from '@modules/iam/sod.service';
 import { Injectable } from '@nestjs/common';
 import { ApprovalsService } from '@platform/approvals/approvals.service';
 import { AuditService } from '@platform/audit/audit.service';
@@ -57,6 +58,7 @@ export class BankAccountsService {
     private readonly hasher: LookupHasher,
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
+    private readonly sod: SodService,
   ) {}
 
   async list(actor: Actor, factoryPublicId: string): Promise<BankAccountDto[]> {
@@ -77,57 +79,106 @@ export class BankAccountsService {
     input: ProposeBankAccountDto,
   ): Promise<BankAccountDto> {
     const factory = await this.access.factory(actor, factoryPublicId);
-    const accountNo = input.accountNo.replace(/[^0-9]/g, '');
     return this.prisma.withTx(async (tx) => {
-      if (
-        await tx.vendorBankAccount.count({
-          where: { vendorId: factory.vendorId, status: 'pending_approval' },
-        })
-      ) {
-        throw new DomainException('partners.bank_account_pending');
-      }
-      const account = await tx.vendorBankAccount.create({
-        data: {
-          vendorId: factory.vendorId,
-          bankCode: input.bankCode,
-          branchName: input.branchName ?? null,
-          accountName: input.accountName,
-          accountNoEnc: this.encryption.encrypt(accountNo),
-          accountNoLast4: accountNo.slice(-4),
-          accountNoHash: this.hasher.hash(accountNo, HASH_PURPOSE),
-          createdById: actor.userId,
-        },
-      });
-      const request = await this.approvals.create(tx, {
-        policyKey: POLICY,
-        subject: { type: SUBJECT, id: account.id, publicId: account.publicId },
-        requester: actor,
-        // What approvers see: never the full number (§8, PDPA).
-        payload: {
-          factory: factory.code,
-          bankCode: input.bankCode,
-          accountName: input.accountName,
-          accountNoLast4: account.accountNoLast4,
-        },
-        scope: { factoryId: factory.id },
-      });
-      const row = await tx.vendorBankAccount.update({
-        where: { id: account.id },
-        data: { approvalRequestId: request.id },
-        include: { approvalRequest: { select: { publicId: true } } },
-      });
+      const row = await this.proposeIn(tx, actor, factory.vendorId, input, { factory: factory.code, factoryId: factory.id, factoryPublicId: factory.publicId });
       const step = await tx.factoryOnboardingStep.findUniqueOrThrow({
         where: { factoryId_step: { factoryId: factory.id, step: 'bank_account' } },
       });
       if (step.status === 'pending' || step.status === 'rejected') {
         await this.factories.markStep(tx, factory.id, 'bank_account', 'submitted', actor.userId);
       }
-      await this.record(tx, account.publicId, factory.publicId, 'vendor_bank_account.proposed', {
-        last4: account.accountNoLast4,
-        approvalRequestId: request.publicId,
-      });
       return this.toDto(row, actor.audience === 'staff', await this.duplicateHashes([row], tx));
     });
+  }
+
+  /** A carrier, freelancer or service vendor's bank account (B5.3): same dual approval and verification call. */
+  async proposeForVendor(actor: UserActor, vendorPublicId: string, input: ProposeBankAccountDto): Promise<BankAccountDto> {
+    return this.prisma.withTx(async (tx) => {
+      const vendor = await tx.vendor.findUnique({ where: { publicId: vendorPublicId } });
+      if (!vendor || vendor.kind === 'factory') throw new DomainException('http.not_found');
+      const row = await this.proposeIn(tx, actor, vendor.id, input, { factory: null, factoryId: null, factoryPublicId: null });
+      return this.toDto(row, true, await this.duplicateHashes([row], tx));
+    });
+  }
+
+  async listForVendor(vendorPublicId: string): Promise<BankAccountDto[]> {
+    const vendor = await this.prisma.vendor.findUnique({ where: { publicId: vendorPublicId } });
+    if (!vendor) throw new DomainException('http.not_found');
+    const rows = await this.prisma.vendorBankAccount.findMany({
+      where: { vendorId: vendor.id },
+      include: { approvalRequest: { select: { publicId: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const duplicates = await this.duplicateHashes(rows);
+    return rows.map((row) => this.toDto(row, true, duplicates));
+  }
+
+  private async proposeIn(
+    tx: Tx,
+    actor: UserActor,
+    vendorId: bigint,
+    input: ProposeBankAccountDto,
+    owner: { factory: string | null; factoryId: bigint | null; factoryPublicId: string | null },
+  ) {
+    const accountNo = input.accountNo.replace(/[^0-9]/g, '');
+    if (await tx.vendorBankAccount.count({ where: { vendorId, status: 'pending_approval' } })) {
+      throw new DomainException('partners.bank_account_pending');
+    }
+    const vendor = await tx.vendor.findUniqueOrThrow({ where: { id: vendorId } });
+    const account = await tx.vendorBankAccount.create({
+      data: {
+        vendorId,
+        bankCode: input.bankCode,
+        branchName: input.branchName ?? null,
+        accountName: input.accountName,
+        accountNoEnc: this.encryption.encrypt(accountNo),
+        accountNoLast4: accountNo.slice(-4),
+        accountNoHash: this.hasher.hash(accountNo, HASH_PURPOSE),
+        createdById: actor.userId,
+      },
+    });
+    // SoD (§8): whoever recorded a bill of this vendor cannot change its bank account.
+    if (actor.audience === 'staff') {
+      await this.sod.checkAction(tx, {
+        actorUserId: actor.userId,
+        action: 'vendor_bank_account.change',
+        subject: { type: SUBJECT, publicId: account.publicId },
+        party: { kind: 'vendor', publicId: vendor.publicId },
+      });
+    }
+    const request = await this.approvals.create(tx, {
+      policyKey: POLICY,
+      subject: { type: SUBJECT, id: account.id, publicId: account.publicId },
+      requester: actor,
+      // What approvers see: never the full number (§8, PDPA).
+      payload: {
+        factory: owner.factory,
+        vendor: vendor.legalName,
+        bankCode: input.bankCode,
+        accountName: input.accountName,
+        accountNoLast4: account.accountNoLast4,
+      },
+      ...(owner.factoryId && { scope: { factoryId: owner.factoryId } }),
+    });
+    const row = await tx.vendorBankAccount.update({
+      where: { id: account.id },
+      data: { approvalRequestId: request.id },
+      include: { approvalRequest: { select: { publicId: true } } },
+    });
+    await this.audit.record(tx, {
+      category: 'finance',
+      action: 'vendor_bank_account.change',
+      actor,
+      resourceType: SUBJECT,
+      resourcePublicId: account.publicId,
+      data: { sodParty: sodPartyKey({ kind: 'vendor', publicId: vendor.publicId }) },
+    });
+    await this.record(tx, account.publicId, owner.factoryPublicId, 'vendor_bank_account.proposed', {
+      last4: account.accountNoLast4,
+      approvalRequestId: request.publicId,
+      vendorId: vendor.publicId,
+    });
+    return row;
   }
 
   /** Finance records the verification call (§8); a confirmed call activates an already approved change. */
@@ -151,13 +202,13 @@ export class BankAccountsService {
         where: { id: account.id },
         data: { verificationCall: { ...call } },
       });
-      const factory = await tx.factory.findUniqueOrThrow({ where: { vendorId: account.vendorId } });
-      await this.record(tx, account.publicId, factory.publicId, 'vendor_bank_account.verification_recorded', {
+      const factory = await tx.factory.findUnique({ where: { vendorId: account.vendorId } });
+      await this.record(tx, account.publicId, factory?.publicId ?? null, 'vendor_bank_account.verification_recorded', {
         outcome: call.outcome,
         calledNumberMasked: call.calledNumberMasked,
       });
       if (account.approvalRequest?.status === 'approved' && call.outcome === 'confirmed') {
-        await this.activate(tx, account, factory.publicId, factory.id);
+        await this.activate(tx, account, factory?.publicId ?? null, factory?.id ?? null);
       }
       const row = await tx.vendorBankAccount.findUniqueOrThrow({
         where: { id: account.id },
@@ -176,34 +227,34 @@ export class BankAccountsService {
     if (!request) return;
     const account = await tx.vendorBankAccount.findUnique({ where: { id: request.subjectId } });
     if (!account || account.status !== 'pending_approval') return; // idempotent
-    const factory = await tx.factory.findUniqueOrThrow({ where: { vendorId: account.vendorId } });
+    const factory = await tx.factory.findUnique({ where: { vendorId: account.vendorId } });
     if (event.type !== 'approval.approved') {
       await tx.vendorBankAccount.update({
         where: { id: account.id },
         data: { status: 'rejected', decidedAt: new Date() },
       });
-      await this.factories.markStep(tx, factory.id, 'bank_account', 'rejected', null);
-      await this.record(tx, account.publicId, factory.publicId, 'vendor_bank_account.rejected', {
+      if (factory) await this.factories.markStep(tx, factory.id, 'bank_account', 'rejected', null);
+      await this.record(tx, account.publicId, factory?.publicId ?? null, 'vendor_bank_account.rejected', {
         outcome: event.type,
       });
       return;
     }
     const call = account.verificationCall as VerificationCall | null;
     if (call?.outcome === 'confirmed') {
-      await this.activate(tx, account, factory.publicId, factory.id);
+      await this.activate(tx, account, factory?.publicId ?? null, factory?.id ?? null);
     } else {
       // Approved without a confirmed call: stays pending until Finance records one (§8).
       await this.record(
         tx,
         account.publicId,
-        factory.publicId,
+        factory?.publicId ?? null,
         'vendor_bank_account.awaiting_verification',
         {},
       );
     }
   }
 
-  private async activate(tx: Tx, account: VendorBankAccount, factoryPublicId: string, factoryId: bigint) {
+  private async activate(tx: Tx, account: VendorBankAccount, factoryPublicId: string | null, factoryId: bigint | null) {
     const now = new Date();
     await tx.vendorBankAccount.updateMany({
       where: { vendorId: account.vendorId, status: 'active' },
@@ -213,7 +264,7 @@ export class BankAccountsService {
       where: { id: account.id },
       data: { status: 'active', effectiveFrom: now, decidedAt: now },
     });
-    await this.factories.markStep(tx, factoryId, 'bank_account', 'approved', null);
+    if (factoryId !== null) await this.factories.markStep(tx, factoryId, 'bank_account', 'approved', null);
     await this.record(tx, account.publicId, factoryPublicId, 'vendor_bank_account.activated', {
       last4: account.accountNoLast4,
     });
@@ -264,7 +315,7 @@ export class BankAccountsService {
   private async record(
     tx: Tx,
     accountPublicId: string,
-    factoryPublicId: string,
+    factoryPublicId: string | null,
     type: string,
     data: Record<string, unknown>,
   ) {

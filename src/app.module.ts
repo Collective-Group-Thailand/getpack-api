@@ -13,6 +13,7 @@ import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { BankingModule } from '@modules/banking/banking.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
@@ -29,8 +30,10 @@ import { LogisticsModule } from '@modules/logistics/logistics.module';
 import { LoyaltyModule } from '@modules/loyalty/loyalty.module';
 import { OrdersModule } from '@modules/orders/orders.module';
 import { PartnersModule } from '@modules/partners/partners.module';
+import { PayablesModule } from '@modules/payables/payables.module';
 import { PaymentSchedulesModule } from '@modules/payment-schedules/payment-schedules.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
+import { PayoutsModule } from '@modules/payouts/payouts.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
 import { ProductionModule } from '@modules/production/production.module';
 import { PromotionsModule } from '@modules/promotions/promotions.module';
@@ -117,6 +120,9 @@ import { LoggerModule } from 'nestjs-pino';
     ConversationsModule,
     LedgerModule,
     ReceivablesModule,
+    PayablesModule,
+    PayoutsModule,
+    BankingModule,
     HealthModule,
     SurfacesModule,
   ],
