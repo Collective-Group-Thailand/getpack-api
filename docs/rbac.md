@@ -119,6 +119,11 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `ledger.periods.manage` — Soft-close, reopen, close and lock fiscal periods (§1.4, §7) (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
 | `ledger.post_soft_closed` — Post into a soft-closed period (§1.4) (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
 | `ledger.config.propose` — Propose chart-of-accounts changes, posting-rule and tax-rate versions and cost centres (maker-checker, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `receivables.read` — Read customer documents, receivables and aging, 50 ทวิ certificates, credit balances and statements (D-010, D-033) | ● | ● |  |  |  | ● | ● |  | ● | ● |  |  |  | ● |
+| `receivables.manage` — Void invoices / debit notes, record or waive 50 ทวิ, update the allowance for doubtful accounts (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `credit_notes.request` — Request credit notes (issued after a Finance Manager approves, §8) (D-033, D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |
+| `receivables.write_off.request` — Request bad-debt write-offs (approved by a Finance Manager, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `receivables.debit_notes.issue` — Issue debit notes (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

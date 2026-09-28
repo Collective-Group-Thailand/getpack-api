@@ -765,6 +765,38 @@ export const PERMISSIONS = [
     description: 'Propose chart-of-accounts changes, posting-rule and tax-rate versions and cost centres (maker-checker, §8)',
     decisionRefs: ['D-033', 'D-169'],
   },
+
+  // --- Finance: receivables (B5.2, accounting-design §2, §4, §6)
+  {
+    key: 'receivables.read',
+    audience: 'staff',
+    description: 'Read customer documents, receivables and aging, 50 ทวิ certificates, credit balances and statements',
+    decisionRefs: ['D-010', 'D-033'],
+  },
+  {
+    key: 'receivables.manage',
+    audience: 'staff',
+    description: 'Void invoices / debit notes, record or waive 50 ทวิ, update the allowance for doubtful accounts',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'credit_notes.request',
+    audience: 'staff',
+    description: 'Request credit notes (issued after a Finance Manager approves, §8)',
+    decisionRefs: ['D-033', 'D-169'],
+  },
+  {
+    key: 'receivables.write_off.request',
+    audience: 'staff',
+    description: 'Request bad-debt write-offs (approved by a Finance Manager, §8)',
+    decisionRefs: ['D-033', 'D-169'],
+  },
+  {
+    key: 'receivables.debit_notes.issue',
+    audience: 'staff',
+    description: 'Issue debit notes',
+    decisionRefs: ['D-033'],
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];

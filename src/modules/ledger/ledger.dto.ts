@@ -58,7 +58,7 @@ export const TAX_CODES = [
 export const PERIOD_STATUSES = ['open', 'soft_closed', 'closed', 'locked'] as const;
 export const ACCOUNT_CHANGE_KINDS = ['create', 'update', 'deactivate', 'reactivate'] as const;
 export const RECURRING_STATUSES = ['pending_approval', 'active', 'paused', 'ended', 'rejected'] as const;
-export const VERSION_STATUSES = ['draft', 'proposed', 'approved', 'rejected', 'withdrawn', 'pending_acceptance'] as const;
+export const VERSION_STATUSES = ['draft', 'proposed', 'pending_acceptance', 'approved', 'rejected', 'withdrawn'] as const;
 export const SALES_CHANNELS = ['web', 'cs', 'line', 'b2b'] as const;
 
 export const LEDGER_IDS = {

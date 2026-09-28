@@ -9,6 +9,7 @@ import { ManualJournalsService } from './manual-journals.service';
 import { PeriodsService } from './periods.service';
 import { PostingEngine } from './posting/posting-engine.service';
 import { RecurringJournalsService } from './recurring-journals.service';
+import { SourceReversalSubscriber } from './source-reversal.subscriber';
 
 const SERVICES = [
   PeriodsService,
@@ -25,5 +26,5 @@ const SERVICES = [
  * engine and its rules, manual / recurring / reversing journals under maker-checker.
  */
 @Global()
-@Module({ providers: [...SERVICES, LedgerApprovalsSubscriber, LedgerJobs], exports: SERVICES })
+@Module({ providers: [...SERVICES, LedgerApprovalsSubscriber, SourceReversalSubscriber, LedgerJobs], exports: SERVICES })
 export class LedgerModule {}

@@ -18,6 +18,7 @@ import { PAYMENTS_STORE_CONTROLLERS } from '@modules/payments/payments.registry'
 import { PRICING_STORE_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
+import { RECEIVABLES_STORE_CONTROLLERS } from '@modules/receivables/receivables.registry';
 import { TIMELINE_STORE_CONTROLLERS } from '@modules/timeline/timeline.registry';
 import { Module } from '@nestjs/common';
 import { StoreFilesController } from '@platform/files/files.controllers';
@@ -57,6 +58,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...LOYALTY_STORE_CONTROLLERS,
     ...COMPANIES_STORE_CONTROLLERS,
     ...PAYMENTS_STORE_CONTROLLERS,
+    ...RECEIVABLES_STORE_CONTROLLERS,
     ...ARTWORK_STORE_CONTROLLERS,
     ...DESIGN_SERVICES_STORE_CONTROLLERS,
     ...DESIGNS_STORE_CONTROLLERS,

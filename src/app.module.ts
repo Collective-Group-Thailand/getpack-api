@@ -35,6 +35,7 @@ import { PricingModule } from '@modules/pricing/pricing.module';
 import { ProductionModule } from '@modules/production/production.module';
 import { PromotionsModule } from '@modules/promotions/promotions.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
+import { ReceivablesModule } from '@modules/receivables/receivables.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
@@ -115,6 +116,7 @@ import { LoggerModule } from 'nestjs-pino';
     ClaimsModule,
     ConversationsModule,
     LedgerModule,
+    ReceivablesModule,
     HealthModule,
     SurfacesModule,
   ],

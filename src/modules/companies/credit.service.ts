@@ -11,6 +11,7 @@ import {
   type CheckoutInput,
   type PlacedGroup,
 } from '@modules/checkout/checkout.extensions';
+import { ReceivablesService } from '@modules/receivables/receivables.service';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { ApprovalsService } from '@platform/approvals/approvals.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
@@ -55,6 +56,7 @@ export class CreditService {
     private readonly approvals: ApprovalsService,
     private readonly settings: SettingsService,
     private readonly events: DomainEvents,
+    private readonly receivables: ReceivablesService,
   ) {}
 
   // --- reads --------------------------------------------------------------------------------------------
@@ -66,16 +68,12 @@ export class CreditService {
     });
   }
 
-  /** Open credit-term instalments of the company's live order groups (interim credit exposure). */
+  /**
+   * The credit the company uses (D-121): its open receivables plus open credit-term instalments of orders not
+   * invoiced yet — the receivables feed of B5.2 (it replaces the interim instalment sum of B3.5).
+   */
   async exposure(db: Tx, companyId: bigint): Promise<MoneyValue> {
-    const open = await db.instalment.findMany({
-      where: {
-        status: { in: [...OPEN] },
-        schedule: { orderGroup: { companyId, status: { not: 'cancelled' } }, templateVersion: { template: { key: 'credit_term' } } },
-      },
-      select: { cashAmount: true, paidAmount: true },
-    });
-    return open.reduce((a, i) => a.add(D(i.cashAmount).sub(i.paidAmount.toString())), D(0));
+    return this.receivables.companyExposure(db, companyId);
   }
 
   async view(companyId: bigint, db: Tx = this.prisma): Promise<CreditView> {

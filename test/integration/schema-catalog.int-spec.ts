@@ -607,6 +607,42 @@ const CHECKS = [
   'ck_recurring_journals__name',
   'ck_recurring_journals__template',
   'ck_recurring_journals__window',
+  // --- B5.2 receivables
+  'ck_bad_debt_provisions__method',
+  'ck_bad_debt_provisions__target',
+  'ck_company_statements__month',
+  'ck_company_statements__roll',
+  'ck_credit_note_reasons__code',
+  'ck_credit_note_reasons__names',
+  'ck_credit_note_requests__amount',
+  'ck_credit_note_requests__decided',
+  'ck_credit_note_requests__issued',
+  'ck_credit_note_requests__note',
+  'ck_customer_document_lines__amounts',
+  'ck_customer_document_lines__description',
+  'ck_customer_document_lines__line_no',
+  'ck_customer_document_links__amount',
+  'ck_customer_document_links__distinct',
+  'ck_customer_documents__amounts',
+  'ck_customer_documents__buyer',
+  'ck_customer_documents__cn_kind',
+  'ck_customer_documents__doc_number',
+  'ck_customer_documents__doc_type',
+  'ck_customer_documents__kind',
+  'ck_customer_documents__notes',
+  'ck_customer_documents__pdf',
+  'ck_customer_documents__receipt',
+  'ck_customer_documents__vat_rate',
+  'ck_customer_documents__void',
+  'ck_customer_wht_certificates__amounts',
+  'ck_customer_wht_certificates__received',
+  'ck_customer_wht_certificates__waived',
+  'ck_receivable_applications__amount',
+  'ck_receivable_applications__source',
+  'ck_receivable_items__amounts',
+  'ck_receivable_items__status',
+  'ck_receivable_items__written_off',
+  'ck_store_credit_entries__amount',
 ];
 
 const TRIGGERS = [
@@ -754,6 +790,18 @@ const TRIGGERS = [
   'tg_journal_entries__sync_lines',
   'tg_journal_lines__guard',
   'tg_posting_rule_versions__immutable',
+  // --- B5.2 receivables
+  'tg_bad_debt_provisions__append_only',
+  'tg_credit_note_requests__no_delete',
+  'tg_customer_document_lines__append_only',
+  'tg_customer_document_links__append_only',
+  'tg_customer_documents__issued_frozen',
+  'tg_customer_wht_certificates__no_delete',
+  'tg_dunning_notices__append_only',
+  'tg_receivable_applications__append_only',
+  'tg_receivable_items__no_delete',
+  'tg_store_credit_entries__append_only',
+  'tg_store_credit_entries__balance',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -852,6 +900,10 @@ const INDEXES = [
   'ix_journal_lines__order_id',
   'ix_journal_lines__tax_code__entry_date',
   'ix_journal_entries__auto_reverse_on',
+  // --- B5.2 receivables
+  'ix_customer_documents__company_id__document_date',
+  'ix_customer_documents__pdf_pending',
+  'ux_store_credit_entries__refund_id',
 ];
 
 const EXPRESSION_INDEXES = [

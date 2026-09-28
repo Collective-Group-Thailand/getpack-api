@@ -213,4 +213,10 @@ export const API_TAGS: Record<string, string> = {
   'admin.recurringJournals': 'Recurring and auto-reversing journals, approved once by a Finance Manager (B5.1).',
   'admin.postingRules': 'Posting rules as data: P01–P30 and supplementary rules, versioned and approved (`posting_rule_change`, ADR-0007).',
   'admin.taxRates': 'VAT and withholding rates with dated versions (accounting-design §2 ⚖, D-174); changes approved (`tax_setting_change`).',
+  // --- B5.2 receivables
+  'admin.customerDocuments':
+    'Tax invoices, invoices, receipts, credit and debit notes issued by the entity under the Packio brand (D-010, D-092): PDFs, voids, credit notes under maker-checker (D-169).',
+  'admin.receivables':
+    'Customer AR: open items, aging, write-offs (maker-checker), allowance for doubtful accounts, 50 ทวิ collection, credit balances, company statements (D-121, D-125).',
+  'store.documents': 'My tax invoices, receipts and notes (and my company’s), my credit balance and company statements (D-010, D-125).',
 };

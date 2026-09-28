@@ -372,7 +372,15 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
       documentDate: 'receivedOn',
       source: { type: 'unidentified_receipt', id: 'receiptId' },
       lines: [
-        { account: { path: 'receivedIntoAccountCode' }, side: 'debit', amount: 'amount' },
+        {
+          account: {
+            switch: 'receivedVia',
+            cases: { scb: '1132', twoc2p: '1131', slip: '1133', bank: '1133' },
+            default: { path: 'receivedIntoAccountCode' },
+          },
+          side: 'debit',
+          amount: 'amount',
+        },
         { account: '1140', side: 'credit', amount: 'amount' },
       ],
     },

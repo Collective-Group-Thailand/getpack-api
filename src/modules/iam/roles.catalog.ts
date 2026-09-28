@@ -44,6 +44,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      'receivables.read',
       'ledger.read',
       ...APPROVER,
       ...COST_AND_MARGIN,
@@ -174,6 +175,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายบริการลูกค้า',
     nameEn: 'CS',
     permissions: [
+      'receivables.read',
       ...EVERY_STAFF_MEMBER,
       'conversations.read',
       'conversations.reply',
@@ -214,6 +216,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'หัวหน้าฝ่ายบริการลูกค้า',
     nameEn: 'CS Lead',
     permissions: [
+      'receivables.read', 'credit_notes.request',
       ...EVERY_STAFF_MEMBER,
       'conversations.read',
       'conversations.reply',
@@ -287,6 +290,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายการเงิน',
     nameEn: 'Finance',
     permissions: [
+      'receivables.read', 'receivables.manage', 'credit_notes.request', 'receivables.write_off.request',
       'ledger.read', 'ledger.journals.manage', 'ledger.config.propose',
       ...APPROVER,
       ...COST_AND_MARGIN,
@@ -319,6 +323,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการฝ่ายการเงิน',
     nameEn: 'Finance Manager',
     permissions: [
+      'receivables.read', 'receivables.manage', 'credit_notes.request', 'receivables.write_off.request', 'receivables.debit_notes.issue',
       'ledger.read', 'ledger.journals.manage', 'ledger.config.propose', 'ledger.periods.manage', 'ledger.post_soft_closed',
       ...APPROVER,
       ...COST_AND_MARGIN,
@@ -429,6 +434,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ตรวจสอบบัญชี',
     nameEn: 'Auditor (read-only)',
     permissions: [
+      'receivables.read',
       'ledger.read',
       'settings.read',
       'approvals.read',

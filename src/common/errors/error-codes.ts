@@ -240,6 +240,12 @@ export const ERROR_CODES = {
   'ledger.not_reversible': HttpStatus.CONFLICT,
   'ledger.change_pending': HttpStatus.CONFLICT,
   'ledger.account_exists': HttpStatus.CONFLICT,
+  'receivables.document_not_voidable': HttpStatus.CONFLICT,
+  'receivables.credit_exceeds': HttpStatus.UNPROCESSABLE_ENTITY,
+  'receivables.reason_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'receivables.nothing_to_write_off': HttpStatus.CONFLICT,
+  'receivables.allowance_rates_unset': HttpStatus.CONFLICT,
+  'receivables.certificate_invalid': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

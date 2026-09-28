@@ -496,6 +496,10 @@ model OrderGroup {
   journalLines JournalLine[] @relation("JournalLineOrderGroup")
   // --- end Finance B5.1
 
+  // --- Finance B5.2 (generated back-relations)
+  customerDocuments CustomerDocument[] @relation("CustomerDocumentOrderGroup")
+  // --- end Finance B5.2
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_order_groups__company_id__created_at")
   @@index([companyBranchId], map: "ix_order_groups__company_branch_id")
   @@index([companyApprovalRequestId], map: "ix_order_groups__company_approval_request_id")
@@ -638,6 +642,14 @@ model Order {
   journalLines JournalLine[] @relation("JournalLineOrder")
   // --- end Finance B5.1
 
+  // --- Finance B5.2 (generated back-relations)
+  customerDocuments     CustomerDocument[]     @relation("CustomerDocumentOrder")
+  customerDocumentLines CustomerDocumentLine[] @relation("CustomerDocumentLineOrder")
+  creditNoteRequests    CreditNoteRequest[]    @relation("CreditNoteRequestOrder")
+  receivableItems       ReceivableItem[]       @relation("ReceivableItemOrder")
+  storeCreditEntries    StoreCreditEntry[]     @relation("StoreCreditEntryOrder")
+  // --- end Finance B5.2
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
   @@index([status, promisedShipDate], map: "ix_orders__status__promised_ship_date")
@@ -697,6 +709,10 @@ model OrderLine {
   // --- Fulfilment B4.2 (generated back-relations)
   productionJobs ProductionJob[] @relation("ProductionJobOrderLine")
   // --- end Fulfilment B4.2
+
+  // --- Finance B5.2 (generated back-relations)
+  customerDocumentLines CustomerDocumentLine[] @relation("CustomerDocumentLineOrderLine")
+  // --- end Finance B5.2
 
   @@unique([orderId, lineNo], map: "ux_order_lines__order_id__line_no")
   @@map("order_lines")
@@ -1156,6 +1172,12 @@ model Payment {
   slips       Slip[]
   refunds     Refund[]
 
+  // --- Finance B5.2 (generated back-relations)
+  customerDocuments       CustomerDocument[]       @relation("CustomerDocumentPayment")
+  customerWhtCertificates CustomerWhtCertificate[] @relation("CustomerWhtCertificatePayment")
+  receivableApplications  ReceivableApplication[]  @relation("ReceivableApplicationPayment")
+  // --- end Finance B5.2
+
   @@unique([provider, providerRef], map: "ux_payments__provider__provider_ref", where: raw("(provider_ref IS NOT NULL)"))
   @@index([orderGroupId, status], map: "ix_payments__order_group_id__status")
   @@index([status, expiresAt], map: "ix_payments__status__expires_at")
@@ -1269,6 +1291,10 @@ model Refund {
   // --- Fulfilment B4.5 (generated back-relations)
   claimResolutions ClaimResolution[] @relation("ClaimResolutionRefund")
   // --- end Fulfilment B4.5
+
+  // --- Finance B5.2 (generated back-relations)
+  storeCreditEntries StoreCreditEntry[] @relation("StoreCreditEntryRefund")
+  // --- end Finance B5.2
 
   @@index([paymentId], map: "ix_refunds__payment_id")
   @@index([status], map: "ix_refunds__status")
@@ -1885,6 +1911,13 @@ model Company {
   journalLines JournalLine[] @relation("JournalLineCompany")
   // --- end Finance B5.1
 
+  // --- Finance B5.2 (generated back-relations)
+  customerDocuments       CustomerDocument[]       @relation("CustomerDocumentCompany")
+  customerWhtCertificates CustomerWhtCertificate[] @relation("CustomerWhtCertificateCompany")
+  receivableItems         ReceivableItem[]         @relation("ReceivableItemCompany")
+  statements              CompanyStatement[]       @relation("CompanyStatementCompany")
+  // --- end Finance B5.2
+
   @@unique([taxId], map: "ux_companies__tax_id", where: raw("(status <> 'closed'::company_status)"))
   @@index([status], map: "ix_companies__status")
   @@index([entityId], map: "ix_companies__entity_id")
@@ -1919,6 +1952,10 @@ model CompanyBranch {
   province    GeoProvince     @relation("CompanyBranchProvince", fields: [provinceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_branches__province_id")
   createdBy   User?           @relation("CompanyBranchCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_branches__created_by")
   orderGroups OrderGroup[]    @relation("OrderGroupCompanyBranch")
+
+  // --- Finance B5.2 (generated back-relations)
+  customerDocuments CustomerDocument[] @relation("CustomerDocumentCompanyBranch")
+  // --- end Finance B5.2
 
   @@unique([companyId, branchCode], map: "ux_company_branches__company_id__branch_code", where: raw("(deleted_at IS NULL)"))
   @@unique([companyId], map: "ux_company_branches__one_default", where: raw("(is_default AND (deleted_at IS NULL))"))

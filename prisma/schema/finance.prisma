@@ -323,6 +323,10 @@ model FiscalPeriod {
   journalEntries  JournalEntry[]
   journalLines    JournalLine[]
 
+  // --- Finance B5.2 (generated back-relations)
+  badDebtProvisions BadDebtProvision[]
+  // --- end Finance B5.2
+
   @@unique([entityId, startDate], map: "ux_fiscal_periods__entity_id__start_date")
   @@unique([fiscalYearId, periodNo], map: "ux_fiscal_periods__fiscal_year_id__period_no")
   @@index([statusChangedById], map: "ix_fiscal_periods__status_changed_by")
@@ -654,4 +658,564 @@ model JournalEntryCounter {
 
   @@id([entityId, periodKey], map: "pk_journal_entry_counters")
   @@map("journal_entry_counters")
+}
+
+// ================================================================================================
+// Receivables & customer documents (B5.2, accounting-design §2, §4, §6; D-091, D-092, D-125)
+// ================================================================================================
+
+enum CustomerDocumentStatus {
+  issued
+  void
+
+  @@map("customer_document_status")
+}
+
+/// What the document is for (schema-design §7 A-42): an instalment TR, the final TR at delivery, an invoice
+/// at delivery, a receipt for an invoice, a credit or a debit note.
+enum CustomerDocumentKind {
+  instalment
+  final
+  delivery
+  collection
+  credit_note
+  debit_note
+
+  @@map("customer_document_kind")
+}
+
+/// How the money of a receipt arrived (the posting rules pick the cash / clearing account from it).
+enum ReceiptVia {
+  scb
+  twoc2p
+  slip
+  bank
+  unidentified
+  store_credit
+
+  @@map("receipt_via")
+}
+
+enum ETaxStatus {
+  not_applicable
+  pending
+  submitted
+  accepted
+  rejected
+
+  @@map("etax_status")
+}
+
+enum DocumentLinkKind {
+  deducts_instalment
+  credits
+  debits
+  replaces
+  receipt_for
+
+  @@map("document_link_kind")
+}
+
+enum CnStatutoryCategory {
+  price_reduction
+  defective_or_short
+  returns
+  cancellation
+  post_sale_discount
+  other
+
+  @@map("cn_statutory_category")
+}
+
+enum CnAppliesTo {
+  item
+  service
+  both
+
+  @@map("cn_applies_to")
+}
+
+/// Business reason of a credit note, mapped to its statutory category through `credit_note_reasons`.
+enum CreditNoteKind {
+  shortage
+  claim
+  cancellation
+  price_reduction
+  return
+  discount
+
+  @@map("credit_note_kind")
+}
+
+enum CreditSettlement {
+  store_credit
+  receivable
+
+  @@map("credit_settlement")
+}
+
+enum CreditNoteRequestStatus {
+  pending_approval
+  issued
+  rejected
+  withdrawn
+
+  @@map("credit_note_request_status")
+}
+
+enum WhtCertStatus {
+  pending
+  received
+  waived
+
+  @@map("wht_cert_status")
+}
+
+enum ArItemStatus {
+  open
+  partially_paid
+  paid
+  written_off
+  cancelled
+
+  @@map("ar_item_status")
+}
+
+enum DunningStage {
+  before_due
+  on_due
+  overdue
+
+  @@map("dunning_stage")
+}
+
+enum StoreCreditSource {
+  shortage_credit
+  cancellation
+  claim
+  refund_alternative
+  applied_to_order
+  manual
+  refunded
+
+  @@map("store_credit_source")
+}
+
+/// IV, TR, RC, CN, DN issued by the entity under the Packio brand (D-010, D-092). Numbers are gapless per
+/// (entity, type, period) and taken in the issuing transaction; a void keeps its number with a reason. Money
+/// columns never change after issue (trigger).
+model CustomerDocument {
+  id                  BigInt                 @id(map: "pk_customer_documents") @default(autoincrement())
+  publicId            String                 @unique(map: "ux_customer_documents__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId            BigInt                 @map("entity_id")
+  docType             DocumentType           @map("doc_type")
+  docKind             CustomerDocumentKind   @map("doc_kind")
+  docNumber           String                 @map("doc_number")
+  status              CustomerDocumentStatus @default(issued)
+  issuedAt            DateTime               @default(now()) @map("issued_at") @db.Timestamptz(6)
+  documentDate        DateTime               @map("document_date") @db.Date
+  taxPointDate        DateTime?              @map("tax_point_date") @db.Date
+  /// A tax invoice (ใบกำกับภาษี): TR, CN, DN, and an IV / RC that carries the tax point (§2).
+  isTaxInvoice        Boolean                @map("is_tax_invoice")
+  /// Full-form tax invoice for a juristic / government buyer (buyer tax id and branch printed).
+  isFullForm          Boolean                @default(false) @map("is_full_form")
+  customerUserId      BigInt                 @map("customer_user_id")
+  companyId           BigInt?                @map("company_id")
+  companyBranchId     BigInt?                @map("company_branch_id")
+  buyerSnapshot       Json                   @map("buyer_snapshot")
+  sellerSnapshot      Json                   @map("seller_snapshot")
+  orderGroupId        BigInt?                @map("order_group_id")
+  orderId             BigInt?                @map("order_id")
+  paymentId           BigInt?                @map("payment_id")
+  originalDocumentId  BigInt?                @map("original_document_id")
+  creditNoteReasonId  BigInt?                @map("credit_note_reason_id")
+  cnKind              CreditNoteKind?        @map("cn_kind")
+  receiptVia          ReceiptVia?            @map("receipt_via")
+  taxNature           TaxNature?             @map("tax_nature")
+  netAmount           Decimal                @map("net_amount") @db.Decimal(14, 2)
+  discountAmount      Decimal                @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  vatRatePct          Decimal                @map("vat_rate_pct") @db.Decimal(7, 4)
+  vatAmount           Decimal                @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount         Decimal                @map("gross_amount") @db.Decimal(14, 2)
+  whtAmount           Decimal                @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  cashAmount          Decimal                @default(0) @map("cash_amount") @db.Decimal(14, 2)
+  /// Final TR: instalments already taxed and deducted (§2 deposits & instalments).
+  deductedPriorAmount Decimal                @default(0) @map("deducted_prior_amount") @db.Decimal(14, 2)
+  roundingAmount      Decimal                @default(0) @map("rounding_amount") @db.Decimal(14, 2)
+  /// Amount the customer still owes on this document (an IV or a final TR with a remainder).
+  amountDue           Decimal                @default(0) @map("amount_due") @db.Decimal(14, 2)
+  dueDate             DateTime?              @map("due_date") @db.Date
+  voidReason          String?                @map("void_reason")
+  voidedAt            DateTime?              @map("voided_at") @db.Timestamptz(6)
+  voidedById          BigInt?                @map("voided_by")
+  pdfFileId           BigInt?                @map("pdf_file_id")
+  pdfSha256           Bytes?                 @map("pdf_sha256")
+  eTaxStatus          ETaxStatus             @default(not_applicable) @map("e_tax_status")
+  eTaxXmlFileId       BigInt?                @map("e_tax_xml_file_id")
+  approvalRequestId   BigInt?                @map("approval_request_id")
+  legalHold           Boolean                @default(false) @map("legal_hold")
+  createdAt           DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById         BigInt?                @map("created_by")
+
+  entity           Entity                   @relation("CustomerDocumentEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__entity_id")
+  customer         User                     @relation("CustomerDocumentCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__customer_user_id")
+  company          Company?                 @relation("CustomerDocumentCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__company_id")
+  companyBranch    CompanyBranch?           @relation("CustomerDocumentCompanyBranch", fields: [companyBranchId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__company_branch_id")
+  orderGroup       OrderGroup?              @relation("CustomerDocumentOrderGroup", fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__order_group_id")
+  order            Order?                   @relation("CustomerDocumentOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__order_id")
+  payment          Payment?                 @relation("CustomerDocumentPayment", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__payment_id")
+  originalDocument CustomerDocument?        @relation("CustomerDocumentOriginal", fields: [originalDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__original_document_id")
+  derived          CustomerDocument[]       @relation("CustomerDocumentOriginal")
+  creditNoteReason CreditNoteReason?        @relation(fields: [creditNoteReasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__credit_note_reason_id")
+  voidedBy         User?                    @relation("CustomerDocumentVoidedBy", fields: [voidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__voided_by")
+  pdfFile          FileObject?              @relation("CustomerDocumentPdf", fields: [pdfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__pdf_file_id")
+  eTaxXmlFile      FileObject?              @relation("CustomerDocumentETaxXml", fields: [eTaxXmlFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__e_tax_xml_file_id")
+  approvalRequest  ApprovalRequest?         @relation("CustomerDocumentApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__approval_request_id")
+  createdBy        User?                    @relation("CustomerDocumentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_documents__created_by")
+  lines            CustomerDocumentLine[]
+  links            CustomerDocumentLink[]   @relation("CustomerDocumentLinkFrom")
+  linkedBy         CustomerDocumentLink[]   @relation("CustomerDocumentLinkTo")
+  receivableItem   ReceivableItem?
+  whtCertificates  CustomerWhtCertificate[]
+  creditRequests   CreditNoteRequest[]      @relation("CreditNoteRequestDocument")
+  creditedBy       CreditNoteRequest[]      @relation("CreditNoteRequestOriginal")
+  storeCredits     StoreCreditEntry[]
+  applications     ReceivableApplication[]  @relation("ReceivableApplicationDocument")
+  claimResolutions ClaimResolution[]        @relation("ClaimResolutionCustomerDocument")
+
+  @@unique([entityId, docType, docNumber], map: "ux_customer_documents__entity_id__doc_type__doc_number")
+  @@index([customerUserId, documentDate(sort: Desc)], map: "ix_customer_documents__customer_user_id__document_date")
+  @@index([companyId, documentDate], map: "ix_customer_documents__company_id__document_date", where: raw("(company_id IS NOT NULL)"))
+  @@index([orderId], map: "ix_customer_documents__order_id")
+  @@index([orderGroupId], map: "ix_customer_documents__order_group_id")
+  @@index([paymentId], map: "ix_customer_documents__payment_id")
+  @@index([originalDocumentId], map: "ix_customer_documents__original_document_id")
+  @@index([entityId, docType, documentDate], map: "ix_customer_documents__entity_id__doc_type__document_date")
+  @@index([companyBranchId], map: "ix_customer_documents__company_branch_id")
+  @@index([creditNoteReasonId], map: "ix_customer_documents__credit_note_reason_id")
+  @@index([voidedById], map: "ix_customer_documents__voided_by")
+  @@index([pdfFileId], map: "ix_customer_documents__pdf_file_id")
+  @@index([eTaxXmlFileId], map: "ix_customer_documents__e_tax_xml_file_id")
+  @@index([approvalRequestId], map: "ix_customer_documents__approval_request_id")
+  @@index([createdById], map: "ix_customer_documents__created_by")
+  @@index([issuedAt], map: "ix_customer_documents__pdf_pending", where: raw("(pdf_file_id IS NULL)"))
+  @@map("customer_documents")
+}
+
+model CustomerDocumentLine {
+  id              BigInt           @id(map: "pk_customer_document_lines") @default(autoincrement())
+  documentId      BigInt           @map("document_id")
+  lineNo          Int              @map("line_no") @db.SmallInt
+  orderId         BigInt?          @map("order_id")
+  orderLineId     BigInt?          @map("order_line_id")
+  description     String
+  quantity        Decimal          @db.Decimal(14, 3)
+  unitPrice       Decimal          @map("unit_price") @db.Decimal(18, 6)
+  netAmount       Decimal          @map("net_amount") @db.Decimal(14, 2)
+  discountAmount  Decimal          @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  vatRatePct      Decimal          @map("vat_rate_pct") @db.Decimal(7, 4)
+  vatAmount       Decimal          @map("vat_amount") @db.Decimal(14, 2)
+  grossAmount     Decimal          @map("gross_amount") @db.Decimal(14, 2)
+  whtAmount       Decimal          @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  revenueCategory RevenueCategory? @map("revenue_category")
+  taxNature       TaxNature?       @map("tax_nature")
+
+  document  CustomerDocument @relation(fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_document_lines__document_id")
+  order     Order?           @relation("CustomerDocumentLineOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_document_lines__order_id")
+  orderLine OrderLine?       @relation("CustomerDocumentLineOrderLine", fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_document_lines__order_line_id")
+
+  @@unique([documentId, lineNo], map: "ux_customer_document_lines__document_id__line_no")
+  @@index([orderId], map: "ix_customer_document_lines__order_id")
+  @@index([orderLineId], map: "ix_customer_document_lines__order_line_id")
+  @@map("customer_document_lines")
+}
+
+model CustomerDocumentLink {
+  id               BigInt           @id(map: "pk_customer_document_links") @default(autoincrement())
+  documentId       BigInt           @map("document_id")
+  linkedDocumentId BigInt           @map("linked_document_id")
+  kind             DocumentLinkKind
+  amount           Decimal?         @db.Decimal(14, 2)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  document       CustomerDocument @relation("CustomerDocumentLinkFrom", fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_document_links__document_id")
+  linkedDocument CustomerDocument @relation("CustomerDocumentLinkTo", fields: [linkedDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_document_links__linked_document_id")
+
+  @@unique([documentId, linkedDocumentId, kind], map: "ux_customer_document_links__document__linked__kind")
+  @@index([linkedDocumentId], map: "ix_customer_document_links__linked_document_id")
+  @@map("customer_document_links")
+}
+
+/// Controlled list of credit / debit note reasons mapped to statutory categories (§2).
+model CreditNoteReason {
+  id                BigInt              @id(map: "pk_credit_note_reasons") @default(autoincrement())
+  publicId          String              @unique(map: "ux_credit_note_reasons__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  code              String              @unique(map: "ux_credit_note_reasons__code")
+  statutoryCategory CnStatutoryCategory @map("statutory_category")
+  nameTh            String              @map("name_th")
+  nameEn            String              @map("name_en")
+  appliesTo         CnAppliesTo         @map("applies_to")
+  active            Boolean             @default(true)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  documents CustomerDocument[]
+  requests  CreditNoteRequest[]
+
+  @@map("credit_note_reasons")
+}
+
+/// A requested credit note waiting for its checker (maker-checker `credit_note`, §8, D-169); the approval
+/// issues the CN. Rule-driven credit notes (tolerance shortage D-021, cancellation) are issued directly.
+model CreditNoteRequest {
+  id                 BigInt                  @id(map: "pk_credit_note_requests") @default(autoincrement())
+  publicId           String                  @unique(map: "ux_credit_note_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId           BigInt                  @map("entity_id")
+  orderId            BigInt                  @map("order_id")
+  originalDocumentId BigInt?                 @map("original_document_id")
+  reasonId           BigInt                  @map("reason_id")
+  cnKind             CreditNoteKind          @map("cn_kind")
+  /// Gross amount credited (incl. VAT).
+  amount             Decimal                 @db.Decimal(14, 2)
+  settleTo           CreditSettlement?       @map("settle_to")
+  note               String
+  claimId            BigInt?                 @map("claim_id")
+  status             CreditNoteRequestStatus @default(pending_approval)
+  approvalRequestId  BigInt?                 @map("approval_request_id")
+  customerDocumentId BigInt?                 @unique(map: "ux_credit_note_requests__customer_document_id") @map("customer_document_id")
+  requestedById      BigInt?                 @map("requested_by")
+  decidedAt          DateTime?               @map("decided_at") @db.Timestamptz(6)
+  createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity           Entity            @relation("CreditNoteRequestEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_credit_note_requests__entity_id")
+  order            Order             @relation("CreditNoteRequestOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_credit_note_requests__order_id")
+  originalDocument CustomerDocument? @relation("CreditNoteRequestOriginal", fields: [originalDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_credit_note_requests__original_document_id")
+  reason           CreditNoteReason  @relation(fields: [reasonId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_credit_note_requests__reason_id")
+  claim            Claim?            @relation("CreditNoteRequestClaim", fields: [claimId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_credit_note_requests__claim_id")
+  approvalRequest  ApprovalRequest?  @relation("CreditNoteRequestApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_credit_note_requests__approval_request_id")
+  customerDocument CustomerDocument? @relation("CreditNoteRequestDocument", fields: [customerDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_credit_note_requests__customer_document_id")
+  requestedBy      User?             @relation("CreditNoteRequestRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_credit_note_requests__requested_by")
+
+  @@index([orderId], map: "ix_credit_note_requests__order_id")
+  @@index([originalDocumentId], map: "ix_credit_note_requests__original_document_id")
+  @@index([reasonId], map: "ix_credit_note_requests__reason_id")
+  @@index([claimId], map: "ix_credit_note_requests__claim_id")
+  @@index([approvalRequestId], map: "ix_credit_note_requests__approval_request_id")
+  @@index([requestedById], map: "ix_credit_note_requests__requested_by")
+  @@index([entityId, status], map: "ix_credit_note_requests__entity_id__status")
+  @@map("credit_note_requests")
+}
+
+/// 50 ทวิ received from a withholding customer, tracked until the certificate is in (§2 customer WHT).
+model CustomerWhtCertificate {
+  id                 BigInt        @id(map: "pk_customer_wht_certificates") @default(autoincrement())
+  publicId           String        @unique(map: "ux_customer_wht_certificates__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId           BigInt        @map("entity_id")
+  customerDocumentId BigInt        @map("customer_document_id")
+  paymentId          BigInt?       @map("payment_id")
+  customerUserId     BigInt        @map("customer_user_id")
+  companyId          BigInt?       @map("company_id")
+  whtBase            Decimal       @map("wht_base") @db.Decimal(14, 2)
+  whtAmount          Decimal       @map("wht_amount") @db.Decimal(14, 2)
+  status             WhtCertStatus @default(pending)
+  certificateNo      String?       @map("certificate_no")
+  certificateDate    DateTime?     @map("certificate_date") @db.Date
+  fileObjectId       BigInt?       @map("file_object_id")
+  receivedAt         DateTime?     @map("received_at") @db.Timestamptz(6)
+  recordedById       BigInt?       @map("recorded_by")
+  waivedReason       String?       @map("waived_reason")
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int           @default(1) @map("row_version")
+
+  entity           Entity           @relation("CustomerWhtCertificateEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_wht_certificates__entity_id")
+  customerDocument CustomerDocument @relation(fields: [customerDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_wht_certificates__customer_document_id")
+  payment          Payment?         @relation("CustomerWhtCertificatePayment", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_wht_certificates__payment_id")
+  customer         User             @relation("CustomerWhtCertificateCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_wht_certificates__customer_user_id")
+  company          Company?         @relation("CustomerWhtCertificateCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_wht_certificates__company_id")
+  file             FileObject?      @relation("CustomerWhtCertificateFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_wht_certificates__file_object_id")
+  recordedBy       User?            @relation("CustomerWhtCertificateRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_wht_certificates__recorded_by")
+
+  @@unique([customerDocumentId], map: "ux_customer_wht_certificates__customer_document_id")
+  @@index([entityId, status], map: "ix_customer_wht_certificates__entity_id__status")
+  @@index([paymentId], map: "ix_customer_wht_certificates__payment_id")
+  @@index([customerUserId], map: "ix_customer_wht_certificates__customer_user_id")
+  @@index([companyId], map: "ix_customer_wht_certificates__company_id")
+  @@index([fileObjectId], map: "ix_customer_wht_certificates__file_object_id")
+  @@index([recordedById], map: "ix_customer_wht_certificates__recorded_by")
+  @@map("customer_wht_certificates")
+}
+
+/// AR open item of an invoice (or of a final TR with a remainder); `vat_not_due_*` is the VAT still in
+/// 2211 that each collection moves to 2210 pro rata (P08).
+model ReceivableItem {
+  id                        BigInt       @id(map: "pk_receivable_items") @default(autoincrement())
+  publicId                  String       @unique(map: "ux_receivable_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId                  BigInt       @map("entity_id")
+  customerUserId            BigInt       @map("customer_user_id")
+  companyId                 BigInt?      @map("company_id")
+  customerDocumentId        BigInt       @unique(map: "ux_receivable_items__customer_document_id") @map("customer_document_id")
+  orderId                   BigInt?      @map("order_id")
+  dueDate                   DateTime     @map("due_date") @db.Date
+  amount                    Decimal      @db.Decimal(14, 2)
+  openAmount                Decimal      @map("open_amount") @db.Decimal(14, 2)
+  vatNotDueAmount           Decimal      @default(0) @map("vat_not_due_amount") @db.Decimal(14, 2)
+  vatNotDueBase             Decimal      @default(0) @map("vat_not_due_base") @db.Decimal(14, 2)
+  status                    ArItemStatus @default(open)
+  writeOffReason            String?      @map("write_off_reason")
+  writeOffApprovalRequestId BigInt?      @map("write_off_approval_request_id")
+  writtenOffAt              DateTime?    @map("written_off_at") @db.Timestamptz(6)
+  createdAt                 DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion                Int          @default(1) @map("row_version")
+
+  entity            Entity                  @relation("ReceivableItemEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_items__entity_id")
+  customer          User                    @relation("ReceivableItemCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_items__customer_user_id")
+  company           Company?                @relation("ReceivableItemCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_items__company_id")
+  customerDocument  CustomerDocument        @relation(fields: [customerDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_items__customer_document_id")
+  order             Order?                  @relation("ReceivableItemOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_items__order_id")
+  writeOffApproval  ApprovalRequest?        @relation("ReceivableItemWriteOffApproval", fields: [writeOffApprovalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_items__write_off_approval_request_id")
+  applications      ReceivableApplication[]
+  dunningNotices    DunningNotice[]
+  badDebtProvisions BadDebtProvision[]
+
+  @@index([companyId, status, dueDate], map: "ix_receivable_items__company_id__status__due_date")
+  @@index([customerUserId, status, dueDate], map: "ix_receivable_items__customer_user_id__status__due_date")
+  @@index([orderId], map: "ix_receivable_items__order_id")
+  @@index([writeOffApprovalRequestId], map: "ix_receivable_items__write_off_approval_request_id")
+  @@index([entityId, status], map: "ix_receivable_items__entity_id__status")
+  @@map("receivable_items")
+}
+
+model ReceivableApplication {
+  id                 BigInt   @id(map: "pk_receivable_applications") @default(autoincrement())
+  receivableItemId   BigInt   @map("receivable_item_id")
+  paymentId          BigInt?  @map("payment_id")
+  documentId         BigInt?  @map("document_id")
+  storeCreditEntryId BigInt?  @map("store_credit_entry_id")
+  amount             Decimal  @db.Decimal(14, 2)
+  appliedAt          DateTime @default(now()) @map("applied_at") @db.Timestamptz(6)
+
+  receivableItem   ReceivableItem    @relation(fields: [receivableItemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_applications__receivable_item_id")
+  payment          Payment?          @relation("ReceivableApplicationPayment", fields: [paymentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_applications__payment_id")
+  document         CustomerDocument? @relation("ReceivableApplicationDocument", fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_applications__document_id")
+  storeCreditEntry StoreCreditEntry? @relation(fields: [storeCreditEntryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_receivable_applications__store_credit_entry_id")
+
+  @@index([receivableItemId], map: "ix_receivable_applications__receivable_item_id")
+  @@index([paymentId], map: "ix_receivable_applications__payment_id")
+  @@index([documentId], map: "ix_receivable_applications__document_id")
+  @@index([storeCreditEntryId], map: "ix_receivable_applications__store_credit_entry_id")
+  @@map("receivable_applications")
+}
+
+model DunningNotice {
+  id               BigInt       @id(map: "pk_dunning_notices") @default(autoincrement())
+  receivableItemId BigInt       @map("receivable_item_id")
+  stage            DunningStage
+  domainEventId    String?      @map("domain_event_id") @db.Uuid
+  sentAt           DateTime     @default(now()) @map("sent_at") @db.Timestamptz(6)
+
+  receivableItem ReceivableItem @relation(fields: [receivableItemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dunning_notices__receivable_item_id")
+
+  @@unique([receivableItemId, stage], map: "ux_dunning_notices__receivable_item_id__stage")
+  @@map("dunning_notices")
+}
+
+/// The customer's credit balance (shortage credits, cancellations, claims) — the 2320 sub-ledger.
+model StoreCreditAccount {
+  id             BigInt   @id(map: "pk_store_credit_accounts") @default(autoincrement())
+  publicId       String   @unique(map: "ux_store_credit_accounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId       BigInt   @map("entity_id")
+  customerUserId BigInt   @map("customer_user_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity   Entity             @relation("StoreCreditAccountEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_store_credit_accounts__entity_id")
+  customer User               @relation("StoreCreditAccountCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_store_credit_accounts__customer_user_id")
+  entries  StoreCreditEntry[]
+
+  @@unique([entityId, customerUserId], map: "ux_store_credit_accounts__entity_id__customer_user_id")
+  @@index([customerUserId], map: "ix_store_credit_accounts__customer_user_id")
+  @@map("store_credit_accounts")
+}
+
+/// Append-only (trigger): signed movements of a store-credit account.
+model StoreCreditEntry {
+  id                 BigInt            @id(map: "pk_store_credit_entries") @default(autoincrement())
+  publicId           String            @unique(map: "ux_store_credit_entries__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  accountId          BigInt            @map("account_id")
+  amount             Decimal           @db.Decimal(14, 2)
+  source             StoreCreditSource
+  customerDocumentId BigInt?           @map("customer_document_id")
+  orderId            BigInt?           @map("order_id")
+  refundId           BigInt?           @map("refund_id")
+  note               String?
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt?           @map("created_by")
+
+  account          StoreCreditAccount      @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_store_credit_entries__account_id")
+  customerDocument CustomerDocument?       @relation(fields: [customerDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_store_credit_entries__customer_document_id")
+  order            Order?                  @relation("StoreCreditEntryOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_store_credit_entries__order_id")
+  refund           Refund?                 @relation("StoreCreditEntryRefund", fields: [refundId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_store_credit_entries__refund_id")
+  createdBy        User?                   @relation("StoreCreditEntryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_store_credit_entries__created_by")
+  applications     ReceivableApplication[]
+
+  @@unique([refundId], map: "ux_store_credit_entries__refund_id", where: raw("(refund_id IS NOT NULL)"))
+  @@index([accountId, createdAt], map: "ix_store_credit_entries__account_id__created_at")
+  @@index([customerDocumentId], map: "ix_store_credit_entries__customer_document_id")
+  @@index([orderId], map: "ix_store_credit_entries__order_id")
+  @@index([createdById], map: "ix_store_credit_entries__created_by")
+  @@map("store_credit_entries")
+}
+
+/// Allowance for doubtful accounts updates (P30), per period.
+model BadDebtProvision {
+  id               BigInt   @id(map: "pk_bad_debt_provisions") @default(autoincrement())
+  publicId         String   @unique(map: "ux_bad_debt_provisions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId         BigInt   @map("entity_id")
+  fiscalPeriodId   BigInt   @map("fiscal_period_id")
+  receivableItemId BigInt?  @map("receivable_item_id")
+  method           String
+  targetAmount     Decimal  @map("target_amount") @db.Decimal(14, 2)
+  /// Change of the allowance (signed): target − balance before.
+  amount           Decimal  @db.Decimal(14, 2)
+  basis            Json
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?  @map("created_by")
+
+  entity         Entity          @relation("BadDebtProvisionEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bad_debt_provisions__entity_id")
+  fiscalPeriod   FiscalPeriod    @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bad_debt_provisions__fiscal_period_id")
+  receivableItem ReceivableItem? @relation(fields: [receivableItemId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bad_debt_provisions__receivable_item_id")
+  createdBy      User?           @relation("BadDebtProvisionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_bad_debt_provisions__created_by")
+
+  @@index([entityId, fiscalPeriodId], map: "ix_bad_debt_provisions__entity_id__fiscal_period_id")
+  @@index([fiscalPeriodId], map: "ix_bad_debt_provisions__fiscal_period_id")
+  @@index([receivableItemId], map: "ix_bad_debt_provisions__receivable_item_id")
+  @@index([createdById], map: "ix_bad_debt_provisions__created_by")
+  @@map("bad_debt_provisions")
+}
+
+/// Monthly statement of a B2B company (D-125).
+model CompanyStatement {
+  id           BigInt    @id(map: "pk_company_statements") @default(autoincrement())
+  publicId     String    @unique(map: "ux_company_statements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId     BigInt    @map("entity_id")
+  companyId    BigInt    @map("company_id")
+  periodMonth  DateTime  @map("period_month") @db.Date
+  opening      Decimal   @db.Decimal(14, 2)
+  invoiced     Decimal   @db.Decimal(14, 2)
+  paid         Decimal   @db.Decimal(14, 2)
+  credited     Decimal   @db.Decimal(14, 2)
+  closing      Decimal   @db.Decimal(14, 2)
+  lines        Json
+  fileObjectId BigInt?   @map("file_object_id")
+  generatedAt  DateTime  @default(now()) @map("generated_at") @db.Timestamptz(6)
+  sentAt       DateTime? @map("sent_at") @db.Timestamptz(6)
+
+  entity  Entity      @relation("CompanyStatementEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_statements__entity_id")
+  company Company     @relation("CompanyStatementCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_statements__company_id")
+  file    FileObject? @relation("CompanyStatementFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_statements__file_object_id")
+
+  @@unique([companyId, periodMonth], map: "ux_company_statements__company_id__period_month")
+  @@index([entityId], map: "ix_company_statements__entity_id")
+  @@index([fileObjectId], map: "ix_company_statements__file_object_id")
+  @@map("company_statements")
 }

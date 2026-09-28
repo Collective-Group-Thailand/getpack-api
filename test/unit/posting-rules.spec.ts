@@ -396,7 +396,7 @@ const FIXTURES: Record<string, Fixture> = {
     ],
   },
   P29: {
-    payload: { receiptId: IDS.doc, reference: 'BANK-77', receivedOn: '2026-10-07', receivedIntoAccountCode: '1121', amount: '500.00' },
+    payload: { receiptId: IDS.doc, reference: 'BANK-77', receivedOn: '2026-10-07', receivedVia: 'statement', receivedIntoAccountCode: '1121', amount: '500.00' },
     lines: [
       ['1121', 'dr', '500.00'],
       ['1140', 'cr', '500.00'],

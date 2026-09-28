@@ -571,6 +571,19 @@ model User {
   recurringJournalsCreated   RecurringJournal[]   @relation("RecurringJournalCreatedBy")
   // --- end Finance B5.1
 
+  // --- Finance B5.2 (generated back-relations)
+  customerDocuments         CustomerDocument[]       @relation("CustomerDocumentCustomer")
+  customerDocumentsVoided   CustomerDocument[]       @relation("CustomerDocumentVoidedBy")
+  customerDocumentsCreated  CustomerDocument[]       @relation("CustomerDocumentCreatedBy")
+  creditNoteRequestsMade    CreditNoteRequest[]      @relation("CreditNoteRequestRequestedBy")
+  customerWhtCertificates   CustomerWhtCertificate[] @relation("CustomerWhtCertificateCustomer")
+  customerWhtCertsRecorded  CustomerWhtCertificate[] @relation("CustomerWhtCertificateRecordedBy")
+  receivableItems           ReceivableItem[]         @relation("ReceivableItemCustomer")
+  storeCreditAccounts       StoreCreditAccount[]     @relation("StoreCreditAccountCustomer")
+  storeCreditEntriesCreated StoreCreditEntry[]       @relation("StoreCreditEntryCreatedBy")
+  badDebtProvisionsCreated  BadDebtProvision[]       @relation("BadDebtProvisionCreatedBy")
+  // --- end Finance B5.2
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

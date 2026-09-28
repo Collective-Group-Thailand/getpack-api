@@ -1030,5 +1030,31 @@
       "title": "Account code exists",
       "detail": "Account {code} already exists."
     }
+  },
+  "receivables": {
+    "document_not_voidable": {
+      "title": "Document cannot be voided",
+      "detail": "This document cannot be voided or changed: {reason}."
+    },
+    "credit_exceeds": {
+      "title": "Credit too large",
+      "detail": "At most {amount} can be credited on this order."
+    },
+    "reason_invalid": {
+      "title": "Unknown reason",
+      "detail": "The reason {code} is not an active credit / debit note reason."
+    },
+    "nothing_to_write_off": {
+      "title": "Nothing to write off",
+      "detail": "A receivable in {status} (or already waiting for approval) cannot be written off."
+    },
+    "allowance_rates_unset": {
+      "title": "Allowance rates not set",
+      "detail": "No allowance rates are set: enter the allowance amount."
+    },
+    "certificate_invalid": {
+      "title": "Certificate already settled",
+      "detail": "A certificate in {status} cannot change."
+    }
   }
 }

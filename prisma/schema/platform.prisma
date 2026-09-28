@@ -391,6 +391,16 @@ model Entity {
   journalEntryCounters JournalEntryCounter[] @relation("JournalEntryCounterEntity")
   // --- end Finance B5.1
 
+  // --- Finance B5.2 (generated back-relations)
+  customerDocuments       CustomerDocument[]       @relation("CustomerDocumentEntity")
+  creditNoteRequests      CreditNoteRequest[]      @relation("CreditNoteRequestEntity")
+  customerWhtCertificates CustomerWhtCertificate[] @relation("CustomerWhtCertificateEntity")
+  receivableItems         ReceivableItem[]         @relation("ReceivableItemEntity")
+  storeCreditAccounts     StoreCreditAccount[]     @relation("StoreCreditAccountEntity")
+  badDebtProvisions       BadDebtProvision[]       @relation("BadDebtProvisionEntity")
+  companyStatements       CompanyStatement[]       @relation("CompanyStatementEntity")
+  // --- end Finance B5.2
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -626,6 +636,12 @@ model ApprovalRequest {
   recurringJournals   RecurringJournal[]   @relation("RecurringJournalApprovalRequest")
   // --- end Finance B5.1
 
+  // --- Finance B5.2 (generated back-relations)
+  customerDocuments   CustomerDocument[]  @relation("CustomerDocumentApprovalRequest")
+  creditNoteRequests  CreditNoteRequest[] @relation("CreditNoteRequestApprovalRequest")
+  receivableWriteOffs ReceivableItem[]    @relation("ReceivableItemWriteOffApproval")
+  // --- end Finance B5.2
+
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")
   @@index([status, expiresAt], map: "ix_approval_requests__status__expires_at")
@@ -799,6 +815,13 @@ model FileObject {
   // --- Fulfilment B4.6 (generated back-relations)
   conversationMessages ConversationMessage[] @relation("ConversationMessageFile")
   // --- end Fulfilment B4.6
+
+  // --- Finance B5.2 (generated back-relations)
+  customerDocumentPdfs    CustomerDocument[]       @relation("CustomerDocumentPdf")
+  customerDocumentXmls    CustomerDocument[]       @relation("CustomerDocumentETaxXml")
+  customerWhtCertificates CustomerWhtCertificate[] @relation("CustomerWhtCertificateFile")
+  companyStatements       CompanyStatement[]       @relation("CompanyStatementFile")
+  // --- end Finance B5.2
 
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
