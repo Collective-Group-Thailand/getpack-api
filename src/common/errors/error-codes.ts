@@ -268,6 +268,15 @@ export const ERROR_CODES = {
   'fixed_assets.run_exists': HttpStatus.CONFLICT,
   'fixed_assets.already_disposed': HttpStatus.CONFLICT,
   'fixed_assets.depreciation_pending': HttpStatus.CONFLICT,
+  'close.checklist_not_open': HttpStatus.CONFLICT,
+  'close.checklist_not_in_review': HttpStatus.CONFLICT,
+  'close.checklist_not_closed': HttpStatus.CONFLICT,
+  'close.checklist_incomplete': HttpStatus.CONFLICT,
+  'close.check_failed': HttpStatus.CONFLICT,
+  'close.task_done': HttpStatus.CONFLICT,
+  'close.tasks_open': HttpStatus.CONFLICT,
+  'close.review_by_approval': HttpStatus.UNPROCESSABLE_ENTITY,
+  'close.auditor_sign_off_required': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

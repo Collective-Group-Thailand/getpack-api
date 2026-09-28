@@ -405,6 +405,16 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'finance_manager',
   },
   {
+    key: 'audit.business_hours',
+    valueType: 'json',
+    value: { start: '08:00', end: '18:00', weekdays: [1, 2, 3, 4, 5] },
+    description:
+      'D-033 / accounting-design §8 exception report: manual journals posted outside these hours (Asia/Bangkok, ISO weekdays) are listed for the auditor (proposed)',
+    decisions: ['D-033'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+  {
     key: 'fixed_assets.depreciation_start',
     valueType: 'enum',
     value: 'acquisition_month',

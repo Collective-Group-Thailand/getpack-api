@@ -341,12 +341,6 @@ export class DepreciationLineDto {
   runId!: string;
 }
 
-export class RunDepreciationDto {
-  @ApiProperty({ example: '2026-10', pattern: MONTH.source })
-  @Matches(MONTH)
-  period!: string;
-}
-
 export class DepreciationRunDto {
   @ApiProperty({ format: 'uuid', example: FA_IDS.run })
   id!: string;

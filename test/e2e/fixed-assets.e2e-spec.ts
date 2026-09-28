@@ -30,7 +30,8 @@ describe('fixed assets (e2e, B5.5)', () => {
   let finance: string;
   let manager: string;
   let auditor: string;
-  const month = bangkokDate(new Date()).slice(0, 7);
+  // Months no other suite depreciates (the month simulation runs the current month).
+  const month = addMonths(`${bangkokDate(new Date()).slice(0, 7)}-01`, 7).slice(0, 7);
   const m = (offset: number) => addMonths(`${month}-01`, offset).slice(0, 7);
 
   beforeAll(async () => {
@@ -106,8 +107,10 @@ describe('fixed assets (e2e, B5.5)', () => {
     expect((await asset(laptop.id)).accumulatedDepreciation).toBe('1000.00');
     expect((await asset(small.id)).accumulatedDepreciation).toBe('333.33');
     const fa02 = (await journalsOf(run.id)).flatMap((j) => j.lines);
+    // The run covers every active asset (other suites' too): one journal, expense = the run total; this
+    // category's accumulated depreciation is this suite's three assets (1000.00 + 333.33 + 277.78).
     expect(sum(fa02, '6150')).toBe(run.totalAmount);
-    expect(sum(fa02, '1521')).toBe(D(run.totalAmount).neg().toFixed(2));
+    expect(sum(fa02, '1521')).toBe('-1611.11');
 
     // Two months later without the month in between: caught up in one run.
     await post(finance, '/v1/admin/depreciation-runs', { period: m(2) }).expect(201);

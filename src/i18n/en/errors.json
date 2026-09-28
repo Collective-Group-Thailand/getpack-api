@@ -1154,5 +1154,43 @@
       "title": "Depreciation not up to date",
       "detail": "Post the depreciation up to the month before disposal first (expected {expected}, recorded {accumulated})."
     }
+  },
+  "close": {
+    "checklist_not_open": {
+      "title": "Checklist not open",
+      "detail": "The close checklist is {status}; tasks change only while it is open."
+    },
+    "checklist_not_in_review": {
+      "title": "Checklist not in review",
+      "detail": "The close checklist is {status}; only a submitted checklist is approved or returned."
+    },
+    "checklist_not_closed": {
+      "title": "Month not closed",
+      "detail": "The close checklist is {status}; sign-off follows the close."
+    },
+    "checklist_incomplete": {
+      "title": "Close checklist incomplete",
+      "detail": "{period} cannot be closed or locked: its close checklist is {status} (§7)."
+    },
+    "check_failed": {
+      "title": "Check not passed",
+      "detail": "The check of {key} does not pass: {summary}. Fix it or have a Finance Manager waive it."
+    },
+    "task_done": {
+      "title": "Task already done",
+      "detail": "The task is already done or waived."
+    },
+    "tasks_open": {
+      "title": "Tasks still open",
+      "detail": "Steps not done or waived: {tasks}."
+    },
+    "review_by_approval": {
+      "title": "Review is the approval",
+      "detail": "Step 9 is completed by approving the checklist."
+    },
+    "auditor_sign_off_required": {
+      "title": "Auditor sign-off required",
+      "detail": "The last month of the fiscal year ({period}) is locked after the auditor signs off."
+    }
   }
 }

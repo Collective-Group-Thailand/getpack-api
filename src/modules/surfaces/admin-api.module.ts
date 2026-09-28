@@ -1,16 +1,19 @@
 import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
+import { AUDIT_SUPPORT_ADMIN_CONTROLLERS } from '@modules/audit-support/audit-support.registry';
 import { AdminMeController } from '@modules/auth/controllers/me.controllers';
 import { BANKING_ADMIN_CONTROLLERS } from '@modules/banking/banking.registry';
 import { CARTS_ADMIN_CONTROLLERS } from '@modules/carts/carts.registry';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry';
 import { CLAIMS_ADMIN_CONTROLLERS } from '@modules/claims/claims.registry';
+import { CLOSE_ADMIN_CONTROLLERS } from '@modules/close/close.registry';
 import { COMPANIES_ADMIN_CONTROLLERS } from '@modules/companies/companies.registry';
 import { CONVERSATIONS_ADMIN_CONTROLLERS } from '@modules/conversations/conversations.registry';
 import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_ADMIN_CONTROLLERS } from '@modules/design-services/design-services.registry';
 import { DESIGNS_ADMIN_CONTROLLERS } from '@modules/designs/designs.registry';
 import { DISCOUNT_MEMOS_ADMIN_CONTROLLERS } from '@modules/discount-memos/discount-memos.registry';
+import { FINANCIAL_REPORTS_ADMIN_CONTROLLERS } from '@modules/financial-reports/financial-reports.registry';
 import { FIXED_ASSETS_ADMIN_CONTROLLERS } from '@modules/fixed-assets/fixed-assets.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
@@ -106,6 +109,9 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...BANKING_ADMIN_CONTROLLERS,
     ...TAX_ADMIN_CONTROLLERS,
     ...FIXED_ASSETS_ADMIN_CONTROLLERS,
+    ...FINANCIAL_REPORTS_ADMIN_CONTROLLERS,
+    ...CLOSE_ADMIN_CONTROLLERS,
+    ...AUDIT_SUPPORT_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

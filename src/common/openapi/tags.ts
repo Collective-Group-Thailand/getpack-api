@@ -229,4 +229,8 @@ export const API_TAGS: Record<string, string> = {
   'admin.tax': 'Sales / purchase tax reports, ภ.พ.30 and ภ.ง.ด.3 / 53 working papers with attachments, WHT registers, GL reconciliation and the tax calendar (§6, §7).',
   // --- B5.5 fixed assets
   'admin.fixedAssets': 'Fixed-asset register (D-150): categories, registration from bills or manual (FA01), monthly straight-line depreciation (FA02), disposal / write-off (FA03), roll-forward with GL reconciliation.',
+  // --- B5.6 close, reports & audit
+  'admin.financialReports': 'Trial balance, GL detail with drill-down, balance sheet, P&L by dimension and the indirect cash-flow statement from the posted ledger (D-031).',
+  'admin.close': 'Period close (§7): the nine steps with blocking checks, owners and evidence; submit → soft close, approval by another Finance Manager → close, lock (auditor sign-off at year end).',
+  'admin.auditSupport': 'Auditor support (§8): exception reports, reproducible samples and the prepared-by-client pack per month.',
 };

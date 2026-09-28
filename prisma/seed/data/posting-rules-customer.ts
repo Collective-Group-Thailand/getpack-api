@@ -104,9 +104,10 @@ export const CUSTOMER_POSTING_RULES: readonly PostingRuleSeed[] = [
     key: 'P03',
     eventType: 'customer_document.issued',
     name: 'Customer withholding tax',
-    description: 'The customer withholds tax: WHT receivable instead of cash on TR / RC receipts (§5 P03)',
+    description:
+      'The customer withholds tax: WHT receivable instead of cash on the receipts (instalment TR, RC); a final TR only restates what earlier receipts withheld (§5 P03)',
     decisions: ['D-033', 'D-174'],
-    conditions: all(any(eq('docType', 'tr'), eq('docType', 'rc')), gt0('whtAmount')),
+    conditions: all(any(all(eq('docType', 'tr'), eq('docKind', 'instalment')), eq('docType', 'rc')), gt0('whtAmount')),
     template: {
       description: 'ภาษีถูกหัก ณ ที่จ่าย {docNumber}',
       documentDate: 'documentDate',

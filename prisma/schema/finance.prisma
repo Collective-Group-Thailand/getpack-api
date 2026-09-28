@@ -352,6 +352,12 @@ model FiscalPeriod {
   depreciationLines DepreciationLine[]
   // --- end Finance B5.5
 
+  // --- Finance B5.6
+  closeChecklist CloseChecklist?
+  auditSamples   AuditSample[]
+  pbcExports     PbcExport[]
+  // --- end Finance B5.6
+
   @@unique([entityId, startDate], map: "ux_fiscal_periods__entity_id__start_date")
   @@unique([fiscalYearId, periodNo], map: "ux_fiscal_periods__fiscal_year_id__period_no")
   @@index([statusChangedById], map: "ix_fiscal_periods__status_changed_by")
@@ -2366,4 +2372,145 @@ model DepreciationLine {
   @@index([runId], map: "ix_depreciation_lines__run_id")
   @@index([fiscalPeriodId], map: "ix_depreciation_lines__fiscal_period_id")
   @@map("depreciation_lines")
+}
+
+// =====================================================================================================
+// Period close & audit support (B5.6, accounting-design §7, §8)
+// =====================================================================================================
+
+enum CloseStatus {
+  open
+  in_review
+  closed
+  locked
+
+  @@map("close_status")
+}
+
+enum CloseTaskStatus {
+  pending
+  blocked
+  done
+  waived
+
+  @@map("close_task_status")
+}
+
+enum SampleMethod {
+  random
+  stratified
+
+  @@map("sample_method")
+}
+
+/// The close checklist of a period (§7): tasks 1–8, then review (9) by someone other than the submitter.
+model CloseChecklist {
+  id                   BigInt      @id(map: "pk_close_checklists") @default(autoincrement())
+  publicId             String      @unique(map: "ux_close_checklists__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId             BigInt      @map("entity_id")
+  fiscalPeriodId       BigInt      @unique(map: "ux_close_checklists__fiscal_period_id") @map("fiscal_period_id")
+  status               CloseStatus @default(open)
+  createdAt            DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?     @map("created_by")
+  submittedAt          DateTime?   @map("submitted_at") @db.Timestamptz(6)
+  submittedById        BigInt?     @map("submitted_by")
+  closedAt             DateTime?   @map("closed_at") @db.Timestamptz(6)
+  closedById           BigInt?     @map("closed_by")
+  auditorSignedOffAt   DateTime?   @map("auditor_signed_off_at") @db.Timestamptz(6)
+  auditorSignedOffById BigInt?     @map("auditor_signed_off_by")
+  lockedAt             DateTime?   @map("locked_at") @db.Timestamptz(6)
+  lockedById           BigInt?     @map("locked_by")
+  rowVersion           Int         @default(1) @map("row_version")
+
+  entity           Entity       @relation("CloseChecklistEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__entity_id")
+  fiscalPeriod     FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__fiscal_period_id")
+  createdBy        User?        @relation("CloseChecklistCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__created_by")
+  submittedBy      User?        @relation("CloseChecklistSubmittedBy", fields: [submittedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__submitted_by")
+  closedBy         User?        @relation("CloseChecklistClosedBy", fields: [closedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__closed_by")
+  auditorSignedOff User?        @relation("CloseChecklistAuditorSignedOffBy", fields: [auditorSignedOffById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__auditor_signed_off_by")
+  lockedBy         User?        @relation("CloseChecklistLockedBy", fields: [lockedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_checklists__locked_by")
+  tasks            CloseTask[]
+
+  @@index([entityId, status], map: "ix_close_checklists__entity_id__status")
+  @@index([createdById], map: "ix_close_checklists__created_by")
+  @@index([submittedById], map: "ix_close_checklists__submitted_by")
+  @@index([closedById], map: "ix_close_checklists__closed_by")
+  @@index([auditorSignedOffById], map: "ix_close_checklists__auditor_signed_off_by")
+  @@index([lockedById], map: "ix_close_checklists__locked_by")
+  @@map("close_checklists")
+}
+
+/// A close step with its owner, blocking check result and evidence (attachments `close_task`).
+model CloseTask {
+  id            BigInt          @id(map: "pk_close_tasks") @default(autoincrement())
+  publicId      String          @unique(map: "ux_close_tasks__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  checklistId   BigInt          @map("checklist_id")
+  stepNo        Int             @map("step_no") @db.SmallInt
+  key           String
+  ownerUserId   BigInt?         @map("owner_user_id")
+  status        CloseTaskStatus @default(pending)
+  checkResult   Json?           @map("check_result")
+  checkedAt     DateTime?       @map("checked_at") @db.Timestamptz(6)
+  note          String?
+  waivedReason  String?         @map("waived_reason")
+  completedById BigInt?         @map("completed_by")
+  completedAt   DateTime?       @map("completed_at") @db.Timestamptz(6)
+  rowVersion    Int             @default(1) @map("row_version")
+
+  checklist   CloseChecklist @relation(fields: [checklistId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_tasks__checklist_id")
+  owner       User?          @relation("CloseTaskOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_tasks__owner_user_id")
+  completedBy User?          @relation("CloseTaskCompletedBy", fields: [completedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_close_tasks__completed_by")
+
+  @@unique([checklistId, key], map: "ux_close_tasks__checklist_id__key")
+  @@index([ownerUserId], map: "ix_close_tasks__owner_user_id")
+  @@index([completedById], map: "ix_close_tasks__completed_by")
+  @@map("close_tasks")
+}
+
+/// An auditor's sample of a period's population (§8 sample selection helper), reproducible from its seed.
+model AuditSample {
+  id             BigInt       @id(map: "pk_audit_samples") @default(autoincrement())
+  publicId       String       @unique(map: "ux_audit_samples__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId       BigInt       @map("entity_id")
+  fiscalPeriodId BigInt       @map("fiscal_period_id")
+  auditorUserId  BigInt       @map("auditor_user_id")
+  population     String
+  method         SampleMethod
+  size           Int
+  seed           BigInt
+  populationSize Int          @map("population_size")
+  selected       Json
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity       Entity       @relation("AuditSampleEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_audit_samples__entity_id")
+  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_audit_samples__fiscal_period_id")
+  auditor      User         @relation("AuditSampleAuditor", fields: [auditorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_audit_samples__auditor_user_id")
+
+  @@index([fiscalPeriodId], map: "ix_audit_samples__fiscal_period_id")
+  @@index([auditorUserId], map: "ix_audit_samples__auditor_user_id")
+  @@index([entityId], map: "ix_audit_samples__entity_id")
+  @@map("audit_samples")
+}
+
+/// A prepared-by-client export pack of a period (§8): one workbook, its hash kept.
+model PbcExport {
+  id             BigInt   @id(map: "pk_pbc_exports") @default(autoincrement())
+  publicId       String   @unique(map: "ux_pbc_exports__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId       BigInt   @map("entity_id")
+  fiscalPeriodId BigInt   @map("fiscal_period_id")
+  fileObjectId   BigInt   @map("file_object_id")
+  sha256         Bytes
+  generatedById  BigInt   @map("generated_by")
+  generatedAt    DateTime @default(now()) @map("generated_at") @db.Timestamptz(6)
+
+  entity       Entity       @relation("PbcExportEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pbc_exports__entity_id")
+  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pbc_exports__fiscal_period_id")
+  file         FileObject   @relation("PbcExportFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pbc_exports__file_object_id")
+  generatedBy  User         @relation("PbcExportGeneratedBy", fields: [generatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pbc_exports__generated_by")
+
+  @@index([fiscalPeriodId], map: "ix_pbc_exports__fiscal_period_id")
+  @@index([fileObjectId], map: "ix_pbc_exports__file_object_id")
+  @@index([generatedById], map: "ix_pbc_exports__generated_by")
+  @@index([entityId], map: "ix_pbc_exports__entity_id")
+  @@map("pbc_exports")
 }

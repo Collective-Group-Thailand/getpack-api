@@ -608,6 +608,18 @@ model User {
   depreciationRuns       DepreciationRun[] @relation("DepreciationRunCreatedBy")
   // --- end Finance B5.5
 
+  // --- Finance B5.6
+  closeChecklistsCreated   CloseChecklist[] @relation("CloseChecklistCreatedBy")
+  closeChecklistsSubmitted CloseChecklist[] @relation("CloseChecklistSubmittedBy")
+  closeChecklistsClosed    CloseChecklist[] @relation("CloseChecklistClosedBy")
+  closeChecklistsSignedOff CloseChecklist[] @relation("CloseChecklistAuditorSignedOffBy")
+  closeChecklistsLocked    CloseChecklist[] @relation("CloseChecklistLockedBy")
+  closeTasksOwned          CloseTask[]      @relation("CloseTaskOwner")
+  closeTasksCompleted      CloseTask[]      @relation("CloseTaskCompletedBy")
+  auditSamples             AuditSample[]    @relation("AuditSampleAuditor")
+  pbcExports               PbcExport[]      @relation("PbcExportGeneratedBy")
+  // --- end Finance B5.6
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

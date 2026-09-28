@@ -905,6 +905,50 @@ export const PERMISSIONS = [
     description: 'Dispose of or write off fixed assets',
     decisionRefs: ['D-150'],
   },
+
+  // --- Finance: period close & audit support (B5.6, accounting-design §7, §8)
+  {
+    key: 'close.read',
+    audience: 'staff',
+    description: 'Read close checklists, their checks and evidence',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'close.manage',
+    audience: 'staff',
+    description: 'Open close checklists, run checks, complete tasks, attach evidence and submit for review',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'close.approve',
+    audience: 'staff',
+    description: 'Waive close tasks, approve and close a month (not the submitter), return it, lock it',
+    decisionRefs: ['D-033', 'D-169'],
+  },
+  {
+    key: 'audit_support.read',
+    audience: 'staff',
+    description: 'Read the §8 exception reports and audit samples',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'audit_support.sample',
+    audience: 'staff',
+    description: 'Draw audit samples',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'audit_support.export',
+    audience: 'staff',
+    description: 'Generate and download the prepared-by-client pack of a month',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'close.audit_sign_off',
+    audience: 'staff',
+    description: 'Sign off a closed month as the auditor (required to lock the fiscal year end)',
+    decisionRefs: ['D-033'],
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];

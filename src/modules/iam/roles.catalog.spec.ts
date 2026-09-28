@@ -77,8 +77,9 @@ describe('IAM catalogues (D-140, D-141)', () => {
   });
 
   it('keeps the Auditor read-only', () => {
+    // The only writes are the auditor's own working records (B5.6, §8): the close sign-off and samples.
     const writes = byKey.get('auditor')!.permissions.filter((p) => !/\.(read|export)$/.test(p));
-    expect(writes).toEqual([]);
+    expect(writes.sort()).toEqual(['audit_support.sample', 'close.audit_sign_off']);
   });
 
   it('uses unique resource.action keys', () => {

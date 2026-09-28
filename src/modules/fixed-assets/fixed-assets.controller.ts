@@ -8,6 +8,7 @@ import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiConcurrency, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { type Prisma } from '@generated/prisma/client';
+import { MonthDto } from '@modules/financial-reports/financial-reports.dto';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, Res } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
@@ -29,7 +30,6 @@ import {
   RollForwardDto,
   RollForwardQuery,
   RUN_EXAMPLE,
-  RunDepreciationDto,
   UpdateAssetCategoryDto,
 } from './fixed-assets.dto';
 import { FixedAssetsService } from './fixed-assets.service';
@@ -191,10 +191,10 @@ export class AdminFixedAssetsController {
     description: 'Straight-line depreciation of every active asset for an open month, missed months caught up, posted as one journal (FA02); once per month (the worker runs last month on the 1st). Requires `Idempotency-Key`.',
     implements: DOCS,
   })
-  @ApiBody({ type: RunDepreciationDto, examples: { default: { value: { period: '2026-10' } } } })
+  @ApiBody({ type: MonthDto, examples: { default: { value: { period: '2026-10' } } } })
   @ApiSuccess(201, { description: 'Run', type: DepreciationRunDto, example: RUN_EXAMPLE })
   @ApiStandardErrors(...WRITE, 'fixed_assets.run_exists', 'ledger.period_closed')
-  async run(@CurrentActor() actor: Actor, @Body() body: RunDepreciationDto): Promise<DepreciationRunDto> {
+  async run(@CurrentActor() actor: Actor, @Body() body: MonthDto): Promise<DepreciationRunDto> {
     return runDto(await this.assets.run(staff(actor), body.period));
   }
 

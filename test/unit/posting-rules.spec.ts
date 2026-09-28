@@ -496,6 +496,8 @@ describe('default posting rules (B5.1, accounting-design §5)', () => {
     expect(applying(FIXTURES['P01']!.payload)).toEqual(['P01', 'P03']);
     expect(applying({ ...FIXTURES['P02']!.payload, whtAmount: '0.00' })).toEqual(['P02']);
     expect(applying(FIXTURES['P06']!.payload)).toEqual(['P06']);
+    // A final TR of a withholding customer restates earlier withholding; it is not a receipt (no P03).
+    expect(applying({ ...FIXTURES['P06']!.payload, whtAmount: '30.00', receiptVia: null })).toEqual(['P06']);
     expect(applying(FIXTURES['P09']!.payload)).toEqual(['P06', 'P09']);
     expect(applying(FIXTURES['P07']!.payload)).toEqual(['P07']);
     expect(applying(FIXTURES['P08']!.payload)).toEqual(['P08']);

@@ -12,18 +12,21 @@ import { DatabaseModule } from '@database/database.module';
 import { RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
+import { AuditSupportModule } from '@modules/audit-support/audit-support.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { BankingModule } from '@modules/banking/banking.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
 import { ClaimsModule } from '@modules/claims/claims.module';
+import { CloseModule } from '@modules/close/close.module';
 import { CompaniesModule } from '@modules/companies/companies.module';
 import { ConversationsModule } from '@modules/conversations/conversations.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { DesignServicesModule } from '@modules/design-services/design-services.module';
 import { DesignsModule } from '@modules/designs/designs.module';
 import { DiscountMemosModule } from '@modules/discount-memos/discount-memos.module';
+import { FinancialReportsModule } from '@modules/financial-reports/financial-reports.module';
 import { FixedAssetsModule } from '@modules/fixed-assets/fixed-assets.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { LedgerModule } from '@modules/ledger/ledger.module';
@@ -127,6 +130,9 @@ import { LoggerModule } from 'nestjs-pino';
     BankingModule,
     TaxModule,
     FixedAssetsModule,
+    FinancialReportsModule,
+    CloseModule,
+    AuditSupportModule,
     HealthModule,
     SurfacesModule,
   ],

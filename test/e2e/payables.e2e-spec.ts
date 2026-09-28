@@ -209,9 +209,12 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
     const created = await post(finance, '/v1/admin/payout-runs', { companyBankAccountId: companyAccountId, payOn: today(), vendorIds: [factoryVendorId] }).expect(201);
     advanceRun = created.body as Run;
     const item = advanceRun.items.find((i) => i.kind === 'advance')!;
-    const net = D(advance.openNetAmount);
-    expect(item).toMatchObject({ status: 'included', vatClaimable: false, retentionAmount: '0.00', whtAmount: r2(net.mul(3).div(100)).toFixed(2) });
-    expect(item.cashAmount).toBe(net.add(advance.openVatAmount).sub(item.whtAmount).toFixed(2));
+    // The item pays every eligible advance of the factory (other suites' orders too): WHT is per payable.
+    const allocated = await ctx.prisma.payoutItemAllocation.findMany({ where: { payoutItem: { publicId: item.id } }, include: { payableItem: true } });
+    expect(allocated.map((x) => x.payableItem.publicId)).toContain(advance.id);
+    const wht = allocated.reduce((acc, x) => acc.add(r2(D(x.payableItem.whtBaseHire).mul(3).div(100))), D(0));
+    expect(item).toMatchObject({ status: 'included', vatClaimable: false, retentionAmount: '0.00', whtAmount: wht.toFixed(2) });
+    expect(item.cashAmount).toBe(D(item.apNetAmount).add(item.vatAmount).sub(item.whtAmount).toFixed(2));
 
     // Maker-checker: the proposer cannot approve; a C-Level approves.
     const proposed = (await post(finance, `/v1/admin/payout-runs/${advanceRun.id}/actions/propose`).expect(200)).body as Run;
@@ -241,8 +244,8 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
     const journals = await journalsOf(item.id);
     expect(journals.length).toBeGreaterThan(0);
     const lines = journals.flatMap((j) => j.lines);
-    expect(sum(lines, '1250')).toBe(advance.openNetAmount);
-    expect(sum(lines, '1242')).toBe(advance.openVatAmount);
+    expect(sum(lines, '1250')).toBe(item.apNetAmount);
+    expect(sum(lines, '1242')).toBe(item.vatAmount);
     expect(sum(lines, '2231')).toBe(D(item.whtAmount).neg().toFixed(2));
     expect(sum(lines, bankGlCode)).toBe(D(item.cashAmount).neg().toFixed(2));
 
@@ -279,7 +282,7 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
     const destination = (detail.body.destinations as { id: string }[])[0]!;
     const shipment = (await post(owner, '/v1/partner/shipments', { items: [{ jobId: job.publicId, destinationId: destination.id, quantity: 1000 }], cartonsCount: 1, weightG: 6000 }).expect(201)).body.id as string;
     await post(owner, `/v1/partner/shipments/${shipment}/actions/ready`).expect(200);
-    const inspection = await ctx.prisma.inspection.findFirst({ where: { jobId: job.id } });
+    const inspection = await ctx.prisma.inspection.findFirst({ where: { jobId: job.id, status: { in: ['planned', 'in_progress'] } } });
     if (inspection)
       await as(ctx, await staffToken(ctx, 'partner_manager')).post(`/v1/admin/inspections/${inspection.publicId}/actions/record`, { foundCritical: 0, foundMajor: 0, foundMinor: 0 }).expect(200);
     await post(owner, `/v1/partner/shipments/${shipment}/proof-of-delivery`, {

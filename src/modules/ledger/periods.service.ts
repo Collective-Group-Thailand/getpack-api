@@ -3,7 +3,8 @@ import { DomainException } from '@common/errors/domain.exception';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type FiscalPeriod, type PeriodStatus } from '@generated/prisma/client';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
@@ -16,6 +17,15 @@ const TRANSITIONS: Record<PeriodStatus, PeriodStatus[]> = {
   closed: ['locked'],
   locked: [],
 };
+
+/**
+ * Closing or locking a period is gated by the close checklist (§7, B5.6), provided by the close module; the
+ * ledger itself does not depend on it (unit / integration set-ups run without a gate).
+ */
+export const PERIOD_CLOSE_GATE = Symbol('PERIOD_CLOSE_GATE');
+export interface PeriodCloseGate {
+  assertMayTransition(tx: Tx, period: FiscalPeriod, to: PeriodStatus, actor: Actor): Promise<void>;
+}
 
 export interface PostingPeriod {
   period: FiscalPeriod;
@@ -33,7 +43,22 @@ export class PeriodsService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
+    @Optional() private readonly moduleRef?: ModuleRef,
   ) {}
+
+  private gateRef: PeriodCloseGate | null | undefined;
+
+  /** Resolved lazily: the close module depends on this service (no constructor cycle). */
+  private get gate(): PeriodCloseGate | null {
+    if (this.gateRef === undefined) {
+      try {
+        this.gateRef = this.moduleRef?.get<PeriodCloseGate>(PERIOD_CLOSE_GATE, { strict: false }) ?? null;
+      } catch {
+        this.gateRef = null;
+      }
+    }
+    return this.gateRef;
+  }
 
   /** The fiscal year containing `day` exists afterwards (with its 12 periods). */
   async ensureYear(tx: Tx, entityId: bigint, day: string): Promise<void> {
@@ -139,6 +164,7 @@ export class PeriodsService {
     const from = row!.status;
     if (!TRANSITIONS[from].includes(to))
       throw new DomainException('ledger.period_transition', { params: { from, to } });
+    if (this.gate && (to === 'closed' || to === 'locked')) await this.gate.assertMayTransition(tx, period, to, actor);
     if (to === 'open') {
       // A month cannot reopen once a later month is closed (periods close in sequence).
       const laterClosed = await tx.fiscalPeriod.count({

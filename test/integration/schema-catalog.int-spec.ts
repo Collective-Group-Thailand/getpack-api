@@ -706,6 +706,17 @@ const CHECKS = [
   'ck_fixed_assets__fully',
   'ck_depreciation_runs__amounts',
   'ck_depreciation_lines__amounts',
+  // --- B5.6 close & audit
+  'ck_close_checklists__submitted',
+  'ck_close_checklists__closed',
+  'ck_close_checklists__locked',
+  'ck_close_tasks__step',
+  'ck_close_tasks__key',
+  'ck_close_tasks__completed',
+  'ck_close_tasks__waived',
+  'ck_audit_samples__size',
+  'ck_audit_samples__population',
+  'ck_pbc_exports__sha256',
 ];
 
 const TRIGGERS = [
@@ -895,6 +906,11 @@ const TRIGGERS = [
   'tg_fixed_assets__no_delete',
   'tg_depreciation_runs__append_only',
   'tg_depreciation_lines__append_only',
+  // --- B5.6 close & audit
+  'tg_close_checklists__no_delete',
+  'tg_close_tasks__no_delete',
+  'tg_audit_samples__append_only',
+  'tg_pbc_exports__append_only',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */

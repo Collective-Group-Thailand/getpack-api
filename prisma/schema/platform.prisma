@@ -427,6 +427,12 @@ model Entity {
   depreciationRuns DepreciationRun[] @relation("DepreciationRunEntity")
   // --- end Finance B5.5
 
+  // --- Finance B5.6
+  closeChecklists CloseChecklist[] @relation("CloseChecklistEntity")
+  auditSamples    AuditSample[]    @relation("AuditSampleEntity")
+  pbcExports      PbcExport[]      @relation("PbcExportEntity")
+  // --- end Finance B5.6
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -852,6 +858,7 @@ model FileObject {
   customerDocumentXmls    CustomerDocument[]       @relation("CustomerDocumentETaxXml")
   customerWhtCertificates CustomerWhtCertificate[] @relation("CustomerWhtCertificateFile")
   companyStatements       CompanyStatement[]       @relation("CompanyStatementFile")
+  pbcExports              PbcExport[]              @relation("PbcExportFile")
   // --- end Finance B5.2
 
   // --- Finance B5.3 (generated back-relations)

@@ -139,6 +139,13 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `fixed_assets.read` — Read asset categories, the fixed-asset register, depreciation and roll-forward (D-150) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
 | `fixed_assets.manage` — Manage asset categories, register assets and run the monthly depreciation (D-150) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 | `fixed_assets.dispose` — Dispose of or write off fixed assets (D-150) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
+| `close.read` — Read close checklists, their checks and evidence (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
+| `close.manage` — Open close checklists, run checks, complete tasks, attach evidence and submit for review (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `close.approve` — Waive close tasks, approve and close a month (not the submitter), return it, lock it (D-033, D-169) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
+| `audit_support.read` — Read the §8 exception reports and audit samples (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
+| `audit_support.sample` — Draw audit samples (D-033) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |
+| `audit_support.export` — Generate and download the prepared-by-client pack of a month (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  | ● |
+| `close.audit_sign_off` — Sign off a closed month as the auditor (required to lock the fiscal year end) (D-033) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|
