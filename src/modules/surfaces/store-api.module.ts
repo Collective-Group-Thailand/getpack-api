@@ -1,3 +1,4 @@
+import { ANALYTICS_STORE_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_STORE_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { StoreMeController } from '@modules/auth/controllers/me.controllers';
 import { CARTS_STORE_CONTROLLERS } from '@modules/carts/carts.registry';
@@ -62,6 +63,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...ARTWORK_STORE_CONTROLLERS,
     ...DESIGN_SERVICES_STORE_CONTROLLERS,
     ...DESIGNS_STORE_CONTROLLERS,
+    ...ANALYTICS_STORE_CONTROLLERS,
   ],
 })
 export class StoreApiModule {}

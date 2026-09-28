@@ -146,6 +146,10 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `audit_support.sample` — Draw audit samples (D-033) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |
 | `audit_support.export` — Generate and download the prepared-by-client pack of a month (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  | ● |
 | `close.audit_sign_off` — Sign off a closed month as the auditor (required to lock the fiscal year end) (D-033) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |
+| `analytics.read` — Read the demand & growth dashboards: traffic, funnel, demand, sales, sensitivity, unmet demand, campaigns (D-102) | ● | ● | ● | ● | ● |  |  |  |  |  |  | ● | ● |  |
+| `analytics.read_factories` — Read factory utilisation and on-time performance by named factory (staff-only) (D-102, D-044) | ● | ● | ● | ● |  |  |  |  |  |  |  |  | ● |  |
+| `analytics.manage` — Queue analytics rollup backfills and read their runs (D-102) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
+| `analytics.prospectus` — Generate and download the aggregated, anonymised partner prospectus (D-102, D-044, D-160) | ● | ● | ● |  |  |  |  |  |  |  |  |  | ● |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

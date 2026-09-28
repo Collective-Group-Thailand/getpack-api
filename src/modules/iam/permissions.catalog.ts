@@ -949,6 +949,31 @@ export const PERMISSIONS = [
     description: 'Sign off a closed month as the auditor (required to lock the fiscal year end)',
     decisionRefs: ['D-033'],
   },
+  // --- B6.1 analytics (D-102, D-044, D-160)
+  {
+    key: 'analytics.read',
+    audience: 'staff',
+    description: 'Read the demand & growth dashboards: traffic, funnel, demand, sales, sensitivity, unmet demand, campaigns',
+    decisionRefs: ['D-102'],
+  },
+  {
+    key: 'analytics.read_factories',
+    audience: 'staff',
+    description: 'Read factory utilisation and on-time performance by named factory (staff-only)',
+    decisionRefs: ['D-102', 'D-044'],
+  },
+  {
+    key: 'analytics.manage',
+    audience: 'staff',
+    description: 'Queue analytics rollup backfills and read their runs',
+    decisionRefs: ['D-102'],
+  },
+  {
+    key: 'analytics.prospectus',
+    audience: 'staff',
+    description: 'Generate and download the aggregated, anonymised partner prospectus',
+    decisionRefs: ['D-102', 'D-044', 'D-160'],
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];

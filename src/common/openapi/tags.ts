@@ -233,4 +233,9 @@ export const API_TAGS: Record<string, string> = {
   'admin.financialReports': 'Trial balance, GL detail with drill-down, balance sheet, P&L by dimension and the indirect cash-flow statement from the posted ledger (D-031).',
   'admin.close': 'Period close (§7): the nine steps with blocking checks, owners and evidence; submit → soft close, approval by another Finance Manager → close, lock (auditor sign-off at year end).',
   'admin.auditSupport': 'Auditor support (§8): exception reports, reproducible samples and the prepared-by-client pack per month.',
+  // --- B6.1 analytics
+  'store.analytics':
+    'Analytics events posted by the BFF with consent mode, and the visitor’s analytics-cookie consent (D-102, PDPA): no identifier is kept without consent.',
+  'admin.analytics':
+    'Demand & growth analytics (D-102): traffic, funnel, demand by product type × spec × quantity × province, sales (GMV, AOV, repeat rate), price / lead-time sensitivity, unmet demand, factory performance, campaigns, rollups and the anonymised partner prospectus (D-044, D-160).',
 };

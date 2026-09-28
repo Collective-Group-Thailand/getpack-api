@@ -1,3 +1,4 @@
+import { ANALYTICS_ADMIN_CONTROLLERS } from '@modules/analytics/analytics.registry';
 import { ARTWORK_ADMIN_CONTROLLERS } from '@modules/artwork/artwork.registry';
 import { AUDIT_SUPPORT_ADMIN_CONTROLLERS } from '@modules/audit-support/audit-support.registry';
 import { AdminMeController } from '@modules/auth/controllers/me.controllers';
@@ -112,6 +113,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...FINANCIAL_REPORTS_ADMIN_CONTROLLERS,
     ...CLOSE_ADMIN_CONTROLLERS,
     ...AUDIT_SUPPORT_ADMIN_CONTROLLERS,
+    ...ANALYTICS_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

@@ -4,6 +4,7 @@ import { AppConfigModule } from '@config/app-config.module';
 import { DatabaseModule } from '@database/database.module';
 import { BULLMQ_REDIS, RedisModule } from '@database/redis.module';
 import { IntegrationsModule } from '@integrations/integrations.module';
+import { AnalyticsModule } from '@modules/analytics/analytics.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { AuditSupportModule } from '@modules/audit-support/audit-support.module';
 import { BankingModule } from '@modules/banking/banking.module';
@@ -113,6 +114,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     FinancialReportsModule,
     CloseModule,
     AuditSupportModule,
+    AnalyticsModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

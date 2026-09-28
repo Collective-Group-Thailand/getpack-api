@@ -10,7 +10,7 @@ export class HousekeepingJobs {
 
   /**
    * Keeps three months of partitions ahead for the partitioned logs: `audit_logs`, `activity_logs`,
-   * `calculate_logs`, `search_logs` (schema-design §1.7).
+   * `calculate_logs`, `search_logs`, `analytics.raw_events` (schema-design §1.7).
    */
   @ScheduledJob({ name: 'partitions.ensure', cron: '15 3 * * *' })
   async ensurePartitions(): Promise<void> {
@@ -22,6 +22,8 @@ export class HousekeepingJobs {
       .$executeRaw`SELECT ensure_monthly_partitions('calculate_logs', date_trunc('month', now())::date, 3)`;
     await this.prisma
       .$executeRaw`SELECT ensure_monthly_partitions('search_logs', date_trunc('month', now())::date, 3)`;
+    await this.prisma
+      .$executeRaw`SELECT ensure_monthly_partitions('analytics.raw_events', date_trunc('month', now())::date, 3)`;
   }
 
   /** Idempotency keys expire after 24 h (contract §3). */
