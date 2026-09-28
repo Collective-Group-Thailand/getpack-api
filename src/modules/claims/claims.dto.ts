@@ -1,0 +1,519 @@
+import { PageQuery } from '@common/pagination/pagination.dto';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+
+/** Claims and reorder (D-080, D-082, D-083, D-153; B4.5). */
+
+export const CLAIM_TYPES = [
+  'damaged',
+  'wrong_spec',
+  'print_defect',
+  'quantity_short',
+  'late',
+  'other',
+] as const;
+export const CLAIM_STATUSES = [
+  'submitted',
+  'under_review',
+  'need_info',
+  'factory_review',
+  'approved',
+  'rejected',
+  'resolved',
+  'closed',
+] as const;
+export const RESOLUTION_KINDS = ['reprint', 'partial_refund', 'full_refund', 'credit'] as const;
+export const LIABILITIES = ['factory', 'customer', 'carrier', 'packio', 'undetermined'] as const;
+export const CLAIM_ACTIONS = [
+  'reproduction_job',
+  'refund',
+  'credit_note',
+  'store_credit',
+  'factory_deduction',
+  'carrier_recovery',
+] as const;
+const MONEY = /^\d{1,12}(\.\d{1,2})?$/;
+
+export const CLAIM_IDS = {
+  claim: '0192f3a0-7c1e-7d2a-9b1f-0000000f3001',
+  order: '0192f3a0-7c1e-7d2a-9b1f-0000000f1002',
+  shipment: '0192f3a0-7c1e-7d2a-9b1f-0000000f2001',
+  job: '0192f3a0-7c1e-7d2a-9b1f-0000000f1001',
+  factory: '0192f3a0-7c1e-7d2a-9b1f-0000000f1003',
+  photo: '0192f3a0-7c1e-7d2a-9b1f-0000000f3002',
+  carton: '0192f3a0-7c1e-7d2a-9b1f-0000000f3003',
+  payment: '0192f3a0-7c1e-7d2a-9b1f-0000000f3004',
+};
+
+// --- requests ------------------------------------------------------------------------------------------
+
+export class SubmitClaimDto {
+  @ApiProperty({ enum: CLAIM_TYPES, enumName: 'ClaimType', example: 'damaged' })
+  @IsIn(CLAIM_TYPES)
+  type!: (typeof CLAIM_TYPES)[number];
+
+  @ApiProperty({ example: 'กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย', minLength: 5, maxLength: 4000 })
+  @IsString()
+  @MinLength(5)
+  @MaxLength(4000)
+  description!: string;
+
+  @ApiProperty({ enum: RESOLUTION_KINDS, enumName: 'ClaimResolutionKind', example: 'reprint' })
+  @IsIn(RESOLUTION_KINDS)
+  requestedResolution!: (typeof RESOLUTION_KINDS)[number];
+
+  @ApiPropertyOptional({ format: 'uuid', example: CLAIM_IDS.shipment, description: 'The delivery concerned' })
+  @IsOptional()
+  @IsUUID()
+  shipmentId?: string;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, example: 120 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  claimedQuantity?: number;
+
+  @ApiPropertyOptional({ example: '1500.00', description: 'THB, when a refund or credit is asked for' })
+  @IsOptional()
+  @Matches(MONEY)
+  claimedAmount?: string;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    minItems: 1,
+    maxItems: 10,
+    example: [CLAIM_IDS.photo],
+    description: 'Photos of the product (D-082)',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  productPhotoFileIds!: string[];
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    minItems: 1,
+    maxItems: 10,
+    example: [CLAIM_IDS.carton],
+    description: 'Photos of the shipping cartons (D-082)',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  cartonPhotoFileIds!: string[];
+}
+
+/** Staff open claims for the customer: same fields, photos optional. */
+export class StaffClaimDto {
+  @ApiProperty({ enum: CLAIM_TYPES, enumName: 'ClaimType', example: 'damaged' })
+  @IsIn(CLAIM_TYPES)
+  type!: (typeof CLAIM_TYPES)[number];
+
+  @ApiProperty({ example: 'กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย', minLength: 5, maxLength: 4000 })
+  @IsString()
+  @MinLength(5)
+  @MaxLength(4000)
+  description!: string;
+
+  @ApiProperty({ enum: RESOLUTION_KINDS, enumName: 'ClaimResolutionKind', example: 'reprint' })
+  @IsIn(RESOLUTION_KINDS)
+  requestedResolution!: (typeof RESOLUTION_KINDS)[number];
+
+  @ApiPropertyOptional({ format: 'uuid', example: CLAIM_IDS.shipment, description: 'The delivery concerned' })
+  @IsOptional()
+  @IsUUID()
+  shipmentId?: string;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, example: 120 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  claimedQuantity?: number;
+
+  @ApiPropertyOptional({ example: '1500.00', description: 'THB, when a refund or credit is asked for' })
+  @IsOptional()
+  @Matches(MONEY)
+  claimedAmount?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    maxItems: 10,
+    example: [CLAIM_IDS.photo],
+    description: 'Photos of the product (D-082) — optional for staff',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  productPhotoFileIds?: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    maxItems: 10,
+    example: [CLAIM_IDS.carton],
+    description: 'Photos of the shipping cartons (D-082) — optional for staff',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  cartonPhotoFileIds?: string[];
+}
+
+export class ClaimNoteDto {
+  @ApiProperty({ example: 'โปรดส่งรูปฉลากข้างกล่องเพิ่มเติม', minLength: 3, maxLength: 2000 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(2000)
+  note!: string;
+}
+
+export class ClaimInfoDto {
+  @ApiProperty({ example: 'แนบรูปฉลากข้างกล่องแล้ว', minLength: 1, maxLength: 4000 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(4000)
+  response!: string;
+
+  @ApiPropertyOptional({ type: [String], format: 'uuid', maxItems: 10, example: [CLAIM_IDS.photo] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  photoFileIds?: string[];
+}
+
+export class FactoryClaimResponseDto {
+  @ApiProperty({ enum: ['accepted', 'disputed'], enumName: 'FactoryClaimResponse', example: 'accepted' })
+  @IsIn(['accepted', 'disputed'])
+  response!: 'accepted' | 'disputed';
+
+  @ApiPropertyOptional({ example: 'ยอมรับ จะผลิตทดแทนภายใน 5 วัน', maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  note?: string;
+}
+
+export class OverrideLiabilityDto {
+  @ApiProperty({ enum: LIABILITIES, enumName: 'ClaimLiability', example: 'customer' })
+  @IsIn(LIABILITIES)
+  liability!: (typeof LIABILITIES)[number];
+
+  @ApiProperty({ example: 'ตำแหน่งตัวอักษรผิดตามไฟล์ที่ลูกค้าอนุมัติ', minLength: 10, maxLength: 2000 })
+  @IsString()
+  @MinLength(10)
+  @MaxLength(2000)
+  reason!: string;
+}
+
+export class DecideClaimDto {
+  @ApiProperty({ enum: ['approved', 'rejected'], enumName: 'ClaimDecision', example: 'approved' })
+  @IsIn(['approved', 'rejected'])
+  decision!: 'approved' | 'rejected';
+
+  @ApiProperty({ example: 'รูปยืนยันความเสียหายจากการขนส่ง', minLength: 3, maxLength: 2000 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(2000)
+  note!: string;
+}
+
+export class ResolutionActionDto {
+  @ApiProperty({ enum: CLAIM_ACTIONS, enumName: 'ClaimAction', example: 'reproduction_job' })
+  @IsIn(CLAIM_ACTIONS)
+  action!: (typeof CLAIM_ACTIONS)[number];
+
+  @ApiPropertyOptional({ example: '1500.00', description: 'THB; required for money actions' })
+  @IsOptional()
+  @Matches(MONEY)
+  amount?: string;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, example: 120, description: 'Pieces to re-produce' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  quantity?: number;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    example: CLAIM_IDS.payment,
+    description: 'Payment to refund (refund)',
+  })
+  @IsOptional()
+  @IsUUID()
+  paymentId?: string;
+
+  @ApiPropertyOptional({ example: 'ผลิตทดแทน 120 ชิ้น', maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  note?: string;
+}
+
+export class ResolveClaimDto {
+  @ApiProperty({ type: [ResolutionActionDto], minItems: 1, maxItems: 6 })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(6)
+  @ValidateNested({ each: true })
+  @Type(() => ResolutionActionDto)
+  actions!: ResolutionActionDto[];
+}
+
+export class ClaimListQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: CLAIM_STATUSES, enumName: 'ClaimStatus' })
+  @IsOptional()
+  @IsIn(CLAIM_STATUSES)
+  status?: (typeof CLAIM_STATUSES)[number];
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  orderId?: string;
+}
+
+export class ReorderOrderDto {
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    example: 2000,
+    description: 'Default: the past quantity',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  quantity?: number;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'Keep the approved artwork (proof skipped); false to send new artwork',
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  reuseArtwork?: boolean;
+}
+
+// --- responses -------------------------------------------------------------------------------------------
+
+export class ClaimResolutionDto {
+  @ApiProperty({ enum: CLAIM_ACTIONS, enumName: 'ClaimAction', example: 'reproduction_job' })
+  action!: string;
+
+  @ApiProperty({ nullable: true, example: null })
+  amount!: string | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 120 })
+  quantity!: number | null;
+
+  @ApiProperty({
+    nullable: true,
+    example: 'DEVJOB-2610-00002',
+    description: 'Re-production job (staff and factory)',
+  })
+  jobNo!: string | null;
+
+  @ApiProperty({ format: 'uuid', nullable: true, example: null })
+  refundId!: string | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-25T11:00:00+07:00' })
+  executedAt!: string;
+}
+
+export class ClaimPhotosDto {
+  @ApiProperty({ type: [String], format: 'uuid', example: [CLAIM_IDS.photo] })
+  product!: string[];
+
+  @ApiProperty({ type: [String], format: 'uuid', example: [CLAIM_IDS.carton] })
+  carton!: string[];
+}
+
+/** The customer's view: no factory, no internal liability reasoning. */
+export class StoreClaimDto {
+  @ApiProperty({ format: 'uuid', example: CLAIM_IDS.claim })
+  id!: string;
+
+  @ApiProperty({ example: 'DEVCL-2610-0001' })
+  claimNo!: string;
+
+  @ApiProperty({ format: 'uuid', example: CLAIM_IDS.order })
+  orderId!: string;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+
+  @ApiProperty({ enum: CLAIM_TYPES, enumName: 'ClaimType', example: 'damaged' })
+  type!: string;
+
+  @ApiProperty({
+    enum: ['customer', 'tolerance_auto', 'staff'],
+    enumName: 'ClaimOrigin',
+    example: 'customer',
+  })
+  origin!: string;
+
+  @ApiProperty({ enum: CLAIM_STATUSES, enumName: 'ClaimStatus', example: 'under_review' })
+  status!: string;
+
+  @ApiProperty({ example: 'กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย' })
+  description!: string;
+
+  @ApiProperty({ enum: RESOLUTION_KINDS, enumName: 'ClaimResolutionKind', example: 'reprint' })
+  requestedResolution!: string;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 120 })
+  claimedQuantity!: number | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  claimedAmount!: string | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-21T14:05:00+07:00' })
+  receivedAt!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-28T14:05:00+07:00' })
+  windowEndsAt!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-22T09:00:00+07:00' })
+  submittedAt!: string;
+
+  @ApiProperty({ nullable: true, example: null, description: 'What Packio asked for (status need_info)' })
+  infoRequest!: string | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  decisionNote!: string | null;
+
+  @ApiProperty({ type: ClaimPhotosDto })
+  photos!: ClaimPhotosDto;
+
+  @ApiProperty({ type: [ClaimResolutionDto] })
+  resolutions!: ClaimResolutionDto[];
+}
+
+export class PartnerClaimDto extends StoreClaimDto {
+  @ApiProperty({ format: 'uuid', nullable: true, example: CLAIM_IDS.job })
+  jobId!: string | null;
+
+  @ApiProperty({ nullable: true, example: 'DEVJOB-2610-00001' })
+  jobNo!: string | null;
+
+  @ApiProperty({ enum: LIABILITIES, enumName: 'ClaimLiability', example: 'factory' })
+  liability!: string;
+
+  @ApiProperty({
+    enum: ['accepted', 'disputed'],
+    enumName: 'FactoryClaimResponse',
+    nullable: true,
+    example: null,
+  })
+  factoryResponse!: string | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  factoryResponseNote!: string | null;
+}
+
+export class AdminClaimDto extends PartnerClaimDto {
+  @ApiProperty({ enum: LIABILITIES, enumName: 'ClaimLiability', example: 'factory' })
+  liabilityByRule!: string;
+
+  @ApiProperty({
+    nullable: true,
+    example: null,
+    description: 'Why the rule’s liability was overridden (D-083)',
+  })
+  overrideReason!: string | null;
+
+  @ApiProperty({ format: 'uuid', nullable: true, example: CLAIM_IDS.factory })
+  factoryId!: string | null;
+
+  @ApiProperty({ nullable: true, example: 'F-0001' })
+  factoryCode!: string | null;
+
+  @ApiProperty({ format: 'uuid', nullable: true, example: CLAIM_IDS.shipment })
+  shipmentId!: string | null;
+
+  @ApiProperty({ nullable: true, example: null })
+  infoResponse!: string | null;
+
+  @ApiProperty({ format: 'date-time', nullable: true, example: null })
+  decidedAt!: string | null;
+}
+
+const BASE = {
+  id: CLAIM_IDS.claim,
+  claimNo: 'DEVCL-2610-0001',
+  orderId: CLAIM_IDS.order,
+  orderCode: 'PK-2610-0001-01',
+  type: 'damaged',
+  origin: 'customer',
+  status: 'under_review',
+  description: 'กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย',
+  requestedResolution: 'reprint',
+  claimedQuantity: 120,
+  claimedAmount: null,
+  receivedAt: '2026-10-21T14:05:00+07:00',
+  windowEndsAt: '2026-10-28T14:05:00+07:00',
+  submittedAt: '2026-10-22T09:00:00+07:00',
+  infoRequest: null,
+  decisionNote: null,
+  photos: { product: [CLAIM_IDS.photo], carton: [CLAIM_IDS.carton] },
+  resolutions: [],
+};
+export const STORE_CLAIM_EXAMPLE = BASE;
+export const PARTNER_CLAIM_EXAMPLE = {
+  ...BASE,
+  status: 'factory_review',
+  jobId: CLAIM_IDS.job,
+  jobNo: 'DEVJOB-2610-00001',
+  liability: 'factory',
+  factoryResponse: null,
+  factoryResponseNote: null,
+};
+export const ADMIN_CLAIM_EXAMPLE = {
+  ...PARTNER_CLAIM_EXAMPLE,
+  status: 'under_review',
+  liabilityByRule: 'factory',
+  overrideReason: null,
+  factoryId: CLAIM_IDS.factory,
+  factoryCode: 'F-0001',
+  shipmentId: CLAIM_IDS.shipment,
+  infoResponse: null,
+  decidedAt: null,
+};
+export const RESOLVED_EXAMPLE = {
+  ...ADMIN_CLAIM_EXAMPLE,
+  status: 'resolved',
+  decidedAt: '2026-10-24T10:00:00+07:00',
+  resolutions: [
+    {
+      action: 'reproduction_job',
+      amount: null,
+      quantity: 120,
+      jobNo: 'DEVJOB-2610-00002',
+      refundId: null,
+      executedAt: '2026-10-25T11:00:00+07:00',
+    },
+  ],
+};

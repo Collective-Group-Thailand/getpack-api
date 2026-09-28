@@ -23,6 +23,7 @@ export const CART_INCLUDE = {
       pendingQuoteOption: true,
       destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }], include: { customerAddress: true } },
       designDocument: { select: { publicId: true } },
+      reorderOfOrder: { select: { publicId: true, orderCode: true } },
     },
   },
   codes: { orderBy: { id: 'asc' } },
@@ -107,7 +108,13 @@ export class CartsService {
     return this.prisma.withTx((tx) => this.active(tx, who));
   }
 
-  async addItem(who: CartActor, ifMatch: string | undefined, body: AddCartItemDto): Promise<CartRow> {
+  async addItem(
+    who: CartActor,
+    ifMatch: string | undefined,
+    body: AddCartItemDto,
+    /** A reorder (D-153): the past order and the approved proof carried over when the artwork is unchanged. */
+    reorder?: { orderId: bigint; reuseArtworkProofId: bigint | null },
+  ): Promise<CartRow> {
     if (body.mockupOption && body.mockupOption !== 'none') throw new DomainException('cart.mockup_price_unavailable');
     return this.prisma.withTx(async (tx) => {
       const cart = await this.active(tx, who);
@@ -138,6 +145,10 @@ export class CartsService {
           unitPrice: snapshot.unitPrice,
           priceLockedUntil: snapshot.priceLockedUntil,
           sort: cart.items.length,
+          ...(reorder && {
+            reorderOfOrderId: reorder.orderId,
+            reuseArtworkProofId: reorder.reuseArtworkProofId,
+          }),
         },
       });
       const destinations =

@@ -3,6 +3,7 @@ import { AdminMeController } from '@modules/auth/controllers/me.controllers';
 import { CARTS_ADMIN_CONTROLLERS } from '@modules/carts/carts.registry';
 import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry';
+import { CLAIMS_ADMIN_CONTROLLERS } from '@modules/claims/claims.registry';
 import { COMPANIES_ADMIN_CONTROLLERS } from '@modules/companies/companies.registry';
 import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_ADMIN_CONTROLLERS } from '@modules/design-services/design-services.registry';
@@ -87,6 +88,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...DESIGNS_ADMIN_CONTROLLERS,
     ...PRODUCTION_ADMIN_CONTROLLERS,
     ...LOGISTICS_ADMIN_CONTROLLERS,
+    ...CLAIMS_ADMIN_CONTROLLERS,
     ...TIMELINE_ADMIN_CONTROLLERS,
   ],
 })

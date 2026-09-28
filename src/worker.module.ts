@@ -7,6 +7,7 @@ import { IntegrationsModule } from '@integrations/integrations.module';
 import { ArtworkModule } from '@modules/artwork/artwork.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
+import { ClaimsModule } from '@modules/claims/claims.module';
 import { CompaniesModule } from '@modules/companies/companies.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { DesignServicesModule } from '@modules/design-services/design-services.module';
@@ -89,6 +90,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     ProductionModule,
     LogisticsModule,
     TimelineModule,
+    ClaimsModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

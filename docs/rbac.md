@@ -106,6 +106,10 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `milestone_routes.manage` — Edit milestone routes per product type as new versions (D-075) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |
 | `inspections.perform` — Carry out Packio inspections and record their results (D-076) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |
 | `shipments.read` — Read shipments, carrier events, proofs of delivery and delivery reconciliations (D-013, D-080) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |
+| `claims.read` — Read claims, their evidence and resolutions (D-082) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |
+| `claims.manage` — Open, review, ask for information, send to the factory, decide and close claims (D-082, D-083) | ● |  |  |  | ● | ● | ● |  |  |  |  |  | ● |  |
+| `claims.override_liability` — Override the liability rule of a claim with a reason (D-083) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
+| `claims.resolve` — Resolve approved claims: re-production, refund request, credit, deductions (D-083, D-022) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
 | `shipments.manage` — Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments (D-013, D-114) | ● |  |  |  | ● |  | ● |  |  |  | ● |  |  |  |
 
 | Role | Name (th) | Name (en) |
@@ -149,6 +153,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `factory_capacity.manage` — Set weekly capacity overrides of the own factory (D-101) | ● | ● |  |  |  |  |
 | `factory_scorecard.read` — Read the own factory’s monthly scorecard (D-155) | ● | ● |  | ● |  |  |
 | `factory_shipments.read` — Read the own factory’s shipments, labels and packing lists (D-013, D-142) | ● | ● |  |  | ● |  |
+| `factory_claims.read` — Read the claims about the own factory’s jobs (D-083) | ● | ● |  | ● |  |  |
+| `factory_claims.respond` — Accept or dispute a claim Packio sent for review (D-083) | ● |  |  | ● |  |  |
 | `factory_shipments.manage` — Create, pack, dispatch and deliver shipments with proof of delivery (D-013) | ● |  |  |  | ● |  |
 
 | Role | Name (th) | Name (en) |

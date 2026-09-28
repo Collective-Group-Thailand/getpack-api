@@ -529,6 +529,30 @@ export const PERMISSIONS = [
     decisionRefs: ['D-013', 'D-080'],
   },
   {
+    key: 'claims.read',
+    audience: 'staff',
+    description: 'Read claims, their evidence and resolutions',
+    decisionRefs: ['D-082'],
+  },
+  {
+    key: 'claims.manage',
+    audience: 'staff',
+    description: 'Open, review, ask for information, send to the factory, decide and close claims',
+    decisionRefs: ['D-082', 'D-083'],
+  },
+  {
+    key: 'claims.override_liability',
+    audience: 'staff',
+    description: 'Override the liability rule of a claim with a reason',
+    decisionRefs: ['D-083'],
+  },
+  {
+    key: 'claims.resolve',
+    audience: 'staff',
+    description: 'Resolve approved claims: re-production, refund request, credit, deductions',
+    decisionRefs: ['D-083', 'D-022'],
+  },
+  {
     key: 'shipments.manage',
     audience: 'staff',
     description: 'Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments',
@@ -645,6 +669,18 @@ export const PERMISSIONS = [
     audience: 'partner',
     description: 'Read the own factory’s shipments, labels and packing lists',
     decisionRefs: ['D-013', 'D-142'],
+  },
+  {
+    key: 'factory_claims.read',
+    audience: 'partner',
+    description: 'Read the claims about the own factory’s jobs',
+    decisionRefs: ['D-083'],
+  },
+  {
+    key: 'factory_claims.respond',
+    audience: 'partner',
+    description: 'Accept or dispute a claim Packio sent for review',
+    decisionRefs: ['D-083'],
   },
   {
     key: 'factory_shipments.manage',

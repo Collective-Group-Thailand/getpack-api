@@ -72,72 +72,83 @@ export class RefundsService {
 
   /** Requests a refund and routes it to the Finance Manager (`refund` approval policy). */
   async request(actor: UserActor, paymentPublicId: string, input: RefundInput): Promise<RefundRow> {
-    return this.prisma.withTx(async (tx) => {
-      const payment = await tx.payment.findUnique({
-        where: { publicId: paymentPublicId },
-        include: { orderGroup: true, allocations: true, refunds: true },
-      });
-      if (!payment) throw new DomainException('http.not_found');
-      if (!['succeeded', 'partially_refunded'].includes(payment.status))
-        throw new DomainException('refunds.not_refundable', { params: { reason: `payment is ${payment.status}` } });
-      const amount = D(input.amount);
-      const pending = payment.refunds
-        .filter((r) => (OPEN_REFUNDS as readonly string[]).includes(r.status))
-        .reduce((a, r) => a.add(r.amount.toString()), new MoneyDecimal(0));
-      const allocated = payment.allocations.reduce((a, x) => a.add(x.cashAmount.toString()), new MoneyDecimal(0));
-      const closed = !payment.orderGroup || ['cancelled', 'completed'].includes(payment.orderGroup.status);
-      const refundable = (closed ? D(payment.cashAmount) : D(payment.cashAmount).sub(allocated))
-        .sub(payment.refundedAmount.toString())
-        .sub(pending);
-      if (amount.lte(0) || amount.gt(refundable))
-        throw new DomainException('refunds.not_refundable', {
-          params: { reason: `at most ${formatMoney(MoneyDecimal.max(refundable, 0))} can be refunded` },
-        });
-      const channel: RefundChannel = input.channel ?? (payment.provider === 'twoc2p' ? 'original_gateway' : 'bank_transfer');
-      if (channel === 'store_credit' || (channel === 'original_gateway' && payment.provider !== 'twoc2p'))
-        throw new DomainException('refunds.channel_unavailable', { params: { channel } });
-      const reason = input.cancelReasonCode
-        ? await tx.orderCancelReason.findUnique({ where: { code: input.cancelReasonCode } })
-        : null;
-      if (input.cancelReasonCode && !reason)
-        throw new DomainException('validation.failed', {
-          errors: [{ path: 'cancelReasonCode', code: 'exists', message: 'unknown cancel reason' }],
-        });
-      const order = input.orderId
-        ? await tx.order.findFirst({ where: { publicId: input.orderId, orderGroupId: payment.orderGroupId ?? -1n } })
-        : null;
-      if (input.orderId && !order) throw new DomainException('http.not_found');
-      const refund = await tx.refund.create({
-        data: {
-          entityId: payment.entityId,
-          paymentId: payment.id,
-          orderId: order?.id ?? null,
-          amount: formatMoney(amount),
-          cancelReasonId: reason?.id ?? null,
-          reasonNote: input.reasonNote,
-          channel,
-          status: 'pending_approval',
-          requestedById: actor.userId,
-        },
-      });
-      const request = await this.approvals.create(tx, {
-        policyKey: POLICY,
-        subject: { type: 'refund', id: refund.id, publicId: refund.publicId },
-        requester: actor,
-        amount: formatMoney(amount),
-        entityId: payment.entityId,
-        payload: {
-          paymentId: payment.publicId,
-          reference: payment.referenceCode,
-          amount: formatMoney(amount),
-          channel,
-          reason: input.reasonNote,
-        },
-      });
-      await tx.refund.update({ where: { id: refund.id }, data: { approvalRequestId: request.id } });
-      await this.record(tx, refund, 'refund.requested', { amount: formatMoney(amount), channel }, actor);
-      return this.refund(refund.publicId, tx);
+    return this.prisma.withTx((tx) => this.requestIn(tx, actor, paymentPublicId, input));
+  }
+
+  /** `request` inside the caller's transaction (claim resolutions, B4.5). */
+  async requestIn(tx: Tx, actor: UserActor, paymentPublicId: string, input: RefundInput): Promise<RefundRow> {
+    const payment = await tx.payment.findUnique({
+      where: { publicId: paymentPublicId },
+      include: { orderGroup: true, allocations: true, refunds: true },
     });
+    if (!payment) throw new DomainException('http.not_found');
+    if (!['succeeded', 'partially_refunded'].includes(payment.status))
+      throw new DomainException('refunds.not_refundable', {
+        params: { reason: `payment is ${payment.status}` },
+      });
+    const amount = D(input.amount);
+    const pending = payment.refunds
+      .filter((r) => (OPEN_REFUNDS as readonly string[]).includes(r.status))
+      .reduce((a, r) => a.add(r.amount.toString()), new MoneyDecimal(0));
+    const allocated = payment.allocations.reduce(
+      (a, x) => a.add(x.cashAmount.toString()),
+      new MoneyDecimal(0),
+    );
+    const closed = !payment.orderGroup || ['cancelled', 'completed'].includes(payment.orderGroup.status);
+    const refundable = (closed ? D(payment.cashAmount) : D(payment.cashAmount).sub(allocated))
+      .sub(payment.refundedAmount.toString())
+      .sub(pending);
+    if (amount.lte(0) || amount.gt(refundable))
+      throw new DomainException('refunds.not_refundable', {
+        params: { reason: `at most ${formatMoney(MoneyDecimal.max(refundable, 0))} can be refunded` },
+      });
+    const channel: RefundChannel =
+      input.channel ?? (payment.provider === 'twoc2p' ? 'original_gateway' : 'bank_transfer');
+    if (channel === 'store_credit' || (channel === 'original_gateway' && payment.provider !== 'twoc2p'))
+      throw new DomainException('refunds.channel_unavailable', { params: { channel } });
+    const reason = input.cancelReasonCode
+      ? await tx.orderCancelReason.findUnique({ where: { code: input.cancelReasonCode } })
+      : null;
+    if (input.cancelReasonCode && !reason)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'cancelReasonCode', code: 'exists', message: 'unknown cancel reason' }],
+      });
+    const order = input.orderId
+      ? await tx.order.findFirst({
+          where: { publicId: input.orderId, orderGroupId: payment.orderGroupId ?? -1n },
+        })
+      : null;
+    if (input.orderId && !order) throw new DomainException('http.not_found');
+    const refund = await tx.refund.create({
+      data: {
+        entityId: payment.entityId,
+        paymentId: payment.id,
+        orderId: order?.id ?? null,
+        amount: formatMoney(amount),
+        cancelReasonId: reason?.id ?? null,
+        reasonNote: input.reasonNote,
+        channel,
+        status: 'pending_approval',
+        requestedById: actor.userId,
+      },
+    });
+    const request = await this.approvals.create(tx, {
+      policyKey: POLICY,
+      subject: { type: 'refund', id: refund.id, publicId: refund.publicId },
+      requester: actor,
+      amount: formatMoney(amount),
+      entityId: payment.entityId,
+      payload: {
+        paymentId: payment.publicId,
+        reference: payment.referenceCode,
+        amount: formatMoney(amount),
+        channel,
+        reason: input.reasonNote,
+      },
+    });
+    await tx.refund.update({ where: { id: refund.id }, data: { approvalRequestId: request.id } });
+    await this.record(tx, refund, 'refund.requested', { amount: formatMoney(amount), channel }, actor);
+    return this.refund(refund.publicId, tx);
   }
 
   @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], {
@@ -147,14 +158,26 @@ export class RefundsService {
     if (event.payload['policyKey'] !== POLICY) return;
     const request = await tx.approvalRequest.findUnique({ where: { publicId: event.aggregateId } });
     if (!request) return;
-    const refund = await tx.refund.findFirst({ where: { approvalRequestId: request.id, status: 'pending_approval' } });
+    const refund = await tx.refund.findFirst({
+      where: { approvalRequestId: request.id, status: 'pending_approval' },
+    });
     if (!refund) return;
     const approved = event.type === 'approval.approved';
     const updated = await tx.refund.update({
       where: { id: refund.id },
-      data: { status: approved ? 'approved' : 'rejected', decidedAt: new Date(), rowVersion: { increment: 1 } },
+      data: {
+        status: approved ? 'approved' : 'rejected',
+        decidedAt: new Date(),
+        rowVersion: { increment: 1 },
+      },
     });
-    await this.record(tx, updated, approved ? 'refund.approved' : 'refund.rejected', {}, systemActor('payments.refunds'));
+    await this.record(
+      tx,
+      updated,
+      approved ? 'refund.approved' : 'refund.rejected',
+      {},
+      systemActor('payments.refunds'),
+    );
   }
 
   /** Scheduled: approved gateway refunds are sent to the provider (outside any transaction). */
@@ -176,7 +199,8 @@ export class RefundsService {
           amount: refund.amount.toFixed(2),
           idempotencyId: refund.publicId,
         });
-        if (result.status === 'succeeded') await this.complete(refund.id, result.providerRef, null, systemActor('refunds.execute'));
+        if (result.status === 'succeeded')
+          await this.complete(refund.id, result.providerRef, null, systemActor('refunds.execute'));
         else if (result.status === 'failed') await this.fail(refund.id, result.message);
         else
           await this.prisma.refund.update({
@@ -185,7 +209,10 @@ export class RefundsService {
           });
       } catch (error) {
         this.logger.warn(`refund ${refund.publicId} not sent: ${(error as Error).message}`);
-        await this.prisma.refund.update({ where: { id: refund.id }, data: { status: 'approved', rowVersion: { increment: 1 } } });
+        await this.prisma.refund.update({
+          where: { id: refund.id },
+          data: { status: 'approved', rowVersion: { increment: 1 } },
+        });
       }
     }
     return due.length;
@@ -202,7 +229,12 @@ export class RefundsService {
     return this.refund(publicId);
   }
 
-  private async complete(refundId: bigint, providerRef: string | null, completedById: bigint | null, actor: Actor) {
+  private async complete(
+    refundId: bigint,
+    providerRef: string | null,
+    completedById: bigint | null,
+    actor: Actor,
+  ) {
     await this.prisma.withTx(async (tx) => {
       const refund = await tx.refund.update({
         where: { id: refundId },
@@ -231,7 +263,13 @@ export class RefundsService {
           data: { status: 'refunded', rowVersion: { increment: 1 } },
         });
       }
-      await this.record(tx, refund, 'refund.succeeded', { amount: refund.amount.toFixed(2), channel: refund.channel }, actor);
+      await this.record(
+        tx,
+        refund,
+        'refund.succeeded',
+        { amount: refund.amount.toFixed(2), channel: refund.channel },
+        actor,
+      );
     });
   }
 
@@ -246,7 +284,10 @@ export class RefundsService {
   }
 
   private async record(tx: Tx, refund: Refund, type: string, data: Record<string, unknown>, actor: Actor) {
-    const payment = await tx.payment.findUniqueOrThrow({ where: { id: refund.paymentId }, include: { orderGroup: true } });
+    const payment = await tx.payment.findUniqueOrThrow({
+      where: { id: refund.paymentId },
+      include: { orderGroup: true },
+    });
     const event = await this.events.record(
       tx,
       {

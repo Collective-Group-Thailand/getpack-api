@@ -16,6 +16,7 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { CartsModule } from '@modules/carts/carts.module';
 import { CatalogModule } from '@modules/catalog/catalog.module';
 import { CheckoutModule } from '@modules/checkout/checkout.module';
+import { ClaimsModule } from '@modules/claims/claims.module';
 import { CompaniesModule } from '@modules/companies/companies.module';
 import { CustomersModule } from '@modules/customers/customers.module';
 import { DesignServicesModule } from '@modules/design-services/design-services.module';
@@ -109,6 +110,7 @@ import { LoggerModule } from 'nestjs-pino';
     ProductionModule,
     LogisticsModule,
     TimelineModule,
+    ClaimsModule,
     HealthModule,
     SurfacesModule,
   ],

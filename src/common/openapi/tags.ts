@@ -83,6 +83,10 @@ export const API_TAGS: Record<string, string> = {
     'Shipments for staff: fallback carrier booking (D-114), status corrections, PODs on behalf, delivery reconciliation (D-021, D-080, D-165).',
   'store.logistics': 'The shipments of my orders and confirming receipt (D-050, D-081).',
   'store.timeline': 'My order’s story, promised vs actual and shareable tracking links (D-050, D-143).',
+  'store.claims': 'Claims within 7 days of receipt with product and carton photos (D-082) and reorders (D-153).',
+  'partner.claims': 'Claims about my factory’s jobs: accept or dispute (D-083).',
+  'admin.claims':
+    'Claims: review, information requests, factory review, liability rules and overrides (D-083), decisions and resolutions through existing mechanisms.',
   'store.tracking': 'Public tracking from a carton label or a shared link — no personal data, rate-limited.',
   'admin.timeline': 'An order’s full timeline with internal notes and @mentions, promised vs actual.',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',

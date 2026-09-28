@@ -73,6 +73,15 @@ export class RealtimeFanout {
           out.push([`factory:${factoryId}`, { type: 'production_job.updated', id: event.aggregateId }]);
         break;
       }
+      case 'claim': {
+        const customerId = event.payload['customerId'];
+        const factoryId = event.payload['factoryId'];
+        if (visibility.has('customer') && typeof customerId === 'string')
+          out.push([`user:${customerId}`, { type: 'claim.updated', id: event.aggregateId }]);
+        if (visibility.has('partner') && typeof factoryId === 'string')
+          out.push([`factory:${factoryId}`, { type: 'claim.updated', id: event.aggregateId }]);
+        break;
+      }
       case 'shipment': {
         const factoryId = event.payload['factoryId'];
         if (visibility.has('partner') && typeof factoryId === 'string')

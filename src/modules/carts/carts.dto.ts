@@ -180,6 +180,14 @@ export class CartRepriceDto {
   validUntil!: string;
 }
 
+export class ReorderRefDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000f1002' })
+  orderId!: string;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+}
+
 export class CartItemDto {
   @IdField(CART_IDS.item)
   id!: string;
@@ -233,6 +241,20 @@ export class CartItemDto {
 
   @ApiProperty({ enum: MOCKUP_OPTIONS, enumName: 'MockupOption', example: 'none' })
   mockupOption!: string;
+
+  @ApiProperty({
+    type: ReorderRefDto,
+    nullable: true,
+    example: null,
+    description: 'The past order this item reorders (D-153)',
+  })
+  reorderOf!: ReorderRefDto | null;
+
+  @ApiProperty({
+    example: false,
+    description: 'Reorder with unchanged artwork: the approved proof carries over and no new proof is needed (D-153)',
+  })
+  reusesApprovedArtwork!: boolean;
 
   @TimestampField('2026-10-16T10:00:00+07:00')
   priceLockedUntil!: string;
@@ -324,6 +346,8 @@ export const CART_ITEM_EXAMPLE: CartItemDto = {
   designNote: null,
   designDocumentId: null,
   mockupOption: 'none',
+  reorderOf: null,
+  reusesApprovedArtwork: false,
   priceLockedUntil: '2026-10-16T10:00:00+07:00',
   priceLocked: true,
   pendingReprice: null,

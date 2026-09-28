@@ -944,5 +944,37 @@
       "title": "Delivered quantities invalid",
       "detail": "Report a delivered quantity for every item of the shipment"
     }
+  },
+  "claims": {
+    "not_delivered": {
+      "title": "Not delivered yet",
+      "detail": "A claim can be made once the order is delivered"
+    },
+    "window_closed": {
+      "title": "Claim window closed",
+      "detail": "Claims were accepted until {until}"
+    },
+    "evidence_missing": {
+      "title": "Photos required",
+      "detail": "Attach photos of the product and of the shipping carton"
+    },
+    "invalid_status": {
+      "title": "Wrong claim status",
+      "detail": "The claim is {status}"
+    },
+    "liability_undetermined": {
+      "title": "Liability undetermined",
+      "detail": "Decide who is liable before approving"
+    },
+    "action_not_allowed": {
+      "title": "Action not allowed",
+      "detail": "This resolution is not possible ({reason})"
+    }
+  },
+  "orders": {
+    "reorder_unavailable": {
+      "title": "Reorder unavailable",
+      "detail": "This order cannot be reordered ({reason})"
+    }
   }
 }

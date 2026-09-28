@@ -3,6 +3,7 @@ import { StoreMeController } from '@modules/auth/controllers/me.controllers';
 import { CARTS_STORE_CONTROLLERS } from '@modules/carts/carts.registry';
 import { StoreCatalogController } from '@modules/catalog/store/store-catalog.controller';
 import { CHECKOUT_STORE_CONTROLLERS } from '@modules/checkout/checkout.registry';
+import { CLAIMS_STORE_CONTROLLERS } from '@modules/claims/claims.registry';
 import { COMPANIES_STORE_CONTROLLERS } from '@modules/companies/companies.registry';
 import { CUSTOMERS_STORE_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_STORE_CONTROLLERS } from '@modules/design-services/design-services.registry';
@@ -47,6 +48,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...CHECKOUT_STORE_CONTROLLERS,
     ...ORDERS_STORE_CONTROLLERS,
     ...LOGISTICS_STORE_CONTROLLERS,
+    ...CLAIMS_STORE_CONTROLLERS,
     ...TIMELINE_STORE_CONTROLLERS,
     ...PAYMENT_SCHEDULES_STORE_CONTROLLERS,
     ...PROMOTIONS_STORE_CONTROLLERS,

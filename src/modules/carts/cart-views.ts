@@ -24,6 +24,10 @@ export function cartItemDto(item: CartItemRow, now = new Date()): CartItemDto {
     designNote: item.designNote,
     designDocumentId: item.designDocument?.publicId ?? null,
     mockupOption: item.mockupOption,
+    reorderOf: item.reorderOfOrder
+      ? { orderId: item.reorderOfOrder.publicId, orderCode: item.reorderOfOrder.orderCode }
+      : null,
+    reusesApprovedArtwork: item.reuseArtworkProofId !== null,
     priceLockedUntil: toBangkokIso(item.priceLockedUntil),
     priceLocked: item.priceLockedUntil > now,
     pendingReprice:

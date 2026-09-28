@@ -131,9 +131,20 @@ export class ProductionOversightService {
     return (defective * 100) / done.length;
   }
 
-  /** Claims with factory liability on these jobs; the claims table arrives with B4.5. */
-  protected factoryClaims(_tx: Tx, _jobIds: bigint[]): Promise<number> {
-    return Promise.resolve(0);
+  /** Jobs with an approved (or since resolved / closed) claim the factory is liable for (D-083, D-155). */
+  async factoryClaims(tx: Tx, jobIds: bigint[]): Promise<number> {
+    if (jobIds.length === 0) return 0;
+    const claimed = await tx.claim.findMany({
+      where: {
+        productionJobId: { in: jobIds },
+        liability: 'factory',
+        // Approved, or resolved since (a rejected claim is closed without being resolved).
+        OR: [{ status: 'approved' }, { resolvedAt: { not: null } }],
+      },
+      distinct: ['productionJobId'],
+      select: { productionJobId: true },
+    });
+    return claimed.length;
   }
 
   private async hasSpecialFinish(tx: Tx, input: unknown): Promise<boolean> {
