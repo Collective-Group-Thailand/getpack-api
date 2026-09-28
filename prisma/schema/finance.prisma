@@ -347,6 +347,11 @@ model FiscalPeriod {
   taxCalendarItems TaxCalendarItem[]
   // --- end Finance B5.4
 
+  // --- Finance B5.5
+  depreciationRuns  DepreciationRun[]
+  depreciationLines DepreciationLine[]
+  // --- end Finance B5.5
+
   @@unique([entityId, startDate], map: "ux_fiscal_periods__entity_id__start_date")
   @@unique([fiscalYearId, periodNo], map: "ux_fiscal_periods__fiscal_year_id__period_no")
   @@index([statusChangedById], map: "ix_fiscal_periods__status_changed_by")
@@ -387,8 +392,18 @@ model Account {
   changes      AccountChange[]
 
   // --- Finance B5.3 (generated back-relations)
-  companyBankAccounts CompanyBankAccount[] @relation("CompanyBankAccountGl")
-  vendorInvoiceLines  VendorInvoiceLine[]  @relation("VendorInvoiceLineAccount")
+  companyBankAccounts        CompanyBankAccount[] @relation("CompanyBankAccountGl")
+  vendorInvoiceLines         VendorInvoiceLine[]  @relation("VendorInvoiceLineAccount")
+  assetCategoriesAsset       AssetCategory[]      @relation("AssetCategoryAssetAccount")
+  assetCategoriesAccumulated AssetCategory[]      @relation("AssetCategoryAccumulatedAccount")
+  assetCategoriesExpense     AssetCategory[]      @relation("AssetCategoryExpenseAccount")
+  assetCategoriesGainLoss    AssetCategory[]      @relation("AssetCategoryGainLossAccount")
+  fixedAssetsAsset           FixedAsset[]         @relation("FixedAssetAssetAccount")
+  fixedAssetsAccumulated     FixedAsset[]         @relation("FixedAssetAccumulatedAccount")
+  fixedAssetsExpense         FixedAsset[]         @relation("FixedAssetExpenseAccount")
+  fixedAssetsGainLoss        FixedAsset[]         @relation("FixedAssetGainLossAccount")
+  fixedAssetsCredit          FixedAsset[]         @relation("FixedAssetCreditAccount")
+  fixedAssetsProceeds        FixedAsset[]         @relation("FixedAssetProceedsAccount")
   // --- end Finance B5.3
 
   @@unique([entityId, code], map: "ux_accounts__entity_id__code")
@@ -439,6 +454,7 @@ model CostCentre {
   entity       Entity        @relation("CostCentreEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cost_centres__entity_id")
   createdBy    User?         @relation("CostCentreCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cost_centres__created_by")
   journalLines JournalLine[]
+  fixedAssets  FixedAsset[]
 
   @@unique([entityId, code], map: "ux_cost_centres__entity_id__code")
   @@index([createdById], map: "ix_cost_centres__created_by")
@@ -1695,6 +1711,7 @@ model VendorInvoice {
   recordedBy       User?               @relation("VendorInvoiceRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_vendor_invoices__recorded_by")
   lines            VendorInvoiceLine[]
   payableItems     PayableItem[]
+  fixedAssets      FixedAsset[]
 
   @@unique([vendorId, vendorInvoiceNo], map: "ux_vendor_invoices__vendor_id__vendor_invoice_no")
   @@index([billingStatementId], map: "ix_vendor_invoices__billing_statement_id")
@@ -2178,4 +2195,175 @@ model TaxCalendarItem {
   @@index([fiscalPeriodId], map: "ix_tax_calendar_items__fiscal_period_id")
   @@index([taxReportId], map: "ix_tax_calendar_items__tax_report_id")
   @@map("tax_calendar_items")
+}
+
+// =====================================================================================================
+// Fixed assets (B5.5, D-150)
+// =====================================================================================================
+
+enum DepreciationMethod {
+  straight_line
+
+  @@map("depreciation_method")
+}
+
+enum AssetStatus {
+  active
+  fully_depreciated
+  disposed
+  written_off
+
+  @@map("asset_status")
+}
+
+enum AssetSource {
+  manual
+  vendor_bill
+
+  @@map("asset_source")
+}
+
+/// Asset category (D-150): useful life and GL accounts; assets snapshot them at registration.
+model AssetCategory {
+  id                        BigInt             @id(map: "pk_asset_categories") @default(autoincrement())
+  publicId                  String             @unique(map: "ux_asset_categories__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId                  BigInt             @map("entity_id")
+  code                      String
+  nameTh                    String             @map("name_th")
+  nameEn                    String             @map("name_en")
+  usefulLifeMonths          Int                @map("useful_life_months")
+  method                    DepreciationMethod @default(straight_line)
+  assetAccountId            BigInt             @map("asset_account_id")
+  accumulatedAccountId      BigInt             @map("accumulated_account_id")
+  expenseAccountId          BigInt             @map("expense_account_id")
+  disposalGainLossAccountId BigInt             @map("disposal_gain_loss_account_id")
+  status                    AccountStatus      @default(active)
+  createdAt                 DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById               BigInt?            @map("created_by")
+  updatedAt                 DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion                Int                @default(1) @map("row_version")
+
+  entity             Entity       @relation("AssetCategoryEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_asset_categories__entity_id")
+  assetAccount       Account      @relation("AssetCategoryAssetAccount", fields: [assetAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_asset_categories__asset_account_id")
+  accumulatedAccount Account      @relation("AssetCategoryAccumulatedAccount", fields: [accumulatedAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_asset_categories__accumulated_account_id")
+  expenseAccount     Account      @relation("AssetCategoryExpenseAccount", fields: [expenseAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_asset_categories__expense_account_id")
+  gainLossAccount    Account      @relation("AssetCategoryGainLossAccount", fields: [disposalGainLossAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_asset_categories__disposal_gain_loss_account_id")
+  createdBy          User?        @relation("AssetCategoryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_asset_categories__created_by")
+  assets             FixedAsset[]
+
+  @@unique([entityId, code], map: "ux_asset_categories__entity_id__code")
+  @@index([assetAccountId], map: "ix_asset_categories__asset_account_id")
+  @@index([accumulatedAccountId], map: "ix_asset_categories__accumulated_account_id")
+  @@index([expenseAccountId], map: "ix_asset_categories__expense_account_id")
+  @@index([disposalGainLossAccountId], map: "ix_asset_categories__disposal_gain_loss_account_id")
+  @@index([createdById], map: "ix_asset_categories__created_by")
+  @@map("asset_categories")
+}
+
+/// A fixed asset (D-150): cost, residual value, life, method and GL accounts snapshot at registration.
+model FixedAsset {
+  id                        BigInt             @id(map: "pk_fixed_assets") @default(autoincrement())
+  publicId                  String             @unique(map: "ux_fixed_assets__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId                  BigInt             @map("entity_id")
+  assetNo                   String             @map("asset_no")
+  categoryId                BigInt             @map("category_id")
+  name                      String
+  source                    AssetSource
+  acquiredOn                DateTime           @map("acquired_on") @db.Date
+  /// First month depreciated (setting `fixed_assets.depreciation_start` at registration).
+  depreciationStartOn       DateTime           @map("depreciation_start_on") @db.Date
+  cost                      Decimal            @db.Decimal(14, 2)
+  residualValue             Decimal            @default(0) @map("residual_value") @db.Decimal(14, 2)
+  usefulLifeMonths          Int                @map("useful_life_months")
+  method                    DepreciationMethod
+  assetAccountId            BigInt             @map("asset_account_id")
+  accumulatedAccountId      BigInt             @map("accumulated_account_id")
+  expenseAccountId          BigInt             @map("expense_account_id")
+  disposalGainLossAccountId BigInt             @map("disposal_gain_loss_account_id")
+  /// Kept in step with the depreciation lines (≤ cost − residual).
+  accumulatedDepreciation   Decimal            @default(0) @map("accumulated_depreciation") @db.Decimal(14, 2)
+  vendorInvoiceId           BigInt?            @map("vendor_invoice_id")
+  creditAccountId           BigInt?            @map("credit_account_id")
+  location                  String?
+  custodianUserId           BigInt?            @map("custodian_user_id")
+  costCentreId              BigInt?            @map("cost_centre_id")
+  status                    AssetStatus        @default(active)
+  disposedOn                DateTime?          @map("disposed_on") @db.Date
+  disposalProceeds          Decimal?           @map("disposal_proceeds") @db.Decimal(14, 2)
+  proceedsAccountId         BigInt?            @map("proceeds_account_id")
+  disposalReason            String?            @map("disposal_reason")
+  createdAt                 DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById               BigInt?            @map("created_by")
+  updatedAt                 DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion                Int                @default(1) @map("row_version")
+
+  entity             Entity             @relation("FixedAssetEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__entity_id")
+  category           AssetCategory      @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__category_id")
+  assetAccount       Account            @relation("FixedAssetAssetAccount", fields: [assetAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__asset_account_id")
+  accumulatedAccount Account            @relation("FixedAssetAccumulatedAccount", fields: [accumulatedAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__accumulated_account_id")
+  expenseAccount     Account            @relation("FixedAssetExpenseAccount", fields: [expenseAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__expense_account_id")
+  gainLossAccount    Account            @relation("FixedAssetGainLossAccount", fields: [disposalGainLossAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__disposal_gain_loss_account_id")
+  creditAccount      Account?           @relation("FixedAssetCreditAccount", fields: [creditAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__credit_account_id")
+  proceedsAccount    Account?           @relation("FixedAssetProceedsAccount", fields: [proceedsAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__proceeds_account_id")
+  vendorInvoice      VendorInvoice?     @relation(fields: [vendorInvoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__vendor_invoice_id")
+  custodian          User?              @relation("FixedAssetCustodian", fields: [custodianUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__custodian_user_id")
+  costCentre         CostCentre?        @relation(fields: [costCentreId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__cost_centre_id")
+  createdBy          User?              @relation("FixedAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fixed_assets__created_by")
+  depreciationLines  DepreciationLine[]
+
+  @@unique([entityId, assetNo], map: "ux_fixed_assets__entity_id__asset_no")
+  @@index([categoryId], map: "ix_fixed_assets__category_id")
+  @@index([entityId, status], map: "ix_fixed_assets__entity_id__status")
+  @@index([assetAccountId], map: "ix_fixed_assets__asset_account_id")
+  @@index([accumulatedAccountId], map: "ix_fixed_assets__accumulated_account_id")
+  @@index([expenseAccountId], map: "ix_fixed_assets__expense_account_id")
+  @@index([disposalGainLossAccountId], map: "ix_fixed_assets__disposal_gain_loss_account_id")
+  @@index([creditAccountId], map: "ix_fixed_assets__credit_account_id")
+  @@index([proceedsAccountId], map: "ix_fixed_assets__proceeds_account_id")
+  @@index([vendorInvoiceId], map: "ix_fixed_assets__vendor_invoice_id")
+  @@index([custodianUserId], map: "ix_fixed_assets__custodian_user_id")
+  @@index([costCentreId], map: "ix_fixed_assets__cost_centre_id")
+  @@index([createdById], map: "ix_fixed_assets__created_by")
+  @@map("fixed_assets")
+}
+
+/// One depreciation run per entity and month (FA02).
+model DepreciationRun {
+  id             BigInt   @id(map: "pk_depreciation_runs") @default(autoincrement())
+  publicId       String   @unique(map: "ux_depreciation_runs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId       BigInt   @map("entity_id")
+  fiscalPeriodId BigInt   @map("fiscal_period_id")
+  runOn          DateTime @map("run_on") @db.Date
+  totalAmount    Decimal  @map("total_amount") @db.Decimal(14, 2)
+  assetCount     Int      @map("asset_count")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById    BigInt?  @map("created_by")
+
+  entity       Entity             @relation("DepreciationRunEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_depreciation_runs__entity_id")
+  fiscalPeriod FiscalPeriod       @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_depreciation_runs__fiscal_period_id")
+  createdBy    User?              @relation("DepreciationRunCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_depreciation_runs__created_by")
+  lines        DepreciationLine[]
+
+  @@unique([entityId, fiscalPeriodId], map: "ux_depreciation_runs__entity_id__fiscal_period_id")
+  @@index([fiscalPeriodId], map: "ix_depreciation_runs__fiscal_period_id")
+  @@index([createdById], map: "ix_depreciation_runs__created_by")
+  @@map("depreciation_runs")
+}
+
+model DepreciationLine {
+  id               BigInt  @id(map: "pk_depreciation_lines") @default(autoincrement())
+  runId            BigInt  @map("run_id")
+  assetId          BigInt  @map("asset_id")
+  fiscalPeriodId   BigInt  @map("fiscal_period_id")
+  amount           Decimal @db.Decimal(14, 2)
+  accumulatedAfter Decimal @map("accumulated_after") @db.Decimal(14, 2)
+
+  run          DepreciationRun @relation(fields: [runId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_depreciation_lines__run_id")
+  asset        FixedAsset      @relation(fields: [assetId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_depreciation_lines__asset_id")
+  fiscalPeriod FiscalPeriod    @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_depreciation_lines__fiscal_period_id")
+
+  @@unique([assetId, fiscalPeriodId], map: "ux_depreciation_lines__asset_id__fiscal_period_id")
+  @@index([runId], map: "ix_depreciation_lines__run_id")
+  @@index([fiscalPeriodId], map: "ix_depreciation_lines__fiscal_period_id")
+  @@map("depreciation_lines")
 }

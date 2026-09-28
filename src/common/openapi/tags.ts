@@ -227,4 +227,6 @@ export const API_TAGS: Record<string, string> = {
   'partner.payables': 'My factory’s POs, goods receipts, billing statements to confirm, tax invoices to submit, payouts and 50 ทวิ (D-090, D-022).',
   // --- B5.4 tax
   'admin.tax': 'Sales / purchase tax reports, ภ.พ.30 and ภ.ง.ด.3 / 53 working papers with attachments, WHT registers, GL reconciliation and the tax calendar (§6, §7).',
+  // --- B5.5 fixed assets
+  'admin.fixedAssets': 'Fixed-asset register (D-150): categories, registration from bills or manual (FA01), monthly straight-line depreciation (FA02), disposal / write-off (FA03), roll-forward with GL reconciliation.',
 };

@@ -136,6 +136,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `tax.read` — Read tax reports, working papers, WHT registers and the tax calendar (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
 | `tax.manage` — Generate and finalise tax reports (GL difference must be 0) and record filings (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 | `tax.pay` — Record VAT and withholding-tax payments to the Revenue Department (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
+| `fixed_assets.read` — Read asset categories, the fixed-asset register, depreciation and roll-forward (D-150) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
+| `fixed_assets.manage` — Manage asset categories, register assets and run the monthly depreciation (D-150) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `fixed_assets.dispose` — Dispose of or write off fixed assets (D-150) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

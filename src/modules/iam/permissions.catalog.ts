@@ -885,6 +885,26 @@ export const PERMISSIONS = [
     description: 'Record VAT and withholding-tax payments to the Revenue Department',
     decisionRefs: ['D-033'],
   },
+
+  // --- Finance: fixed assets (B5.5, D-150)
+  {
+    key: 'fixed_assets.read',
+    audience: 'staff',
+    description: 'Read asset categories, the fixed-asset register, depreciation and roll-forward',
+    decisionRefs: ['D-150'],
+  },
+  {
+    key: 'fixed_assets.manage',
+    audience: 'staff',
+    description: 'Manage asset categories, register assets and run the monthly depreciation',
+    decisionRefs: ['D-150'],
+  },
+  {
+    key: 'fixed_assets.dispose',
+    audience: 'staff',
+    description: 'Dispose of or write off fixed assets',
+    decisionRefs: ['D-150'],
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];

@@ -405,6 +405,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'finance_manager',
   },
   {
+    key: 'fixed_assets.depreciation_start',
+    valueType: 'enum',
+    value: 'acquisition_month',
+    valueSchema: { enum: ['acquisition_month', 'next_month'] },
+    description:
+      'D-150 first month of straight-line depreciation: the month the asset is acquired (full month) or the month after (⚖ pro-rata by days is not used)',
+    decisions: ['D-150'],
+    confirmation: 'pending_cpa',
+    ownerRole: 'finance_manager',
+  },
+  {
     key: 'tax.gl_accounts',
     valueType: 'json',
     value: {

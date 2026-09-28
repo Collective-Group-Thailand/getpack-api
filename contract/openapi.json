@@ -1035,6 +1035,72 @@
           "type": "https://errors.packio/file.upload_incomplete"
         }
       },
+      "problem.fixed_assets.account_invalid": {
+        "summary": "fixed_assets.account_invalid",
+        "value": {
+          "code": "fixed_assets.account_invalid",
+          "detail": "บัญชี {code} ใช้เป็น {field} ไม่ได้ (ต้องบันทึกได้ ใช้งานอยู่ ไม่ใช่บัญชีคุม และถูกประเภท)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ใช้บัญชีนี้ไม่ได้",
+          "type": "https://errors.packio/fixed_assets.account_invalid"
+        }
+      },
+      "problem.fixed_assets.already_disposed": {
+        "summary": "fixed_assets.already_disposed",
+        "value": {
+          "code": "fixed_assets.already_disposed",
+          "detail": "สินทรัพย์นี้จำหน่ายหรือตัดจำหน่ายแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "จำหน่ายสินทรัพย์แล้ว",
+          "type": "https://errors.packio/fixed_assets.already_disposed"
+        }
+      },
+      "problem.fixed_assets.category_exists": {
+        "summary": "fixed_assets.category_exists",
+        "value": {
+          "code": "fixed_assets.category_exists",
+          "detail": "มีหมวดสินทรัพย์รหัส {code} อยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีหมวดสินทรัพย์นี้แล้ว",
+          "type": "https://errors.packio/fixed_assets.category_exists"
+        }
+      },
+      "problem.fixed_assets.cost_exceeds_bill": {
+        "summary": "fixed_assets.cost_exceeds_bill",
+        "value": {
+          "code": "fixed_assets.cost_exceeds_bill",
+          "detail": "ใบแจ้งหนี้บันทึกเป็นสินทรัพย์ {capitalised} และลงทะเบียนแล้ว {registered}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ราคาทุนเกินใบแจ้งหนี้",
+          "type": "https://errors.packio/fixed_assets.cost_exceeds_bill"
+        }
+      },
+      "problem.fixed_assets.depreciation_pending": {
+        "summary": "fixed_assets.depreciation_pending",
+        "value": {
+          "code": "fixed_assets.depreciation_pending",
+          "detail": "บันทึกค่าเสื่อมราคาถึงเดือนก่อนจำหน่ายก่อน (ควรเป็น {expected} บันทึกแล้ว {accumulated})",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ค่าเสื่อมยังไม่ครบ",
+          "type": "https://errors.packio/fixed_assets.depreciation_pending"
+        }
+      },
+      "problem.fixed_assets.run_exists": {
+        "summary": "fixed_assets.run_exists",
+        "value": {
+          "code": "fixed_assets.run_exists",
+          "detail": "ค่าเสื่อมราคางวด {period} บันทึกแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "คำนวณค่าเสื่อมแล้ว",
+          "type": "https://errors.packio/fixed_assets.run_exists"
+        }
+      },
       "problem.http.bad_request": {
         "summary": "http.bad_request",
         "value": {
@@ -1253,6 +1319,17 @@
           "status": 409,
           "title": "กลับรายการไม่ได้",
           "type": "https://errors.packio/ledger.not_reversible"
+        }
+      },
+      "problem.ledger.period_closed": {
+        "summary": "ledger.period_closed",
+        "value": {
+          "code": "ledger.period_closed",
+          "detail": "งวดบัญชีของวันที่ {date} อยู่ในสถานะ {status} ไม่สามารถบันทึกรายการได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "งวดบัญชีปิดแล้ว",
+          "type": "https://errors.packio/ledger.period_closed"
         }
       },
       "problem.ledger.period_transition": {
@@ -7501,6 +7578,136 @@
         ],
         "type": "object"
       },
+      "AssetCategoryDto": {
+        "properties": {
+          "accumulatedAccountCode": {
+            "example": "1521",
+            "type": "string"
+          },
+          "assetAccountCode": {
+            "example": "1520",
+            "type": "string"
+          },
+          "code": {
+            "example": "computers",
+            "type": "string"
+          },
+          "expenseAccountCode": {
+            "example": "6150",
+            "type": "string"
+          },
+          "gainLossAccountCode": {
+            "example": "6910",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DepreciationMethod"
+              }
+            ],
+            "example": "straight_line"
+          },
+          "nameEn": {
+            "example": "Computers & IT equipment",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "คอมพิวเตอร์และอุปกรณ์ไอที",
+            "type": "string"
+          },
+          "rowVersion": {
+            "description": "Send back in `If-Match` (as the ETag) to update",
+            "example": 1,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CapabilityStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "usefulLifeMonths": {
+            "description": "Useful life (months) — snapshot on each asset registered",
+            "example": 36,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "usefulLifeMonths",
+          "method",
+          "assetAccountCode",
+          "accumulatedAccountCode",
+          "expenseAccountCode",
+          "gainLossAccountCode",
+          "status",
+          "rowVersion"
+        ],
+        "type": "object"
+      },
+      "AssetDisposalKind": {
+        "enum": [
+          "sold",
+          "written_off"
+        ],
+        "type": "string"
+      },
+      "AssetReconciliationDto": {
+        "properties": {
+          "accountCode": {
+            "example": "1520",
+            "type": "string"
+          },
+          "difference": {
+            "description": "Must be 0 (§7 step 8)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "gl": {
+            "example": "36000.00",
+            "type": "string"
+          },
+          "register": {
+            "description": "Register (cost debit-positive; accumulated credit-negative)",
+            "example": "36000.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountCode",
+          "register",
+          "gl",
+          "difference"
+        ],
+        "type": "object"
+      },
+      "AssetSource": {
+        "enum": [
+          "manual",
+          "vendor_bill"
+        ],
+        "type": "string"
+      },
+      "AssetStatus": {
+        "enum": [
+          "active",
+          "fully_depreciated",
+          "disposed",
+          "written_off"
+        ],
+        "type": "string"
+      },
       "AssignConversationDto": {
         "properties": {
           "userId": {
@@ -12045,6 +12252,65 @@
           "code",
           "nameTh",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "CreateAssetCategoryDto": {
+        "properties": {
+          "accumulatedAccountCode": {
+            "description": "Contra-asset (credit) account",
+            "example": "1521",
+            "type": "string"
+          },
+          "assetAccountCode": {
+            "description": "Postable investing asset account",
+            "example": "1520",
+            "type": "string"
+          },
+          "code": {
+            "example": "computers",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,39}$",
+            "type": "string"
+          },
+          "expenseAccountCode": {
+            "description": "Expense account",
+            "example": "6150",
+            "type": "string"
+          },
+          "gainLossAccountCode": {
+            "description": "Expense or revenue account for gain / loss on disposal",
+            "example": "6910",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Computers & IT equipment",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "คอมพิวเตอร์และอุปกรณ์ไอที",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "usefulLifeMonths": {
+            "description": "Set by Finance with the CPA (⚖)",
+            "example": 36,
+            "maximum": 1200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "usefulLifeMonths",
+          "assetAccountCode",
+          "accumulatedAccountCode",
+          "expenseAccountCode",
+          "gainLossAccountCode"
         ],
         "type": "object"
       },
@@ -16720,6 +16986,74 @@
         ],
         "type": "object"
       },
+      "DepreciationLineDto": {
+        "properties": {
+          "accumulatedAfter": {
+            "example": "1000.00",
+            "type": "string"
+          },
+          "amount": {
+            "example": "1000.00",
+            "type": "string"
+          },
+          "period": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "runId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000550003",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "amount",
+          "accumulatedAfter",
+          "runId"
+        ],
+        "type": "object"
+      },
+      "DepreciationMethod": {
+        "enum": [
+          "straight_line"
+        ],
+        "type": "string"
+      },
+      "DepreciationRunDto": {
+        "properties": {
+          "assetCount": {
+            "example": 1,
+            "type": "integer"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000550003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "period": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "runOn": {
+            "example": "2026-10-31",
+            "format": "date",
+            "type": "string"
+          },
+          "totalAmount": {
+            "example": "1000.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "period",
+          "runOn",
+          "totalAmount",
+          "assetCount"
+        ],
+        "type": "object"
+      },
       "DesignAssetDto": {
         "properties": {
           "fileId": {
@@ -17713,6 +18047,46 @@
           "points_redemption"
         ],
         "type": "string"
+      },
+      "DisposeAssetDto": {
+        "properties": {
+          "disposedOn": {
+            "example": "2027-06-30",
+            "format": "date",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetDisposalKind"
+              }
+            ],
+            "example": "sold"
+          },
+          "proceeds": {
+            "description": "Sold only (net of VAT)",
+            "example": "15000.00",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": "string"
+          },
+          "proceedsAccountCode": {
+            "description": "Where the proceeds went (an asset account) when there are any",
+            "example": "1121",
+            "type": "string"
+          },
+          "reason": {
+            "example": "ขายเครื่องเก่า (fake)",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "disposedOn",
+          "reason"
+        ],
+        "type": "object"
       },
       "DisputeStatementDto": {
         "properties": {
@@ -19856,6 +20230,160 @@
           "endDate",
           "status",
           "periods"
+        ],
+        "type": "object"
+      },
+      "FixedAssetDto": {
+        "properties": {
+          "accumulatedDepreciation": {
+            "example": "1000.00",
+            "type": "string"
+          },
+          "acquiredOn": {
+            "example": "2026-10-01",
+            "format": "date",
+            "type": "string"
+          },
+          "assetAccountCode": {
+            "example": "1520",
+            "type": "string"
+          },
+          "assetNo": {
+            "example": "DEVFA-00001",
+            "type": "string"
+          },
+          "categoryCode": {
+            "example": "computers",
+            "type": "string"
+          },
+          "categoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "cost": {
+            "example": "36000.00",
+            "type": "string"
+          },
+          "costCentreCode": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "creditAccountCode": {
+            "example": "2410",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "custodianUserId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000000101",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "depreciationStartOn": {
+            "description": "First month depreciated",
+            "example": "2026-10-01",
+            "format": "date",
+            "type": "string"
+          },
+          "disposalProceeds": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "disposedOn": {
+            "example": null,
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000550002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "example": "สำนักงานกรุงเทพ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "โน้ตบุ๊กฝ่ายบัญชี (fake)",
+            "type": "string"
+          },
+          "netBookValue": {
+            "example": "35000.00",
+            "type": "string"
+          },
+          "residualValue": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetSource"
+              }
+            ],
+            "example": "manual"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "usefulLifeMonths": {
+            "example": 36,
+            "type": "integer"
+          },
+          "vendorInvoiceId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "assetNo",
+          "categoryId",
+          "categoryCode",
+          "name",
+          "source",
+          "acquiredOn",
+          "depreciationStartOn",
+          "cost",
+          "residualValue",
+          "usefulLifeMonths",
+          "accumulatedDepreciation",
+          "netBookValue",
+          "assetAccountCode",
+          "creditAccountCode",
+          "vendorInvoiceId",
+          "location",
+          "custodianUserId",
+          "costCentreCode",
+          "status",
+          "disposedOn",
+          "disposalProceeds"
         ],
         "type": "object"
       },
@@ -32364,6 +32892,79 @@
         ],
         "type": "string"
       },
+      "RegisterAssetDto": {
+        "properties": {
+          "acquiredOn": {
+            "example": "2026-10-01",
+            "format": "date",
+            "type": "string"
+          },
+          "categoryId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "cost": {
+            "description": "Cost excluding recoverable VAT",
+            "example": "36000.00",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": "string"
+          },
+          "costCentreCode": {
+            "example": "ops",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "creditAccountCode": {
+            "description": "Required for `manual`: the account credited (not a control account)",
+            "example": "2410",
+            "type": "string"
+          },
+          "custodianUserId": {
+            "description": "The staff member holding the asset",
+            "format": "uuid",
+            "type": "string"
+          },
+          "location": {
+            "example": "สำนักงานกรุงเทพ",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "name": {
+            "example": "โน้ตบุ๊กฝ่ายบัญชี (fake)",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "residualValue": {
+            "example": "0.00",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssetSource"
+              }
+            ],
+            "description": "`vendor_bill`: already capitalised by the bill (P25); `manual`: FA01 against `creditAccountCode`",
+            "example": "manual"
+          },
+          "vendorInvoiceId": {
+            "description": "Required for `vendor_bill`: the bill with the asset line",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "name",
+          "acquiredOn",
+          "cost",
+          "source"
+        ],
+        "type": "object"
+      },
       "RejectDto": {
         "properties": {
           "comment": {
@@ -33851,6 +34452,99 @@
         ],
         "type": "string"
       },
+      "RollForwardCategoryDto": {
+        "properties": {
+          "additions": {
+            "example": "36000.00",
+            "type": "string"
+          },
+          "category": {
+            "example": "computers",
+            "type": "string"
+          },
+          "closingAccumulated": {
+            "example": "3000.00",
+            "type": "string"
+          },
+          "closingCost": {
+            "example": "36000.00",
+            "type": "string"
+          },
+          "depreciation": {
+            "example": "3000.00",
+            "type": "string"
+          },
+          "disposalsAccumulated": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "disposalsCost": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "name": {
+            "example": "คอมพิวเตอร์และอุปกรณ์ไอที",
+            "type": "string"
+          },
+          "netBookValue": {
+            "example": "33000.00",
+            "type": "string"
+          },
+          "openingAccumulated": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "openingCost": {
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "name",
+          "openingCost",
+          "additions",
+          "disposalsCost",
+          "closingCost",
+          "openingAccumulated",
+          "depreciation",
+          "disposalsAccumulated",
+          "closingAccumulated",
+          "netBookValue"
+        ],
+        "type": "object"
+      },
+      "RollForwardDto": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/RollForwardCategoryDto"
+            },
+            "type": "array"
+          },
+          "from": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "reconciliation": {
+            "items": {
+              "$ref": "#/components/schemas/AssetReconciliationDto"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-12",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "categories",
+          "reconciliation"
+        ],
+        "type": "object"
+      },
       "RouteStepDto": {
         "properties": {
           "customerLabelTh": {
@@ -34083,6 +34777,19 @@
           "bankCode",
           "accountNoLast4",
           "glAccountCode"
+        ],
+        "type": "object"
+      },
+      "RunDepreciationDto": {
+        "properties": {
+          "period": {
+            "example": "2026-10",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period"
         ],
         "type": "object"
       },
@@ -42004,6 +42711,37 @@
         },
         "type": "object"
       },
+      "UpdateAssetCategoryDto": {
+        "properties": {
+          "nameEn": {
+            "example": "Computers",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "คอมพิวเตอร์",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CapabilityStatus"
+              }
+            ]
+          },
+          "usefulLifeMonths": {
+            "description": "Applies to assets registered afterwards",
+            "example": 60,
+            "maximum": 1200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "UpdateBannerDto": {
         "properties": {
           "desktopFileId": {
@@ -49217,6 +49955,710 @@
         ],
         "x-required-permissions": [
           "prepress.review"
+        ]
+      }
+    },
+    "/v1/admin/asset-categories": {
+      "get": {
+        "description": "Useful life, method and GL accounts per category (D-150).\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.listCategories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "accumulatedAccountCode": "1521",
+                    "assetAccountCode": "1520",
+                    "code": "computers",
+                    "expenseAccountCode": "6150",
+                    "gainLossAccountCode": "6910",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+                    "method": "straight_line",
+                    "nameEn": "Computers & IT equipment",
+                    "nameTh": "คอมพิวเตอร์และอุปกรณ์ไอที",
+                    "rowVersion": 1,
+                    "status": "active",
+                    "usefulLifeMonths": 36
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AssetCategoryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Categories",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List asset categories",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.read"
+        ]
+      },
+      "post": {
+        "description": "Useful life (set with the CPA, ⚖) and its asset, accumulated-depreciation, expense and gain / loss accounts (postable, not control accounts). Audited. Requires `Idempotency-Key`.\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.createCategory",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "accumulatedAccountCode": "1521",
+                    "assetAccountCode": "1520",
+                    "code": "computers",
+                    "expenseAccountCode": "6150",
+                    "gainLossAccountCode": "6910",
+                    "nameEn": "Computers & IT equipment",
+                    "nameTh": "คอมพิวเตอร์และอุปกรณ์ไอที",
+                    "usefulLifeMonths": 36
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetCategoryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accumulatedAccountCode": "1521",
+                  "assetAccountCode": "1520",
+                  "code": "computers",
+                  "expenseAccountCode": "6150",
+                  "gainLossAccountCode": "6910",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+                  "method": "straight_line",
+                  "nameEn": "Computers & IT equipment",
+                  "nameTh": "คอมพิวเตอร์และอุปกรณ์ไอที",
+                  "rowVersion": 1,
+                  "status": "active",
+                  "usefulLifeMonths": 36
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AssetCategoryDto"
+                }
+              }
+            },
+            "description": "Category",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "fixed_assets.category_exists": {
+                    "$ref": "#/components/examples/problem.fixed_assets.category_exists"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `fixed_assets.category_exists`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "fixed_assets.account_invalid": {
+                    "$ref": "#/components/examples/problem.fixed_assets.account_invalid"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `fixed_assets.account_invalid`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create an asset category",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.manage"
+        ]
+      }
+    },
+    "/v1/admin/asset-categories/{categoryId}": {
+      "patch": {
+        "description": "Names, status and the useful life for assets registered from now on (registered assets keep their snapshot). Guarded by `If-Match`; audited.\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.updateCategory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "categoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "usefulLifeMonths": 60
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssetCategoryDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accumulatedAccountCode": "1521",
+                  "assetAccountCode": "1520",
+                  "code": "computers",
+                  "expenseAccountCode": "6150",
+                  "gainLossAccountCode": "6910",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+                  "method": "straight_line",
+                  "nameEn": "Computers & IT equipment",
+                  "nameTh": "คอมพิวเตอร์และอุปกรณ์ไอที",
+                  "rowVersion": 2,
+                  "status": "active",
+                  "usefulLifeMonths": 60
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AssetCategoryDto"
+                }
+              }
+            },
+            "description": "Category",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Update an asset category",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.manage"
         ]
       }
     },
@@ -113428,6 +114870,408 @@
         ]
       }
     },
+    "/v1/admin/depreciation-runs": {
+      "get": {
+        "description": "One per month (FA02), newest first.\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.listRuns",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "assetCount": 1,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000550003",
+                    "period": "2026-10",
+                    "runOn": "2026-10-31",
+                    "totalAmount": "1000.00"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DepreciationRunDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Runs",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List depreciation runs",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.read"
+        ]
+      },
+      "post": {
+        "description": "Straight-line depreciation of every active asset for an open month, missed months caught up, posted as one journal (FA02); once per month (the worker runs last month on the 1st). Requires `Idempotency-Key`.\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.run",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "period": "2026-10"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RunDepreciationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assetCount": 1,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000550003",
+                  "period": "2026-10",
+                  "runOn": "2026-10-31",
+                  "totalAmount": "1000.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DepreciationRunDto"
+                }
+              }
+            },
+            "description": "Run",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "fixed_assets.run_exists": {
+                    "$ref": "#/components/examples/problem.fixed_assets.run_exists"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "ledger.period_closed": {
+                    "$ref": "#/components/examples/problem.ledger.period_closed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `fixed_assets.run_exists`, `idempotency.in_progress`, `ledger.period_closed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Run the month’s depreciation",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.manage"
+        ]
+      }
+    },
     "/v1/admin/design-services": {
       "get": {
         "description": "Earliest target date first, with the due state against 5 / 10 business days (D-071).\n\nImplements: D-071.",
@@ -131958,6 +133802,1459 @@
         "summary": "Short-lived download URL",
         "tags": [
           "admin.files"
+        ]
+      }
+    },
+    "/v1/admin/fixed-assets": {
+      "get": {
+        "description": "Assets with cost, accumulated depreciation and net book value (D-150).\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AssetStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "categoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "accumulatedDepreciation": "1000.00",
+                      "acquiredOn": "2026-10-01",
+                      "assetAccountCode": "1520",
+                      "assetNo": "DEVFA-00001",
+                      "categoryCode": "computers",
+                      "categoryId": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+                      "cost": "36000.00",
+                      "costCentreCode": null,
+                      "creditAccountCode": "2410",
+                      "custodianUserId": "0192f3a0-7c1e-7d2a-9b1f-000000000101",
+                      "depreciationStartOn": "2026-10-01",
+                      "disposalProceeds": null,
+                      "disposedOn": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-000000550002",
+                      "location": "สำนักงานกรุงเทพ",
+                      "name": "โน้ตบุ๊กฝ่ายบัญชี (fake)",
+                      "netBookValue": "35000.00",
+                      "residualValue": "0.00",
+                      "source": "manual",
+                      "status": "active",
+                      "usefulLifeMonths": 36,
+                      "vendorInvoiceId": null
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/FixedAssetDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Fixed-asset register",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.read"
+        ]
+      },
+      "post": {
+        "description": "From a vendor bill that capitalised it (P25; never more than the bill’s lines on the category’s asset account) or manually against another account (FA01). Life, method and accounts are the category’s at registration; depreciation starts per `fixed_assets.depreciation_start` (⚖). Requires `Idempotency-Key`.\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.register",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "acquiredOn": "2026-10-01",
+                    "categoryId": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+                    "cost": "36000.00",
+                    "creditAccountCode": "2410",
+                    "location": "สำนักงานกรุงเทพ",
+                    "name": "โน้ตบุ๊กฝ่ายบัญชี (fake)",
+                    "source": "manual"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAssetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accumulatedDepreciation": "0.00",
+                  "acquiredOn": "2026-10-01",
+                  "assetAccountCode": "1520",
+                  "assetNo": "DEVFA-00001",
+                  "categoryCode": "computers",
+                  "categoryId": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+                  "cost": "36000.00",
+                  "costCentreCode": null,
+                  "creditAccountCode": "2410",
+                  "custodianUserId": "0192f3a0-7c1e-7d2a-9b1f-000000000101",
+                  "depreciationStartOn": "2026-10-01",
+                  "disposalProceeds": null,
+                  "disposedOn": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000550002",
+                  "location": "สำนักงานกรุงเทพ",
+                  "name": "โน้ตบุ๊กฝ่ายบัญชี (fake)",
+                  "netBookValue": "36000.00",
+                  "residualValue": "0.00",
+                  "source": "manual",
+                  "status": "active",
+                  "usefulLifeMonths": 36,
+                  "vendorInvoiceId": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FixedAssetDto"
+                }
+              }
+            },
+            "description": "Asset",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "numbering.series_missing": {
+                    "$ref": "#/components/examples/problem.numbering.series_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `numbering.series_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "fixed_assets.account_invalid": {
+                    "$ref": "#/components/examples/problem.fixed_assets.account_invalid"
+                  },
+                  "fixed_assets.cost_exceeds_bill": {
+                    "$ref": "#/components/examples/problem.fixed_assets.cost_exceeds_bill"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `fixed_assets.account_invalid`, `fixed_assets.cost_exceeds_bill`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Register a fixed asset",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.manage"
+        ]
+      }
+    },
+    "/v1/admin/fixed-assets-reports/roll-forward": {
+      "get": {
+        "description": "Per category: cost and accumulated depreciation opening, additions, depreciation, disposals, closing and net book value; the register reconciled to the GL balances of its accounts (difference must be 0, §7 step 8).\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.rollForward",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "example": "2026-10",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "example": "2026-12",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "categories": [
+                    {
+                      "additions": "36000.00",
+                      "category": "computers",
+                      "closingAccumulated": "3000.00",
+                      "closingCost": "36000.00",
+                      "depreciation": "3000.00",
+                      "disposalsAccumulated": "0.00",
+                      "disposalsCost": "0.00",
+                      "name": "คอมพิวเตอร์และอุปกรณ์ไอที",
+                      "netBookValue": "33000.00",
+                      "openingAccumulated": "0.00",
+                      "openingCost": "0.00"
+                    }
+                  ],
+                  "from": "2026-10",
+                  "reconciliation": [
+                    {
+                      "accountCode": "1520",
+                      "difference": "0.00",
+                      "gl": "36000.00",
+                      "register": "36000.00"
+                    },
+                    {
+                      "accountCode": "1521",
+                      "difference": "0.00",
+                      "gl": "-3000.00",
+                      "register": "-3000.00"
+                    }
+                  ],
+                  "to": "2026-12"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RollForwardDto"
+                }
+              }
+            },
+            "description": "Roll-forward",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Fixed-asset roll-forward",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.read"
+        ]
+      }
+    },
+    "/v1/admin/fixed-assets/{assetId}": {
+      "get": {
+        "description": "With its registration snapshot and disposal (D-150).\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accumulatedDepreciation": "1000.00",
+                  "acquiredOn": "2026-10-01",
+                  "assetAccountCode": "1520",
+                  "assetNo": "DEVFA-00001",
+                  "categoryCode": "computers",
+                  "categoryId": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+                  "cost": "36000.00",
+                  "costCentreCode": null,
+                  "creditAccountCode": "2410",
+                  "custodianUserId": "0192f3a0-7c1e-7d2a-9b1f-000000000101",
+                  "depreciationStartOn": "2026-10-01",
+                  "disposalProceeds": null,
+                  "disposedOn": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000550002",
+                  "location": "สำนักงานกรุงเทพ",
+                  "name": "โน้ตบุ๊กฝ่ายบัญชี (fake)",
+                  "netBookValue": "35000.00",
+                  "residualValue": "0.00",
+                  "source": "manual",
+                  "status": "active",
+                  "usefulLifeMonths": 36,
+                  "vendorInvoiceId": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FixedAssetDto"
+                }
+              }
+            },
+            "description": "Asset",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a fixed asset",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.read"
+        ]
+      }
+    },
+    "/v1/admin/fixed-assets/{assetId}/actions/dispose": {
+      "post": {
+        "description": "Depreciation must be posted to the month before; cost and accumulated depreciation leave the books, proceeds are recorded and the rest is gain / loss (FA03). Final. Requires `Idempotency-Key`.\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.dispose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "sold": {
+                  "value": {
+                    "disposedOn": "2027-06-30",
+                    "kind": "sold",
+                    "proceeds": "15000.00",
+                    "proceedsAccountCode": "1121",
+                    "reason": "ขายเครื่องเก่า (fake)"
+                  }
+                },
+                "writeOff": {
+                  "value": {
+                    "disposedOn": "2027-06-30",
+                    "kind": "written_off",
+                    "reason": "ชำรุดใช้การไม่ได้ (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DisposeAssetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accumulatedDepreciation": "1000.00",
+                  "acquiredOn": "2026-10-01",
+                  "assetAccountCode": "1520",
+                  "assetNo": "DEVFA-00001",
+                  "categoryCode": "computers",
+                  "categoryId": "0192f3a0-7c1e-7d2a-9b1f-000000550001",
+                  "cost": "36000.00",
+                  "costCentreCode": null,
+                  "creditAccountCode": "2410",
+                  "custodianUserId": "0192f3a0-7c1e-7d2a-9b1f-000000000101",
+                  "depreciationStartOn": "2026-10-01",
+                  "disposalProceeds": "15000.00",
+                  "disposedOn": "2027-06-30",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000550002",
+                  "location": "สำนักงานกรุงเทพ",
+                  "name": "โน้ตบุ๊กฝ่ายบัญชี (fake)",
+                  "netBookValue": "35000.00",
+                  "residualValue": "0.00",
+                  "source": "manual",
+                  "status": "disposed",
+                  "usefulLifeMonths": 36,
+                  "vendorInvoiceId": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FixedAssetDto"
+                }
+              }
+            },
+            "description": "Asset",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "fixed_assets.already_disposed": {
+                    "$ref": "#/components/examples/problem.fixed_assets.already_disposed"
+                  },
+                  "fixed_assets.depreciation_pending": {
+                    "$ref": "#/components/examples/problem.fixed_assets.depreciation_pending"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `fixed_assets.already_disposed`, `fixed_assets.depreciation_pending`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "fixed_assets.account_invalid": {
+                    "$ref": "#/components/examples/problem.fixed_assets.account_invalid"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `fixed_assets.account_invalid`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Dispose of or write off an asset",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.dispose"
+        ]
+      }
+    },
+    "/v1/admin/fixed-assets/{assetId}/depreciation": {
+      "get": {
+        "description": "Month by month, with the run that posted it (FA02).\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.schedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "accumulatedAfter": "1000.00",
+                    "amount": "1000.00",
+                    "period": "2026-10",
+                    "runId": "0192f3a0-7c1e-7d2a-9b1f-000000550003"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DepreciationLineDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Lines",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Depreciation of an asset",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.read"
         ]
       }
     },
@@ -257584,6 +260881,10 @@
     {
       "description": "Staff uploads and downloads (presign → PUT → complete → signed download).",
       "name": "admin.files"
+    },
+    {
+      "description": "Fixed-asset register (D-150): categories, registration from bills or manual (FA01), monthly straight-line depreciation (FA02), disposal / write-off (FA03), roll-forward with GL reconciliation.",
+      "name": "admin.fixedAssets"
     },
     {
       "description": "Districts — admin-maintained reference data (D-161, D-170).",

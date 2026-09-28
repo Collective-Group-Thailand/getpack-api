@@ -421,6 +421,12 @@ model Entity {
   taxCalendarItems TaxCalendarItem[] @relation("TaxCalendarItemEntity")
   // --- end Finance B5.4
 
+  // --- Finance B5.5
+  assetCategories  AssetCategory[]   @relation("AssetCategoryEntity")
+  fixedAssets      FixedAsset[]      @relation("FixedAssetEntity")
+  depreciationRuns DepreciationRun[] @relation("DepreciationRunEntity")
+  // --- end Finance B5.5
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -1325,6 +1331,7 @@ enum DocumentType {
   pv
   wt
   jv
+  fa
   order_group
   job
   claim

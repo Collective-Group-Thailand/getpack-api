@@ -262,6 +262,12 @@ export const ERROR_CODES = {
   'tax.report_not_final': HttpStatus.CONFLICT,
   'tax.gl_difference': HttpStatus.UNPROCESSABLE_ENTITY,
   'tax.report_not_payable': HttpStatus.CONFLICT,
+  'fixed_assets.category_exists': HttpStatus.CONFLICT,
+  'fixed_assets.account_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'fixed_assets.cost_exceeds_bill': HttpStatus.UNPROCESSABLE_ENTITY,
+  'fixed_assets.run_exists': HttpStatus.CONFLICT,
+  'fixed_assets.already_disposed': HttpStatus.CONFLICT,
+  'fixed_assets.depreciation_pending': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

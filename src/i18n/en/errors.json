@@ -1128,5 +1128,31 @@
       "title": "Nothing to pay on this report",
       "detail": "A {kind} report in status {status} cannot be paid, or it is already paid."
     }
+  },
+  "fixed_assets": {
+    "category_exists": {
+      "title": "Category already exists",
+      "detail": "An asset category with code {code} already exists."
+    },
+    "account_invalid": {
+      "title": "Account not allowed here",
+      "detail": "The account {code} cannot be used as {field} (postable, active, not a control account, of the right type)."
+    },
+    "cost_exceeds_bill": {
+      "title": "Cost exceeds the bill",
+      "detail": "The bill capitalised {capitalised} on this asset account and {registered} is already registered."
+    },
+    "run_exists": {
+      "title": "Depreciation already run",
+      "detail": "The depreciation of {period} is already posted."
+    },
+    "already_disposed": {
+      "title": "Asset already disposed",
+      "detail": "The asset is already disposed of or written off."
+    },
+    "depreciation_pending": {
+      "title": "Depreciation not up to date",
+      "detail": "Post the depreciation up to the month before disposal first (expected {expected}, recorded {accumulated})."
+    }
   }
 }

@@ -601,6 +601,13 @@ model User {
   taxReportsFinalised TaxReport[] @relation("TaxReportFinalisedBy")
   // --- end Finance B5.4
 
+  // --- Finance B5.5
+  assetCategoriesCreated AssetCategory[]   @relation("AssetCategoryCreatedBy")
+  fixedAssetsCustodied   FixedAsset[]      @relation("FixedAssetCustodian")
+  fixedAssetsCreated     FixedAsset[]      @relation("FixedAssetCreatedBy")
+  depreciationRuns       DepreciationRun[] @relation("DepreciationRunCreatedBy")
+  // --- end Finance B5.5
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

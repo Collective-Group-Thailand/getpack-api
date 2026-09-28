@@ -11,6 +11,7 @@ import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.regist
 import { DESIGN_SERVICES_ADMIN_CONTROLLERS } from '@modules/design-services/design-services.registry';
 import { DESIGNS_ADMIN_CONTROLLERS } from '@modules/designs/designs.registry';
 import { DISCOUNT_MEMOS_ADMIN_CONTROLLERS } from '@modules/discount-memos/discount-memos.registry';
+import { FIXED_ASSETS_ADMIN_CONTROLLERS } from '@modules/fixed-assets/fixed-assets.registry';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
 import { LEDGER_ADMIN_CONTROLLERS } from '@modules/ledger/ledger.registry';
@@ -104,6 +105,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...PAYOUTS_ADMIN_CONTROLLERS,
     ...BANKING_ADMIN_CONTROLLERS,
     ...TAX_ADMIN_CONTROLLERS,
+    ...FIXED_ASSETS_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

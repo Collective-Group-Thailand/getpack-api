@@ -198,6 +198,14 @@ const DEV_SERIES = [
     isGapless: true,
     description: '[DEV] fake journal voucher series (B5)',
   },
+  {
+    docType: 'fa',
+    prefix: 'DEVFA',
+    format: '{prefix}-{seq:5}',
+    resetPeriod: 'never',
+    isGapless: true,
+    description: '[DEV] fake fixed-asset number series (B5.5)',
+  },
 ] as const;
 
 export async function seedDev(prisma: PrismaClient, devPassword?: string): Promise<SeedReport> {

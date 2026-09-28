@@ -71,6 +71,7 @@ describe('seed data (B1.2 step 3)', () => {
       'tax.calendar': 'proposed',
       'close.unmatched_items_threshold': 'proposed',
       'tax.gl_accounts': 'proposed',
+      'fixed_assets.depreciation_start': 'pending_cpa',
     });
   });
 

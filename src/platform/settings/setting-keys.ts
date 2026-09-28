@@ -59,6 +59,8 @@ export interface SettingValues {
   };
   'close.unmatched_items_threshold': number;
   /** B5.4 GL control accounts each tax report reconciles to (§7 step 7). */
+  /** B5.5 first month an asset is depreciated (D-150 ⚖). */
+  'fixed_assets.depreciation_start': 'acquisition_month' | 'next_month';
   'tax.gl_accounts': { output_vat: string[]; input_vat: string[]; wht_pnd3: string[]; wht_pnd53: string[]; wht_receivable: string[] };
   'orders.auto_complete_days': number;
   'claims.window_days': number;

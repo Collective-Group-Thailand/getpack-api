@@ -15,6 +15,7 @@ import { CustomersModule } from '@modules/customers/customers.module';
 import { DesignServicesModule } from '@modules/design-services/design-services.module';
 import { DesignsModule } from '@modules/designs/designs.module';
 import { DiscountMemosModule } from '@modules/discount-memos/discount-memos.module';
+import { FixedAssetsModule } from '@modules/fixed-assets/fixed-assets.module';
 import { IamModule } from '@modules/iam/iam.module';
 import { LedgerModule } from '@modules/ledger/ledger.module';
 import { LogisticsModule } from '@modules/logistics/logistics.module';
@@ -105,6 +106,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     PayoutsModule,
     BankingModule,
     TaxModule,
+    FixedAssetsModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

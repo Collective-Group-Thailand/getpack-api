@@ -694,6 +694,18 @@ const CHECKS = [
   'ck_tax_reports__lines',
   'ck_tax_calendar_items__kind',
   'ck_tax_calendar_items__done',
+  // --- B5.5 fixed assets
+  'ck_asset_categories__code',
+  'ck_asset_categories__life',
+  'ck_fixed_assets__asset_no',
+  'ck_fixed_assets__amounts',
+  'ck_fixed_assets__life',
+  'ck_fixed_assets__start',
+  'ck_fixed_assets__source',
+  'ck_fixed_assets__disposal',
+  'ck_fixed_assets__fully',
+  'ck_depreciation_runs__amounts',
+  'ck_depreciation_lines__amounts',
 ];
 
 const TRIGGERS = [
@@ -877,6 +889,12 @@ const TRIGGERS = [
   // --- B5.4 tax
   'tg_tax_reports__frozen',
   'tg_tax_calendar_items__no_delete',
+  // --- B5.5 fixed assets
+  'tg_asset_categories__no_delete',
+  'tg_fixed_assets__frozen',
+  'tg_fixed_assets__no_delete',
+  'tg_depreciation_runs__append_only',
+  'tg_depreciation_lines__append_only',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
