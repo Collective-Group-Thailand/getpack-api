@@ -596,6 +596,10 @@ model User {
   gatewaySettlementsCreated  GatewaySettlement[]   @relation("GatewaySettlementCreatedBy")
   // --- end Finance B5.3
 
+  // --- Finance B5.4
+  taxReportsGenerated TaxReport[] @relation("TaxReportGeneratedBy")
+  taxReportsFinalised TaxReport[] @relation("TaxReportFinalisedBy")
+  // --- end Finance B5.4
 
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))

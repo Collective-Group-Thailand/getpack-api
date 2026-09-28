@@ -685,6 +685,15 @@ const CHECKS = [
   'ck_vendor_invoices__tax_id',
   'ck_wht_certificates__amounts',
   'ck_wht_certificates__void',
+  // --- B5.4 tax
+  'ck_tax_reports__difference',
+  'ck_tax_reports__final',
+  'ck_tax_reports__filed',
+  'ck_tax_reports__paid',
+  'ck_tax_reports__payable_kind',
+  'ck_tax_reports__lines',
+  'ck_tax_calendar_items__kind',
+  'ck_tax_calendar_items__done',
 ];
 
 const TRIGGERS = [
@@ -865,6 +874,9 @@ const TRIGGERS = [
   'tg_vendor_invoice_lines__append_only',
   'tg_vendor_invoices__no_delete',
   'tg_wht_certificates__no_delete',
+  // --- B5.4 tax
+  'tg_tax_reports__frozen',
+  'tg_tax_calendar_items__no_delete',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */

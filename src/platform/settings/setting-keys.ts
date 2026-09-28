@@ -58,6 +58,8 @@ export interface SettingValues {
     reminderDaysBefore: number;
   };
   'close.unmatched_items_threshold': number;
+  /** B5.4 GL control accounts each tax report reconciles to (§7 step 7). */
+  'tax.gl_accounts': { output_vat: string[]; input_vat: string[]; wht_pnd3: string[]; wht_pnd53: string[]; wht_receivable: string[] };
   'orders.auto_complete_days': number;
   'claims.window_days': number;
   'discounts.cs_limit_pct': string;

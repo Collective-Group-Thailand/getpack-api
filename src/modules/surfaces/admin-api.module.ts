@@ -29,6 +29,7 @@ import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.reg
 import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_ADMIN_CONTROLLERS } from '@modules/receivables/receivables.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
+import { TAX_ADMIN_CONTROLLERS } from '@modules/tax/tax.registry';
 import { TIMELINE_ADMIN_CONTROLLERS } from '@modules/timeline/timeline.registry';
 import { Module } from '@nestjs/common';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
@@ -102,6 +103,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...PAYABLES_ADMIN_CONTROLLERS,
     ...PAYOUTS_ADMIN_CONTROLLERS,
     ...BANKING_ADMIN_CONTROLLERS,
+    ...TAX_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

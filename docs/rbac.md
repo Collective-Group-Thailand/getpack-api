@@ -133,6 +133,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `banking.read` — Read company bank accounts, statement lines, unidentified receipts and the cash position (D-061, D-093) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
 | `banking.manage` — Import statements and settlements, match, ignore and identify statement lines (D-061, D-093) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 | `banking.accounts.propose` — Propose company bank accounts (approved by Finance then Finance Manager, §8) (D-093, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `tax.read` — Read tax reports, working papers, WHT registers and the tax calendar (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
+| `tax.manage` — Generate and finalise tax reports (GL difference must be 0) and record filings (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `tax.pay` — Record VAT and withholding-tax payments to the Revenue Department (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

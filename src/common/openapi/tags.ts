@@ -225,4 +225,6 @@ export const API_TAGS: Record<string, string> = {
   'admin.payouts': 'Payout runs: eligible payables, WHT and retention, approval (D-166), bank files (D-093), confirmation, 50 ทวิ, exceptions.',
   'admin.banking': 'Company bank accounts, statement imports, auto / manual matching, unidentified receipts, gateway settlements and the cash position (D-061, D-093).',
   'partner.payables': 'My factory’s POs, goods receipts, billing statements to confirm, tax invoices to submit, payouts and 50 ทวิ (D-090, D-022).',
+  // --- B5.4 tax
+  'admin.tax': 'Sales / purchase tax reports, ภ.พ.30 and ภ.ง.ด.3 / 53 working papers with attachments, WHT registers, GL reconciliation and the tax calendar (§6, §7).',
 };

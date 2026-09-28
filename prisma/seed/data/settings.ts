@@ -405,6 +405,22 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'finance_manager',
   },
   {
+    key: 'tax.gl_accounts',
+    valueType: 'json',
+    value: {
+      output_vat: ['2210'],
+      input_vat: ['1241'],
+      wht_pnd3: ['2232'],
+      wht_pnd53: ['2231'],
+      wht_receivable: ['1230'],
+    },
+    description:
+      'D-033 / accounting-design §7 step 7: GL control accounts each tax report and working paper reconciles to (difference must be 0); follows the chart of accounts (proposed)',
+    decisions: ['D-033'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+  {
     key: 'close.unmatched_items_threshold',
     valueType: 'integer',
     value: 0,

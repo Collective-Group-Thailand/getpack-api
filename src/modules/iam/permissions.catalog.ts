@@ -865,6 +865,26 @@ export const PERMISSIONS = [
     description: 'Propose company bank accounts (approved by Finance then Finance Manager, §8)',
     decisionRefs: ['D-093', 'D-169'],
   },
+
+  // --- Finance: tax (B5.4, accounting-design §2, §6, §7)
+  {
+    key: 'tax.read',
+    audience: 'staff',
+    description: 'Read tax reports, working papers, WHT registers and the tax calendar',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'tax.manage',
+    audience: 'staff',
+    description: 'Generate and finalise tax reports (GL difference must be 0) and record filings',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'tax.pay',
+    audience: 'staff',
+    description: 'Record VAT and withholding-tax payments to the Revenue Department',
+    decisionRefs: ['D-033'],
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];

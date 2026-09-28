@@ -70,6 +70,7 @@ describe('seed data (B1.2 step 3)', () => {
       'banking.auto_match': 'proposed',
       'tax.calendar': 'proposed',
       'close.unmatched_items_threshold': 'proposed',
+      'tax.gl_accounts': 'proposed',
     });
   });
 

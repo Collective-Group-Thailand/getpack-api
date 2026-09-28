@@ -258,6 +258,10 @@ export const ERROR_CODES = {
   'banking.line_already_matched': HttpStatus.CONFLICT,
   'banking.match_amount_mismatch': HttpStatus.UNPROCESSABLE_ENTITY,
   'banking.gl_account_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'tax.report_not_draft': HttpStatus.CONFLICT,
+  'tax.report_not_final': HttpStatus.CONFLICT,
+  'tax.gl_difference': HttpStatus.UNPROCESSABLE_ENTITY,
+  'tax.report_not_payable': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

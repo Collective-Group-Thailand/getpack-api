@@ -42,6 +42,7 @@ import { ReceivablesModule } from '@modules/receivables/receivables.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
 import { SurfacesModule } from '@modules/surfaces/surfaces.module';
+import { TaxModule } from '@modules/tax/tax.module';
 import { TimelineModule } from '@modules/timeline/timeline.module';
 import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -123,6 +124,7 @@ import { LoggerModule } from 'nestjs-pino';
     PayablesModule,
     PayoutsModule,
     BankingModule,
+    TaxModule,
     HealthModule,
     SurfacesModule,
   ],

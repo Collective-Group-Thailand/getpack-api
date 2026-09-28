@@ -416,6 +416,10 @@ model Entity {
   unidentifiedReceipts UnidentifiedReceipt[] @relation("UnidentifiedReceiptEntity")
   // --- end Finance B5.3
 
+  // --- Finance B5.4
+  taxReports       TaxReport[]       @relation("TaxReportEntity")
+  taxCalendarItems TaxCalendarItem[] @relation("TaxCalendarItemEntity")
+  // --- end Finance B5.4
 
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")

@@ -342,6 +342,10 @@ model FiscalPeriod {
   badDebtProvisions BadDebtProvision[]
   // --- end Finance B5.2
 
+  // --- Finance B5.4
+  taxReports       TaxReport[]
+  taxCalendarItems TaxCalendarItem[]
+  // --- end Finance B5.4
 
   @@unique([entityId, startDate], map: "ux_fiscal_periods__entity_id__start_date")
   @@unique([fiscalYearId, periodNo], map: "ux_fiscal_periods__fiscal_year_id__period_no")
@@ -1465,6 +1469,7 @@ model CompanyBankAccount {
   imports         BankStatementImport[]
   lines           BankStatementLine[]
   settlements     GatewaySettlement[]
+  taxReports      TaxReport[]
 
   @@unique([glAccountId], map: "ux_company_bank_accounts__gl_account_id", where: raw("(status = 'active'::bank_account_status)"))
   @@index([entityId], map: "ix_company_bank_accounts__entity_id")
@@ -2074,4 +2079,103 @@ model UnidentifiedReceipt {
   @@index([entityId, status], map: "ix_unidentified_receipts__entity_id__status")
   @@index([matchedPaymentId], map: "ix_unidentified_receipts__matched_payment_id")
   @@map("unidentified_receipts")
+}
+
+// =====================================================================================================
+// Tax (B5.4, accounting-design §2, §6, §7 step 7)
+// =====================================================================================================
+
+enum TaxReportKind {
+  sales_tax
+  purchase_tax
+  pp30
+  pnd3
+  pnd53
+  wht_issued_register
+  wht_received_register
+
+  @@map("tax_report_kind")
+}
+
+enum TaxReportStatus {
+  draft
+  final
+  filed
+
+  @@map("tax_report_status")
+}
+
+enum TaxCalendarStatus {
+  open
+  done
+
+  @@map("tax_calendar_status")
+}
+
+/// A tax report or working paper of a period with its reconciliation to the GL control account: final only
+/// when the difference is 0 (§7 step 7); regenerated while draft; final / filed rows never change their figures.
+model TaxReport {
+  id                   BigInt          @id(map: "pk_tax_reports") @default(autoincrement())
+  publicId             String          @unique(map: "ux_tax_reports__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId             BigInt          @map("entity_id")
+  kind                 TaxReportKind
+  fiscalPeriodId       BigInt          @map("fiscal_period_id")
+  status               TaxReportStatus @default(draft)
+  generatedAt          DateTime        @default(now()) @map("generated_at") @db.Timestamptz(6)
+  generatedById        BigInt?         @map("generated_by")
+  totals               Json
+  lines                Json
+  lineCount            Int             @map("line_count")
+  /// What the report says (VAT / WHT); the GL movement of the control accounts (setting `tax.gl_accounts`).
+  reportAmount         Decimal         @map("report_amount") @db.Decimal(14, 2)
+  glAmount             Decimal         @map("gl_amount") @db.Decimal(14, 2)
+  glDifference         Decimal         @map("gl_difference") @db.Decimal(14, 2)
+  fileObjectIds        BigInt[]        @default([]) @map("file_object_ids")
+  finalisedAt          DateTime?       @map("finalised_at") @db.Timestamptz(6)
+  finalisedById        BigInt?         @map("finalised_by")
+  filedAt              DateTime?       @map("filed_at") @db.Timestamptz(6)
+  filingRef            String?         @map("filing_ref")
+  paidOn               DateTime?       @map("paid_on") @db.Date
+  paidAmount           Decimal?        @map("paid_amount") @db.Decimal(14, 2)
+  companyBankAccountId BigInt?         @map("company_bank_account_id")
+  rowVersion           Int             @default(1) @map("row_version")
+
+  entity             Entity              @relation("TaxReportEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_reports__entity_id")
+  fiscalPeriod       FiscalPeriod        @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_reports__fiscal_period_id")
+  generatedBy        User?               @relation("TaxReportGeneratedBy", fields: [generatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_reports__generated_by")
+  finalisedBy        User?               @relation("TaxReportFinalisedBy", fields: [finalisedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_reports__finalised_by")
+  companyBankAccount CompanyBankAccount? @relation(fields: [companyBankAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_reports__company_bank_account_id")
+  calendarItems      TaxCalendarItem[]
+
+  @@unique([entityId, kind, fiscalPeriodId], map: "ux_tax_reports__entity_id__kind__fiscal_period_id")
+  @@index([fiscalPeriodId], map: "ix_tax_reports__fiscal_period_id")
+  @@index([generatedById], map: "ix_tax_reports__generated_by")
+  @@index([finalisedById], map: "ix_tax_reports__finalised_by")
+  @@index([companyBankAccountId], map: "ix_tax_reports__company_bank_account_id")
+  @@map("tax_reports")
+}
+
+/// Filing / payment due dates per form and period (setting `tax.calendar`), reminded before they fall due.
+model TaxCalendarItem {
+  id             BigInt            @id(map: "pk_tax_calendar_items") @default(autoincrement())
+  publicId       String            @unique(map: "ux_tax_calendar_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId       BigInt            @map("entity_id")
+  kind           TaxReportKind
+  fiscalPeriodId BigInt            @map("fiscal_period_id")
+  dueOn          DateTime          @map("due_on") @db.Date
+  status         TaxCalendarStatus @default(open)
+  remindedAt     DateTime?         @map("reminded_at") @db.Timestamptz(6)
+  doneAt         DateTime?         @map("done_at") @db.Timestamptz(6)
+  taxReportId    BigInt?           @map("tax_report_id")
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity       Entity       @relation("TaxCalendarItemEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_calendar_items__entity_id")
+  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_calendar_items__fiscal_period_id")
+  taxReport    TaxReport?   @relation(fields: [taxReportId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_tax_calendar_items__tax_report_id")
+
+  @@unique([entityId, kind, fiscalPeriodId], map: "ux_tax_calendar_items__entity_id__kind__fiscal_period_id")
+  @@index([status, dueOn], map: "ix_tax_calendar_items__status__due_on")
+  @@index([fiscalPeriodId], map: "ix_tax_calendar_items__fiscal_period_id")
+  @@index([taxReportId], map: "ix_tax_calendar_items__tax_report_id")
+  @@map("tax_calendar_items")
 }

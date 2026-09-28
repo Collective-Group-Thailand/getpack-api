@@ -2663,6 +2663,50 @@
           "type": "https://errors.packio/shipping.version_open"
         }
       },
+      "problem.tax.gl_difference": {
+        "summary": "tax.gl_difference",
+        "value": {
+          "code": "tax.gl_difference",
+          "detail": "รายงาน ({report}) ต่างจากบัญชีคุม ({gl}) อยู่ {difference} ต้องเป็น 0 ก่อนสรุป",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "รายงานภาษีไม่ตรงกับบัญชีแยกประเภท",
+          "type": "https://errors.packio/tax.gl_difference"
+        }
+      },
+      "problem.tax.report_not_draft": {
+        "summary": "tax.report_not_draft",
+        "value": {
+          "code": "tax.report_not_draft",
+          "detail": "รายงานอยู่ในสถานะ {status} จึงสร้างใหม่ไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "รายงานภาษีปิดแล้ว",
+          "type": "https://errors.packio/tax.report_not_draft"
+        }
+      },
+      "problem.tax.report_not_final": {
+        "summary": "tax.report_not_final",
+        "value": {
+          "code": "tax.report_not_final",
+          "detail": "ยื่นแบบได้เฉพาะรายงานที่สรุปแล้ว (สถานะปัจจุบัน {status})",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "รายงานภาษียังไม่สรุป",
+          "type": "https://errors.packio/tax.report_not_final"
+        }
+      },
+      "problem.tax.report_not_payable": {
+        "summary": "tax.report_not_payable",
+        "value": {
+          "code": "tax.report_not_payable",
+          "detail": "รายงาน {kind} สถานะ {status} ชำระไม่ได้ หรือชำระแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ชำระภาษีจากรายงานนี้ไม่ได้",
+          "type": "https://errors.packio/tax.report_not_payable"
+        }
+      },
       "problem.validation.failed": {
         "summary": "validation.failed",
         "value": {
@@ -19473,6 +19517,27 @@
         ],
         "type": "string"
       },
+      "FileTaxReportDto": {
+        "properties": {
+          "filedAt": {
+            "description": "Default: now",
+            "example": "2026-11-14T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "filingRef": {
+            "description": "The Revenue Department’s filing reference",
+            "example": "RD-2611-000123",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "filingRef"
+        ],
+        "type": "object"
+      },
       "FileUploadStatus": {
         "enum": [
           "pending",
@@ -20193,6 +20258,28 @@
         },
         "required": [
           "kind"
+        ],
+        "type": "object"
+      },
+      "GenerateTaxReportDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxReportKind"
+              }
+            ],
+            "example": "pp30"
+          },
+          "period": {
+            "example": "2026-10",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "period"
         ],
         "type": "object"
       },
@@ -25937,6 +26024,25 @@
         },
         "required": [
           "patternId"
+        ],
+        "type": "object"
+      },
+      "PayTaxReportDto": {
+        "properties": {
+          "companyBankAccountId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000530103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "paidOn": {
+            "example": "2026-11-14",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "paidOn",
+          "companyBankAccountId"
         ],
         "type": "object"
       },
@@ -40282,6 +40388,73 @@
         ],
         "type": "string"
       },
+      "TaxCalendarItemDto": {
+        "properties": {
+          "dueOn": {
+            "example": "2026-11-07",
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000540002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxFilingKind"
+              }
+            ],
+            "example": "pnd53"
+          },
+          "period": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "remindedAt": {
+            "example": "2026-11-04T08:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxCalendarStatus"
+              }
+            ],
+            "example": "open"
+          },
+          "taxReportId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "period",
+          "dueOn",
+          "status",
+          "remindedAt",
+          "taxReportId"
+        ],
+        "type": "object"
+      },
+      "TaxCalendarStatus": {
+        "enum": [
+          "open",
+          "done"
+        ],
+        "type": "string"
+      },
       "TaxCode": {
         "enum": [
           "output_vat",
@@ -40291,6 +40464,14 @@
           "wht_receivable",
           "wht_pnd3",
           "wht_pnd53"
+        ],
+        "type": "string"
+      },
+      "TaxFilingKind": {
+        "enum": [
+          "pp30",
+          "pnd3",
+          "pnd53"
         ],
         "type": "string"
       },
@@ -40580,6 +40761,314 @@
           "status",
           "ratePct",
           "reason"
+        ],
+        "type": "object"
+      },
+      "TaxReportDto": {
+        "properties": {
+          "fileReady": {
+            "description": "Its CSV export (for ภ.ง.ด.3 / 53 the attachment) is stored",
+            "example": true,
+            "type": "boolean"
+          },
+          "filedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filingRef": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finalisedAt": {
+            "example": "2026-11-05T10:05:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fiscalPeriodId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000510010",
+            "format": "uuid",
+            "type": "string"
+          },
+          "generatedAt": {
+            "example": "2026-11-05T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "glAmount": {
+            "description": "Movement of its GL control accounts (setting `tax.gl_accounts`)",
+            "example": "140.00",
+            "type": "string"
+          },
+          "glDifference": {
+            "description": "Must be 0 to finalise (§7 step 7)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000540001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxReportKind"
+              }
+            ],
+            "example": "pp30"
+          },
+          "lineCount": {
+            "example": 12,
+            "type": "integer"
+          },
+          "lines": {
+            "description": "Report lines (columns per kind: VAT reports by source document; WHT by certificate)",
+            "example": [
+              {
+                "base": "1000.00",
+                "documentDate": "2026-10-05",
+                "documentNo": "DEVTR-2610-00001",
+                "late": false,
+                "partyBranch": "00000",
+                "partyName": "บริษัท ตัวอย่าง จำกัด (fake)",
+                "partyTaxId": "0000000000001",
+                "seq": 1,
+                "vat": "70.00"
+              }
+            ],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "paidAmount": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paidOn": {
+            "example": null,
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "period": {
+            "description": "Month (YYYY-MM)",
+            "example": "2026-10",
+            "type": "string"
+          },
+          "reportAmount": {
+            "description": "What the report says",
+            "example": "140.00",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxReportStatus"
+              }
+            ],
+            "example": "final"
+          },
+          "totals": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "inputVat": "560.00",
+              "netPayable": "140.00",
+              "outputVat": "700.00"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "period",
+          "fiscalPeriodId",
+          "status",
+          "totals",
+          "lineCount",
+          "reportAmount",
+          "glAmount",
+          "glDifference",
+          "generatedAt",
+          "finalisedAt",
+          "filedAt",
+          "filingRef",
+          "paidOn",
+          "paidAmount",
+          "fileReady",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "TaxReportKind": {
+        "enum": [
+          "sales_tax",
+          "purchase_tax",
+          "pp30",
+          "pnd3",
+          "pnd53",
+          "wht_issued_register",
+          "wht_received_register"
+        ],
+        "type": "string"
+      },
+      "TaxReportStatus": {
+        "enum": [
+          "draft",
+          "final",
+          "filed"
+        ],
+        "type": "string"
+      },
+      "TaxReportSummaryDto": {
+        "properties": {
+          "fileReady": {
+            "description": "Its CSV export (for ภ.ง.ด.3 / 53 the attachment) is stored",
+            "example": true,
+            "type": "boolean"
+          },
+          "filedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filingRef": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finalisedAt": {
+            "example": "2026-11-05T10:05:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fiscalPeriodId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000510010",
+            "format": "uuid",
+            "type": "string"
+          },
+          "generatedAt": {
+            "example": "2026-11-05T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "glAmount": {
+            "description": "Movement of its GL control accounts (setting `tax.gl_accounts`)",
+            "example": "140.00",
+            "type": "string"
+          },
+          "glDifference": {
+            "description": "Must be 0 to finalise (§7 step 7)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000540001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxReportKind"
+              }
+            ],
+            "example": "pp30"
+          },
+          "lineCount": {
+            "example": 12,
+            "type": "integer"
+          },
+          "paidAmount": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "paidOn": {
+            "example": null,
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "period": {
+            "description": "Month (YYYY-MM)",
+            "example": "2026-10",
+            "type": "string"
+          },
+          "reportAmount": {
+            "description": "What the report says",
+            "example": "140.00",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TaxReportStatus"
+              }
+            ],
+            "example": "final"
+          },
+          "totals": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "inputVat": "560.00",
+              "netPayable": "140.00",
+              "outputVat": "700.00"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "period",
+          "fiscalPeriodId",
+          "status",
+          "totals",
+          "lineCount",
+          "reportAmount",
+          "glAmount",
+          "glDifference",
+          "generatedAt",
+          "finalisedAt",
+          "filedAt",
+          "filingRef",
+          "paidOn",
+          "paidAmount",
+          "fileReady"
         ],
         "type": "object"
       },
@@ -188049,6 +188538,1951 @@
         ]
       }
     },
+    "/v1/admin/tax-calendar": {
+      "get": {
+        "description": "ภ.พ.30 and ภ.ง.ด.3 / 53 due dates per month (setting `tax.calendar`), reminded ahead, done when filed.\n\nImplements: D-033.",
+        "operationId": "admin.tax.calendar",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TaxCalendarStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "dueOn": "2026-11-07",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000540002",
+                    "kind": "pnd53",
+                    "period": "2026-10",
+                    "remindedAt": "2026-11-04T08:00:00+07:00",
+                    "status": "open",
+                    "taxReportId": null
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TaxCalendarItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Items",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Tax calendar",
+        "tags": [
+          "admin.tax"
+        ],
+        "x-required-permissions": [
+          "tax.read"
+        ]
+      }
+    },
+    "/v1/admin/tax-reports": {
+      "get": {
+        "description": "Sales / purchase tax reports, ภ.พ.30 and ภ.ง.ด.3 / 53 working papers and the WHT registers per month, with their GL reconciliation (§6, §7 step 7).\n\nImplements: D-033.",
+        "operationId": "admin.tax.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "example": "2026-10",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TaxReportKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "fileReady": false,
+                    "filedAt": null,
+                    "filingRef": null,
+                    "finalisedAt": null,
+                    "fiscalPeriodId": "0192f3a0-7c1e-7d2a-9b1f-000000510010",
+                    "generatedAt": "2026-11-05T10:00:00+07:00",
+                    "glAmount": "70.00",
+                    "glDifference": "0.00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000540001",
+                    "kind": "sales_tax",
+                    "lineCount": 1,
+                    "paidAmount": null,
+                    "paidOn": null,
+                    "period": "2026-10",
+                    "reportAmount": "70.00",
+                    "status": "draft",
+                    "totals": {
+                      "base": "1000.00",
+                      "vat": "70.00"
+                    }
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TaxReportSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Reports",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List tax reports",
+        "tags": [
+          "admin.tax"
+        ],
+        "x-required-permissions": [
+          "tax.read"
+        ]
+      },
+      "post": {
+        "description": "Builds (or rebuilds while draft) the report of a month from the posted journals and certificates, and reconciles it to its GL control accounts (setting `tax.gl_accounts`). Late documents are included with a `late` flag. Requires `Idempotency-Key`.\n\nImplements: D-033.",
+        "operationId": "admin.tax.generate",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "kind": "pp30",
+                    "period": "2026-10"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/GenerateTaxReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "fileReady": false,
+                  "filedAt": null,
+                  "filingRef": null,
+                  "finalisedAt": null,
+                  "fiscalPeriodId": "0192f3a0-7c1e-7d2a-9b1f-000000510010",
+                  "generatedAt": "2026-11-05T10:00:00+07:00",
+                  "glAmount": "70.00",
+                  "glDifference": "0.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000540001",
+                  "kind": "sales_tax",
+                  "lineCount": 1,
+                  "lines": [
+                    {
+                      "base": "1000.00",
+                      "documentDate": "2026-10-05",
+                      "documentNo": "DEVTR-2610-00001",
+                      "late": false,
+                      "partyBranch": "00000",
+                      "partyName": "บริษัท ตัวอย่าง จำกัด (fake)",
+                      "partyTaxId": "0000000000001",
+                      "seq": 1,
+                      "vat": "70.00"
+                    }
+                  ],
+                  "paidAmount": null,
+                  "paidOn": null,
+                  "period": "2026-10",
+                  "reportAmount": "70.00",
+                  "status": "draft",
+                  "totals": {
+                    "base": "1000.00",
+                    "vat": "70.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxReportDto"
+                }
+              }
+            },
+            "description": "Draft report",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "tax.report_not_draft": {
+                    "$ref": "#/components/examples/problem.tax.report_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `tax.report_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Generate a tax report",
+        "tags": [
+          "admin.tax"
+        ],
+        "x-required-permissions": [
+          "tax.manage"
+        ]
+      }
+    },
+    "/v1/admin/tax-reports/{reportId}": {
+      "get": {
+        "description": "With its lines, each traceable to its journal entry and source document (§1.7).\n\nImplements: D-033.",
+        "operationId": "admin.tax.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reportId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "fileReady": false,
+                  "filedAt": null,
+                  "filingRef": null,
+                  "finalisedAt": null,
+                  "fiscalPeriodId": "0192f3a0-7c1e-7d2a-9b1f-000000510010",
+                  "generatedAt": "2026-11-05T10:00:00+07:00",
+                  "glAmount": "70.00",
+                  "glDifference": "0.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000540001",
+                  "kind": "sales_tax",
+                  "lineCount": 1,
+                  "lines": [
+                    {
+                      "base": "1000.00",
+                      "documentDate": "2026-10-05",
+                      "documentNo": "DEVTR-2610-00001",
+                      "late": false,
+                      "partyBranch": "00000",
+                      "partyName": "บริษัท ตัวอย่าง จำกัด (fake)",
+                      "partyTaxId": "0000000000001",
+                      "seq": 1,
+                      "vat": "70.00"
+                    }
+                  ],
+                  "paidAmount": null,
+                  "paidOn": null,
+                  "period": "2026-10",
+                  "reportAmount": "70.00",
+                  "status": "draft",
+                  "totals": {
+                    "base": "1000.00",
+                    "vat": "70.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxReportDto"
+                }
+              }
+            },
+            "description": "Report",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a tax report",
+        "tags": [
+          "admin.tax"
+        ],
+        "x-required-permissions": [
+          "tax.read"
+        ]
+      }
+    },
+    "/v1/admin/tax-reports/{reportId}/actions/file": {
+      "post": {
+        "description": "The Revenue Department’s reference of the filed return; its calendar item is done. Requires `Idempotency-Key`.\n\nImplements: D-033.",
+        "operationId": "admin.tax.file",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reportId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "filingRef": "RD-2611-000123"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/FileTaxReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "fileReady": true,
+                  "filedAt": "2026-11-14T10:00:00+07:00",
+                  "filingRef": "RD-2611-000123",
+                  "finalisedAt": null,
+                  "fiscalPeriodId": "0192f3a0-7c1e-7d2a-9b1f-000000510010",
+                  "generatedAt": "2026-11-05T10:00:00+07:00",
+                  "glAmount": "70.00",
+                  "glDifference": "0.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000540001",
+                  "kind": "sales_tax",
+                  "lineCount": 1,
+                  "lines": [
+                    {
+                      "base": "1000.00",
+                      "documentDate": "2026-10-05",
+                      "documentNo": "DEVTR-2610-00001",
+                      "late": false,
+                      "partyBranch": "00000",
+                      "partyName": "บริษัท ตัวอย่าง จำกัด (fake)",
+                      "partyTaxId": "0000000000001",
+                      "seq": 1,
+                      "vat": "70.00"
+                    }
+                  ],
+                  "paidAmount": null,
+                  "paidOn": null,
+                  "period": "2026-10",
+                  "reportAmount": "70.00",
+                  "status": "filed",
+                  "totals": {
+                    "base": "1000.00",
+                    "vat": "70.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxReportDto"
+                }
+              }
+            },
+            "description": "Filed report",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "tax.report_not_final": {
+                    "$ref": "#/components/examples/problem.tax.report_not_final"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `tax.report_not_final`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Record the filing",
+        "tags": [
+          "admin.tax"
+        ],
+        "x-required-permissions": [
+          "tax.manage"
+        ]
+      }
+    },
+    "/v1/admin/tax-reports/{reportId}/actions/finalise": {
+      "post": {
+        "description": "Rebuilt and refused unless it agrees with the GL (difference 0, §7 step 7); its CSV (ภ.ง.ด.3 / 53: the attachment) is stored; its figures never change afterwards. The ภ.พ.30 working paper closes the month’s VAT (P27). Requires `Idempotency-Key`.\n\nImplements: D-033.",
+        "operationId": "admin.tax.finalise",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reportId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "fileReady": true,
+                  "filedAt": null,
+                  "filingRef": null,
+                  "finalisedAt": "2026-11-05T10:05:00+07:00",
+                  "fiscalPeriodId": "0192f3a0-7c1e-7d2a-9b1f-000000510010",
+                  "generatedAt": "2026-11-05T10:00:00+07:00",
+                  "glAmount": "70.00",
+                  "glDifference": "0.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000540001",
+                  "kind": "sales_tax",
+                  "lineCount": 1,
+                  "lines": [
+                    {
+                      "base": "1000.00",
+                      "documentDate": "2026-10-05",
+                      "documentNo": "DEVTR-2610-00001",
+                      "late": false,
+                      "partyBranch": "00000",
+                      "partyName": "บริษัท ตัวอย่าง จำกัด (fake)",
+                      "partyTaxId": "0000000000001",
+                      "seq": 1,
+                      "vat": "70.00"
+                    }
+                  ],
+                  "paidAmount": null,
+                  "paidOn": null,
+                  "period": "2026-10",
+                  "reportAmount": "70.00",
+                  "status": "final",
+                  "totals": {
+                    "base": "1000.00",
+                    "vat": "70.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxReportDto"
+                }
+              }
+            },
+            "description": "Final report",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "tax.report_not_draft": {
+                    "$ref": "#/components/examples/problem.tax.report_not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `tax.report_not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "tax.gl_difference": {
+                    "$ref": "#/components/examples/problem.tax.gl_difference"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `tax.gl_difference`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Finalise a tax report",
+        "tags": [
+          "admin.tax"
+        ],
+        "x-required-permissions": [
+          "tax.manage"
+        ]
+      }
+    },
+    "/v1/admin/tax-reports/{reportId}/actions/pay": {
+      "post": {
+        "description": "The net VAT of a final ภ.พ.30 (P27P) or the withholding tax of a final ภ.ง.ด.3 / 53 (P28) paid from a company bank account; once. Requires `Idempotency-Key`.\n\nImplements: D-033.",
+        "operationId": "admin.tax.pay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reportId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "companyBankAccountId": "0192f3a0-7c1e-7d2a-9b1f-000000530103",
+                    "paidOn": "2026-11-14"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PayTaxReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "fileReady": true,
+                  "filedAt": null,
+                  "filingRef": null,
+                  "finalisedAt": null,
+                  "fiscalPeriodId": "0192f3a0-7c1e-7d2a-9b1f-000000510010",
+                  "generatedAt": "2026-11-05T10:00:00+07:00",
+                  "glAmount": "70.00",
+                  "glDifference": "0.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000540001",
+                  "kind": "pp30",
+                  "lineCount": 1,
+                  "lines": [
+                    {
+                      "base": "1000.00",
+                      "documentDate": "2026-10-05",
+                      "documentNo": "DEVTR-2610-00001",
+                      "late": false,
+                      "partyBranch": "00000",
+                      "partyName": "บริษัท ตัวอย่าง จำกัด (fake)",
+                      "partyTaxId": "0000000000001",
+                      "seq": 1,
+                      "vat": "70.00"
+                    }
+                  ],
+                  "paidAmount": "140.00",
+                  "paidOn": "2026-11-14",
+                  "period": "2026-10",
+                  "reportAmount": "70.00",
+                  "status": "filed",
+                  "totals": {
+                    "base": "1000.00",
+                    "vat": "70.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TaxReportDto"
+                }
+              }
+            },
+            "description": "Paid report",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "payouts.bank_account_missing": {
+                    "$ref": "#/components/examples/problem.payouts.bank_account_missing"
+                  },
+                  "tax.report_not_payable": {
+                    "$ref": "#/components/examples/problem.tax.report_not_payable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `payouts.bank_account_missing`, `tax.report_not_payable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Record the tax payment",
+        "tags": [
+          "admin.tax"
+        ],
+        "x-required-permissions": [
+          "tax.pay"
+        ]
+      }
+    },
+    "/v1/admin/tax-reports/{reportId}/export": {
+      "get": {
+        "description": "A short-lived signed URL of the CSV stored at finalising (`file.not_ready` for a draft).\n\nImplements: D-033.",
+        "operationId": "admin.tax.export",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "reportId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-11-05T10:10:00+07:00",
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Signed URL",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Download a tax report",
+        "tags": [
+          "admin.tax"
+        ],
+        "x-required-permissions": [
+          "tax.read"
+        ]
+      }
+    },
     "/v1/admin/tax/rates": {
       "get": {
         "description": "VAT and withholding rates with their dated versions (accounting-design §2 ⚖): customer withholding (D-174) and vendor withholding per line type — production 3 %, transport 1 %, services 3 % by default.\n\nImplements: D-033, D-174.",
@@ -255322,6 +257756,10 @@
     {
       "description": "Zones and their postcodes (D-013, D-114).",
       "name": "admin.shippingZones"
+    },
+    {
+      "description": "Sales / purchase tax reports, ภ.พ.30 and ภ.ง.ด.3 / 53 working papers with attachments, WHT registers, GL reconciliation and the tax calendar (§6, §7).",
+      "name": "admin.tax"
     },
     {
       "description": "VAT and withholding rates with dated versions (accounting-design §2 ⚖, D-174); changes approved (`tax_setting_change`).",

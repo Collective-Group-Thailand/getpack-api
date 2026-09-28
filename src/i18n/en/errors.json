@@ -1110,5 +1110,23 @@
       "title": "GL account not usable",
       "detail": "Account {code} is not a free postable cash account."
     }
+  },
+  "tax": {
+    "report_not_draft": {
+      "title": "Tax report already final",
+      "detail": "The report is {status}; a final report is not regenerated."
+    },
+    "report_not_final": {
+      "title": "Tax report not final",
+      "detail": "Only a final report can be filed (it is {status})."
+    },
+    "gl_difference": {
+      "title": "Tax report does not agree with the GL",
+      "detail": "The report ({report}) differs from its GL control accounts ({gl}) by {difference}; the difference must be 0."
+    },
+    "report_not_payable": {
+      "title": "Nothing to pay on this report",
+      "detail": "A {kind} report in status {status} cannot be paid, or it is already paid."
+    }
   }
 }
