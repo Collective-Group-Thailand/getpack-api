@@ -10,7 +10,11 @@ import {
   PAYMENT_SCHEDULE_TEMPLATES,
   REFERRAL_PROMOTION,
 } from './data/commerce';
-import { FULFILMENT_FEATURE_FLAGS, MILESTONE_ROUTE_FAMILIES, MILESTONE_ROUTE_FAMILY_BY_TYPE } from './data/fulfilment';
+import {
+  FULFILMENT_FEATURE_FLAGS,
+  MILESTONE_ROUTE_FAMILIES,
+  MILESTONE_ROUTE_FAMILY_BY_TYPE,
+} from './data/fulfilment';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
 import { UNMET_DEMAND_REASONS } from './data/quotes';
@@ -348,14 +352,23 @@ async function ensureNotifications(tx: Tx, count: (what: string) => void): Promi
     const template = await tx.notificationTemplate.findUniqueOrThrow({
       where: { key_channel: { key: seed.templateKey, channel: seed.channel } },
     });
+    const team = seed.staffTeamCode
+      ? await tx.team.findUniqueOrThrow({ where: { code: seed.staffTeamCode } })
+      : null;
     const exists = await tx.notificationRoute.count({
-      where: { eventType: seed.eventType, audience: seed.audience, staffTeamId: null, channel: seed.channel },
+      where: {
+        eventType: seed.eventType,
+        audience: seed.audience,
+        staffTeamId: team?.id ?? null,
+        channel: seed.channel,
+      },
     });
     if (exists) continue;
     await tx.notificationRoute.create({
       data: {
         eventType: seed.eventType,
         audience: seed.audience,
+        staffTeamId: team?.id ?? null,
         channel: seed.channel,
         templateId: template.id,
         isCritical: seed.isCritical ?? false,
@@ -525,7 +538,9 @@ async function ensureMilestoneRoutes(tx: Tx, count: (what: string) => void): Pro
     const type = await tx.productType.findUnique({ where: { code: typeCode } });
     if (!type) continue;
     for (const variant of ['standard', 'mockup'] as const) {
-      const existing = await tx.milestoneRoute.findFirst({ where: { productTypeId: type.id, printTypeId: null, variant } });
+      const existing = await tx.milestoneRoute.findFirst({
+        where: { productTypeId: type.id, printTypeId: null, variant },
+      });
       if (existing) continue;
       const steps = MILESTONE_ROUTE_FAMILIES[variant === 'mockup' ? 'mockup' : family]!;
       const route = await tx.milestoneRoute.create({

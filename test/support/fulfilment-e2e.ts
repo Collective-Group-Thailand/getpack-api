@@ -98,7 +98,7 @@ export interface FulfilmentApp extends CommerceApp {
    * Runs every registered domain-event subscriber (the worker's consumers, exactly-once through
    * `event_consumptions`) on the events recorded since the suite started, until nothing new happens.
    */
-  pump: (opts?: { skip?: string[] }) => Promise<number>;
+  pump: (opts?: { skip?: string[]; notifications?: boolean }) => Promise<number>;
 }
 
 /** The commerce app plus the worker's subscriber registry, so suites can drive event chains (B4). */
@@ -115,8 +115,8 @@ export async function bootFulfilmentApp(): Promise<FulfilmentApp> {
   const since = new Date();
   const registry = app.get(SubscriberRegistry);
   const runner = app.get(EventConsumerRunner);
-  const pump = async (opts: { skip?: string[] } = {}) => {
-    const skip = new Set(['notifications.router', ...(opts.skip ?? [])]);
+  const pump = async (opts: { skip?: string[]; notifications?: boolean } = {}) => {
+    const skip = new Set([...(opts.notifications ? [] : ['notifications.router']), ...(opts.skip ?? [])]);
     let total = 0;
     for (let round = 0; round < 25; round++) {
       const events = await prisma.domainEvent.findMany({

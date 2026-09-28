@@ -20,7 +20,7 @@ export type RecipientResolver = (
 
 /**
  * Who an audience of the routing matrix means for one event (D-143). Built in: `customer`
- * (`payload.customerId`, or the aggregate when it is a user), `staff_team` (members of the route's
+ * (`payload.customerId`, or the owner of the aggregate), `staff_team` (members of the route's
  * team, plus the team itself for LINE/Teams) and `assignee` (per aggregate type — the approval
  * engine registers its approvers). `factory` and `company_member` are registered by the partner
  * (B2.2) and company (B3.5) modules.
@@ -59,18 +59,65 @@ async function customerRecipients(
   _route: NotificationRoute,
   tx: Tx,
 ): Promise<Recipient[]> {
-  const fromPayload = event.payload['customerId'];
-  const publicId =
-    typeof fromPayload === 'string'
-      ? fromPayload
-      : event.aggregateType === 'user'
-        ? event.aggregateId
-        : undefined;
-  if (!publicId) return [];
-  const user = await tx.user.findFirst({
-    where: { publicId, kind: 'customer', status: 'active', anonymisedAt: null },
+  const ids = await customersOf(event, tx);
+  if (ids.length === 0) return [];
+  const users = await tx.user.findMany({
+    where: { OR: ids.map((i) => i.where), kind: 'customer', status: 'active', anonymisedAt: null },
   });
-  return user ? [{ userId: user.id, locale: user.locale, displayName: user.displayName }] : [];
+  return users.map((user) => ({ userId: user.id, locale: user.locale, displayName: user.displayName }));
+}
+
+/**
+ * The customer(s) an event is about: `payload.customerId`, a user aggregate, or the owner of the aggregate
+ * (order, order group, claim, RFQ, payment, refund; the orders a shipment carries).
+ */
+async function customersOf(
+  event: DomainEventEnvelope,
+  tx: Tx,
+): Promise<{ where: { publicId?: string; id?: bigint } }[]> {
+  const fromPayload = event.payload['customerId'];
+  if (typeof fromPayload === 'string') return [{ where: { publicId: fromPayload } }];
+  const id = event.aggregateId;
+  const byId = (userId: bigint | null | undefined) => (userId ? [{ where: { id: userId } }] : []);
+  switch (event.aggregateType) {
+    case 'user':
+      return [{ where: { publicId: id } }];
+    case 'order':
+      return byId((await tx.order.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))?.customerUserId);
+    case 'order_group':
+      return byId(
+        (await tx.orderGroup.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))?.customerUserId,
+      );
+    case 'claim':
+      return byId((await tx.claim.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))?.customerUserId);
+    case 'rfq':
+      return byId((await tx.rfq.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))?.customerUserId);
+    case 'payment':
+      return byId(
+        (
+          await tx.payment.findUnique({
+            where: { publicId: id },
+            select: { orderGroup: { select: { customerUserId: true } } },
+          })
+        )?.orderGroup?.customerUserId,
+      );
+    case 'refund':
+      return byId(
+        (
+          await tx.refund.findUnique({
+            where: { publicId: id },
+            select: { payment: { select: { orderGroup: { select: { customerUserId: true } } } } },
+          })
+        )?.payment.orderGroup?.customerUserId,
+      );
+    case 'shipment': {
+      const orderIds = (event.payload['orderIds'] as string[] | undefined) ?? [];
+      const orders = await tx.order.findMany({ where: { publicId: { in: orderIds } }, select: { customerUserId: true } });
+      return [...new Set(orders.map((o) => o.customerUserId))].map((userId) => ({ where: { id: userId } }));
+    }
+    default:
+      return [];
+  }
 }
 
 async function staffTeamRecipients(

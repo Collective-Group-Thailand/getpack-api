@@ -1,3 +1,5 @@
+import { MATRIX_ROUTES, MATRIX_TEMPLATES } from './notification-matrix';
+
 /**
  * Platform notifications seeded by `pnpm db:seed` (B1.3): approvers hear about requests routed to
  * them (ADR-0006). Business notifications (orders, payments, shipping…) are added with their modules
@@ -17,9 +19,11 @@ export interface NotificationRouteSeed {
   templateKey: string;
   channel: NotificationTemplateSeed['channel'];
   isCritical?: boolean;
+  /** For `staff_team` routes: the team (TEAMS code). */
+  staffTeamCode?: string;
 }
 
-export const NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] = [
+const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
   {
     key: 'approval.requested:assignee',
     channel: 'in_app',
@@ -83,7 +87,7 @@ export const NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] = [
   },
 ];
 
-export const NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
+const PLATFORM_ROUTES: readonly NotificationRouteSeed[] = [
   {
     eventType: 'approval.requested',
     audience: 'assignee',
@@ -109,3 +113,9 @@ export const NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
     channel: 'in_app',
   },
 ];
+
+export const NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] = [
+  ...PLATFORM_TEMPLATES,
+  ...MATRIX_TEMPLATES,
+];
+export const NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [...PLATFORM_ROUTES, ...MATRIX_ROUTES];
