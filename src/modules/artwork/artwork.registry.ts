@@ -8,4 +8,8 @@ import { AdminProofsController, StoreProofsController } from './proofs.controlle
 export const ARTWORK_STORE_CONTROLLERS: Type<unknown>[] = [StoreArtworkController, StoreProofsController];
 
 /** `/v1/admin/*` controllers of artwork. */
-export const ARTWORK_ADMIN_CONTROLLERS: Type<unknown>[] = [AdminArtworkController, AdminProofsController, AdminMockupsController];
+export const ARTWORK_ADMIN_CONTROLLERS: Type<unknown>[] = [
+  AdminArtworkController,
+  AdminProofsController,
+  AdminMockupsController,
+];

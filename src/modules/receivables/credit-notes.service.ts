@@ -97,7 +97,10 @@ export class CreditNotesService {
 
   /** Issues a credit note now (rule-driven, or an approved request). */
   async issue(tx: Tx, input: CreditNoteInput, actor: Actor): Promise<CustomerDocument> {
-    const order = await tx.order.findUniqueOrThrow({ where: { id: input.orderId }, include: { orderGroup: true } });
+    const order = await tx.order.findUniqueOrThrow({
+      where: { id: input.orderId },
+      include: { orderGroup: true },
+    });
     const delivery = await tx.customerDocument.findFirst({
       where: { orderId: order.id, docKind: { in: ['final', 'delivery'] }, status: 'issued' },
       include: { receivableItem: true },
@@ -123,14 +126,21 @@ export class CreditNotesService {
       : advances.reduce((a, l) => a.add(l.grossAmount.toString()), ZERO());
     const creditable = base.sub(credited._sum.grossAmount?.toString() ?? '0');
     if (gross.lte(0) || gross.gt(creditable))
-      throw new DomainException('receivables.credit_exceeds', { params: { amount: formatMoney(MoneyDecimal.max(creditable, 0)) } });
+      throw new DomainException('receivables.credit_exceeds', {
+        params: { amount: formatMoney(MoneyDecimal.max(creditable, 0)) },
+      });
     const item = delivery?.receivableItem ?? null;
     const openItem = item && ['open', 'partially_paid'].includes(item.status) ? item : null;
-    const settleTo: CreditSettlement = input.settleTo ?? (openItem && D(openItem.openAmount).gte(gross) ? 'receivable' : 'store_credit');
+    const settleTo: CreditSettlement =
+      input.settleTo ?? (openItem && D(openItem.openAmount).gte(gross) ? 'receivable' : 'store_credit');
     if (settleTo === 'receivable' && (!openItem || D(openItem.openAmount).lt(gross)))
-      throw new DomainException('receivables.credit_exceeds', { params: { amount: formatMoney(openItem ? D(openItem.openAmount) : 0) } });
+      throw new DomainException('receivables.credit_exceeds', {
+        params: { amount: formatMoney(openItem ? D(openItem.openAmount) : 0) },
+      });
     const notDue = openItem && settleTo === 'receivable' && D(openItem.vatNotDueAmount).gte(vat) && vat.gt(0);
-    const reason = await tx.creditNoteReason.findUniqueOrThrow({ where: { code: input.reasonCode ?? REASON_OF_KIND[input.cnKind] } });
+    const reason = await tx.creditNoteReason.findUniqueOrThrow({
+      where: { code: input.reasonCode ?? REASON_OF_KIND[input.cnKind] },
+    });
     const { buyer, fullForm } = await this.documents.buyerOfGroup(tx, order.orderGroupId);
     const doc = await this.documents.issue(
       tx,
@@ -207,16 +217,27 @@ export class CreditNotesService {
    * Debit note (ใบเพิ่มหนี้, §2) against the order's delivery document: an additional amount the customer owes,
    * with a reason from the controlled list; issued by a Finance Manager and collected like an invoice.
    */
-  async issueDebitNote(actor: UserActor, orderPublicId: string, input: { net: string; reasonCode: string; note: string; dueDate?: string }) {
+  async issueDebitNote(
+    actor: UserActor,
+    orderPublicId: string,
+    input: { net: string; reasonCode: string; note: string; dueDate?: string },
+  ) {
     const doc = await this.prisma.withTx(async (tx) => {
-      const order = await tx.order.findUnique({ where: { publicId: orderPublicId }, include: { orderGroup: true } });
+      const order = await tx.order.findUnique({
+        where: { publicId: orderPublicId },
+        include: { orderGroup: true },
+      });
       if (!order) throw new DomainException('http.not_found');
       const original = await tx.customerDocument.findFirst({
         where: { orderId: order.id, docKind: { in: ['final', 'delivery'] }, status: 'issued' },
       });
-      if (!original) throw new DomainException('receivables.document_not_voidable', { params: { reason: 'the order has no delivery document yet' } });
+      if (!original)
+        throw new DomainException('receivables.document_not_voidable', {
+          params: { reason: 'the order has no delivery document yet' },
+        });
       const reason = await tx.creditNoteReason.findUnique({ where: { code: input.reasonCode } });
-      if (!reason?.active) throw new DomainException('receivables.reason_invalid', { params: { code: input.reasonCode } });
+      if (!reason?.active)
+        throw new DomainException('receivables.reason_invalid', { params: { code: input.reasonCode } });
       const net = D(input.net);
       const rate = D(original.vatRatePct);
       const vat = round(net.mul(rate).div(100));
@@ -240,7 +261,16 @@ export class CreditNotesService {
           originalDocumentId: original.id,
           creditNoteReasonId: reason.id,
           taxNature: order.taxNature,
-          lines: [{ description: `${reason.nameTh} — ${input.note}`.slice(0, 500), orderId: order.id, net, vatRatePct: rate.toFixed(4), vat, taxNature: order.taxNature }],
+          lines: [
+            {
+              description: `${reason.nameTh} — ${input.note}`.slice(0, 500),
+              orderId: order.id,
+              net,
+              vatRatePct: rate.toFixed(4),
+              vat,
+              taxNature: order.taxNature,
+            },
+          ],
           amountDue: net.add(vat),
           dueDate: input.dueDate ?? today,
           links: [{ documentId: original.id, kind: 'debits', amount: net.add(vat) }],
@@ -264,16 +294,32 @@ export class CreditNotesService {
 
   // --- requests under maker-checker ------------------------------------------------------------------------
 
-  async request(actor: UserActor, orderPublicId: string, input: CreditNoteRequestInput, claimId?: bigint | null) {
+  async request(
+    actor: UserActor,
+    orderPublicId: string,
+    input: CreditNoteRequestInput,
+    claimId?: bigint | null,
+  ) {
     const row = await this.prisma.withTx((tx) => this.requestIn(tx, actor, orderPublicId, input, claimId));
     return this.getRequest(row.publicId);
   }
 
-  async requestIn(tx: Tx, actor: UserActor, orderPublicId: string, input: CreditNoteRequestInput, claimId?: bigint | null) {
+  async requestIn(
+    tx: Tx,
+    actor: UserActor,
+    orderPublicId: string,
+    input: CreditNoteRequestInput,
+    claimId?: bigint | null,
+  ) {
     const order = await tx.order.findUnique({ where: { publicId: orderPublicId } });
     if (!order) throw new DomainException('http.not_found');
-    const reason = await tx.creditNoteReason.findUnique({ where: { code: input.reasonCode ?? REASON_OF_KIND[input.cnKind] } });
-    if (!reason?.active) throw new DomainException('receivables.reason_invalid', { params: { code: input.reasonCode ?? input.cnKind } });
+    const reason = await tx.creditNoteReason.findUnique({
+      where: { code: input.reasonCode ?? REASON_OF_KIND[input.cnKind] },
+    });
+    if (!reason?.active)
+      throw new DomainException('receivables.reason_invalid', {
+        params: { code: input.reasonCode ?? input.cnKind },
+      });
     const amount = D(input.amount);
     const request = await tx.creditNoteRequest.create({
       data: {
@@ -294,9 +340,18 @@ export class CreditNotesService {
       requester: actor,
       amount: formatMoney(amount),
       entityId: order.entityId,
-      payload: { order: order.orderCode, amount: formatMoney(amount), reason: reason.code, kind: input.cnKind, note: input.note },
+      payload: {
+        order: order.orderCode,
+        amount: formatMoney(amount),
+        reason: reason.code,
+        kind: input.cnKind,
+        note: input.note,
+      },
     });
-    await tx.creditNoteRequest.update({ where: { id: request.id }, data: { approvalRequestId: approval.id } });
+    await tx.creditNoteRequest.update({
+      where: { id: request.id },
+      data: { approvalRequestId: approval.id },
+    });
     await this.audit.record(tx, {
       category: 'finance',
       action: 'customer_document.request',
@@ -313,7 +368,12 @@ export class CreditNotesService {
         aggregateType: 'order',
         aggregateId: order.publicId,
         entityId: order.entityId,
-        payload: { requestId: request.publicId, orderId: order.publicId, amount: formatMoney(amount), kind: input.cnKind },
+        payload: {
+          requestId: request.publicId,
+          orderId: order.publicId,
+          amount: formatMoney(amount),
+          kind: input.cnKind,
+        },
       },
       actor,
     );
@@ -327,12 +387,18 @@ export class CreditNotesService {
     if (event.payload['policyKey'] !== POLICY) return;
     const approval = await tx.approvalRequest.findUnique({ where: { publicId: event.aggregateId } });
     if (!approval) return;
-    const request = await tx.creditNoteRequest.findUnique({ where: { id: approval.subjectId }, include: { reason: true } });
+    const request = await tx.creditNoteRequest.findUnique({
+      where: { id: approval.subjectId },
+      include: { reason: true },
+    });
     if (!request || request.status !== 'pending_approval') return;
     if (event.type !== 'approval.approved') {
       await tx.creditNoteRequest.update({
         where: { id: request.id },
-        data: { status: event.type === 'approval.withdrawn' ? 'withdrawn' : 'rejected', decidedAt: new Date() },
+        data: {
+          status: event.type === 'approval.withdrawn' ? 'withdrawn' : 'rejected',
+          decidedAt: new Date(),
+        },
       });
       return;
     }
@@ -367,25 +433,47 @@ export class CreditNotesService {
       });
       if (request.claimId) {
         const resolution = await tx.claimResolution.findFirst({
-          where: { claimId: request.claimId, action: { in: ['credit_note', 'store_credit'] }, customerDocumentId: null },
+          where: {
+            claimId: request.claimId,
+            action: { in: ['credit_note', 'store_credit'] },
+            customerDocumentId: null,
+          },
         });
-        if (resolution) await tx.claimResolution.update({ where: { id: resolution.id }, data: { customerDocumentId: doc.id } });
+        if (resolution)
+          await tx.claimResolution.update({
+            where: { id: resolution.id },
+            data: { customerDocumentId: doc.id },
+          });
       }
     } catch (error) {
       if (!(error instanceof DomainException)) throw error;
       // The order changed since the request (e.g. a larger credit already issued): the request cannot apply.
       await tx.$executeRaw`ROLLBACK TO SAVEPOINT issue_cn`;
-      await tx.creditNoteRequest.update({ where: { id: request.id }, data: { status: 'rejected', decidedAt: new Date() } });
+      await tx.creditNoteRequest.update({
+        where: { id: request.id },
+        data: { status: 'rejected', decidedAt: new Date() },
+      });
     }
   }
 
   /** Claims resolved with a credit note or store credit (B4.5 `claim.*_requested`) become requests. */
-  @OnDomainEvent(['claim.credit_note_requested', 'claim.store_credit_requested'], { consumer: 'receivables.claim_credits' })
+  @OnDomainEvent(['claim.credit_note_requested', 'claim.store_credit_requested'], {
+    consumer: 'receivables.claim_credits',
+  })
   async onClaimCredit(event: DomainEventEnvelope, tx: Tx): Promise<void> {
-    const claim = await tx.claim.findUnique({ where: { publicId: event.aggregateId }, include: { order: true } });
+    const claim = await tx.claim.findUnique({
+      where: { publicId: event.aggregateId },
+      include: { order: true },
+    });
     if (!claim || event.actor.type !== 'user' || !event.actor.userId) return;
     const user = await tx.user.findUniqueOrThrow({ where: { id: BigInt(event.actor.userId) } });
-    const actor: UserActor = { type: 'user', userId: user.id, publicId: user.publicId, audience: 'staff', scopes: [] };
+    const actor: UserActor = {
+      type: 'user',
+      userId: user.id,
+      publicId: user.publicId,
+      audience: 'staff',
+      scopes: [],
+    };
     await this.requestIn(
       tx,
       actor,
@@ -401,7 +489,10 @@ export class CreditNotesService {
   }
 
   async getRequest(publicId: string) {
-    const row = await this.prisma.creditNoteRequest.findUnique({ where: { publicId }, include: CN_REQUEST_INCLUDE });
+    const row = await this.prisma.creditNoteRequest.findUnique({
+      where: { publicId },
+      include: CN_REQUEST_INCLUDE,
+    });
     if (!row) throw new DomainException('http.not_found');
     return row;
   }

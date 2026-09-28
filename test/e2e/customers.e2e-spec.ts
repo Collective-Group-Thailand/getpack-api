@@ -64,7 +64,9 @@ describe('customers (e2e, B3.1)', () => {
     expect((list.body.data as { id: string }[]).map((a) => a.id)).toEqual([second.body.id, first.body.id]);
     expect(list.body.data[1].isDefault).toBe(false);
 
-    const bad = await as(ctx, customer).post('/v1/store/addresses', address({ postcode: '10110' })).expect(422);
+    const bad = await as(ctx, customer)
+      .post('/v1/store/addresses', address({ postcode: '10110' }))
+      .expect(422);
     expect(bad.body.errors[0].path).toBe('postcode');
 
     await as(ctx, customer).delete(`/v1/store/addresses/${first.body.id}`).expect(204);
@@ -84,8 +86,12 @@ describe('customers (e2e, B3.1)', () => {
       postcode: geo.postcode,
       withholdsTax: true,
     };
-    await as(ctx, customer).post('/v1/store/tax-profiles', { ...body, taxId: '0000000000010' }).expect(422);
-    await as(ctx, customer).post('/v1/store/tax-profiles', { ...body, branchType: 'branch' }).expect(422);
+    await as(ctx, customer)
+      .post('/v1/store/tax-profiles', { ...body, taxId: '0000000000010' })
+      .expect(422);
+    await as(ctx, customer)
+      .post('/v1/store/tax-profiles', { ...body, branchType: 'branch' })
+      .expect(422);
     const created = await as(ctx, customer).post('/v1/store/tax-profiles', body).expect(201);
     expect(created.body).toMatchObject({ branchCode: '00000', withholdsTax: true, isDefault: true });
     const branch = await as(ctx, customer)
@@ -96,10 +102,16 @@ describe('customers (e2e, B3.1)', () => {
 
   it('lets CS find or create a customer and act for them; others are refused', async () => {
     const created = await as(ctx, cs)
-      .post('/v1/admin/customers', { phone: `08${String(ctx.run).padStart(8, '0').slice(-8)}`, displayName: 'ลูกค้า CS' })
+      .post('/v1/admin/customers', {
+        phone: `08${String(ctx.run).padStart(8, '0').slice(-8)}`,
+        displayName: 'ลูกค้า CS',
+      })
       .expect(201);
     expect(created.body.created).toBe(true);
-    expect(created.body.customer).toMatchObject({ createdVia: 'cs', customerCode: expect.stringMatching(/^DEVCU-/) });
+    expect(created.body.customer).toMatchObject({
+      createdVia: 'cs',
+      customerCode: expect.stringMatching(/^DEVCU-/),
+    });
     const again = await as(ctx, cs)
       .post('/v1/admin/customers', { phone: created.body.customer.phone, displayName: 'ซ้ำ' })
       .expect(200);
@@ -109,7 +121,9 @@ describe('customers (e2e, B3.1)', () => {
     await as(ctx, cs).post(`/v1/admin/customers/${id}/addresses`, address()).expect(201);
     const listed = await as(ctx, cs).get(`/v1/admin/customers/${id}/addresses`).expect(200);
     expect(listed.body.meta.total).toBe(1);
-    const found = await as(ctx, cs).get(`/v1/admin/customers?q=${encodeURIComponent(created.body.customer.phone)}`);
+    const found = await as(ctx, cs).get(
+      `/v1/admin/customers?q=${encodeURIComponent(created.body.customer.phone)}`,
+    );
     expect((found.body.data as { id: string }[]).map((c) => c.id)).toContain(id);
 
     await as(ctx, prepress).get('/v1/admin/customers').expect(403);

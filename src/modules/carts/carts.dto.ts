@@ -92,7 +92,13 @@ export class UpdateCartItemDto {
   @TextField({ example: 'ใช้โลโก้เดิม', max: 500, optional: true, nullable: true })
   designNote?: string | null;
 
-  @ApiPropertyOptional({ type: String, format: 'uuid', nullable: true, example: null, description: 'My online design (B4.1)' })
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'My online design (B4.1)',
+  })
   @IsOptional()
   @IsUUID()
   designDocumentId?: string | null;
@@ -102,7 +108,10 @@ export class UpdateCartItemDto {
 }
 
 export class SetDestinationsDto {
-  @ApiProperty({ type: [DestinationInputDto], description: 'Replaces every destination; sum = item quantity' })
+  @ApiProperty({
+    type: [DestinationInputDto],
+    description: 'Replaces every destination; sum = item quantity',
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(20)
@@ -215,7 +224,8 @@ export class CartItemDto {
 
   @ApiProperty({
     example: '13380.00',
-    description: 'Price of the configuration incl. VAT and design fees, excluding shipping (priced at checkout)',
+    description:
+      'Price of the configuration incl. VAT and design fees, excluding shipping (priced at checkout)',
   })
   productGrossAmount!: string;
 
@@ -236,7 +246,13 @@ export class CartItemDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   designNote!: string | null;
 
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null, description: 'The online design used (B4.1)' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'The online design used (B4.1)',
+  })
   designDocumentId!: string | null;
 
   @ApiProperty({ enum: MOCKUP_OPTIONS, enumName: 'MockupOption', example: 'none' })
@@ -252,7 +268,8 @@ export class CartItemDto {
 
   @ApiProperty({
     example: false,
-    description: 'Reorder with unchanged artwork: the approved proof carries over and no new proof is needed (D-153)',
+    description:
+      'Reorder with unchanged artwork: the approved proof carries over and no new proof is needed (D-153)',
   })
   reusesApprovedArtwork!: boolean;
 

@@ -15,12 +15,21 @@ import { EntitiesService } from '@platform/entities/entities.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
-export const COMPANY_ROLES = ['company_admin', 'company_buyer', 'company_approver', 'company_accountant'] as const;
+export const COMPANY_ROLES = [
+  'company_admin',
+  'company_buyer',
+  'company_approver',
+  'company_accountant',
+] as const;
 export type CompanyRole = (typeof COMPANY_ROLES)[number];
 
 export const COMPANY_INCLUDE = {
   branches: { where: { deletedAt: null }, orderBy: [{ isDefault: 'desc' }, { branchCode: 'asc' }] },
-  members: { where: { status: { not: 'removed' } }, include: { user: { select: { publicId: true, displayName: true, phone: true, email: true } } }, orderBy: { id: 'asc' } },
+  members: {
+    where: { status: { not: 'removed' } },
+    include: { user: { select: { publicId: true, displayName: true, phone: true, email: true } } },
+    orderBy: { id: 'asc' },
+  },
   kycDocuments: { include: { fileObject: { select: { publicId: true } } }, orderBy: { id: 'asc' } },
 } as const satisfies Prisma.CompanyInclude;
 export type CompanyRow = Prisma.CompanyGetPayload<{ include: typeof COMPANY_INCLUDE }>;
@@ -59,7 +68,11 @@ export interface SettingsInput {
 
 /** KYC documents a company must provide before review (D-120). */
 export function requiredKyc(isVatRegistered: boolean): KycDocType[] {
-  return ['company_certificate', 'signatory_id', ...(isVatRegistered ? (['vat_registration_pp20'] as KycDocType[]) : [])];
+  return [
+    'company_certificate',
+    'signatory_id',
+    ...(isVatRegistered ? (['vat_registration_pp20'] as KycDocType[]) : []),
+  ];
 }
 
 function invalid(path: string, message: string, code = 'invalid'): never {
@@ -90,7 +103,12 @@ export class CompaniesService {
   // --- access ------------------------------------------------------------------------------------------
 
   /** The company when the customer is an active member whose company roles grant `permission`. */
-  async forMember(actor: UserActor, publicId: string, permission?: string, db: Tx = this.prisma): Promise<CompanyRow> {
+  async forMember(
+    actor: UserActor,
+    publicId: string,
+    permission?: string,
+    db: Tx = this.prisma,
+  ): Promise<CompanyRow> {
     const company = await db.company.findUnique({ where: { publicId }, include: COMPANY_INCLUDE });
     if (!company || company.status === 'closed') throw new DomainException('http.not_found');
     const member = company.members.find((m) => m.userId === actor.userId && m.status === 'active');
@@ -105,16 +123,22 @@ export class CompaniesService {
     const company = await db.company.findUnique({ where: { publicId }, include: COMPANY_INCLUDE });
     if (!company || !company.members.some((m) => m.userId === customerUserId && m.status === 'active'))
       throw new DomainException('http.not_found');
-    if (company.status !== 'active') throw new DomainException('companies.invalid_status', { params: { status: company.status } });
-    if (!(await this.hasCompanyPermission(customerUserId, company.id, 'company_orders.place'))) throw new DomainException('auth.forbidden');
+    if (company.status !== 'active')
+      throw new DomainException('companies.invalid_status', { params: { status: company.status } });
+    if (!(await this.hasCompanyPermission(customerUserId, company.id, 'company_orders.place')))
+      throw new DomainException('auth.forbidden');
     return company;
   }
 
   async hasCompanyPermission(userId: bigint, companyId: bigint, permission: string): Promise<boolean> {
     const access = await this.permissions.forUser(userId);
-    const keys = access.roles.filter((r) => r.scopeType === 'company' && r.scopeId === companyId).map((r) => r.key);
+    const keys = access.roles
+      .filter((r) => r.scopeType === 'company' && r.scopeId === companyId)
+      .map((r) => r.key);
     if (keys.length === 0) return false;
-    const n = await this.prisma.rolePermission.count({ where: { role: { key: { in: keys } }, permission: { key: permission } } });
+    const n = await this.prisma.rolePermission.count({
+      where: { role: { key: { in: keys } }, permission: { key: permission } },
+    });
     return n > 0;
   }
 
@@ -134,7 +158,13 @@ export class CompaniesService {
 
   list(where: Prisma.CompanyWhereInput, page: number, perPage: number) {
     return Promise.all([
-      this.prisma.company.findMany({ where, include: COMPANY_INCLUDE, orderBy: { createdAt: 'desc' }, skip: (page - 1) * perPage, take: perPage }),
+      this.prisma.company.findMany({
+        where,
+        include: COMPANY_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
       this.prisma.company.count({ where }),
     ]);
   }
@@ -158,11 +188,29 @@ export class CompaniesService {
           appliedById: actor.userId,
         },
       });
-      await this.createBranch(tx, company.id, { ...input.headOffice, branchType: 'head_office', branchCode: '00000', isDefault: true }, actor.userId);
+      await this.createBranch(
+        tx,
+        company.id,
+        { ...input.headOffice, branchType: 'head_office', branchCode: '00000', isDefault: true },
+        actor.userId,
+      );
       await tx.companyMember.create({
-        data: { companyId: company.id, userId: actor.userId, status: 'active', roleKeys: ['company_admin'], joinedAt: new Date() },
+        data: {
+          companyId: company.id,
+          userId: actor.userId,
+          status: 'active',
+          roleKeys: ['company_admin'],
+          joinedAt: new Date(),
+        },
       });
-      await this.grantRoles(tx, actor.userId, company.id, ['company_admin'], actor.userId, 'Applied for the company');
+      await this.grantRoles(
+        tx,
+        actor.userId,
+        company.id,
+        ['company_admin'],
+        actor.userId,
+        'Applied for the company',
+      );
       await this.record(tx, company, 'company.applied', { legalName: company.legalName }, actor);
       return company;
     });
@@ -172,7 +220,12 @@ export class CompaniesService {
 
   // --- settings (Company Admin) ----------------------------------------------------------------------
 
-  async updateSettings(actor: UserActor, publicId: string, ifMatch: string | undefined, input: SettingsInput): Promise<CompanyRow> {
+  async updateSettings(
+    actor: UserActor,
+    publicId: string,
+    ifMatch: string | undefined,
+    input: SettingsInput,
+  ): Promise<CompanyRow> {
     return this.prisma.withTx(async (tx) => {
       const company = await this.forMember(actor, publicId, 'company_profile.manage', tx);
       assertIfMatch(ifMatch, companyEtag(company));
@@ -180,15 +233,22 @@ export class CompaniesService {
         where: { id: company.id },
         data: {
           ...(input.tradeName !== undefined && { tradeName: input.tradeName?.trim() || null }),
-          ...(input.documentEmail !== undefined && { documentEmail: input.documentEmail?.toLowerCase() ?? null }),
+          ...(input.documentEmail !== undefined && {
+            documentEmail: input.documentEmail?.toLowerCase() ?? null,
+          }),
           ...(input.withholdsTax !== undefined && { withholdsTax: input.withholdsTax }),
           ...(input.poNumberPolicy !== undefined && { poNumberPolicy: input.poNumberPolicy }),
-          ...(input.orderApprovalThreshold !== undefined && { orderApprovalThreshold: input.orderApprovalThreshold }),
+          ...(input.orderApprovalThreshold !== undefined && {
+            orderApprovalThreshold: input.orderApprovalThreshold,
+          }),
           updatedById: actor.userId,
           rowVersion: { increment: 1 },
         },
       });
-      if (input.orderApprovalThreshold !== undefined && String(company.orderApprovalThreshold?.toFixed(2) ?? null) !== String(input.orderApprovalThreshold)) {
+      if (
+        input.orderApprovalThreshold !== undefined &&
+        String(company.orderApprovalThreshold?.toFixed(2) ?? null) !== String(input.orderApprovalThreshold)
+      ) {
         // D-123: the company's own approval threshold is audited.
         await this.audit.record(tx, {
           category: 'config',
@@ -196,7 +256,10 @@ export class CompaniesService {
           actor,
           resourceType: 'company',
           resourcePublicId: company.publicId,
-          data: { from: company.orderApprovalThreshold?.toFixed(2) ?? null, to: input.orderApprovalThreshold },
+          data: {
+            from: company.orderApprovalThreshold?.toFixed(2) ?? null,
+            to: input.orderApprovalThreshold,
+          },
         });
       }
       await this.record(tx, row, 'company.settings_updated', { fields: Object.keys(input) }, actor);
@@ -210,7 +273,8 @@ export class CompaniesService {
     return this.prisma.withTx(async (tx) => {
       const company = await this.forMember(actor, publicId, 'company_profile.manage', tx);
       if (input.branchType === 'head_office') invalid('branchType', 'the head office exists already');
-      if (company.branches.some((b) => b.branchCode === input.branchCode)) throw new DomainException('companies.branch_exists');
+      if (company.branches.some((b) => b.branchCode === input.branchCode))
+        throw new DomainException('companies.branch_exists');
       await this.createBranch(tx, company.id, input, actor.userId);
       await this.touch(tx, company.id);
       await this.record(tx, company, 'company.branch_added', { branchCode: input.branchCode }, actor);
@@ -224,7 +288,10 @@ export class CompaniesService {
       const branch = company.branches.find((b) => b.publicId === branchPublicId);
       if (!branch) throw new DomainException('http.not_found');
       if (branch.branchType === 'head_office') throw new DomainException('companies.head_office_required');
-      await tx.companyBranch.update({ where: { id: branch.id }, data: { deletedAt: new Date(), isDefault: false, rowVersion: { increment: 1 } } });
+      await tx.companyBranch.update({
+        where: { id: branch.id },
+        data: { deletedAt: new Date(), isDefault: false, rowVersion: { increment: 1 } },
+      });
       if (branch.isDefault) {
         const head = company.branches.find((b) => b.branchType === 'head_office')!;
         await tx.companyBranch.update({ where: { id: head.id }, data: { isDefault: true } });
@@ -238,9 +305,15 @@ export class CompaniesService {
   private async createBranch(tx: Tx, companyId: bigint, input: BranchInput, createdById: bigint) {
     const province = await tx.geoProvince.findUnique({ where: { publicId: input.provinceId } });
     if (!province) invalid('provinceId', 'unknown province', 'exists');
-    const subdistrict = input.subdistrictId ? await tx.geoSubdistrict.findUnique({ where: { publicId: input.subdistrictId } }) : null;
+    const subdistrict = input.subdistrictId
+      ? await tx.geoSubdistrict.findUnique({ where: { publicId: input.subdistrictId } })
+      : null;
     if (input.subdistrictId && !subdistrict) invalid('subdistrictId', 'unknown subdistrict', 'exists');
-    if (input.isDefault) await tx.companyBranch.updateMany({ where: { companyId, isDefault: true }, data: { isDefault: false } });
+    if (input.isDefault)
+      await tx.companyBranch.updateMany({
+        where: { companyId, isDefault: true },
+        data: { isDefault: false },
+      });
     return tx.companyBranch.create({
       data: {
         companyId,
@@ -260,12 +333,22 @@ export class CompaniesService {
 
   // --- KYC (D-120) -----------------------------------------------------------------------------------
 
-  async addKycDocument(actor: UserActor, publicId: string, input: { docType: KycDocType; fileId: string; issuedOn?: string | null }) {
+  async addKycDocument(
+    actor: UserActor,
+    publicId: string,
+    input: { docType: KycDocType; fileId: string; issuedOn?: string | null },
+  ) {
     return this.prisma.withTx(async (tx) => {
       const company = await this.forMember(actor, publicId, 'company_profile.manage', tx);
-      if (!['applied', 'kyc_review', 'active'].includes(company.status)) throw new DomainException('companies.invalid_status', { params: { status: company.status } });
+      if (!['applied', 'kyc_review', 'active'].includes(company.status))
+        throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       const file = await tx.fileObject.findUnique({ where: { publicId: input.fileId } });
-      if (!file || file.ownerUserId !== actor.userId || file.uploadStatus !== 'uploaded' || file.scanStatus === 'infected')
+      if (
+        !file ||
+        file.ownerUserId !== actor.userId ||
+        file.uploadStatus !== 'uploaded' ||
+        file.scanStatus === 'infected'
+      )
         invalid('fileId', 'not an uploaded file of yours', 'fileReady');
       await tx.companyKycDocument.create({
         data: {
@@ -288,18 +371,29 @@ export class CompaniesService {
   async submitKyc(actor: UserActor, publicId: string): Promise<CompanyRow> {
     return this.prisma.withTx(async (tx) => {
       const company = await this.forMember(actor, publicId, 'company_profile.manage', tx);
-      if (company.status !== 'applied') throw new DomainException('companies.invalid_status', { params: { status: company.status } });
+      if (company.status !== 'applied')
+        throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       const have = new Set(company.kycDocuments.filter((d) => d.status !== 'rejected').map((d) => d.docType));
       const missing = requiredKyc(company.isVatRegistered).filter((t) => !have.has(t));
-      if (missing.length) throw new DomainException('companies.kyc_incomplete', { params: { missing: missing.join(', ') } });
-      const row = await tx.company.update({ where: { id: company.id }, data: { status: 'kyc_review', rowVersion: { increment: 1 } } });
+      if (missing.length)
+        throw new DomainException('companies.kyc_incomplete', { params: { missing: missing.join(', ') } });
+      const row = await tx.company.update({
+        where: { id: company.id },
+        data: { status: 'kyc_review', rowVersion: { increment: 1 } },
+      });
       await this.record(tx, row, 'company.kyc_submitted', {}, actor);
       return this.get(publicId, tx);
     });
   }
 
   /** Staff verify or reject one document; a certificate older than the setting cannot be verified. */
-  async reviewKycDocument(actor: UserActor, publicId: string, documentId: string, outcome: 'verified' | 'rejected', note: string | null) {
+  async reviewKycDocument(
+    actor: UserActor,
+    publicId: string,
+    documentId: string,
+    outcome: 'verified' | 'rejected',
+    note: string | null,
+  ) {
     return this.prisma.withTx(async (tx) => {
       const company = await this.get(publicId, tx);
       const doc = company.kycDocuments.find((d) => d.publicId === documentId);
@@ -312,31 +406,67 @@ export class CompaniesService {
       }
       await tx.companyKycDocument.update({
         where: { id: doc.id },
-        data: { status: outcome, verifiedById: actor.userId, verifiedAt: new Date(), note, rowVersion: { increment: 1 } },
+        data: {
+          status: outcome,
+          verifiedById: actor.userId,
+          verifiedAt: new Date(),
+          note,
+          rowVersion: { increment: 1 },
+        },
       });
       await this.touch(tx, company.id);
-      await this.record(tx, company, 'company.kyc_document_reviewed', { docType: doc.docType, outcome }, actor);
+      await this.record(
+        tx,
+        company,
+        'company.kyc_document_reviewed',
+        { docType: doc.docType, outcome },
+        actor,
+      );
       return this.get(publicId, tx);
     });
   }
 
   /** Staff decide the application: approve (every required document verified) activates the company. */
-  async decideKyc(actor: UserActor, publicId: string, approve: boolean, reason: string | null): Promise<CompanyRow> {
+  async decideKyc(
+    actor: UserActor,
+    publicId: string,
+    approve: boolean,
+    reason: string | null,
+  ): Promise<CompanyRow> {
     return this.prisma.withTx(async (tx) => {
       const company = await this.get(publicId, tx);
-      if (company.status !== 'kyc_review') throw new DomainException('companies.invalid_status', { params: { status: company.status } });
+      if (company.status !== 'kyc_review')
+        throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       if (!approve) {
-        const row = await tx.company.update({ where: { id: company.id }, data: { status: 'applied', statusReason: reason, kycReviewedById: actor.userId, rowVersion: { increment: 1 } } });
+        const row = await tx.company.update({
+          where: { id: company.id },
+          data: {
+            status: 'applied',
+            statusReason: reason,
+            kycReviewedById: actor.userId,
+            rowVersion: { increment: 1 },
+          },
+        });
         await this.record(tx, row, 'company.kyc_rejected', { reason }, actor);
         return this.get(publicId, tx);
       }
-      const verified = new Set(company.kycDocuments.filter((d) => d.status === 'verified').map((d) => d.docType));
+      const verified = new Set(
+        company.kycDocuments.filter((d) => d.status === 'verified').map((d) => d.docType),
+      );
       const missing = requiredKyc(company.isVatRegistered).filter((t) => !verified.has(t));
-      if (missing.length) throw new DomainException('companies.kyc_incomplete', { params: { missing: missing.join(', ') } });
+      if (missing.length)
+        throw new DomainException('companies.kyc_incomplete', { params: { missing: missing.join(', ') } });
       const code = company.companyCode ?? (await this.numbering.next(tx, 'company'));
       const row = await tx.company.update({
         where: { id: company.id },
-        data: { status: 'active', companyCode: code, kycApprovedAt: new Date(), kycReviewedById: actor.userId, statusReason: null, rowVersion: { increment: 1 } },
+        data: {
+          status: 'active',
+          companyCode: code,
+          kycApprovedAt: new Date(),
+          kycReviewedById: actor.userId,
+          statusReason: null,
+          rowVersion: { increment: 1 },
+        },
       });
       await this.record(tx, row, 'company.activated', { companyCode: code }, actor);
       return this.get(publicId, tx);
@@ -344,7 +474,12 @@ export class CompaniesService {
   }
 
   /** Staff suspend, reactivate or close a company (with a reason). */
-  async setStatus(actor: UserActor, publicId: string, action: 'suspend' | 'reactivate' | 'close', reason: string): Promise<CompanyRow> {
+  async setStatus(
+    actor: UserActor,
+    publicId: string,
+    action: 'suspend' | 'reactivate' | 'close',
+    reason: string,
+  ): Promise<CompanyRow> {
     const allowed: Record<typeof action, [string[], 'suspended' | 'active' | 'closed']> = {
       suspend: [['active'], 'suspended'],
       reactivate: [['suspended'], 'active'],
@@ -353,10 +488,16 @@ export class CompaniesService {
     const [from, to] = allowed[action];
     return this.prisma.withTx(async (tx) => {
       const company = await this.get(publicId, tx);
-      if (!from.includes(company.status)) throw new DomainException('companies.invalid_status', { params: { status: company.status } });
+      if (!from.includes(company.status))
+        throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       const row = await tx.company.update({
         where: { id: company.id },
-        data: { status: to, statusReason: reason, ...(to === 'closed' && { creditStatus: 'prepaid' }), rowVersion: { increment: 1 } },
+        data: {
+          status: to,
+          statusReason: reason,
+          ...(to === 'closed' && { creditStatus: 'prepaid' }),
+          rowVersion: { increment: 1 },
+        },
       });
       await this.record(tx, row, `company.${to}`, { from: company.status, reason }, actor);
       return this.get(publicId, tx);
@@ -366,7 +507,11 @@ export class CompaniesService {
   // --- members ------------------------------------------------------------------------------------------
 
   /** Invites an existing customer account (by phone or e-mail) with company roles. */
-  async invite(actor: UserActor, publicId: string, input: { phone?: string; email?: string; roles: CompanyRole[] }): Promise<CompanyRow> {
+  async invite(
+    actor: UserActor,
+    publicId: string,
+    input: { phone?: string; email?: string; roles: CompanyRole[] },
+  ): Promise<CompanyRow> {
     return this.prisma.withTx(async (tx) => {
       const company = await this.forMember(actor, publicId, 'company_members.manage', tx);
       if (!input.phone && !input.email) invalid('phone', 'phone or email is required', 'required');
@@ -374,17 +519,38 @@ export class CompaniesService {
         where: {
           kind: 'customer',
           status: 'active',
-          ...(input.phone ? { phone: input.phone } : { email: { equals: input.email!, mode: 'insensitive' } }),
+          ...(input.phone
+            ? { phone: input.phone }
+            : { email: { equals: input.email!, mode: 'insensitive' } }),
         },
       });
       if (!user) throw new DomainException('companies.account_not_found');
-      const existing = await tx.companyMember.findUnique({ where: { companyId_userId: { companyId: company.id, userId: user.id } } });
+      const existing = await tx.companyMember.findUnique({
+        where: { companyId_userId: { companyId: company.id, userId: user.id } },
+      });
       if (existing && existing.status !== 'removed') throw new DomainException('companies.already_member');
-      const data = { status: 'invited' as const, roleKeys: [...new Set(input.roles)], invitedById: actor.userId, invitedAt: new Date(), joinedAt: null, removedAt: null };
-      if (existing) await tx.companyMember.update({ where: { id: existing.id }, data: { ...data, rowVersion: { increment: 1 } } });
+      const data = {
+        status: 'invited' as const,
+        roleKeys: [...new Set(input.roles)],
+        invitedById: actor.userId,
+        invitedAt: new Date(),
+        joinedAt: null,
+        removedAt: null,
+      };
+      if (existing)
+        await tx.companyMember.update({
+          where: { id: existing.id },
+          data: { ...data, rowVersion: { increment: 1 } },
+        });
       else await tx.companyMember.create({ data: { companyId: company.id, userId: user.id, ...data } });
       await this.touch(tx, company.id);
-      await this.record(tx, company, 'company.member_invited', { userId: user.publicId, roles: data.roleKeys, customerId: user.publicId }, actor);
+      await this.record(
+        tx,
+        company,
+        'company.member_invited',
+        { userId: user.publicId, roles: data.roleKeys, customerId: user.publicId },
+        actor,
+      );
       return this.get(publicId, tx);
     });
   }
@@ -399,11 +565,31 @@ export class CompaniesService {
 
   async accept(actor: UserActor, memberPublicId: string): Promise<CompanyRow> {
     const company = await this.prisma.withTx(async (tx) => {
-      const member = await tx.companyMember.findUnique({ where: { publicId: memberPublicId }, include: { company: true } });
-      if (!member || member.userId !== actor.userId || member.status !== 'invited') throw new DomainException('http.not_found');
-      await tx.companyMember.update({ where: { id: member.id }, data: { status: 'active', joinedAt: new Date(), rowVersion: { increment: 1 } } });
-      await this.grantRoles(tx, actor.userId, member.companyId, member.roleKeys as CompanyRole[], member.invitedById, 'Accepted the company invitation');
-      await this.record(tx, member.company, 'company.member_joined', { userId: actor.publicId, roles: member.roleKeys }, actor);
+      const member = await tx.companyMember.findUnique({
+        where: { publicId: memberPublicId },
+        include: { company: true },
+      });
+      if (!member || member.userId !== actor.userId || member.status !== 'invited')
+        throw new DomainException('http.not_found');
+      await tx.companyMember.update({
+        where: { id: member.id },
+        data: { status: 'active', joinedAt: new Date(), rowVersion: { increment: 1 } },
+      });
+      await this.grantRoles(
+        tx,
+        actor.userId,
+        member.companyId,
+        member.roleKeys as CompanyRole[],
+        member.invitedById,
+        'Accepted the company invitation',
+      );
+      await this.record(
+        tx,
+        member.company,
+        'company.member_joined',
+        { userId: actor.publicId, roles: member.roleKeys },
+        actor,
+      );
       return member.company;
     });
     await this.permissions.invalidate(actor.userId);
@@ -417,7 +603,10 @@ export class CompaniesService {
       const member = company.members.find((m) => m.publicId === memberPublicId);
       if (!member) throw new DomainException('http.not_found');
       if (member.userId === actor.userId) throw new DomainException('companies.cannot_remove_self');
-      await tx.companyMember.update({ where: { id: member.id }, data: { status: 'removed', removedAt: new Date(), rowVersion: { increment: 1 } } });
+      await tx.companyMember.update({
+        where: { id: member.id },
+        data: { status: 'removed', removedAt: new Date(), rowVersion: { increment: 1 } },
+      });
       await tx.userRole.updateMany({
         where: { userId: member.userId, scopeType: 'company', scopeId: company.id, revokedAt: null },
         data: { revokedAt: new Date(), revokedById: actor.userId },
@@ -431,13 +620,25 @@ export class CompaniesService {
     return row;
   }
 
-  private async grantRoles(tx: Tx, userId: bigint, companyId: bigint, roles: CompanyRole[], grantedById: bigint | null, reason: string) {
+  private async grantRoles(
+    tx: Tx,
+    userId: bigint,
+    companyId: bigint,
+    roles: CompanyRole[],
+    grantedById: bigint | null,
+    reason: string,
+  ) {
     const rows = await tx.role.findMany({ where: { key: { in: roles }, scopeType: 'company' } });
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { publicId: true } });
-    const company = await tx.company.findUniqueOrThrow({ where: { id: companyId }, select: { publicId: true } });
+    const company = await tx.company.findUniqueOrThrow({
+      where: { id: companyId },
+      select: { publicId: true },
+    });
     for (const role of rows) {
       try {
-        await tx.userRole.create({ data: { userId, roleId: role.id, scopeType: 'company', scopeId: companyId, grantedById, reason } });
+        await tx.userRole.create({
+          data: { userId, roleId: role.id, scopeType: 'company', scopeId: companyId, grantedById, reason },
+        });
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') continue;
         throw error;
@@ -458,7 +659,11 @@ export class CompaniesService {
   async pendingApprovals(actor: UserActor, publicId: string) {
     const company = await this.forMember(actor, publicId, 'company_orders.approve');
     const groups = await this.prisma.orderGroup.findMany({
-      where: { companyId: company.id, status: 'pending_company_approval', companyApprovalRequestId: { not: null } },
+      where: {
+        companyId: company.id,
+        status: 'pending_company_approval',
+        companyApprovalRequestId: { not: null },
+      },
       include: {
         companyApprovalRequest: { include: { requester: { select: { publicId: true, displayName: true } } } },
       },
@@ -468,7 +673,13 @@ export class CompaniesService {
   }
 
   /** The company approver approves or rejects in the store; the approval engine checks the role and SoD. */
-  async decideApproval(actor: UserActor, publicId: string, approvalPublicId: string, approve: boolean, comment: string | null) {
+  async decideApproval(
+    actor: UserActor,
+    publicId: string,
+    approvalPublicId: string,
+    approve: boolean,
+    comment: string | null,
+  ) {
     const company = await this.forMember(actor, publicId, 'company_orders.approve');
     const group = await this.prisma.orderGroup.findFirst({
       where: { companyId: company.id, companyApprovalRequest: { publicId: approvalPublicId } },
@@ -491,7 +702,12 @@ export class CompaniesService {
   async record(tx: Tx, company: Company, type: string, data: Record<string, unknown>, actor: Actor) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'company', aggregateId: company.publicId, payload: { companyId: company.publicId, ...data } },
+      {
+        type,
+        aggregateType: 'company',
+        aggregateId: company.publicId,
+        payload: { companyId: company.publicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {

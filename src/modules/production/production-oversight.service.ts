@@ -148,8 +148,8 @@ export class ProductionOversightService {
   }
 
   private async hasSpecialFinish(tx: Tx, input: unknown): Promise<boolean> {
-    const parts = ((input as { configuration?: { parts?: Record<string, unknown>[] } } | null)?.configuration
-      ?.parts ?? []);
+    const parts =
+      (input as { configuration?: { parts?: Record<string, unknown>[] } } | null)?.configuration?.parts ?? [];
     const ids = parts.flatMap((p) =>
       Object.entries(p)
         .filter(([k, v]) => /^finish/i.test(k) && typeof v === 'string')

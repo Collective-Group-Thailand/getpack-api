@@ -58,7 +58,11 @@ describe('order operations (e2e, B3.1)', () => {
         customerUserId: me.body.id,
       })
       .expect(201);
-    const body = { quoteId: quote.body.id, quoteOptionId: quote.body.options[0].id, reason: 'ลูกค้าขอเพิ่มจำนวน' };
+    const body = {
+      quoteId: quote.body.id,
+      quoteOptionId: quote.body.options[0].id,
+      reason: 'ลูกค้าขอเพิ่มจำนวน',
+    };
     const read = await as(ctx, csLead).get(`/v1/admin/orders/${orderId}`).expect(200);
     await as(ctx, cs).post(`/v1/admin/orders/${orderId}/actions/reprice`, body).expect(403);
     await as(ctx, csLead).post(`/v1/admin/orders/${orderId}/actions/reprice`, body).expect(428);
@@ -68,18 +72,27 @@ describe('order operations (e2e, B3.1)', () => {
       .expect(200);
     expect(repriced.body).toMatchObject({ quantityOrdered: 2000, quoteId: quote.body.id });
     expect(repriced.body.destinations[0].quantity).toBe(2000);
-    const revisions = await ctx.prisma.orderPriceRevision.findMany({ where: { order: { publicId: orderId } } });
+    const revisions = await ctx.prisma.orderPriceRevision.findMany({
+      where: { order: { publicId: orderId } },
+    });
     expect(revisions).toHaveLength(1);
     expect(revisions[0]!.previousGross.toFixed(2)).toBe(group.orders[0]!.totals.grossAmount);
     const after = await as(ctx, cs).get(`/v1/admin/order-groups/${group.id}`).expect(200);
     expect(after.body.totals.grossAmount).toBe(repriced.body.totals.grossAmount);
-    expect(await ctx.prisma.domainEvent.count({ where: { type: 'order.repriced', aggregateId: orderId } })).toBe(1);
+    expect(
+      await ctx.prisma.domainEvent.count({ where: { type: 'order.repriced', aggregateId: orderId } }),
+    ).toBe(1);
 
     const other = await customerToken(ctx, 2);
     const foreign = await as(ctx, other.token)
-      .post('/v1/store/quotes', { productTypeCode: 'folding_carton', configuration: foldingConfiguration(fixture, [3000]) })
+      .post('/v1/store/quotes', {
+        productTypeCode: 'folding_carton',
+        configuration: foldingConfiguration(fixture, [3000]),
+      })
       .expect(201);
-    const etag = (await as(ctx, csLead).get(`/v1/admin/orders/${orderId}`).expect(200)).headers['etag'] as string;
+    const etag = (await as(ctx, csLead).get(`/v1/admin/orders/${orderId}`).expect(200)).headers[
+      'etag'
+    ] as string;
     await as(ctx, csLead)
       .post(`/v1/admin/orders/${orderId}/actions/reprice`, {
         quoteId: foreign.body.id,
@@ -94,11 +107,18 @@ describe('order operations (e2e, B3.1)', () => {
     const { token } = await customerToken(ctx, 3);
     const group = await placeOrder(ctx, token, fixture, postcode);
     const target = await as(ctx, cs)
-      .post('/v1/admin/customers', { phone: `08${String(ctx.run + 7).padStart(8, '0').slice(-8)}`, displayName: 'ลูกค้าใหม่' })
+      .post('/v1/admin/customers', {
+        phone: `08${String(ctx.run + 7)
+          .padStart(8, '0')
+          .slice(-8)}`,
+        displayName: 'ลูกค้าใหม่',
+      })
       .expect(201);
     const read = await as(ctx, cs).get(`/v1/admin/order-groups/${group.id}`).expect(200);
     const moved = await as(ctx, cs)
-      .post(`/v1/admin/order-groups/${group.id}/actions/change-customer`, { customerId: target.body.customer.id })
+      .post(`/v1/admin/order-groups/${group.id}/actions/change-customer`, {
+        customerId: target.body.customer.id,
+      })
       .set('If-Match', read.headers['etag'] as string)
       .expect(200);
     expect(moved.body.customerId).toBe(target.body.customer.id);
@@ -106,9 +126,13 @@ describe('order operations (e2e, B3.1)', () => {
 
     const second = await placeOrder(ctx, token, fixture, postcode);
     await paid(second.orders[0]!.id);
-    const etag = (await as(ctx, cs).get(`/v1/admin/order-groups/${second.id}`).expect(200)).headers['etag'] as string;
+    const etag = (await as(ctx, cs).get(`/v1/admin/order-groups/${second.id}`).expect(200)).headers[
+      'etag'
+    ] as string;
     await as(ctx, cs)
-      .post(`/v1/admin/order-groups/${second.id}/actions/change-customer`, { customerId: target.body.customer.id })
+      .post(`/v1/admin/order-groups/${second.id}/actions/change-customer`, {
+        customerId: target.body.customer.id,
+      })
       .set('If-Match', etag)
       .expect(409);
   });
@@ -146,12 +170,17 @@ describe('order operations (e2e, B3.1)', () => {
     const queue = (name: string, extra = '') =>
       as(ctx, cs).get(`/v1/admin/order-queues/${name}?perPage=100${extra}`).expect(200);
 
-    expect(ids(await queue('waiting_payment'))).toEqual(expect.arrayContaining([a.orders[0]!.id, b.orders[0]!.id]));
+    expect(ids(await queue('waiting_payment'))).toEqual(
+      expect.arrayContaining([a.orders[0]!.id, b.orders[0]!.id]),
+    );
     await paid(b.orders[0]!.id);
     expect(ids(await queue('waiting_production'))).toContain(b.orders[0]!.id);
     expect(ids(await queue('waiting_payment'))).not.toContain(b.orders[0]!.id);
 
-    await ctx.prisma.order.update({ where: { publicId: a.orders[0]!.id }, data: { artworkStatus: 'uploaded' } });
+    await ctx.prisma.order.update({
+      where: { publicId: a.orders[0]!.id },
+      data: { artworkStatus: 'uploaded' },
+    });
     expect(ids(await queue('artwork_review'))).toContain(a.orders[0]!.id);
 
     const today = new Date(`${new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10)}T00:00:00Z`);

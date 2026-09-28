@@ -1,6 +1,11 @@
 import { bangkokDate } from '@common/time/bangkok';
 
-import { type PartnerPayoutDto, type PayoutExceptionDto, type PayoutItemDto, type PayoutRunDto } from './payouts.dto';
+import {
+  type PartnerPayoutDto,
+  type PayoutExceptionDto,
+  type PayoutItemDto,
+  type PayoutRunDto,
+} from './payouts.dto';
 import { type PayoutsService, type RunRow } from './payouts.service';
 
 type Amount = { toFixed(dp: number): string };
@@ -50,7 +55,9 @@ export const runDto = (r: RunRow): PayoutRunDto => ({
   items: r.items.map(itemDto),
 });
 
-export const exceptionDto = (i: Awaited<ReturnType<PayoutsService['exceptions']>>[number]): PayoutExceptionDto => ({
+export const exceptionDto = (
+  i: Awaited<ReturnType<PayoutsService['exceptions']>>[number],
+): PayoutExceptionDto => ({
   id: i.publicId,
   runId: i.run.publicId,
   runNo: i.run.runNo,
@@ -60,7 +67,9 @@ export const exceptionDto = (i: Awaited<ReturnType<PayoutsService['exceptions']>
   failureReason: i.failureReason,
 });
 
-export const partnerPayoutDto = (i: Awaited<ReturnType<PayoutsService['statementOf']>>[number]): PartnerPayoutDto => ({
+export const partnerPayoutDto = (
+  i: Awaited<ReturnType<PayoutsService['statementOf']>>[number],
+): PartnerPayoutDto => ({
   id: i.publicId,
   kind: i.kind,
   pvNumber: i.pvNumber,

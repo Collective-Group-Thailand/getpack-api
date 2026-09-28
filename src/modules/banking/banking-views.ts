@@ -1,6 +1,11 @@
 import { bangkokDate } from '@common/time/bangkok';
 
-import { type BankStatementLineDto, type CashPositionDto, type CompanyBankAccountDto, type UnidentifiedReceiptDto } from './banking.dto';
+import {
+  type BankStatementLineDto,
+  type CashPositionDto,
+  type CompanyBankAccountDto,
+  type UnidentifiedReceiptDto,
+} from './banking.dto';
 import { type BankingService, type LineRow } from './banking.service';
 import { type CompanyAccountRow } from './company-bank-accounts.service';
 
@@ -30,10 +35,17 @@ export const lineDto = (r: LineRow): BankStatementLineDto => ({
   reference: r.reference,
   runningBalance: r.runningBalance ? m(r.runningBalance) : null,
   matchStatus: r.matchStatus,
-  matches: r.matches.map((x) => ({ targetType: x.targetType, targetId: x.targetPublicId, amount: m(x.amount), auto: x.auto })),
+  matches: r.matches.map((x) => ({
+    targetType: x.targetType,
+    targetId: x.targetPublicId,
+    amount: m(x.amount),
+    auto: x.auto,
+  })),
 });
 
-export const receiptDto = (r: Awaited<ReturnType<BankingService['unidentified']>>[number]): UnidentifiedReceiptDto => ({
+export const receiptDto = (
+  r: Awaited<ReturnType<BankingService['unidentified']>>[number],
+): UnidentifiedReceiptDto => ({
   id: r.publicId,
   amount: m(r.amount),
   receivedOn: bangkokDate(r.statementLine.txnDate),

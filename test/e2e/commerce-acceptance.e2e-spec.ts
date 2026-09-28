@@ -67,14 +67,23 @@ describe('commerce acceptance (e2e, B3)', () => {
       })
       .expect(201);
     const code = `ACC${ctx.run}`;
-    await as(ctx, marketing).post(`/v1/admin/promotions/${promo.body.id as string}/coupons`, { kind: 'single', code }).set('Idempotency-Key', randomUUID()).expect(201);
-    await as(ctx, marketing).post(`/v1/admin/promotions/${promo.body.id as string}/actions/activate`).expect(200);
+    await as(ctx, marketing)
+      .post(`/v1/admin/promotions/${promo.body.id as string}/coupons`, { kind: 'single', code })
+      .set('Idempotency-Key', randomUUID())
+      .expect(201);
+    await as(ctx, marketing)
+      .post(`/v1/admin/promotions/${promo.body.id as string}/actions/activate`)
+      .expect(200);
 
     // A new customer with the sign-up reward (20 points).
     const { token, phone } = await customerToken(ctx, 1);
     const user = await ctx.prisma.user.findFirstOrThrow({ where: { phone } });
-    const registered = await ctx.prisma.domainEvent.findFirstOrThrow({ where: { type: 'customer.registered', aggregateId: user.publicId } });
-    await ctx.prisma.withTx((tx) => ctx.app.get(LoyaltyService).onRegistered(envelopeFromRow(registered), tx));
+    const registered = await ctx.prisma.domainEvent.findFirstOrThrow({
+      where: { type: 'customer.registered', aggregateId: user.publicId },
+    });
+    await ctx.prisma.withTx((tx) =>
+      ctx.app.get(LoyaltyService).onRegistered(envelopeFromRow(registered), tx),
+    );
 
     // Two items: the first split over both addresses, the second to the second address.
     const home = await addAddress(ctx, token, codes[0]!, 'บ้าน');
@@ -93,14 +102,23 @@ describe('commerce acceptance (e2e, B3)', () => {
       })
       .expect(201);
     await as(ctx, token)
-      .post('/v1/store/cart/items', { quoteId: q2.id, quoteOptionId: q2.options[0]!.id, designOption: 'own_file', destinations: [{ addressId: office.id, quantity: 5000 }] })
+      .post('/v1/store/cart/items', {
+        quoteId: q2.id,
+        quoteOptionId: q2.options[0]!.id,
+        designOption: 'own_file',
+        destinations: [{ addressId: office.id, quantity: 5000 }],
+      })
       .expect(201);
     await as(ctx, token).post('/v1/store/cart/codes', { code }).expect(201);
 
-    const preview = await as(ctx, token).post('/v1/store/checkout/actions/preview', { redeemPoints: 8 }).expect(200);
+    const preview = await as(ctx, token)
+      .post('/v1/store/checkout/actions/preview', { redeemPoints: 8 })
+      .expect(200);
     expect(preview.body.orders).toHaveLength(2);
     expect(preview.body.orders[0].destinations).toHaveLength(2);
-    const sources = (preview.body.orders as { discounts: { source: string }[] }[]).flatMap((o) => o.discounts.map((d) => d.source));
+    const sources = (preview.body.orders as { discounts: { source: string }[] }[]).flatMap((o) =>
+      o.discounts.map((d) => d.source),
+    );
     expect(sources).toEqual(expect.arrayContaining(['coupon', 'points_redemption']));
     expect(new MoneyDecimal(preview.body.totals.grossAmount as string).gte(20_000)).toBe(true);
     expect(preview.body.paymentSchedule.templateKey).toBe('deposit_50_before_shipping_50');
@@ -112,18 +130,32 @@ describe('commerce acceptance (e2e, B3)', () => {
     const groupId = placed.body.id as string;
     expect(placed.body.totals.grossAmount).toBe(preview.body.totals.grossAmount);
     const group = await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: groupId } });
-    expect(await ctx.prisma.promotionRedemption.count({ where: { orderGroupId: group.id, status: 'reserved' } })).toBe(1);
-    expect(await ctx.prisma.pointsEntry.count({ where: { orderGroupId: group.id, entryType: 'redeem' } })).toBe(1);
+    expect(
+      await ctx.prisma.promotionRedemption.count({ where: { orderGroupId: group.id, status: 'reserved' } }),
+    ).toBe(1);
+    expect(
+      await ctx.prisma.pointsEntry.count({ where: { orderGroupId: group.id, entryType: 'redeem' } }),
+    ).toBe(1);
 
     // Deposit by SCB QR, confirmed by the (fake) SCB callback.
     const payment = (
-      await as(ctx, token).post(`/v1/store/order-groups/${groupId}/payments`, { method: 'scb_qr' }).set('Idempotency-Key', randomUUID()).expect(201)
+      await as(ctx, token)
+        .post(`/v1/store/order-groups/${groupId}/payments`, { method: 'scb_qr' })
+        .set('Idempotency-Key', randomUUID())
+        .expect(201)
     ).body as { referenceCode: string; cashAmount: string };
-    const schedule = await as(ctx, token).get(`/v1/store/order-groups/${groupId}/payment-schedule`).expect(200);
+    const schedule = await as(ctx, token)
+      .get(`/v1/store/order-groups/${groupId}/payment-schedule`)
+      .expect(200);
     expect(payment.cashAmount).toBe(schedule.body.instalments[0].cashAmount);
     const scb = ctx.app.get<FakeScbGateway>(SCB_GATEWAY);
-    await request(ctx.server).post('/webhooks/scb/payment-confirmation').send(scb.settle(payment.referenceCode, payment.cashAmount)).expect(200);
-    const afterDeposit = await as(ctx, token).get(`/v1/store/order-groups/${groupId}/payment-schedule`).expect(200);
+    await request(ctx.server)
+      .post('/webhooks/scb/payment-confirmation')
+      .send(scb.settle(payment.referenceCode, payment.cashAmount))
+      .expect(200);
+    const afterDeposit = await as(ctx, token)
+      .get(`/v1/store/order-groups/${groupId}/payment-schedule`)
+      .expect(200);
     expect(afterDeposit.body).toMatchObject({ productionGateOpen: true, shippingGateOpen: false });
 
     // Artwork approved (B4.1 is not built yet: the fact is recorded directly) → production may start.
@@ -132,7 +164,9 @@ describe('commerce acceptance (e2e, B3)', () => {
     for (const o of placed.body.orders as { id: string }[]) {
       const order = await ctx.prisma.order.findUniqueOrThrow({ where: { publicId: o.id } });
       expect(await schedules.canStartProduction(order.id)).toBe(true);
-      await ctx.prisma.withTx((tx) => orders.applyFact(tx, order.id, { kind: 'artwork_approved' }, systemActor('e2e')));
+      await ctx.prisma.withTx((tx) =>
+        orders.applyFact(tx, order.id, { kind: 'artwork_approved' }, systemActor('e2e')),
+      );
       const read = await as(ctx, token).get(`/v1/store/orders/${o.id}`).expect(200);
       expect(read.body.status).toBe('artwork_approved');
     }

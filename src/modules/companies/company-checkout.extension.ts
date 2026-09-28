@@ -42,8 +42,13 @@ function companyInput(input: CheckoutInput): CompanyInput | null {
 }
 
 function branchOf(company: CompanyRow, branchId: string | null) {
-  const branch = branchId ? company.branches.find((b) => b.publicId === branchId) : company.branches.find((b) => b.isDefault);
-  if (!branch) throw new DomainException('validation.failed', { errors: [{ path: 'companyBranchId', code: 'exists', message: 'unknown branch' }] });
+  const branch = branchId
+    ? company.branches.find((b) => b.publicId === branchId)
+    : company.branches.find((b) => b.isDefault);
+  if (!branch)
+    throw new DomainException('validation.failed', {
+      errors: [{ path: 'companyBranchId', code: 'exists', message: 'unknown branch' }],
+    });
   return branch;
 }
 
@@ -73,7 +78,11 @@ export class CompanyCheckout implements CheckoutExtension, OnModuleInit {
     this.extensions.register(this);
   }
 
-  async taxProfile(who: { actor: Actor; customerUserId: bigint }, input: CheckoutInput, db: Tx): Promise<TaxProfileSnapshot | undefined> {
+  async taxProfile(
+    who: { actor: Actor; customerUserId: bigint },
+    input: CheckoutInput,
+    db: Tx,
+  ): Promise<TaxProfileSnapshot | undefined> {
     const c = companyInput(input);
     if (!c) return undefined;
     const company = await this.companies.orderingCompany(db, who.customerUserId, c.companyId);
@@ -81,7 +90,14 @@ export class CompanyCheckout implements CheckoutExtension, OnModuleInit {
       where: { id: branchOf(company, c.branchId).id },
       include: { province: true, subdistrict: { include: { district: true } } },
     });
-    const address = [branch.line1, branch.line2, branch.subdistrict?.nameTh, branch.subdistrict?.district.nameTh, branch.province.nameTh, branch.postcode]
+    const address = [
+      branch.line1,
+      branch.line2,
+      branch.subdistrict?.nameTh,
+      branch.subdistrict?.district.nameTh,
+      branch.province.nameTh,
+      branch.postcode,
+    ]
       .filter(Boolean)
       .join(' ');
     return {
@@ -106,20 +122,32 @@ export class CompanyCheckout implements CheckoutExtension, OnModuleInit {
     if (!c) return;
     const company = await this.companies.orderingCompany(db, draft.customerUserId, c.companyId);
     const branch = branchOf(company, c.branchId);
-    if (company.poNumberPolicy === 'required' && !draft.input.poNumber?.trim()) throw new DomainException('companies.po_required');
+    if (company.poNumberPolicy === 'required' && !draft.input.poNumber?.trim())
+      throw new DomainException('companies.po_required');
     const threshold = company.orderApprovalThreshold?.toFixed(2) ?? null;
     if (threshold !== null && new MoneyDecimal(draft.totals.grossAmount).gt(threshold)) {
       draft.initialStatus = 'pending_company_approval';
       draft.notices.push({ code: 'company.approval_required', params: { threshold } });
     }
-    draft.state[this.key] = { companyId: company.id, companyPublicId: company.publicId, branchId: branch.id, threshold } satisfies CompanyState;
+    draft.state[this.key] = {
+      companyId: company.id,
+      companyPublicId: company.publicId,
+      branchId: branch.id,
+      threshold,
+    } satisfies CompanyState;
   }
 
   async placed(tx: Tx, draft: CheckoutDraft, placed: PlacedGroup): Promise<void> {
     const state = draft.state[this.key] as CompanyState | undefined;
     if (!state) return;
-    await tx.orderGroup.update({ where: { id: placed.groupId }, data: { companyId: state.companyId, companyBranchId: state.branchId } });
-    await tx.order.updateMany({ where: { orderGroupId: placed.groupId }, data: { companyId: state.companyId } });
+    await tx.orderGroup.update({
+      where: { id: placed.groupId },
+      data: { companyId: state.companyId, companyBranchId: state.branchId },
+    });
+    await tx.order.updateMany({
+      where: { orderGroupId: placed.groupId },
+      data: { companyId: state.companyId },
+    });
     if (draft.initialStatus !== 'pending_company_approval') return;
     if (draft.actor.type !== 'user') throw new DomainException('auth.forbidden');
     const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: placed.groupId } });
@@ -140,21 +168,32 @@ export class CompanyCheckout implements CheckoutExtension, OnModuleInit {
       },
     });
     await tx.orderGroup.update({ where: { id: group.id }, data: { companyApprovalRequestId: request.id } });
-    await this.record(tx, group.publicId, 'order_group.company_approval_requested', {
-      companyId: state.companyPublicId,
-      approvalId: request.publicId,
-      amount: group.grossAmount.toFixed(2),
-      threshold: state.threshold,
-    }, draft.actor);
+    await this.record(
+      tx,
+      group.publicId,
+      'order_group.company_approval_requested',
+      {
+        companyId: state.companyPublicId,
+        approvalId: request.publicId,
+        amount: group.grossAmount.toFixed(2),
+        threshold: state.threshold,
+      },
+      draft.actor,
+    );
   }
 
   /** The approver's decision: approved → waiting for payment (expiry starts now); otherwise cancelled. */
-  @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], { consumer: 'companies.order_approval' })
+  @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], {
+    consumer: 'companies.order_approval',
+  })
   async onApprovalOutcome(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     if (event.payload['policyKey'] !== POLICY) return;
     const request = await tx.approvalRequest.findUnique({ where: { publicId: event.aggregateId } });
     if (!request) return;
-    const group = await tx.orderGroup.findFirst({ where: { companyApprovalRequestId: request.id }, include: { company: true } });
+    const group = await tx.orderGroup.findFirst({
+      where: { companyApprovalRequestId: request.id },
+      include: { company: true },
+    });
     if (!group || group.status !== 'pending_company_approval') return;
     const actor = systemActor('companies.order_approval');
     if (event.type === 'approval.approved') {
@@ -162,19 +201,52 @@ export class CompanyCheckout implements CheckoutExtension, OnModuleInit {
       const now = new Date();
       await tx.orderGroup.update({
         where: { id: group.id },
-        data: { status: 'waiting_payment', expiresAt: new Date(now.getTime() + Number(expiry.value) * DAY_MS), rowVersion: { increment: 1 } },
+        data: {
+          status: 'waiting_payment',
+          expiresAt: new Date(now.getTime() + Number(expiry.value) * DAY_MS),
+          rowVersion: { increment: 1 },
+        },
       });
-      await this.record(tx, group.publicId, 'order_group.company_approved', { companyId: group.company?.publicId ?? null }, actor);
+      await this.record(
+        tx,
+        group.publicId,
+        'order_group.company_approved',
+        { companyId: group.company?.publicId ?? null },
+        actor,
+      );
       return;
     }
-    await this.orders.cancelGroupIn(tx, actor, group.publicId, { reasonCode: 'company_approval_rejected', note: null }, { system: true });
-    await this.record(tx, group.publicId, 'order_group.company_rejected', { companyId: group.company?.publicId ?? null, outcome: event.type }, actor);
+    await this.orders.cancelGroupIn(
+      tx,
+      actor,
+      group.publicId,
+      { reasonCode: 'company_approval_rejected', note: null },
+      { system: true },
+    );
+    await this.record(
+      tx,
+      group.publicId,
+      'order_group.company_rejected',
+      { companyId: group.company?.publicId ?? null, outcome: event.type },
+      actor,
+    );
   }
 
-  private async record(tx: Tx, groupPublicId: string, type: string, data: Record<string, unknown>, actor: Actor) {
+  private async record(
+    tx: Tx,
+    groupPublicId: string,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'order_group', aggregateId: groupPublicId, payload: { groupId: groupPublicId, ...data } },
+      {
+        type,
+        aggregateType: 'order_group',
+        aggregateId: groupPublicId,
+        payload: { groupId: groupPublicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {

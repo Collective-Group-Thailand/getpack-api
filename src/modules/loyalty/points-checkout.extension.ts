@@ -56,7 +56,10 @@ export class PointsCheckout implements CheckoutExtension, OnModuleInit {
     const rooms = draft.orders.map((o) => {
       if (!o.buyCostNet || keep.lte(0)) return D(0);
       const payable = o.lines.reduce((a, l) => a.add(D(l.netAmount).sub(l.discountAmount)), D(0));
-      return MoneyDecimal.max(payable.sub(D(o.buyCostNet).div(keep)).toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN), D(0));
+      return MoneyDecimal.max(
+        payable.sub(D(o.buyCostNet).div(keep)).toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN),
+        D(0),
+      );
     });
     const result = redeemablePoints({
       requested,
@@ -68,10 +71,17 @@ export class PointsCheckout implements CheckoutExtension, OnModuleInit {
       marginRoom: rooms.reduce((a, r) => a.add(r), D(0)),
     });
     if (result.points === 0) {
-      draft.notices.push({ code: 'points.rejected', params: { requested, reason: result.reason, minimumBaht: limits.value.minimumBaht } });
+      draft.notices.push({
+        code: 'points.rejected',
+        params: { requested, reason: result.reason, minimumBaht: limits.value.minimumBaht },
+      });
       return;
     }
-    if (result.reason !== 'ok') draft.notices.push({ code: 'points.capped', params: { requested, points: result.points, reason: result.reason } });
+    if (result.reason !== 'ok')
+      draft.notices.push({
+        code: 'points.capped',
+        params: { requested, points: result.points, reason: result.reason },
+      });
 
     // Spread the discount: orders with the most room first, then each order's non-shipping lines by net left.
     let left = D(result.points).mul(pointValue);
@@ -86,19 +96,39 @@ export class PointsCheckout implements CheckoutExtension, OnModuleInit {
         if (take.lte(0)) break;
         const amount = MoneyDecimal.min(x.net, take);
         o.lines[x.index] = discountLine(o.lines[x.index]!, amount);
-        o.discounts.push({ lineIndex: x.index, source: 'points_redemption', amount: formatMoney(amount), meta: { points: result.points } });
+        o.discounts.push({
+          lineIndex: x.index,
+          source: 'points_redemption',
+          amount: formatMoney(amount),
+          meta: { points: result.points },
+        });
         take = take.sub(amount);
         left = left.sub(amount);
       }
       if (left.lte(0)) break;
     }
-    draft.notices.push({ code: 'points.applied', params: { points: result.points, amount: formatMoney(D(result.points).mul(pointValue)) } });
-    draft.state[this.key] = { points: result.points, pointValue, versionId: value.versionId } satisfies PointsState;
+    draft.notices.push({
+      code: 'points.applied',
+      params: { points: result.points, amount: formatMoney(D(result.points).mul(pointValue)) },
+    });
+    draft.state[this.key] = {
+      points: result.points,
+      pointValue,
+      versionId: value.versionId,
+    } satisfies PointsState;
   }
 
   async placed(tx: Tx, draft: CheckoutDraft, placed: PlacedGroup): Promise<void> {
     const state = draft.state[this.key] as PointsState | undefined;
     if (!state) return;
-    await this.loyalty.redeem(tx, draft.customerUserId, placed.groupId, state.points, state.pointValue, state.versionId, draft.actor);
+    await this.loyalty.redeem(
+      tx,
+      draft.customerUserId,
+      placed.groupId,
+      state.points,
+      state.pointValue,
+      state.versionId,
+      draft.actor,
+    );
   }
 }

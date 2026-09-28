@@ -50,10 +50,16 @@ export function companyDto(c: CompanyRow): CompanyDto {
 }
 
 export function adminCompanyDto(c: CompanyRow): AdminCompanyDto {
-  return { ...companyDto(c), paidOrdersCount: c.paidOrdersCount, kycApprovedAt: c.kycApprovedAt ? toBangkokIso(c.kycApprovedAt) : null };
+  return {
+    ...companyDto(c),
+    paidOrdersCount: c.paidOrdersCount,
+    kycApprovedAt: c.kycApprovedAt ? toBangkokIso(c.kycApprovedAt) : null,
+  };
 }
 
-export function invitationDto(m: Awaited<ReturnType<CompaniesService['invitations']>>[number]): CompanyInvitationDto {
+export function invitationDto(
+  m: Awaited<ReturnType<CompaniesService['invitations']>>[number],
+): CompanyInvitationDto {
   return {
     id: m.publicId,
     companyId: m.company.publicId,

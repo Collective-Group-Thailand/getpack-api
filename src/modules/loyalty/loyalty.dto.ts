@@ -2,7 +2,17 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength, NotEquals } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+  NotEquals,
+} from 'class-validator';
 
 /** Loyalty points and tiers (D-130…D-135). */
 
@@ -36,13 +46,20 @@ export class LoyaltySummaryDto {
   @ApiProperty({ example: '1.25', description: 'Earn multiplier of the tier (D-134)' })
   multiplier!: string;
 
-  @ApiProperty({ example: '62500.00', description: 'Spend of the last 12 months (before VAT, excluding shipping)' })
+  @ApiProperty({
+    example: '62500.00',
+    description: 'Spend of the last 12 months (before VAT, excluding shipping)',
+  })
   spend12m!: string;
 
   @ApiProperty({ type: 'integer', example: 128, description: 'Points that can be redeemed now' })
   availablePoints!: number;
 
-  @ApiProperty({ type: 'integer', example: 25, description: 'Earned on completed orders, credited after the claim window (D-132)' })
+  @ApiProperty({
+    type: 'integer',
+    example: 25,
+    description: 'Earned on completed orders, credited after the claim window (D-132)',
+  })
   pendingPoints!: number;
 
   @ApiProperty({ example: '2.50', description: 'THB per point (D-131)' })
@@ -51,7 +68,10 @@ export class LoyaltySummaryDto {
   @ApiProperty({ example: '320.00' })
   availableValue!: string;
 
-  @ApiProperty({ type: [ExpiringPointsDto], description: 'Points expiring within the reminder window (30 days)' })
+  @ApiProperty({
+    type: [ExpiringPointsDto],
+    description: 'Points expiring within the reminder window (30 days)',
+  })
   expiringSoon!: ExpiringPointsDto[];
 
   @ApiProperty({ example: 'THB' })
@@ -77,7 +97,11 @@ export class PointsEntryDto {
   @ApiProperty({ enum: POINTS_ENTRY_TYPES, enumName: 'PointsEntryType', example: 'earn_order' })
   entryType!: string;
 
-  @ApiProperty({ type: 'integer', example: 25, description: 'Signed: earnings positive, redemptions and expiry negative' })
+  @ApiProperty({
+    type: 'integer',
+    example: 25,
+    description: 'Signed: earnings positive, redemptions and expiry negative',
+  })
   points!: number;
 
   @ApiProperty({ example: '62.50' })
@@ -193,7 +217,11 @@ export class ReviewListQuery extends PageQuery {
 // --- staff adjustments ----------------------------------------------------------------------------------
 
 export class AdjustPointsDto {
-  @ApiProperty({ type: 'integer', example: 40, description: 'Points to add (positive) or remove (negative), never 0' })
+  @ApiProperty({
+    type: 'integer',
+    example: 40,
+    description: 'Points to add (positive) or remove (negative), never 0',
+  })
   @Type(() => Number)
   @IsInt()
   @Min(-1_000_000)

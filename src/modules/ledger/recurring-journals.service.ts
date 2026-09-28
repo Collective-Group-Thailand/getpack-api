@@ -3,7 +3,12 @@ import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type ApprovalRequest, type Prisma, type RecurringJournal, type RecurringJournalStatus } from '@generated/prisma/client';
+import {
+  type ApprovalRequest,
+  type Prisma,
+  type RecurringJournal,
+  type RecurringJournalStatus,
+} from '@generated/prisma/client';
 import { Injectable, Logger } from '@nestjs/common';
 import { ApprovalsService } from '@platform/approvals/approvals.service';
 import { AuditService } from '@platform/audit/audit.service';
@@ -26,7 +31,8 @@ export interface RecurringJournalInput {
 }
 
 /** The run date in the month of `monthStart` for `dayOfMonth` (1–28, so it always exists). */
-const runDate = (monthStart: string, dayOfMonth: number) => `${monthStart.slice(0, 8)}${String(dayOfMonth).padStart(2, '0')}`;
+const runDate = (monthStart: string, dayOfMonth: number) =>
+  `${monthStart.slice(0, 8)}${String(dayOfMonth).padStart(2, '0')}`;
 
 /**
  * Recurring journals (B5.1): a definition approved once like a manual journal (`recurring_journal`, D-169);
@@ -48,11 +54,17 @@ export class RecurringJournalsService {
   ) {}
 
   async list() {
-    return this.prisma.recurringJournal.findMany({ orderBy: { createdAt: 'desc' }, include: { approvalRequest: true } });
+    return this.prisma.recurringJournal.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { approvalRequest: true },
+    });
   }
 
   async get(publicId: string, db: Tx = this.prisma) {
-    const row = await db.recurringJournal.findUnique({ where: { publicId }, include: { approvalRequest: true } });
+    const row = await db.recurringJournal.findUnique({
+      where: { publicId },
+      include: { approvalRequest: true },
+    });
     if (!row) throw new DomainException('http.not_found');
     return row;
   }
@@ -71,7 +83,8 @@ export class RecurringJournalsService {
         lines: input.lines.map((l) => ({ ...l, dimensions: l.dimensions ?? {} })),
       });
       const first = runDate(input.startOn, input.dayOfMonth);
-      const nextRunOn = first >= input.startOn ? first : runDate(addMonths(input.startOn, 1), input.dayOfMonth);
+      const nextRunOn =
+        first >= input.startOn ? first : runDate(addMonths(input.startOn, 1), input.dayOfMonth);
       const row = await tx.recurringJournal.create({
         data: {
           entityId,
@@ -95,7 +108,12 @@ export class RecurringJournalsService {
         requester: actor,
         amount: formatMoney(total),
         entityId,
-        payload: { recurring: true, name: input.name, dayOfMonth: input.dayOfMonth, total: formatMoney(total) },
+        payload: {
+          recurring: true,
+          name: input.name,
+          dayOfMonth: input.dayOfMonth,
+          total: formatMoney(total),
+        },
       });
       await tx.recurringJournal.update({ where: { id: row.id }, data: { approvalRequestId: request.id } });
       await this.audit.record(tx, {
@@ -121,17 +139,29 @@ export class RecurringJournalsService {
     const updated = await tx.recurringJournal.update({
       where: { id: row.id },
       data: approved
-        ? { status: 'active', approvedAt: new Date(), approvedById: approver?.actorUserId ?? null, rowVersion: { increment: 1 } }
+        ? {
+            status: 'active',
+            approvedAt: new Date(),
+            approvedById: approver?.actorUserId ?? null,
+            rowVersion: { increment: 1 },
+          }
         : { status: 'rejected', rowVersion: { increment: 1 } },
     });
     await this.record(tx, updated, approved ? 'recurring_journal.activated' : 'recurring_journal.rejected');
   }
 
   /** Pause / resume / end (Finance Manager; audited). */
-  async setStatus(actor: UserActor, publicId: string, to: Extract<RecurringJournalStatus, 'active' | 'paused' | 'ended'>) {
+  async setStatus(
+    actor: UserActor,
+    publicId: string,
+    to: Extract<RecurringJournalStatus, 'active' | 'paused' | 'ended'>,
+  ) {
     return this.prisma.withTx(async (tx) => {
       const row = await this.get(publicId, tx);
-      const allowed: Record<string, RecurringJournalStatus[]> = { active: ['paused', 'ended'], paused: ['active', 'ended'] };
+      const allowed: Record<string, RecurringJournalStatus[]> = {
+        active: ['paused', 'ended'],
+        paused: ['active', 'ended'],
+      };
       if (!allowed[row.status]?.includes(to))
         throw new DomainException('ledger.journal_not_editable', { params: { status: row.status } });
       const updated = await tx.recurringJournal.update({

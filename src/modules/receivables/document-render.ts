@@ -37,7 +37,15 @@ export interface RenderableDocument {
   };
   buyer: { name: string; taxId: string | null; branchCode: string | null; address: string | null };
   reference: { docNumber: string; reason: string | null } | null;
-  lines: { description: string; quantity: string; unitPrice: string; net: string; discount: string; vat: string; gross: string }[];
+  lines: {
+    description: string;
+    quantity: string;
+    unitPrice: string;
+    net: string;
+    discount: string;
+    vat: string;
+    gross: string;
+  }[];
   net: string;
   discount: string;
   vat: string;
@@ -50,16 +58,22 @@ export interface RenderableDocument {
   receiptVia: string | null;
 }
 
-export function documentTitle(d: Pick<RenderableDocument, 'docType' | 'docKind' | 'isTaxInvoice' | 'amountDue'>): { th: string; en: string } {
+export function documentTitle(
+  d: Pick<RenderableDocument, 'docType' | 'docKind' | 'isTaxInvoice' | 'amountDue'>,
+): { th: string; en: string } {
   switch (d.docType) {
     case 'tr':
       return Number(d.amountDue) > 0
         ? { th: 'ใบกำกับภาษี/ใบแจ้งหนี้', en: 'Tax invoice / Invoice' }
         : { th: 'ใบกำกับภาษี/ใบเสร็จรับเงิน', en: 'Tax invoice / Receipt' };
     case 'iv':
-      return d.isTaxInvoice ? { th: 'ใบแจ้งหนี้/ใบกำกับภาษี', en: 'Invoice / Tax invoice' } : { th: 'ใบแจ้งหนี้', en: 'Invoice' };
+      return d.isTaxInvoice
+        ? { th: 'ใบแจ้งหนี้/ใบกำกับภาษี', en: 'Invoice / Tax invoice' }
+        : { th: 'ใบแจ้งหนี้', en: 'Invoice' };
     case 'rc':
-      return d.isTaxInvoice ? { th: 'ใบเสร็จรับเงิน/ใบกำกับภาษี', en: 'Receipt / Tax invoice' } : { th: 'ใบเสร็จรับเงิน', en: 'Receipt' };
+      return d.isTaxInvoice
+        ? { th: 'ใบเสร็จรับเงิน/ใบกำกับภาษี', en: 'Receipt / Tax invoice' }
+        : { th: 'ใบเสร็จรับเงิน', en: 'Receipt' };
     case 'cn':
       return { th: 'ใบลดหนี้/ใบกำกับภาษี', en: 'Credit note' };
     default:
@@ -86,7 +100,8 @@ const STYLE = `
 export function renderDocumentHtml(d: RenderableDocument): string {
   const title = documentTitle(d);
   const sellerName = d.seller.legalNameTh ?? d.seller.legalNameEn ?? '';
-  const branch = (code: string | null) => (code === null ? '' : code === '00000' ? 'สำนักงานใหญ่' : `สาขาที่ ${code}`);
+  const branch = (code: string | null) =>
+    code === null ? '' : code === '00000' ? 'สำนักงานใหญ่' : `สาขาที่ ${code}`;
   const rows = d.lines
     .map(
       (l, i) =>
@@ -146,7 +161,10 @@ export interface RenderableStatement {
 
 export function renderStatementHtml(s: RenderableStatement): string {
   const rows = s.lines
-    .map((l) => `<tr><td>${thaiDate(l.date)}</td><td>${esc(l.docNumber)}</td><td>${esc(l.description)}</td><td class="n">${money(l.debit)}</td><td class="n">${money(l.credit)}</td></tr>`)
+    .map(
+      (l) =>
+        `<tr><td>${thaiDate(l.date)}</td><td>${esc(l.docNumber)}</td><td>${esc(l.description)}</td><td class="n">${money(l.debit)}</td><td class="n">${money(l.credit)}</td></tr>`,
+    )
     .join('');
   return `<!doctype html><html lang="th"><head><meta charset="utf-8"><title>Statement ${esc(s.month)}</title><style>${STYLE}</style></head><body>
 <div class="row"><div><div class="brand">Packio</div><b>${esc(s.seller.legalNameTh ?? '')}</b><br>${esc(s.seller.addressTh)}</div>
@@ -168,10 +186,12 @@ export function renderStatementHtml(s: RenderableStatement): string {
  * registration work.
  */
 export function renderETaxXml(d: RenderableDocument & { typeCode: string; issuedAt: string }): string {
-  const x = (tag: string, value: string | null | undefined) => (value ? `<${tag}>${esc(value)}</${tag}>` : '');
+  const x = (tag: string, value: string | null | undefined) =>
+    value ? `<${tag}>${esc(value)}</${tag}>` : '';
   const lines = d.lines
     .map(
-      (l, i) => `<ram:IncludedSupplyChainTradeLineItem><ram:AssociatedDocumentLineDocument>${x('ram:LineID', String(i + 1))}</ram:AssociatedDocumentLineDocument><ram:SpecifiedTradeProduct>${x('ram:Name', l.description)}</ram:SpecifiedTradeProduct><ram:SpecifiedLineTradeAgreement><ram:GrossPriceProductTradePrice>${x('ram:ChargeAmount', l.unitPrice)}</ram:GrossPriceProductTradePrice></ram:SpecifiedLineTradeAgreement><ram:SpecifiedLineTradeDelivery>${x('ram:BilledQuantity', l.quantity)}</ram:SpecifiedLineTradeDelivery><ram:SpecifiedLineTradeSettlement><ram:ApplicableTradeTax>${x('ram:TypeCode', 'VAT')}${x('ram:CalculatedRate', d.vatRatePct)}${x('ram:CalculatedAmount', l.vat)}</ram:ApplicableTradeTax><ram:SpecifiedTradeSettlementLineMonetarySummation>${x('ram:NetLineTotalAmount', (Number(l.net) - Number(l.discount)).toFixed(2))}${x('ram:NetIncludingTaxesLineTotalAmount', l.gross)}</ram:SpecifiedTradeSettlementLineMonetarySummation></ram:SpecifiedLineTradeSettlement></ram:IncludedSupplyChainTradeLineItem>`,
+      (l, i) =>
+        `<ram:IncludedSupplyChainTradeLineItem><ram:AssociatedDocumentLineDocument>${x('ram:LineID', String(i + 1))}</ram:AssociatedDocumentLineDocument><ram:SpecifiedTradeProduct>${x('ram:Name', l.description)}</ram:SpecifiedTradeProduct><ram:SpecifiedLineTradeAgreement><ram:GrossPriceProductTradePrice>${x('ram:ChargeAmount', l.unitPrice)}</ram:GrossPriceProductTradePrice></ram:SpecifiedLineTradeAgreement><ram:SpecifiedLineTradeDelivery>${x('ram:BilledQuantity', l.quantity)}</ram:SpecifiedLineTradeDelivery><ram:SpecifiedLineTradeSettlement><ram:ApplicableTradeTax>${x('ram:TypeCode', 'VAT')}${x('ram:CalculatedRate', d.vatRatePct)}${x('ram:CalculatedAmount', l.vat)}</ram:ApplicableTradeTax><ram:SpecifiedTradeSettlementLineMonetarySummation>${x('ram:NetLineTotalAmount', (Number(l.net) - Number(l.discount)).toFixed(2))}${x('ram:NetIncludingTaxesLineTotalAmount', l.gross)}</ram:SpecifiedTradeSettlementLineMonetarySummation></ram:SpecifiedLineTradeSettlement></ram:IncludedSupplyChainTradeLineItem>`,
     )
     .join('');
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -192,5 +212,8 @@ ${lines}
 
 /** ETDA document type codes: 388 tax invoice, T02 invoice/tax invoice, T03 receipt/tax invoice, 81 credit note, 80 debit note. */
 export function eTaxTypeCode(d: Pick<RenderableDocument, 'docType' | 'amountDue'>): string {
-  return { tr: Number(d.amountDue) > 0 ? 'T02' : 'T03', iv: 'T02', rc: 'T03', cn: '81', dn: '80' }[d.docType] ?? '388';
+  return (
+    { tr: Number(d.amountDue) > 0 ? 'T02' : 'T03', iv: 'T02', rc: 'T03', cn: '81', dn: '80' }[d.docType] ??
+    '388'
+  );
 }

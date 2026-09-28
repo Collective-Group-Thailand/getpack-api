@@ -48,7 +48,12 @@ export class PromotionRedemptions {
 
   // --- reserve (checkout transaction) -------------------------------------------------------------
 
-  async reserve(tx: Tx, draft: CheckoutDraft, placed: PlacedGroup, applied: AppliedPromotion[]): Promise<void> {
+  async reserve(
+    tx: Tx,
+    draft: CheckoutDraft,
+    placed: PlacedGroup,
+    applied: AppliedPromotion[],
+  ): Promise<void> {
     const customer = draft.customerUserId;
     const orderIds = placed.orders.map((o) => o.id);
     // A stable lock order keeps concurrent checkouts from deadlocking on counters.
@@ -71,13 +76,19 @@ export class PromotionRedemptions {
         where: { orderId: { in: orderIds }, promotionId: a.promotionId },
         data: { redemptionId: redemption.id },
       });
-      await this.record(tx, placed.groupPublicId, 'promotion.reserved', {
-        promotionId: a.promotionPublicId,
-        redemptionId: redemption.publicId,
-        amount: a.amount,
-        cappedAmount: a.cappedAmount,
-        code: (a.snapshot['code']) ?? null,
-      }, draft.actor);
+      await this.record(
+        tx,
+        placed.groupPublicId,
+        'promotion.reserved',
+        {
+          promotionId: a.promotionPublicId,
+          redemptionId: redemption.publicId,
+          amount: a.amount,
+          cappedAmount: a.cappedAmount,
+          code: a.snapshot['code'] ?? null,
+        },
+        draft.actor,
+      );
     }
   }
 
@@ -124,7 +135,13 @@ export class PromotionRedemptions {
     if (promo !== 1) throw new DomainException('promotions.budget_exhausted');
     if (a.campaignId === null) return;
     const rows = await tx.$queryRaw<
-      { public_id: string; spent_amount: string; budget_amount: string | null; alert_threshold_pct: string; alerted_at: Date | null }[]
+      {
+        public_id: string;
+        spent_amount: string;
+        budget_amount: string | null;
+        alert_threshold_pct: string;
+        alerted_at: Date | null;
+      }[]
     >`
       UPDATE campaigns SET spent_amount = spent_amount + ${a.amount}::numeric, updated_at = now()
        WHERE id = ${a.campaignId} AND status = 'active'
@@ -137,18 +154,33 @@ export class PromotionRedemptions {
     const spent = D(c.spent_amount);
     if (c.alerted_at === null && spent.gte(budget.mul(c.alert_threshold_pct).div(100))) {
       await tx.campaign.update({ where: { id: a.campaignId }, data: { alertedAt: new Date() } });
-      await this.recordCampaign(tx, c.public_id, 'campaign.budget_alert', {
-        spentAmount: formatMoney(spent),
-        budgetAmount: formatMoney(budget),
-        alertThresholdPct: c.alert_threshold_pct,
-      }, actor);
+      await this.recordCampaign(
+        tx,
+        c.public_id,
+        'campaign.budget_alert',
+        {
+          spentAmount: formatMoney(spent),
+          budgetAmount: formatMoney(budget),
+          alertThresholdPct: c.alert_threshold_pct,
+        },
+        actor,
+      );
     }
     if (spent.gte(budget)) {
-      await tx.campaign.update({ where: { id: a.campaignId }, data: { status: 'exhausted', rowVersion: { increment: 1 } } });
-      await this.recordCampaign(tx, c.public_id, 'campaign.exhausted', {
-        spentAmount: formatMoney(spent),
-        budgetAmount: formatMoney(budget),
-      }, actor);
+      await tx.campaign.update({
+        where: { id: a.campaignId },
+        data: { status: 'exhausted', rowVersion: { increment: 1 } },
+      });
+      await this.recordCampaign(
+        tx,
+        c.public_id,
+        'campaign.exhausted',
+        {
+          spentAmount: formatMoney(spent),
+          budgetAmount: formatMoney(budget),
+        },
+        actor,
+      );
     }
   }
 
@@ -166,12 +198,21 @@ export class PromotionRedemptions {
     });
     const actor = systemActor('promotions.apply');
     for (const r of reserved) {
-      await tx.promotionRedemption.update({ where: { id: r.id }, data: { status: 'applied', appliedAt: new Date() } });
-      await this.record(tx, order.orderGroup.publicId, 'promotion.redeemed', {
-        promotionId: r.promotion.publicId,
-        redemptionId: r.publicId,
-        amount: r.amount.toFixed(2),
-      }, actor);
+      await tx.promotionRedemption.update({
+        where: { id: r.id },
+        data: { status: 'applied', appliedAt: new Date() },
+      });
+      await this.record(
+        tx,
+        order.orderGroup.publicId,
+        'promotion.redeemed',
+        {
+          promotionId: r.promotion.publicId,
+          redemptionId: r.publicId,
+          amount: r.amount.toFixed(2),
+        },
+        actor,
+      );
     }
   }
 
@@ -180,16 +221,24 @@ export class PromotionRedemptions {
   /** A cancelled order gives its discount back to the budgets; the last one reverses the redemption. */
   @OnDomainEvent('order.cancelled', { consumer: 'promotions.reverse' })
   async onCancelled(event: DomainEventEnvelope, tx: Tx): Promise<void> {
-    const order = await tx.order.findUnique({ where: { publicId: event.aggregateId }, include: { orderGroup: true } });
+    const order = await tx.order.findUnique({
+      where: { publicId: event.aggregateId },
+      include: { orderGroup: true },
+    });
     if (!order) return;
-    const discounts = await tx.orderDiscount.findMany({ where: { orderId: order.id, redemptionId: { not: null } } });
+    const discounts = await tx.orderDiscount.findMany({
+      where: { orderId: order.id, redemptionId: { not: null } },
+    });
     const byRedemption = new Map<bigint, MoneyValue>();
     for (const d of discounts) {
       byRedemption.set(d.redemptionId!, (byRedemption.get(d.redemptionId!) ?? D(0)).add(d.amount.toString()));
     }
     const actor = systemActor('promotions.reverse');
     for (const [redemptionId, released] of byRedemption) {
-      const r = await tx.promotionRedemption.findUniqueOrThrow({ where: { id: redemptionId }, include: { promotion: true } });
+      const r = await tx.promotionRedemption.findUniqueOrThrow({
+        where: { id: redemptionId },
+        include: { promotion: true },
+      });
       if (r.status === 'reversed') continue;
       const amount = formatMoney(released);
       await tx.$executeRaw`
@@ -204,11 +253,17 @@ export class PromotionRedemptions {
       const left = MoneyDecimal.max(D(r.amount).sub(released), D(0));
       if (stillLive > 0) {
         await tx.promotionRedemption.update({ where: { id: r.id }, data: { amount: formatMoney(left) } });
-        await this.record(tx, order.orderGroup.publicId, 'promotion.reduced', {
-          promotionId: r.promotion.publicId,
-          redemptionId: r.publicId,
-          releasedAmount: amount,
-        }, actor);
+        await this.record(
+          tx,
+          order.orderGroup.publicId,
+          'promotion.reduced',
+          {
+            promotionId: r.promotion.publicId,
+            redemptionId: r.publicId,
+            releasedAmount: amount,
+          },
+          actor,
+        );
         continue;
       }
       await tx.promotionRedemption.update({
@@ -224,11 +279,17 @@ export class PromotionRedemptions {
              SET used_count = GREATEST(used_count - 1, 0),
                  status = CASE WHEN status = 'used_up' THEN 'active'::coupon_status ELSE status END
            WHERE id = ${r.couponCodeId}`;
-      await this.record(tx, order.orderGroup.publicId, 'promotion.reversed', {
-        promotionId: r.promotion.publicId,
-        redemptionId: r.publicId,
-        releasedAmount: amount,
-      }, actor);
+      await this.record(
+        tx,
+        order.orderGroup.publicId,
+        'promotion.reversed',
+        {
+          promotionId: r.promotion.publicId,
+          redemptionId: r.publicId,
+          releasedAmount: amount,
+        },
+        actor,
+      );
     }
   }
 
@@ -242,7 +303,8 @@ export class PromotionRedemptions {
     });
     let allowed: string[] | null = null;
     for (const r of rows) {
-      const methods = ((r.snapshot as { conditions?: { paymentMethods?: string[] } }).conditions?.paymentMethods) ?? null;
+      const methods =
+        (r.snapshot as { conditions?: { paymentMethods?: string[] } }).conditions?.paymentMethods ?? null;
       if (!methods) continue;
       allowed = allowed === null ? methods : allowed.filter((m) => methods.includes(m));
     }
@@ -266,8 +328,12 @@ export class PromotionRedemptions {
     for (const c of due) {
       const to = c.endsAt && c.endsAt <= now ? 'ended' : 'active';
       await this.prisma.withTx(async (tx) => {
-        const n = await tx.campaign.updateMany({ where: { id: c.id, status: c.status }, data: { status: to, rowVersion: { increment: 1 } } });
-        if (n.count === 1) await this.recordCampaign(tx, c.publicId, `campaign.${to}`, { from: c.status }, actor);
+        const n = await tx.campaign.updateMany({
+          where: { id: c.id, status: c.status },
+          data: { status: to, rowVersion: { increment: 1 } },
+        });
+        if (n.count === 1)
+          await this.recordCampaign(tx, c.publicId, `campaign.${to}`, { from: c.status }, actor);
       });
       changed += 1;
     }
@@ -276,11 +342,19 @@ export class PromotionRedemptions {
     });
     for (const p of ended) {
       await this.prisma.withTx(async (tx) => {
-        const n = await tx.promotion.updateMany({ where: { id: p.id, status: p.status }, data: { status: 'ended', rowVersion: { increment: 1 } } });
+        const n = await tx.promotion.updateMany({
+          where: { id: p.id, status: p.status },
+          data: { status: 'ended', rowVersion: { increment: 1 } },
+        });
         if (n.count !== 1) return;
         const event = await this.events.record(
           tx,
-          { type: 'promotion.ended', aggregateType: 'promotion', aggregateId: p.publicId, payload: { promotionId: p.publicId, from: p.status } },
+          {
+            type: 'promotion.ended',
+            aggregateType: 'promotion',
+            aggregateId: p.publicId,
+            payload: { promotionId: p.publicId, from: p.status },
+          },
           actor,
         );
         await this.activity.record(tx, {
@@ -302,10 +376,21 @@ export class PromotionRedemptions {
 
   // --- helpers ------------------------------------------------------------------------------------------
 
-  private async record(tx: Tx, groupPublicId: string, type: string, data: Record<string, unknown>, actor: Actor) {
+  private async record(
+    tx: Tx,
+    groupPublicId: string,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'order_group', aggregateId: groupPublicId, payload: { groupId: groupPublicId, ...data } },
+      {
+        type,
+        aggregateType: 'order_group',
+        aggregateId: groupPublicId,
+        payload: { groupId: groupPublicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {
@@ -320,10 +405,21 @@ export class PromotionRedemptions {
     });
   }
 
-  private async recordCampaign(tx: Tx, campaignPublicId: string, type: string, data: Record<string, unknown>, actor: Actor) {
+  private async recordCampaign(
+    tx: Tx,
+    campaignPublicId: string,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'campaign', aggregateId: campaignPublicId, payload: { campaignId: campaignPublicId, ...data } },
+      {
+        type,
+        aggregateType: 'campaign',
+        aggregateId: campaignPublicId,
+        payload: { campaignId: campaignPublicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {

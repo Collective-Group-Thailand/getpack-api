@@ -16,13 +16,22 @@ export class CreditRequestSummaryDto {
 }
 
 export class CompanyCreditDto {
-  @ApiProperty({ enum: ['prepaid', 'eligible', 'credit', 'blocked_overdue'], enumName: 'CreditStatus', example: 'credit' })
+  @ApiProperty({
+    enum: ['prepaid', 'eligible', 'credit', 'blocked_overdue'],
+    enumName: 'CreditStatus',
+    example: 'credit',
+  })
   creditStatus!: string;
 
   @ApiProperty({ type: String, nullable: true, example: '100000.00' })
   limitAmount!: string | null;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 30, description: 'Payment term in days after delivery' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 30,
+    description: 'Payment term in days after delivery',
+  })
   termDays!: number | null;
 
   @ApiProperty({ example: '25000.00', description: 'Open credit-term instalments' })
@@ -54,13 +63,21 @@ export class RequestCreditLimitDto {
   @Matches(/^\d{1,12}(\.\d{1,2})?$/)
   limitAmount!: string;
 
-  @ApiPropertyOptional({ type: 'integer', example: 30, description: 'One of `b2b.credit_terms.allowedDays`; default `defaultDays`' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 30,
+    description: 'One of `b2b.credit_terms.allowedDays`; default `defaultDays`',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   termDays?: number;
 
-  @ApiProperty({ enum: ['paid_orders', 'financial_statement'], enumName: 'CreditEligibilityBasis', example: 'paid_orders' })
+  @ApiProperty({
+    enum: ['paid_orders', 'financial_statement'],
+    enumName: 'CreditEligibilityBasis',
+    example: 'paid_orders',
+  })
   @IsIn(['paid_orders', 'financial_statement'])
   basis!: 'paid_orders' | 'financial_statement';
 
@@ -72,7 +89,11 @@ export class RequestCreditLimitDto {
 }
 
 export class StatementQuery {
-  @ApiProperty({ example: '2026-10', pattern: '^\\d{4}-(0[1-9]|1[0-2])$', description: 'Month in Bangkok time' })
+  @ApiProperty({
+    example: '2026-10',
+    pattern: '^\\d{4}-(0[1-9]|1[0-2])$',
+    description: 'Month in Bangkok time',
+  })
   @Matches(/^\d{4}-(0[1-9]|1[0-2])$/)
   month!: string;
 }

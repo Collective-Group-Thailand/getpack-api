@@ -138,7 +138,12 @@ export class StoreAddressesController {
   @ApiPaginated(AddressDto, { example: ADDRESS_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@CurrentActor() actor: Actor, @Query() q: AddressListQuery) {
-    const { rows, total } = await this.customers.listAddresses(customerUser(actor).userId, q.kind, q.page, q.perPage);
+    const { rows, total } = await this.customers.listAddresses(
+      customerUser(actor).userId,
+      q.kind,
+      q.page,
+      q.perPage,
+    );
     return page(rows.map(addressDto), total, q);
   }
 
@@ -250,7 +255,11 @@ export class StoreTaxProfilesController {
   @ApiPaginated(TaxProfileDto, { example: TAX_PROFILE_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@CurrentActor() actor: Actor, @Query() q: PageQuery) {
-    const { rows, total } = await this.customers.listTaxProfiles(customerUser(actor).userId, q.page, q.perPage);
+    const { rows, total } = await this.customers.listTaxProfiles(
+      customerUser(actor).userId,
+      q.page,
+      q.perPage,
+    );
     return page(rows.map(taxProfileDto), total, q);
   }
 
@@ -394,7 +403,12 @@ export class AdminCustomersController {
     type: FindOrCreateCustomerResultDto,
     example: { created: false, customer: ADMIN_CUSTOMER_EXAMPLE },
   })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'numbering.series_missing')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'numbering.series_missing',
+  )
   async findOrCreate(
     @CurrentActor() actor: Actor,
     @Body() body: FindOrCreateCustomerDto,

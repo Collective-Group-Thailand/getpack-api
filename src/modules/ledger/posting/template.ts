@@ -50,8 +50,7 @@ export type AccountSelector =
 
 /** A tax code, or `{ switch, cases, default }` like an account. */
 export type TaxCodeSelector =
-  | TaxCodeValue
-  | { switch: string; cases: Record<string, TaxCodeValue>; default?: TaxCodeValue };
+  TaxCodeValue | { switch: string; cases: Record<string, TaxCodeValue>; default?: TaxCodeValue };
 
 export interface TemplateLine {
   /** Repeats the line for every element of this payload array; the element is `item`. */
@@ -117,7 +116,8 @@ function selectAccount(selector: AccountSelector, scope: Scope): string {
   if (typeof selector === 'string') return selector;
   if ('path' in selector) {
     const code = readPath(scope, selector.path);
-    if (typeof code !== 'string' || code === '') throw new TemplateError(`no account code at "${selector.path}"`);
+    if (typeof code !== 'string' || code === '')
+      throw new TemplateError(`no account code at "${selector.path}"`);
     return code;
   }
   const key = readPath(scope, selector.switch);
@@ -136,7 +136,9 @@ function selectTaxCode(selector: TaxCodeSelector | undefined, scope: Scope): Tax
 function interpolate(text: string, scope: Scope): string {
   return text.replace(/\{([A-Za-z0-9_.]+)\}/g, (_, path: string) => {
     const value = readPath(scope, path);
-    return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : '';
+    return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : '';
   });
 }
 
@@ -158,7 +160,10 @@ export function renderJournal(template: PostingTemplate, payload: Scope): Render
   const lines: RenderedLine[] = [];
   for (const line of template.lines) {
     const scopes: Scope[] = line.forEach
-      ? ((readPath(payload, line.forEach) as unknown[] | undefined) ?? []).map((item) => ({ ...payload, item }))
+      ? ((readPath(payload, line.forEach) as unknown[] | undefined) ?? []).map((item) => ({
+          ...payload,
+          item,
+        }))
       : [payload];
     for (const scope of scopes) {
       if (line.when !== undefined && !evaluateCondition(line.when, { payload: scope })) continue;
@@ -195,7 +200,11 @@ export function renderJournal(template: PostingTemplate, payload: Scope): Render
     documentDate: typeof date === 'string' && date !== '' ? date : null,
     source:
       template.source && typeof sourceId === 'string'
-        ? { type: template.source.type, publicId: sourceId, number: typeof sourceNo === 'string' ? sourceNo : null }
+        ? {
+            type: template.source.type,
+            publicId: sourceId,
+            number: typeof sourceNo === 'string' ? sourceNo : null,
+          }
         : null,
     lines,
     totalDebit: total('debit'),
@@ -220,7 +229,8 @@ function checkAccountSelector(selector: unknown, at: string, errors: string[]): 
     errors.push(`${at}: account selector needs a code, { path } or { switch, cases }`);
     return;
   }
-  for (const [k, v] of Object.entries(s['cases'] as Record<string, unknown>)) checkAccountSelector(v, `${at}.cases.${k}`, errors);
+  for (const [k, v] of Object.entries(s['cases'] as Record<string, unknown>))
+    checkAccountSelector(v, `${at}.cases.${k}`, errors);
   if (s['default'] !== undefined) checkAccountSelector(s['default'], `${at}.default`, errors);
 }
 
@@ -236,7 +246,8 @@ function checkTaxCode(selector: unknown, at: string, errors: string[]): void {
     errors.push(`${at}: tax code needs a code or { switch, cases }`);
     return;
   }
-  for (const [k, v] of Object.entries(s['cases'] as Record<string, unknown>)) if (!ok(v)) errors.push(`${at}.cases.${k}: unknown tax code`);
+  for (const [k, v] of Object.entries(s['cases'] as Record<string, unknown>))
+    if (!ok(v)) errors.push(`${at}.cases.${k}: unknown tax code`);
   if (s['default'] !== undefined && !ok(s['default'])) errors.push(`${at}.default: unknown tax code`);
 }
 
@@ -257,8 +268,10 @@ export function validateTemplate(template: unknown): string[] {
   const errors: string[] = [];
   if (!template || typeof template !== 'object') return ['template must be an object'];
   const t = template as Record<string, unknown>;
-  if (typeof t['description'] !== 'string' || t['description'].trim() === '') errors.push('description required');
-  if (t['documentDate'] !== undefined && typeof t['documentDate'] !== 'string') errors.push('documentDate must be a path');
+  if (typeof t['description'] !== 'string' || t['description'].trim() === '')
+    errors.push('description required');
+  if (t['documentDate'] !== undefined && typeof t['documentDate'] !== 'string')
+    errors.push('documentDate must be a path');
   checkDimensions(t['dimensions'], 'dimensions', errors);
   if (!Array.isArray(t['lines'])) return [...errors, 'lines must be an array'];
   t['lines'].forEach((raw: unknown, i: number) => {
@@ -282,7 +295,8 @@ export function validateTemplate(template: unknown): string[] {
         errors.push(`${at}.${key}: ${(error as Error).message}`);
       }
     }
-    if (line['forEach'] !== undefined && typeof line['forEach'] !== 'string') errors.push(`${at}.forEach: must be a path`);
+    if (line['forEach'] !== undefined && typeof line['forEach'] !== 'string')
+      errors.push(`${at}.forEach: must be a path`);
     checkTaxCode(line['taxCode'], `${at}.taxCode`, errors);
     checkDimensions(line['dimensions'], `${at}.dimensions`, errors);
   });

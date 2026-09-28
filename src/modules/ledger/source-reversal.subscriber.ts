@@ -17,19 +17,29 @@ import { publicDimensions, swappedLines } from './manual-journals.service';
 export class SourceReversalSubscriber {
   constructor(private readonly posting: JournalPostingService) {}
 
-  @OnDomainEvent(['customer_document.voided', 'vendor_invoice.voided'], { consumer: 'ledger.source_reversal' })
+  @OnDomainEvent(['customer_document.voided', 'vendor_invoice.voided'], {
+    consumer: 'ledger.source_reversal',
+  })
   async onVoided(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     const type = typeof event.payload['sourceType'] === 'string' ? event.payload['sourceType'] : '';
     const id = typeof event.payload['sourceId'] === 'string' ? event.payload['sourceId'] : '';
     if (!type || !id) return;
     const entries = await tx.journalEntry.findMany({
-      where: { sourceDocumentType: type, sourceDocumentPublicId: id, status: 'posted', kind: 'auto', reversedBy: null },
+      where: {
+        sourceDocumentType: type,
+        sourceDocumentPublicId: id,
+        status: 'posted',
+        kind: 'auto',
+        reversedBy: null,
+      },
       include: { lines: true },
     });
     const day = bangkokDate(new Date(event.occurredAt));
     for (const entry of entries) {
       const accounts = new Map(
-        (await tx.account.findMany({ where: { id: { in: entry.lines.map((l) => l.accountId) } } })).map((a) => [a.id, a.code]),
+        (await tx.account.findMany({ where: { id: { in: entry.lines.map((l) => l.accountId) } } })).map(
+          (a) => [a.id, a.code],
+        ),
       );
       const lines: JournalDraftLine[] = [];
       for (const l of swappedLines(entry.lines)) {

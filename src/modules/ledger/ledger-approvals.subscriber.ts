@@ -7,7 +7,13 @@ import { LedgerConfigService } from './ledger-config.service';
 import { ManualJournalsService } from './manual-journals.service';
 import { RecurringJournalsService } from './recurring-journals.service';
 
-const POLICIES = ['manual_journal', 'recurring_journal', 'coa_change', 'posting_rule_change', 'tax_setting_change'];
+const POLICIES = [
+  'manual_journal',
+  'recurring_journal',
+  'coa_change',
+  'posting_rule_change',
+  'tax_setting_change',
+];
 
 /**
  * Applies the outcome of the ledger's maker-checker approvals (accounting-design §8, D-169) in the approval

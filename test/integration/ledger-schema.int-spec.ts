@@ -58,7 +58,8 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
     }
   }
 
-  const account = async (code: string) => (await prisma.account.findFirstOrThrow({ where: { entityId, code } })).id;
+  const account = async (code: string) =>
+    (await prisma.account.findFirstOrThrow({ where: { entityId, code } })).id;
   const line = (accountCode: string, side: 'debit' | 'credit', amount: string, dimensions = {}) => ({
     accountCode,
     side,
@@ -69,7 +70,10 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
   it('creates a fiscal year of 12 open months on demand, without overlaps', async () => {
     await prisma.withTx((tx) => periods.ensureYear(tx, entityId, '2031-05-17'));
     await prisma.withTx((tx) => periods.ensureYear(tx, entityId, '2031-08-01'));
-    const year = await prisma.fiscalYear.findFirstOrThrow({ where: { entityId, label: 'FY2031' }, include: { periods: true } });
+    const year = await prisma.fiscalYear.findFirstOrThrow({
+      where: { entityId, label: 'FY2031' },
+      include: { periods: true },
+    });
     expect(year.periods).toHaveLength(12);
     expect(year.periods.every((p) => p.status === 'open')).toBe(true);
     const period = year.periods.find((p) => p.periodNo === 2)!;
@@ -79,7 +83,9 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
         [entityId, year.id],
       ),
     ).toBe(SQLSTATE.exclusionViolation);
-    expect(await state(`UPDATE fiscal_periods SET end_date = '2031-02-27' WHERE id = $1`, [period.id])).toBe(SQLSTATE.restrictViolation);
+    expect(await state(`UPDATE fiscal_periods SET end_date = '2031-02-27' WHERE id = $1`, [period.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
   });
 
   it('posts a balanced manual journal and keeps it and its lines immutable', async () => {
@@ -98,15 +104,25 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
     );
     expect(entry).toMatchObject({ status: 'posted', totalDebit: expect.anything() });
     expect(entry.entryNo).toMatch(/^JE203103-\d{6}$/);
-    expect(await state(`UPDATE journal_entries SET description = 'x' WHERE id = $1`, [entry.id])).toBe(SQLSTATE.restrictViolation);
-    expect(await state(`DELETE FROM journal_entries WHERE id = $1`, [entry.id])).toBe(SQLSTATE.restrictViolation);
-    expect(await state(`UPDATE journal_lines SET debit = 1 WHERE journal_entry_id = $1 AND debit > 0`, [entry.id])).toBe(SQLSTATE.restrictViolation);
-    expect(await state(`DELETE FROM journal_lines WHERE journal_entry_id = $1`, [entry.id])).toBe(SQLSTATE.restrictViolation);
+    expect(await state(`UPDATE journal_entries SET description = 'x' WHERE id = $1`, [entry.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
+    expect(await state(`DELETE FROM journal_entries WHERE id = $1`, [entry.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
+    expect(
+      await state(`UPDATE journal_lines SET debit = 1 WHERE journal_entry_id = $1 AND debit > 0`, [entry.id]),
+    ).toBe(SQLSTATE.restrictViolation);
+    expect(await state(`DELETE FROM journal_lines WHERE journal_entry_id = $1`, [entry.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
   });
 
   it('refuses an unbalanced posted entry at commit (deferred check) and in the service', async () => {
     await prisma.withTx((tx) => periods.ensureYear(tx, entityId, '2031-04-15'));
-    const period = await prisma.fiscalPeriod.findFirstOrThrow({ where: { entityId, startDate: dateOnly('2031-04-01') } });
+    const period = await prisma.fiscalPeriod.findFirstOrThrow({
+      where: { entityId, startDate: dateOnly('2031-04-01') },
+    });
     const [a, b] = [await account('6900'), await account('2410')];
     await client.query('BEGIN');
     try {
@@ -133,7 +149,13 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
       prisma.withTx((tx) =>
         posting.post(
           tx,
-          { entityId, kind: 'manual', documentDate: '2031-04-15', description: 'x', lines: [line('6900', 'debit', '100.00'), line('2410', 'credit', '90.00')] },
+          {
+            entityId,
+            kind: 'manual',
+            documentDate: '2031-04-15',
+            description: 'x',
+            lines: [line('6900', 'debit', '100.00'), line('2410', 'credit', '90.00')],
+          },
           actor,
         ),
       ),
@@ -142,27 +164,48 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
 
   it('keeps control accounts for sub-ledger entries and enforces required dimensions', async () => {
     const manual = (lines: ReturnType<typeof line>[]) =>
-      prisma.withTx((tx) => posting.post(tx, { entityId, kind: 'manual', documentDate: '2031-04-20', description: 'x', lines }, actor));
-    await expect(manual([line('1210', 'debit', '10.00'), line('4990', 'credit', '10.00')])).rejects.toMatchObject({
+      prisma.withTx((tx) =>
+        posting.post(
+          tx,
+          { entityId, kind: 'manual', documentDate: '2031-04-20', description: 'x', lines },
+          actor,
+        ),
+      );
+    await expect(
+      manual([line('1210', 'debit', '10.00'), line('4990', 'credit', '10.00')]),
+    ).rejects.toMatchObject({
       code: 'ledger.account_invalid',
     });
-    await expect(manual([line('2320', 'debit', '10.00'), line('4990', 'credit', '10.00')])).rejects.toMatchObject({
+    await expect(
+      manual([line('2320', 'debit', '10.00'), line('4990', 'credit', '10.00')]),
+    ).rejects.toMatchObject({
       code: 'ledger.account_invalid',
     });
-    await expect(manual([line('1000', 'debit', '10.00'), line('4990', 'credit', '10.00')])).rejects.toMatchObject({
+    await expect(
+      manual([line('1000', 'debit', '10.00'), line('4990', 'credit', '10.00')]),
+    ).rejects.toMatchObject({
       code: 'ledger.account_invalid',
     });
   });
 
   it('posts into the next open period when the document period is closed, keeping the document date', async () => {
     await prisma.withTx((tx) => periods.ensureYear(tx, entityId, '2032-01-10'));
-    const jan = await prisma.fiscalPeriod.findFirstOrThrow({ where: { entityId, startDate: dateOnly('2032-01-01') } });
+    const jan = await prisma.fiscalPeriod.findFirstOrThrow({
+      where: { entityId, startDate: dateOnly('2032-01-01') },
+    });
     await prisma.withTx((tx) => periods.transitionIn(tx, actor, jan, 'soft_closed', 'test'));
     // Soft-closed: only with the permission (session flag).
     const soft = await prisma.withTx((tx) =>
       posting.post(
         tx,
-        { entityId, kind: 'manual', documentDate: '2032-01-10', description: 'soft', allowSoftClosed: true, lines: [line('6900', 'debit', '5.00'), line('2410', 'credit', '5.00')] },
+        {
+          entityId,
+          kind: 'manual',
+          documentDate: '2032-01-10',
+          description: 'soft',
+          allowSoftClosed: true,
+          lines: [line('6900', 'debit', '5.00'), line('2410', 'credit', '5.00')],
+        },
         actor,
       ),
     );
@@ -170,7 +213,13 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
     const late = await prisma.withTx((tx) =>
       posting.post(
         tx,
-        { entityId, kind: 'manual', documentDate: '2032-01-10', description: 'late', lines: [line('6900', 'debit', '5.00'), line('2410', 'credit', '5.00')] },
+        {
+          entityId,
+          kind: 'manual',
+          documentDate: '2032-01-10',
+          description: 'late',
+          lines: [line('6900', 'debit', '5.00'), line('2410', 'credit', '5.00')],
+        },
         actor,
       ),
     );
@@ -191,7 +240,10 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
         [rows[0].id, a, entityId, jan.id, b],
       );
       expect(
-        await state(`UPDATE journal_entries SET status = 'posted', entry_no = 'X-2', posted_at = now(), total_debit = 1, total_credit = 1 WHERE id = $1`, [rows[0].id]),
+        await state(
+          `UPDATE journal_entries SET status = 'posted', entry_no = 'X-2', posted_at = now(), total_debit = 1, total_credit = 1 WHERE id = $1`,
+          [rows[0].id],
+        ),
       ).toBe(SQLSTATE.restrictViolation);
     } finally {
       await client.query('ROLLBACK');
@@ -199,23 +251,35 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
   });
 
   it('closes periods in sequence and never reopens a locked one', async () => {
-    const other = await prisma.entity.create({ data: { code: 'LEDGERTEST', displayName: 'Ledger test (fake)' } });
+    const other = await prisma.entity.create({
+      data: { code: 'LEDGERTEST', displayName: 'Ledger test (fake)' },
+    });
     await prisma.withTx((tx) => periods.ensureYear(tx, other.id, '2033-01-15'));
     const month = (n: number) =>
-      prisma.fiscalPeriod.findFirstOrThrow({ where: { entityId: other.id, startDate: dateOnly(`2033-0${n}-01`) } });
+      prisma.fiscalPeriod.findFirstOrThrow({
+        where: { entityId: other.id, startDate: dateOnly(`2033-0${n}-01`) },
+      });
     const feb = await month(2);
     await prisma.withTx((tx) => periods.transitionIn(tx, actor, feb, 'soft_closed', 'test'));
-    await expect(prisma.withTx(async (tx) => periods.transitionIn(tx, actor, await month(2), 'closed', 'x'))).rejects.toMatchObject({
+    await expect(
+      prisma.withTx(async (tx) => periods.transitionIn(tx, actor, await month(2), 'closed', 'x')),
+    ).rejects.toMatchObject({
       code: 'ledger.period_transition',
     });
-    await expect(prisma.withTx(async (tx) => periods.transitionIn(tx, actor, await month(1), 'locked', 'x'))).rejects.toMatchObject({
+    await expect(
+      prisma.withTx(async (tx) => periods.transitionIn(tx, actor, await month(1), 'locked', 'x')),
+    ).rejects.toMatchObject({
       code: 'ledger.period_transition',
     });
     for (const to of ['soft_closed', 'closed', 'locked'] as const)
       await prisma.withTx(async (tx) => periods.transitionIn(tx, actor, await month(1), to, 'test'));
     const jan = await month(1);
-    expect(await state(`UPDATE fiscal_periods SET status = 'open' WHERE id = $1`, [jan.id])).toBe(SQLSTATE.restrictViolation);
-    await expect(prisma.withTx((tx) => periods.transitionIn(tx, actor, jan, 'open', 'x'))).rejects.toMatchObject({
+    expect(await state(`UPDATE fiscal_periods SET status = 'open' WHERE id = $1`, [jan.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
+    await expect(
+      prisma.withTx((tx) => periods.transitionIn(tx, actor, jan, 'open', 'x')),
+    ).rejects.toMatchObject({
       code: 'ledger.period_transition',
     });
   });
@@ -266,6 +330,8 @@ describe('ledger schema and posting (PostgreSQL 18)', () => {
     ]);
     expect(lines.every((l) => l.customerUserId === customer.id)).toBe(true);
     // A second run of the same event and rule is refused by the unique key.
-    await expect(prisma.withTx((tx) => engine.postEvent(tx, event as DomainEventEnvelope))).rejects.toBeTruthy();
+    await expect(
+      prisma.withTx((tx) => engine.postEvent(tx, event as DomainEventEnvelope)),
+    ).rejects.toBeTruthy();
   });
 });

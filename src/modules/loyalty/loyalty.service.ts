@@ -59,7 +59,10 @@ export class LoyaltyService {
   async summary(userId: bigint, now = new Date()) {
     const [membership, lots, pending, value, expiry] = await Promise.all([
       this.prisma.loyaltyMembership.findUnique({ where: { userId } }),
-      this.prisma.pointsLot.findMany({ where: { userId, remaining: { gt: 0 }, expiresAt: { gt: now } }, orderBy: { expiresAt: 'asc' } }),
+      this.prisma.pointsLot.findMany({
+        where: { userId, remaining: { gt: 0 }, expiresAt: { gt: now } },
+        orderBy: { expiresAt: 'asc' },
+      }),
       this.prisma.pointsEntry.aggregate({ where: { userId, status: 'pending' }, _sum: { points: true } }),
       this.settings.at('loyalty.point_value', { at: now }),
       this.settings.at('loyalty.points_expiry', { at: now }),
@@ -74,7 +77,9 @@ export class LoyaltyService {
       pendingPoints: pending._sum.points ?? 0,
       pointValue: D(value.value).toFixed(2),
       availableValue: formatMoney(D(available).mul(value.value)),
-      expiringSoon: lots.filter((l) => l.expiresAt <= soon).map((l) => ({ points: l.remaining, expiresAt: l.expiresAt })),
+      expiringSoon: lots
+        .filter((l) => l.expiresAt <= soon)
+        .map((l) => ({ points: l.remaining, expiresAt: l.expiresAt })),
     };
   }
 
@@ -83,7 +88,10 @@ export class LoyaltyService {
     return Promise.all([
       this.prisma.pointsEntry.findMany({
         where,
-        include: { order: { select: { publicId: true, orderCode: true } }, orderGroup: { select: { publicId: true, groupCode: true } } },
+        include: {
+          order: { select: { publicId: true, orderCode: true } },
+          orderGroup: { select: { publicId: true, groupCode: true } },
+        },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * perPage,
         take: perPage,
@@ -130,7 +138,8 @@ export class LoyaltyService {
     const points = earnPoints(base, rate.value.bahtPerPoint, membership?.multiplier.toString() ?? '1');
     if (points <= 0) return null;
     const completedAt = order.completedAt ?? now;
-    const availableAt = order.claimWindowEndsAt ?? new Date(completedAt.getTime() + Number(window.value) * DAY_MS);
+    const availableAt =
+      order.claimWindowEndsAt ?? new Date(completedAt.getTime() + Number(window.value) * DAY_MS);
     const entry = await tx.pointsEntry.create({
       data: {
         userId: order.customerUserId,
@@ -145,11 +154,18 @@ export class LoyaltyService {
         orderGroupId: order.orderGroupId,
       },
     });
-    await this.record(tx, order.customerUserId, entry, 'points.earned', {
-      points,
-      base: formatMoney(base),
-      availableAt: availableAt.toISOString(),
-    }, systemActor('loyalty.earn'));
+    await this.record(
+      tx,
+      order.customerUserId,
+      entry,
+      'points.earned',
+      {
+        points,
+        base: formatMoney(base),
+        availableAt: availableAt.toISOString(),
+      },
+      systemActor('loyalty.earn'),
+    );
     return entry;
   }
 
@@ -199,7 +215,15 @@ export class LoyaltyService {
     const expiry = await this.settings.at('loyalty.points_expiry', { at: now, tx });
     const expiresAt = addMonths(now, expiry.value.monthsPerEarning);
     await tx.pointsEntry.update({ where: { id: entry.id }, data: { status: 'available', expiresAt } });
-    await tx.pointsLot.create({ data: { earnEntryId: entry.id, userId: entry.userId, points: creditable, remaining: creditable, expiresAt } });
+    await tx.pointsLot.create({
+      data: {
+        earnEntryId: entry.id,
+        userId: entry.userId,
+        points: creditable,
+        remaining: creditable,
+        expiresAt,
+      },
+    });
     await this.issued(tx, entry, creditable, actor);
     return true;
   }
@@ -207,7 +231,15 @@ export class LoyaltyService {
   // --- activity and referral rewards (D-135, D-136) ----------------------------------------------------
 
   /** A reward in baht credited at once at the point value in force (rounded down, D-131). */
-  async reward(tx: Tx, userId: bigint, type: PointsEntryType, baht: string, links: Links, actor: Actor, now = new Date()) {
+  async reward(
+    tx: Tx,
+    userId: bigint,
+    type: PointsEntryType,
+    baht: string,
+    links: Links,
+    actor: Actor,
+    now = new Date(),
+  ) {
     const value = await this.settings.at('loyalty.point_value', { at: now, tx });
     const points = pointsForBaht(baht, String(value.value));
     if (points <= 0) return null;
@@ -230,7 +262,9 @@ export class LoyaltyService {
         createdById: links.createdById ?? null,
       },
     });
-    await tx.pointsLot.create({ data: { earnEntryId: entry.id, userId, points, remaining: points, expiresAt } });
+    await tx.pointsLot.create({
+      data: { earnEntryId: entry.id, userId, points, remaining: points, expiresAt },
+    });
     await this.issued(tx, entry, points, actor);
     return entry;
   }
@@ -243,7 +277,14 @@ export class LoyaltyService {
     if (!user || user.kind !== 'customer') return;
     if (await tx.pointsEntry.findFirst({ where: { userId: user.id, entryType: 'earn_signup' } })) return;
     const rewards = await this.settings.at('loyalty.activity_rewards', { tx });
-    await this.reward(tx, user.id, 'earn_signup', rewards.value.signupBaht, {}, systemActor('loyalty.signup'));
+    await this.reward(
+      tx,
+      user.id,
+      'earn_signup',
+      rewards.value.signupBaht,
+      {},
+      systemActor('loyalty.signup'),
+    );
   }
 
   /** LINE linking reward, once (D-135). */
@@ -254,7 +295,14 @@ export class LoyaltyService {
     if (!user || user.kind !== 'customer') return;
     if (await tx.pointsEntry.findFirst({ where: { userId: user.id, entryType: 'earn_line_link' } })) return;
     const rewards = await this.settings.at('loyalty.activity_rewards', { tx });
-    await this.reward(tx, user.id, 'earn_line_link', rewards.value.lineLinkingBaht, {}, systemActor('loyalty.line_link'));
+    await this.reward(
+      tx,
+      user.id,
+      'earn_line_link',
+      rewards.value.lineLinkingBaht,
+      {},
+      systemActor('loyalty.line_link'),
+    );
   }
 
   /** The referrer's reward once a referral qualifies (D-136); the referral becomes `rewarded`. */
@@ -263,20 +311,38 @@ export class LoyaltyService {
     const referral = await tx.referralAttribution.findUnique({ where: { publicId: event.aggregateId } });
     if (!referral || referral.status !== 'qualified') return;
     const baht = String(event.payload['rewardBaht']);
-    await this.reward(tx, referral.referrerUserId, 'earn_referral', baht, { referralAttributionId: referral.id }, systemActor('loyalty.referral'));
-    await tx.referralAttribution.update({ where: { id: referral.id }, data: { status: 'rewarded', rewardedAt: new Date() } });
+    await this.reward(
+      tx,
+      referral.referrerUserId,
+      'earn_referral',
+      baht,
+      { referralAttributionId: referral.id },
+      systemActor('loyalty.referral'),
+    );
+    await tx.referralAttribution.update({
+      where: { id: referral.id },
+      data: { status: 'rewarded', rewardedAt: new Date() },
+    });
   }
 
   // --- reversals for refunds and claims (D-132) ------------------------------------------------------
 
   @OnDomainEvent('refund.succeeded', { consumer: 'loyalty.refund' })
   async onRefund(event: DomainEventEnvelope, tx: Tx): Promise<void> {
-    const refund = await tx.refund.findUnique({ where: { publicId: event.aggregateId }, include: { payment: true } });
+    const refund = await tx.refund.findUnique({
+      where: { publicId: event.aggregateId },
+      include: { payment: true },
+    });
     if (!refund) return;
     const orderIds = refund.orderId
       ? [refund.orderId]
       : refund.payment.orderGroupId
-        ? (await tx.order.findMany({ where: { orderGroupId: refund.payment.orderGroupId }, select: { id: true } })).map((o) => o.id)
+        ? (
+            await tx.order.findMany({
+              where: { orderGroupId: refund.payment.orderGroupId },
+              select: { id: true },
+            })
+          ).map((o) => o.id)
         : [];
     for (const orderId of orderIds) await this.reverseForOrder(tx, orderId, systemActor('loyalty.refund'));
   }
@@ -285,17 +351,36 @@ export class LoyaltyService {
    * Brings an order's earning down to what its refunded base still allows. Refunds tied to the order count
    * fully; group-level refunds count by the order's share of the group's gross. Claims (B4.5) call this too.
    */
-  async reverseForOrder(tx: Tx, orderId: bigint, actor: Actor, extraRefundedBase: MoneyValue = D(0)): Promise<number> {
-    const earn = await tx.pointsEntry.findFirst({ where: { orderId, entryType: 'earn_order', status: { in: ['pending', 'available'] } } });
+  async reverseForOrder(
+    tx: Tx,
+    orderId: bigint,
+    actor: Actor,
+    extraRefundedBase: MoneyValue = D(0),
+  ): Promise<number> {
+    const earn = await tx.pointsEntry.findFirst({
+      where: { orderId, entryType: 'earn_order', status: { in: ['pending', 'available'] } },
+    });
     if (!earn) return 0;
     const order = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
-    const siblings = await tx.order.findMany({ where: { orderGroupId: order.orderGroupId, status: { not: 'cancelled' } } });
+    const siblings = await tx.order.findMany({
+      where: { orderGroupId: order.orderGroupId, status: { not: 'cancelled' } },
+    });
     const groupGross = siblings.reduce((a, o) => a.add(o.grossAmount.toString()), D(0));
     const refunds = await tx.refund.findMany({
-      where: { status: 'succeeded', OR: [{ orderId }, { orderId: null, payment: { orderGroupId: order.orderGroupId } }] },
+      where: {
+        status: 'succeeded',
+        OR: [{ orderId }, { orderId: null, payment: { orderGroupId: order.orderGroupId } }],
+      },
     });
     const refundedGross = refunds.reduce(
-      (a, r) => a.add(r.orderId === orderId ? D(r.amount) : groupGross.gt(0) ? D(r.amount).mul(order.grossAmount.toString()).div(groupGross) : D(0)),
+      (a, r) =>
+        a.add(
+          r.orderId === orderId
+            ? D(r.amount)
+            : groupGross.gt(0)
+              ? D(r.amount).mul(order.grossAmount.toString()).div(groupGross)
+              : D(0),
+        ),
       D(0),
     );
     const base = await this.earnBase(tx, orderId);
@@ -323,20 +408,38 @@ export class LoyaltyService {
       },
     });
     // A pending earning is simply credited smaller; a credited one gives the points back from its lots.
-    const unrecovered = earn.status === 'available' ? toReverse - (await this.consume(tx, earn.userId, toReverse, entry.id, earn.id)) : 0;
-    await this.record(tx, earn.userId, entry, 'points.reversed', {
-      points: toReverse,
-      orderId: order.publicId,
-      earningStatus: earn.status,
-      unrecoveredPoints: unrecovered,
-    }, actor);
+    const unrecovered =
+      earn.status === 'available'
+        ? toReverse - (await this.consume(tx, earn.userId, toReverse, entry.id, earn.id))
+        : 0;
+    await this.record(
+      tx,
+      earn.userId,
+      entry,
+      'points.reversed',
+      {
+        points: toReverse,
+        orderId: order.publicId,
+        earningStatus: earn.status,
+        unrecoveredPoints: unrecovered,
+      },
+      actor,
+    );
     return toReverse;
   }
 
   // --- redemption (D-133, P11) -------------------------------------------------------------------------
 
   /** Writes the group's redemption and takes the points from the lots (row-locked, FIFO by expiry). */
-  async redeem(tx: Tx, userId: bigint, groupId: bigint, points: number, pointValue: string, versionId: bigint, actor: Actor) {
+  async redeem(
+    tx: Tx,
+    userId: bigint,
+    groupId: bigint,
+    points: number,
+    pointValue: string,
+    versionId: bigint,
+    actor: Actor,
+  ) {
     const amount = formatMoney(D(points).mul(pointValue));
     const entry = await tx.pointsEntry.create({
       data: {
@@ -351,8 +454,22 @@ export class LoyaltyService {
       },
     });
     const taken = await this.consume(tx, userId, points, entry.id);
-    if (taken < points) throw new DomainException('loyalty.insufficient_points', { params: { requested: points, available: taken } });
-    await this.record(tx, userId, entry, 'points.redeemed', { points, amount, groupId: (await tx.orderGroup.findUniqueOrThrow({ where: { id: groupId } })).publicId }, actor);
+    if (taken < points)
+      throw new DomainException('loyalty.insufficient_points', {
+        params: { requested: points, available: taken },
+      });
+    await this.record(
+      tx,
+      userId,
+      entry,
+      'points.redeemed',
+      {
+        points,
+        amount,
+        groupId: (await tx.orderGroup.findUniqueOrThrow({ where: { id: groupId } })).publicId,
+      },
+      actor,
+    );
     return entry;
   }
 
@@ -361,7 +478,9 @@ export class LoyaltyService {
   async onOrderCancelled(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     const order = await tx.order.findUnique({ where: { publicId: event.aggregateId } });
     if (!order) return;
-    const redeem = await tx.pointsEntry.findFirst({ where: { orderGroupId: order.orderGroupId, entryType: 'redeem' } });
+    const redeem = await tx.pointsEntry.findFirst({
+      where: { orderGroupId: order.orderGroupId, entryType: 'redeem' },
+    });
     if (!redeem) return;
     const discounts = await tx.orderDiscount.aggregate({
       where: { orderId: order.id, source: 'points_redemption' },
@@ -374,8 +493,13 @@ export class LoyaltyService {
       _sum: { points: true },
     });
     const outstanding = -redeem.points - (returned._sum.points ?? 0);
-    const live = await tx.order.count({ where: { orderGroupId: order.orderGroupId, status: { not: 'cancelled' } } });
-    const points = Math.min(outstanding, live === 0 ? outstanding : amount.div(redeem.pointValue.toString()).floor().toNumber());
+    const live = await tx.order.count({
+      where: { orderGroupId: order.orderGroupId, status: { not: 'cancelled' } },
+    });
+    const points = Math.min(
+      outstanding,
+      live === 0 ? outstanding : amount.div(redeem.pointValue.toString()).floor().toNumber(),
+    );
     if (points <= 0) return;
     const entry = await tx.pointsEntry.create({
       data: {
@@ -392,7 +516,14 @@ export class LoyaltyService {
       },
     });
     await this.restore(tx, redeem.id, entry.id, points);
-    await this.record(tx, redeem.userId, entry, 'points.redemption_reversed', { points, orderId: order.publicId }, systemActor('loyalty.redemption_return'));
+    await this.record(
+      tx,
+      redeem.userId,
+      entry,
+      'points.redemption_reversed',
+      { points, orderId: order.publicId },
+      systemActor('loyalty.redemption_return'),
+    );
   }
 
   // --- expiry and reminders (D-132, P12) ------------------------------------------------------------
@@ -413,7 +544,9 @@ export class LoyaltyService {
              WHERE user_id = ${userId} AND remaining > 0 AND expires_at <= ${now}
              ORDER BY expires_at, id FOR UPDATE`;
           if (lots.length === 0) return;
-          const earns = await tx.pointsEntry.findMany({ where: { id: { in: lots.map((l) => l.earn_entry_id) } } });
+          const earns = await tx.pointsEntry.findMany({
+            where: { id: { in: lots.map((l) => l.earn_entry_id) } },
+          });
           const valueOf = new Map(earns.map((e) => [e.id, D(e.pointValue)]));
           const points = lots.reduce((a, l) => a + l.remaining, 0);
           const baht = lots.reduce((a, l) => a.add(valueOf.get(l.earn_entry_id)!.mul(l.remaining)), D(0));
@@ -431,10 +564,22 @@ export class LoyaltyService {
           });
           for (const l of lots) {
             await tx.pointsLot.update({ where: { id: l.id }, data: { remaining: 0 } });
-            await tx.pointsLotConsumption.create({ data: { lotId: l.id, consumingEntryId: entry.id, points: l.remaining } });
+            await tx.pointsLotConsumption.create({
+              data: { lotId: l.id, consumingEntryId: entry.id, points: l.remaining },
+            });
           }
-          await tx.pointsEntry.updateMany({ where: { id: { in: earns.map((e) => e.id) }, status: 'available' }, data: { status: 'expired' } });
-          await this.record(tx, userId, entry, 'points.expired', { points, bahtValue: formatMoney(baht) }, systemActor('loyalty.expire'));
+          await tx.pointsEntry.updateMany({
+            where: { id: { in: earns.map((e) => e.id) }, status: 'available' },
+            data: { status: 'expired' },
+          });
+          await this.record(
+            tx,
+            userId,
+            entry,
+            'points.expired',
+            { points, bahtValue: formatMoney(baht) },
+            systemActor('loyalty.expire'),
+          );
           expired += 1;
         });
       } catch (error) {
@@ -456,7 +601,10 @@ export class LoyaltyService {
     for (const l of lots) byUser.set(l.userId, [...(byUser.get(l.userId) ?? []), l]);
     for (const [userId, own] of byUser) {
       await this.prisma.withTx(async (tx) => {
-        const { count } = await tx.pointsLot.updateMany({ where: { id: { in: own.map((l) => l.id) }, remindedAt: null }, data: { remindedAt: now } });
+        const { count } = await tx.pointsLot.updateMany({
+          where: { id: { in: own.map((l) => l.id) }, remindedAt: null },
+          data: { remindedAt: now },
+        });
         if (count === 0) return;
         const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { publicId: true } });
         const points = own.reduce((a, l) => a + l.remaining, 0);
@@ -513,10 +661,20 @@ export class LoyaltyService {
         });
         if ((before?.tier ?? 'member') === rule.tier) return;
         const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { publicId: true } });
-        const payload = { from: before?.tier ?? 'member', to: rule.tier, spend12m: formatMoney(spend), multiplier: data.multiplier };
+        const payload = {
+          from: before?.tier ?? 'member',
+          to: rule.tier,
+          spend12m: formatMoney(spend),
+          multiplier: data.multiplier,
+        };
         const event = await this.events.record(
           tx,
-          { type: 'loyalty.tier_changed', aggregateType: 'user', aggregateId: user.publicId, payload: { userId: user.publicId, ...payload } },
+          {
+            type: 'loyalty.tier_changed',
+            aggregateType: 'user',
+            aggregateId: user.publicId,
+            payload: { userId: user.publicId, ...payload },
+          },
           systemActor('loyalty.tiers'),
         );
         await this.activity.record(tx, {
@@ -541,7 +699,13 @@ export class LoyaltyService {
    * Adds (a lot expiring 12 months later) or removes (FIFO from the lots) points with a reason; audited
    * as a finance action. Removing more than the balance is refused.
    */
-  async adjust(actor: UserActor, userId: bigint, points: number, reason: string, now = new Date()): Promise<PointsEntry> {
+  async adjust(
+    actor: UserActor,
+    userId: bigint,
+    points: number,
+    reason: string,
+    now = new Date(),
+  ): Promise<PointsEntry> {
     return this.prisma.withTx(async (tx) => {
       const value = await this.settings.at('loyalty.point_value', { at: now, tx });
       const expiry = await this.settings.at('loyalty.points_expiry', { at: now, tx });
@@ -562,10 +726,15 @@ export class LoyaltyService {
         },
       });
       if (positive) {
-        await tx.pointsLot.create({ data: { earnEntryId: entry.id, userId, points, remaining: points, expiresAt: expiresAt! } });
+        await tx.pointsLot.create({
+          data: { earnEntryId: entry.id, userId, points, remaining: points, expiresAt: expiresAt! },
+        });
       } else {
         const taken = await this.consume(tx, userId, -points, entry.id);
-        if (taken < -points) throw new DomainException('loyalty.insufficient_points', { params: { requested: -points, available: taken } });
+        if (taken < -points)
+          throw new DomainException('loyalty.insufficient_points', {
+            params: { requested: -points, available: taken },
+          });
       }
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { publicId: true } });
       await this.audit.record(tx, {
@@ -584,7 +753,13 @@ export class LoyaltyService {
   // --- lots -------------------------------------------------------------------------------------------
 
   /** Takes up to `points` from unexpired lots (one lot first when given, then FIFO by expiry); returns what it took. */
-  async consume(tx: Tx, userId: bigint, points: number, entryId: bigint, preferEarnEntryId?: bigint): Promise<number> {
+  async consume(
+    tx: Tx,
+    userId: bigint,
+    points: number,
+    entryId: bigint,
+    preferEarnEntryId?: bigint,
+  ): Promise<number> {
     const lots = await tx.$queryRaw<{ id: bigint; remaining: number }[]>`
       SELECT id, remaining FROM points_lots
        WHERE user_id = ${userId} AND remaining > 0 AND expires_at > now()
@@ -595,16 +770,29 @@ export class LoyaltyService {
       if (left <= 0) break;
       const take = Math.min(left, l.remaining);
       await tx.pointsLot.update({ where: { id: l.id }, data: { remaining: { decrement: take } } });
-      await tx.pointsLotConsumption.create({ data: { lotId: l.id, consumingEntryId: entryId, points: take } });
+      await tx.pointsLotConsumption.create({
+        data: { lotId: l.id, consumingEntryId: entryId, points: take },
+      });
       left -= take;
     }
     return points - left;
   }
 
   /** Gives redeemed points back to the lots they came from, most recently consumed first. */
-  private async restore(tx: Tx, redeemEntryId: bigint, reversalEntryId: bigint, points: number): Promise<void> {
-    const taken = await tx.pointsLotConsumption.findMany({ where: { consumingEntryId: redeemEntryId }, orderBy: { id: 'desc' } });
-    const reversals = await tx.pointsEntry.findMany({ where: { reversesEntryId: redeemEntryId, entryType: 'redeem_reversal' }, select: { id: true } });
+  private async restore(
+    tx: Tx,
+    redeemEntryId: bigint,
+    reversalEntryId: bigint,
+    points: number,
+  ): Promise<void> {
+    const taken = await tx.pointsLotConsumption.findMany({
+      where: { consumingEntryId: redeemEntryId },
+      orderBy: { id: 'desc' },
+    });
+    const reversals = await tx.pointsEntry.findMany({
+      where: { reversesEntryId: redeemEntryId, entryType: 'redeem_reversal' },
+      select: { id: true },
+    });
     const given = await tx.pointsLotConsumption.groupBy({
       by: ['lotId'],
       where: { consumingEntryId: { in: reversals.map((r) => r.id) } },
@@ -618,7 +806,9 @@ export class LoyaltyService {
       if (room <= 0) continue;
       const put = Math.min(room, left);
       await tx.pointsLot.update({ where: { id: c.lotId }, data: { remaining: { increment: put } } });
-      await tx.pointsLotConsumption.create({ data: { lotId: c.lotId, consumingEntryId: reversalEntryId, points: -put } });
+      await tx.pointsLotConsumption.create({
+        data: { lotId: c.lotId, consumingEntryId: reversalEntryId, points: -put },
+      });
       back.set(c.lotId, (back.get(c.lotId) ?? 0) + put);
       left -= put;
     }
@@ -628,17 +818,31 @@ export class LoyaltyService {
 
   private async issued(tx: Tx, entry: PointsEntry, points: number, actor: Actor) {
     const rate = await this.settings.at('loyalty.expected_redemption_rate_pct', { tx });
-    await this.record(tx, entry.userId, entry, 'points.issued', {
-      entryType: entry.entryType,
-      points,
-      pointValue: D(entry.pointValue).toFixed(2),
-      bahtValue: formatMoney(D(points).mul(entry.pointValue.toString())),
-      expectedRedemptionRatePct: String(rate.value),
-      expiresAt: entry.expiresAt?.toISOString() ?? null,
-    }, actor);
+    await this.record(
+      tx,
+      entry.userId,
+      entry,
+      'points.issued',
+      {
+        entryType: entry.entryType,
+        points,
+        pointValue: D(entry.pointValue).toFixed(2),
+        bahtValue: formatMoney(D(points).mul(entry.pointValue.toString())),
+        expectedRedemptionRatePct: String(rate.value),
+        expiresAt: entry.expiresAt?.toISOString() ?? null,
+      },
+      actor,
+    );
   }
 
-  private async record(tx: Tx, userId: bigint, entry: PointsEntry, type: string, data: Record<string, unknown>, actor: Actor) {
+  private async record(
+    tx: Tx,
+    userId: bigint,
+    entry: PointsEntry,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
     const user = await tx.user.findUniqueOrThrow({ where: { id: userId }, select: { publicId: true } });
     const event = await this.events.record(
       tx,
@@ -651,8 +855,13 @@ export class LoyaltyService {
           userId: user.publicId,
           entryId: entry.publicId,
           bahtValue: D(entry.bahtValue).abs().toFixed(2),
-          signedBahtValue: (entry.points < 0 ? D(entry.bahtValue).abs().neg() : D(entry.bahtValue).abs()).toFixed(2),
-          expectedRedemptionRatePct: String((await this.settings.at('loyalty.expected_redemption_rate_pct', { tx })).value),
+          signedBahtValue: (entry.points < 0
+            ? D(entry.bahtValue).abs().neg()
+            : D(entry.bahtValue).abs()
+          ).toFixed(2),
+          expectedRedemptionRatePct: String(
+            (await this.settings.at('loyalty.expected_redemption_rate_pct', { tx })).value,
+          ),
           ...data,
         },
       },
@@ -672,5 +881,8 @@ export class LoyaltyService {
 }
 
 export type LedgerRow = Prisma.PointsEntryGetPayload<{
-  include: { order: { select: { publicId: true; orderCode: true } }; orderGroup: { select: { publicId: true; groupCode: true } } };
+  include: {
+    order: { select: { publicId: true; orderCode: true } };
+    orderGroup: { select: { publicId: true; groupCode: true } };
+  };
 }>;

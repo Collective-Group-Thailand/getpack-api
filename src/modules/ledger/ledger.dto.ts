@@ -43,7 +43,14 @@ export const LEDGER_DIMENSIONS = [
   'cost_centre',
 ] as const;
 export const ACCOUNT_STATUSES = ['active', 'inactive'] as const;
-export const CASH_FLOW_CLASSES = ['cash', 'operating', 'investing', 'financing', 'equity', 'non_cash'] as const;
+export const CASH_FLOW_CLASSES = [
+  'cash',
+  'operating',
+  'investing',
+  'financing',
+  'equity',
+  'non_cash',
+] as const;
 export const JOURNAL_KINDS = ['auto', 'manual', 'reversal', 'recurring', 'closing'] as const;
 export const JOURNAL_STATUSES = ['draft', 'pending_approval', 'posted', 'rejected'] as const;
 export const TAX_CODES = [
@@ -58,7 +65,14 @@ export const TAX_CODES = [
 export const PERIOD_STATUSES = ['open', 'soft_closed', 'closed', 'locked'] as const;
 export const ACCOUNT_CHANGE_KINDS = ['create', 'update', 'deactivate', 'reactivate'] as const;
 export const RECURRING_STATUSES = ['pending_approval', 'active', 'paused', 'ended', 'rejected'] as const;
-export const VERSION_STATUSES = ['draft', 'proposed', 'pending_acceptance', 'approved', 'rejected', 'withdrawn'] as const;
+export const VERSION_STATUSES = [
+  'draft',
+  'proposed',
+  'pending_acceptance',
+  'approved',
+  'rejected',
+  'withdrawn',
+] as const;
 export const SALES_CHANNELS = ['web', 'cs', 'line', 'b2b'] as const;
 
 export const LEDGER_IDS = {
@@ -111,7 +125,12 @@ export class AccountDto {
   @ApiProperty({ example: true, description: 'False for heading accounts' })
   isPostable!: boolean;
 
-  @ApiProperty({ enum: LEDGER_DIMENSIONS, enumName: 'LedgerDimension', isArray: true, example: ['customer', 'order'] })
+  @ApiProperty({
+    enum: LEDGER_DIMENSIONS,
+    enumName: 'LedgerDimension',
+    isArray: true,
+    example: ['customer', 'order'],
+  })
   allowedDimensions!: string[];
 
   @ApiProperty({ enum: LEDGER_DIMENSIONS, enumName: 'LedgerDimension', isArray: true, example: ['customer'] })
@@ -141,7 +160,11 @@ export const ACCOUNT_EXAMPLE: AccountDto = {
 };
 
 export class AccountFieldsDto {
-  @ApiPropertyOptional({ example: '1124', pattern: ACCOUNT_CODE.source, description: 'Required when creating' })
+  @ApiPropertyOptional({
+    example: '1124',
+    pattern: ACCOUNT_CODE.source,
+    description: 'Required when creating',
+  })
   @IsOptional()
   @IsString()
   @Matches(ACCOUNT_CODE)
@@ -188,7 +211,12 @@ export class AccountFieldsDto {
   @IsBoolean()
   isPostable?: boolean;
 
-  @ApiPropertyOptional({ enum: LEDGER_DIMENSIONS, enumName: 'LedgerDimension', isArray: true, example: ['cost_centre'] })
+  @ApiPropertyOptional({
+    enum: LEDGER_DIMENSIONS,
+    enumName: 'LedgerDimension',
+    isArray: true,
+    example: ['cost_centre'],
+  })
   @IsOptional()
   @IsArray()
   @IsIn(LEDGER_DIMENSIONS, { each: true })
@@ -237,7 +265,12 @@ export class AccountChangeDto {
   @ApiProperty({ enum: ACCOUNT_CHANGE_KINDS, enumName: 'AccountChangeKind', example: 'create' })
   kind!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Existing account (null when creating)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Existing account (null when creating)',
+  })
   accountCode!: string | null;
 
   @ApiProperty({ type: AccountFieldsDto })
@@ -260,7 +293,15 @@ export const ACCOUNT_CHANGE_EXAMPLE: AccountChangeDto = {
   id: LEDGER_IDS.change,
   kind: 'create',
   accountCode: null,
-  proposed: { code: '1124', nameTh: 'เงินฝากธนาคาร บัญชีที่ 4', nameEn: 'Bank account 4', accountType: 'asset', normalSide: 'debit', parentCode: '1120', cashFlowClass: 'cash' },
+  proposed: {
+    code: '1124',
+    nameTh: 'เงินฝากธนาคาร บัญชีที่ 4',
+    nameEn: 'Bank account 4',
+    accountType: 'asset',
+    normalSide: 'debit',
+    parentCode: '1120',
+    cashFlowClass: 'cash',
+  },
   reason: 'เปิดบัญชีธนาคารใหม่สำหรับจ่ายโรงงาน',
   status: 'proposed',
   approvalRequestId: LEDGER_IDS.approval,
@@ -288,7 +329,12 @@ export class CostCentreDto {
   status!: string;
 }
 
-export const COST_CENTRE_EXAMPLE: CostCentreDto = { id: LEDGER_IDS.costCentre, code: 'OPS', name: 'ฝ่ายปฏิบัติการ', status: 'active' };
+export const COST_CENTRE_EXAMPLE: CostCentreDto = {
+  id: LEDGER_IDS.costCentre,
+  code: 'OPS',
+  name: 'ฝ่ายปฏิบัติการ',
+  status: 'active',
+};
 
 export class CreateCostCentreDto {
   @ApiProperty({ example: 'OPS', pattern: '^[A-Z0-9][A-Z0-9_-]*$' })
@@ -549,7 +595,12 @@ export class JournalDto {
   @ApiProperty({ type: String, nullable: true, example: 'JE202610-000001' })
   entryNo!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'JV number of a manual journal (§4)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'JV number of a manual journal (§4)',
+  })
   jvNumber!: string | null;
 
   @ApiProperty({ enum: JOURNAL_KINDS, enumName: 'JournalKind', example: 'auto' })
@@ -582,7 +633,13 @@ export class JournalDto {
   @ApiProperty({ type: JournalSourceDto, nullable: true })
   source!: JournalSourceDto | null;
 
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: LEDGER_IDS.event, description: 'Domain event that produced the entry (drill-down)' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: LEDGER_IDS.event,
+    description: 'Domain event that produced the entry (drill-down)',
+  })
   domainEventId!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'P01' })
@@ -645,9 +702,39 @@ export const JOURNAL_EXAMPLE: JournalDto = {
   approvedBy: null,
   postedAt: '2026-10-05T10:00:00+07:00',
   lines: [
-    { lineNo: 1, accountCode: '1132', accountName: 'Clearing — SCB', debit: '1070.00', credit: '0.00', description: null, dimensions: { order: LEDGER_IDS.order }, taxCode: null, taxBaseAmount: null },
-    { lineNo: 2, accountCode: '2310', accountName: 'Customer advances / contract liabilities', debit: '0.00', credit: '1000.00', description: null, dimensions: { order: LEDGER_IDS.order }, taxCode: null, taxBaseAmount: null },
-    { lineNo: 3, accountCode: '2210', accountName: 'Output VAT', debit: '0.00', credit: '70.00', description: null, dimensions: {}, taxCode: 'output_vat', taxBaseAmount: '1000.00' },
+    {
+      lineNo: 1,
+      accountCode: '1132',
+      accountName: 'Clearing — SCB',
+      debit: '1070.00',
+      credit: '0.00',
+      description: null,
+      dimensions: { order: LEDGER_IDS.order },
+      taxCode: null,
+      taxBaseAmount: null,
+    },
+    {
+      lineNo: 2,
+      accountCode: '2310',
+      accountName: 'Customer advances / contract liabilities',
+      debit: '0.00',
+      credit: '1000.00',
+      description: null,
+      dimensions: { order: LEDGER_IDS.order },
+      taxCode: null,
+      taxBaseAmount: null,
+    },
+    {
+      lineNo: 3,
+      accountCode: '2210',
+      accountName: 'Output VAT',
+      debit: '0.00',
+      credit: '70.00',
+      description: null,
+      dimensions: {},
+      taxCode: 'output_vat',
+      taxBaseAmount: '1000.00',
+    },
   ],
 };
 
@@ -809,10 +896,19 @@ export class PostingRuleVersionDto {
   @ApiProperty({ enum: VERSION_STATUSES, enumName: 'ConfigVersionStatus', example: 'approved' })
   status!: string;
 
-  @ApiProperty({ ...JSON_OBJECT, nullable: true, example: { field: 'payload.docType', op: 'eq', value: 'tr' }, description: 'Approval-engine condition over `payload.<path>`' })
+  @ApiProperty({
+    ...JSON_OBJECT,
+    nullable: true,
+    example: { field: 'payload.docType', op: 'eq', value: 'tr' },
+    description: 'Approval-engine condition over `payload.<path>`',
+  })
   conditions!: Record<string, unknown> | null;
 
-  @ApiProperty({ ...JSON_OBJECT, example: { description: 'TR {docNumber}', lines: [] }, description: 'Journal template (ADR-0007)' })
+  @ApiProperty({
+    ...JSON_OBJECT,
+    example: { description: 'TR {docNumber}', lines: [] },
+    description: 'Journal template (ADR-0007)',
+  })
   template!: Record<string, unknown>;
 
   @ApiProperty({ example: 'Seed default from accounting-design.md §5' })
@@ -871,12 +967,26 @@ export class ProposeRuleVersionDto {
   @IsISO8601({ strict: true })
   effectiveFrom!: string;
 
-  @ApiPropertyOptional({ ...JSON_OBJECT, nullable: true, example: { field: 'payload.docType', op: 'eq', value: 'tr' } })
+  @ApiPropertyOptional({
+    ...JSON_OBJECT,
+    nullable: true,
+    example: { field: 'payload.docType', op: 'eq', value: 'tr' },
+  })
   @IsOptional()
   @IsObject()
   conditions?: Record<string, unknown> | null;
 
-  @ApiProperty({ ...JSON_OBJECT, example: { description: 'TR {docNumber}', documentDate: 'documentDate', lines: [{ account: '1132', side: 'debit', amount: 'grossAmount' }, { account: '2310', side: 'credit', amount: 'grossAmount' }] } })
+  @ApiProperty({
+    ...JSON_OBJECT,
+    example: {
+      description: 'TR {docNumber}',
+      documentDate: 'documentDate',
+      lines: [
+        { account: '1132', side: 'debit', amount: 'grossAmount' },
+        { account: '2310', side: 'credit', amount: 'grossAmount' },
+      ],
+    },
+  })
   @IsObject()
   template!: Record<string, unknown>;
 
@@ -888,11 +998,25 @@ export class ProposeRuleVersionDto {
 }
 
 export class PreviewRuleDto {
-  @ApiProperty({ ...JSON_OBJECT, example: { docType: 'tr', docKind: 'instalment', receiptVia: 'scb', grossAmount: '1070.00', netAmount: '1000.00', vatAmount: '70.00' } })
+  @ApiProperty({
+    ...JSON_OBJECT,
+    example: {
+      docType: 'tr',
+      docKind: 'instalment',
+      receiptVia: 'scb',
+      grossAmount: '1070.00',
+      netAmount: '1000.00',
+      vatAmount: '70.00',
+    },
+  })
   @IsObject()
   payload!: Record<string, unknown>;
 
-  @ApiPropertyOptional({ type: 'integer', example: 2, description: 'Version to try (default: the one in force)' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 2,
+    description: 'Version to try (default: the one in force)',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -1002,7 +1126,15 @@ export const TAX_RATE_EXAMPLE: TaxRateDto = {
   nameTh: 'ภาษีมูลค่าเพิ่ม อัตราทั่วไป',
   nameEn: 'VAT, standard rate',
   description: 'Output VAT on sales',
-  versions: [{ versionNo: 1, effectiveFrom: '2026-01-01T00:00:00+07:00', status: 'approved', ratePct: '7.0000', reason: 'Seed default' }],
+  versions: [
+    {
+      versionNo: 1,
+      effectiveFrom: '2026-01-01T00:00:00+07:00',
+      status: 'approved',
+      ratePct: '7.0000',
+      reason: 'Seed default',
+    },
+  ],
 };
 
 export class ProposeTaxRateDto {

@@ -48,7 +48,11 @@ export class PurchasingService {
     private readonly events: DomainEvents,
   ) {}
 
-  async policy(tx: Tx, factoryId: bigint, at: Date): Promise<{ versionId: bigint | null; snapshot: PolicySnapshot }> {
+  async policy(
+    tx: Tx,
+    factoryId: bigint,
+    at: Date,
+  ): Promise<{ versionId: bigint | null; snapshot: PolicySnapshot }> {
     const version = await tx.factoryPayoutPolicyVersion.findFirst({
       where: { policy: { factoryId }, status: 'approved', effectiveFrom: { lte: at } },
       orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
@@ -135,24 +139,34 @@ export class PurchasingService {
         },
       },
     });
-    await this.publish(tx, po, 'purchase_order.issued', { poKind: kind, jobNo: job.jobNo, priced: snapshot.priced === true });
+    await this.publish(tx, po, 'purchase_order.issued', {
+      poKind: kind,
+      jobNo: job.jobNo,
+      priced: snapshot.priced === true,
+    });
     if (policy.advanceTrigger === 'immediate') await this.openAdvance(tx, po, at);
   }
 
-  @OnDomainEvent(['production_job.accepted', 'production_job.rejected', 'production_job.reassigned'], { consumer: 'payables.po_status' })
+  @OnDomainEvent(['production_job.accepted', 'production_job.rejected', 'production_job.reassigned'], {
+    consumer: 'payables.po_status',
+  })
   async onJobDecision(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     const job = await tx.productionJob.findUnique({ where: { publicId: event.aggregateId } });
     const po = job ? await tx.purchaseOrder.findUnique({ where: { productionJobId: job.id } }) : null;
     if (!po || po.status !== 'issued') return;
     if (event.type !== 'production_job.accepted') {
       await tx.purchaseOrder.update({ where: { id: po.id }, data: { status: 'cancelled' } });
-      await tx.payableItem.updateMany({ where: { purchaseOrderId: po.id, status: { in: ['open', 'eligible'] } }, data: { status: 'cancelled' } });
+      await tx.payableItem.updateMany({
+        where: { purchaseOrderId: po.id, status: { in: ['open', 'eligible'] } },
+        data: { status: 'cancelled' },
+      });
       await this.publish(tx, po, 'purchase_order.cancelled', { reason: event.type });
       return;
     }
     const at = new Date(event.occurredAt);
     await tx.purchaseOrder.update({ where: { id: po.id }, data: { status: 'accepted', acceptedAt: at } });
-    if ((po.payoutPolicy as unknown as PolicySnapshot).advanceTrigger === 'job_accepted') await this.openAdvance(tx, po, at);
+    if ((po.payoutPolicy as unknown as PolicySnapshot).advanceTrigger === 'job_accepted')
+      await this.openAdvance(tx, po, at);
   }
 
   /** The advance (30 % default) payable on acceptance, WHT on its production base (P14). */
@@ -185,7 +199,10 @@ export class PurchasingService {
 
   @OnDomainEvent('delivery.reconciled', { consumer: 'payables.goods_receipts' })
   async onReconciled(event: DomainEventEnvelope, tx: Tx): Promise<void> {
-    const order = await tx.order.findUnique({ where: { publicId: String(event.payload['orderId']) }, include: { productType: true } });
+    const order = await tx.order.findUnique({
+      where: { publicId: String(event.payload['orderId']) },
+      include: { productType: true },
+    });
     if (!order) return;
     const po = await tx.purchaseOrder.findFirst({
       where: { orderId: order.id, poKind: 'production', status: { in: ['issued', 'accepted'] } },
@@ -200,7 +217,12 @@ export class PurchasingService {
     const productionNet = MoneyDecimal.min(round(unit.mul(payable)), D(po.netAmount));
     const vatPct = D(po.vatRatePct);
     const shipments = await tx.shipment.findMany({
-      where: { items: { some: { productionJobId: po.productionJobId } }, status: 'delivered', payoutAmount: { not: null }, carrier: { code: 'factory_fleet' } },
+      where: {
+        items: { some: { productionJobId: po.productionJobId } },
+        status: 'delivered',
+        payoutAmount: { not: null },
+        carrier: { code: 'factory_fleet' },
+      },
       orderBy: { id: 'asc' },
     });
     const lines: Prisma.GoodsReceiptLineUncheckedCreateWithoutGrInput[] = [];
@@ -253,7 +275,10 @@ export class PurchasingService {
       },
     });
     await tx.purchaseOrder.update({ where: { id: po.id }, data: { status: 'received' } });
-    const factory = await tx.factory.findUniqueOrThrow({ where: { id: po.factoryId }, include: { vendor: true } });
+    const factory = await tx.factory.findUniqueOrThrow({
+      where: { id: po.factoryId },
+      include: { vendor: true },
+    });
     await this.events.record(
       tx,
       {
@@ -290,10 +315,15 @@ export class PurchasingService {
         advanceNet = advanceNet.add(a.netAmount.toString());
         advanceVat = advanceVat.add(a.vatAmount.toString());
       } else if (a.status !== 'cancelled') {
-        await tx.payableItem.update({ where: { id: a.id }, data: { status: 'cancelled', rowVersion: { increment: 1 } } });
+        await tx.payableItem.update({
+          where: { id: a.id },
+          data: { status: 'cancelled', rowVersion: { increment: 1 } },
+        });
       }
     }
-    const paidAdvance = advances.filter((a) => a.status === 'paid').reduce((s, a) => s.add(a.netAmount.toString()), ZERO());
+    const paidAdvance = advances
+      .filter((a) => a.status === 'paid')
+      .reduce((s, a) => s.add(a.netAmount.toString()), ZERO());
     if (paidAdvance.gt(0)) await this.applyAdvance(tx, po, paidAdvance, at);
 
     // The balance: after POD and the claim window (D-022), retention held at payment (D-164).
@@ -360,7 +390,12 @@ export class PurchasingService {
         aggregateType: 'billing_statement',
         aggregateId: statement.publicId,
         entityId: statement.entityId,
-        payload: { billingStatementId: statement.publicId, bsNumber: statement.bsNumber, factoryId: factory.publicId, grossAmount: statement.grossAmount.toFixed(2) },
+        payload: {
+          billingStatementId: statement.publicId,
+          bsNumber: statement.bsNumber,
+          factoryId: factory.publicId,
+          grossAmount: statement.grossAmount.toFixed(2),
+        },
       },
       ACTOR,
     );
@@ -398,13 +433,20 @@ export class PurchasingService {
 
   @OnDomainEvent('claim.factory_deduction_requested', { consumer: 'payables.deductions' })
   async onFactoryDeduction(event: DomainEventEnvelope, tx: Tx): Promise<void> {
-    const claim = await tx.claim.findUnique({ where: { publicId: event.aggregateId }, include: { factory: { include: { vendor: true } }, order: { include: { productType: true } } } });
+    const claim = await tx.claim.findUnique({
+      where: { publicId: event.aggregateId },
+      include: { factory: { include: { vendor: true } }, order: { include: { productType: true } } },
+    });
     if (!claim?.factory) return;
     const amount = D(String(event.payload['amount']));
     if (!amount.gt(0)) return;
     // Deducted from the factory's open payables (oldest first) or, when there is not enough, a claim receivable.
     const open = await tx.payableItem.findMany({
-      where: { vendorId: claim.factory.vendorId, source: 'goods_receipt', status: { in: ['open', 'eligible'] } },
+      where: {
+        vendorId: claim.factory.vendorId,
+        source: 'goods_receipt',
+        status: { in: ['open', 'eligible'] },
+      },
       orderBy: { createdAt: 'asc' },
     });
     const available = open.reduce((a, p) => a.add(p.openNetAmount.toString()), ZERO());
@@ -443,8 +485,14 @@ export class PurchasingService {
         appliedPayableItemId: applied,
       },
     });
-    const resolution = await tx.claimResolution.findFirst({ where: { claimId: claim.id, action: 'factory_deduction', vendorDeductionId: null } });
-    if (resolution) await tx.claimResolution.update({ where: { id: resolution.id }, data: { vendorDeductionId: deduction.id } });
+    const resolution = await tx.claimResolution.findFirst({
+      where: { claimId: claim.id, action: 'factory_deduction', vendorDeductionId: null },
+    });
+    if (resolution)
+      await tx.claimResolution.update({
+        where: { id: resolution.id },
+        data: { vendorDeductionId: deduction.id },
+      });
     await this.events.record(
       tx,
       {
@@ -470,9 +518,15 @@ export class PurchasingService {
 
   @OnDomainEvent('claim.carrier_recovery_requested', { consumer: 'payables.carrier_recoveries' })
   async onCarrierRecovery(event: DomainEventEnvelope, tx: Tx): Promise<void> {
-    const claim = await tx.claim.findUnique({ where: { publicId: event.aggregateId }, include: { order: true } });
+    const claim = await tx.claim.findUnique({
+      where: { publicId: event.aggregateId },
+      include: { order: true },
+    });
     if (!claim) return;
-    const customer = await tx.user.findUniqueOrThrow({ where: { id: claim.customerUserId }, select: { publicId: true } });
+    const customer = await tx.user.findUniqueOrThrow({
+      where: { id: claim.customerUserId },
+      select: { publicId: true },
+    });
     await this.events.record(
       tx,
       {

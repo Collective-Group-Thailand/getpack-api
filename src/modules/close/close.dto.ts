@@ -36,10 +36,17 @@ export class CheckResultDto {
   @ApiProperty({ example: false })
   passed!: boolean;
 
-  @ApiProperty({ example: '1 unmatched statement line(s), 0 settlement(s) not in the bank, 0 account(s) without a statement to 2026-10-31 (threshold 0)' })
+  @ApiProperty({
+    example:
+      '1 unmatched statement line(s), 0 settlement(s) not in the bank, 0 account(s) without a statement to 2026-10-31 (threshold 0)',
+  })
   summary!: string;
 
-  @ApiProperty({ type: 'object', additionalProperties: { oneOf: [{ type: 'string' }, { type: 'number' }] }, example: { unmatchedLines: 1, threshold: 0 } })
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { oneOf: [{ type: 'string' }, { type: 'number' }] },
+    example: { unmatchedLines: 1, threshold: 0 },
+  })
   figures!: Record<string, string | number>;
 
   @ApiProperty({ type: [CheckItemDto] })
@@ -67,7 +74,11 @@ export class CloseTaskDto {
   @ApiProperty({ example: true, description: 'Has a blocking automatic check' })
   automatic!: boolean;
 
-  @ApiProperty({ enum: ['pending', 'blocked', 'done', 'waived'], enumName: 'CloseTaskStatus', example: 'blocked' })
+  @ApiProperty({
+    enum: ['pending', 'blocked', 'done', 'waived'],
+    enumName: 'CloseTaskStatus',
+    example: 'blocked',
+  })
   status!: string;
 
   @ApiProperty({ type: PersonRefDto, nullable: true })
@@ -102,7 +113,11 @@ export class CloseChecklistDto {
   @ApiProperty({ example: '2026-10' })
   period!: string;
 
-  @ApiProperty({ enum: ['open', 'soft_closed', 'closed', 'locked'], enumName: 'PeriodStatus', example: 'open' })
+  @ApiProperty({
+    enum: ['open', 'soft_closed', 'closed', 'locked'],
+    enumName: 'PeriodStatus',
+    example: 'open',
+  })
   periodStatus!: string;
 
   @ApiProperty({ enum: ['open', 'in_review', 'closed', 'locked'], enumName: 'CloseStatus', example: 'open' })
@@ -151,9 +166,18 @@ export const CHECKLIST_EXAMPLE: CloseChecklistDto = {
       owner: null,
       checkResult: {
         passed: false,
-        summary: '1 unmatched statement line(s), 0 settlement(s) not in the bank, 0 account(s) without a statement to 2026-10-31 (threshold 0)',
+        summary:
+          '1 unmatched statement line(s), 0 settlement(s) not in the bank, 0 account(s) without a statement to 2026-10-31 (threshold 0)',
         figures: { unmatchedLines: 1, threshold: 0 },
-        items: [{ type: 'statement_line', id: '0192f3a0-7c1e-7d2a-9b1f-000000530202', date: '2026-10-27', amount: '1234.37', description: 'TRF IN UNKNOWN' }],
+        items: [
+          {
+            type: 'statement_line',
+            id: '0192f3a0-7c1e-7d2a-9b1f-000000530202',
+            date: '2026-10-27',
+            amount: '1234.37',
+            description: 'TRF IN UNKNOWN',
+          },
+        ],
       },
       checkedAt: '2026-11-03T09:00:00+07:00',
       note: null,
@@ -184,7 +208,10 @@ export class EvidenceInputDto {
   @IsUUID()
   fileId!: string;
 
-  @ApiProperty({ example: 'Bank reconciliation October', description: 'What the file shows (kept in the audit log)' })
+  @ApiProperty({
+    example: 'Bank reconciliation October',
+    description: 'What the file shows (kept in the audit log)',
+  })
   @IsString()
   @MinLength(3)
   @MaxLength(500)

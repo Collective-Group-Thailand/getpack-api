@@ -1,7 +1,5 @@
 {
-  "selection": [
-    "F1:digital"
-  ],
+  "selection": ["F1:digital"],
   "options": [
     {
       "optionKey": "F1:digital",

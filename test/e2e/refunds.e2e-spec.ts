@@ -65,17 +65,27 @@ describe('refunds (e2e, B3.2)', () => {
     ).body as { id: string; referenceCode: string; cashAmount: string };
     if (method === 'scb_qr') {
       const scb = ctx.app.get<FakeScbGateway>(SCB_GATEWAY);
-      await request(ctx.server).post('/webhooks/scb/payment-confirmation').send(scb.settle(payment.referenceCode, payment.cashAmount)).expect(200);
+      await request(ctx.server)
+        .post('/webhooks/scb/payment-confirmation')
+        .send(scb.settle(payment.referenceCode, payment.cashAmount))
+        .expect(200);
     } else {
       const gw = ctx.app.get<FakeTwoC2PGateway>(TWOC2P_GATEWAY);
-      await request(ctx.server).post('/webhooks/2c2p/payment').send(await gw.notification(payment.referenceCode)).expect(204);
+      await request(ctx.server)
+        .post('/webhooks/2c2p/payment')
+        .send(await gw.notification(payment.referenceCode))
+        .expect(204);
     }
     return { token, group, payment };
   }
 
   const decide = async (approvalId: string) => {
-    await as(ctx, financeManager).post(`/v1/admin/approvals/${approvalId}/actions/approve`, { comment: 'ok' }).expect(200);
-    const event = await ctx.prisma.domainEvent.findFirstOrThrow({ where: { type: 'approval.approved', aggregateId: approvalId } });
+    await as(ctx, financeManager)
+      .post(`/v1/admin/approvals/${approvalId}/actions/approve`, { comment: 'ok' })
+      .expect(200);
+    const event = await ctx.prisma.domainEvent.findFirstOrThrow({
+      where: { type: 'approval.approved', aggregateId: approvalId },
+    });
     await ctx.prisma.withTx((tx) => refunds.onApprovalOutcome(envelopeFromRow(event), tx));
   };
 
@@ -98,7 +108,9 @@ describe('refunds (e2e, B3.2)', () => {
       .post(`/v1/admin/order-groups/${group.id}/actions/cancel`, { reasonCode: 'customer_changed_mind' })
       .expect(200);
     expect(cancelled.body.status).toBe('cancelled');
-    const event = await ctx.prisma.domainEvent.findFirstOrThrow({ where: { type: 'order_group.cancelled', aggregateId: group.id } });
+    const event = await ctx.prisma.domainEvent.findFirstOrThrow({
+      where: { type: 'order_group.cancelled', aggregateId: group.id },
+    });
     expect(event.payload).toMatchObject({ refundRequired: true, paidAmount: payment.cashAmount });
 
     await as(ctx, csLead)
@@ -128,12 +140,18 @@ describe('refunds (e2e, B3.2)', () => {
     expect(done.body).toMatchObject({ status: 'succeeded', providerRef: 'TRF-E2E-0001' });
     const paymentRow = await ctx.prisma.payment.findUniqueOrThrow({ where: { publicId: payment.id } });
     expect(paymentRow.status).toBe('refunded');
-    expect(await ctx.prisma.domainEvent.count({ where: { type: 'refund.succeeded', aggregateId: requested.body.id } })).toBe(1);
+    expect(
+      await ctx.prisma.domainEvent.count({
+        where: { type: 'refund.succeeded', aggregateId: requested.body.id },
+      }),
+    ).toBe(1);
   });
 
   it('sends an approved 2C2P refund through the gateway', async () => {
     const { group, payment } = await paidGroup(3, 'card_2c2p');
-    await as(ctx, cs).post(`/v1/admin/order-groups/${group.id}/actions/cancel`, { reasonCode: 'customer_changed_mind' }).expect(200);
+    await as(ctx, cs)
+      .post(`/v1/admin/order-groups/${group.id}/actions/cancel`, { reasonCode: 'customer_changed_mind' })
+      .expect(200);
     const requested = await as(ctx, csLead)
       .post(`/v1/admin/payments/${payment.id}/refunds`, { amount: payment.cashAmount, reasonNote: 'ยกเลิก' })
       .set('Idempotency-Key', randomUUID())

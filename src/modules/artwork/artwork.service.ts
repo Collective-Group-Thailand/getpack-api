@@ -132,7 +132,11 @@ export class ArtworkService implements OnModuleInit {
     const files = input.files ?? [];
     const links = input.links ?? [];
     // An online design (source `designer`) is its own artwork; otherwise a file or a link is needed.
-    if (!opts.designDocumentVersionId && !files.some((f) => (f.role ?? 'artwork') === 'artwork') && links.length === 0)
+    if (
+      !opts.designDocumentVersionId &&
+      !files.some((f) => (f.role ?? 'artwork') === 'artwork') &&
+      links.length === 0
+    )
       throw new DomainException('validation.failed', {
         errors: [{ path: 'files', code: 'required', message: 'at least one artwork file or link' }],
       });

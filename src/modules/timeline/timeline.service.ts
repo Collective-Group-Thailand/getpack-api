@@ -386,7 +386,12 @@ export class TimelineService implements OnModuleInit {
   }
 
   /** Chronological page after the cursor (entries are few per order; merged in memory). */
-  private page<T>(entries: Entry[], cursor: string | undefined, limit: number, view: (e: Entry) => T): CursorPage<T> {
+  private page<T>(
+    entries: Entry[],
+    cursor: string | undefined,
+    limit: number,
+    view: (e: Entry) => T,
+  ): CursorPage<T> {
     const sorted = [...entries].sort((a, b) => (a._key < b._key ? -1 : a._key > b._key ? 1 : 0));
     const after = cursor ? decodeCursor(cursor)['k'] : undefined;
     if (cursor && typeof after !== 'string')

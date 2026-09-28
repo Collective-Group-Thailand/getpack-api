@@ -9,7 +9,14 @@ import { CreditCheckout, CreditService } from './credit.service';
 /** B2B companies (D-120…D-125): scope resolver and company-member recipients; services arrive per slice. */
 @Global()
 @Module({
-  providers: [CompanyScopeResolver, CompaniesService, CompanyCheckout, CreditService, CreditCheckout, CompaniesJobs],
+  providers: [
+    CompanyScopeResolver,
+    CompaniesService,
+    CompanyCheckout,
+    CreditService,
+    CreditCheckout,
+    CompaniesJobs,
+  ],
   exports: [CompaniesService, CreditService],
 })
 export class CompaniesModule {}

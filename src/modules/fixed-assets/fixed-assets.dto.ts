@@ -1,6 +1,17 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 /** Fixed assets (B5.5, D-150). Money: strings, THB. */
 
@@ -32,7 +43,11 @@ export class AssetCategoryDto {
   @ApiProperty({ example: 'Computers & IT equipment' })
   nameEn!: string;
 
-  @ApiProperty({ type: 'integer', example: 36, description: 'Useful life (months) — snapshot on each asset registered' })
+  @ApiProperty({
+    type: 'integer',
+    example: 36,
+    description: 'Useful life (months) — snapshot on each asset registered',
+  })
   usefulLifeMonths!: number;
 
   @ApiProperty({ enum: ['straight_line'], enumName: 'DepreciationMethod', example: 'straight_line' })
@@ -53,7 +68,11 @@ export class AssetCategoryDto {
   @ApiProperty({ enum: ['active', 'inactive'], enumName: 'CapabilityStatus', example: 'active' })
   status!: string;
 
-  @ApiProperty({ type: 'integer', example: 1, description: 'Send back in `If-Match` (as the ETag) to update' })
+  @ApiProperty({
+    type: 'integer',
+    example: 1,
+    description: 'Send back in `If-Match` (as the ETag) to update',
+  })
   rowVersion!: number;
 }
 
@@ -89,7 +108,13 @@ export class CreateAssetCategoryDto {
   @MaxLength(200)
   nameEn!: string;
 
-  @ApiProperty({ type: 'integer', example: 36, minimum: 1, maximum: 1200, description: 'Set by Finance with the CPA (⚖)' })
+  @ApiProperty({
+    type: 'integer',
+    example: 36,
+    minimum: 1,
+    maximum: 1200,
+    description: 'Set by Finance with the CPA (⚖)',
+  })
   @IsInt()
   @Min(1)
   @Max(1200)
@@ -127,7 +152,11 @@ export class UpdateAssetCategoryDto {
   @MaxLength(200)
   nameEn?: string;
 
-  @ApiPropertyOptional({ type: 'integer', example: 60, description: 'Applies to assets registered afterwards' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 60,
+    description: 'Applies to assets registered afterwards',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -257,16 +286,28 @@ export class RegisterAssetDto {
   @Matches(MONEY)
   residualValue?: string;
 
-  @ApiProperty({ enum: ASSET_SOURCES, enumName: 'AssetSource', example: 'manual', description: '`vendor_bill`: already capitalised by the bill (P25); `manual`: FA01 against `creditAccountCode`' })
+  @ApiProperty({
+    enum: ASSET_SOURCES,
+    enumName: 'AssetSource',
+    example: 'manual',
+    description:
+      '`vendor_bill`: already capitalised by the bill (P25); `manual`: FA01 against `creditAccountCode`',
+  })
   @IsIn(ASSET_SOURCES)
   source!: (typeof ASSET_SOURCES)[number];
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Required for `vendor_bill`: the bill with the asset line' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Required for `vendor_bill`: the bill with the asset line',
+  })
   @IsOptional()
   @IsUUID()
   vendorInvoiceId?: string;
 
-  @ApiPropertyOptional({ example: '2410', description: 'Required for `manual`: the account credited (not a control account)' })
+  @ApiPropertyOptional({
+    example: '2410',
+    description: 'Required for `manual`: the account credited (not a control account)',
+  })
   @IsOptional()
   @Matches(ACCOUNT)
   creditAccountCode?: string;
@@ -303,7 +344,10 @@ export class DisposeAssetDto {
   @Matches(MONEY)
   proceeds?: string;
 
-  @ApiPropertyOptional({ example: '1121', description: 'Where the proceeds went (an asset account) when there are any' })
+  @ApiPropertyOptional({
+    example: '1121',
+    description: 'Where the proceeds went (an asset account) when there are any',
+  })
   @IsOptional()
   @Matches(ACCOUNT)
   proceedsAccountCode?: string;
@@ -358,7 +402,13 @@ export class DepreciationRunDto {
   assetCount!: number;
 }
 
-export const RUN_EXAMPLE: DepreciationRunDto = { id: FA_IDS.run, period: '2026-10', runOn: '2026-10-31', totalAmount: '1000.00', assetCount: 1 };
+export const RUN_EXAMPLE: DepreciationRunDto = {
+  id: FA_IDS.run,
+  period: '2026-10',
+  runOn: '2026-10-31',
+  totalAmount: '1000.00',
+  assetCount: 1,
+};
 
 export class RollForwardQuery {
   @ApiProperty({ example: '2026-10', pattern: MONTH.source })
@@ -409,7 +459,10 @@ export class AssetReconciliationDto {
   @ApiProperty({ example: '1520' })
   accountCode!: string;
 
-  @ApiProperty({ example: '36000.00', description: 'Register (cost debit-positive; accumulated credit-negative)' })
+  @ApiProperty({
+    example: '36000.00',
+    description: 'Register (cost debit-positive; accumulated credit-negative)',
+  })
   register!: string;
 
   @ApiProperty({ example: '36000.00' })

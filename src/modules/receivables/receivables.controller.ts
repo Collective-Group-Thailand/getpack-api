@@ -49,13 +49,24 @@ import {
   WhtCertificateListQuery,
 } from './receivables.dto';
 import { ReceivablesService } from './receivables.service';
-import { agingDto, certDto, documentDto, itemDto, requestDto, statementDto, storeCreditDto } from './receivables-views';
+import {
+  agingDto,
+  certDto,
+  documentDto,
+  itemDto,
+  requestDto,
+  statementDto,
+  storeCreditDto,
+} from './receivables-views';
 import { StoreCreditService } from './store-credit.service';
 import { WhtCertificatesService } from './wht-certificates.service';
 
 const DOCS = ['D-010', 'D-092', 'D-033'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
-const DOWNLOAD_EXAMPLE = { url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300', expiresAt: '2026-10-05T10:05:00+07:00' };
+const DOWNLOAD_EXAMPLE = {
+  url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+  expiresAt: '2026-10-05T10:05:00+07:00',
+};
 
 function staff(actor: Actor): UserActor {
   if (actor.type !== 'user' || actor.audience !== 'staff') throw new DomainException('auth.forbidden');
@@ -67,7 +78,10 @@ function customer(actor: Actor): UserActor {
   return actor;
 }
 
-const download = (d: { url: string; expiresAt: Date }): DownloadUrlDto => ({ url: d.url, expiresAt: toBangkokIso(d.expiresAt) });
+const download = (d: { url: string; expiresAt: Date }): DownloadUrlDto => ({
+  url: d.url,
+  expiresAt: toBangkokIso(d.expiresAt),
+});
 
 @ApiSurface('admin', 'customerDocuments')
 @Controller()
@@ -111,7 +125,8 @@ export class AdminCustomerDocumentsController {
   @ApiEndpoint({
     id: 'admin.customerDocuments.get',
     summary: 'Get a customer document',
-    description: 'With its lines, the document it refers to, its open receivable and whether its PDF is ready.',
+    description:
+      'With its lines, the document it refers to, its open receivable and whether its PDF is ready.',
     implements: DOCS,
   })
   @ApiSuccess(200, { description: 'Document', type: CustomerDocumentDto, example: DOCUMENT_EXAMPLE })
@@ -150,7 +165,11 @@ export class AdminCustomerDocumentsController {
     implements: DOCS,
   })
   @ApiBody({ type: ReasonDto, examples: { default: { value: { reason: 'ออกผิดลูกค้า' } } } })
-  @ApiSuccess(200, { description: 'Voided document', type: CustomerDocumentDto, example: { ...DOCUMENT_EXAMPLE, docType: 'iv', status: 'void', voidReason: 'ออกผิดลูกค้า' } })
+  @ApiSuccess(200, {
+    description: 'Voided document',
+    type: CustomerDocumentDto,
+    example: { ...DOCUMENT_EXAMPLE, docType: 'iv', status: 'void', voidReason: 'ออกผิดลูกค้า' },
+  })
   @ApiStandardErrors(...WRITE, 'receivables.document_not_voidable')
   async void(
     @CurrentActor() actor: Actor,
@@ -171,9 +190,23 @@ export class AdminCustomerDocumentsController {
       'A debit note (ใบเพิ่มหนี้) against the order’s delivery document, with a reason from the controlled list; VAT at the invoice’s rate; collected like an invoice (§2, P07D). Requires `Idempotency-Key`.',
     implements: DOCS,
   })
-  @ApiBody({ type: IssueDebitNoteDto, examples: { default: { value: { net: '500.00', reasonCode: 'additional_charge', note: 'ค่าบริการเพิ่มเติม' } } } })
-  @ApiSuccess(201, { description: 'Debit note', type: CustomerDocumentDto, example: { ...DOCUMENT_EXAMPLE, docType: 'dn', docKind: 'debit_note', amountDue: '535.00' } })
-  @ApiStandardErrors(...WRITE, 'receivables.reason_invalid', 'receivables.document_not_voidable', 'numbering.series_missing')
+  @ApiBody({
+    type: IssueDebitNoteDto,
+    examples: {
+      default: { value: { net: '500.00', reasonCode: 'additional_charge', note: 'ค่าบริการเพิ่มเติม' } },
+    },
+  })
+  @ApiSuccess(201, {
+    description: 'Debit note',
+    type: CustomerDocumentDto,
+    example: { ...DOCUMENT_EXAMPLE, docType: 'dn', docKind: 'debit_note', amountDue: '535.00' },
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'receivables.reason_invalid',
+    'receivables.document_not_voidable',
+    'numbering.series_missing',
+  )
   async debitNote(
     @CurrentActor() actor: Actor,
     @Param('orderId', ParseUUIDPipe) orderId: string,
@@ -194,8 +227,17 @@ export class AdminCustomerDocumentsController {
       'Price reduction, return, discount after sale or a claim credit, against the order’s tax invoice with a statutory reason. Issued only when a Finance Manager other than the requester approves it (policy `credit_note`, §8, D-169); never more than was invoiced or paid, less earlier credits. Requires `Idempotency-Key`.',
     implements: [...DOCS, 'D-169'],
   })
-  @ApiBody({ type: RequestCreditNoteDto, examples: { default: { value: { amount: '535.00', cnKind: 'price_reduction', note: 'ลดราคาตามข้อตกลงกับลูกค้า' } } } })
-  @ApiSuccess(201, { description: 'Request awaiting approval', type: CreditNoteRequestDto, example: CN_REQUEST_EXAMPLE })
+  @ApiBody({
+    type: RequestCreditNoteDto,
+    examples: {
+      default: { value: { amount: '535.00', cnKind: 'price_reduction', note: 'ลดราคาตามข้อตกลงกับลูกค้า' } },
+    },
+  })
+  @ApiSuccess(201, {
+    description: 'Request awaiting approval',
+    type: CreditNoteRequestDto,
+    example: CN_REQUEST_EXAMPLE,
+  })
   @ApiStandardErrors(...WRITE, 'receivables.reason_invalid', 'approval.no_matching_step')
   async requestCredit(
     @CurrentActor() actor: Actor,
@@ -238,7 +280,8 @@ export class AdminReceivablesController {
   @ApiEndpoint({
     id: 'admin.receivables.list',
     summary: 'List receivables',
-    description: 'AR open items by due date: invoices and final tax invoices with a remainder, debit notes (§6).',
+    description:
+      'AR open items by due date: invoices and final tax invoices with a remainder, debit notes (§6).',
     implements: ['D-033', 'D-121'],
   })
   @ApiPaginated(ReceivableItemDto, { example: ITEM_EXAMPLE })
@@ -248,7 +291,10 @@ export class AdminReceivablesController {
       ...(q.status && { status: q.status }),
       ...(q.companyId && { company: { publicId: q.companyId } }),
       ...(q.customerId && { customer: { publicId: q.customerId } }),
-      ...(q.overdue === true && { status: { in: ['open', 'partially_paid'] }, dueDate: { lt: dateOnly(bangkokDate(new Date())) } }),
+      ...(q.overdue === true && {
+        status: { in: ['open', 'partially_paid'] },
+        dueDate: { lt: dateOnly(bangkokDate(new Date())) },
+      }),
     };
     const { rows, total } = await this.receivables.items(where, q.page, q.perPage);
     return { data: rows.map(itemDto), meta: { page: q.page, perPage: q.perPage, total } };
@@ -259,13 +305,16 @@ export class AdminReceivablesController {
   @ApiEndpoint({
     id: 'admin.receivables.aging',
     summary: 'Receivables aging',
-    description: 'Open receivables per customer / company in buckets of days past due (current, 1–30, 31–60, 61–90, over 90) at a date (§6).',
+    description:
+      'Open receivables per customer / company in buckets of days past due (current, 1–30, 31–60, 61–90, over 90) at a date (§6).',
     implements: ['D-033'],
   })
   @ApiSuccess(200, { description: 'Aging report', type: AgingReportDto, example: AGING_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async aging(@Query() q: AgingQuery): Promise<AgingReportDto> {
-    const company = q.companyId ? await this.prisma.company.findUnique({ where: { publicId: q.companyId } }) : null;
+    const company = q.companyId
+      ? await this.prisma.company.findUnique({ where: { publicId: q.companyId } })
+      : null;
     return agingDto(await this.receivables.aging(q.asOf ?? bangkokDate(new Date()), company?.id));
   }
 
@@ -282,9 +331,17 @@ export class AdminReceivablesController {
     implements: ['D-033', 'D-169'],
   })
   @ApiBody({ type: ReasonDto, examples: { default: { value: { reason: 'ลูกค้าปิดกิจการ ติดตามไม่ได้' } } } })
-  @ApiSuccess(200, { description: 'Item with its write-off request', type: ReceivableItemDto, example: { ...ITEM_EXAMPLE, writeOffApprovalId: '0192f3a0-7c1e-7d2a-9b1f-000000520008' } })
+  @ApiSuccess(200, {
+    description: 'Item with its write-off request',
+    type: ReceivableItemDto,
+    example: { ...ITEM_EXAMPLE, writeOffApprovalId: '0192f3a0-7c1e-7d2a-9b1f-000000520008' },
+  })
   @ApiStandardErrors(...WRITE, 'receivables.nothing_to_write_off', 'approval.no_matching_step')
-  async writeOff(@CurrentActor() actor: Actor, @Param('itemId', ParseUUIDPipe) itemId: string, @Body() body: ReasonDto) {
+  async writeOff(
+    @CurrentActor() actor: Actor,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @Body() body: ReasonDto,
+  ) {
     return itemDto(await this.receivables.requestWriteOff(staff(actor), itemId, body.reason));
   }
 
@@ -299,12 +356,34 @@ export class AdminReceivablesController {
       'Brings the allowance to its target at a date: from the ⚖ setting `receivables.allowance_rates` (% per days-overdue band) when set, otherwise the amount Finance enters; posts the change (P30). Requires `Idempotency-Key`.',
     implements: ['D-033'],
   })
-  @ApiBody({ type: ProvisionDto, examples: { default: { value: { asOf: '2026-12-31', amount: '1000.00' } } } })
-  @ApiSuccess(200, { description: 'Allowance update', type: ProvisionResultDto, example: { id: '0192f3a0-7c1e-7d2a-9b1f-000000520007', method: 'manual', targetAmount: '1000.00', amount: '1000.00' } })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'receivables.allowance_rates_unset')
+  @ApiBody({
+    type: ProvisionDto,
+    examples: { default: { value: { asOf: '2026-12-31', amount: '1000.00' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Allowance update',
+    type: ProvisionResultDto,
+    example: {
+      id: '0192f3a0-7c1e-7d2a-9b1f-000000520007',
+      method: 'manual',
+      targetAmount: '1000.00',
+      amount: '1000.00',
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'receivables.allowance_rates_unset',
+  )
   async provision(@CurrentActor() actor: Actor, @Body() body: ProvisionDto): Promise<ProvisionResultDto> {
     const row = await this.receivables.provision(staff(actor), body);
-    return { id: row.publicId, method: row.method, targetAmount: row.targetAmount.toFixed(2), amount: row.amount.toFixed(2) };
+    return {
+      id: row.publicId,
+      method: row.method,
+      targetAmount: row.targetAmount.toFixed(2),
+      amount: row.amount.toFixed(2),
+    };
   }
 
   @Get('customer-wht-certificates')
@@ -319,7 +398,11 @@ export class AdminReceivablesController {
   @ApiPaginated(WhtCertificateDto, { example: CERT_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async certificates(@Query() q: WhtCertificateListQuery) {
-    const { rows, total } = await this.certs.list({ status: q.status, olderThanDays: q.olderThanDays }, q.page, q.perPage);
+    const { rows, total } = await this.certs.list(
+      { status: q.status, olderThanDays: q.olderThanDays },
+      q.page,
+      q.perPage,
+    );
     return { data: rows.map(certDto), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
@@ -333,10 +416,21 @@ export class AdminReceivablesController {
     description: 'Certificate number and date, with the uploaded copy kept as a financial record (audited).',
     implements: ['D-033'],
   })
-  @ApiBody({ type: RecordWhtCertificateDto, examples: { default: { value: { certificateNo: 'WT-0001', certificateDate: '2026-10-10' } } } })
-  @ApiSuccess(200, { description: 'Certificate', type: WhtCertificateDto, example: { ...CERT_EXAMPLE, status: 'received', certificateNo: 'WT-0001', certificateDate: '2026-10-10' } })
+  @ApiBody({
+    type: RecordWhtCertificateDto,
+    examples: { default: { value: { certificateNo: 'WT-0001', certificateDate: '2026-10-10' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Certificate',
+    type: WhtCertificateDto,
+    example: { ...CERT_EXAMPLE, status: 'received', certificateNo: 'WT-0001', certificateDate: '2026-10-10' },
+  })
   @ApiStandardErrors(...WRITE, 'receivables.certificate_invalid', 'file.not_ready')
-  async record(@CurrentActor() actor: Actor, @Param('certificateId', ParseUUIDPipe) id: string, @Body() body: RecordWhtCertificateDto) {
+  async record(
+    @CurrentActor() actor: Actor,
+    @Param('certificateId', ParseUUIDPipe) id: string,
+    @Body() body: RecordWhtCertificateDto,
+  ) {
     return certDto(await this.certs.record(staff(actor), id, body));
   }
 
@@ -350,10 +444,21 @@ export class AdminReceivablesController {
     description: 'Closes a pending certificate with a reason (audited).',
     implements: ['D-033'],
   })
-  @ApiBody({ type: ReasonDto, examples: { default: { value: { reason: 'ลูกค้ายืนยันไม่ได้หักภาษี คืนเงินส่วนต่างแล้ว' } } } })
-  @ApiSuccess(200, { description: 'Certificate', type: WhtCertificateDto, example: { ...CERT_EXAMPLE, status: 'waived' } })
+  @ApiBody({
+    type: ReasonDto,
+    examples: { default: { value: { reason: 'ลูกค้ายืนยันไม่ได้หักภาษี คืนเงินส่วนต่างแล้ว' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Certificate',
+    type: WhtCertificateDto,
+    example: { ...CERT_EXAMPLE, status: 'waived' },
+  })
   @ApiStandardErrors(...WRITE, 'receivables.certificate_invalid')
-  async waive(@CurrentActor() actor: Actor, @Param('certificateId', ParseUUIDPipe) id: string, @Body() body: ReasonDto) {
+  async waive(
+    @CurrentActor() actor: Actor,
+    @Param('certificateId', ParseUUIDPipe) id: string,
+    @Body() body: ReasonDto,
+  ) {
     return certDto(await this.certs.waive(staff(actor), id, body.reason));
   }
 
@@ -363,10 +468,15 @@ export class AdminReceivablesController {
   @ApiEndpoint({
     id: 'admin.receivables.storeCredit',
     summary: 'A customer’s credit balance',
-    description: 'The store-credit wallet (customer credit balances, 2320): credit notes settled to it, refunds and uses.',
+    description:
+      'The store-credit wallet (customer credit balances, 2320): credit notes settled to it, refunds and uses.',
     implements: ['D-021', 'D-033'],
   })
-  @ApiSuccess(200, { description: 'Balance and movements', type: StoreCreditDto, example: STORE_CREDIT_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Balance and movements',
+    type: StoreCreditDto,
+    example: STORE_CREDIT_EXAMPLE,
+  })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async storeCreditOf(@Param('customerId', ParseUUIDPipe) customerId: string): Promise<StoreCreditDto> {
     return storeCreditDto(this.storeCredit, await this.customers.customerIdOf(customerId));
@@ -378,12 +488,16 @@ export class AdminReceivablesController {
   @ApiEndpoint({
     id: 'admin.receivables.companyStatement',
     summary: 'A company’s monthly statement',
-    description: 'Opening, invoiced, paid, credited and closing balance of the month from the receivables, with its PDF (D-125); generated on first request.',
+    description:
+      'Opening, invoiced, paid, credited and closing balance of the month from the receivables, with its PDF (D-125); generated on first request.',
     implements: ['D-125'],
   })
   @ApiSuccess(200, { description: 'Statement', type: CompanyStatementDto, example: STATEMENT_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async statement(@Param('companyId', ParseUUIDPipe) companyId: string, @Query() q: StatementQuery): Promise<CompanyStatementDto> {
+  async statement(
+    @Param('companyId', ParseUUIDPipe) companyId: string,
+    @Query() q: StatementQuery,
+  ): Promise<CompanyStatementDto> {
     const company = await this.prisma.company.findUnique({ where: { publicId: companyId } });
     if (!company) throw new DomainException('http.not_found');
     return statementDto(await this.prisma.withTx((tx) => this.files.statement(tx, company.id, q.month)));
@@ -413,7 +527,9 @@ export class StoreDocumentsController {
   @ApiStandardErrors('validation.failed', 'http.not_found')
   async list(@CurrentActor() actor: Actor, @Query() q: StoreDocumentListQuery) {
     const me = customer(actor);
-    const company = q.companyId ? await this.companies.forMember(me, q.companyId, 'company_documents.read') : null;
+    const company = q.companyId
+      ? await this.companies.forMember(me, q.companyId, 'company_documents.read')
+      : null;
     const { rows, total } = await this.documents.list(
       company ? { companyId: company.id } : { customerUserId: me.userId },
       q.page,
@@ -427,12 +543,16 @@ export class StoreDocumentsController {
   @ApiEndpoint({
     id: 'store.documents.pdf',
     summary: 'Download my document',
-    description: 'A short-lived signed URL of the PDF; my own documents or my company’s with `company_documents.read`.',
+    description:
+      'A short-lived signed URL of the PDF; my own documents or my company’s with `company_documents.read`.',
     implements: ['D-010', 'D-125'],
   })
   @ApiSuccess(200, { description: 'Signed URL', type: DownloadUrlDto, example: DOWNLOAD_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed', 'file.not_ready')
-  async pdf(@CurrentActor() actor: Actor, @Param('documentId', ParseUUIDPipe) documentId: string): Promise<DownloadUrlDto> {
+  async pdf(
+    @CurrentActor() actor: Actor,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+  ): Promise<DownloadUrlDto> {
     const doc = await this.readable(customer(actor), documentId);
     return download(await this.files.downloadUrl(doc.pdfFileId));
   }
@@ -447,7 +567,10 @@ export class StoreDocumentsController {
   })
   @ApiSuccess(200, { description: 'Document', type: CustomerDocumentDto, example: DOCUMENT_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async get(@CurrentActor() actor: Actor, @Param('documentId', ParseUUIDPipe) documentId: string): Promise<CustomerDocumentDto> {
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+  ): Promise<CustomerDocumentDto> {
     return documentDto(await this.readable(customer(actor), documentId));
   }
 
@@ -455,10 +578,15 @@ export class StoreDocumentsController {
   @ApiEndpoint({
     id: 'store.documents.storeCredit',
     summary: 'My credit balance',
-    description: 'Credits from credit notes (shortages within tolerance D-021, cancellations, claims) and their use or refund.',
+    description:
+      'Credits from credit notes (shortages within tolerance D-021, cancellations, claims) and their use or refund.',
     implements: ['D-021', 'D-033'],
   })
-  @ApiSuccess(200, { description: 'Balance and movements', type: StoreCreditDto, example: STORE_CREDIT_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Balance and movements',
+    type: StoreCreditDto,
+    example: STORE_CREDIT_EXAMPLE,
+  })
   @ApiStandardErrors()
   async storeCreditOfMine(@CurrentActor() actor: Actor): Promise<StoreCreditDto> {
     return storeCreditDto(this.storeCredit, customer(actor).userId);
@@ -469,7 +597,8 @@ export class StoreDocumentsController {
   @ApiEndpoint({
     id: 'store.documents.companyStatement',
     summary: 'My company’s monthly statement',
-    description: 'For Company Admins and Accountants (`company_documents.read`): the month’s statement for consolidated payment (D-125).',
+    description:
+      'For Company Admins and Accountants (`company_documents.read`): the month’s statement for consolidated payment (D-125).',
     implements: ['D-125'],
   })
   @ApiSuccess(200, { description: 'Statement', type: CompanyStatementDto, example: STATEMENT_EXAMPLE })
@@ -494,10 +623,16 @@ export class StoreDocumentsController {
   })
   @ApiSuccess(200, { description: 'Signed URL', type: DownloadUrlDto, example: DOWNLOAD_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed', 'file.not_ready')
-  async statementPdf(@CurrentActor() actor: Actor, @Param('companyId', ParseUUIDPipe) companyId: string, @Param('month') month: string): Promise<DownloadUrlDto> {
+  async statementPdf(
+    @CurrentActor() actor: Actor,
+    @Param('companyId', ParseUUIDPipe) companyId: string,
+    @Param('month') month: string,
+  ): Promise<DownloadUrlDto> {
     const company = await this.companies.forMember(customer(actor), companyId, 'company_documents.read');
     if (!/^\d{4}-\d{2}$/.test(month)) throw new DomainException('http.not_found');
-    const statement = await this.prisma.companyStatement.findUnique({ where: { companyId_periodMonth: { companyId: company.id, periodMonth: dateOnly(`${month}-01`) } } });
+    const statement = await this.prisma.companyStatement.findUnique({
+      where: { companyId_periodMonth: { companyId: company.id, periodMonth: dateOnly(`${month}-01`) } },
+    });
     if (!statement) throw new DomainException('http.not_found');
     return download(await this.files.downloadUrl(statement.fileObjectId));
   }

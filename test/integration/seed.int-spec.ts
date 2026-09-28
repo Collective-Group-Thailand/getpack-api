@@ -94,12 +94,18 @@ describe('seeds (PostgreSQL 18)', () => {
     ]);
     const rules = await db.client.query<{ key: string; status: string }>(`
       SELECT r.key, v.status::text AS status FROM posting_rules r JOIN posting_rule_versions v ON v.posting_rule_id = r.id ORDER BY r.key`);
-    for (let n = 1; n <= 30; n++) expect(rules.rows.map((r) => r.key)).toContain(`P${String(n).padStart(2, '0')}`);
+    for (let n = 1; n <= 30; n++)
+      expect(rules.rows.map((r) => r.key)).toContain(`P${String(n).padStart(2, '0')}`);
     expect(new Set(rules.rows.map((r) => r.status))).toEqual(new Set(['approved']));
   });
 
   it('seeds the D-020 payment schedule templates and the payment flags off (B3.2)', async () => {
-    const { rows } = await db.client.query<{ key: string; status: string; instalments: string; pct: string }>(`
+    const { rows } = await db.client.query<{
+      key: string;
+      status: string;
+      instalments: string;
+      pct: string;
+    }>(`
       SELECT t.key, v.status::text AS status, count(i.id) AS instalments, sum(i.pct)::text AS pct
         FROM payment_schedule_templates t
         JOIN payment_schedule_template_versions v ON v.template_id = t.id
@@ -125,7 +131,16 @@ describe('seeds (PostgreSQL 18)', () => {
         JOIN product_types t ON t.id = r.product_type_id
        WHERE t.code = 'folding_carton' AND r.variant = 'standard' ORDER BY s.seq`);
     expect(rows.map((r) => r.key)).toEqual([
-      'job_received', 'prepress_ready', 'materials_ready', 'printing', 'finishing', 'die_cut', 'gluing', 'qc', 'packing', 'ready_to_ship',
+      'job_received',
+      'prepress_ready',
+      'materials_ready',
+      'printing',
+      'finishing',
+      'die_cut',
+      'gluing',
+      'qc',
+      'packing',
+      'ready_to_ship',
     ]);
   });
 
@@ -135,7 +150,9 @@ describe('seeds (PostgreSQL 18)', () => {
 
   it('seeds the order cancel reasons lookup (B3.1)', async () => {
     expect(await count('order_cancel_reasons')).toBe(7);
-    expect(await count("order_cancel_reasons WHERE code = 'payment_expired' AND applies_to = 'system'")).toBe(1);
+    expect(await count("order_cancel_reasons WHERE code = 'payment_expired' AND applies_to = 'system'")).toBe(
+      1,
+    );
   });
 
   it('keeps the issuing entity data in entity-scoped settings, not in code (D-092)', async () => {

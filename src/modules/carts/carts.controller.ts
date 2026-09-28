@@ -156,7 +156,10 @@ function cartController(surface: CartSurface): Type<unknown> {
       @Body() body: UpdateCartItemDto,
       @Res({ passthrough: true }) res: Response,
     ) {
-      return respond(await this.carts.updateItem(await this.who(actor, customerId), itemId, ifMatch, body), res);
+      return respond(
+        await this.carts.updateItem(await this.who(actor, customerId), itemId, ifMatch, body),
+        res,
+      );
     }
 
     @Put('items/:itemId/destinations')
@@ -195,7 +198,12 @@ function cartController(surface: CartSurface): Type<unknown> {
       @Res({ passthrough: true }) res: Response,
     ) {
       return respond(
-        await this.carts.setDestinations(await this.who(actor, customerId), itemId, ifMatch, body.destinations),
+        await this.carts.setDestinations(
+          await this.who(actor, customerId),
+          itemId,
+          ifMatch,
+          body.destinations,
+        ),
         res,
       );
     }
@@ -260,7 +268,8 @@ function cartController(surface: CartSurface): Type<unknown> {
     @ApiEndpoint({
       id: id('confirmReprice'),
       summary: 'Accept the re-priced item',
-      description: 'The item takes the new quotation, its price and a new lock (D-051). Guarded by `If-Match`.',
+      description:
+        'The item takes the new quotation, its price and a new lock (D-051). Guarded by `If-Match`.',
       implements: DECISIONS,
     })
     @ApiConcurrency()
@@ -273,7 +282,10 @@ function cartController(surface: CartSurface): Type<unknown> {
       @IfMatch() ifMatch: string | undefined,
       @Res({ passthrough: true }) res: Response,
     ) {
-      return respond(await this.carts.confirmReprice(await this.who(actor, customerId), itemId, ifMatch), res);
+      return respond(
+        await this.carts.confirmReprice(await this.who(actor, customerId), itemId, ifMatch),
+        res,
+      );
     }
   }
 

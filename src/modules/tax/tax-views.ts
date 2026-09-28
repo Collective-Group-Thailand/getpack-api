@@ -25,9 +25,14 @@ export const summaryDto = (r: ReportRow): TaxReportSummaryDto => ({
   fileReady: r.fileObjectIds.length > 0,
 });
 
-export const reportDto = (r: ReportRow): TaxReportDto => ({ ...summaryDto(r), lines: r.lines as Record<string, unknown>[] });
+export const reportDto = (r: ReportRow): TaxReportDto => ({
+  ...summaryDto(r),
+  lines: r.lines as Record<string, unknown>[],
+});
 
-export const calendarDto = (i: Awaited<ReturnType<TaxCalendarService['list']>>[number]): TaxCalendarItemDto => ({
+export const calendarDto = (
+  i: Awaited<ReturnType<TaxCalendarService['list']>>[number],
+): TaxCalendarItemDto => ({
   id: i.publicId,
   kind: i.kind,
   period: dayOf(i.fiscalPeriod.startDate).slice(0, 7),

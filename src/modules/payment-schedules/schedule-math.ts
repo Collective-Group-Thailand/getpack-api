@@ -21,7 +21,10 @@ const round2 = (v: MoneyValue) => v.toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_U
 /** Split independently; net and cash are derived so every row keeps §2.9 arithmetic exactly. */
 const KEYS = ['vat', 'gross', 'wht'] as const;
 
-const withCash = (a: Omit<AmountSet, 'cash'>): AmountSet => ({ ...a, cash: formatMoney(D(a.gross).sub(a.wht)) });
+const withCash = (a: Omit<AmountSet, 'cash'>): AmountSet => ({
+  ...a,
+  cash: formatMoney(D(a.gross).sub(a.wht)),
+});
 const derive = (a: Pick<AmountSet, 'vat' | 'gross' | 'wht'>): AmountSet =>
   withCash({ ...a, net: formatMoney(D(a.gross).sub(a.vat)) });
 
@@ -67,7 +70,10 @@ export function splitByPct(total: AmountSet, pcts: readonly string[], renormalis
 }
 
 /** Allocates `amount` across orders by gross; the remainder goes to the largest gross (ties: first listed). */
-export function allocateByGross<K>(amount: AmountSet, orders: readonly { key: K; gross: string }[]): Map<K, AmountSet> {
+export function allocateByGross<K>(
+  amount: AmountSet,
+  orders: readonly { key: K; gross: string }[],
+): Map<K, AmountSet> {
   const result = new Map<K, AmountSet>();
   if (orders.length === 0) return result;
   const total = orders.reduce((a, o) => a.add(o.gross), D(0));
@@ -79,8 +85,7 @@ export function allocateByGross<K>(amount: AmountSet, orders: readonly { key: K;
   const parts: Pick<AmountSet, 'vat' | 'gross' | 'wht'>[] = orders.map((o, i) => {
     const part = {} as Pick<AmountSet, 'vat' | 'gross' | 'wht'>;
     for (const k of KEYS) {
-      const value =
-        i === largest ? D(0) : total.gt(0) ? round2(D(amount[k]).mul(o.gross).div(total)) : D(0);
+      const value = i === largest ? D(0) : total.gt(0) ? round2(D(amount[k]).mul(o.gross).div(total)) : D(0);
       running[k] = running[k].add(value);
       part[k] = formatMoney(value);
     }
@@ -119,7 +124,12 @@ export function applyFifo<K>(
     if (open.lte(0)) continue;
     const take = MoneyDecimal.min(open, left);
     const gross = D(i.cash).gt(0) ? round2(take.mul(i.gross).div(i.cash)) : take;
-    applications.push({ key: i.key, cash: formatMoney(take), gross: formatMoney(gross), fullyPaid: take.eq(open) });
+    applications.push({
+      key: i.key,
+      cash: formatMoney(take),
+      gross: formatMoney(gross),
+      fullyPaid: take.eq(open),
+    });
     left = left.sub(take);
   }
   return { applications, leftover: formatMoney(left) };
@@ -160,7 +170,8 @@ function bound(value: { setting: string } | string, settings: Record<string, str
 export function matches(rule: SelectionRule, ctx: SelectionContext): boolean {
   if (rule.creditApproved !== undefined && rule.creditApproved !== ctx.creditApproved) return false;
   if (rule.customerTypes && !rule.customerTypes.includes(ctx.customerType)) return false;
-  if (rule.productTypeCodes && !ctx.productTypeCodes.every((c) => rule.productTypeCodes!.includes(c))) return false;
+  if (rule.productTypeCodes && !ctx.productTypeCodes.every((c) => rule.productTypeCodes!.includes(c)))
+    return false;
   const value = D(ctx.grossAmount);
   if (rule.orderValue?.gte !== undefined && value.lt(bound(rule.orderValue.gte, ctx.settings))) return false;
   if (rule.orderValue?.lt !== undefined && value.gte(bound(rule.orderValue.lt, ctx.settings))) return false;
@@ -168,7 +179,10 @@ export function matches(rule: SelectionRule, ctx: SelectionContext): boolean {
 }
 
 /** The first matching template by priority (lower first, then key for a stable order); null when none. */
-export function selectTemplate<T extends TemplateCandidate>(candidates: readonly T[], ctx: SelectionContext): T | null {
+export function selectTemplate<T extends TemplateCandidate>(
+  candidates: readonly T[],
+  ctx: SelectionContext,
+): T | null {
   const ordered = [...candidates].sort((a, b) => a.priority - b.priority || a.key.localeCompare(b.key));
   return ordered.find((c) => matches(c.rule, ctx)) ?? null;
 }

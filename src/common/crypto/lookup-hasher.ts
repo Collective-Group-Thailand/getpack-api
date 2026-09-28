@@ -26,7 +26,10 @@ export class LookupHasher {
 
   /** Free text (e.g. a Thai address): NFC, lower case, punctuation and whitespace removed. */
   hashText(value: string, purpose: string): Uint8Array<ArrayBuffer> {
-    const normalised = value.normalize('NFC').toLowerCase().replace(/[\s.,\-/#()]+/g, '');
+    const normalised = value
+      .normalize('NFC')
+      .toLowerCase()
+      .replace(/[\s.,\-/#()]+/g, '');
     return hmacSha256(this.key, `${purpose}:${normalised}`);
   }
 }

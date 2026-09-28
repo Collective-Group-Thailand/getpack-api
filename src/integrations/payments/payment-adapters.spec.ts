@@ -17,7 +17,12 @@ import { checkOf, Slip2GoAdapter } from './slip2go.adapter';
 import { TwoC2PAdapter } from './twoc2p.adapter';
 
 /** Adapters against doc-shaped responses (no network; docs/integrations/payment-providers.md). */
-function fakeFetch(respond: (url: string, init: RequestInit) => Promise<{ status?: number; body: unknown }> | { status?: number; body: unknown }) {
+function fakeFetch(
+  respond: (
+    url: string,
+    init: RequestInit,
+  ) => Promise<{ status?: number; body: unknown }> | { status?: number; body: unknown },
+) {
   const calls: { url: string; init: RequestInit }[] = [];
   const impl = (async (url: string, init: RequestInit) => {
     calls.push({ url, init });
@@ -36,14 +41,22 @@ const SCB = {
   merchantId: '684349039613126',
   terminalId: '379479514042628',
 };
-const TOKEN = { status: { code: 1000, description: 'Success' }, data: { accessToken: 'tok', tokenType: 'Bearer', expiresIn: 1800 } };
+const TOKEN = {
+  status: { code: 1000, description: 'Success' },
+  data: { accessToken: 'tok', tokenType: 'Bearer', expiresIn: 1800 },
+};
 
 describe('SCB adapter', () => {
   it('creates a QR 30 with ref1 = the payment reference and ref3 = prefix + reference', async () => {
     const { impl, calls } = fakeFetch((url) =>
       url.endsWith('/oauth/token')
         ? { body: TOKEN }
-        : { body: { status: { code: 1000, description: 'Success' }, data: { qrRawData: '000201…6304CE18', qrImage: 'iVBOR' } } },
+        : {
+            body: {
+              status: { code: 1000, description: 'Success' },
+              data: { qrRawData: '000201…6304CE18', qrImage: 'iVBOR' },
+            },
+          },
     );
     const qr = await new ScbAdapter(SCB, impl).createQr({
       kind: 'qr30',
@@ -75,37 +88,61 @@ describe('SCB adapter', () => {
       payerAccountNumber: '0662658053',
     };
     const inquiry = (found: unknown[]) =>
-      fakeFetch((url) => (url.includes('/oauth/token') ? { body: TOKEN } : { body: { status: { code: 1000 }, data: found } }));
+      fakeFetch((url) =>
+        url.includes('/oauth/token') ? { body: TOKEN } : { body: { status: { code: 1000 }, data: found } },
+      );
     const genuine = inquiry([{ ...callback, reverseFlag: 'N' }]);
     const result = await new ScbAdapter(SCB, genuine.impl).confirm(callback);
-    expect(result.confirmation).toMatchObject({ kind: 'qr30', reference: 'PKO2610000001', amount: '1070.00' });
+    expect(result.confirmation).toMatchObject({
+      kind: 'qr30',
+      reference: 'PKO2610000001',
+      amount: '1070.00',
+    });
     expect(genuine.calls[1]!.url).toContain('eventCode=00300100');
     expect(genuine.calls[1]!.url).toContain('transactionDate=2026-10-01');
     expect(JSON.stringify(result.confirmation!.raw)).not.toContain('0662658053');
 
     expect((await new ScbAdapter(SCB, inquiry([]).impl).confirm(callback)).confirmation).toBeNull();
     expect(
-      (await new ScbAdapter(SCB, inquiry([{ ...callback, reverseFlag: 'R' }]).impl).confirm(callback)).confirmation,
+      (await new ScbAdapter(SCB, inquiry([{ ...callback, reverseFlag: 'R' }]).impl).confirm(callback))
+        .confirmation,
     ).toBeNull();
   });
 
   it('refuses when not configured', async () => {
-    await expect(new ScbAdapter({}).createQr({ kind: 'qr30', reference: 'X', amount: '1', expiresAt: new Date() })).rejects.toThrow(
-      /not configured/,
-    );
+    await expect(
+      new ScbAdapter({}).createQr({ kind: 'qr30', reference: 'X', amount: '1', expiresAt: new Date() }),
+    ).rejects.toThrow(/not configured/);
   });
 });
 
 const SECRET = 'fake-merchant-secret-key-for-tests';
 const twoc2p = (impl: typeof fetch, extra: object = {}) =>
-  new TwoC2PAdapter({ baseUrl: 'https://sandbox-pgw.2c2p.com', apiVersion: '4.5', merchantId: 'JT01', secretKey: SECRET, ...extra }, impl);
+  new TwoC2PAdapter(
+    {
+      baseUrl: 'https://sandbox-pgw.2c2p.com',
+      apiVersion: '4.5',
+      merchantId: 'JT01',
+      secretKey: SECRET,
+      ...extra,
+    },
+    impl,
+  );
 const sign = (payload: object, secret = SECRET) =>
-  new SignJWT({ ...payload }).setProtectedHeader({ alg: 'HS256', typ: 'JWT' }).sign(new TextEncoder().encode(secret));
+  new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .sign(new TextEncoder().encode(secret));
 
 describe('2C2P adapter', () => {
   it('requests a payment token with an HS256 JWT and verifies the answer', async () => {
     const { impl, calls } = fakeFetch(async () => ({
-      body: { payload: await sign({ webPaymentUrl: 'https://sandbox-pgw-ui.2c2p.com/x', paymentToken: 'kSA', respCode: '0000' }) },
+      body: {
+        payload: await sign({
+          webPaymentUrl: 'https://sandbox-pgw-ui.2c2p.com/x',
+          paymentToken: 'kSA',
+          respCode: '0000',
+        }),
+      },
     }));
     const session = await twoc2p(impl).paymentToken({
       reference: 'PKO2610000002',
@@ -133,10 +170,24 @@ describe('2C2P adapter', () => {
   it('accepts only notifications signed with the merchant secret; 0000 is success', async () => {
     const adapter = twoc2p(fakeFetch(() => ({ body: {} })).impl);
     const ok = await adapter.decodeNotification({
-      payload: await sign({ invoiceNo: 'PKO2610000002', amount: '1070.00', respCode: '0000', tranRef: '2868821', accountNo: '411111XXXXXX1111' }),
+      payload: await sign({
+        invoiceNo: 'PKO2610000002',
+        amount: '1070.00',
+        respCode: '0000',
+        tranRef: '2868821',
+        accountNo: '411111XXXXXX1111',
+      }),
     });
-    expect(ok).toMatchObject({ valid: true, succeeded: true, reference: 'PKO2610000002', amount: '1070.00', tranRef: '2868821' });
-    const forged = await adapter.decodeNotification({ payload: await sign({ invoiceNo: 'X', respCode: '0000' }, 'wrong-secret-wrong-secret-wrong') });
+    expect(ok).toMatchObject({
+      valid: true,
+      succeeded: true,
+      reference: 'PKO2610000002',
+      amount: '1070.00',
+      tranRef: '2868821',
+    });
+    const forged = await adapter.decodeNotification({
+      payload: await sign({ invoiceNo: 'X', respCode: '0000' }, 'wrong-secret-wrong-secret-wrong'),
+    });
     expect(forged.valid).toBe(false);
   });
 
@@ -147,13 +198,17 @@ describe('2C2P adapter', () => {
       k.export({ type, format: 'pem' }).toString();
     const { impl } = fakeFetch(async (_url, init) => {
       // 2C2P side: verify the merchant signature, decrypt, answer encrypted to the merchant and signed.
-      const verified = await compactVerify(init.body as string, await importSPKI(pem(merchant.publicKey, 'spki'), 'PS256'));
+      const verified = await compactVerify(
+        init.body as string,
+        await importSPKI(pem(merchant.publicKey, 'spki'), 'PS256'),
+      );
       const { plaintext } = await compactDecrypt(
         new TextDecoder().decode(verified.payload),
         await importPKCS8(pem(provider.privateKey, 'pkcs8'), 'RSA-OAEP'),
       );
       expect(new TextDecoder().decode(plaintext)).toContain('<processType>R</processType>');
-      const xml = '<PaymentProcessResponse><respCode>00</respCode><respDesc>Success</respDesc><status>RF</status><refundReferenceNo>RF1</refundReferenceNo></PaymentProcessResponse>';
+      const xml =
+        '<PaymentProcessResponse><respCode>00</respCode><respDesc>Success</respDesc><status>RF</status><refundReferenceNo>RF1</refundReferenceNo></PaymentProcessResponse>';
       const jwe = await new CompactEncrypt(new TextEncoder().encode(xml))
         .setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A256GCM' })
         .encrypt(await importSPKI(pem(merchant.publicKey, 'spki'), 'RSA-OAEP'));
@@ -173,7 +228,12 @@ describe('2C2P adapter', () => {
 
 describe('Slip2Go adapter', () => {
   it('maps result codes to slip checks', () => {
-    expect(checkOf({ code: '200200', data: { transRef: 'T1', amount: 1000, dateTime: '2026-10-01T03:00:00.000Z' } }, true)).toMatchObject({
+    expect(
+      checkOf(
+        { code: '200200', data: { transRef: 'T1', amount: 1000, dateTime: '2026-10-01T03:00:00.000Z' } },
+        true,
+      ),
+    ).toMatchObject({
       result: 'pass',
       transRef: 'T1',
       amount: '1000.00',
@@ -187,8 +247,13 @@ describe('Slip2Go adapter', () => {
   });
 
   it('posts the image with duplicate, receiver, amount and date conditions', async () => {
-    const { impl, calls } = fakeFetch(() => ({ body: { code: '200200', data: { transRef: 'T9', amount: 1000 } } }));
-    const check = await new Slip2GoAdapter({ apiUrl: 'https://slip.example.invalid', secretKey: 'k' }, impl).verify({
+    const { impl, calls } = fakeFetch(() => ({
+      body: { code: '200200', data: { transRef: 'T9', amount: 1000 } },
+    }));
+    const check = await new Slip2GoAdapter(
+      { apiUrl: 'https://slip.example.invalid', secretKey: 'k' },
+      impl,
+    ).verify({
       file: Buffer.from('png'),
       mime: 'image/png',
       fileName: 'slip.png',
@@ -210,7 +275,14 @@ describe('Slip2Go adapter', () => {
   it('the fake refuses a reference already accepted', async () => {
     const fake = new FakeSlipVerifier();
     const slip = Buffer.from('FAKESLIP;transRef=T1;amount=10.00;date=2026-10-01T03:00:00Z;receiver=ok');
-    const req = { file: slip, mime: 'text/plain', fileName: 's', amount: '10.00', transferredAfter: new Date('2026-10-01T00:00:00Z'), receivers: [{ accountType: '01014', accountNumber: '1' }] };
+    const req = {
+      file: slip,
+      mime: 'text/plain',
+      fileName: 's',
+      amount: '10.00',
+      transferredAfter: new Date('2026-10-01T00:00:00Z'),
+      receivers: [{ accountType: '01014', accountNumber: '1' }],
+    };
     expect((await fake.verify(req)).result).toBe('pass');
     expect((await fake.verify(req)).result).toBe('duplicate');
   });

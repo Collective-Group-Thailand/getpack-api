@@ -53,7 +53,11 @@ describe('checkout (e2e, B3.1)', () => {
     const shop = await addAddress(ctx, token, codes[1]!, 'ร้าน');
     const quote = await saveQuote(ctx, token, fixture, [1000, 2000]);
     await as(ctx, token)
-      .post('/v1/store/cart/items', { quoteId: quote.id, quoteOptionId: quote.options[0]!.id, designOption: 'own_file' })
+      .post('/v1/store/cart/items', {
+        quoteId: quote.id,
+        quoteOptionId: quote.options[0]!.id,
+        designOption: 'own_file',
+      })
       .expect(201);
     await as(ctx, token)
       .post('/v1/store/cart/items', {
@@ -85,7 +89,10 @@ describe('checkout (e2e, B3.1)', () => {
 
     const key = randomUUID();
     const placed = await as(ctx, token)
-      .post('/v1/store/checkout', { expectedGrossAmount: total.grossAmount, ccEmails: ['Account@Example.com'] })
+      .post('/v1/store/checkout', {
+        expectedGrossAmount: total.grossAmount,
+        ccEmails: ['Account@Example.com'],
+      })
       .set('Idempotency-Key', key)
       .expect(201);
     expect(placed.headers['location']).toBe(`/v1/store/order-groups/${placed.body.id}`);
@@ -107,7 +114,10 @@ describe('checkout (e2e, B3.1)', () => {
     expect(Math.round(hours)).toBe(7 * 24);
 
     const replay = await as(ctx, token)
-      .post('/v1/store/checkout', { expectedGrossAmount: total.grossAmount, ccEmails: ['Account@Example.com'] })
+      .post('/v1/store/checkout', {
+        expectedGrossAmount: total.grossAmount,
+        ccEmails: ['Account@Example.com'],
+      })
       .set('Idempotency-Key', key)
       .expect(201);
     expect(replay.body.id).toBe(placed.body.id);
@@ -120,11 +130,19 @@ describe('checkout (e2e, B3.1)', () => {
     expect(group.orders[1]!.destinations.map((d) => d.quantity)).toEqual([1200, 800]);
     expect(group.orders[0]!.snapshotSha256).toHaveLength(32);
     expect(group.orders[0]!.buyCostNet).not.toBeNull();
-    expect((await ctx.prisma.quote.findUniqueOrThrow({ where: { publicId: quote.id } })).status).toBe('converted');
+    expect((await ctx.prisma.quote.findUniqueOrThrow({ where: { publicId: quote.id } })).status).toBe(
+      'converted',
+    );
     expect(
-      await ctx.prisma.domainEvent.count({ where: { type: 'order_group.placed', aggregateId: placed.body.id } }),
+      await ctx.prisma.domainEvent.count({
+        where: { type: 'order_group.placed', aggregateId: placed.body.id },
+      }),
     ).toBe(1);
-    expect(await ctx.prisma.domainEvent.count({ where: { type: 'order.placed', payload: { path: ['groupId'], equals: placed.body.id } } })).toBe(2);
+    expect(
+      await ctx.prisma.domainEvent.count({
+        where: { type: 'order.placed', payload: { path: ['groupId'], equals: placed.body.id } },
+      }),
+    ).toBe(2);
     const cart = await as(ctx, token).get('/v1/store/cart').expect(200);
     expect(cart.body.items).toEqual([]);
   });
@@ -220,7 +238,9 @@ describe('checkout (e2e, B3.1)', () => {
     expect(placed.body.orders[0].internal).toMatchObject({ buyCostNet: null, marginAmount: null });
     const group = await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: placed.body.id } });
     expect(group.onBehalfOfUserId).not.toBeNull();
-    const profile = await ctx.prisma.customerProfile.findFirstOrThrow({ where: { user: { publicId: me.body.id } } });
+    const profile = await ctx.prisma.customerProfile.findFirstOrThrow({
+      where: { user: { publicId: me.body.id } },
+    });
     expect(profile.customerCode).toMatch(/^DEVCU-/);
   });
 });

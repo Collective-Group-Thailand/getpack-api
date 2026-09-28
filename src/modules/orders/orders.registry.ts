@@ -7,4 +7,7 @@ import { AdminOrdersController, StoreOrdersController } from './orders.controlle
 export const ORDERS_STORE_CONTROLLERS: Type<unknown>[] = [StoreOrdersController];
 
 /** `/v1/admin/*` controllers of orders. */
-export const ORDERS_ADMIN_CONTROLLERS: Type<unknown>[] = [AdminOrdersController, AdminOrderOperationsController];
+export const ORDERS_ADMIN_CONTROLLERS: Type<unknown>[] = [
+  AdminOrdersController,
+  AdminOrderOperationsController,
+];

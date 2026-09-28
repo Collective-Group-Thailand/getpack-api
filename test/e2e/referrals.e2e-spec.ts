@@ -35,7 +35,9 @@ describe('referrals (e2e, B3.3)', () => {
     await seedShipping(ctx, fixture.factoryPublicId, [postcode]);
     referrals = ctx.app.get(ReferralsService);
     marketing = await staffToken(ctx, 'marketing');
-    const setting = await ctx.prisma.setting.findFirstOrThrow({ where: { key: 'referral.rules', scopeType: 'platform' } });
+    const setting = await ctx.prisma.setting.findFirstOrThrow({
+      where: { key: 'referral.rules', scopeType: 'platform' },
+    });
     const version = await ctx.prisma.settingVersion.findFirstOrThrow({
       where: { settingId: setting.id, status: 'approved' },
       orderBy: { versionNo: 'desc' },
@@ -73,7 +75,10 @@ describe('referrals (e2e, B3.3)', () => {
       })
       .expect(201);
     const preview = await as(ctx, token).post('/v1/store/checkout/actions/preview', {}).expect(200);
-    const placed = await as(ctx, token).post('/v1/store/checkout', {}).set('Idempotency-Key', randomUUID()).expect(201);
+    const placed = await as(ctx, token)
+      .post('/v1/store/checkout', {})
+      .set('Idempotency-Key', randomUUID())
+      .expect(201);
     return { preview: preview.body, group: placed.body as { id: string } };
   }
 
@@ -101,26 +106,41 @@ describe('referrals (e2e, B3.3)', () => {
   it('shares a code, gives the referee the first-order discount and qualifies after the claim window', async () => {
     const referrer = await customerToken(ctx, 1);
     const mine = await as(ctx, referrer.token).get('/v1/store/referral').expect(200);
-    expect(mine.body).toMatchObject({ code: expect.stringMatching(/^[A-Z0-9]{8}$/), link: expect.stringContaining('/r/') });
+    expect(mine.body).toMatchObject({
+      code: expect.stringMatching(/^[A-Z0-9]{8}$/),
+      link: expect.stringContaining('/r/'),
+    });
     const code = mine.body.code as string;
     expect((await as(ctx, referrer.token).get('/v1/store/referral').expect(200)).body.code).toBe(code);
-    await as(ctx, referrer.token).post('/v1/store/referral/attribution', { code }).expect(422).expect((r) => {
-      expect(r.body.code).toBe('referrals.self_referral');
-    });
+    await as(ctx, referrer.token)
+      .post('/v1/store/referral/attribution', { code })
+      .expect(422)
+      .expect((r) => {
+        expect(r.body.code).toBe('referrals.self_referral');
+      });
 
     const referee = await customerToken(ctx, 2);
     await as(ctx, referee.token).post('/v1/store/referral/attribution', { code: 'ZZZZZZZZ' }).expect(422);
-    await as(ctx, referee.token).post('/v1/store/referral/attribution', { code: code.toLowerCase() }).expect(201).expect((r) => {
-      expect(r.body).toMatchObject({ code, status: 'pending' });
-    });
+    await as(ctx, referee.token)
+      .post('/v1/store/referral/attribution', { code: code.toLowerCase() })
+      .expect(201)
+      .expect((r) => {
+        expect(r.body).toMatchObject({ code, status: 'pending' });
+      });
     await as(ctx, referee.token).post('/v1/store/referral/attribution', { code }).expect(409);
 
     const { preview, group } = await order(referee.token, `${ctx.run} ถนนผู้ถูกแนะนำ 2`);
-    expect(preview.orders[0].discounts).toEqual([expect.objectContaining({ source: 'referral', code: null })]);
+    expect(preview.orders[0].discounts).toEqual([
+      expect.objectContaining({ source: 'referral', code: null }),
+    ]);
     const referral = await referralOf(referee.phone);
     const placed = await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: group.id } });
     expect(referral.firstOrderGroupId).toBe(placed.id);
-    expect(await ctx.prisma.promotionRedemption.count({ where: { orderGroupId: placed.id, promotion: { kind: 'referral' } } })).toBe(1);
+    expect(
+      await ctx.prisma.promotionRedemption.count({
+        where: { orderGroupId: placed.id, promotion: { kind: 'referral' } },
+      }),
+    ).toBe(1);
 
     // A second customer can no longer use a code after ordering.
     await as(ctx, referee.token).post('/v1/store/referral/attribution', { code }).expect(409);
@@ -130,22 +150,31 @@ describe('referrals (e2e, B3.3)', () => {
     expect(await referrals.qualifyDue()).toBe(1);
     const qualified = await ctx.prisma.referralAttribution.findUniqueOrThrow({ where: { id: referral.id } });
     expect(qualified).toMatchObject({ status: 'qualified', fraudFlags: [] });
-    const event = await ctx.prisma.domainEvent.findFirstOrThrow({ where: { type: 'referral.qualified', aggregateId: referral.publicId } });
+    const event = await ctx.prisma.domainEvent.findFirstOrThrow({
+      where: { type: 'referral.qualified', aggregateId: referral.publicId },
+    });
     expect(event.payload).toMatchObject({ rewardBaht: rules['referrerRewardBaht'] });
     const counts = await as(ctx, referrer.token).get('/v1/store/referral').expect(200);
     expect(counts.body.referrals).toMatchObject({ qualified: 1 });
 
     // Loyalty (B3.4) pays the referrer THB 500 = 200 points and marks the referral rewarded (D-136, D-131).
-    await ctx.prisma.withTx((tx) => ctx.app.get(LoyaltyService).onReferralQualified(envelopeFromRow(event), tx));
-    expect((await ctx.prisma.referralAttribution.findUniqueOrThrow({ where: { id: referral.id } })).status).toBe('rewarded');
+    await ctx.prisma.withTx((tx) =>
+      ctx.app.get(LoyaltyService).onReferralQualified(envelopeFromRow(event), tx),
+    );
+    expect(
+      (await ctx.prisma.referralAttribution.findUniqueOrThrow({ where: { id: referral.id } })).status,
+    ).toBe('rewarded');
     const points = await as(ctx, referrer.token).get('/v1/store/loyalty').expect(200);
     expect(points.body.availablePoints).toBe(200);
 
     // The referee discount is a system promotion: its values are the referral settings, not editable.
     const system = await ctx.prisma.promotion.findFirstOrThrow({ where: { kind: 'referral' } });
-    await as(ctx, marketing).post(`/v1/admin/promotions/${system.publicId}/actions/pause`).expect(409).expect((r) => {
-      expect(r.body.code).toBe('promotions.system_managed');
-    });
+    await as(ctx, marketing)
+      .post(`/v1/admin/promotions/${system.publicId}/actions/pause`)
+      .expect(409)
+      .expect((r) => {
+        expect(r.body.code).toBe('promotions.system_managed');
+      });
   });
 
   it('gives no reward when the referee shares an address with the referrer (D-136)', async () => {
@@ -179,12 +208,16 @@ describe('referrals (e2e, B3.3)', () => {
     expect(held).toMatchObject({ status: 'under_review', fraudFlags: ['monthly_cap'] });
 
     const queue = await as(ctx, marketing).get('/v1/admin/referrals?status=under_review').expect(200);
-    const item = (queue.body.data as { id: string; approvalId: string }[]).find((r) => r.id === held.publicId)!;
+    const item = (queue.body.data as { id: string; approvalId: string }[]).find(
+      (r) => r.id === held.publicId,
+    )!;
     expect(item.approvalId).toBeTruthy();
     await as(ctx, marketing)
       .post(`/v1/admin/approvals/${item.approvalId}/actions/approve`, { comment: 'ลูกค้าแนะนำจริง' })
       .expect(200);
-    const outcome = await ctx.prisma.domainEvent.findFirstOrThrow({ where: { type: 'approval.approved', aggregateId: item.approvalId } });
+    const outcome = await ctx.prisma.domainEvent.findFirstOrThrow({
+      where: { type: 'approval.approved', aggregateId: item.approvalId },
+    });
     await ctx.prisma.withTx((tx) => referrals.onApprovalOutcome(envelopeFromRow(outcome), tx));
     expect((await referralOf(second.phone)).status).toBe('qualified');
   });

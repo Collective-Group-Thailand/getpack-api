@@ -704,12 +704,17 @@ describe('fulfilment schema (PostgreSQL 18)', () => {
           },
         });
       const [first, second] = [await doc(1), await doc(2)];
-      expect(await state('UPDATE claim_resolutions SET customer_document_id = 987654321 WHERE id = $1', [r.id])).toBe('23503');
+      expect(
+        await state('UPDATE claim_resolutions SET customer_document_id = 987654321 WHERE id = $1', [r.id]),
+      ).toBe('23503');
       expect(
         await state('UPDATE claim_resolutions SET customer_document_id = $2 WHERE id = $1', [r.id, first.id]),
       ).toBeNull();
       expect(
-        await state('UPDATE claim_resolutions SET customer_document_id = $2 WHERE id = $1', [r.id, second.id]),
+        await state('UPDATE claim_resolutions SET customer_document_id = $2 WHERE id = $1', [
+          r.id,
+          second.id,
+        ]),
       ).toBe(SQLSTATE.restrictViolation);
     });
   });

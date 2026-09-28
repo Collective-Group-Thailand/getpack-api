@@ -83,15 +83,25 @@ async function customersOf(
     case 'user':
       return [{ where: { publicId: id } }];
     case 'order':
-      return byId((await tx.order.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))?.customerUserId);
+      return byId(
+        (await tx.order.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))
+          ?.customerUserId,
+      );
     case 'order_group':
       return byId(
-        (await tx.orderGroup.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))?.customerUserId,
+        (await tx.orderGroup.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))
+          ?.customerUserId,
       );
     case 'claim':
-      return byId((await tx.claim.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))?.customerUserId);
+      return byId(
+        (await tx.claim.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))
+          ?.customerUserId,
+      );
     case 'rfq':
-      return byId((await tx.rfq.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))?.customerUserId);
+      return byId(
+        (await tx.rfq.findUnique({ where: { publicId: id }, select: { customerUserId: true } }))
+          ?.customerUserId,
+      );
     case 'payment':
       return byId(
         (
@@ -112,7 +122,10 @@ async function customersOf(
       );
     case 'shipment': {
       const orderIds = (event.payload['orderIds'] as string[] | undefined) ?? [];
-      const orders = await tx.order.findMany({ where: { publicId: { in: orderIds } }, select: { customerUserId: true } });
+      const orders = await tx.order.findMany({
+        where: { publicId: { in: orderIds } },
+        select: { customerUserId: true },
+      });
       return [...new Set(orders.map((o) => o.customerUserId))].map((userId) => ({ where: { id: userId } }));
     }
     default:

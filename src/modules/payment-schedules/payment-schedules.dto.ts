@@ -105,7 +105,10 @@ export class InstalmentDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   paidAt!: string | null;
 
-  @ApiPropertyOptional({ type: [InstalmentAllocationDto], description: 'Staff only: share of each order (ADR-0008)' })
+  @ApiPropertyOptional({
+    type: [InstalmentAllocationDto],
+    description: 'Staff only: share of each order (ADR-0008)',
+  })
   allocations?: InstalmentAllocationDto[];
 }
 
@@ -191,7 +194,14 @@ export const ADMIN_SCHEDULE_EXAMPLE: AdminPaymentScheduleDto = {
   overrideReason: null,
   instalments: SCHEDULE_EXAMPLE.instalments.map((i) => ({
     ...i,
-    allocations: [{ orderId: IDS.order, orderCode: 'OR-2610-00042', grossAmount: i.grossAmount, cashAmount: i.cashAmount }],
+    allocations: [
+      {
+        orderId: IDS.order,
+        orderCode: 'OR-2610-00042',
+        grossAmount: i.grossAmount,
+        cashAmount: i.cashAmount,
+      },
+    ],
   })),
 };
 
@@ -243,7 +253,12 @@ export class TemplateInstalmentDto {
 }
 
 export class CreateTemplateVersionDto {
-  @ApiProperty({ type: String, format: 'date-time', example: '2026-11-01T00:00:00+07:00', description: 'Never in the past' })
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    example: '2026-11-01T00:00:00+07:00',
+    description: 'Never in the past',
+  })
   @IsISO8601()
   effectiveFrom!: string;
 
@@ -262,7 +277,10 @@ export class CreateTemplateVersionDto {
   @Max(10_000)
   priority!: number;
 
-  @ApiPropertyOptional({ example: false, description: 'Selected only by CS with `payment_schedules.override`' })
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Selected only by CS with `payment_schedules.override`',
+  })
   @IsOptional()
   @IsBoolean()
   requiresPermissionToSelect?: boolean;
@@ -291,13 +309,22 @@ export class TemplateDto {
   @ApiProperty({ example: '50 % deposit, 50 % before shipping' })
   nameEn!: string;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 1, description: 'Version in force; null when none' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 1,
+    description: 'Version in force; null when none',
+  })
   versionNo!: number | null;
 
   @ApiProperty({ type: 'integer', nullable: true, example: 100 })
   priority!: number | null;
 
-  @ApiProperty({ type: Object, nullable: true, example: { orderValue: { gte: { setting: 'payments.schedule_split_threshold' } } } })
+  @ApiProperty({
+    type: Object,
+    nullable: true,
+    example: { orderValue: { gte: { setting: 'payments.schedule_split_threshold' } } },
+  })
   selectionRule!: Record<string, unknown> | null;
 
   @ApiProperty({ example: false })
@@ -316,7 +343,14 @@ export const TEMPLATE_EXAMPLE: TemplateDto = {
   selectionRule: { orderValue: { gte: { setting: 'payments.schedule_split_threshold' } } },
   requiresPermissionToSelect: false,
   instalments: [
-    { labelTh: 'มัดจำ 50%', labelEn: '50 % deposit', pct: '50.0000', dueTrigger: 'at_checkout', dueOffsetDays: null, requiredBefore: 'production' },
+    {
+      labelTh: 'มัดจำ 50%',
+      labelEn: '50 % deposit',
+      pct: '50.0000',
+      dueTrigger: 'at_checkout',
+      dueOffsetDays: null,
+      requiredBefore: 'production',
+    },
     {
       labelTh: 'ส่วนที่เหลือก่อนจัดส่ง',
       labelEn: 'Balance before shipping',

@@ -17,7 +17,16 @@ import {
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-export const RUN_STATUSES = ['draft', 'proposed', 'approved', 'file_generated', 'confirmed', 'partially_failed', 'rejected', 'cancelled'] as const;
+export const RUN_STATUSES = [
+  'draft',
+  'proposed',
+  'approved',
+  'file_generated',
+  'confirmed',
+  'partially_failed',
+  'rejected',
+  'cancelled',
+] as const;
 export const PAYOUT_KINDS = ['advance', 'balance', 'retention_release', 'vendor_bill'] as const;
 export const ITEM_STATUSES = ['included', 'paid', 'failed', 'excluded'] as const;
 export const WHT_FORMS = ['pnd3', 'pnd53'] as const;
@@ -33,7 +42,11 @@ export const PAYOUT_IDS = {
 };
 
 export class PayoutItemDto {
-  @ApiProperty({ format: 'uuid', example: PAYOUT_IDS.item, description: 'Also the reference in the bank file' })
+  @ApiProperty({
+    format: 'uuid',
+    example: PAYOUT_IDS.item,
+    description: 'Also the reference in the bank file',
+  })
   id!: string;
 
   @ApiProperty({ format: 'uuid', example: PAYOUT_IDS.vendor })
@@ -45,7 +58,12 @@ export class PayoutItemDto {
   @ApiProperty({ enum: PAYOUT_KINDS, enumName: 'PayoutKind', example: 'balance' })
   kind!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '0009', description: 'Last 4 digits of the vendor account; null when excluded' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '0009',
+    description: 'Last 4 digits of the vendor account; null when excluded',
+  })
   bankAccountLast4!: string | null;
 
   @ApiProperty({ example: '5560.00' })
@@ -54,7 +72,10 @@ export class PayoutItemDto {
   @ApiProperty({ example: '389.20' })
   vatAmount!: string;
 
-  @ApiProperty({ example: true, description: 'Input VAT claimable now (a validated tax invoice) or parked in 1242' })
+  @ApiProperty({
+    example: true,
+    description: 'Input VAT claimable now (a validated tax invoice) or parked in 1242',
+  })
   vatClaimable!: boolean;
 
   @ApiProperty({ example: '166.80' })
@@ -186,25 +207,44 @@ export const RUN_EXAMPLE: PayoutRunDto = {
   currency: 'THB',
   items: [ITEM_EXAMPLE],
 };
-export const PAID_ITEM_EXAMPLE: PayoutItemDto = { ...ITEM_EXAMPLE, status: 'paid', pvNumber: 'DEVPV-26-00001', bankRef: 'SCB0001', paidOn: '2026-10-27' };
+export const PAID_ITEM_EXAMPLE: PayoutItemDto = {
+  ...ITEM_EXAMPLE,
+  status: 'paid',
+  pvNumber: 'DEVPV-26-00001',
+  bankRef: 'SCB0001',
+  paidOn: '2026-10-27',
+};
 
 export class CreatePayoutRunDto {
-  @ApiProperty({ format: 'uuid', description: 'Active company bank account the money leaves from (purpose payout / both)' })
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Active company bank account the money leaves from (purpose payout / both)',
+  })
   @IsUUID()
   companyBankAccountId!: string;
 
-  @ApiProperty({ format: 'date', example: '2026-10-27', description: 'Payables eligible by this day are included' })
+  @ApiProperty({
+    format: 'date',
+    example: '2026-10-27',
+    description: 'Payables eligible by this day are included',
+  })
   @Matches(DAY)
   payOn!: string;
 
-  @ApiPropertyOptional({ type: [String], description: 'Only these vendors (default: every vendor with eligible payables)' })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'Only these vendors (default: every vendor with eligible payables)',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(200)
   @IsUUID('all', { each: true })
   vendorIds?: string[];
 
-  @ApiPropertyOptional({ example: 'generic_csv', description: 'Bank file adapter (default: the bank account’s)' })
+  @ApiPropertyOptional({
+    example: 'generic_csv',
+    description: 'Bank file adapter (default: the bank account’s)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(40)
@@ -234,7 +274,10 @@ export class ConfirmationLineDto {
 }
 
 export class ConfirmPayoutRunDto {
-  @ApiPropertyOptional({ type: [ConfirmationLineDto], description: 'The bank’s result per item (or `fileId`)' })
+  @ApiPropertyOptional({
+    type: [ConfirmationLineDto],
+    description: 'The bank’s result per item (or `fileId`)',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1)
@@ -243,7 +286,10 @@ export class ConfirmPayoutRunDto {
   @Type(() => ConfirmationLineDto)
   confirmations?: ConfirmationLineDto[];
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'The bank’s confirmation file, parsed by the run’s adapter' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'The bank’s confirmation file, parsed by the run’s adapter',
+  })
   @IsOptional()
   @IsUUID()
   fileId?: string;
@@ -278,7 +324,15 @@ export class PayoutExceptionDto {
   failureReason!: string | null;
 }
 
-export const EXCEPTION_EXAMPLE: PayoutExceptionDto = { id: PAYOUT_IDS.item, runId: PAYOUT_IDS.run, runNo: 'PR261020-001', vendorName: 'โรงพิมพ์ตัวอย่าง (fake)', status: 'failed', cashAmount: '5504.40', failureReason: 'บัญชีปิดแล้ว' };
+export const EXCEPTION_EXAMPLE: PayoutExceptionDto = {
+  id: PAYOUT_IDS.item,
+  runId: PAYOUT_IDS.run,
+  runNo: 'PR261020-001',
+  vendorName: 'โรงพิมพ์ตัวอย่าง (fake)',
+  status: 'failed',
+  cashAmount: '5504.40',
+  failureReason: 'บัญชีปิดแล้ว',
+};
 
 export class IssuedWhtCertificateDto {
   @ApiProperty({ format: 'uuid', example: PAYOUT_IDS.cert })
@@ -352,7 +406,18 @@ export const PARTNER_PAYOUT_EXAMPLE: PartnerPayoutDto = {
   retentionAmount: '278.00',
   cashAmount: '5504.40',
   bankAccountLast4: '0009',
-  whtCertificates: [{ id: PAYOUT_IDS.cert, wtNumber: 'DEVWT-26-00001', form: 'pnd53', paidOn: '2026-10-27', paidAmount: '5560.00', whtRatePct: '3.0000', whtAmount: '166.80', pdfReady: true }],
+  whtCertificates: [
+    {
+      id: PAYOUT_IDS.cert,
+      wtNumber: 'DEVWT-26-00001',
+      form: 'pnd53',
+      paidOn: '2026-10-27',
+      paidAmount: '5560.00',
+      whtRatePct: '3.0000',
+      whtAmount: '166.80',
+      pdfReady: true,
+    },
+  ],
 };
 
 export class PayoutStatementQuery {

@@ -866,11 +866,20 @@ export class PartnerFactoryOperationsController extends FactoryReads {
     type: SetCapacityOverrideDto,
     examples: {
       default: {
-        value: { productTypeId: CAPABILITY_IDS.productType, weekStart: '2026-10-12', capacity: 6000, reason: 'ปิดซ่อมเครื่องจักร' },
+        value: {
+          productTypeId: CAPABILITY_IDS.productType,
+          weekStart: '2026-10-12',
+          capacity: 6000,
+          reason: 'ปิดซ่อมเครื่องจักร',
+        },
       },
     },
   })
-  @ApiSuccess(200, { description: 'The week', type: [CapacityWeekDto], example: [{ ...WEEK, weekStart: '2026-10-12', source: 'override' }] })
+  @ApiSuccess(200, {
+    description: 'The week',
+    type: [CapacityWeekDto],
+    example: [{ ...WEEK, weekStart: '2026-10-12', source: 'override' }],
+  })
   @ApiStandardErrors(...WRITE)
   async setCapacityOverride(
     @CurrentActor() actor: Actor,

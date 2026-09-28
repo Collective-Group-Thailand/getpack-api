@@ -6,7 +6,13 @@ import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
 /** Referral programme (D-136). */
 
-export const REFERRAL_STATUSES = ['pending', 'under_review', 'qualified', 'rewarded', 'rejected_fraud'] as const;
+export const REFERRAL_STATUSES = [
+  'pending',
+  'under_review',
+  'qualified',
+  'rewarded',
+  'rejected_fraud',
+] as const;
 
 const IDS = {
   referral: '0192f3a0-7c1e-7d2a-9b1f-0000000a0001',
@@ -84,7 +90,13 @@ export class AdminReferralDto extends ReferralDto {
   @ApiProperty({ type: UserRefDto })
   referee!: UserRefDto;
 
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.group, description: 'The referee’s first order group' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: IDS.group,
+    description: 'The referee’s first order group',
+  })
   firstOrderGroupId!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'OG-2610-0001' })
@@ -93,11 +105,18 @@ export class AdminReferralDto extends ReferralDto {
   @ApiProperty({
     type: [String],
     example: [],
-    description: 'Why it was held or rejected: `<kind>_match` (same phone / address / card / device as the referrer), `linked_referees`, `monthly_cap`',
+    description:
+      'Why it was held or rejected: `<kind>_match` (same phone / address / card / device as the referrer), `linked_referees`, `monthly_cap`',
   })
   fraudFlags!: string[];
 
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null, description: 'Marketing review (`referral_review`)' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Marketing review (`referral_review`)',
+  })
   approvalId!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })

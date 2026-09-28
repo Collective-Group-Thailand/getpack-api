@@ -45,7 +45,12 @@ describe('company orders (e2e, B3.5)', () => {
     const address = await addAddress(ctx, token, postcode);
     const quote = await saveQuote(ctx, token, fixture, [1000]);
     await as(ctx, token)
-      .post('/v1/store/cart/items', { quoteId: quote.id, quoteOptionId: quote.options[0]!.id, designOption: 'own_file', destinations: [{ addressId: address.id, quantity: 1000 }] })
+      .post('/v1/store/cart/items', {
+        quoteId: quote.id,
+        quoteOptionId: quote.options[0]!.id,
+        designOption: 'own_file',
+        destinations: [{ addressId: address.id, quantity: 1000 }],
+      })
       .expect(201);
   }
 
@@ -55,9 +60,16 @@ describe('company orders (e2e, B3.5)', () => {
   async function decide(approver: string, companyId: string, decision: 'approve' | 'reject') {
     const pending = await as(ctx, approver).get(`/v1/store/companies/${companyId}/approvals`).expect(200);
     const approval = (pending.body as { id: string }[])[0]!;
-    await as(ctx, approver).post(`/v1/store/companies/${companyId}/approvals/${approval.id}/actions/${decision}`, { comment: 'ตรวจแล้ว' }).expect(200);
+    await as(ctx, approver)
+      .post(`/v1/store/companies/${companyId}/approvals/${approval.id}/actions/${decision}`, {
+        comment: 'ตรวจแล้ว',
+      })
+      .expect(200);
     const outcome = await ctx.prisma.domainEvent.findFirstOrThrow({
-      where: { type: decision === 'approve' ? 'approval.approved' : 'approval.rejected', aggregateId: approval.id },
+      where: {
+        type: decision === 'approve' ? 'approval.approved' : 'approval.rejected',
+        aggregateId: approval.id,
+      },
     });
     await ctx.prisma.withTx((tx) => checkoutExt.onApprovalOutcome(envelopeFromRow(outcome), tx));
   }
@@ -82,17 +94,31 @@ describe('company orders (e2e, B3.5)', () => {
     await place(outsider.token, { companyId, poNumber: 'PO-1' }).expect(404);
 
     await cart(buyer.token);
-    const preview = await as(ctx, buyer.token).post('/v1/store/checkout/actions/preview', { companyId, poNumber: 'PO-1' }).expect(200);
+    const preview = await as(ctx, buyer.token)
+      .post('/v1/store/checkout/actions/preview', { companyId, poNumber: 'PO-1' })
+      .expect(200);
     expect(preview.body.withholding).toBe(true);
-    expect(preview.body.notices).toEqual(expect.arrayContaining([{ code: 'company.approval_required', params: { threshold: '100.00' } }]));
-    await place(buyer.token, { companyId }).expect(422).expect((r) => expect(r.body.code).toBe('companies.po_required'));
+    expect(preview.body.notices).toEqual(
+      expect.arrayContaining([{ code: 'company.approval_required', params: { threshold: '100.00' } }]),
+    );
+    await place(buyer.token, { companyId })
+      .expect(422)
+      .expect((r) => expect(r.body.code).toBe('companies.po_required'));
     const placed = await place(buyer.token, { companyId, poNumber: 'PO-1' }).expect(201);
     expect(placed.body.status).toBe('pending_company_approval');
-    const group = await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: placed.body.id as string }, include: { company: true, orders: true } });
+    const group = await ctx.prisma.orderGroup.findUniqueOrThrow({
+      where: { publicId: placed.body.id as string },
+      include: { company: true, orders: true },
+    });
     expect(group.company?.publicId).toBe(companyId);
     expect(group.expiresAt).toBeNull();
     expect(group.orders.every((o) => o.companyId === group.companyId)).toBe(true);
-    expect(group.taxProfileSnapshot).toMatchObject({ taxType: 'juristic', branchCode: '00000', withholdsTax: true, companyId });
+    expect(group.taxProfileSnapshot).toMatchObject({
+      taxType: 'juristic',
+      branchCode: '00000',
+      withholdsTax: true,
+      companyId,
+    });
     await as(ctx, buyer.token)
       .post(`/v1/store/order-groups/${group.publicId}/payments`, { method: 'scb_qr' })
       .set('Idempotency-Key', randomUUID())
@@ -110,7 +136,10 @@ describe('company orders (e2e, B3.5)', () => {
     await cart(buyer.token);
     const second = await place(buyer.token, { companyId, poNumber: 'PO-2' }).expect(201);
     await decide(approver.token, companyId, 'reject');
-    const rejected = await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: second.body.id as string }, include: { orders: { include: { cancelReason: true } } } });
+    const rejected = await ctx.prisma.orderGroup.findUniqueOrThrow({
+      where: { publicId: second.body.id as string },
+      include: { orders: { include: { cancelReason: true } } },
+    });
     expect(rejected.status).toBe('cancelled');
     expect(rejected.orders[0]!.cancelReason!.code).toBe('company_approval_rejected');
   });

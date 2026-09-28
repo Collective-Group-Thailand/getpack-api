@@ -58,7 +58,13 @@ export class PayablesQueryService {
       ...(q.status && { status: q.status as Prisma.PurchaseOrderWhereInput['status'] }),
     };
     const [rows, total] = await Promise.all([
-      this.prisma.purchaseOrder.findMany({ where, include: PO_INCLUDE, orderBy: { issuedAt: 'desc' }, skip: (q.page - 1) * q.perPage, take: q.perPage }),
+      this.prisma.purchaseOrder.findMany({
+        where,
+        include: PO_INCLUDE,
+        orderBy: { issuedAt: 'desc' },
+        skip: (q.page - 1) * q.perPage,
+        take: q.perPage,
+      }),
       this.prisma.purchaseOrder.count({ where }),
     ]);
     return { rows, total };
@@ -74,7 +80,13 @@ export class PayablesQueryService {
   async goodsReceipts(actor: Actor, q: Page & { factoryId?: string }) {
     const where: Prisma.GoodsReceiptWhereInput = await this.factoryWhere(actor, q.factoryId);
     const [rows, total] = await Promise.all([
-      this.prisma.goodsReceipt.findMany({ where, include: GR_INCLUDE, orderBy: { createdAt: 'desc' }, skip: (q.page - 1) * q.perPage, take: q.perPage }),
+      this.prisma.goodsReceipt.findMany({
+        where,
+        include: GR_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+        skip: (q.page - 1) * q.perPage,
+        take: q.perPage,
+      }),
       this.prisma.goodsReceipt.count({ where }),
     ]);
     return { rows, total };
@@ -86,7 +98,13 @@ export class PayablesQueryService {
       ...(q.status && { status: q.status as Prisma.BillingStatementWhereInput['status'] }),
     };
     const [rows, total] = await Promise.all([
-      this.prisma.billingStatement.findMany({ where, include: BS_INCLUDE, orderBy: { generatedAt: 'desc' }, skip: (q.page - 1) * q.perPage, take: q.perPage }),
+      this.prisma.billingStatement.findMany({
+        where,
+        include: BS_INCLUDE,
+        orderBy: { generatedAt: 'desc' },
+        skip: (q.page - 1) * q.perPage,
+        take: q.perPage,
+      }),
       this.prisma.billingStatement.count({ where }),
     ]);
     return { rows, total };
@@ -105,7 +123,13 @@ export class PayablesQueryService {
       ...(q.vendorId && { vendor: { publicId: q.vendorId } }),
     };
     const [rows, total] = await Promise.all([
-      this.prisma.payableItem.findMany({ where, include: PAYABLE_INCLUDE, orderBy: [{ eligibleAt: 'asc' }, { id: 'asc' }], skip: (q.page - 1) * q.perPage, take: q.perPage }),
+      this.prisma.payableItem.findMany({
+        where,
+        include: PAYABLE_INCLUDE,
+        orderBy: [{ eligibleAt: 'asc' }, { id: 'asc' }],
+        skip: (q.page - 1) * q.perPage,
+        take: q.perPage,
+      }),
       this.prisma.payableItem.count({ where }),
     ]);
     return { rows, total };

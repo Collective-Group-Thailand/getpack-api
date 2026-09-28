@@ -573,7 +573,8 @@ export const PERMISSIONS = [
   {
     key: 'shipments.manage',
     audience: 'staff',
-    description: 'Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments',
+    description:
+      'Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments',
     decisionRefs: ['D-013', 'D-114'],
   },
 
@@ -750,7 +751,8 @@ export const PERMISSIONS = [
   {
     key: 'ledger.read',
     audience: 'staff',
-    description: 'Read the chart of accounts, periods, journals with their lines, posting rules and tax rates',
+    description:
+      'Read the chart of accounts, periods, journals with their lines, posting rules and tax rates',
     decisionRefs: ['D-031'],
   },
   {
@@ -774,7 +776,8 @@ export const PERMISSIONS = [
   {
     key: 'ledger.config.propose',
     audience: 'staff',
-    description: 'Propose chart-of-accounts changes, posting-rule and tax-rate versions and cost centres (maker-checker, §8)',
+    description:
+      'Propose chart-of-accounts changes, posting-rule and tax-rate versions and cost centres (maker-checker, §8)',
     decisionRefs: ['D-033', 'D-169'],
   },
 
@@ -782,13 +785,15 @@ export const PERMISSIONS = [
   {
     key: 'receivables.read',
     audience: 'staff',
-    description: 'Read customer documents, receivables and aging, 50 ทวิ certificates, credit balances and statements',
+    description:
+      'Read customer documents, receivables and aging, 50 ทวิ certificates, credit balances and statements',
     decisionRefs: ['D-010', 'D-033'],
   },
   {
     key: 'receivables.manage',
     audience: 'staff',
-    description: 'Void invoices / debit notes, record or waive 50 ทวิ, update the allowance for doubtful accounts',
+    description:
+      'Void invoices / debit notes, record or waive 50 ทวิ, update the allowance for doubtful accounts',
     decisionRefs: ['D-033'],
   },
   {
@@ -814,7 +819,8 @@ export const PERMISSIONS = [
   {
     key: 'payables.read',
     audience: 'staff',
-    description: 'Read POs, goods receipts, billing statements, vendor invoices, payables, vendors and payout runs',
+    description:
+      'Read POs, goods receipts, billing statements, vendor invoices, payables, vendors and payout runs',
     decisionRefs: ['D-022', 'D-090'],
   },
   {
@@ -838,7 +844,8 @@ export const PERMISSIONS = [
   {
     key: 'payouts.manage',
     audience: 'staff',
-    description: 'Create, propose and cancel payout runs (approved by a C-Level other than the proposer, D-166)',
+    description:
+      'Create, propose and cancel payout runs (approved by a C-Level other than the proposer, D-166)',
     decisionRefs: ['D-022', 'D-166'],
   },
   {
@@ -953,7 +960,8 @@ export const PERMISSIONS = [
   {
     key: 'analytics.read',
     audience: 'staff',
-    description: 'Read the demand & growth dashboards: traffic, funnel, demand, sales, sensitivity, unmet demand, campaigns',
+    description:
+      'Read the demand & growth dashboards: traffic, funnel, demand, sales, sensitivity, unmet demand, campaigns',
     decisionRefs: ['D-102'],
   },
   {
@@ -978,20 +986,23 @@ export const PERMISSIONS = [
   {
     key: 'reports.export',
     audience: 'staff',
-    description: 'Export operational reports as XLSX / CSV and download report files (each report also needs its data permission)',
+    description:
+      'Export operational reports as XLSX / CSV and download report files (each report also needs its data permission)',
     decisionRefs: ['D-111'],
   },
   {
     key: 'reports.schedule',
     audience: 'staff',
-    description: 'Schedule operational reports for staff recipients and see every run of the reports the user may read',
+    description:
+      'Schedule operational reports for staff recipients and see every run of the reports the user may read',
     decisionRefs: ['D-111'],
   },
   // --- B6.3 launch readiness (D-113)
   {
     key: 'ops.read',
     audience: 'staff',
-    description: 'Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches)',
+    description:
+      'Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches)',
     decisionRefs: ['D-113'],
   },
 ] as const satisfies readonly PermissionDefinition[];

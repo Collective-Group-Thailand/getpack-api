@@ -34,7 +34,12 @@ export async function bootCommerceApp(): Promise<CommerceApp> {
   await app.listen(0, '127.0.0.1');
   const prisma = app.get(PrismaService);
   await seedDev(prisma, E2E_DEV_PASSWORD);
-  return { app, server: app.getHttpServer(), prisma, run: (Date.now() % 1_000_000) + Math.floor(Math.random() * 1000) };
+  return {
+    app,
+    server: app.getHttpServer(),
+    prisma,
+    run: (Date.now() % 1_000_000) + Math.floor(Math.random() * 1000),
+  };
 }
 
 export async function staffToken(ctx: CommerceApp, role: string): Promise<string> {
@@ -47,8 +52,13 @@ export async function staffToken(ctx: CommerceApp, role: string): Promise<string
 
 /** Signs a customer in by phone OTP (creating the account on first use); `n` makes the phone unique. */
 export async function customerToken(ctx: CommerceApp, n: number): Promise<{ token: string; phone: string }> {
-  const phone = `08${String(ctx.run * 10 + n).padStart(8, '0').slice(-8)}`;
-  const requested = await request(ctx.server).post('/v1/auth/customer/otp/request').send({ phone }).expect(200);
+  const phone = `08${String(ctx.run * 10 + n)
+    .padStart(8, '0')
+    .slice(-8)}`;
+  const requested = await request(ctx.server)
+    .post('/v1/auth/customer/otp/request')
+    .send({ phone })
+    .expect(200);
   const sms = ctx.app.get<FakeSmsSender>(SMS_SENDER);
   const code = /\b(\d{6})\b/.exec(sms.lastTo(`+66${phone.slice(1)}`)!.text)![1]!;
   const verified = await request(ctx.server)
@@ -78,7 +88,11 @@ export function as(ctx: CommerceApp, token: string) {
 export async function devGeo(prisma: PrismaService) {
   const province = await prisma.geoProvince.findUniqueOrThrow({ where: { code: 'DEV1' } });
   const subdistrict = await prisma.geoSubdistrict.findUniqueOrThrow({ where: { code: 'DEV10101' } });
-  return { provinceId: province.publicId, subdistrictId: subdistrict.publicId, postcode: subdistrict.postcode };
+  return {
+    provinceId: province.publicId,
+    subdistrictId: subdistrict.publicId,
+    postcode: subdistrict.postcode,
+  };
 }
 
 /** The dev folding factory with folding switched to instant (switch back in `afterAll`, A-16). */
@@ -231,7 +245,9 @@ export async function seedShipping(ctx: CommerceApp, factoryPublicId: string, po
 
 /** Unique 5-digit postcodes for a suite run (the e2e database is shared). */
 export function postcodes(ctx: CommerceApp, count: number): string[] {
-  return Array.from({ length: count }, (_, n) => String(60_000 + ((ctx.run * 13 + n * 7919) % 9_999)).padStart(5, '0'));
+  return Array.from({ length: count }, (_, n) =>
+    String(60_000 + ((ctx.run * 13 + n * 7919) % 9_999)).padStart(5, '0'),
+  );
 }
 
 /** Moves a quotation's validity into the past (test only: the snapshot trigger forbids it otherwise). */
@@ -315,7 +331,12 @@ export async function setSetting(ctx: CommerceApp, key: string, value: unknown):
 }
 
 /** Uploads a slip file (the fake verifier reads `FAKESLIP;transRef=…;amount=…;date=…;receiver=ok`) and scans it. */
-export async function uploadSlipFile(ctx: CommerceApp, token: string, text: string, surface: 'store' | 'admin' = 'store') {
+export async function uploadSlipFile(
+  ctx: CommerceApp,
+  token: string,
+  text: string,
+  surface: 'store' | 'admin' = 'store',
+) {
   return uploadFile(ctx, token, text, 'slip', surface);
 }
 
@@ -329,18 +350,29 @@ export async function uploadFile(
 ) {
   const body = Buffer.from(text);
   const presigned = await as(ctx, token)
-    .post(`/v1/${surface}/files/presign`, { purpose, fileName: `${purpose}.png`, mimeType: 'image/png', sizeBytes: body.length })
+    .post(`/v1/${surface}/files/presign`, {
+      purpose,
+      fileName: `${purpose}.png`,
+      mimeType: 'image/png',
+      sizeBytes: body.length,
+    })
     .expect(201);
-  const row = await ctx.prisma.fileObject.findUniqueOrThrow({ where: { publicId: presigned.body.fileId as string } });
+  const row = await ctx.prisma.fileObject.findUniqueOrThrow({
+    where: { publicId: presigned.body.fileId as string },
+  });
   ctx.app.get<FakeObjectStorage>(OBJECT_STORAGE).putDirect(row.storageKey, body, 'image/png');
   await as(ctx, token).post(`/v1/${surface}/files/${presigned.body.fileId}/actions/complete`, {}).expect(200);
-  await ctx.app.get(FileProcessingJobs).processOne(await ctx.prisma.fileObject.findUniqueOrThrow({ where: { id: row.id } }));
+  await ctx.app
+    .get(FileProcessingJobs)
+    .processOne(await ctx.prisma.fileObject.findUniqueOrThrow({ where: { id: row.id } }));
   return presigned.body.fileId as string;
 }
 
 /** A valid fake Thai tax id (0000… with its check digit), unique per run and `n`. */
 export function fakeTaxId(ctx: CommerceApp, n: number): string {
-  const base = `0000${String(ctx.run * 10 + n).padStart(8, '0').slice(-8)}`;
+  const base = `0000${String(ctx.run * 10 + n)
+    .padStart(8, '0')
+    .slice(-8)}`;
   const sum = [...base].reduce((a, d, i) => a + Number(d) * (13 - i), 0);
   return base + String((11 - (sum % 11)) % 10);
 }
@@ -363,19 +395,33 @@ export async function activeCompany(
       taxId: fakeTaxId(ctx, n),
       isVatRegistered: true,
       withholdsTax: true,
-      headOffice: { name: 'สำนักงานใหญ่', line1: '1 ถนนทดสอบ', postcode: '99999', provinceId: province.publicId },
+      headOffice: {
+        name: 'สำนักงานใหญ่',
+        line1: '1 ถนนทดสอบ',
+        postcode: '99999',
+        provinceId: province.publicId,
+      },
     })
     .expect(201);
   const id = applied.body.id as string;
-  await ctx.prisma.company.update({ where: { publicId: id }, data: { status: 'active', kycApprovedAt: new Date(), companyCode: `E2E-${ctx.run}-${n}` } });
+  await ctx.prisma.company.update({
+    where: { publicId: id },
+    data: { status: 'active', kycApprovedAt: new Date(), companyCode: `E2E-${ctx.run}-${n}` },
+  });
   for (const m of members) {
-    await as(ctx, adminToken).post(`/v1/store/companies/${id}/members`, { phone: m.phone, roles: m.roles }).expect(201);
+    await as(ctx, adminToken)
+      .post(`/v1/store/companies/${id}/members`, { phone: m.phone, roles: m.roles })
+      .expect(201);
     const invitations = await as(ctx, m.token).get('/v1/store/company-invitations').expect(200);
-    const invitation = (invitations.body as { id: string; companyId: string }[]).find((i) => i.companyId === id)!;
+    const invitation = (invitations.body as { id: string; companyId: string }[]).find(
+      (i) => i.companyId === id,
+    )!;
     await as(ctx, m.token).post(`/v1/store/company-invitations/${invitation.id}/actions/accept`).expect(200);
   }
   if (Object.keys(settings).length > 0) {
-    const etag = (await as(ctx, adminToken).get(`/v1/store/companies/${id}`).expect(200)).headers['etag'] as string;
+    const etag = (await as(ctx, adminToken).get(`/v1/store/companies/${id}`).expect(200)).headers[
+      'etag'
+    ] as string;
     await as(ctx, adminToken).patch(`/v1/store/companies/${id}`, settings).set('If-Match', etag).expect(200);
   }
   return id;

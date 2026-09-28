@@ -87,7 +87,10 @@ export class MoneyTotalsDto {
   @ApiProperty({ example: '14182.80', description: 'net − discount + VAT' })
   grossAmount!: string;
 
-  @ApiProperty({ example: '0.00', description: 'Expected customer withholding (tax profile withholds, D-174)' })
+  @ApiProperty({
+    example: '0.00',
+    description: 'Expected customer withholding (tax profile withholds, D-174)',
+  })
   whtAmount!: string;
 
   @ApiProperty({ example: '14182.80', description: 'gross − withholding: what the customer transfers' })
@@ -177,7 +180,11 @@ export class OrderDto {
   @ApiProperty({ type: 'integer', example: 1000 })
   quantityOrdered!: number;
 
-  @ApiProperty({ enum: ['own_file', 'online_designer', 'hired_design', 'free_design'], enumName: 'DesignOption', example: 'own_file' })
+  @ApiProperty({
+    enum: ['own_file', 'online_designer', 'hired_design', 'free_design'],
+    enumName: 'DesignOption',
+    example: 'own_file',
+  })
   designOption!: string;
 
   @ApiProperty({ enum: ['none', 'with_print', 'without_print'], enumName: 'MockupOption', example: 'none' })
@@ -256,13 +263,28 @@ export class OrderGroupDto {
 }
 
 export class AdminOrderInternalDto {
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: '0192f3a0-7c1e-7d2a-9b1f-0000000f0001' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000f0001',
+  })
   selectedFactoryId!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '10150.00', description: 'Masked without `factory_cost.read` (D-141)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '10150.00',
+    description: 'Masked without `factory_cost.read` (D-141)',
+  })
   buyCostNet!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '3104.95', description: 'Masked without `margin.read`' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3104.95',
+    description: 'Masked without `margin.read`',
+  })
   marginAmount!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: '23.4254' })
@@ -402,7 +424,8 @@ export class OrderGroupListQuery extends PageQuery {
 export class CancelOrderDto {
   @ApiProperty({
     example: 'customer_request',
-    description: 'An active cancel reason (`order_cancel_reasons`); customers may use `customer` reasons only',
+    description:
+      'An active cancel reason (`order_cancel_reasons`); customers may use `customer` reasons only',
   })
   @IsString()
   @Matches(/^[a-z][a-z0-9_]*$/)
@@ -415,11 +438,14 @@ export class CancelOrderDto {
   note?: string | null;
 }
 
-
 // --- CS operations (B3.1 slice 6) -------------------------------------------------------------------
 
 export class RepriceOrderDto {
-  @ApiProperty({ format: 'uuid', example: ORDER_IDS.quote, description: 'A live quotation of the same customer and product type' })
+  @ApiProperty({
+    format: 'uuid',
+    example: ORDER_IDS.quote,
+    description: 'A live quotation of the same customer and product type',
+  })
   @IsUUID()
   quoteId!: string;
 
@@ -432,12 +458,18 @@ export class RepriceOrderDto {
   @MaxLength(500)
   reason!: string;
 
-  @ApiPropertyOptional({ enum: ['own_file', 'online_designer', 'hired_design', 'free_design'], enumName: 'DesignOption' })
+  @ApiPropertyOptional({
+    enum: ['own_file', 'online_designer', 'hired_design', 'free_design'],
+    enumName: 'DesignOption',
+  })
   @IsOptional()
   @IsIn(['own_file', 'online_designer', 'hired_design', 'free_design'])
   designOption?: string;
 
-  @ApiPropertyOptional({ type: [DestinationInputDto], description: 'Required when a split order changes quantity' })
+  @ApiPropertyOptional({
+    type: [DestinationInputDto],
+    description: 'Required when a split order changes quantity',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(20)
@@ -501,7 +533,13 @@ export class OrderNoteDto {
   createdAt!: string;
 }
 
-export const ORDER_QUEUES = ['waiting_payment', 'artwork_review', 'waiting_production', 'due_soon', 'late'] as const;
+export const ORDER_QUEUES = [
+  'waiting_payment',
+  'artwork_review',
+  'waiting_production',
+  'due_soon',
+  'late',
+] as const;
 
 export class OrderQueueQuery extends PageQuery {
   @ApiPropertyOptional({

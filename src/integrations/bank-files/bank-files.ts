@@ -36,7 +36,10 @@ export interface StatementRow {
 export interface BankFileAdapter {
   readonly key: string;
   readonly description: string;
-  transferFile(instructions: TransferInstruction[], meta: { runNo: string; debitAccountLast4: string }): { fileName: string; mimeType: string; body: Buffer };
+  transferFile(
+    instructions: TransferInstruction[],
+    meta: { runNo: string; debitAccountLast4: string },
+  ): { fileName: string; mimeType: string; body: Buffer };
   parseConfirmation(body: Buffer): TransferConfirmation[];
   parseStatement(body: Buffer): StatementRow[];
 }
@@ -96,13 +99,16 @@ function table(body: Buffer, required: string[]): Record<string, string>[] {
 /** The generic CSV format (D-093 fallback), documented in docs/integrations/bank-files.md. */
 export class GenericCsvBankFileAdapter implements BankFileAdapter {
   readonly key = 'generic_csv';
-  readonly description = 'Generic CSV (UTF-8): transfers, confirmations and statements with fixed column names';
+  readonly description =
+    'Generic CSV (UTF-8): transfers, confirmations and statements with fixed column names';
 
   transferFile(instructions: TransferInstruction[], meta: { runNo: string; debitAccountLast4: string }) {
     const lines = [
       ['reference', 'vendor_name', 'bank_code', 'account_no', 'account_name', 'amount', 'pay_on'].join(','),
       ...instructions.map((i) =>
-        [i.reference, i.vendorName, i.bankCode, i.accountNo, i.accountName, i.amount, i.payOn].map(csvField).join(','),
+        [i.reference, i.vendorName, i.bankCode, i.accountNo, i.accountName, i.amount, i.payOn]
+          .map(csvField)
+          .join(','),
       ),
     ];
     return {
@@ -115,8 +121,14 @@ export class GenericCsvBankFileAdapter implements BankFileAdapter {
   parseConfirmation(body: Buffer): TransferConfirmation[] {
     return table(body, ['reference', 'status']).map((r, i) => {
       const status = r['status']!.toLowerCase();
-      if (status !== 'paid' && status !== 'failed') throw new BankFileError(`row ${i + 2}: status must be paid or failed`);
-      return { reference: r['reference']!, status, bankRef: r['bank_ref'] || null, reason: r['reason'] || null };
+      if (status !== 'paid' && status !== 'failed')
+        throw new BankFileError(`row ${i + 2}: status must be paid or failed`);
+      return {
+        reference: r['reference']!,
+        status,
+        bankRef: r['bank_ref'] || null,
+        reason: r['reason'] || null,
+      };
     });
   }
 
@@ -124,9 +136,12 @@ export class GenericCsvBankFileAdapter implements BankFileAdapter {
     return table(body, ['txn_date', 'amount', 'description']).map((r, i) => {
       const at = `row ${i + 2}`;
       if (!DAY.test(r['txn_date']!)) throw new BankFileError(`${at}: txn_date must be YYYY-MM-DD`);
-      if (r['value_date'] && !DAY.test(r['value_date'])) throw new BankFileError(`${at}: value_date must be YYYY-MM-DD`);
-      if (!AMOUNT.test(r['amount']!) || Number(r['amount']) === 0) throw new BankFileError(`${at}: amount must be a non-zero decimal`);
-      if (r['balance'] && !AMOUNT.test(r['balance'])) throw new BankFileError(`${at}: balance must be a decimal`);
+      if (r['value_date'] && !DAY.test(r['value_date']))
+        throw new BankFileError(`${at}: value_date must be YYYY-MM-DD`);
+      if (!AMOUNT.test(r['amount']!) || Number(r['amount']) === 0)
+        throw new BankFileError(`${at}: amount must be a non-zero decimal`);
+      if (r['balance'] && !AMOUNT.test(r['balance']))
+        throw new BankFileError(`${at}: balance must be a decimal`);
       return {
         txnDate: r['txn_date']!,
         valueDate: r['value_date'] || null,

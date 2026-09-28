@@ -26,7 +26,14 @@ interface ScheduleBody {
   templateKey: string;
   productionGateOpen: boolean;
   shippingGateOpen: boolean;
-  instalments: { seq: number; status: string; cashAmount: string; dueTrigger: string; requiredBefore: string; dueAt: string | null }[];
+  instalments: {
+    seq: number;
+    status: string;
+    cashAmount: string;
+    dueTrigger: string;
+    requiredBefore: string;
+    dueAt: string | null;
+  }[];
 }
 
 /** Payment schedules: choice at checkout, gates, due dates from facts, override, rebalance (B3.2 slice 2, D-020). */
@@ -79,7 +86,10 @@ describe('payment schedules (e2e, B3.2)', () => {
     });
   /** Runs the schedule subscribers on the events an order produced (the worker does this in production). */
   const deliver = async (types: string[], aggregateId: string) => {
-    const events = await ctx.prisma.domainEvent.findMany({ where: { type: { in: types }, aggregateId }, orderBy: { occurredAt: 'asc' } });
+    const events = await ctx.prisma.domainEvent.findMany({
+      where: { type: { in: types }, aggregateId },
+      orderBy: { occurredAt: 'asc' },
+    });
     for (const e of events) {
       await ctx.prisma.withTx((tx) =>
         e.type === 'order.fact_recorded'
@@ -93,14 +103,21 @@ describe('payment schedules (e2e, B3.2)', () => {
     const { token } = await customerToken(ctx, 1);
     const group = await placeOrder(ctx, token, fixture, postcode, [1000]);
     expect(new MoneyDecimal(group.totals.grossAmount).lt(20_000)).toBe(true);
-    let schedule = (await as(ctx, token).get(`/v1/store/order-groups/${group.id}/payment-schedule`).expect(200))
-      .body as ScheduleBody;
+    let schedule = (
+      await as(ctx, token).get(`/v1/store/order-groups/${group.id}/payment-schedule`).expect(200)
+    ).body as ScheduleBody;
     expect(schedule).toMatchObject({ templateKey: 'full_upfront', productionGateOpen: false });
     expect(schedule.instalments).toEqual([
-      expect.objectContaining({ seq: 1, status: 'due', cashAmount: group.totals.cashAmount, requiredBefore: 'production' }),
+      expect.objectContaining({
+        seq: 1,
+        status: 'due',
+        cashAmount: group.totals.cashAmount,
+        requiredBefore: 'production',
+      }),
     ]);
     await pay(group.id, group.totals.cashAmount);
-    schedule = (await as(ctx, token).get(`/v1/store/order-groups/${group.id}/payment-schedule`).expect(200)).body;
+    schedule = (await as(ctx, token).get(`/v1/store/order-groups/${group.id}/payment-schedule`).expect(200))
+      .body;
     expect(schedule.productionGateOpen).toBe(true);
     const read = await as(ctx, token).get(`/v1/store/order-groups/${group.id}`).expect(200);
     expect(read.body).toMatchObject({ status: 'in_progress', orders: [{ status: 'paid_for_production' }] });
@@ -121,22 +138,30 @@ describe('payment schedules (e2e, B3.2)', () => {
     const preview = await as(ctx, token).post('/v1/store/checkout/actions/preview', {}).expect(200);
     expect(new MoneyDecimal(preview.body.totals.grossAmount).gte(20_000)).toBe(true);
     expect(preview.body.paymentSchedule.templateKey).toBe('deposit_50_before_shipping_50');
-    const placed = await as(ctx, token).post('/v1/store/checkout', {}).set('Idempotency-Key', randomUUID()).expect(201);
+    const placed = await as(ctx, token)
+      .post('/v1/store/checkout', {})
+      .set('Idempotency-Key', randomUUID())
+      .expect(201);
     const orderId = placed.body.orders[0].id as string;
 
-    let schedule = (await as(ctx, csLead).get(`/v1/admin/order-groups/${placed.body.id}/payment-schedule`).expect(200))
-      .body as ScheduleBody & { instalments: { allocations: { orderId: string }[] }[] };
+    let schedule = (
+      await as(ctx, csLead).get(`/v1/admin/order-groups/${placed.body.id}/payment-schedule`).expect(200)
+    ).body as ScheduleBody & { instalments: { allocations: { orderId: string }[] }[] };
     const [deposit, balance] = schedule.instalments;
     expect(deposit).toMatchObject({ status: 'due', requiredBefore: 'production' });
     expect(balance).toMatchObject({ status: 'pending', requiredBefore: 'shipping', dueAt: null });
-    expect(new MoneyDecimal(deposit!.cashAmount).add(balance!.cashAmount).toFixed(2)).toBe(placed.body.totals.cashAmount);
+    expect(new MoneyDecimal(deposit!.cashAmount).add(balance!.cashAmount).toFixed(2)).toBe(
+      placed.body.totals.cashAmount,
+    );
     expect(schedule.instalments[0]!.allocations[0]!.orderId).toBe(orderId);
 
     await pay(placed.body.id, deposit!.cashAmount);
     await fact(orderId, { kind: 'artwork_approved' });
     await fact(orderId, { kind: 'production_started', mode: 'auto' });
     await deliver(['order.fact_recorded'], orderId);
-    schedule = (await as(ctx, csLead).get(`/v1/admin/order-groups/${placed.body.id}/payment-schedule`).expect(200)).body;
+    schedule = (
+      await as(ctx, csLead).get(`/v1/admin/order-groups/${placed.body.id}/payment-schedule`).expect(200)
+    ).body;
     expect(schedule).toMatchObject({ productionGateOpen: true, shippingGateOpen: false });
     expect(schedule.instalments[1]).toMatchObject({ status: 'due' });
     const order = await ctx.prisma.order.findUniqueOrThrow({ where: { publicId: orderId } });
@@ -158,11 +183,18 @@ describe('payment schedules (e2e, B3.2)', () => {
       .post(`${url}/actions/override`, { templateKey: 'deposit_50_before_shipping_50', reason: 'x' })
       .expect(403);
     const replaced = await as(ctx, csLead)
-      .post(`${url}/actions/override`, { templateKey: 'deposit_50_before_shipping_50', reason: 'ลูกค้าขอแบ่งจ่าย' })
+      .post(`${url}/actions/override`, {
+        templateKey: 'deposit_50_before_shipping_50',
+        reason: 'ลูกค้าขอแบ่งจ่าย',
+      })
       .set('If-Match', read.headers['etag'] as string)
       .expect(200);
     expect(replaced.body).toMatchObject({ templateKey: 'deposit_50_before_shipping_50', isOverride: true });
-    expect((replaced.body.instalments as { status: string }[]).map((i) => i.status)).toEqual(['cancelled', 'due', 'pending']);
+    expect((replaced.body.instalments as { status: string }[]).map((i) => i.status)).toEqual([
+      'cancelled',
+      'due',
+      'pending',
+    ]);
     await pay(group.id, (replaced.body.instalments as { cashAmount: string }[])[1]!.cashAmount);
     await as(ctx, csLead)
       .post(`${url}/actions/override`, { templateKey: 'full_upfront', reason: 'x' })
@@ -179,8 +211,9 @@ describe('payment schedules (e2e, B3.2)', () => {
       .post(`/v1/admin/orders/${group.orders[0]!.id}/actions/cancel`, { reasonCode: 'cannot_produce' })
       .expect(200);
     await deliver(['order.cancelled'], group.orders[0]!.id);
-    const schedule = (await as(ctx, cs).get(`/v1/admin/order-groups/${group.id}/payment-schedule`).expect(200))
-      .body as ScheduleBody;
+    const schedule = (
+      await as(ctx, cs).get(`/v1/admin/order-groups/${group.id}/payment-schedule`).expect(200)
+    ).body as ScheduleBody;
     const remaining = schedule.instalments.filter((i) => i.status !== 'cancelled');
     const total = remaining.reduce((a, i) => a.add(i.cashAmount), new MoneyDecimal(0));
     expect(total.toFixed(2)).toBe(group.orders[1]!.totals.grossAmount);
@@ -200,12 +233,26 @@ describe('payment schedules (e2e, B3.2)', () => {
       selectionRule: { orderValue: { gte: { setting: 'payments.schedule_split_threshold' } } },
       priority: 100,
       instalments: [
-        { labelTh: 'งวด 1', labelEn: 'First', pct: '30', dueTrigger: 'at_checkout', requiredBefore: 'production' },
-        { labelTh: 'งวด 2', labelEn: 'Second', pct: '30', dueTrigger: 'before_shipping', requiredBefore: 'shipping' },
+        {
+          labelTh: 'งวด 1',
+          labelEn: 'First',
+          pct: '30',
+          dueTrigger: 'at_checkout',
+          requiredBefore: 'production',
+        },
+        {
+          labelTh: 'งวด 2',
+          labelEn: 'Second',
+          pct: '30',
+          dueTrigger: 'before_shipping',
+          requiredBefore: 'shipping',
+        },
       ],
       reason: 'e2e (future version)',
     };
-    await as(ctx, csLead).post('/v1/admin/payment-schedule-templates/deposit_50_before_shipping_50/versions', body).expect(403);
+    await as(ctx, csLead)
+      .post('/v1/admin/payment-schedule-templates/deposit_50_before_shipping_50/versions', body)
+      .expect(403);
     await as(ctx, superadmin)
       .post('/v1/admin/payment-schedule-templates/deposit_50_before_shipping_50/versions', body)
       .expect(422);
@@ -214,7 +261,13 @@ describe('payment schedules (e2e, B3.2)', () => {
         ...body,
         instalments: [
           ...body.instalments,
-          { labelTh: 'งวด 3', labelEn: 'Third', pct: '40', dueTrigger: 'on_delivery', requiredBefore: 'none' },
+          {
+            labelTh: 'งวด 3',
+            labelEn: 'Third',
+            pct: '40',
+            dueTrigger: 'on_delivery',
+            requiredBefore: 'none',
+          },
         ],
       })
       .expect(201);

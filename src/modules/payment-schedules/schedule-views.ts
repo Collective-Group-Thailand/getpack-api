@@ -42,7 +42,9 @@ function instalmentDto(i: ScheduleRow['instalments'][number], staff: boolean): I
 export function scheduleDto(row: ScheduleRow, staff = false): PaymentScheduleDto {
   const live = row.instalments.filter((i) => i.status !== 'cancelled');
   const paidFor = (gates: string[]) =>
-    live.filter((i) => gates.includes(i.requiredBefore)).every((i) => i.status === 'paid' || i.status === 'refunded');
+    live
+      .filter((i) => gates.includes(i.requiredBefore))
+      .every((i) => i.status === 'paid' || i.status === 'refunded');
   const open = live
     .filter((i) => i.status !== 'paid' && i.status !== 'refunded')
     .reduce((a, i) => a.add(i.cashAmount.toString()).sub(i.paidAmount.toString()), new MoneyDecimal(0));

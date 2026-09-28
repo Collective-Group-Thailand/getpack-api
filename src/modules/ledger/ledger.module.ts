@@ -28,5 +28,8 @@ const SERVICES = [
  * engine and its rules, manual / recurring / reversing journals under maker-checker.
  */
 @Global()
-@Module({ providers: [...SERVICES, LedgerApprovalsSubscriber, SourceReversalSubscriber, LedgerJobs], exports: SERVICES })
+@Module({
+  providers: [...SERVICES, LedgerApprovalsSubscriber, SourceReversalSubscriber, LedgerJobs],
+  exports: SERVICES,
+})
 export class LedgerModule {}

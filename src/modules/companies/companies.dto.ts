@@ -27,7 +27,13 @@ import { COMPANY_ROLES } from './companies.service';
 export const COMPANY_STATUSES = ['applied', 'kyc_review', 'active', 'suspended', 'closed'] as const;
 export const CREDIT_STATUSES = ['prepaid', 'eligible', 'credit', 'blocked_overdue'] as const;
 export const PO_POLICIES = ['required', 'optional', 'none'] as const;
-export const COMPANY_KYC_TYPES = ['company_certificate', 'vat_registration_pp20', 'signatory_id', 'financial_statement', 'other'] as const;
+export const COMPANY_KYC_TYPES = [
+  'company_certificate',
+  'vat_registration_pp20',
+  'signatory_id',
+  'financial_statement',
+  'other',
+] as const;
 const MONEY = /^\d{1,12}(\.\d{1,2})?$/;
 
 const IDS = {
@@ -46,7 +52,11 @@ export class CompanyBranchInputDto {
   @IsIn(['head_office', 'branch'])
   branchType?: 'head_office' | 'branch';
 
-  @ApiPropertyOptional({ example: '00001', pattern: '^[0-9]{5}$', description: 'Branch number on the tax invoice (head office 00000)' })
+  @ApiPropertyOptional({
+    example: '00001',
+    pattern: '^[0-9]{5}$',
+    description: 'Branch number on the tax invoice (head office 00000)',
+  })
   @IsOptional()
   @Matches(/^[0-9]{5}$/)
   branchCode?: string;
@@ -109,7 +119,10 @@ export class ApplyCompanyDto {
   @IsBoolean()
   isVatRegistered!: boolean;
 
-  @ApiPropertyOptional({ example: true, description: 'The company withholds tax on payments (accounting-design §2)' })
+  @ApiPropertyOptional({
+    example: true,
+    description: 'The company withholds tax on payments (accounting-design §2)',
+  })
   @IsOptional()
   @IsBoolean()
   withholdsTax?: boolean;
@@ -142,7 +155,12 @@ export class UpdateCompanySettingsDto {
   @IsBoolean()
   withholdsTax?: boolean;
 
-  @ApiPropertyOptional({ enum: PO_POLICIES, enumName: 'PoNumberPolicy', example: 'required', description: 'D-125' })
+  @ApiPropertyOptional({
+    enum: PO_POLICIES,
+    enumName: 'PoNumberPolicy',
+    example: 'required',
+    description: 'D-125',
+  })
   @IsOptional()
   @IsIn(PO_POLICIES)
   poNumberPolicy?: (typeof PO_POLICIES)[number];
@@ -168,14 +186,23 @@ export class AddCompanyKycDocumentDto {
   @IsUUID()
   fileId!: string;
 
-  @ApiPropertyOptional({ type: String, format: 'date', nullable: true, example: '2026-09-01', description: 'Issue date (certificate ≤ 6 months, D-120)' })
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-09-01',
+    description: 'Issue date (certificate ≤ 6 months, D-120)',
+  })
   @IsOptional()
   @IsISO8601({ strict: true })
   issuedOn?: string | null;
 }
 
 export class InviteMemberDto {
-  @ApiPropertyOptional({ example: '+66810001234', description: 'Phone (E.164) or e-mail of an existing customer account' })
+  @ApiPropertyOptional({
+    example: '+66810001234',
+    description: 'Phone (E.164) or e-mail of an existing customer account',
+  })
   @IsOptional()
   @Matches(/^\+66[0-9]{8,9}$/)
   phone?: string;
@@ -261,7 +288,11 @@ export class CompanyKycDocumentDto {
   @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-09-01' })
   issuedOn!: string | null;
 
-  @ApiProperty({ enum: ['pending', 'verified', 'rejected', 'expired'], enumName: 'KycStatus', example: 'pending' })
+  @ApiProperty({
+    enum: ['pending', 'verified', 'rejected', 'expired'],
+    enumName: 'KycStatus',
+    example: 'pending',
+  })
   status!: string;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -296,10 +327,20 @@ export class CompanyDto {
   @ApiProperty({ enum: COMPANY_STATUSES, enumName: 'CompanyStatus', example: 'active' })
   status!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Why it was sent back, suspended or closed' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Why it was sent back, suspended or closed',
+  })
   statusReason!: string | null;
 
-  @ApiProperty({ enum: CREDIT_STATUSES, enumName: 'CreditStatus', example: 'prepaid', description: 'D-121 / D-122' })
+  @ApiProperty({
+    enum: CREDIT_STATUSES,
+    enumName: 'CreditStatus',
+    example: 'prepaid',
+    description: 'D-121 / D-122',
+  })
   creditStatus!: string;
 
   @ApiProperty({ enum: PO_POLICIES, enumName: 'PoNumberPolicy', example: 'optional' })
@@ -317,7 +358,13 @@ export class CompanyDto {
   @ApiProperty({ type: [CompanyKycDocumentDto] })
   kycDocuments!: CompanyKycDocumentDto[];
 
-  @ApiProperty({ type: [String], enum: COMPANY_KYC_TYPES, enumName: 'CompanyKycDocType', example: [], description: 'Documents still required before review (D-120)' })
+  @ApiProperty({
+    type: [String],
+    enum: COMPANY_KYC_TYPES,
+    enumName: 'CompanyKycDocType',
+    example: [],
+    description: 'Documents still required before review (D-120)',
+  })
   missingKyc!: string[];
 
   @TimestampField()
@@ -368,13 +415,24 @@ export const COMPANY_EXAMPLE: CompanyDto = {
     },
   ],
   kycDocuments: [
-    { id: IDS.document, docType: 'company_certificate', fileId: IDS.file, issuedOn: '2026-09-01', status: 'verified', note: null },
+    {
+      id: IDS.document,
+      docType: 'company_certificate',
+      fileId: IDS.file,
+      issuedOn: '2026-09-01',
+      status: 'verified',
+      note: null,
+    },
   ],
   missingKyc: [],
   createdAt: '2026-10-01T10:00:00+07:00',
 };
 
-export const ADMIN_COMPANY_EXAMPLE: AdminCompanyDto = { ...COMPANY_EXAMPLE, paidOrdersCount: 2, kycApprovedAt: '2026-10-02T10:00:00+07:00' };
+export const ADMIN_COMPANY_EXAMPLE: AdminCompanyDto = {
+  ...COMPANY_EXAMPLE,
+  paidOrdersCount: 2,
+  kycApprovedAt: '2026-10-02T10:00:00+07:00',
+};
 
 export const APPLY_EXAMPLE = {
   legalName: 'บริษัท ตัวอย่าง จำกัด',
@@ -382,7 +440,12 @@ export const APPLY_EXAMPLE = {
   isVatRegistered: true,
   withholdsTax: true,
   documentEmail: 'account@example.com',
-  headOffice: { name: 'สำนักงานใหญ่', line1: '99/9 ถนนบางนา-ตราด', postcode: '10260', provinceId: IDS.province },
+  headOffice: {
+    name: 'สำนักงานใหญ่',
+    line1: '99/9 ถนนบางนา-ตราด',
+    postcode: '10260',
+    provinceId: IDS.province,
+  },
 };
 
 export class CompanyInvitationDto {
@@ -419,14 +482,21 @@ export class CompanyListQuery extends PageQuery {
   @IsOptional()
   @IsIn(COMPANY_STATUSES)
   status?: (typeof COMPANY_STATUSES)[number];
-
 }
 
 export class CompanyApprovalDto {
-  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1010', description: 'The approval to decide' })
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1010',
+    description: 'The approval to decide',
+  })
   id!: string;
 
-  @ApiProperty({ enum: ['pending', 'approved', 'rejected', 'withdrawn', 'expired'], enumName: 'ApprovalStatus', example: 'pending' })
+  @ApiProperty({
+    enum: ['pending', 'approved', 'rejected', 'withdrawn', 'expired'],
+    enumName: 'ApprovalStatus',
+    example: 'pending',
+  })
   status!: string;
 
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1011' })

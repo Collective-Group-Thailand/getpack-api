@@ -2,11 +2,29 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
-import { ArrayMaxSize, IsArray, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 /** Discount memos (D-052, D-124, D-162). */
 
-export const MEMO_STATUSES = ['draft', 'pending_approval', 'approved', 'rejected', 'withdrawn', 'expired', 'applied'] as const;
+export const MEMO_STATUSES = [
+  'draft',
+  'pending_approval',
+  'approved',
+  'rejected',
+  'withdrawn',
+  'expired',
+  'applied',
+] as const;
 const PCT = /^\d{1,3}(\.\d{1,4})?$/;
 const IDS = {
   memo: '0192f3a0-7c1e-7d2a-9b1f-0000000d1001',
@@ -18,7 +36,11 @@ const IDS = {
 };
 
 export class RaiseOrderMemoDto {
-  @ApiProperty({ format: 'uuid', example: IDS.customer, description: 'The customer whose CS cart the memo prices' })
+  @ApiProperty({
+    format: 'uuid',
+    example: IDS.customer,
+    description: 'The customer whose CS cart the memo prices',
+  })
   @IsUUID()
   customerId!: string;
 
@@ -33,7 +55,12 @@ export class RaiseOrderMemoDto {
   @MaxLength(1000)
   reason!: string;
 
-  @ApiPropertyOptional({ type: [String], format: 'uuid', example: [IDS.file], description: 'Evidence files you uploaded (competitor quote…)' })
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    example: [IDS.file],
+    description: 'Evidence files you uploaded (competitor quote…)',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(10)
@@ -89,7 +116,12 @@ export class DiscountMemoDto {
   @ApiProperty({ example: '2800.00', description: 'Requested discount before VAT' })
   requestedAmount!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '14.2000', description: 'Resulting margin % — only with `margin.read` or `margin.read_pct_when_discounting` (D-141)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '14.2000',
+    description: 'Resulting margin % — only with `margin.read` or `margin.read_pct_when_discounting` (D-141)',
+  })
   resultingMarginPct!: string | null;
 
   @ApiProperty({ example: false, description: 'Below the margin floor → C-Level only (D-052)' })
@@ -104,10 +136,19 @@ export class DiscountMemoDto {
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.approval })
   approvalId!: string | null;
 
-  @ApiProperty({ format: 'date-time', example: '2026-10-16T10:00:00+07:00', description: 'The quote validity (D-052)' })
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-10-16T10:00:00+07:00',
+    description: 'The quote validity (D-052)',
+  })
   validUntil!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Order group the memo was used on' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Order group the memo was used on',
+  })
   appliedGroupCode!: string | null;
 
   @TimestampField()

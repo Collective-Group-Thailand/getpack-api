@@ -1,7 +1,5 @@
 {
-  "selection": [
-    "F1:offset"
-  ],
+  "selection": ["F1:offset"],
   "options": [
     {
       "optionKey": "F1:offset",

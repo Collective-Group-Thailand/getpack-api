@@ -51,17 +51,22 @@ describe('payments (e2e, B3.2)', () => {
     scb = ctx.app.get(SCB_GATEWAY);
     twoc2p = ctx.app.get(TWOC2P_GATEWAY);
     finance = await staffToken(ctx, 'finance');
-    await setSetting(ctx, 'payments.slip_receiver_accounts', [{ accountType: '01014', accountNumber: '1234567890' }]);
+    await setSetting(ctx, 'payments.slip_receiver_accounts', [
+      { accountType: '01014', accountNumber: '1234567890' },
+    ]);
   });
 
   afterAll(async () => {
-    for (const flag of ['payments.scb', 'payments.twoc2p', 'payments.slip_verify']) await setFlag(ctx, flag, false);
+    for (const flag of ['payments.scb', 'payments.twoc2p', 'payments.slip_verify'])
+      await setFlag(ctx, flag, false);
     await foldingBackToRfq(ctx);
     await ctx?.app.close();
   });
 
   const initiate = (token: string, groupId: string, method: string) =>
-    as(ctx, token).post(`/v1/store/order-groups/${groupId}/payments`, { method }).set('Idempotency-Key', randomUUID());
+    as(ctx, token)
+      .post(`/v1/store/order-groups/${groupId}/payments`, { method })
+      .set('Idempotency-Key', randomUUID());
   const webhook = (path: string, body: object) => request(ctx.server).post(`/webhooks/${path}`).send(body);
 
   it('refuses a method whose provider is off (D-176)', async () => {
@@ -80,8 +85,13 @@ describe('payments (e2e, B3.2)', () => {
     const group = await placeOrder(ctx, token, fixture, postcode, [5000]);
     const started = await initiate(token, group.id, 'scb_qr').expect(201);
     const payment = started.body as PaymentBody;
-    expect(payment).toMatchObject({ status: 'pending', qrPayload: expect.stringContaining(payment.referenceCode) });
-    const schedule = await as(ctx, token).get(`/v1/store/order-groups/${group.id}/payment-schedule`).expect(200);
+    expect(payment).toMatchObject({
+      status: 'pending',
+      qrPayload: expect.stringContaining(payment.referenceCode),
+    });
+    const schedule = await as(ctx, token)
+      .get(`/v1/store/order-groups/${group.id}/payment-schedule`)
+      .expect(200);
     expect(payment.cashAmount).toBe(schedule.body.instalments[0].cashAmount);
 
     const forged = await webhook('scb/payment-confirmation', {
@@ -90,7 +100,9 @@ describe('payments (e2e, B3.2)', () => {
       billPaymentRef1: payment.referenceCode,
     }).expect(200);
     expect(forged.body.resCode).toBe('00');
-    expect((await as(ctx, token).get(`/v1/store/payments/${payment.id}`).expect(200)).body.status).toBe('pending');
+    expect((await as(ctx, token).get(`/v1/store/payments/${payment.id}`).expect(200)).body.status).toBe(
+      'pending',
+    );
 
     const callback = scb.settle(payment.referenceCode, payment.cashAmount);
     const ack = await webhook('scb/payment-confirmation', callback).expect(200);
@@ -102,12 +114,16 @@ describe('payments (e2e, B3.2)', () => {
     const after = await as(ctx, token).get(`/v1/store/order-groups/${group.id}/payment-schedule`).expect(200);
     expect(after.body).toMatchObject({ productionGateOpen: true, shippingGateOpen: false });
     expect(after.body.instalments[0].status).toBe('paid');
-    expect(await ctx.prisma.domainEvent.count({ where: { type: 'payment.received', aggregateId: payment.id } })).toBe(1);
+    expect(
+      await ctx.prisma.domainEvent.count({ where: { type: 'payment.received', aggregateId: payment.id } }),
+    ).toBe(1);
 
     // Artwork approved + the deposit → production may start (D-073).
     const orders = ctx.app.get(OrdersService);
     const order = await ctx.prisma.order.findUniqueOrThrow({ where: { publicId: group.orders[0]!.id } });
-    await ctx.prisma.withTx((tx) => orders.applyFact(tx, order.id, { kind: 'artwork_approved' }, systemActor('e2e')));
+    await ctx.prisma.withTx((tx) =>
+      orders.applyFact(tx, order.id, { kind: 'artwork_approved' }, systemActor('e2e')),
+    );
     expect(await ctx.app.get(PaymentSchedulesService).canStartProduction(order.id)).toBe(true);
     const read = await as(ctx, token).get(`/v1/store/orders/${order.publicId}`).expect(200);
     expect(read.body.status).toBe('artwork_approved');
@@ -135,26 +151,56 @@ describe('payments (e2e, B3.2)', () => {
     const first = await placeOrder(ctx, token, fixture, postcode);
     const p1 = (await initiate(token, first.id, 'bank_transfer_slip').expect(201)).body as PaymentBody;
     let today = new Date().toISOString();
-    const file1 = await uploadSlipFile(ctx, token, `FAKESLIP;transRef=${transRef};amount=${p1.cashAmount};date=${today};receiver=ok`);
+    const file1 = await uploadSlipFile(
+      ctx,
+      token,
+      `FAKESLIP;transRef=${transRef};amount=${p1.cashAmount};date=${today};receiver=ok`,
+    );
     const sent = await as(ctx, token)
-      .post(`/v1/store/payments/${p1.id}/slips`, { fileId: file1, declaredAmount: p1.cashAmount, transferredAt: today })
+      .post(`/v1/store/payments/${p1.id}/slips`, {
+        fileId: file1,
+        declaredAmount: p1.cashAmount,
+        transferredAt: today,
+      })
       .set('Idempotency-Key', randomUUID())
       .expect(201);
-    expect(sent.body).toMatchObject({ status: 'succeeded', slips: [{ status: 'passed', lastCheck: 'pass' }] });
+    expect(sent.body).toMatchObject({
+      status: 'succeeded',
+      slips: [{ status: 'passed', lastCheck: 'pass' }],
+    });
 
     const second = await placeOrder(ctx, token, fixture, postcode);
     const p2 = (await initiate(token, second.id, 'bank_transfer_slip').expect(201)).body as PaymentBody;
     today = new Date().toISOString();
-    const file2 = await uploadSlipFile(ctx, token, `FAKESLIP;transRef=${transRef};amount=${p2.cashAmount};date=${today};receiver=ok`);
+    const file2 = await uploadSlipFile(
+      ctx,
+      token,
+      `FAKESLIP;transRef=${transRef};amount=${p2.cashAmount};date=${today};receiver=ok`,
+    );
     const dup = await as(ctx, token)
-      .post(`/v1/store/payments/${p2.id}/slips`, { fileId: file2, declaredAmount: p2.cashAmount, transferredAt: today })
+      .post(`/v1/store/payments/${p2.id}/slips`, {
+        fileId: file2,
+        declaredAmount: p2.cashAmount,
+        transferredAt: today,
+      })
       .set('Idempotency-Key', randomUUID())
       .expect(201);
-    expect(dup.body).toMatchObject({ status: 'pending', slips: [{ status: 'failed', lastCheck: 'duplicate' }] });
+    expect(dup.body).toMatchObject({
+      status: 'pending',
+      slips: [{ status: 'failed', lastCheck: 'duplicate' }],
+    });
 
-    const file3 = await uploadSlipFile(ctx, token, `FAKESLIP;transRef=${transRef}B;amount=1.00;date=${today};receiver=ok`);
+    const file3 = await uploadSlipFile(
+      ctx,
+      token,
+      `FAKESLIP;transRef=${transRef}B;amount=1.00;date=${today};receiver=ok`,
+    );
     const review = await as(ctx, token)
-      .post(`/v1/store/payments/${p2.id}/slips`, { fileId: file3, declaredAmount: p2.cashAmount, transferredAt: today })
+      .post(`/v1/store/payments/${p2.id}/slips`, {
+        fileId: file3,
+        declaredAmount: p2.cashAmount,
+        transferredAt: today,
+      })
       .set('Idempotency-Key', randomUUID())
       .expect(201);
     const slip = (review.body as PaymentBody).slips[0]!;
@@ -170,7 +216,11 @@ describe('payments (e2e, B3.2)', () => {
       .expect(409)
       .expect((res) => expect(res.body.code).toBe('payments.slip_duplicate'));
     const approved = await as(ctx, finance)
-      .post(`/v1/admin/slips/${slip.id}/actions/review`, { approve: true, bankTransRef: `${transRef}B`, note: 'ตรวจ statement แล้ว' })
+      .post(`/v1/admin/slips/${slip.id}/actions/review`, {
+        approve: true,
+        bankTransRef: `${transRef}B`,
+        note: 'ตรวจ statement แล้ว',
+      })
       .set('Idempotency-Key', randomUUID())
       .expect(200);
     expect(approved.body.status).toBe('succeeded');
@@ -185,21 +235,37 @@ describe('payments (e2e, B3.2)', () => {
       .post(`/v1/admin/order-groups/${group.id}/payments`, { method: 'bank_transfer_slip' })
       .set('Idempotency-Key', randomUUID())
       .expect(403);
-    const started = (await as(ctx, cs)
-      .post(`/v1/admin/order-groups/${group.id}/payments`, { method: 'bank_transfer_slip' })
-      .set('Idempotency-Key', randomUUID())
-      .expect(201)).body as PaymentBody;
+    const started = (
+      await as(ctx, cs)
+        .post(`/v1/admin/order-groups/${group.id}/payments`, { method: 'bank_transfer_slip' })
+        .set('Idempotency-Key', randomUUID())
+        .expect(201)
+    ).body as PaymentBody;
     const now = new Date().toISOString();
-    const fileId = await uploadSlipFile(ctx, cs, `FAKESLIP;transRef=TR${ctx.run}C;amount=${started.cashAmount};date=${now}`, 'admin');
+    const fileId = await uploadSlipFile(
+      ctx,
+      cs,
+      `FAKESLIP;transRef=TR${ctx.run}C;amount=${started.cashAmount};date=${now}`,
+      'admin',
+    );
     const sent = await as(ctx, cs)
-      .post(`/v1/admin/payments/${started.id}/slips`, { fileId, declaredAmount: started.cashAmount, transferredAt: now })
+      .post(`/v1/admin/payments/${started.id}/slips`, {
+        fileId,
+        declaredAmount: started.cashAmount,
+        transferredAt: now,
+      })
       .set('Idempotency-Key', randomUUID())
       .expect(201);
     expect(sent.body.slips[0].status).toBe('manual_review');
 
-    await ctx.prisma.orderGroup.update({ where: { publicId: group.id }, data: { expiresAt: new Date(Date.now() - 60_000) } });
+    await ctx.prisma.orderGroup.update({
+      where: { publicId: group.id },
+      data: { expiresAt: new Date(Date.now() - 60_000) },
+    });
     await ctx.app.get(OrdersService).expireUnpaid();
-    expect((await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: group.id } })).status).toBe('waiting_payment');
+    expect((await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: group.id } })).status).toBe(
+      'waiting_payment',
+    );
 
     const csLead = await staffToken(ctx, 'cs-lead');
     await as(ctx, csLead).get('/v1/admin/slips').expect(403);
@@ -212,7 +278,9 @@ describe('payments (e2e, B3.2)', () => {
     const callback = scb.settle(`PKUNKNOWN${ctx.run}`.slice(0, 16), group.totals.cashAmount);
     await webhook('scb/payment-confirmation', callback).expect(200);
     const list = await as(ctx, finance).get('/v1/admin/payments?unidentified=true&perPage=100').expect(200);
-    const receipt = (list.body.data as { id: string; providerRef: string }[]).find((p) => p.providerRef === callback['transactionId'])!;
+    const receipt = (list.body.data as { id: string; providerRef: string }[]).find(
+      (p) => p.providerRef === callback['transactionId'],
+    )!;
     expect(receipt).toBeDefined();
     const allocated = await as(ctx, finance)
       .post(`/v1/admin/payments/${receipt.id}/actions/allocate`, { groupId: group.id })

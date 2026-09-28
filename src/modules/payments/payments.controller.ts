@@ -9,7 +9,17 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { type Prisma } from '@generated/prisma/client';
 import { OrdersService } from '@modules/orders/orders.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, VERSION_NEUTRAL } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Query,
+  VERSION_NEUTRAL,
+} from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import { adminPaymentDto, paymentDto, slipQueueDto } from './payment-views';
@@ -113,7 +123,11 @@ export class StorePaymentsController {
   })
   @ApiPaginated(PaymentDto, { example: PAYMENT_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async list(@CurrentActor() actor: Actor, @Param('groupId', ParseUUIDPipe) groupId: string, @Query() q: PageQuery) {
+  async list(
+    @CurrentActor() actor: Actor,
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Query() q: PageQuery,
+  ) {
     const group = await this.orders.group(groupId, customer(actor).userId);
     const { rows, total } = await this.payments.list({ orderGroupId: group.id }, q.page, q.perPage);
     return { data: rows.map(paymentDto), meta: { page: q.page, perPage: q.perPage, total } };
@@ -205,7 +219,8 @@ export class AdminPaymentsController {
   @ApiEndpoint({
     id: 'admin.payments.initiate',
     summary: 'Start a payment for a customer (CS)',
-    description: 'CS starts a payment on the customer’s behalf, e.g. a bank transfer whose slip CS then sends.',
+    description:
+      'CS starts a payment on the customer’s behalf, e.g. a bank transfer whose slip CS then sends.',
     implements: DECISIONS,
   })
   @ApiBody({ type: InitiatePaymentDto, examples: { default: { value: { method: 'bank_transfer_slip' } } } })
@@ -230,7 +245,11 @@ export class AdminPaymentsController {
     implements: DECISIONS,
   })
   @SLIP_BODY
-  @ApiSuccess(201, { description: 'Payment with its slip', type: AdminPaymentDto, example: ADMIN_PAYMENT_EXAMPLE })
+  @ApiSuccess(201, {
+    description: 'Payment with its slip',
+    type: AdminPaymentDto,
+    example: ADMIN_PAYMENT_EXAMPLE,
+  })
   @ApiStandardErrors(...SLIP_ERRORS)
   async slip(
     @CurrentActor() actor: Actor,
@@ -245,7 +264,8 @@ export class AdminPaymentsController {
   @ApiEndpoint({
     id: 'admin.payments.slipQueue',
     summary: 'Slips waiting for Finance',
-    description: 'Slips that failed automatic verification, earliest SLA first (4 business hours, D-061 / D-175).',
+    description:
+      'Slips that failed automatic verification, earliest SLA first (4 business hours, D-061 / D-175).',
     implements: ['D-061', 'D-175'],
   })
   @ApiPaginated(SlipQueueItemDto, { example: SLIP_QUEUE_EXAMPLE })
@@ -270,11 +290,19 @@ export class AdminPaymentsController {
   })
   @ApiBody({
     type: SlipReviewDto,
-    examples: { default: { value: { approve: true, bankTransRef: '015073144041ATF00999', note: 'ตรวจกับ statement แล้ว' } } },
+    examples: {
+      default: {
+        value: { approve: true, bankTransRef: '015073144041ATF00999', note: 'ตรวจกับ statement แล้ว' },
+      },
+    },
   })
   @ApiSuccess(200, { description: 'Payment', type: AdminPaymentDto, example: ADMIN_PAYMENT_EXAMPLE })
   @ApiStandardErrors(...WRITE, 'payments.slip_not_in_review', 'payments.slip_duplicate', 'iam.sod_conflict')
-  async review(@CurrentActor() actor: Actor, @Param('slipId', ParseUUIDPipe) slipId: string, @Body() body: SlipReviewDto) {
+  async review(
+    @CurrentActor() actor: Actor,
+    @Param('slipId', ParseUUIDPipe) slipId: string,
+    @Body() body: SlipReviewDto,
+  ) {
     return adminPaymentDto(await this.payments.reviewSlip(staff(actor), slipId, body));
   }
 
@@ -286,10 +314,14 @@ export class AdminPaymentsController {
   @ApiEndpoint({
     id: 'admin.payments.allocate',
     summary: 'Attach an unidentified receipt to an order group',
-    description: 'The cash is applied to the group’s open instalments (FIFO, ADR-0008). Requires `Idempotency-Key`.',
+    description:
+      'The cash is applied to the group’s open instalments (FIFO, ADR-0008). Requires `Idempotency-Key`.',
     implements: ['D-061', 'D-020'],
   })
-  @ApiBody({ type: AllocatePaymentDto, examples: { default: { value: { groupId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001' } } } })
+  @ApiBody({
+    type: AllocatePaymentDto,
+    examples: { default: { value: { groupId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001' } } },
+  })
   @ApiSuccess(200, { description: 'Payment', type: AdminPaymentDto, example: ADMIN_PAYMENT_EXAMPLE })
   @ApiStandardErrors(...WRITE, 'payments.not_unidentified', 'payments.group_not_payable')
   async allocate(
@@ -365,8 +397,16 @@ export class PaymentWebhooksController {
     implements: ['D-061', 'D-176'],
   })
   @ApiBody({
-    schema: { type: 'object', properties: { code: { type: 'string' }, data: { type: 'object', properties: { queueId: { type: 'string' } } } } },
-    examples: { default: { value: { code: '200200', data: { queueId: '92887bd5-0000-4000-8000-000000000001' } } } },
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'string' },
+        data: { type: 'object', properties: { queueId: { type: 'string' } } },
+      },
+    },
+    examples: {
+      default: { value: { code: '200200', data: { queueId: '92887bd5-0000-4000-8000-000000000001' } } },
+    },
   })
   @ApiSuccess(204, { description: 'Accepted' })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
@@ -389,10 +429,20 @@ export class PaymentWebhooksController {
   })
   @ApiBody({
     schema: { type: 'object', required: ['payload'], properties: { payload: { type: 'string' } } },
-    examples: { default: { value: { payload: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnZvaWNlTm8iOiJQSy4uLiJ9.c2ln' } } },
+    examples: {
+      default: {
+        value: { payload: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnZvaWNlTm8iOiJQSy4uLiJ9.c2ln' },
+      },
+    },
   })
   @ApiSuccess(204, { description: 'Accepted' })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'auth.unauthenticated', 'provider.unavailable')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'auth.unauthenticated',
+    'provider.unavailable',
+  )
   async twoc2p(@Body() body: Record<string, unknown>): Promise<void> {
     await this.payments.twoc2pNotification(body);
   }

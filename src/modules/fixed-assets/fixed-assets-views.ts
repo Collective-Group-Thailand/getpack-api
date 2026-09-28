@@ -1,6 +1,11 @@
 import { dayOf } from '@modules/ledger/ledger-dates';
 
-import { type AssetCategoryDto, type DepreciationLineDto, type DepreciationRunDto, type FixedAssetDto } from './fixed-assets.dto';
+import {
+  type AssetCategoryDto,
+  type DepreciationLineDto,
+  type DepreciationRunDto,
+  type FixedAssetDto,
+} from './fixed-assets.dto';
 import { type AssetRow, type CategoryRow, type FixedAssetsService } from './fixed-assets.service';
 
 export const categoryDto = (c: CategoryRow): AssetCategoryDto => ({
@@ -43,14 +48,22 @@ export const assetDto = (a: AssetRow): FixedAssetDto => ({
   disposalProceeds: a.disposalProceeds ? a.disposalProceeds.toFixed(2) : null,
 });
 
-export const lineDto = (l: Awaited<ReturnType<FixedAssetsService['schedule']>>[number]): DepreciationLineDto => ({
+export const lineDto = (
+  l: Awaited<ReturnType<FixedAssetsService['schedule']>>[number],
+): DepreciationLineDto => ({
   period: dayOf(l.fiscalPeriod.startDate).slice(0, 7),
   amount: l.amount.toFixed(2),
   accumulatedAfter: l.accumulatedAfter.toFixed(2),
   runId: l.run.publicId,
 });
 
-export const runDto = (r: { publicId: string; runOn: Date; totalAmount: { toFixed(dp: number): string }; assetCount: number; fiscalPeriod: { startDate: Date } }): DepreciationRunDto => ({
+export const runDto = (r: {
+  publicId: string;
+  runOn: Date;
+  totalAmount: { toFixed(dp: number): string };
+  assetCount: number;
+  fiscalPeriod: { startDate: Date };
+}): DepreciationRunDto => ({
   id: r.publicId,
   period: dayOf(r.fiscalPeriod.startDate).slice(0, 7),
   runOn: dayOf(r.runOn),

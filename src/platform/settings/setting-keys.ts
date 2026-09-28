@@ -63,7 +63,13 @@ export interface SettingValues {
   'audit.business_hours': { start: string; end: string; weekdays: number[] };
   /** B5.5 first month an asset is depreciated (D-150 ⚖). */
   'fixed_assets.depreciation_start': 'acquisition_month' | 'next_month';
-  'tax.gl_accounts': { output_vat: string[]; input_vat: string[]; wht_pnd3: string[]; wht_pnd53: string[]; wht_receivable: string[] };
+  'tax.gl_accounts': {
+    output_vat: string[];
+    input_vat: string[];
+    wht_pnd3: string[];
+    wht_pnd53: string[];
+    wht_receivable: string[];
+  };
   'orders.auto_complete_days': number;
   /** B6.3 alert threshold per operational signal (proposed). */
   'ops.alert_thresholds': Partial<Record<string, number>>;
@@ -74,7 +80,11 @@ export interface SettingValues {
   'payments.schedule_split_threshold': string;
   'campaigns.budget_alert_pct': string;
   /** D-053 rate limits on coupon code attempts (proposed). */
-  'promotions.code_attempt_limits': { perCustomerPerHour: number; perIpPerHour: number; perDevicePerHour: number };
+  'promotions.code_attempt_limits': {
+    perCustomerPerHour: number;
+    perIpPerHour: number;
+    perDevicePerHour: number;
+  };
   /** D-130…D-135 loyalty (all numbers are settings). */
   'loyalty.earn_rate': { bahtPerPoint: string; basis: string };
   'loyalty.point_value': string;

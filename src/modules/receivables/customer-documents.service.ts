@@ -262,7 +262,9 @@ export class CustomerDocumentsService {
       });
     }
     if (draft.isReceipt && totals.wht.gt(0)) {
-      const whtBase = draft.lines.filter((l) => (l.wht ?? ZERO()).gt(0)).reduce((a, l) => a.add(l.net).sub(l.discount ?? 0), ZERO());
+      const whtBase = draft.lines
+        .filter((l) => (l.wht ?? ZERO()).gt(0))
+        .reduce((a, l) => a.add(l.net).sub(l.discount ?? 0), ZERO());
       await tx.customerWhtCertificate.create({
         data: {
           entityId: draft.entityId,
@@ -292,7 +294,11 @@ export class CustomerDocumentsService {
     };
     for (const [field, key] of Object.entries(ENTITY_KEYS) as [keyof typeof ENTITY_KEYS, string][]) {
       try {
-        const resolved = await this.settings.at(key as never, { at, scope: { type: 'entity', id: entityId }, tx });
+        const resolved = await this.settings.at(key as never, {
+          at,
+          scope: { type: 'entity', id: entityId },
+          tx,
+        });
         out[field] = String(resolved.value);
         out.settingVersionIds[key] = resolved.versionId.toString();
       } catch (error) {
@@ -333,7 +339,11 @@ export class CustomerDocumentsService {
         fullForm: true,
       };
     }
-    const billing = group.billingAddressSnapshot as { address?: string; line1?: string; recipientName?: string } | null;
+    const billing = group.billingAddressSnapshot as {
+      address?: string;
+      line1?: string;
+      recipientName?: string;
+    } | null;
     return {
       buyer: {
         name: group.customer.displayName,
@@ -375,20 +385,34 @@ export class CustomerDocumentsService {
    */
   async void(actor: UserActor, publicId: string, reason: string): Promise<DocumentRow> {
     await this.prisma.withTx(async (tx) => {
-      const doc = await tx.customerDocument.findUnique({ where: { publicId }, include: { receivableItem: true } });
+      const doc = await tx.customerDocument.findUnique({
+        where: { publicId },
+        include: { receivableItem: true },
+      });
       if (!doc) throw new DomainException('http.not_found');
       if (doc.status === 'void' || !['iv', 'dn'].includes(doc.docType))
         throw new DomainException('receivables.document_not_voidable', {
-          params: { reason: doc.status === 'void' ? 'already void' : 'tax invoices and receipts are corrected by credit notes' },
+          params: {
+            reason:
+              doc.status === 'void'
+                ? 'already void'
+                : 'tax invoices and receipts are corrected by credit notes',
+          },
         });
       const item = doc.receivableItem;
       if (item && (item.status !== 'open' || !D(item.openAmount).eq(item.amount.toString())))
-        throw new DomainException('receivables.document_not_voidable', { params: { reason: 'money was applied to it' } });
+        throw new DomainException('receivables.document_not_voidable', {
+          params: { reason: 'money was applied to it' },
+        });
       await tx.customerDocument.update({
         where: { id: doc.id },
         data: { status: 'void', voidReason: reason, voidedAt: new Date(), voidedById: actor.userId },
       });
-      if (item) await tx.receivableItem.update({ where: { id: item.id }, data: { status: 'cancelled', openAmount: '0.00', rowVersion: { increment: 1 } } });
+      if (item)
+        await tx.receivableItem.update({
+          where: { id: item.id },
+          data: { status: 'cancelled', openAmount: '0.00', rowVersion: { increment: 1 } },
+        });
       await this.audit.record(tx, {
         category: 'finance',
         action: 'customer_document.voided',
@@ -405,7 +429,14 @@ export class CustomerDocumentsService {
           aggregateType: 'customer_document',
           aggregateId: doc.publicId,
           entityId: doc.entityId,
-          payload: { documentId: doc.publicId, docType: doc.docType, docNumber: doc.docNumber, reason, sourceType: 'customer_document', sourceId: doc.publicId },
+          payload: {
+            documentId: doc.publicId,
+            docType: doc.docType,
+            docNumber: doc.docNumber,
+            reason,
+            sourceType: 'customer_document',
+            sourceId: doc.publicId,
+          },
         },
         actor,
       );
@@ -431,17 +462,27 @@ export class CustomerDocumentsService {
     totals: { net: MoneyValue; discount: MoneyValue; vat: MoneyValue; wht: MoneyValue },
     actor: Actor,
   ) {
-    const pub = async <T extends { publicId: string }>(find: () => Promise<T | null>) => (await find())?.publicId ?? null;
+    const pub = async <T extends { publicId: string }>(find: () => Promise<T | null>) =>
+      (await find())?.publicId ?? null;
     const [customer, company, group, order] = await Promise.all([
       pub(() => tx.user.findUnique({ where: { id: draft.customerUserId }, select: { publicId: true } })),
-      draft.companyId ? pub(() => tx.company.findUnique({ where: { id: draft.companyId! }, select: { publicId: true } })) : null,
-      draft.orderGroupId
-        ? tx.orderGroup.findUnique({ where: { id: draft.orderGroupId }, select: { publicId: true, channel: true } })
+      draft.companyId
+        ? pub(() => tx.company.findUnique({ where: { id: draft.companyId! }, select: { publicId: true } }))
         : null,
-      draft.orderId ? pub(() => tx.order.findUnique({ where: { id: draft.orderId! }, select: { publicId: true } })) : null,
+      draft.orderGroupId
+        ? tx.orderGroup.findUnique({
+            where: { id: draft.orderGroupId },
+            select: { publicId: true, channel: true },
+          })
+        : null,
+      draft.orderId
+        ? pub(() => tx.order.findUnique({ where: { id: draft.orderId! }, select: { publicId: true } }))
+        : null,
     ]);
     const taxable = totals.net.sub(totals.discount);
-    const whtBase = draft.lines.filter((l) => (l.wht ?? ZERO()).gt(0)).reduce((a, l) => a.add(l.net).sub(l.discount ?? 0), ZERO());
+    const whtBase = draft.lines
+      .filter((l) => (l.wht ?? ZERO()).gt(0))
+      .reduce((a, l) => a.add(l.net).sub(l.discount ?? 0), ZERO());
     const event = await this.events.record(
       tx,
       {
@@ -484,7 +525,11 @@ export class CustomerDocumentsService {
       aggregatePublicId: group?.publicId ?? doc.publicId,
       action: 'customer_document.issued',
       messageKey: 'activity.customer_document.issued',
-      messageParams: { docType: doc.docType, docNumber: doc.docNumber, grossAmount: doc.grossAmount.toFixed(2) },
+      messageParams: {
+        docType: doc.docType,
+        docNumber: doc.docNumber,
+        grossAmount: doc.grossAmount.toFixed(2),
+      },
       visibility: ['internal', 'customer'],
       entityId: doc.entityId,
       domainEventId: event.id,

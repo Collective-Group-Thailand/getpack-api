@@ -69,7 +69,13 @@ export const bsDto = (r: BsRow): BillingStatementDto => ({
   grossAmount: m(r.grossAmount),
   disputeNote: r.disputeNote,
   confirmedAt: r.confirmedAt ? toBangkokIso(r.confirmedAt) : null,
-  lines: r.lines.map((l) => ({ lineNo: l.lineNo, description: l.description, netAmount: m(l.netAmount), vatAmount: m(l.vatAmount), grossAmount: m(l.grossAmount) })),
+  lines: r.lines.map((l) => ({
+    lineNo: l.lineNo,
+    description: l.description,
+    netAmount: m(l.netAmount),
+    vatAmount: m(l.vatAmount),
+    grossAmount: m(l.grossAmount),
+  })),
 });
 
 export const invoiceDto = (r: InvoiceRow): VendorInvoiceDto => ({

@@ -10,7 +10,11 @@ import {
   type Prisma,
   type RequiredBefore,
 } from '@generated/prisma/client';
-import { type CheckoutDraft, CheckoutExtensions, type PlacedGroup } from '@modules/checkout/checkout.extensions';
+import {
+  type CheckoutDraft,
+  CheckoutExtensions,
+  type PlacedGroup,
+} from '@modules/checkout/checkout.extensions';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { OrderLifecycleHooks, OrdersService } from '@modules/orders/orders.service';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
@@ -179,7 +183,9 @@ export class PaymentSchedulesService implements OnModuleInit {
       chosen = templates.find((t) => t.key === override.templateKey) ?? null;
       if (!chosen)
         throw new DomainException('validation.failed', {
-          errors: [{ path: 'paymentSchedule.templateKey', code: 'exists', message: 'unknown schedule template' }],
+          errors: [
+            { path: 'paymentSchedule.templateKey', code: 'exists', message: 'unknown schedule template' },
+          ],
         });
     } else {
       const threshold = await this.settings.at('payments.schedule_split_threshold', { at: draft.at });
@@ -204,7 +210,10 @@ export class PaymentSchedulesService implements OnModuleInit {
       wht: draft.totals.whtAmount,
       cash: draft.totals.cashAmount,
     };
-    const amounts = splitByPct(total, chosen.instalments.map((i) => i.pct));
+    const amounts = splitByPct(
+      total,
+      chosen.instalments.map((i) => i.pct),
+    );
     const creditTermDays = draft.state['creditTermDays'];
     return {
       templateKey: chosen.key,
@@ -214,7 +223,9 @@ export class PaymentSchedulesService implements OnModuleInit {
       instalments: chosen.instalments.map((i, index) => ({
         ...i,
         dueOffsetDays:
-          i.dueTrigger === 'days_after_delivery' && typeof creditTermDays === 'number' ? creditTermDays : i.dueOffsetDays,
+          i.dueTrigger === 'days_after_delivery' && typeof creditTermDays === 'number'
+            ? creditTermDays
+            : i.dueOffsetDays,
         amounts: amounts[index]!,
       })),
     };
@@ -250,19 +261,31 @@ export class PaymentSchedulesService implements OnModuleInit {
       await this.writeInstalment(tx, schedule.id, i.seq, i, i.amounts, orders, draft.at);
     }
     const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: placed.groupId } });
-    await this.record(tx, group.publicId, 'payment_schedule.created', {
-      templateKey: proposed.templateKey,
-      isOverride: proposed.isOverride,
-      instalments: proposed.instalments.map((i) => ({
-        seq: i.seq,
-        pct: i.pct,
-        dueTrigger: i.dueTrigger,
-        requiredBefore: i.requiredBefore,
-        cashAmount: i.amounts.cash,
-      })),
-    }, draft.actor);
+    await this.record(
+      tx,
+      group.publicId,
+      'payment_schedule.created',
+      {
+        templateKey: proposed.templateKey,
+        isOverride: proposed.isOverride,
+        instalments: proposed.instalments.map((i) => ({
+          seq: i.seq,
+          pct: i.pct,
+          dueTrigger: i.dueTrigger,
+          requiredBefore: i.requiredBefore,
+          cashAmount: i.amounts.cash,
+        })),
+      },
+      draft.actor,
+    );
     for (const i of proposed.instalments.filter((x) => x.dueTrigger === 'at_checkout')) {
-      await this.record(tx, group.publicId, 'instalment.due', { seq: i.seq, cashAmount: i.amounts.cash }, draft.actor);
+      await this.record(
+        tx,
+        group.publicId,
+        'instalment.due',
+        { seq: i.seq, cashAmount: i.amounts.cash },
+        draft.actor,
+      );
     }
     // No instalment required before production (e.g. credit term): production may start once the artwork is approved.
     await this.evaluateGates(tx, placed.groupId, draft.actor);
@@ -301,7 +324,12 @@ export class PaymentSchedulesService implements OnModuleInit {
     return instalment;
   }
 
-  private async allocate(tx: Tx, instalmentId: bigint, amounts: AmountSet, orders: { key: bigint; gross: string }[]) {
+  private async allocate(
+    tx: Tx,
+    instalmentId: bigint,
+    amounts: AmountSet,
+    orders: { key: bigint; gross: string }[],
+  ) {
     await tx.instalmentAllocation.deleteMany({ where: { instalmentId } });
     for (const [orderId, a] of allocateByGross(amounts, orders)) {
       await tx.instalmentAllocation.create({
@@ -358,21 +386,32 @@ export class PaymentSchedulesService implements OnModuleInit {
         cashAmount: input.amounts.cash,
       },
     });
-    await this.allocate(tx, instalment.id, input.amounts, [{ key: input.orderId, gross: input.amounts.gross }]);
+    await this.allocate(tx, instalment.id, input.amounts, [
+      { key: input.orderId, gross: input.amounts.gross },
+    ]);
     const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: input.groupId } });
-    await this.record(tx, group.publicId, 'instalment.due', {
-      instalmentId: instalment.publicId,
-      seq,
-      cashAmount: input.amounts.cash,
-      addOn: true,
-    }, actor);
+    await this.record(
+      tx,
+      group.publicId,
+      'instalment.due',
+      {
+        instalmentId: instalment.publicId,
+        seq,
+        cashAmount: input.amounts.cash,
+        addOn: true,
+      },
+      actor,
+    );
     return instalment;
   }
 
   // --- reads & override -------------------------------------------------------------------------------
 
   async forGroup(groupId: bigint, db: Tx = this.prisma): Promise<ScheduleRow> {
-    const row = await db.paymentSchedule.findUnique({ where: { orderGroupId: groupId }, include: SCHEDULE_INCLUDE });
+    const row = await db.paymentSchedule.findUnique({
+      where: { orderGroupId: groupId },
+      include: SCHEDULE_INCLUDE,
+    });
     if (!row) throw new DomainException('http.not_found');
     return row;
   }
@@ -381,7 +420,12 @@ export class PaymentSchedulesService implements OnModuleInit {
    * CS replaces the schedule of a group before anything is paid (`payment_schedules.override`, reason):
    * the open instalments are cancelled and the template's instalments written for the group's totals.
    */
-  async override(actor: UserActor, groupPublicId: string, ifMatch: string | undefined, input: ScheduleOverrideInput) {
+  async override(
+    actor: UserActor,
+    groupPublicId: string,
+    ifMatch: string | undefined,
+    input: ScheduleOverrideInput,
+  ) {
     return this.prisma.withTx(async (tx) => {
       const group = await tx.orderGroup.findUnique({
         where: { publicId: groupPublicId },
@@ -414,17 +458,26 @@ export class PaymentSchedulesService implements OnModuleInit {
       });
       const active = group.orders.filter((o) => o.status !== 'cancelled');
       const total = active.map(setOf).reduce(addSets, ZERO);
-      const amounts = splitByPct(total, template.instalments.map((i) => i.pct));
+      const amounts = splitByPct(
+        total,
+        template.instalments.map((i) => i.pct),
+      );
       const nextSeq = Math.max(...schedule.instalments.map((i) => i.seq)) + 1;
       const orders = active.map((o) => ({ key: o.id, gross: o.grossAmount.toFixed(2) }));
       const now = new Date();
       for (const [index, i] of template.instalments.entries()) {
         await this.writeInstalment(tx, schedule.id, nextSeq + index, i, amounts[index]!, orders, now);
       }
-      await this.record(tx, group.publicId, 'payment_schedule.overridden', {
-        templateKey: template.key,
-        reason: input.reason,
-      }, actor);
+      await this.record(
+        tx,
+        group.publicId,
+        'payment_schedule.overridden',
+        {
+          templateKey: template.key,
+          reason: input.reason,
+        },
+        actor,
+      );
       await this.evaluateGates(tx, group.id, actor);
       return this.forGroup(group.id, tx);
     });
@@ -479,7 +532,8 @@ export class PaymentSchedulesService implements OnModuleInit {
     });
     const rule = body.selectionRule as SelectionRule;
     const allowed = ['orderValue', 'customerTypes', 'productTypeCodes', 'creditApproved'];
-    for (const k of Object.keys(rule)) if (!allowed.includes(k)) invalid(`selectionRule.${k}`, 'unknown rule');
+    for (const k of Object.keys(rule))
+      if (!allowed.includes(k)) invalid(`selectionRule.${k}`, 'unknown rule');
     return this.prisma.withTx(async (tx) => {
       const template = await tx.paymentScheduleTemplate.findUnique({ where: { key } });
       if (!template) throw new DomainException('http.not_found');
@@ -543,7 +597,14 @@ export class PaymentSchedulesService implements OnModuleInit {
    * Applies received cash to the group's open instalments (FIFO, ADR-0008) in the payment's transaction,
    * records the allocations and opens the gates. Returns the cash that found no instalment (overpayment).
    */
-  async applyPayment(tx: Tx, groupId: bigint, paymentId: bigint, cash: string, actor: Actor, at = new Date()) {
+  async applyPayment(
+    tx: Tx,
+    groupId: bigint,
+    paymentId: bigint,
+    cash: string,
+    actor: Actor,
+    at = new Date(),
+  ) {
     const schedule = await this.forGroup(groupId, tx);
     // What is due takes the cash first (oldest seq first), then what is not due yet (ADR-0008 item 3).
     const dueFirst = (i: { status: InstalmentStatus }) => (i.status === 'pending' ? 1 : 0);
@@ -580,7 +641,12 @@ export class PaymentSchedulesService implements OnModuleInit {
           tx,
           group.publicId,
           'instalment.paid',
-          { instalmentId: instalment.publicId, seq: instalment.seq, cashAmount: a.cash, fixedAmount: instalment.fixedAmount },
+          {
+            instalmentId: instalment.publicId,
+            seq: instalment.seq,
+            cashAmount: a.cash,
+            fixedAmount: instalment.fixedAmount,
+          },
           actor,
         );
     }
@@ -597,7 +663,9 @@ export class PaymentSchedulesService implements OnModuleInit {
     if (!schedule) return;
     const live = schedule.instalments.filter((i) => i.status !== 'cancelled');
     const paidFor = (gate: RequiredBefore) =>
-      live.filter((i) => i.requiredBefore === gate).every((i) => i.status === 'paid' || i.status === 'refunded');
+      live
+        .filter((i) => i.requiredBefore === gate)
+        .every((i) => i.status === 'paid' || i.status === 'refunded');
     if (paidFor('production')) {
       const orders = await tx.order.findMany({
         where: { orderGroupId: groupId, cancelledAt: null, paidForProductionAt: null },
@@ -649,20 +717,30 @@ export class PaymentSchedulesService implements OnModuleInit {
     if (!schedule) return;
     const when = new Date(at);
     const actor = systemActor('payment_schedules.due');
-    for (const i of schedule.instalments.filter((x) => x.status === 'pending' && triggers.includes(x.dueTrigger))) {
+    for (const i of schedule.instalments.filter(
+      (x) => x.status === 'pending' && triggers.includes(x.dueTrigger),
+    )) {
       const dueAt =
-        i.dueTrigger === 'days_after_delivery' ? new Date(when.getTime() + (i.dueOffsetDays ?? 0) * DAY_MS) : when;
+        i.dueTrigger === 'days_after_delivery'
+          ? new Date(when.getTime() + (i.dueOffsetDays ?? 0) * DAY_MS)
+          : when;
       const dueNow = dueAt <= new Date();
       await tx.instalment.update({
         where: { id: i.id },
         data: { dueAt, ...(dueNow && { status: 'due' }), rowVersion: { increment: 1 } },
       });
       if (dueNow)
-        await this.record(tx, order.orderGroup.publicId, 'instalment.due', {
-          seq: i.seq,
-          cashAmount: i.cashAmount.toFixed(2),
-          dueAt: dueAt.toISOString(),
-        }, actor);
+        await this.record(
+          tx,
+          order.orderGroup.publicId,
+          'instalment.due',
+          {
+            seq: i.seq,
+            cashAmount: i.cashAmount.toFixed(2),
+            dueAt: dueAt.toISOString(),
+          },
+          actor,
+        );
     }
   }
 
@@ -683,11 +761,17 @@ export class PaymentSchedulesService implements OnModuleInit {
         });
         if (count === 1) {
           changed += 1;
-          await this.record(tx, i.schedule.orderGroup.publicId, 'instalment.due', {
-            seq: i.seq,
-            cashAmount: i.cashAmount.toFixed(2),
-            dueAt: i.dueAt!.toISOString(),
-          }, actor);
+          await this.record(
+            tx,
+            i.schedule.orderGroup.publicId,
+            'instalment.due',
+            {
+              seq: i.seq,
+              cashAmount: i.cashAmount.toFixed(2),
+              dueAt: i.dueAt!.toISOString(),
+            },
+            actor,
+          );
         }
       });
     }
@@ -710,11 +794,17 @@ export class PaymentSchedulesService implements OnModuleInit {
         });
         if (count === 1) {
           changed += 1;
-          await this.record(tx, i.schedule.orderGroup.publicId, 'instalment.overdue', {
-            seq: i.seq,
-            openCashAmount: formatMoney(D(i.cashAmount).sub(i.paidAmount)),
-            dueAt: i.dueAt!.toISOString(),
-          }, actor);
+          await this.record(
+            tx,
+            i.schedule.orderGroup.publicId,
+            'instalment.overdue',
+            {
+              seq: i.seq,
+              openCashAmount: formatMoney(D(i.cashAmount).sub(i.paidAmount)),
+              dueAt: i.dueAt!.toISOString(),
+            },
+            actor,
+          );
         }
       });
     }
@@ -737,7 +827,10 @@ export class PaymentSchedulesService implements OnModuleInit {
       include: { instalments: { orderBy: { seq: 'asc' } } },
     });
     if (!schedule) return;
-    const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: groupId }, include: { orders: true } });
+    const group = await tx.orderGroup.findUniqueOrThrow({
+      where: { id: groupId },
+      include: { orders: true },
+    });
     const active = group.orders.filter((o) => o.status !== 'cancelled');
     const live = schedule.instalments.filter((i) => i.status !== 'cancelled');
     // Paid instalments and add-on charges (ADR-0008 item 6) keep their amounts; the rest is re-split.
@@ -749,24 +842,43 @@ export class PaymentSchedulesService implements OnModuleInit {
 
     if (active.length === 0 || D(remainder.cash).lt(paidOnAdjustable)) {
       for (const i of adjustable.filter((x) => D(x.paidAmount).eq(0))) {
-        await tx.instalment.update({ where: { id: i.id }, data: { status: 'cancelled', rowVersion: { increment: 1 } } });
+        await tx.instalment.update({
+          where: { id: i.id },
+          data: { status: 'cancelled', rowVersion: { increment: 1 } },
+        });
       }
       const paid = live.reduce((a, i) => a.add(i.paidAmount.toString()), new MoneyDecimal(0));
       const over = paid.sub(target.cash);
       if (over.gt(0))
-        await this.record(tx, group.publicId, 'payment_schedule.overpaid', { amount: formatMoney(over) }, actor);
+        await this.record(
+          tx,
+          group.publicId,
+          'payment_schedule.overpaid',
+          { amount: formatMoney(over) },
+          actor,
+        );
       return;
     }
     if (adjustable.length > 0) {
-      const parts = splitByPct(remainder, adjustable.map((i) => i.pct.toFixed(4)), true);
+      const parts = splitByPct(
+        remainder,
+        adjustable.map((i) => i.pct.toFixed(4)),
+        true,
+      );
       // Each order's share excludes its add-on charges, which have their own instalments.
       const charges = await tx.instalmentAllocation.groupBy({
         by: ['orderId'],
-        where: { instalment: { paymentScheduleId: schedule.id, fixedAmount: true, status: { not: 'cancelled' } } },
+        where: {
+          instalment: { paymentScheduleId: schedule.id, fixedAmount: true, status: { not: 'cancelled' } },
+        },
         _sum: { grossAmount: true },
       });
-      const chargeOf = (orderId: bigint) => D(charges.find((c) => c.orderId === orderId)?._sum.grossAmount ?? 0);
-      const orders = active.map((o) => ({ key: o.id, gross: formatMoney(D(o.grossAmount).sub(chargeOf(o.id))) }));
+      const chargeOf = (orderId: bigint) =>
+        D(charges.find((c) => c.orderId === orderId)?._sum.grossAmount ?? 0);
+      const orders = active.map((o) => ({
+        key: o.id,
+        gross: formatMoney(D(o.grossAmount).sub(chargeOf(o.id))),
+      }));
       for (const [index, i] of adjustable.entries()) {
         const a = parts[index]!;
         const paid = D(i.paidAmount);
@@ -786,14 +898,31 @@ export class PaymentSchedulesService implements OnModuleInit {
         await this.allocate(tx, i.id, a, orders);
       }
     }
-    await this.record(tx, group.publicId, 'payment_schedule.rebalanced', { grossAmount: target.gross }, actor);
+    await this.record(
+      tx,
+      group.publicId,
+      'payment_schedule.rebalanced',
+      { grossAmount: target.gross },
+      actor,
+    );
     await this.evaluateGates(tx, groupId, actor);
   }
 
-  private async record(tx: Tx, groupPublicId: string, type: string, data: Record<string, unknown>, actor: Actor) {
+  private async record(
+    tx: Tx,
+    groupPublicId: string,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'order_group', aggregateId: groupPublicId, payload: { groupId: groupPublicId, ...data } },
+      {
+        type,
+        aggregateType: 'order_group',
+        aggregateId: groupPublicId,
+        payload: { groupId: groupPublicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {

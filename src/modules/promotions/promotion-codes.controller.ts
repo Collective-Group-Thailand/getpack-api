@@ -57,12 +57,21 @@ function cartCodesController(surface: 'store' | 'admin'): Type<unknown> {
     async who(actor: Actor, customerId: string | undefined): Promise<CartActor> {
       if (actor.type !== 'user') throw new DomainException('auth.forbidden');
       if (!admin) return { actor, customerUserId: actor.userId, channel: 'web', csUserId: null };
-      return { actor, customerUserId: await this.customers.customerIdOf(customerId!), channel: 'cs', csUserId: actor.userId };
+      return {
+        actor,
+        customerUserId: await this.customers.customerIdOf(customerId!),
+        channel: 'cs',
+        csUserId: actor.userId,
+      };
     }
 
     @Post()
     @guard()
-    @ApiHeader({ name: 'X-Device-Id', required: false, description: 'App or browser install id; feeds per-device limits (D-053)' })
+    @ApiHeader({
+      name: 'X-Device-Id',
+      required: false,
+      description: 'App or browser install id; feeds per-device limits (D-053)',
+    })
     @ApiEndpoint({
       id: `${surface}.cart.applyCode`,
       summary: 'Enter a coupon code',
@@ -107,7 +116,8 @@ function cartCodesController(surface: 'store' | 'admin'): Type<unknown> {
     @ApiEndpoint({
       id: `${surface}.cart.removeCode`,
       summary: 'Remove a coupon code',
-      description: 'Takes the code off the cart; nothing was reserved yet (usage is reserved at checkout, D-053).',
+      description:
+        'Takes the code off the cart; nothing was reserved yet (usage is reserved at checkout, D-053).',
       implements: DECISIONS,
     })
     @ApiConcurrency()

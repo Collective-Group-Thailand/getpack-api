@@ -66,7 +66,10 @@ export class StoreCreditService {
   async entries(customerUserId: bigint) {
     return this.prisma.storeCreditEntry.findMany({
       where: { account: { customerUserId } },
-      include: { customerDocument: { select: { publicId: true, docNumber: true } }, order: { select: { publicId: true, orderCode: true } } },
+      include: {
+        customerDocument: { select: { publicId: true, docNumber: true } },
+        order: { select: { publicId: true, orderCode: true } },
+      },
       orderBy: { createdAt: 'desc' },
       take: 200,
     });

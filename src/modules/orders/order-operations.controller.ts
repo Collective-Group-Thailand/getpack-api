@@ -9,7 +9,18 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { type Response } from 'express';
 
@@ -90,7 +101,11 @@ export class AdminOrderOperationsController {
       },
     },
   })
-  @ApiSuccess(200, { description: 'Re-priced order', type: AdminOrderDto, example: ADMIN_ORDER_GROUP_EXAMPLE.orders[0] })
+  @ApiSuccess(200, {
+    description: 'Re-priced order',
+    type: AdminOrderDto,
+    example: ADMIN_ORDER_GROUP_EXAMPLE.orders[0],
+  })
   @ApiStandardErrors(
     ...WRITE,
     'quotes.not_live',
@@ -128,7 +143,11 @@ export class AdminOrderOperationsController {
   })
   @ApiConcurrency()
   @ApiBody({ type: ChangeCustomerDto, examples: { default: { value: { customerId: ORDER_IDS.customer } } } })
-  @ApiSuccess(200, { description: 'Updated group', type: AdminOrderGroupDto, example: ADMIN_ORDER_GROUP_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Updated group',
+    type: AdminOrderGroupDto,
+    example: ADMIN_ORDER_GROUP_EXAMPLE,
+  })
   @ApiStandardErrors(...WRITE, 'order.invalid_transition')
   async changeCustomer(
     @CurrentActor() actor: Actor,
@@ -148,12 +167,17 @@ export class AdminOrderOperationsController {
   @ApiEndpoint({
     id: 'admin.orderOperations.updateGroup',
     summary: 'Update CS remarks, cc e-mails or the PO number',
-    description: 'Remarks are internal; cc e-mails receive copies of order messages (D-143). Guarded by `If-Match`.',
+    description:
+      'Remarks are internal; cc e-mails receive copies of order messages (D-143). Guarded by `If-Match`.',
     implements: ['D-125', 'D-143'],
   })
   @ApiConcurrency()
   @ApiBody({ type: UpdateOrderGroupDto, examples: { default: { value: { csRemarks: 'ลูกค้าขอส่งด่วน' } } } })
-  @ApiSuccess(200, { description: 'Updated group', type: AdminOrderGroupDto, example: ADMIN_ORDER_GROUP_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Updated group',
+    type: AdminOrderGroupDto,
+    example: ADMIN_ORDER_GROUP_EXAMPLE,
+  })
   @ApiStandardErrors(...WRITE)
   async updateGroup(
     @CurrentActor() actor: Actor,
@@ -198,7 +222,8 @@ export class AdminOrderOperationsController {
   @ApiEndpoint({
     id: 'admin.orderOperations.addNote',
     summary: 'Add an internal note',
-    description: 'Append-only; mentioned staff are listed on the `order.note_added` event (B4.4 notifies them).',
+    description:
+      'Append-only; mentioned staff are listed on the `order.note_added` event (B4.4 notifies them).',
     implements: ['D-143'],
   })
   @ApiBody({ type: AddOrderNoteDto, examples: { default: { value: { body: 'โทรยืนยันกับลูกค้าแล้ว' } } } })
@@ -239,22 +264,20 @@ export class AdminOrderOperationsController {
       });
     const { rows, total } = await this.ops.queue(queue as QueueKey, q.page, q.perPage, q.withinDays ?? 3);
     return {
-      data: rows.map(
-        (o): OrderQueueItemDto => ({
-          orderId: o.publicId,
-          orderCode: o.orderCode,
-          groupId: o.orderGroup.publicId,
-          groupCode: o.orderGroup.groupCode,
-          customerName: o.orderGroup.customer.displayName,
-          status: o.status,
-          artworkStatus: o.artworkStatus,
-          productTypeCode: o.productType.code,
-          promisedShipDate: o.promisedShipDate ? bangkokDate(o.promisedShipDate) : null,
-          grossAmount: o.grossAmount.toFixed(2),
-          placedAt: toBangkokIso(o.orderGroup.placedAt),
-          groupExpiresAt: o.orderGroup.expiresAt ? toBangkokIso(o.orderGroup.expiresAt) : null,
-        }),
-      ),
+      data: rows.map((o): OrderQueueItemDto => ({
+        orderId: o.publicId,
+        orderCode: o.orderCode,
+        groupId: o.orderGroup.publicId,
+        groupCode: o.orderGroup.groupCode,
+        customerName: o.orderGroup.customer.displayName,
+        status: o.status,
+        artworkStatus: o.artworkStatus,
+        productTypeCode: o.productType.code,
+        promisedShipDate: o.promisedShipDate ? bangkokDate(o.promisedShipDate) : null,
+        grossAmount: o.grossAmount.toFixed(2),
+        placedAt: toBangkokIso(o.orderGroup.placedAt),
+        groupExpiresAt: o.orderGroup.expiresAt ? toBangkokIso(o.orderGroup.expiresAt) : null,
+      })),
       meta: { page: q.page, perPage: q.perPage, total },
     };
   }

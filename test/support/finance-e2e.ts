@@ -13,8 +13,15 @@ import { type FulfilmentApp } from './fulfilment-e2e';
  */
 
 /** An active vendor bank account sealed with this app's key (test apps generate one per process). */
-export async function activeVendorAccount(ctx: FulfilmentApp, vendorPk: bigint, digits: string): Promise<void> {
-  await ctx.prisma.vendorBankAccount.updateMany({ where: { vendorId: vendorPk, status: 'active' }, data: { status: 'superseded' } });
+export async function activeVendorAccount(
+  ctx: FulfilmentApp,
+  vendorPk: bigint,
+  digits: string,
+): Promise<void> {
+  await ctx.prisma.vendorBankAccount.updateMany({
+    where: { vendorId: vendorPk, status: 'active' },
+    data: { status: 'superseded' },
+  });
   await ctx.prisma.vendorBankAccount.create({
     data: {
       vendorId: vendorPk,
@@ -32,12 +39,23 @@ export async function activeVendorAccount(ctx: FulfilmentApp, vendorPk: bigint, 
 
 /** The active payout company bank account (created on a free 112x account when there is none). */
 export async function companyAccount(ctx: FulfilmentApp): Promise<{ id: string; glCode: string }> {
-  const existing = await ctx.prisma.companyBankAccount.findFirst({ where: { status: 'active', purpose: { in: ['payout', 'both'] } }, include: { glAccount: true }, orderBy: { id: 'asc' } });
+  const existing = await ctx.prisma.companyBankAccount.findFirst({
+    where: { status: 'active', purpose: { in: ['payout', 'both'] } },
+    include: { glAccount: true },
+    orderBy: { id: 'asc' },
+  });
   if (existing) return { id: existing.publicId, glCode: existing.glAccount.code };
-  const linked = (await ctx.prisma.companyBankAccount.findMany({ where: { status: { in: ['active', 'pending_approval'] } }, include: { glAccount: true } })).map((a) => a.glAccount.code);
+  const linked = (
+    await ctx.prisma.companyBankAccount.findMany({
+      where: { status: { in: ['active', 'pending_approval'] } },
+      include: { glAccount: true },
+    })
+  ).map((a) => a.glAccount.code);
   const code = ['1121', '1122', '1123'].find((c) => !linked.includes(c))!;
   const entity = await ctx.prisma.entity.findFirstOrThrow({ where: { isDefault: true } });
-  const gl = await ctx.prisma.account.findUniqueOrThrow({ where: { entityId_code: { entityId: entity.id, code } } });
+  const gl = await ctx.prisma.account.findUniqueOrThrow({
+    where: { entityId_code: { entityId: entity.id, code } },
+  });
   const digits = `100${String(ctx.run).padStart(7, '0')}`;
   const row = await ctx.prisma.companyBankAccount.create({
     data: {
@@ -62,13 +80,16 @@ export async function carrierBill(
   finance: string,
   opts: { net: string; vat: string; no: string },
 ): Promise<{ vendorId: string; billId: string }> {
-  const post = (path: string, body: object) => as(ctx, finance).post(path, body).set('Idempotency-Key', randomUUID());
+  const post = (path: string, body: object) =>
+    as(ctx, finance).post(path, body).set('Idempotency-Key', randomUUID());
   const vendor = (
     await post('/v1/admin/vendors', {
       kind: 'carrier',
       legalName: `[E2E] ขนส่ง ${opts.no} (fake)`,
       juristicType: 'company',
-      taxId: `05${String(ctx.run + opts.no.length * 7919).padStart(11, '0').slice(-11)}`,
+      taxId: `05${String(ctx.run + opts.no.length * 7919)
+        .padStart(11, '0')
+        .slice(-11)}`,
       isVatRegistered: true,
       defaultWhtCategory: 'transport',
       paymentTermsDays: 0,
@@ -79,7 +100,15 @@ export async function carrierBill(
       vendorInvoiceNo: opts.no,
       invoiceDate: bangkokDate(new Date()),
       isTaxInvoice: true,
-      lines: [{ description: 'ค่าขนส่ง (fake)', accountCode: '5130', netAmount: opts.net, vatAmount: opts.vat, whtCategory: 'transport' }],
+      lines: [
+        {
+          description: 'ค่าขนส่ง (fake)',
+          accountCode: '5130',
+          netAmount: opts.net,
+          vatAmount: opts.vat,
+          whtCategory: 'transport',
+        },
+      ],
     }).expect(201)
   ).body as { id: string };
   const pk = (await ctx.prisma.vendor.findUniqueOrThrow({ where: { publicId: vendor.id } })).id;
@@ -88,18 +117,39 @@ export async function carrierBill(
 }
 
 /** Pays the vendors' eligible payables through a run approved by a C-Level; returns the run. */
-export async function payVendors(ctx: FulfilmentApp, tokens: { finance: string; chief: string }, companyAccountId: string, vendorIds: string[]) {
-  const post = (token: string, path: string, body: object = {}) => as(ctx, token).post(path, body).set('Idempotency-Key', randomUUID());
-  const run = (await post(tokens.finance, '/v1/admin/payout-runs', { companyBankAccountId: companyAccountId, payOn: bangkokDate(new Date()), vendorIds }).expect(201)).body as {
+export async function payVendors(
+  ctx: FulfilmentApp,
+  tokens: { finance: string; chief: string },
+  companyAccountId: string,
+  vendorIds: string[],
+) {
+  const post = (token: string, path: string, body: object = {}) =>
+    as(ctx, token).post(path, body).set('Idempotency-Key', randomUUID());
+  const run = (
+    await post(tokens.finance, '/v1/admin/payout-runs', {
+      companyBankAccountId: companyAccountId,
+      payOn: bangkokDate(new Date()),
+      vendorIds,
+    }).expect(201)
+  ).body as {
     id: string;
     items: { id: string; status: string }[];
   };
-  const proposed = (await post(tokens.finance, `/v1/admin/payout-runs/${run.id}/actions/propose`).expect(200)).body as { approvalRequestId: string };
-  await post(tokens.chief, `/v1/admin/approvals/${proposed.approvalRequestId}/actions/approve`, { comment: 'อนุมัติ (fake)' }).expect(200);
+  const proposed = (await post(tokens.finance, `/v1/admin/payout-runs/${run.id}/actions/propose`).expect(200))
+    .body as { approvalRequestId: string };
+  await post(tokens.chief, `/v1/admin/approvals/${proposed.approvalRequestId}/actions/approve`, {
+    comment: 'อนุมัติ (fake)',
+  }).expect(200);
   await ctx.pump();
   await post(tokens.finance, `/v1/admin/payout-runs/${run.id}/actions/generate-bank-file`).expect(200);
-  const confirmations = run.items.filter((i) => i.status === 'included').map((i) => ({ reference: i.id, status: 'paid', bankRef: `B-${i.id.slice(0, 8)}` }));
-  const done = (await post(tokens.finance, `/v1/admin/payout-runs/${run.id}/actions/confirm`, { confirmations }).expect(200)).body as {
+  const confirmations = run.items
+    .filter((i) => i.status === 'included')
+    .map((i) => ({ reference: i.id, status: 'paid', bankRef: `B-${i.id.slice(0, 8)}` }));
+  const done = (
+    await post(tokens.finance, `/v1/admin/payout-runs/${run.id}/actions/confirm`, { confirmations }).expect(
+      200,
+    )
+  ).body as {
     id: string;
     runNo: string;
     cashAmount: string;

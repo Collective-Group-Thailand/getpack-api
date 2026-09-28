@@ -62,10 +62,20 @@ export class CheckoutDto {
   })
   taxProfileId?: string | null;
 
-  @TextField({ example: 'PO-0001', max: 60, optional: true, nullable: true, description: 'Customer PO number (D-125)' })
+  @TextField({
+    example: 'PO-0001',
+    max: 60,
+    optional: true,
+    nullable: true,
+    description: 'Customer PO number (D-125)',
+  })
   poNumber?: string | null;
 
-  @ApiPropertyOptional({ type: [String], example: ['account@example.com'], description: 'Copies of order e-mails (max 10)' })
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['account@example.com'],
+    description: 'Copies of order e-mails (max 10)',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(10)
@@ -82,7 +92,8 @@ export class CheckoutDto {
     type: String,
     example: '14182.80',
     pattern: '^\\d{1,12}\\.\\d{2}$',
-    description: 'The total the client showed; a different server total is refused (`checkout.total_changed`)',
+    description:
+      'The total the client showed; a different server total is refused (`checkout.total_changed`)',
   })
   @IsOptional()
   @IsString()
@@ -92,7 +103,8 @@ export class CheckoutDto {
     type: 'integer',
     minimum: 1,
     example: 40,
-    description: 'Points to redeem (D-133): capped at 20 % of the order value, the margin floor and the balance; min THB 10',
+    description:
+      'Points to redeem (D-133): capped at 20 % of the order value, the margin floor and the balance; min THB 10',
   })
   @IsOptional()
   @Type(() => Number)
@@ -104,13 +116,19 @@ export class CheckoutDto {
     type: String,
     format: 'uuid',
     example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001',
-    description: 'Order for this B2B company (I must be allowed to order for it); the invoice names its branch (D-125)',
+    description:
+      'Order for this B2B company (I must be allowed to order for it); the invoice names its branch (D-125)',
   })
   @IsOptional()
   @IsUUID()
   companyId?: string;
 
-  @ApiPropertyOptional({ type: String, format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1002', description: 'Company branch on the tax invoice; default branch when omitted' })
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1002',
+    description: 'Company branch on the tax invoice; default branch when omitted',
+  })
   @IsOptional()
   @IsUUID()
   companyBranchId?: string;
@@ -126,20 +144,32 @@ export class AdminCheckoutDto extends CheckoutDto {
   @Type(() => ScheduleOverrideDto)
   paymentSchedule?: ScheduleOverrideDto;
 
-  @TextField({ example: 'ลูกค้าขอส่งด่วน', max: 2000, optional: true, nullable: true, description: 'Internal only' })
+  @TextField({
+    example: 'ลูกค้าขอส่งด่วน',
+    max: 2000,
+    optional: true,
+    nullable: true,
+    description: 'Internal only',
+  })
   csRemarks?: string | null;
 
   @ApiPropertyOptional({
     type: String,
     example: '5',
-    description: 'CS discount % on the non-shipping lines, up to `discounts.cs_limit_pct` (D-052); above it raise a discount memo',
+    description:
+      'CS discount % on the non-shipping lines, up to `discounts.cs_limit_pct` (D-052); above it raise a discount memo',
   })
   @IsOptional()
   @IsString()
   @Matches(/^\d{1,3}(\.\d{1,4})?$/)
   csDiscountPct?: string;
 
-  @ApiPropertyOptional({ type: String, format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d1001', description: 'An approved discount memo of this customer (D-052), used once' })
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000d1001',
+    description: 'An approved discount memo of this customer (D-052), used once',
+  })
   @IsOptional()
   @IsUUID()
   discountMemoId?: string;
@@ -157,11 +187,24 @@ export class PreviewDestinationDto {
 }
 
 export class PreviewDiscountDto {
-  @ApiProperty({ type: 'integer', nullable: true, example: 1, description: 'Line the discount is on; null = the whole order' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 1,
+    description: 'Line the discount is on; null = the whole order',
+  })
   lineNo!: number | null;
 
   @ApiProperty({
-    enum: ['coupon', 'automatic_promotion', 'referral', 'cs_discount', 'discount_memo', 'company_discount', 'points_redemption'],
+    enum: [
+      'coupon',
+      'automatic_promotion',
+      'referral',
+      'cs_discount',
+      'discount_memo',
+      'company_discount',
+      'points_redemption',
+    ],
     enumName: 'DiscountSource',
     example: 'coupon',
   })
@@ -173,10 +216,20 @@ export class PreviewDiscountDto {
   @ApiProperty({ example: '0.00', description: 'Removed by the margin guard or the budget (D-053)' })
   cappedAmount!: string;
 
-  @ApiProperty({ nullable: true, enum: ['margin_floor', 'budget'], enumName: 'DiscountCapReason', example: null })
+  @ApiProperty({
+    nullable: true,
+    enum: ['margin_floor', 'budget'],
+    enumName: 'DiscountCapReason',
+    example: null,
+  })
   capReason!: string | null;
 
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: '0192f3a0-7c1e-7d2a-9b1f-000000090002' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-000000090002',
+  })
   promotionId!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'WELCOME10' })
@@ -184,7 +237,12 @@ export class PreviewDiscountDto {
 }
 
 export class PreviewOrderDto {
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca002' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca002',
+  })
   cartItemId!: string | null;
 
   @ApiProperty({ example: 'folding_carton' })
@@ -202,7 +260,10 @@ export class PreviewOrderDto {
   @ApiProperty({ type: [PreviewDestinationDto] })
   destinations!: PreviewDestinationDto[];
 
-  @ApiProperty({ type: [PreviewDiscountDto], description: 'Discounts on this order (promotions, points, memos)' })
+  @ApiProperty({
+    type: [PreviewDiscountDto],
+    description: 'Discounts on this order (promotions, points, memos)',
+  })
   discounts!: PreviewDiscountDto[];
 }
 
@@ -227,10 +288,18 @@ export class PreviewInstalmentDto {
   @ApiProperty({ example: '50.0000' })
   pct!: string;
 
-  @ApiProperty({ enum: ['at_checkout', 'before_production', 'before_shipping', 'on_delivery', 'days_after_delivery'], enumName: 'DueTrigger', example: 'at_checkout' })
+  @ApiProperty({
+    enum: ['at_checkout', 'before_production', 'before_shipping', 'on_delivery', 'days_after_delivery'],
+    enumName: 'DueTrigger',
+    example: 'at_checkout',
+  })
   dueTrigger!: string;
 
-  @ApiProperty({ enum: ['none', 'production', 'shipping'], enumName: 'RequiredBefore', example: 'production' })
+  @ApiProperty({
+    enum: ['none', 'production', 'shipping'],
+    enumName: 'RequiredBefore',
+    example: 'production',
+  })
   requiredBefore!: string;
 
   @ApiProperty({ example: '7091.40' })
@@ -249,7 +318,11 @@ export class PreviewScheduleDto {
 }
 
 export class CheckoutPreviewDto {
-  @ApiProperty({ type: PreviewScheduleDto, nullable: true, description: 'The payment schedule the order will get (D-020)' })
+  @ApiProperty({
+    type: PreviewScheduleDto,
+    nullable: true,
+    description: 'The payment schedule the order will get (D-020)',
+  })
   paymentSchedule!: PreviewScheduleDto | null;
 
   @ApiProperty({ type: MoneyTotalsDto })

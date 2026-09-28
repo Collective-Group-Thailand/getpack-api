@@ -98,7 +98,8 @@ export function applyFact(current: OrderFacts, fact: OrderFact, at: Date): FactR
   return { ok: true, changed: true, facts: next, status: statusOf(next) };
 }
 
-export type GroupStatus = 'pending_company_approval' | 'waiting_payment' | 'in_progress' | 'completed' | 'cancelled';
+export type GroupStatus =
+  'pending_company_approval' | 'waiting_payment' | 'in_progress' | 'completed' | 'cancelled';
 
 /** Group status from its orders (a group held for company approval stays held until decided or cancelled). */
 export function groupStatusOf(current: GroupStatus, orders: readonly OrderStatus[]): GroupStatus {

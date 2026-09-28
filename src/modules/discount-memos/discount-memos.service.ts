@@ -37,7 +37,11 @@ export interface MemoInput {
 }
 
 /** Resulting margin % after a discount, or null when the buy cost is unknown. */
-export function marginAfter(payable: MoneyValue, cost: MoneyValue | null, discount: MoneyValue): MoneyValue | null {
+export function marginAfter(
+  payable: MoneyValue,
+  cost: MoneyValue | null,
+  discount: MoneyValue,
+): MoneyValue | null {
   if (cost === null) return null;
   const after = payable.sub(discount);
   if (after.lte(0)) return D(-100);
@@ -76,7 +80,13 @@ export class DiscountMemosService {
 
   list(where: Prisma.DiscountMemoWhereInput, page: number, perPage: number) {
     return Promise.all([
-      this.prisma.discountMemo.findMany({ where, include: MEMO_INCLUDE, orderBy: { createdAt: 'desc' }, skip: (page - 1) * perPage, take: perPage }),
+      this.prisma.discountMemo.findMany({
+        where,
+        include: MEMO_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
       this.prisma.discountMemo.count({ where }),
     ]);
   }
@@ -85,18 +95,37 @@ export class DiscountMemosService {
 
   /** An order memo on the customer's CS cart. */
   async raiseForOrder(actor: UserActor, input: MemoInput): Promise<MemoRow> {
-    if (!input.customerId) throw new DomainException('validation.failed', { errors: [{ path: 'customerId', code: 'required', message: 'required' }] });
+    if (!input.customerId)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'customerId', code: 'required', message: 'required' }],
+      });
     await this.assertAboveCsLimit(input.requestedPct);
     const customerUserId = await this.customers.customerIdOf(input.customerId);
     // Price the customer's CS cart as checkout would (promotions and points included, no memo yet).
-    const draft = await this.checkout.price({ actor, customerUserId, channel: 'cs', csUserId: actor.userId }, {});
-    const cart = await this.prisma.cart.findUniqueOrThrow({ where: { id: draft.cartId }, include: { items: true } });
+    const draft = await this.checkout.price(
+      { actor, customerUserId, channel: 'cs', csUserId: actor.userId },
+      {},
+    );
+    const cart = await this.prisma.cart.findUniqueOrThrow({
+      where: { id: draft.cartId },
+      include: { items: true },
+    });
     const base = draft.orders.reduce(
-      (a, o) => a.add(o.lines.filter((l) => l.lineType !== 'shipping').reduce((b, l) => b.add(D(l.netAmount).sub(l.discountAmount)), D(0))),
+      (a, o) =>
+        a.add(
+          o.lines
+            .filter((l) => l.lineType !== 'shipping')
+            .reduce((b, l) => b.add(D(l.netAmount).sub(l.discountAmount)), D(0)),
+        ),
       D(0),
     );
-    const payable = draft.orders.reduce((a, o) => a.add(D(o.totals.netAmount).sub(o.totals.discountAmount)), D(0));
-    const cost = draft.orders.every((o) => o.buyCostNet !== null) ? draft.orders.reduce((a, o) => a.add(o.buyCostNet!), D(0)) : null;
+    const payable = draft.orders.reduce(
+      (a, o) => a.add(D(o.totals.netAmount).sub(o.totals.discountAmount)),
+      D(0),
+    );
+    const cost = draft.orders.every((o) => o.buyCostNet !== null)
+      ? draft.orders.reduce((a, o) => a.add(o.buyCostNet!), D(0))
+      : null;
     const amount = base.mul(input.requestedPct).div(100).toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_UP);
     const margin = marginAfter(payable, cost, amount);
     const floor = D(String((await this.settings.at('pricing.margin_floor_pct')).value));
@@ -123,7 +152,8 @@ export class DiscountMemosService {
   async raiseForCompany(actor: UserActor, companyPublicId: string, input: MemoInput): Promise<MemoRow> {
     await this.assertAboveCsLimit(input.requestedPct);
     const company = await this.companies.get(companyPublicId);
-    if (company.status !== 'active') throw new DomainException('companies.invalid_status', { params: { status: company.status } });
+    if (company.status !== 'active')
+      throw new DomainException('companies.invalid_status', { params: { status: company.status } });
     const days = Number((await this.settings.at('quotes.validity_days')).value);
     return this.create(actor, {
       scope: 'company',
@@ -168,10 +198,18 @@ export class DiscountMemosService {
   ): Promise<MemoRow> {
     return this.prisma.withTx(async (tx) => {
       const files = m.evidenceFileIds.length
-        ? await tx.fileObject.findMany({ where: { publicId: { in: m.evidenceFileIds }, ownerUserId: actor.userId, uploadStatus: 'uploaded' } })
+        ? await tx.fileObject.findMany({
+            where: {
+              publicId: { in: m.evidenceFileIds },
+              ownerUserId: actor.userId,
+              uploadStatus: 'uploaded',
+            },
+          })
         : [];
       if (files.length !== new Set(m.evidenceFileIds).size)
-        throw new DomainException('validation.failed', { errors: [{ path: 'evidenceFileIds', code: 'fileReady', message: 'not uploaded files of yours' }] });
+        throw new DomainException('validation.failed', {
+          errors: [{ path: 'evidenceFileIds', code: 'fileReady', message: 'not uploaded files of yours' }],
+        });
       const memo = await tx.discountMemo.create({
         data: {
           entityId: await this.entities.defaultEntityId(),
@@ -211,7 +249,13 @@ export class DiscountMemosService {
         },
       });
       await tx.discountMemo.update({ where: { id: memo.id }, data: { approvalRequestId: request.id } });
-      await this.record(tx, memo, 'discount_memo.requested', { pct: D(m.requestedPct).toFixed(4), scope: m.scope, approvalId: request.publicId }, actor);
+      await this.record(
+        tx,
+        memo,
+        'discount_memo.requested',
+        { pct: D(m.requestedPct).toFixed(4), scope: m.scope, approvalId: request.publicId },
+        actor,
+      );
       return this.get(memo.publicId, tx);
     });
   }
@@ -219,12 +263,16 @@ export class DiscountMemosService {
   async withdraw(actor: UserActor, publicId: string): Promise<MemoRow> {
     const memo = await this.get(publicId);
     if (memo.requestedById !== actor.userId) throw new DomainException('auth.forbidden');
-    if (memo.status !== 'pending_approval' || !memo.approvalRequest) throw new DomainException('discount_memos.not_usable', { params: { status: memo.status } });
+    if (memo.status !== 'pending_approval' || !memo.approvalRequest)
+      throw new DomainException('discount_memos.not_usable', { params: { status: memo.status } });
     await this.approvals.withdraw(actor, memo.approvalRequest.publicId, 'withdrawn by the requester');
     return this.prisma.withTx(async (tx) => {
       const current = await tx.discountMemo.findUniqueOrThrow({ where: { id: memo.id } });
       if (current.status === 'pending_approval') {
-        await tx.discountMemo.update({ where: { id: memo.id }, data: { status: 'withdrawn', rowVersion: { increment: 1 } } });
+        await tx.discountMemo.update({
+          where: { id: memo.id },
+          data: { status: 'withdrawn', rowVersion: { increment: 1 } },
+        });
         await this.record(tx, current, 'discount_memo.withdrawn', {}, actor);
       }
       return this.get(publicId, tx);
@@ -233,18 +281,30 @@ export class DiscountMemosService {
 
   // --- decisions ----------------------------------------------------------------------------------------
 
-  @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], { consumer: 'discount_memos.decision' })
+  @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], {
+    consumer: 'discount_memos.decision',
+  })
   async onApprovalOutcome(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     if (event.payload['policyKey'] !== POLICY) return;
     const request = await tx.approvalRequest.findUnique({ where: { publicId: event.aggregateId } });
     if (!request) return;
-    const memo = await tx.discountMemo.findFirst({ where: { approvalRequestId: request.id, status: 'pending_approval' } });
+    const memo = await tx.discountMemo.findFirst({
+      where: { approvalRequestId: request.id, status: 'pending_approval' },
+    });
     if (!memo) return;
     const actor = systemActor('discount_memos.decision');
     const now = new Date();
     if (event.type !== 'approval.approved') {
-      const status = event.type === 'approval.rejected' ? 'rejected' : event.type === 'approval.expired' ? 'expired' : 'withdrawn';
-      await tx.discountMemo.update({ where: { id: memo.id }, data: { status, decidedAt: status === 'rejected' ? now : null, rowVersion: { increment: 1 } } });
+      const status =
+        event.type === 'approval.rejected'
+          ? 'rejected'
+          : event.type === 'approval.expired'
+            ? 'expired'
+            : 'withdrawn';
+      await tx.discountMemo.update({
+        where: { id: memo.id },
+        data: { status, decidedAt: status === 'rejected' ? now : null, rowVersion: { increment: 1 } },
+      });
       await this.record(tx, memo, `discount_memo.${status}`, {}, actor);
       return;
     }
@@ -253,31 +313,70 @@ export class DiscountMemosService {
       const identity =
         (await tx.companyDiscount.findUnique({ where: { companyId: memo.companyId! } })) ??
         (await tx.companyDiscount.create({ data: { companyId: memo.companyId! } }));
-      const last = await tx.companyDiscountVersion.findFirst({ where: { discountId: identity.id }, orderBy: { versionNo: 'desc' } });
+      const last = await tx.companyDiscountVersion.findFirst({
+        where: { discountId: identity.id },
+        orderBy: { versionNo: 'desc' },
+      });
       await tx.companyDiscountVersion.create({
-        data: { discountId: identity.id, versionNo: (last?.versionNo ?? 0) + 1, effectiveFrom: now, status: 'approved', discountPct: memo.requestedPct, discountMemoId: memo.id },
+        data: {
+          discountId: identity.id,
+          versionNo: (last?.versionNo ?? 0) + 1,
+          effectiveFrom: now,
+          status: 'approved',
+          discountPct: memo.requestedPct,
+          discountMemoId: memo.id,
+        },
       });
       const row = await tx.discountMemo.update({
         where: { id: memo.id },
-        data: { status: 'applied', approvedPct: memo.requestedPct, decidedAt: now, appliedAt: now, rowVersion: { increment: 1 } },
+        data: {
+          status: 'applied',
+          approvedPct: memo.requestedPct,
+          decidedAt: now,
+          appliedAt: now,
+          rowVersion: { increment: 1 },
+        },
       });
-      await this.record(tx, row, 'discount_memo.approved', { scope: 'company', pct: memo.requestedPct.toFixed(4) }, actor);
+      await this.record(
+        tx,
+        row,
+        'discount_memo.approved',
+        { scope: 'company', pct: memo.requestedPct.toFixed(4) },
+        actor,
+      );
       return;
     }
     const row = await tx.discountMemo.update({
       where: { id: memo.id },
-      data: { status: 'approved', approvedPct: memo.requestedPct, decidedAt: now, rowVersion: { increment: 1 } },
+      data: {
+        status: 'approved',
+        approvedPct: memo.requestedPct,
+        decidedAt: now,
+        rowVersion: { increment: 1 },
+      },
     });
-    await this.record(tx, row, 'discount_memo.approved', { scope: 'order', pct: memo.requestedPct.toFixed(4) }, actor);
+    await this.record(
+      tx,
+      row,
+      'discount_memo.approved',
+      { scope: 'order', pct: memo.requestedPct.toFixed(4) },
+      actor,
+    );
   }
 
   /** Scheduled: approved order memos past their validity expire unused (D-052). */
   async expireUnused(now = new Date()): Promise<number> {
-    const due = await this.prisma.discountMemo.findMany({ where: { status: 'approved', validUntil: { lte: now } } });
+    const due = await this.prisma.discountMemo.findMany({
+      where: { status: 'approved', validUntil: { lte: now } },
+    });
     for (const memo of due) {
       await this.prisma.withTx(async (tx) => {
-        const { count } = await tx.discountMemo.updateMany({ where: { id: memo.id, status: 'approved' }, data: { status: 'expired', rowVersion: { increment: 1 } } });
-        if (count === 1) await this.record(tx, memo, 'discount_memo.expired', {}, systemActor('discount_memos.expire'));
+        const { count } = await tx.discountMemo.updateMany({
+          where: { id: memo.id, status: 'approved' },
+          data: { status: 'expired', rowVersion: { increment: 1 } },
+        });
+        if (count === 1)
+          await this.record(tx, memo, 'discount_memo.expired', {}, systemActor('discount_memos.expire'));
       });
     }
     return due.length;
@@ -286,7 +385,12 @@ export class DiscountMemosService {
   async record(tx: Tx, memo: DiscountMemo, type: string, data: Record<string, unknown>, actor: Actor) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'discount_memo', aggregateId: memo.publicId, payload: { memoId: memo.publicId, ...data } },
+      {
+        type,
+        aggregateType: 'discount_memo',
+        aggregateId: memo.publicId,
+        payload: { memoId: memo.publicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {

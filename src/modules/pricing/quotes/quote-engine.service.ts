@@ -523,7 +523,10 @@ export class QuoteEngineService {
     for (const leg of legs) {
       const prepared = await this.shipping.prepare(parts, leg.quantity, leg.postcode, at, db);
       if (!prepared.customer.priced) {
-        out.push({ available: false, reason: ShippingQuoteService.missReason(prepared.customer) ?? 'no_rate_card' });
+        out.push({
+          available: false,
+          reason: ShippingQuoteService.missReason(prepared.customer) ?? 'no_rate_card',
+        });
         continue;
       }
       const delivery = await this.shipping.delivery(factoryId, prepared, at, db);

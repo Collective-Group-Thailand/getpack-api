@@ -1,6 +1,10 @@
 import { type Type } from '@nestjs/common';
 
-import { AdminPaymentsController, PaymentWebhooksController, StorePaymentsController } from './payments.controller';
+import {
+  AdminPaymentsController,
+  PaymentWebhooksController,
+  StorePaymentsController,
+} from './payments.controller';
 import { AdminRefundsController } from './refunds.controller';
 
 export const PAYMENTS_STORE_CONTROLLERS: Type<unknown>[] = [StorePaymentsController];

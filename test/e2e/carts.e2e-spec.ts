@@ -130,7 +130,11 @@ describe('carts (e2e, B3.1)', () => {
   it('re-prices an item past its lock and waits for the client to confirm (D-051)', async () => {
     const quote = await saveQuote(ctx, customer, fixture, [4000]);
     const added = await as(ctx, customer)
-      .post('/v1/store/cart/items', { quoteId: quote.id, quoteOptionId: quote.options[0]!.id, designOption: 'own_file' })
+      .post('/v1/store/cart/items', {
+        quoteId: quote.id,
+        quoteOptionId: quote.options[0]!.id,
+        designOption: 'own_file',
+      })
       .expect(201);
     const item = (added.body as CartBody).items.find((i) => i.quoteId === quote.id)!;
     await as(ctx, customer).post(`/v1/store/cart/items/${item.id}/actions/reprice`).expect(409);
@@ -139,7 +143,9 @@ describe('carts (e2e, B3.1)', () => {
     const expired = (await as(ctx, customer).get('/v1/store/cart').expect(200)).body as CartBody;
     expect(expired.items.find((i) => i.id === item.id)!.priceLocked).toBe(false);
 
-    const repriced = await as(ctx, customer).post(`/v1/store/cart/items/${item.id}/actions/reprice`).expect(200);
+    const repriced = await as(ctx, customer)
+      .post(`/v1/store/cart/items/${item.id}/actions/reprice`)
+      .expect(200);
     const pending = (repriced.body as CartBody).items.find((i) => i.id === item.id)!.pendingReprice!;
     expect(pending.differenceAmount).toBe('0.00');
     expect(pending.quoteId).not.toBe(quote.id);

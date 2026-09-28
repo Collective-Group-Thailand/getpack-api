@@ -111,7 +111,10 @@ import { WEB_PUSH } from './web-push/web-push.port';
       useFactory: (config: AppConfig) =>
         config.useFakes
           ? new FakeSlipVerifier()
-          : new Slip2GoAdapter({ apiUrl: config.get('SLIP2GO_API_URL'), secretKey: config.get('SLIP2GO_SECRET_KEY') }),
+          : new Slip2GoAdapter({
+              apiUrl: config.get('SLIP2GO_API_URL'),
+              secretKey: config.get('SLIP2GO_SECRET_KEY'),
+            }),
     },
     {
       provide: SMS_SENDER,
@@ -217,7 +220,8 @@ import { WEB_PUSH } from './web-push/web-push.port';
       // @packio/dieline (B4.1): unavailable until packio-web publishes it; the `drawing.engine` flag gates use.
       provide: DIELINE_ENGINE,
       inject: [AppConfig],
-      useFactory: (config: AppConfig) => (config.useFakes ? new FakeDielineEngine() : new PackioDielineEngine()),
+      useFactory: (config: AppConfig) =>
+        config.useFakes ? new FakeDielineEngine() : new PackioDielineEngine(),
     },
     {
       provide: VIRUS_SCANNER,

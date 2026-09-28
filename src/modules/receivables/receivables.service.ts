@@ -84,11 +84,21 @@ export class ReceivablesService {
   /** Open items bucketed by days past due at `asOf`, per customer / company (§6 aging). */
   async aging(asOf: string, companyId?: bigint) {
     const rows = await this.prisma.receivableItem.findMany({
-      where: { status: { in: [...OPEN] }, createdAt: { lt: new Date(Date.parse(`${asOf}T00:00:00+07:00`) + DAY_MS) }, ...(companyId && { companyId }) },
+      where: {
+        status: { in: [...OPEN] },
+        createdAt: { lt: new Date(Date.parse(`${asOf}T00:00:00+07:00`) + DAY_MS) },
+        ...(companyId && { companyId }),
+      },
       include: ITEM_INCLUDE,
     });
-    const parties = new Map<string, { customer: ItemRow['customer']; company: ItemRow['company']; buckets: Record<AgingBucket, MoneyValue> }>();
-    const totals = Object.fromEntries(AGING_BUCKETS.map((b) => [b, ZERO()])) as Record<AgingBucket, MoneyValue>;
+    const parties = new Map<
+      string,
+      { customer: ItemRow['customer']; company: ItemRow['company']; buckets: Record<AgingBucket, MoneyValue> }
+    >();
+    const totals = Object.fromEntries(AGING_BUCKETS.map((b) => [b, ZERO()])) as Record<
+      AgingBucket,
+      MoneyValue
+    >;
     for (const row of rows) {
       const key = row.company?.publicId ?? row.customer.publicId;
       const party = parties.get(key) ?? {
@@ -129,7 +139,9 @@ export class ReceivablesService {
       const total = D(i.cashAmount);
       if (total.isZero()) continue;
       // The share of orders already invoiced is in the receivable items above.
-      const notInvoiced = i.allocations.filter((a) => !a.order.deliveredAt).reduce((a, x) => a.add(x.cashAmount.toString()), ZERO());
+      const notInvoiced = i.allocations
+        .filter((a) => !a.order.deliveredAt)
+        .reduce((a, x) => a.add(x.cashAmount.toString()), ZERO());
       uninvoiced = uninvoiced.add(open.mul(notInvoiced).div(total));
     }
     return D(items._sum.openAmount?.toString() ?? '0').add(uninvoiced.toDecimalPlaces(2));
@@ -144,9 +156,15 @@ export class ReceivablesService {
    */
   async dunning(now = new Date()): Promise<number> {
     const today = bangkokDate(now);
-    const rules = (await this.settings.at('b2b.overdue_rules', { at: now })).value as { reminderDaysBeforeDue: number };
+    const rules = (await this.settings.at('b2b.overdue_rules', { at: now })).value as {
+      reminderDaysBeforeDue: number;
+    };
     const items = await this.prisma.receivableItem.findMany({
-      where: { status: { in: [...OPEN] }, companyId: null, dueDate: { lte: dateOnly(addCalendarDays(today, rules.reminderDaysBeforeDue)) } },
+      where: {
+        status: { in: [...OPEN] },
+        companyId: null,
+        dueDate: { lte: dateOnly(addCalendarDays(today, rules.reminderDaysBeforeDue)) },
+      },
       include: { dunningNotices: true, customer: { select: { publicId: true } }, customerDocument: true },
     });
     let sent = 0;
@@ -172,7 +190,9 @@ export class ReceivablesService {
           },
           systemActor('receivables.dunning'),
         );
-        await tx.dunningNotice.create({ data: { receivableItemId: item.id, stage, domainEventId: event.id } });
+        await tx.dunningNotice.create({
+          data: { receivableItemId: item.id, stage, domainEventId: event.id },
+        });
       });
       sent++;
     }
@@ -211,7 +231,9 @@ export class ReceivablesService {
         }
         target = target.toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_UP);
       } else throw new DomainException('receivables.allowance_rates_unset');
-      const allowance = await tx.account.findUniqueOrThrow({ where: { entityId_code: { entityId, code: '1219' } } });
+      const allowance = await tx.account.findUniqueOrThrow({
+        where: { entityId_code: { entityId, code: '1219' } },
+      });
       const sum = await tx.journalLine.aggregate({
         where: { accountId: allowance.id, journalEntry: { status: 'posted' } },
         _sum: { debit: true, credit: true },
@@ -265,7 +287,10 @@ export class ReceivablesService {
 
   async requestWriteOff(actor: UserActor, publicId: string, reason: string) {
     await this.prisma.withTx(async (tx) => {
-      const item = await tx.receivableItem.findUnique({ where: { publicId }, include: { customerDocument: true } });
+      const item = await tx.receivableItem.findUnique({
+        where: { publicId },
+        include: { customerDocument: true },
+      });
       if (!item) throw new DomainException('http.not_found');
       if (!OPEN.includes(item.status as (typeof OPEN)[number]) || item.writeOffApprovalRequestId)
         throw new DomainException('receivables.nothing_to_write_off', { params: { status: item.status } });
@@ -275,7 +300,11 @@ export class ReceivablesService {
         requester: actor,
         amount: item.openAmount.toFixed(2),
         entityId: item.entityId,
-        payload: { document: item.customerDocument.docNumber, openAmount: item.openAmount.toFixed(2), reason },
+        payload: {
+          document: item.customerDocument.docNumber,
+          openAmount: item.openAmount.toFixed(2),
+          reason,
+        },
       });
       await tx.receivableItem.update({
         where: { id: item.id },
@@ -305,7 +334,12 @@ export class ReceivablesService {
       where: { id: approval.subjectId },
       include: { customerDocument: true, customer: true, company: true, order: true },
     });
-    if (!item || item.writeOffApprovalRequestId !== approval.id || !OPEN.includes(item.status as (typeof OPEN)[number])) return;
+    if (
+      !item ||
+      item.writeOffApprovalRequestId !== approval.id ||
+      !OPEN.includes(item.status as (typeof OPEN)[number])
+    )
+      return;
     if (event.type !== 'approval.approved') {
       await tx.receivableItem.update({
         where: { id: item.id },
@@ -316,7 +350,12 @@ export class ReceivablesService {
     const amount = item.openAmount.toFixed(2);
     await tx.receivableItem.update({
       where: { id: item.id },
-      data: { status: 'written_off', openAmount: '0.00', writtenOffAt: new Date(), rowVersion: { increment: 1 } },
+      data: {
+        status: 'written_off',
+        openAmount: '0.00',
+        writtenOffAt: new Date(),
+        rowVersion: { increment: 1 },
+      },
     });
     await this.events.record(
       tx,

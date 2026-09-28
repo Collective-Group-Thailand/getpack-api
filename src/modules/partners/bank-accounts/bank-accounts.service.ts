@@ -5,7 +5,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type VendorBankAccount } from '@generated/prisma/client';
-import { sodPartyKey,SodService } from '@modules/iam/sod.service';
+import { sodPartyKey, SodService } from '@modules/iam/sod.service';
 import { Injectable } from '@nestjs/common';
 import { ApprovalsService } from '@platform/approvals/approvals.service';
 import { AuditService } from '@platform/audit/audit.service';
@@ -80,7 +80,11 @@ export class BankAccountsService {
   ): Promise<BankAccountDto> {
     const factory = await this.access.factory(actor, factoryPublicId);
     return this.prisma.withTx(async (tx) => {
-      const row = await this.proposeIn(tx, actor, factory.vendorId, input, { factory: factory.code, factoryId: factory.id, factoryPublicId: factory.publicId });
+      const row = await this.proposeIn(tx, actor, factory.vendorId, input, {
+        factory: factory.code,
+        factoryId: factory.id,
+        factoryPublicId: factory.publicId,
+      });
       const step = await tx.factoryOnboardingStep.findUniqueOrThrow({
         where: { factoryId_step: { factoryId: factory.id, step: 'bank_account' } },
       });
@@ -92,11 +96,19 @@ export class BankAccountsService {
   }
 
   /** A carrier, freelancer or service vendor's bank account (B5.3): same dual approval and verification call. */
-  async proposeForVendor(actor: UserActor, vendorPublicId: string, input: ProposeBankAccountDto): Promise<BankAccountDto> {
+  async proposeForVendor(
+    actor: UserActor,
+    vendorPublicId: string,
+    input: ProposeBankAccountDto,
+  ): Promise<BankAccountDto> {
     return this.prisma.withTx(async (tx) => {
       const vendor = await tx.vendor.findUnique({ where: { publicId: vendorPublicId } });
       if (!vendor || vendor.kind === 'factory') throw new DomainException('http.not_found');
-      const row = await this.proposeIn(tx, actor, vendor.id, input, { factory: null, factoryId: null, factoryPublicId: null });
+      const row = await this.proposeIn(tx, actor, vendor.id, input, {
+        factory: null,
+        factoryId: null,
+        factoryPublicId: null,
+      });
       return this.toDto(row, true, await this.duplicateHashes([row], tx));
     });
   }
@@ -203,10 +215,16 @@ export class BankAccountsService {
         data: { verificationCall: { ...call } },
       });
       const factory = await tx.factory.findUnique({ where: { vendorId: account.vendorId } });
-      await this.record(tx, account.publicId, factory?.publicId ?? null, 'vendor_bank_account.verification_recorded', {
-        outcome: call.outcome,
-        calledNumberMasked: call.calledNumberMasked,
-      });
+      await this.record(
+        tx,
+        account.publicId,
+        factory?.publicId ?? null,
+        'vendor_bank_account.verification_recorded',
+        {
+          outcome: call.outcome,
+          calledNumberMasked: call.calledNumberMasked,
+        },
+      );
       if (account.approvalRequest?.status === 'approved' && call.outcome === 'confirmed') {
         await this.activate(tx, account, factory?.publicId ?? null, factory?.id ?? null);
       }
@@ -254,7 +272,12 @@ export class BankAccountsService {
     }
   }
 
-  private async activate(tx: Tx, account: VendorBankAccount, factoryPublicId: string | null, factoryId: bigint | null) {
+  private async activate(
+    tx: Tx,
+    account: VendorBankAccount,
+    factoryPublicId: string | null,
+    factoryId: bigint | null,
+  ) {
     const now = new Date();
     await tx.vendorBankAccount.updateMany({
       where: { vendorId: account.vendorId, status: 'active' },

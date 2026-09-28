@@ -3,7 +3,13 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
-import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import {
+  ApiConcurrency,
+  ApiEndpoint,
+  ApiEtag,
+  ApiStandardErrors,
+  ApiSuccess,
+} from '@common/openapi/decorators';
 import { OrdersService } from '@modules/orders/orders.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Res } from '@nestjs/common';
@@ -76,7 +82,11 @@ export class AdminPaymentSchedulesController {
     implements: DECISIONS,
   })
   @ApiEtag()
-  @ApiSuccess(200, { description: 'Schedule', type: AdminPaymentScheduleDto, example: ADMIN_SCHEDULE_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Schedule',
+    type: AdminPaymentScheduleDto,
+    example: ADMIN_SCHEDULE_EXAMPLE,
+  })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@Param('groupId', ParseUUIDPipe) groupId: string, @Res({ passthrough: true }) res: Response) {
     const group = await this.orders.group(groupId);
@@ -103,7 +113,11 @@ export class AdminPaymentSchedulesController {
     type: ScheduleOverrideDto,
     examples: { default: { value: { templateKey: 'full_upfront', reason: 'ลูกค้าขอชำระเต็มจำนวน' } } },
   })
-  @ApiSuccess(200, { description: 'New schedule', type: AdminPaymentScheduleDto, example: ADMIN_SCHEDULE_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'New schedule',
+    type: AdminPaymentScheduleDto,
+    example: ADMIN_SCHEDULE_EXAMPLE,
+  })
   @ApiStandardErrors(
     'http.bad_request',
     'http.malformed_json',
@@ -162,7 +176,11 @@ export class AdminPaymentSchedulesController {
       },
     },
   })
-  @ApiSuccess(201, { description: 'Template with its version in force', type: TemplateDto, example: TEMPLATE_EXAMPLE })
+  @ApiSuccess(201, {
+    description: 'Template with its version in force',
+    type: TemplateDto,
+    example: TEMPLATE_EXAMPLE,
+  })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
   async createVersion(
     @CurrentActor() actor: Actor,

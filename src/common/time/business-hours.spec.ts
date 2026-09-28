@@ -17,10 +17,14 @@ describe('WorkingDayCalendar.addBusinessMinutes', () => {
     ['after closing on Friday → Monday', '2026-10-02T19:00:00+07:00', '2026-10-05T13:00:00+07:00'],
     ['over a holiday', '2026-10-12T17:00:00+07:00', '2026-10-14T12:00:00+07:00'],
   ])('4 business hours %s', (_name, start, expected) => {
-    expect(calendar.addBusinessMinutes(at(start), 240, window).toISOString()).toBe(at(expected).toISOString());
+    expect(calendar.addBusinessMinutes(at(start), 240, window).toISOString()).toBe(
+      at(expected).toISOString(),
+    );
   });
 
   it('refuses an empty window', () => {
-    expect(() => calendar.addBusinessMinutes(new Date(), 60, { from: '18:00', to: '09:00' })).toThrow(RangeError);
+    expect(() => calendar.addBusinessMinutes(new Date(), 60, { from: '18:00', to: '09:00' })).toThrow(
+      RangeError,
+    );
   });
 });

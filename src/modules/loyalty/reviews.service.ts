@@ -30,17 +30,34 @@ export class ReviewsService {
     private readonly activity: ActivityLogService,
   ) {}
 
-  async submit(actor: UserActor, orderPublicId: string, input: { rating: number; comment?: string | null }): Promise<ReviewRow> {
+  async submit(
+    actor: UserActor,
+    orderPublicId: string,
+    input: { rating: number; comment?: string | null },
+  ): Promise<ReviewRow> {
     return this.prisma.withTx(async (tx) => {
       const order = await tx.order.findUnique({ where: { publicId: orderPublicId } });
       if (!order || order.customerUserId !== actor.userId) throw new DomainException('http.not_found');
       if (!order.deliveredAt) throw new DomainException('reviews.not_delivered');
-      if (await tx.orderReview.findUnique({ where: { orderId: order.id } })) throw new DomainException('reviews.exists');
+      if (await tx.orderReview.findUnique({ where: { orderId: order.id } }))
+        throw new DomainException('reviews.exists');
       const review = await tx.orderReview.create({
-        data: { orderId: order.id, userId: actor.userId, rating: input.rating, comment: input.comment?.trim() || null },
+        data: {
+          orderId: order.id,
+          userId: actor.userId,
+          rating: input.rating,
+          comment: input.comment?.trim() || null,
+        },
       });
       const rewards = await this.settings.at('loyalty.activity_rewards', { tx });
-      await this.loyalty.reward(tx, actor.userId, 'earn_review', rewards.value.reviewBaht, { reviewId: review.id, orderId: order.id }, actor);
+      await this.loyalty.reward(
+        tx,
+        actor.userId,
+        'earn_review',
+        rewards.value.reviewBaht,
+        { reviewId: review.id, orderId: order.id },
+        actor,
+      );
       await this.record(tx, review, order.publicId, 'review.submitted', { rating: review.rating }, actor);
       return this.get(review.publicId, tx);
     });
@@ -63,7 +80,13 @@ export class ReviewsService {
 
   list(where: Prisma.OrderReviewWhereInput, page: number, perPage: number) {
     return Promise.all([
-      this.prisma.orderReview.findMany({ where, include: REVIEW_INCLUDE, orderBy: { createdAt: 'desc' }, skip: (page - 1) * perPage, take: perPage }),
+      this.prisma.orderReview.findMany({
+        where,
+        include: REVIEW_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
       this.prisma.orderReview.count({ where }),
     ]);
   }
@@ -76,7 +99,12 @@ export class ReviewsService {
       if (review.status !== status) {
         const row = await tx.orderReview.update({
           where: { id: review.id },
-          data: { status, moderatedById: actor.userId, moderatedAt: new Date(), rowVersion: { increment: 1 } },
+          data: {
+            status,
+            moderatedById: actor.userId,
+            moderatedAt: new Date(),
+            rowVersion: { increment: 1 },
+          },
         });
         await this.record(tx, row, review.order.publicId, `review.${status}`, { from: review.status }, actor);
       }
@@ -84,10 +112,22 @@ export class ReviewsService {
     });
   }
 
-  private async record(tx: Tx, review: OrderReview, orderPublicId: string, type: string, data: Record<string, unknown>, actor: Actor) {
+  private async record(
+    tx: Tx,
+    review: OrderReview,
+    orderPublicId: string,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'order', aggregateId: orderPublicId, payload: { orderId: orderPublicId, reviewId: review.publicId, ...data } },
+      {
+        type,
+        aggregateType: 'order',
+        aggregateId: orderPublicId,
+        payload: { orderId: orderPublicId, reviewId: review.publicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {

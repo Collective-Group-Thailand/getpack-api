@@ -126,7 +126,12 @@ export function priceOrderLines(
     });
     const productGross = productSideGross.sub(feeGross);
     const productVat = productSideVat.sub(feeVat);
-    drafts.push({ type: 'product', quantity: option.quantity, net: productGross.sub(productVat), vat: productVat });
+    drafts.push({
+      type: 'product',
+      quantity: option.quantity,
+      net: productGross.sub(productVat),
+      vat: productVat,
+    });
     drafts.push(...feeDrafts);
   } else {
     const net = D(option.netAmount).sub(quoteShipNet);
@@ -158,11 +163,7 @@ export function priceOrderLines(
       whtRatePct: whtRate.toFixed(4),
       whtAmount: formatMoney(wht),
       revenueCategory:
-        d.type === 'product'
-          ? ctx.productRevenue
-          : d.type === 'shipping'
-            ? 'shipping'
-            : ('design_service'),
+        d.type === 'product' ? ctx.productRevenue : d.type === 'shipping' ? 'shipping' : 'design_service',
       taxNature: ctx.nature,
     };
   });

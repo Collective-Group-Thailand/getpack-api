@@ -45,7 +45,11 @@ export class TrialBalanceRowDto {
   @ApiProperty({ example: 'Bank account 1' })
   nameEn!: string;
 
-  @ApiProperty({ enum: ['asset', 'liability', 'equity', 'revenue', 'cost_of_sales', 'expense'], enumName: 'AccountType', example: 'asset' })
+  @ApiProperty({
+    enum: ['asset', 'liability', 'equity', 'revenue', 'cost_of_sales', 'expense'],
+    enumName: 'AccountType',
+    example: 'asset',
+  })
   accountType!: string;
 
   @ApiProperty({ enum: ['debit', 'credit'], enumName: 'LedgerSide', example: 'debit' })
@@ -95,8 +99,24 @@ export class TrialBalanceDto {
   balanced!: boolean;
 }
 
-const TB_ROW: TrialBalanceRowDto = { accountCode: '1121', nameTh: 'เงินฝากธนาคาร บัญชีที่ 1', nameEn: 'Bank account 1', accountType: 'asset', normalSide: 'debit', opening: '100000.00', debit: '5350.00', credit: '5504.40', closing: '99845.60' };
-export const TB_EXAMPLE: TrialBalanceDto = { from: '2026-10', to: '2026-10', accounts: [TB_ROW], totals: { opening: '0.00', debit: '125000.00', credit: '125000.00', closing: '0.00' }, balanced: true };
+const TB_ROW: TrialBalanceRowDto = {
+  accountCode: '1121',
+  nameTh: 'เงินฝากธนาคาร บัญชีที่ 1',
+  nameEn: 'Bank account 1',
+  accountType: 'asset',
+  normalSide: 'debit',
+  opening: '100000.00',
+  debit: '5350.00',
+  credit: '5504.40',
+  closing: '99845.60',
+};
+export const TB_EXAMPLE: TrialBalanceDto = {
+  from: '2026-10',
+  to: '2026-10',
+  accounts: [TB_ROW],
+  totals: { opening: '0.00', debit: '125000.00', credit: '125000.00', closing: '0.00' },
+  balanced: true,
+};
 
 export class GlDetailQuery extends MonthRangeQuery {
   @ApiProperty({ example: '1121' })
@@ -128,7 +148,11 @@ export class PersonRefDto {
 }
 
 export class GlLineDto {
-  @ApiProperty({ format: 'uuid', example: JOURNAL, description: 'Drill down: GET /admin/ledger/journals/{id}' })
+  @ApiProperty({
+    format: 'uuid',
+    example: JOURNAL,
+    description: 'Drill down: GET /admin/ledger/journals/{id}',
+  })
   journalEntryId!: string;
 
   @ApiProperty({ type: String, nullable: true, example: 'JE202610-000012' })
@@ -137,7 +161,11 @@ export class GlLineDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   jvNumber!: string | null;
 
-  @ApiProperty({ enum: ['auto', 'manual', 'reversal', 'recurring', 'closing'], enumName: 'JournalKind', example: 'auto' })
+  @ApiProperty({
+    enum: ['auto', 'manual', 'reversal', 'recurring', 'closing'],
+    enumName: 'JournalKind',
+    example: 'auto',
+  })
   kind!: string;
 
   @ApiProperty({ type: String, nullable: true, example: 'P17' })
@@ -176,7 +204,20 @@ export class GlLineDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   customerName!: string | null;
 
-  @ApiProperty({ enum: ['output_vat', 'output_vat_not_due', 'input_vat', 'input_vat_pending', 'wht_receivable', 'wht_pnd3', 'wht_pnd53'], enumName: 'TaxCode', nullable: true, example: null })
+  @ApiProperty({
+    enum: [
+      'output_vat',
+      'output_vat_not_due',
+      'input_vat',
+      'input_vat_pending',
+      'wht_receivable',
+      'wht_pnd3',
+      'wht_pnd53',
+    ],
+    enumName: 'TaxCode',
+    nullable: true,
+    example: null,
+  })
   taxCode!: string | null;
 
   @ApiProperty({ example: '0.00' })
@@ -304,7 +345,10 @@ export class BalanceSheetDto {
   @ApiProperty({ type: [BalanceLineDto] })
   equity!: BalanceLineDto[];
 
-  @ApiProperty({ example: '0.00', description: 'Profit of earlier years not yet closed to retained earnings' })
+  @ApiProperty({
+    example: '0.00',
+    description: 'Profit of earlier years not yet closed to retained earnings',
+  })
   priorYearsProfit!: string;
 
   @ApiProperty({ example: '10000.00' })
@@ -313,14 +357,24 @@ export class BalanceSheetDto {
   @ApiProperty({ type: BsTotalsDto })
   totals!: BsTotalsDto;
 
-  @ApiProperty({ example: '0.00', description: 'assets − liabilities − equity; always 0 for a balanced ledger' })
+  @ApiProperty({
+    example: '0.00',
+    description: 'assets − liabilities − equity; always 0 for a balanced ledger',
+  })
   difference!: string;
 }
 
 export const BS_EXAMPLE: BalanceSheetDto = {
   asOf: '2026-10-31',
   fiscalYearStart: '2026-01-01',
-  assets: [{ accountCode: '1121', nameTh: 'เงินฝากธนาคาร บัญชีที่ 1', nameEn: 'Bank account 1', balance: '150000.00' }],
+  assets: [
+    {
+      accountCode: '1121',
+      nameTh: 'เงินฝากธนาคาร บัญชีที่ 1',
+      nameEn: 'Bank account 1',
+      balance: '150000.00',
+    },
+  ],
   liabilities: [{ accountCode: '2210', nameTh: 'ภาษีขาย', nameEn: 'Output VAT', balance: '40000.00' }],
   equity: [{ accountCode: '3100', nameTh: 'ทุนเรือนหุ้น', nameEn: 'Share capital', balance: '100000.00' }],
   priorYearsProfit: '0.00',
@@ -345,7 +399,10 @@ export class PlAccountDto {
 }
 
 export class PlLineDto {
-  @ApiProperty({ example: 'F9001 [DEV] บริษัท โรงงานทดสอบ จำกัด', description: 'The dimension value, `(none)` when the lines carry none' })
+  @ApiProperty({
+    example: 'F9001 [DEV] บริษัท โรงงานทดสอบ จำกัด',
+    description: 'The dimension value, `(none)` when the lines carry none',
+  })
   dimension!: string;
 
   @ApiProperty({ example: '10000.00' })
@@ -420,7 +477,13 @@ export const PL_EXAMPLE: ProfitAndLossDto = {
       accounts: [{ accountCode: '4110', amount: '10000.00' }],
     },
   ],
-  totals: { revenue: '10000.00', costOfSales: '8000.00', grossMargin: '2000.00', expenses: '100.00', netProfit: '1900.00' },
+  totals: {
+    revenue: '10000.00',
+    costOfSales: '8000.00',
+    grossMargin: '2000.00',
+    expenses: '100.00',
+    netProfit: '1900.00',
+  },
 };
 
 export class CashLineDto {
@@ -483,7 +546,10 @@ export const CF_EXAMPLE: CashFlowDto = {
   from: '2026-10',
   to: '2026-10',
   netProfit: '1900.00',
-  operating: { adjustments: [{ accountCode: '2110', nameTh: 'เจ้าหนี้การค้า — โรงงาน', amount: '0.00' }], total: '1900.00' },
+  operating: {
+    adjustments: [{ accountCode: '2110', nameTh: 'เจ้าหนี้การค้า — โรงงาน', amount: '0.00' }],
+    total: '1900.00',
+  },
   investing: { lines: [], total: '0.00' },
   financing: { lines: [], total: '0.00' },
   netChange: '1900.00',

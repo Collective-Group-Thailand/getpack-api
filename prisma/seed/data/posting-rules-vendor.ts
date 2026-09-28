@@ -51,7 +51,8 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
     key: 'P05',
     eventType: 'bank_match.recorded',
     name: 'Slip transfer matched to the bank statement',
-    description: 'A slip / transfer receipt found on the bank statement moves from clearing to the bank (§5 P05)',
+    description:
+      'A slip / transfer receipt found on the bank statement moves from clearing to the bank (§5 P05)',
     decisions: ['D-061'],
     conditions: eq('matchKind', 'slip'),
     template: {
@@ -90,7 +91,13 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
         { account: '1250', side: 'debit', amount: 'apNet' },
         { account: VAT_INPUT, side: 'debit', amount: 'vatAmount', taxCode: VAT_INPUT_CODE, taxBase: 'apNet' },
         { account: BANK, side: 'credit', amount: 'cashAmount' },
-        { account: WHT_PAYABLE, side: 'credit', amount: 'whtAmount', taxCode: WHT_PAYABLE_CODE, taxBase: 'whtBase' },
+        {
+          account: WHT_PAYABLE,
+          side: 'credit',
+          amount: 'whtAmount',
+          taxCode: WHT_PAYABLE_CODE,
+          taxBase: 'whtBase',
+        },
       ],
     },
   },
@@ -150,7 +157,13 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
         { account: '2110', side: 'debit', amount: 'apNet' },
         { account: VAT_INPUT, side: 'debit', amount: 'vatAmount', taxCode: VAT_INPUT_CODE, taxBase: 'apNet' },
         { account: BANK, side: 'credit', amount: 'cashAmount' },
-        { account: WHT_PAYABLE, side: 'credit', amount: 'whtAmount', taxCode: WHT_PAYABLE_CODE, taxBase: 'whtBase' },
+        {
+          account: WHT_PAYABLE,
+          side: 'credit',
+          amount: 'whtAmount',
+          taxCode: WHT_PAYABLE_CODE,
+          taxBase: 'whtBase',
+        },
         { account: '2130', side: 'credit', amount: 'retentionAmount' },
       ],
     },
@@ -169,7 +182,13 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
       source: VENDOR_INVOICE_SOURCE,
       dimensions: { vendor: 'vendorId', factory: 'factoryId' },
       lines: [
-        { account: '1241', side: 'debit', amount: 'pendingVatToClaim', taxCode: 'input_vat', taxBase: 'pendingVatBase' },
+        {
+          account: '1241',
+          side: 'debit',
+          amount: 'pendingVatToClaim',
+          taxCode: 'input_vat',
+          taxBase: 'pendingVatBase',
+        },
         {
           account: '1242',
           side: 'credit',
@@ -202,7 +221,8 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
     key: 'P20',
     eventType: 'vendor_deduction.recorded',
     name: 'Claim — factory liable',
-    description: 'The factory bears the claim: deducted from its payable (or a claim receivable) against claim costs (§5 P20)',
+    description:
+      'The factory bears the claim: deducted from its payable (or a claim receivable) against claim costs (§5 P20)',
     decisions: ['D-083', 'D-022'],
     conditions: null,
     template: {
@@ -242,7 +262,8 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
     key: 'P24',
     eventType: 'purchase_order.issued',
     name: 'Re-production PO (memo)',
-    description: 'Re-production caused by the factory: a new PO at zero or an agreed price, no customer revenue (§5 P24)',
+    description:
+      'Re-production caused by the factory: a new PO at zero or an agreed price, no customer revenue (§5 P24)',
     decisions: ['D-083'],
     conditions: eq('poKind', 'reproduction'),
     template: { description: 'ใบสั่งผลิตซ้ำ {poNumber} (บันทึกความจำ)', lines: [] },
@@ -262,7 +283,13 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
       dimensions: { vendor: 'vendorId', order: 'orderId' },
       lines: [
         { forEach: 'lines', account: { path: 'item.accountCode' }, side: 'debit', amount: 'item.net' },
-        { account: VAT_INPUT, side: 'debit', amount: 'vatAmount', taxCode: VAT_INPUT_CODE, taxBase: 'netAmount' },
+        {
+          account: VAT_INPUT,
+          side: 'debit',
+          amount: 'vatAmount',
+          taxCode: VAT_INPUT_CODE,
+          taxBase: 'netAmount',
+        },
         { account: '2120', side: 'credit', amount: 'grossAmount' },
       ],
     },
@@ -283,7 +310,13 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
       lines: [
         { account: '2120', side: 'debit', amount: 'apNet + vatAmount' },
         { account: BANK, side: 'credit', amount: 'cashAmount' },
-        { account: WHT_PAYABLE, side: 'credit', amount: 'whtAmount', taxCode: WHT_PAYABLE_CODE, taxBase: 'whtBase' },
+        {
+          account: WHT_PAYABLE,
+          side: 'credit',
+          amount: 'whtAmount',
+          taxCode: WHT_PAYABLE_CODE,
+          taxBase: 'whtBase',
+        },
       ],
     },
   },
@@ -291,7 +324,8 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
     key: 'P26',
     eventType: 'vendor_invoice.recorded',
     name: 'Freelance designer bill',
-    description: 'Individual freelance designer: design outsourcing against the payable; WHT (ภ.ง.ด.3) at payment (§5 P26)',
+    description:
+      'Individual freelance designer: design outsourcing against the payable; WHT (ภ.ง.ด.3) at payment (§5 P26)',
     decisions: ['D-071', 'D-033'],
     conditions: eq('vendorKind', 'freelancer'),
     template: {
@@ -301,7 +335,13 @@ export const VENDOR_POSTING_RULES: readonly PostingRuleSeed[] = [
       dimensions: { vendor: 'vendorId', order: 'orderId' },
       lines: [
         { forEach: 'lines', account: { path: 'item.accountCode' }, side: 'debit', amount: 'item.net' },
-        { account: VAT_INPUT, side: 'debit', amount: 'vatAmount', taxCode: VAT_INPUT_CODE, taxBase: 'netAmount' },
+        {
+          account: VAT_INPUT,
+          side: 'debit',
+          amount: 'vatAmount',
+          taxCode: VAT_INPUT_CODE,
+          taxBase: 'netAmount',
+        },
         { account: '2120', side: 'credit', amount: 'grossAmount' },
       ],
     },

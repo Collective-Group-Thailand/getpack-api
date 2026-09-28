@@ -10,7 +10,13 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } fr
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import { refundDto } from './payment-views';
-import { CompleteRefundDto, REFUND_EXAMPLE, RefundDto, RefundListQuery, RequestRefundDto } from './payments.dto';
+import {
+  CompleteRefundDto,
+  REFUND_EXAMPLE,
+  RefundDto,
+  RefundListQuery,
+  RequestRefundDto,
+} from './payments.dto';
 import { RefundsService } from './refunds.service';
 
 const DECISIONS = ['D-169', 'D-061'];
@@ -41,10 +47,23 @@ export class AdminRefundsController {
   })
   @ApiBody({
     type: RequestRefundDto,
-    examples: { default: { value: { amount: '7091.40', reasonNote: 'ยกเลิกคำสั่งซื้อก่อนผลิต', cancelReasonCode: 'customer_changed_mind' } } },
+    examples: {
+      default: {
+        value: {
+          amount: '7091.40',
+          reasonNote: 'ยกเลิกคำสั่งซื้อก่อนผลิต',
+          cancelReasonCode: 'customer_changed_mind',
+        },
+      },
+    },
   })
   @ApiSuccess(201, { description: 'Refund awaiting approval', type: RefundDto, example: REFUND_EXAMPLE })
-  @ApiStandardErrors(...WRITE, 'refunds.not_refundable', 'refunds.channel_unavailable', 'approval.no_matching_step')
+  @ApiStandardErrors(
+    ...WRITE,
+    'refunds.not_refundable',
+    'refunds.channel_unavailable',
+    'approval.no_matching_step',
+  )
   async request(
     @CurrentActor() actor: Actor,
     @Param('paymentId', ParseUUIDPipe) paymentId: string,
@@ -98,7 +117,11 @@ export class AdminRefundsController {
     implements: DECISIONS,
   })
   @ApiBody({ type: CompleteRefundDto, examples: { default: { value: { providerRef: 'TRF20261001-0001' } } } })
-  @ApiSuccess(200, { description: 'Refund', type: RefundDto, example: { ...REFUND_EXAMPLE, status: 'succeeded' } })
+  @ApiSuccess(200, {
+    description: 'Refund',
+    type: RefundDto,
+    example: { ...REFUND_EXAMPLE, status: 'succeeded' },
+  })
   @ApiStandardErrors(...WRITE, 'refunds.not_approved', 'iam.sod_conflict')
   async complete(
     @CurrentActor() actor: Actor,

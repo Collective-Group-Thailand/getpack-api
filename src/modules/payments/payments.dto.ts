@@ -39,7 +39,14 @@ export const PAYMENT_STATUSES = [
   'refunded',
   'partially_refunded',
 ] as const;
-export const SLIP_STATUSES = ['pending', 'passed', 'failed', 'manual_review', 'manual_approved', 'manual_rejected'] as const;
+export const SLIP_STATUSES = [
+  'pending',
+  'passed',
+  'failed',
+  'manual_review',
+  'manual_approved',
+  'manual_rejected',
+] as const;
 export const SLIP_CHECK_RESULTS = ['pass', 'mismatch', 'duplicate', 'unreadable', 'provider_error'] as const;
 const MONEY = /^\d{1,12}\.\d{2}$/;
 
@@ -56,7 +63,8 @@ export class InitiatePaymentDto {
     enum: PAYMENT_METHODS,
     enumName: 'PaymentMethod',
     example: 'scb_qr',
-    description: 'Card instalments and direct debit are R2 (D-111); store credit and credit-term transfers are not paid here',
+    description:
+      'Card instalments and direct debit are R2 (D-111); store credit and credit-term transfers are not paid here',
   })
   @IsIn(PAYMENT_METHODS)
   method!: (typeof PAYMENT_METHODS)[number];
@@ -102,10 +110,22 @@ export class SlipDto {
   @ApiProperty({ type: String, format: 'date-time', example: '2026-10-01T10:30:00+07:00' })
   declaredTransferredAt!: string;
 
-  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-01T14:30:00+07:00', description: 'Finance deadline (4 business hours, D-061)' })
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-01T14:30:00+07:00',
+    description: 'Finance deadline (4 business hours, D-061)',
+  })
   slaDueAt!: string | null;
 
-  @ApiProperty({ enum: SLIP_CHECK_RESULTS, enumName: 'SlipCheckResult', nullable: true, example: 'pass', description: 'Last automatic check' })
+  @ApiProperty({
+    enum: SLIP_CHECK_RESULTS,
+    enumName: 'SlipCheckResult',
+    nullable: true,
+    example: 'pass',
+    description: 'Last automatic check',
+  })
   lastCheck!: string | null;
 
   @TimestampField()
@@ -116,7 +136,10 @@ export class PaymentDto {
   @IdField(IDS.payment)
   id!: string;
 
-  @ApiProperty({ example: 'PKAB23CD45EF67GH', description: 'Reference shown on QR / transfer (provider ref1 / invoice)' })
+  @ApiProperty({
+    example: 'PKAB23CD45EF67GH',
+    description: 'Reference shown on QR / transfer (provider ref1 / invoice)',
+  })
   referenceCode!: string;
 
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.group })
@@ -128,7 +151,10 @@ export class PaymentDto {
   @ApiProperty({ enum: PAYMENT_STATUSES, enumName: 'PaymentStatus', example: 'pending' })
   status!: string;
 
-  @ApiProperty({ example: '7091.40', description: 'Gross this payment settles (incl. the customer’s withholding)' })
+  @ApiProperty({
+    example: '7091.40',
+    description: 'Gross this payment settles (incl. the customer’s withholding)',
+  })
   amount!: string;
 
   @ApiProperty({ example: '0.00' })
@@ -140,10 +166,20 @@ export class PaymentDto {
   @ApiProperty({ example: 'THB' })
   currency!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '00020101021230…6304CE18', description: 'EMVCo QR payload to render (SCB)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '00020101021230…6304CE18',
+    description: 'EMVCo QR payload to render (SCB)',
+  })
   qrPayload!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Redirect the customer here (2C2P)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Redirect the customer here (2C2P)',
+  })
   redirectUrl!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-02T10:00:00+07:00' })
@@ -236,13 +272,19 @@ export class SlipReviewDto {
   @IsBoolean()
   approve!: boolean;
 
-  @ApiPropertyOptional({ example: '015073144041ATF00999', description: 'Required to approve: the bank transaction reference' })
+  @ApiPropertyOptional({
+    example: '015073144041ATF00999',
+    description: 'Required to approve: the bank transaction reference',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(64)
   bankTransRef?: string;
 
-  @ApiPropertyOptional({ example: '7091.40', description: 'Amount actually received, when it differs from the slip' })
+  @ApiPropertyOptional({
+    example: '7091.40',
+    description: 'Amount actually received, when it differs from the slip',
+  })
   @IsOptional()
   @IsString()
   @Matches(MONEY)
@@ -301,7 +343,15 @@ export class ScbCallbackAckDto {
 // --- refunds -----------------------------------------------------------------------------------------
 
 export const REFUND_CHANNELS = ['original_gateway', 'bank_transfer', 'store_credit'] as const;
-export const REFUND_STATUSES = ['requested', 'pending_approval', 'approved', 'processing', 'succeeded', 'failed', 'rejected'] as const;
+export const REFUND_STATUSES = [
+  'requested',
+  'pending_approval',
+  'approved',
+  'processing',
+  'succeeded',
+  'failed',
+  'rejected',
+] as const;
 
 export class RequestRefundDto {
   @ApiProperty({ example: '7091.40' })
@@ -318,7 +368,8 @@ export class RequestRefundDto {
     enum: REFUND_CHANNELS,
     enumName: 'RefundChannel',
     example: 'bank_transfer',
-    description: 'Default: the gateway when it refunds by API (2C2P), otherwise a bank transfer; store credit arrives with B5',
+    description:
+      'Default: the gateway when it refunds by API (2C2P), otherwise a bank transfer; store credit arrives with B5',
   })
   @IsOptional()
   @IsIn(REFUND_CHANNELS)
@@ -337,7 +388,10 @@ export class RequestRefundDto {
 }
 
 export class CompleteRefundDto {
-  @ApiProperty({ example: 'TRF20261001-0001', description: 'Bank or provider reference of the money sent back' })
+  @ApiProperty({
+    example: 'TRF20261001-0001',
+    description: 'Bank or provider reference of the money sent back',
+  })
   @IsString()
   @MaxLength(64)
   providerRef!: string;
@@ -368,7 +422,13 @@ export class RefundDto {
   @ApiProperty({ example: 'ยกเลิกคำสั่งซื้อก่อนผลิต' })
   reasonNote!: string;
 
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: '0192f3a0-7c1e-7d2a-9b1f-0000000f0101', description: 'Approval request (Finance Manager)' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000f0101',
+    description: 'Approval request (Finance Manager)',
+  })
   approvalRequestId!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })

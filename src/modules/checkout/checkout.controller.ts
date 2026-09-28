@@ -10,7 +10,17 @@ import { type CartActor } from '@modules/carts/carts.service';
 import { CustomersService } from '@modules/customers/customers.service';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { applyDecorators, Body, Controller, HttpCode, Param, ParseUUIDPipe, Post, Res, type Type } from '@nestjs/common';
+import {
+  applyDecorators,
+  Body,
+  Controller,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Res,
+  type Type,
+} from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { type Response } from 'express';
 
@@ -88,7 +98,16 @@ function scheduleOf(draft: CheckoutDraft): CheckoutPreviewDto['paymentSchedule']
 
 /** Controller body → checkout input (the CS schedule choice is an extension input). */
 function inputOf(body: AdminCheckoutDto, admin: boolean): CheckoutInput {
-  const { paymentSchedule, csRemarks, redeemPoints, companyId, companyBranchId, csDiscountPct, discountMemoId, ...rest } = body;
+  const {
+    paymentSchedule,
+    csRemarks,
+    redeemPoints,
+    companyId,
+    companyBranchId,
+    csDiscountPct,
+    discountMemoId,
+    ...rest
+  } = body;
   const extensions = {
     ...(redeemPoints && { points: redeemPoints }),
     ...(admin && csDiscountPct && { csDiscountPct }),
@@ -237,7 +256,10 @@ function checkoutController(surface: 'store' | 'admin'): Type<unknown> {
       );
       if (!admin) return orderGroupDto(group);
       const granted = (await this.permissions.forUser((actor as { userId: bigint }).userId)).permissions;
-      return adminOrderGroupDto(group, { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read') });
+      return adminOrderGroupDto(group, {
+        cost: granted.has('factory_cost.read'),
+        margin: granted.has('margin.read'),
+      });
     }
   }
 

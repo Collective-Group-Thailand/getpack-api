@@ -4,7 +4,10 @@ import { type AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
 import { type CheckoutDraft, type PlacedGroup } from '@modules/checkout/checkout.extensions';
 import { IdentityFingerprints } from '@modules/promotions/identity-fingerprints.service';
-import { type AppliedPromotion, PromotionRedemptions } from '@modules/promotions/promotion-redemptions.service';
+import {
+  type AppliedPromotion,
+  PromotionRedemptions,
+} from '@modules/promotions/promotion-redemptions.service';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
@@ -40,7 +43,9 @@ describe('promotion usage under concurrency (PostgreSQL 18)', () => {
 
   async function customer(): Promise<bigint> {
     seq += 1;
-    const u = await prisma.user.create({ data: { kind: 'customer', status: 'active', displayName: `[INT] ลูกค้า ${seq}` } });
+    const u = await prisma.user.create({
+      data: { kind: 'customer', status: 'active', displayName: `[INT] ลูกค้า ${seq}` },
+    });
     return u.id;
   }
 
@@ -63,7 +68,12 @@ describe('promotion usage under concurrency (PostgreSQL 18)', () => {
     return { groupId: g.id, groupPublicId: g.publicId, orders: [] };
   }
 
-  async function promotion(opts: { total?: number; perCustomer?: number; codeLimit?: number; budget?: string }) {
+  async function promotion(opts: {
+    total?: number;
+    perCustomer?: number;
+    codeLimit?: number;
+    budget?: string;
+  }) {
     seq += 1;
     const owner = (await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } })).id;
     const campaign = opts.budget
@@ -129,7 +139,7 @@ describe('promotion usage under concurrency (PostgreSQL 18)', () => {
         ),
       ),
     );
-    const failed = results.filter((r) => r.status === 'rejected').map((r) => (r).reason as { code?: string });
+    const failed = results.filter((r) => r.status === 'rejected').map((r) => r.reason as { code?: string });
     return { ok: results.length - failed.length, failed };
   }
 

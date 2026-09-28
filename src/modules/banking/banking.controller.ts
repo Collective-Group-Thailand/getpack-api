@@ -63,7 +63,11 @@ export class AdminBankingController {
     description: 'Each tied to its own cash GL account; only the last 4 digits are returned (PDPA, D-093).',
     implements: DOCS,
   })
-  @ApiSuccess(200, { description: 'Accounts', type: [CompanyBankAccountDto], example: [COMPANY_ACCOUNT_EXAMPLE] })
+  @ApiSuccess(200, {
+    description: 'Accounts',
+    type: [CompanyBankAccountDto],
+    example: [COMPANY_ACCOUNT_EXAMPLE],
+  })
   @ApiStandardErrors()
   async accountsList(): Promise<CompanyBankAccountDto[]> {
     return (await this.accounts.list()).map(companyAccountDto);
@@ -81,11 +85,28 @@ export class AdminBankingController {
   })
   @ApiBody({
     type: ProposeCompanyBankAccountDto,
-    examples: { default: { value: { bankCode: '014', accountName: 'บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด (fake)', accountNo: '000-0-00000-1', glAccountCode: '1121', purpose: 'both' } } },
+    examples: {
+      default: {
+        value: {
+          bankCode: '014',
+          accountName: 'บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด (fake)',
+          accountNo: '000-0-00000-1',
+          glAccountCode: '1121',
+          purpose: 'both',
+        },
+      },
+    },
   })
-  @ApiSuccess(201, { description: 'Proposed account', type: CompanyBankAccountDto, example: { ...COMPANY_ACCOUNT_EXAMPLE, status: 'pending_approval' } })
+  @ApiSuccess(201, {
+    description: 'Proposed account',
+    type: CompanyBankAccountDto,
+    example: { ...COMPANY_ACCOUNT_EXAMPLE, status: 'pending_approval' },
+  })
   @ApiStandardErrors(...WRITE, 'banking.gl_account_invalid', 'approval.no_matching_step')
-  async propose(@CurrentActor() actor: Actor, @Body() body: ProposeCompanyBankAccountDto): Promise<CompanyBankAccountDto> {
+  async propose(
+    @CurrentActor() actor: Actor,
+    @Body() body: ProposeCompanyBankAccountDto,
+  ): Promise<CompanyBankAccountDto> {
     return companyAccountDto(await this.accounts.propose(staff(actor), body));
   }
 
@@ -102,15 +123,39 @@ export class AdminBankingController {
   @ApiBody({
     type: ImportStatementDto,
     examples: {
-      file: { value: { companyBankAccountId: BANK_IDS.account, fileId: BANK_IDS.file, format: 'generic_csv' } },
-      rows: { value: { companyBankAccountId: BANK_IDS.account, rows: [{ txnDate: '2026-10-27', amount: '5350.00', description: 'TRF IN', reference: 'PK2610ABCD' }] } },
+      file: {
+        value: { companyBankAccountId: BANK_IDS.account, fileId: BANK_IDS.file, format: 'generic_csv' },
+      },
+      rows: {
+        value: {
+          companyBankAccountId: BANK_IDS.account,
+          rows: [
+            { txnDate: '2026-10-27', amount: '5350.00', description: 'TRF IN', reference: 'PK2610ABCD' },
+          ],
+        },
+      },
     },
   })
-  @ApiSuccess(201, { description: 'Import result', type: ImportResultDto, example: { importId: BANK_IDS.import, lines: 12, matched: 9 } })
-  @ApiStandardErrors(...WRITE, 'banking.duplicate_import', 'banking.statement_invalid', 'payouts.bank_account_missing', 'file.not_ready')
-  async importStatement(@CurrentActor() actor: Actor, @Body() body: ImportStatementDto): Promise<ImportResultDto> {
+  @ApiSuccess(201, {
+    description: 'Import result',
+    type: ImportResultDto,
+    example: { importId: BANK_IDS.import, lines: 12, matched: 9 },
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'banking.duplicate_import',
+    'banking.statement_invalid',
+    'payouts.bank_account_missing',
+    'file.not_ready',
+  )
+  async importStatement(
+    @CurrentActor() actor: Actor,
+    @Body() body: ImportStatementDto,
+  ): Promise<ImportResultDto> {
     if (!body.fileId === !body.rows)
-      throw new DomainException('validation.failed', { errors: [{ path: 'fileId', code: 'one_of', message: 'fileId or rows' }] });
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'fileId', code: 'one_of', message: 'fileId or rows' }],
+      });
     return this.banking.importStatement(staff(actor), {
       companyBankAccountId: body.companyBankAccountId,
       ...(body.fileId && { fileId: body.fileId }),
@@ -131,7 +176,12 @@ export class AdminBankingController {
 
   @Get('bank-statement-lines')
   @Can('banking.read')
-  @ApiEndpoint({ id: 'admin.banking.listLines', summary: 'List bank statement lines', description: 'Newest first; filter by account and match status (the unmatched queue, §6).', implements: DOCS })
+  @ApiEndpoint({
+    id: 'admin.banking.listLines',
+    summary: 'List bank statement lines',
+    description: 'Newest first; filter by account and match status (the unmatched queue, §6).',
+    implements: DOCS,
+  })
   @ApiPaginated(BankStatementLineDto, { example: LINE_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async lines(@Query() q: StatementLineQuery) {
@@ -151,13 +201,23 @@ export class AdminBankingController {
   @ApiEndpoint({
     id: 'admin.banking.matchLine',
     summary: 'Match a statement line by hand',
-    description: 'To a slip / bank payment (P05), a gateway settlement (P04), a payout run, a refund or a tax payment; amounts must agree (§6). Requires `Idempotency-Key`.',
+    description:
+      'To a slip / bank payment (P05), a gateway settlement (P04), a payout run, a refund or a tax payment; amounts must agree (§6). Requires `Idempotency-Key`.',
     implements: DOCS,
   })
-  @ApiBody({ type: ManualMatchDto, examples: { default: { value: { targetType: 'payment', targetId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001' } } } })
+  @ApiBody({
+    type: ManualMatchDto,
+    examples: {
+      default: { value: { targetType: 'payment', targetId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001' } },
+    },
+  })
   @ApiSuccess(200, { description: 'Line', type: BankStatementLineDto, example: LINE_EXAMPLE })
   @ApiStandardErrors(...WRITE, 'banking.line_already_matched', 'banking.match_amount_mismatch')
-  async match(@CurrentActor() actor: Actor, @Param('lineId', ParseUUIDPipe) lineId: string, @Body() body: ManualMatchDto): Promise<BankStatementLineDto> {
+  async match(
+    @CurrentActor() actor: Actor,
+    @Param('lineId', ParseUUIDPipe) lineId: string,
+    @Body() body: ManualMatchDto,
+  ): Promise<BankStatementLineDto> {
     return lineDto(await this.banking.manualMatch(staff(actor), lineId, body));
   }
 
@@ -169,13 +229,25 @@ export class AdminBankingController {
   @ApiEndpoint({
     id: 'admin.banking.ignoreLine',
     summary: 'Ignore a statement line',
-    description: 'A line that is not a transaction to post (e.g. a transfer between company accounts already journalised), with the reason. Requires `Idempotency-Key`.',
+    description:
+      'A line that is not a transaction to post (e.g. a transfer between company accounts already journalised), with the reason. Requires `Idempotency-Key`.',
     implements: DOCS,
   })
-  @ApiBody({ type: ReasonDto, examples: { default: { value: { reason: 'โอนระหว่างบัญชีบริษัท บันทึกด้วยสมุดรายวันแล้ว' } } } })
-  @ApiSuccess(200, { description: 'Line', type: BankStatementLineDto, example: { ...LINE_EXAMPLE, matchStatus: 'ignored', matches: [] } })
+  @ApiBody({
+    type: ReasonDto,
+    examples: { default: { value: { reason: 'โอนระหว่างบัญชีบริษัท บันทึกด้วยสมุดรายวันแล้ว' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Line',
+    type: BankStatementLineDto,
+    example: { ...LINE_EXAMPLE, matchStatus: 'ignored', matches: [] },
+  })
   @ApiStandardErrors(...WRITE, 'banking.line_already_matched')
-  async ignore(@CurrentActor() actor: Actor, @Param('lineId', ParseUUIDPipe) lineId: string, @Body() body: ReasonDto): Promise<BankStatementLineDto> {
+  async ignore(
+    @CurrentActor() actor: Actor,
+    @Param('lineId', ParseUUIDPipe) lineId: string,
+    @Body() body: ReasonDto,
+  ): Promise<BankStatementLineDto> {
     return lineDto(await this.banking.ignore(staff(actor), lineId, body.reason));
   }
 
@@ -187,18 +259,36 @@ export class AdminBankingController {
   @ApiEndpoint({
     id: 'admin.banking.markUnidentified',
     summary: 'Park money in as unidentified',
-    description: 'Money in that no order claims goes to unidentified receipts (1140, P29) until Finance identifies the payer. Requires `Idempotency-Key`.',
+    description:
+      'Money in that no order claims goes to unidentified receipts (1140, P29) until Finance identifies the payer. Requires `Idempotency-Key`.',
     implements: DOCS,
   })
-  @ApiSuccess(200, { description: 'Line', type: BankStatementLineDto, example: { ...LINE_EXAMPLE, amount: '5350.00', matchStatus: 'unidentified', matches: [] } })
-  @ApiStandardErrors('http.bad_request', 'http.not_found', 'validation.failed', 'banking.line_already_matched')
-  async markUnidentified(@CurrentActor() actor: Actor, @Param('lineId', ParseUUIDPipe) lineId: string): Promise<BankStatementLineDto> {
+  @ApiSuccess(200, {
+    description: 'Line',
+    type: BankStatementLineDto,
+    example: { ...LINE_EXAMPLE, amount: '5350.00', matchStatus: 'unidentified', matches: [] },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.not_found',
+    'validation.failed',
+    'banking.line_already_matched',
+  )
+  async markUnidentified(
+    @CurrentActor() actor: Actor,
+    @Param('lineId', ParseUUIDPipe) lineId: string,
+  ): Promise<BankStatementLineDto> {
     return lineDto(await this.banking.markUnidentified(staff(actor), lineId));
   }
 
   @Get('unidentified-receipts')
   @Can('banking.read')
-  @ApiEndpoint({ id: 'admin.banking.listUnidentified', summary: 'List unidentified receipts', description: 'Money parked in 1140 (P29) and what became of it (§6).', implements: DOCS })
+  @ApiEndpoint({
+    id: 'admin.banking.listUnidentified',
+    summary: 'List unidentified receipts',
+    description: 'Money parked in 1140 (P29) and what became of it (§6).',
+    implements: DOCS,
+  })
   @ApiSuccess(200, { description: 'Receipts', type: [UnidentifiedReceiptDto], example: [RECEIPT_EXAMPLE] })
   @ApiStandardErrors('validation.failed')
   async unidentified(@Query() q: UnidentifiedQuery): Promise<UnidentifiedReceiptDto[]> {
@@ -218,9 +308,17 @@ export class AdminBankingController {
     implements: [...DOCS, 'D-033'],
   })
   @ApiBody({ type: IdentifyReceiptDto, examples: { default: { value: { orderGroupId: BANK_IDS.group } } } })
-  @ApiSuccess(200, { description: 'Receipt', type: UnidentifiedReceiptDto, example: { ...RECEIPT_EXAMPLE, status: 'matched' } })
+  @ApiSuccess(200, {
+    description: 'Receipt',
+    type: UnidentifiedReceiptDto,
+    example: { ...RECEIPT_EXAMPLE, status: 'matched' },
+  })
   @ApiStandardErrors(...WRITE, 'banking.line_already_matched')
-  async identify(@CurrentActor() actor: Actor, @Param('receiptId', ParseUUIDPipe) receiptId: string, @Body() body: IdentifyReceiptDto): Promise<UnidentifiedReceiptDto> {
+  async identify(
+    @CurrentActor() actor: Actor,
+    @Param('receiptId', ParseUUIDPipe) receiptId: string,
+    @Body() body: IdentifyReceiptDto,
+  ): Promise<UnidentifiedReceiptDto> {
     return receiptDto(await this.banking.identify(staff(actor), receiptId, body.orderGroupId));
   }
 
@@ -238,13 +336,28 @@ export class AdminBankingController {
     type: ImportSettlementDto,
     examples: {
       default: {
-        value: { provider: 'scb', companyBankAccountId: BANK_IDS.account, settlementDate: '2026-10-28', vatOnFee: '5.99', feeTaxInvoiceNo: 'SCB-TI-2610-01', lines: [{ providerRef: 'SCB-TXN-0001', grossAmount: '5350.00', feeAmount: '85.60' }] },
+        value: {
+          provider: 'scb',
+          companyBankAccountId: BANK_IDS.account,
+          settlementDate: '2026-10-28',
+          vatOnFee: '5.99',
+          feeTaxInvoiceNo: 'SCB-TI-2610-01',
+          lines: [{ providerRef: 'SCB-TXN-0001', grossAmount: '5350.00', feeAmount: '85.60' }],
+        },
       },
     },
   })
   @ApiSuccess(201, { description: 'Settlement', type: SettlementDto, example: SETTLEMENT_EXAMPLE })
-  @ApiStandardErrors(...WRITE, 'banking.duplicate_import', 'banking.statement_invalid', 'payouts.bank_account_missing')
-  async importSettlement(@CurrentActor() actor: Actor, @Body() body: ImportSettlementDto): Promise<SettlementDto> {
+  @ApiStandardErrors(
+    ...WRITE,
+    'banking.duplicate_import',
+    'banking.statement_invalid',
+    'payouts.bank_account_missing',
+  )
+  async importSettlement(
+    @CurrentActor() actor: Actor,
+    @Body() body: ImportSettlementDto,
+  ): Promise<SettlementDto> {
     const s = await this.banking.importSettlement(staff(actor), body);
     return {
       id: s.publicId,
@@ -265,7 +378,8 @@ export class AdminBankingController {
   @ApiEndpoint({
     id: 'admin.banking.cashPosition',
     summary: 'Daily cash position',
-    description: 'Per company bank account its GL balance, last statement balance and unmatched lines; the clearing and unidentified accounts (§6).',
+    description:
+      'Per company bank account its GL balance, last statement balance and unmatched lines; the clearing and unidentified accounts (§6).',
     implements: DOCS,
   })
   @ApiSuccess(200, { description: 'Cash position', type: CashPositionDto, example: CASH_EXAMPLE })

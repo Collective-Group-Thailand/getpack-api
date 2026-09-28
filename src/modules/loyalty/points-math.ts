@@ -35,7 +35,11 @@ export function tierFor(spend12m: MoneyValue | string, rules: readonly TierRule[
  * Points still due on an earning after refunds (D-132): the earning scaled by what is left of its base,
  * rounded down, so a refund always takes back at least its proportional share.
  */
-export function pointsAfterRefund(earned: number, base: MoneyValue | string, refundedBase: MoneyValue | string): number {
+export function pointsAfterRefund(
+  earned: number,
+  base: MoneyValue | string,
+  refundedBase: MoneyValue | string,
+): number {
   if (earned <= 0 || D(base).lte(0)) return 0;
   const left = MoneyDecimal.max(D(base).sub(refundedBase), D(0));
   return Math.min(earned, D(earned).mul(left).div(base).floor().toNumber());
@@ -69,6 +73,7 @@ export function redeemablePoints(opts: {
       reason = why;
     }
   }
-  if (points <= 0 || D(points).mul(opts.pointValue).lt(opts.minimumBaht)) return { points: 0, reason: 'below_minimum' };
+  if (points <= 0 || D(points).mul(opts.pointValue).lt(opts.minimumBaht))
+    return { points: 0, reason: 'below_minimum' };
   return { points, reason };
 }

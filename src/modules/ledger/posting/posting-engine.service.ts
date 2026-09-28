@@ -10,7 +10,13 @@ import { EntitiesService } from '@platform/entities/entities.service';
 
 import { JournalPostingService } from '../journal-posting.service';
 import { businessDay } from '../ledger-dates';
-import { type PostingTemplate, type RenderedJournal, renderJournal, ruleApplies, TemplateError } from './template';
+import {
+  type PostingTemplate,
+  type RenderedJournal,
+  renderJournal,
+  ruleApplies,
+  TemplateError,
+} from './template';
 
 const TYPES_TTL_MS = 30_000;
 
@@ -88,12 +94,18 @@ export class PostingEngine {
   }
 
   /** Dry run of one rule version on a payload (rule editing, B5.1). */
-  render(rule: Pick<PostingRule, 'key'>, version: Pick<PostingRuleVersion, 'template'>, payload: Record<string, unknown>): RenderedJournal {
+  render(
+    rule: Pick<PostingRule, 'key'>,
+    version: Pick<PostingRuleVersion, 'template'>,
+    payload: Record<string, unknown>,
+  ): RenderedJournal {
     try {
       return renderJournal(version.template as unknown as PostingTemplate, payload);
     } catch (error) {
       if (error instanceof TemplateError)
-        throw new DomainException('ledger.rule_invalid', { params: { reason: `${rule.key}: ${error.message}` } });
+        throw new DomainException('ledger.rule_invalid', {
+          params: { reason: `${rule.key}: ${error.message}` },
+        });
       throw error;
     }
   }
@@ -111,7 +123,9 @@ export class PostingEngine {
       },
       orderBy: { key: 'asc' },
     });
-    return rules.filter((r) => r.versions[0]).map(({ versions, ...rule }) => ({ rule, version: versions[0]! }));
+    return rules
+      .filter((r) => r.versions[0])
+      .map(({ versions, ...rule }) => ({ rule, version: versions[0]! }));
   }
 
   private async hasRules(tx: Tx, type: string): Promise<boolean> {

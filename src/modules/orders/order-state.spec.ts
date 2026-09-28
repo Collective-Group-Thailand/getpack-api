@@ -26,7 +26,11 @@ describe('order state (facts → status, B3.1)', () => {
     ['nothing yet', [], 'waiting_payment'],
     ['deposit paid', [{ kind: 'paid_for_production' }], 'paid_for_production'],
     ['artwork before payment keeps waiting', [{ kind: 'artwork_approved' }], 'waiting_payment'],
-    ['artwork then payment', [{ kind: 'artwork_approved' }, { kind: 'paid_for_production' }], 'artwork_approved'],
+    [
+      'artwork then payment',
+      [{ kind: 'artwork_approved' }, { kind: 'paid_for_production' }],
+      'artwork_approved',
+    ],
     [
       'the whole happy path',
       [
@@ -39,22 +43,49 @@ describe('order state (facts → status, B3.1)', () => {
       ],
       'completed',
     ],
-    ['delivered stays shipping until completion (A-9)', [{ kind: 'paid_for_production' }, { kind: 'artwork_approved' }, { kind: 'production_started', mode: 'auto' }, { kind: 'shipped' }, { kind: 'delivered' }], 'shipping'],
+    [
+      'delivered stays shipping until completion (A-9)',
+      [
+        { kind: 'paid_for_production' },
+        { kind: 'artwork_approved' },
+        { kind: 'production_started', mode: 'auto' },
+        { kind: 'shipped' },
+        { kind: 'delivered' },
+      ],
+      'shipping',
+    ],
     ['cancel before production', [{ kind: 'paid_for_production' }, { kind: 'cancelled' }], 'cancelled'],
-    ['repeated facts are no-ops', [{ kind: 'paid_for_production' }, { kind: 'paid_for_production' }], 'paid_for_production'],
+    [
+      'repeated facts are no-ops',
+      [{ kind: 'paid_for_production' }, { kind: 'paid_for_production' }],
+      'paid_for_production',
+    ],
   ])('%s', (_name, facts, status) => {
     expect(run(facts)).toEqual({ error: null, status });
   });
 
   it.each<[string, OrderFact[], RegExp]>([
-    ['production before payment (D-073)', [{ kind: 'artwork_approved' }, { kind: 'production_started', mode: 'auto' }], /unpaid/],
-    ['automatic production before artwork', [{ kind: 'paid_for_production' }, { kind: 'production_started', mode: 'auto' }], /artwork/],
+    [
+      'production before payment (D-073)',
+      [{ kind: 'artwork_approved' }, { kind: 'production_started', mode: 'auto' }],
+      /unpaid/,
+    ],
+    [
+      'automatic production before artwork',
+      [{ kind: 'paid_for_production' }, { kind: 'production_started', mode: 'auto' }],
+      /artwork/,
+    ],
     ['shipping before production', [{ kind: 'paid_for_production' }, { kind: 'shipped' }], /production/],
     ['completion before delivery', [{ kind: 'completed', mode: 'customer_confirmed' }], /delivered/],
     ['anything after cancel', [{ kind: 'cancelled' }, { kind: 'paid_for_production' }], /cancelled/],
     [
       'cancel after production started',
-      [{ kind: 'paid_for_production' }, { kind: 'artwork_approved' }, { kind: 'production_started', mode: 'auto' }, { kind: 'cancelled' }],
+      [
+        { kind: 'paid_for_production' },
+        { kind: 'artwork_approved' },
+        { kind: 'production_started', mode: 'auto' },
+        { kind: 'cancelled' },
+      ],
       /production already started/,
     ],
   ])('refuses %s', (_name, facts, reason) => {
@@ -62,9 +93,9 @@ describe('order state (facts → status, B3.1)', () => {
   });
 
   it('lets CS start production as a documented exception before artwork, never before payment (D-073)', () => {
-    expect(run([{ kind: 'paid_for_production' }, { kind: 'production_started', mode: 'manual_exception' }]).status).toBe(
-      'in_production',
-    );
+    expect(
+      run([{ kind: 'paid_for_production' }, { kind: 'production_started', mode: 'manual_exception' }]).status,
+    ).toBe('in_production');
     expect(run([{ kind: 'production_started', mode: 'manual_exception' }]).error).toMatch(/unpaid/);
   });
 

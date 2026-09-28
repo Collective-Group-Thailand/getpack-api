@@ -54,11 +54,22 @@ describe('loyalty schema — points ledger, lots, reviews (PostgreSQL 18)', () =
 
   it('keeps the points ledger append-only; only an earning’s status moves forward', async () => {
     const e = await entry();
-    expect(await state('UPDATE points_ledger SET points = 11 WHERE id = $1', [e.id])).toBe(SQLSTATE.restrictViolation);
+    expect(await state('UPDATE points_ledger SET points = 11 WHERE id = $1', [e.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
     expect(await state('DELETE FROM points_ledger WHERE id = $1', [e.id])).toBe(SQLSTATE.restrictViolation);
-    expect(await state("UPDATE points_ledger SET status = 'available', expires_at = now() + interval '1 year' WHERE id = $1", [e.id])).toBeNull();
-    expect(await state("UPDATE points_ledger SET status = 'pending' WHERE id = $1", [e.id])).toBe(SQLSTATE.restrictViolation);
-    expect(await state("UPDATE points_ledger SET expires_at = now() WHERE id = $1", [e.id])).toBe(SQLSTATE.restrictViolation);
+    expect(
+      await state(
+        "UPDATE points_ledger SET status = 'available', expires_at = now() + interval '1 year' WHERE id = $1",
+        [e.id],
+      ),
+    ).toBeNull();
+    expect(await state("UPDATE points_ledger SET status = 'pending' WHERE id = $1", [e.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
+    expect(await state('UPDATE points_ledger SET expires_at = now() WHERE id = $1', [e.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
     expect(await state("UPDATE points_ledger SET status = 'expired' WHERE id = $1", [e.id])).toBeNull();
   });
 
@@ -86,14 +97,30 @@ describe('loyalty schema — points ledger, lots, reviews (PostgreSQL 18)', () =
   it('keeps lots within their points and consumptions append-only', async () => {
     const e = await entry({ status: 'available', availableAt: null });
     const lot = await prisma.pointsLot.create({
-      data: { earnEntryId: e.id, userId, points: 10, remaining: 10, expiresAt: new Date(Date.now() + 86_400_000) },
+      data: {
+        earnEntryId: e.id,
+        userId,
+        points: 10,
+        remaining: 10,
+        expiresAt: new Date(Date.now() + 86_400_000),
+      },
     });
-    expect(await state('UPDATE points_lots SET remaining = 11 WHERE id = $1', [lot.id])).toBe(SQLSTATE.checkViolation);
-    expect(await state('UPDATE points_lots SET remaining = -1 WHERE id = $1', [lot.id])).toBe(SQLSTATE.checkViolation);
+    expect(await state('UPDATE points_lots SET remaining = 11 WHERE id = $1', [lot.id])).toBe(
+      SQLSTATE.checkViolation,
+    );
+    expect(await state('UPDATE points_lots SET remaining = -1 WHERE id = $1', [lot.id])).toBe(
+      SQLSTATE.checkViolation,
+    );
     expect(await state('DELETE FROM points_lots WHERE id = $1', [lot.id])).toBe(SQLSTATE.restrictViolation);
-    const c = await prisma.pointsLotConsumption.create({ data: { lotId: lot.id, consumingEntryId: e.id, points: 3 } });
-    expect(await state('UPDATE points_lot_consumptions SET points = 4 WHERE id = $1', [c.id])).toBe(SQLSTATE.restrictViolation);
-    expect(await state('DELETE FROM points_lot_consumptions WHERE id = $1', [c.id])).toBe(SQLSTATE.restrictViolation);
+    const c = await prisma.pointsLotConsumption.create({
+      data: { lotId: lot.id, consumingEntryId: e.id, points: 3 },
+    });
+    expect(await state('UPDATE points_lot_consumptions SET points = 4 WHERE id = $1', [c.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
+    expect(await state('DELETE FROM points_lot_consumptions WHERE id = $1', [c.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
   });
 
   it('rates reviews 1–5', async () => {

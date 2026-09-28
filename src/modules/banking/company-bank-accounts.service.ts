@@ -20,7 +20,9 @@ export const COMPANY_ACCOUNT_INCLUDE = {
   glAccount: { select: { code: true, nameTh: true } },
   approvalRequest: { select: { publicId: true, status: true } },
 } as const satisfies Prisma.CompanyBankAccountInclude;
-export type CompanyAccountRow = Prisma.CompanyBankAccountGetPayload<{ include: typeof COMPANY_ACCOUNT_INCLUDE }>;
+export type CompanyAccountRow = Prisma.CompanyBankAccountGetPayload<{
+  include: typeof COMPANY_ACCOUNT_INCLUDE;
+}>;
 
 export interface CompanyBankAccountInput {
   bankCode: string;
@@ -50,11 +52,17 @@ export class CompanyBankAccountsService {
   ) {}
 
   async list(): Promise<CompanyAccountRow[]> {
-    return this.prisma.companyBankAccount.findMany({ include: COMPANY_ACCOUNT_INCLUDE, orderBy: { createdAt: 'asc' } });
+    return this.prisma.companyBankAccount.findMany({
+      include: COMPANY_ACCOUNT_INCLUDE,
+      orderBy: { createdAt: 'asc' },
+    });
   }
 
   async get(publicId: string, db: Tx = this.prisma): Promise<CompanyAccountRow> {
-    const row = await db.companyBankAccount.findUnique({ where: { publicId }, include: COMPANY_ACCOUNT_INCLUDE });
+    const row = await db.companyBankAccount.findUnique({
+      where: { publicId },
+      include: COMPANY_ACCOUNT_INCLUDE,
+    });
     if (!row) throw new DomainException('http.not_found');
     return row;
   }
@@ -76,13 +84,31 @@ export class CompanyBankAccountsService {
 
   async propose(actor: UserActor, input: CompanyBankAccountInput): Promise<CompanyAccountRow> {
     if (input.defaultBulkFormat && !BANK_FILE_ADAPTERS[input.defaultBulkFormat])
-      throw new DomainException('validation.failed', { errors: [{ path: 'defaultBulkFormat', code: 'enum', message: Object.keys(BANK_FILE_ADAPTERS).join(', ') }] });
+      throw new DomainException('validation.failed', {
+        errors: [
+          { path: 'defaultBulkFormat', code: 'enum', message: Object.keys(BANK_FILE_ADAPTERS).join(', ') },
+        ],
+      });
     const entityId = await this.entities.defaultEntityId();
     const accountNo = input.accountNo.replace(/[^0-9]/g, '');
     const id = await this.prisma.withTx(async (tx) => {
-      const gl = await tx.account.findUnique({ where: { entityId_code: { entityId, code: input.glAccountCode } } });
-      const taken = gl ? await tx.companyBankAccount.count({ where: { glAccountId: gl.id, status: { in: ['active', 'pending_approval'] } } }) : 0;
-      if (!gl || gl.status !== 'active' || !gl.isPostable || gl.cashFlowClass !== 'cash' || gl.isControl || taken > 0 || ['1131', '1132', '1133', '1140'].includes(gl.code))
+      const gl = await tx.account.findUnique({
+        where: { entityId_code: { entityId, code: input.glAccountCode } },
+      });
+      const taken = gl
+        ? await tx.companyBankAccount.count({
+            where: { glAccountId: gl.id, status: { in: ['active', 'pending_approval'] } },
+          })
+        : 0;
+      if (
+        !gl ||
+        gl.status !== 'active' ||
+        !gl.isPostable ||
+        gl.cashFlowClass !== 'cash' ||
+        gl.isControl ||
+        taken > 0 ||
+        ['1131', '1132', '1133', '1140'].includes(gl.code)
+      )
         throw new DomainException('banking.gl_account_invalid', { params: { code: input.glAccountCode } });
       const row = await tx.companyBankAccount.create({
         data: {
@@ -104,7 +130,13 @@ export class CompanyBankAccountsService {
         subject: { type: 'company_bank_account', id: row.id, publicId: row.publicId },
         requester: actor,
         entityId,
-        payload: { bankCode: input.bankCode, accountName: input.accountName, accountNoLast4: row.accountNoLast4, glAccount: gl.code, purpose: input.purpose },
+        payload: {
+          bankCode: input.bankCode,
+          accountName: input.accountName,
+          accountNoLast4: row.accountNoLast4,
+          glAccount: gl.code,
+          purpose: input.purpose,
+        },
       });
       await tx.companyBankAccount.update({ where: { id: row.id }, data: { approvalRequestId: request.id } });
       await this.audit.record(tx, {
@@ -121,7 +153,9 @@ export class CompanyBankAccountsService {
     return this.get(id);
   }
 
-  @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], { consumer: 'banking.company_accounts' })
+  @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], {
+    consumer: 'banking.company_accounts',
+  })
   async onApproval(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     if (event.payload['policyKey'] !== POLICY) return;
     const request = await tx.approvalRequest.findUnique({ where: { publicId: event.aggregateId } });

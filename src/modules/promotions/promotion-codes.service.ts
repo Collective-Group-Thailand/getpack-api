@@ -38,10 +38,17 @@ export class PromotionCodes {
     @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
-  async apply(who: CartActor, ifMatch: string | undefined, rawCode: string, source: AttemptSource): Promise<CartRow> {
+  async apply(
+    who: CartActor,
+    ifMatch: string | undefined,
+    rawCode: string,
+    source: AttemptSource,
+  ): Promise<CartRow> {
     const code = rawCode.trim();
     if (!CODE.test(code))
-      throw new DomainException('validation.failed', { errors: [{ path: 'code', code: 'pattern', message: '3–40 letters, digits or dashes' }] });
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'code', code: 'pattern', message: '3–40 letters, digits or dashes' }],
+      });
     await this.countAttempt(who, source);
     return this.prisma.withTx(async (tx) => {
       const cart = await this.carts.active(tx, who);
@@ -67,7 +74,13 @@ export class PromotionCodes {
         },
       });
       await this.touch(tx, cart.id);
-      await this.record(tx, cart.publicId, 'cart.code_applied', { code: coupon.code, promotionId: coupon.promotion.publicId }, who);
+      await this.record(
+        tx,
+        cart.publicId,
+        'cart.code_applied',
+        { code: coupon.code, promotionId: coupon.promotion.publicId },
+        who,
+      );
       return this.carts.active(tx, who);
     });
   }
@@ -89,20 +102,35 @@ export class PromotionCodes {
   private async countAttempt(who: CartActor, source: AttemptSource): Promise<void> {
     const limits = (await this.settings.at('promotions.code_attempt_limits')).value;
     const hour = Math.floor(Date.now() / 3_600_000);
-    const checks: [string, number][] = [[`packio:coupon:user:${who.customerUserId}:${hour}`, limits.perCustomerPerHour]];
-    if (who.csUserId === null && source.ip) checks.push([`packio:coupon:ip:${source.ip}:${hour}`, limits.perIpPerHour]);
-    if (source.deviceId) checks.push([`packio:coupon:device:${source.deviceId}:${hour}`, limits.perDevicePerHour]);
+    const checks: [string, number][] = [
+      [`packio:coupon:user:${who.customerUserId}:${hour}`, limits.perCustomerPerHour],
+    ];
+    if (who.csUserId === null && source.ip)
+      checks.push([`packio:coupon:ip:${source.ip}:${hour}`, limits.perIpPerHour]);
+    if (source.deviceId)
+      checks.push([`packio:coupon:device:${source.deviceId}:${hour}`, limits.perDevicePerHour]);
     for (const [key, limit] of checks) {
-      const [[, count]] = (await this.redis.multi().incr(key).expire(key, 3_600).exec()) as [[Error | null, number]];
+      const [[, count]] = (await this.redis.multi().incr(key).expire(key, 3_600).exec()) as [
+        [Error | null, number],
+      ];
       if (count > limit) throw new DomainException('promotions.too_many_attempts');
     }
   }
 
   private async touch(tx: Tx, cartId: bigint) {
-    await tx.cart.update({ where: { id: cartId }, data: { lastActivityAt: new Date(), rowVersion: { increment: 1 } } });
+    await tx.cart.update({
+      where: { id: cartId },
+      data: { lastActivityAt: new Date(), rowVersion: { increment: 1 } },
+    });
   }
 
-  private async record(tx: Tx, cartPublicId: string, type: string, data: Record<string, unknown>, who: CartActor) {
+  private async record(
+    tx: Tx,
+    cartPublicId: string,
+    type: string,
+    data: Record<string, unknown>,
+    who: CartActor,
+  ) {
     const event = await this.events.record(
       tx,
       { type, aggregateType: 'cart', aggregateId: cartPublicId, payload: { cartId: cartPublicId, ...data } },

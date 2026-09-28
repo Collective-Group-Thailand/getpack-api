@@ -60,7 +60,9 @@ export class FakeScbGateway implements ScbGateway {
     const transactionId = typeof cb['transactionId'] === 'string' ? cb['transactionId'] : null;
     const settled = transactionId ? this.settled.get(transactionId) : undefined;
     const genuine =
-      settled && settled.reference === cb['billPaymentRef1'] && Number(settled.amount) === Number(cb['amount']);
+      settled &&
+      settled.reference === cb['billPaymentRef1'] &&
+      Number(settled.amount) === Number(cb['amount']);
     return Promise.resolve({ transactionId, confirmation: genuine ? settled : null });
   }
 
@@ -153,7 +155,11 @@ export class FakeTwoC2PGateway implements TwoC2PGateway {
 
   refund(request: { reference: string; amount: string; idempotencyId: string }): Promise<RefundResult> {
     this.refunds.push({ reference: request.reference, amount: request.amount });
-    return Promise.resolve({ status: 'succeeded', providerRef: `RF${request.reference}`, message: '00 Success RF' });
+    return Promise.resolve({
+      status: 'succeeded',
+      providerRef: `RF${request.reference}`,
+      message: '00 Success RF',
+    });
   }
 }
 
@@ -181,9 +187,23 @@ export class FakeSlipVerifier implements SlipVerifier {
     };
     let check: SlipCheck;
     if (!text.startsWith('FAKESLIP') || !base.transRef) {
-      check = { ...base, result: 'unreadable', code: '400002', receiverMatched: false, amountMatched: false, dateMatched: false };
+      check = {
+        ...base,
+        result: 'unreadable',
+        code: '400002',
+        receiverMatched: false,
+        amountMatched: false,
+        dateMatched: false,
+      };
     } else if (this.accepted.has(base.transRef)) {
-      check = { ...base, result: 'duplicate', code: '200501', receiverMatched: false, amountMatched: false, dateMatched: false };
+      check = {
+        ...base,
+        result: 'duplicate',
+        code: '200501',
+        receiverMatched: false,
+        amountMatched: false,
+        dateMatched: false,
+      };
     } else {
       const receiverMatched = request.receivers.length > 0 && fields['receiver'] === 'ok';
       const amountMatched = base.amount !== null && Number(base.amount) === Number(request.amount);

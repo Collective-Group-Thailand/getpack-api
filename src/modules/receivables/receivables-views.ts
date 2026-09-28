@@ -30,14 +30,26 @@ export function documentDto(d: DocumentRow): CustomerDocumentDto {
     dueDate: d.dueDate ? dayOf(d.dueDate) : null,
     isTaxInvoice: d.isTaxInvoice,
     isFullForm: d.isFullForm,
-    buyer: { name: buyer.name, taxId: d.isFullForm ? buyer.taxId : null, branchCode: d.isFullForm ? buyer.branchCode : null, address: buyer.address },
-    seller: { name: seller.legalNameTh ?? seller.legalNameEn ?? '', taxId: seller.taxId, branchCode: seller.branchCode, address: seller.addressTh },
+    buyer: {
+      name: buyer.name,
+      taxId: d.isFullForm ? buyer.taxId : null,
+      branchCode: d.isFullForm ? buyer.branchCode : null,
+      address: buyer.address,
+    },
+    seller: {
+      name: seller.legalNameTh ?? seller.legalNameEn ?? '',
+      taxId: seller.taxId,
+      branchCode: seller.branchCode,
+      address: seller.addressTh,
+    },
     orderGroupId: d.orderGroup?.publicId ?? null,
     groupCode: d.orderGroup?.groupCode ?? null,
     orderId: d.order?.publicId ?? null,
     orderCode: d.order?.orderCode ?? null,
     paymentId: d.payment?.publicId ?? null,
-    originalDocument: d.originalDocument ? { id: d.originalDocument.publicId, docNumber: d.originalDocument.docNumber } : null,
+    originalDocument: d.originalDocument
+      ? { id: d.originalDocument.publicId, docNumber: d.originalDocument.docNumber }
+      : null,
     reason: d.creditNoteReason?.nameTh ?? null,
     cnKind: d.cnKind,
     receiptVia: d.receiptVia,
@@ -63,7 +75,11 @@ export function documentDto(d: DocumentRow): CustomerDocumentDto {
       whtAmount: l.whtAmount.toFixed(2),
     })),
     receivable: d.receivableItem
-      ? { id: d.receivableItem.publicId, openAmount: d.receivableItem.openAmount.toFixed(2), status: d.receivableItem.status }
+      ? {
+          id: d.receivableItem.publicId,
+          openAmount: d.receivableItem.openAmount.toFixed(2),
+          status: d.receivableItem.status,
+        }
       : null,
     pdfReady: d.pdfFileId !== null,
     voidReason: d.voidReason,
@@ -82,7 +98,9 @@ export const requestDto = (r: CreditNoteRequestRow): CreditNoteRequestDto => ({
   note: r.note,
   status: r.status,
   approvalRequestId: r.approvalRequest?.publicId ?? null,
-  creditNote: r.customerDocument ? { id: r.customerDocument.publicId, docNumber: r.customerDocument.docNumber } : null,
+  creditNote: r.customerDocument
+    ? { id: r.customerDocument.publicId, docNumber: r.customerDocument.docNumber }
+    : null,
   claimNo: r.claim?.claimNo ?? null,
   createdAt: toBangkokIso(r.createdAt),
 });

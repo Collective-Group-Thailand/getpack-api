@@ -1051,7 +1051,12 @@ const TRIGRAM_INDEXES = [
 ];
 
 /** Exclusion constraints (non-overlapping bands, B2.3+). */
-const EXCLUSIONS = ['ex_sell_margin_lines__no_overlap', 'ex_geometry_bands__no_overlap', 'ex_fiscal_periods__no_overlap', 'ex_fiscal_years__no_overlap'];
+const EXCLUSIONS = [
+  'ex_sell_margin_lines__no_overlap',
+  'ex_geometry_bands__no_overlap',
+  'ex_fiscal_periods__no_overlap',
+  'ex_fiscal_years__no_overlap',
+];
 
 const EXTENSIONS = ['vector', 'pgcrypto', 'pg_trgm', 'citext', 'btree_gist'];
 

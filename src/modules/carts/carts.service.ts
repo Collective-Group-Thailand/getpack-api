@@ -33,7 +33,8 @@ export const CART_INCLUDE = {
 export type CartRow = Prisma.CartGetPayload<{ include: typeof CART_INCLUDE }>;
 export type CartItemRow = CartRow['items'][number];
 
-export const cartEtag = (cart: { publicId: string; rowVersion: number }) => etagOf(cart.publicId, cart.rowVersion);
+export const cartEtag = (cart: { publicId: string; rowVersion: number }) =>
+  etagOf(cart.publicId, cart.rowVersion);
 
 /** Who works the cart: the customer on the store, or CS for the customer (schema-design §2.10). */
 export interface CartActor {
@@ -115,7 +116,8 @@ export class CartsService {
     /** A reorder (D-153): the past order and the approved proof carried over when the artwork is unchanged. */
     reorder?: { orderId: bigint; reuseArtworkProofId: bigint | null },
   ): Promise<CartRow> {
-    if (body.mockupOption && body.mockupOption !== 'none') throw new DomainException('cart.mockup_price_unavailable');
+    if (body.mockupOption && body.mockupOption !== 'none')
+      throw new DomainException('cart.mockup_price_unavailable');
     return this.prisma.withTx(async (tx) => {
       const cart = await this.active(tx, who);
       assertIfMatch(ifMatch, cartEtag(cart), { required: false });
@@ -127,7 +129,12 @@ export class CartsService {
         throw new DomainException('cart.item_exists');
       const option = await tx.quoteOption.findUniqueOrThrow({ where: { id: snapshot.quoteOptionId } });
       this.checkDesignOption(body.designOption, option.result);
-      const designDocumentId = await this.designDocument(tx, who, body.designDocumentId ?? null, body.designOption);
+      const designDocumentId = await this.designDocument(
+        tx,
+        who,
+        body.designDocumentId ?? null,
+        body.designOption,
+      );
       const item = await tx.cartItem.create({
         data: {
           cartId: cart.id,
@@ -153,9 +160,16 @@ export class CartsService {
       });
       const destinations =
         body.destinations ?? (await this.defaultDestination(tx, who.customerUserId, snapshot.quantity));
-      if (destinations.length > 0) await this.writeDestinations(tx, who, item.id, snapshot.quantity, destinations);
+      if (destinations.length > 0)
+        await this.writeDestinations(tx, who, item.id, snapshot.quantity, destinations);
       await this.touch(tx, cart.id);
-      await this.record(tx, cart.publicId, 'cart.item_added', { itemId: item.publicId, quoteId: quote.publicId }, who);
+      await this.record(
+        tx,
+        cart.publicId,
+        'cart.item_added',
+        { itemId: item.publicId, quoteId: quote.publicId },
+        who,
+      );
       return this.load(tx, cart.id);
     });
   }
@@ -166,7 +180,8 @@ export class CartsService {
     ifMatch: string | undefined,
     body: UpdateCartItemDto,
   ): Promise<CartRow> {
-    if (body.mockupOption && body.mockupOption !== 'none') throw new DomainException('cart.mockup_price_unavailable');
+    if (body.mockupOption && body.mockupOption !== 'none')
+      throw new DomainException('cart.mockup_price_unavailable');
     return this.prisma.withTx(async (tx) => {
       const { cart, item } = await this.item(tx, who, itemId);
       assertIfMatch(ifMatch, cartEtag(cart));
@@ -203,7 +218,13 @@ export class CartsService {
       await tx.cartItemDestination.deleteMany({ where: { cartItemId: item.id } });
       await this.writeDestinations(tx, who, item.id, item.quantity, destinations);
       await this.touch(tx, cart.id);
-      await this.record(tx, cart.publicId, 'cart.destinations_set', { itemId, count: destinations.length }, who);
+      await this.record(
+        tx,
+        cart.publicId,
+        'cart.destinations_set',
+        { itemId, count: destinations.length },
+        who,
+      );
       return this.load(tx, cart.id);
     });
   }
@@ -230,7 +251,9 @@ export class CartsService {
     const fresh = await this.quotes.reprice(this.owner(who), item.quote.publicId);
     return this.prisma.withTx(async (tx) => {
       const { cart, item: current } = await this.item(tx, who, itemId);
-      const option = await tx.quoteOption.findFirst({ where: { quoteId: fresh.id, quantity: current.quantity } });
+      const option = await tx.quoteOption.findFirst({
+        where: { quoteId: fresh.id, quantity: current.quantity },
+      });
       if (!option) throw new DomainException('cart.reprice_unavailable');
       const previous = new MoneyDecimal(current.grossAmount.toString());
       const next = new MoneyDecimal(option.grossAmount.toString());
@@ -283,7 +306,13 @@ export class CartsService {
         },
       });
       await this.touch(tx, cart.id);
-      await this.record(tx, cart.publicId, 'cart.reprice_confirmed', { itemId, quoteId: item.pendingQuote.publicId }, who);
+      await this.record(
+        tx,
+        cart.publicId,
+        'cart.reprice_confirmed',
+        { itemId, quoteId: item.pendingQuote.publicId },
+        who,
+      );
       return this.load(tx, cart.id);
     });
   }
@@ -309,7 +338,12 @@ export class CartsService {
 
   /** `hired_design` only on a quotation priced with the design fee; `free_design` needs a promotion (B3.3). */
   /** The customer's own online design (B4.1), only with `designOption = online_designer`. */
-  private async designDocument(tx: Tx, who: CartActor, publicId: string | null, designOption: string): Promise<bigint | null> {
+  private async designDocument(
+    tx: Tx,
+    who: CartActor,
+    publicId: string | null,
+    designOption: string,
+  ): Promise<bigint | null> {
     if (publicId === null) return null;
     const doc = await tx.designDocument.findFirst({
       where: { publicId, ownerUserId: who.customerUserId, deletedAt: null },
@@ -317,7 +351,13 @@ export class CartsService {
     if (!doc) throw new DomainException('http.not_found');
     if (designOption !== 'online_designer')
       throw new DomainException('validation.failed', {
-        errors: [{ path: 'designDocumentId', code: 'invalid', message: 'a design needs designOption online_designer' }],
+        errors: [
+          {
+            path: 'designDocumentId',
+            code: 'invalid',
+            message: 'a design needs designOption online_designer',
+          },
+        ],
       });
     return doc.id;
   }
@@ -387,7 +427,13 @@ export class CartsService {
     });
   }
 
-  private async record(tx: Tx, cartPublicId: string, type: string, data: Record<string, unknown>, who: CartActor) {
+  private async record(
+    tx: Tx,
+    cartPublicId: string,
+    type: string,
+    data: Record<string, unknown>,
+    who: CartActor,
+  ) {
     const event = await this.events.record(
       tx,
       { type, aggregateType: 'cart', aggregateId: cartPublicId, payload: { cartId: cartPublicId, ...data } },

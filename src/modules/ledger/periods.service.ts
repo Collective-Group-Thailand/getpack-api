@@ -104,7 +104,12 @@ export class PeriodsService {
    * Where a posting dated `day` lands: its own period when open (or soft-closed with the permission),
    * otherwise the first open period after it, keeping the document date for tax (§1.4).
    */
-  async postingPeriod(tx: Tx, entityId: bigint, day: string, allowSoftClosed = false): Promise<PostingPeriod> {
+  async postingPeriod(
+    tx: Tx,
+    entityId: bigint,
+    day: string,
+    allowSoftClosed = false,
+  ): Promise<PostingPeriod> {
     await this.ensureYear(tx, entityId, day);
     const own = await tx.fiscalPeriod.findFirstOrThrow({
       where: { entityId, startDate: { lte: dateOnly(day) }, endDate: { gte: dateOnly(day) } },
@@ -164,11 +169,16 @@ export class PeriodsService {
     const from = row!.status;
     if (!TRANSITIONS[from].includes(to))
       throw new DomainException('ledger.period_transition', { params: { from, to } });
-    if (this.gate && (to === 'closed' || to === 'locked')) await this.gate.assertMayTransition(tx, period, to, actor);
+    if (this.gate && (to === 'closed' || to === 'locked'))
+      await this.gate.assertMayTransition(tx, period, to, actor);
     if (to === 'open') {
       // A month cannot reopen once a later month is closed (periods close in sequence).
       const laterClosed = await tx.fiscalPeriod.count({
-        where: { entityId: period.entityId, startDate: { gt: period.startDate }, status: { in: ['closed', 'locked'] } },
+        where: {
+          entityId: period.entityId,
+          startDate: { gt: period.startDate },
+          status: { in: ['closed', 'locked'] },
+        },
       });
       if (laterClosed > 0) throw new DomainException('ledger.period_transition', { params: { from, to } });
     }
@@ -191,7 +201,8 @@ export class PeriodsService {
       const openLeft = await tx.fiscalPeriod.count({
         where: { fiscalYearId: period.fiscalYearId, status: { not: 'locked' } },
       });
-      if (openLeft === 0) await tx.fiscalYear.update({ where: { id: period.fiscalYearId }, data: { status: 'locked' } });
+      if (openLeft === 0)
+        await tx.fiscalYear.update({ where: { id: period.fiscalYearId }, data: { status: 'locked' } });
     }
     await this.audit.record(tx, {
       category: 'finance',
@@ -217,6 +228,8 @@ export class PeriodsService {
   }
 
   async transition(actor: UserActor, publicId: string, to: PeriodStatus, reason: string | null) {
-    return this.prisma.withTx(async (tx) => this.transitionIn(tx, actor, await this.period(publicId, tx), to, reason));
+    return this.prisma.withTx(async (tx) =>
+      this.transitionIn(tx, actor, await this.period(publicId, tx), to, reason),
+    );
   }
 }

@@ -13,10 +13,17 @@ export class IdentityFingerprints {
   constructor(private readonly hasher: LookupHasher) {}
 
   hashOf(kind: FingerprintKind, value: string): Uint8Array<ArrayBuffer> {
-    return kind === 'address' ? this.hasher.hashText(value, `fingerprint:${kind}`) : this.hasher.hash(value, `fingerprint:${kind}`);
+    return kind === 'address'
+      ? this.hasher.hashText(value, `fingerprint:${kind}`)
+      : this.hasher.hash(value, `fingerprint:${kind}`);
   }
 
-  async record(tx: Tx, userId: bigint, kind: FingerprintKind, value: string | null | undefined): Promise<void> {
+  async record(
+    tx: Tx,
+    userId: bigint,
+    kind: FingerprintKind,
+    value: string | null | undefined,
+  ): Promise<void> {
     if (!value || !value.trim()) return;
     const valueHash = this.hashOf(kind, value);
     await tx.identityFingerprint.upsert({

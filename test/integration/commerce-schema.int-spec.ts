@@ -190,7 +190,9 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
   it('freezes pricing, lines and destinations once production started', async () => {
     const o = await order('in_production');
     expect(
-      await state(`UPDATE orders SET pricing_snapshot = '{"v":9}', pricing_revision = 2 WHERE id = $1`, [o.id]),
+      await state(`UPDATE orders SET pricing_snapshot = '{"v":9}', pricing_revision = 2 WHERE id = $1`, [
+        o.id,
+      ]),
     ).toBe(SQLSTATE.restrictViolation);
     expect(await state(`UPDATE order_lines SET description_en = 'x' WHERE id = $1`, [o.lines[0]!.id])).toBe(
       SQLSTATE.restrictViolation,
@@ -327,8 +329,22 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
             reason: 'int',
             instalments: {
               create: [
-                { seq: 1, labelTh: 'ก', labelEn: 'a', pct, dueTrigger: 'at_checkout', requiredBefore: 'production' },
-                { seq: 2, labelTh: 'ข', labelEn: 'b', pct: '40', dueTrigger: 'before_shipping', requiredBefore: 'shipping' },
+                {
+                  seq: 1,
+                  labelTh: 'ก',
+                  labelEn: 'a',
+                  pct,
+                  dueTrigger: 'at_checkout',
+                  requiredBefore: 'production',
+                },
+                {
+                  seq: 2,
+                  labelTh: 'ข',
+                  labelEn: 'b',
+                  pct: '40',
+                  dueTrigger: 'before_shipping',
+                  requiredBefore: 'shipping',
+                },
               ],
             },
           },
@@ -390,7 +406,9 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
 
   it('keeps instalment arithmetic and payment allocations append-only (ADR-0008)', async () => {
     const o = await order();
-    const template = await prisma.paymentScheduleTemplateVersion.findFirstOrThrow({ where: { status: 'approved' } });
+    const template = await prisma.paymentScheduleTemplateVersion.findFirstOrThrow({
+      where: { status: 'approved' },
+    });
     const schedule = await prisma.paymentSchedule.create({
       data: { orderGroupId: o.orderGroupId, templateVersionId: template.id },
     });
@@ -407,9 +425,9 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
       whtAmount: '30.00',
       cashAmount: '1040.00',
     };
-    await expect(prisma.instalment.create({ data: { ...base, seq: 1, cashAmount: '1070.00' } })).rejects.toThrow(
-      /ck_instalments__cash/,
-    );
+    await expect(
+      prisma.instalment.create({ data: { ...base, seq: 1, cashAmount: '1070.00' } }),
+    ).rejects.toThrow(/ck_instalments__cash/);
     const instalment = await prisma.instalment.create({ data: { ...base, seq: 1 } });
     await expect(
       prisma.instalment.update({ where: { id: instalment.id }, data: { status: 'paid' } }),
@@ -426,12 +444,16 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
         whtAmount: '30.00',
         cashAmount: '1040.00',
         paidAt: new Date(),
-        allocations: { create: { instalmentId: instalment.id, cashAmount: '1040.00', grossAmount: '1070.00' } },
+        allocations: {
+          create: { instalmentId: instalment.id, cashAmount: '1040.00', grossAmount: '1070.00' },
+        },
       },
       include: { allocations: true },
     });
     expect(
-      await state(`UPDATE payment_allocations SET cash_amount = 1 WHERE id = $1`, [payment.allocations[0]!.id]),
+      await state(`UPDATE payment_allocations SET cash_amount = 1 WHERE id = $1`, [
+        payment.allocations[0]!.id,
+      ]),
     ).toBe(SQLSTATE.restrictViolation);
     expect(await state('DELETE FROM payments WHERE id = $1', [payment.id])).toBe(SQLSTATE.restrictViolation);
   });
@@ -455,9 +477,9 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
       data: { promotionId: promotion.id, code: `INT-${seq++}`, usageLimit: 1 },
     });
     await prisma.couponCode.update({ where: { id: code.id }, data: { usedCount: 1 } });
-    await expect(prisma.couponCode.update({ where: { id: code.id }, data: { usedCount: 2 } })).rejects.toThrow(
-      /ck_coupon_codes__usage/,
-    );
+    await expect(
+      prisma.couponCode.update({ where: { id: code.id }, data: { usedCount: 2 } }),
+    ).rejects.toThrow(/ck_coupon_codes__usage/);
     const o = await order();
     const redemption = {
       promotionId: promotion.id,
@@ -477,7 +499,9 @@ describe('commerce schema — customers, carts, orders (PostgreSQL 18)', () => {
       }),
     ).rejects.toThrow(/ck_referral_attributions__self/);
     await expect(
-      prisma.identityFingerprint.create({ data: { userId: fx.customerId, kind: 'phone', valueHash: Buffer.from('x') } }),
+      prisma.identityFingerprint.create({
+        data: { userId: fx.customerId, kind: 'phone', valueHash: Buffer.from('x') },
+      }),
     ).rejects.toThrow(/ck_identity_fingerprints__hash/);
   });
 });

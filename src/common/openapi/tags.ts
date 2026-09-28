@@ -4,37 +4,50 @@
  */
 export const API_TAGS: Record<string, string> = {
   'store.customerProfile': 'The signed-in customer’s profile: customer type and customer code (D-020).',
-  'store.addresses': 'Delivery and billing addresses of the signed-in customer; orders keep a snapshot (D-142).',
+  'store.addresses':
+    'Delivery and billing addresses of the signed-in customer; orders keep a snapshot (D-142).',
   'store.taxProfiles':
     'Buyer data for full-form tax invoices: tax id, head office / branch, withholding flag (D-092, D-174).',
-  'store.cart': 'The signed-in customer’s cart: price-locked quotation options split over addresses (D-051, D-142).',
+  'store.cart':
+    'The signed-in customer’s cart: price-locked quotation options split over addresses (D-051, D-142).',
   'admin.cart': 'CS works a customer’s cart on their behalf (channel `cs`, D-051).',
   'store.checkout': 'Preview and place the order group from the cart (D-051, D-060, D-013, D-174).',
   'admin.checkout': 'CS places a customer’s order on their behalf (channel `cs`).',
-  'store.orders': 'My order groups and orders: status driven by payment, artwork, production and shipping (D-060, D-073).',
+  'store.orders':
+    'My order groups and orders: status driven by payment, artwork, production and shipping (D-060, D-073).',
   'admin.orders': 'Order groups and orders for staff: reads with D-141 masking, cancellation with a reason.',
-  'admin.orderOperations': 'CS operations on orders: edit & re-price, change customer, remarks, notes, work queues.',
-  'store.paymentSchedules': 'The instalments of my order group and its production / shipping gates (D-020, D-073).',
-  'admin.paymentSchedules': 'Payment schedules and their templates: views with allocations per order, CS override (D-020, ADR-0008).',
+  'admin.orderOperations':
+    'CS operations on orders: edit & re-price, change customer, remarks, notes, work queues.',
+  'store.paymentSchedules':
+    'The instalments of my order group and its production / shipping gates (D-020, D-073).',
+  'admin.paymentSchedules':
+    'Payment schedules and their templates: views with allocations per order, CS override (D-020, ADR-0008).',
   'store.payments': 'Pay instalments by SCB QR, 2C2P or bank transfer with a slip (D-061, D-176).',
   'admin.payments': 'Payments, the Finance slip queue and unidentified receipts (D-061).',
-  'webhooks.payments': 'SCB, 2C2P and slip-verification callbacks, confirmed before any payment is accepted (D-061).',
-  'admin.refunds': 'Refunds: request, Finance Manager approval (maker-checker), gateway or bank-transfer execution (D-169).',
+  'webhooks.payments':
+    'SCB, 2C2P and slip-verification callbacks, confirmed before any payment is accepted (D-061).',
+  'admin.refunds':
+    'Refunds: request, Finance Manager approval (maker-checker), gateway or bank-transfer execution (D-169).',
   'admin.campaigns': 'Marketing campaigns with a THB budget: 80 % alert and auto-stop when spent (D-154).',
   'admin.promotions':
     'Promotions with validated conditions and benefits, coupon codes (single, bulk-unique, per-customer), CSV export and the redemption report (D-053).',
   'store.referral': 'My referral code and link; use a friend’s code before the first order (D-136).',
   'admin.referrals': 'Referrals with their fraud flags; `under_review` is Marketing’s queue (D-136).',
-  'store.loyalty': 'My points, tier and points history (D-130…D-134); redeem at checkout with `redeemPoints` (D-133).',
+  'store.loyalty':
+    'My points, tier and points history (D-130…D-134); redeem at checkout with `redeemPoints` (D-133).',
   'store.reviews': 'Review a delivered order and earn the review reward (D-135).',
   'admin.loyalty': 'A customer’s points, tier and history; audited staff adjustments (D-130…D-134).',
   'admin.reviews': 'Order reviews and their moderation (D-135).',
-  'store.companies': 'B2B companies: apply, KYC, members and company roles, branches, PO policy and approval threshold (D-120…D-125).',
-  'store.companyApprovals': 'Company approvers decide orders above the company threshold before placement (D-123).',
+  'store.companies':
+    'B2B companies: apply, KYC, members and company roles, branches, PO policy and approval threshold (D-120…D-125).',
+  'store.companyApprovals':
+    'Company approvers decide orders above the company threshold before placement (D-123).',
   'store.companyCredit': 'My company’s credit and monthly statement (D-121, D-122, D-125).',
-  'admin.companyCredit': 'Company credit: limit requests through the approval matrix, exposure, statements (D-121, D-125).',
+  'admin.companyCredit':
+    'Company credit: limit requests through the approval matrix, exposure, statements (D-121, D-125).',
   'admin.companies': 'B2B companies for staff: KYC review and activation, suspension and closure (D-120).',
-  'admin.discountMemos': 'Discounts above the CS limit, routed to the matching tier only; company discounts (D-052, D-124, D-162).',
+  'admin.discountMemos':
+    'Discounts above the CS limit, routed to the matching tier only; company discounts (D-052, D-124, D-162).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',
@@ -83,12 +96,14 @@ export const API_TAGS: Record<string, string> = {
     'Shipments for staff: fallback carrier booking (D-114), status corrections, PODs on behalf, delivery reconciliation (D-021, D-080, D-165).',
   'store.logistics': 'The shipments of my orders and confirming receipt (D-050, D-081).',
   'store.timeline': 'My order’s story, promised vs actual and shareable tracking links (D-050, D-143).',
-  'store.claims': 'Claims within 7 days of receipt with product and carton photos (D-082) and reorders (D-153).',
+  'store.claims':
+    'Claims within 7 days of receipt with product and carton photos (D-082) and reorders (D-153).',
   'partner.claims': 'Claims about my factory’s jobs: accept or dispute (D-083).',
   'admin.claims':
     'Claims: review, information requests, factory review, liability rules and overrides (D-083), decisions and resolutions through existing mechanisms.',
   'store.conversations': 'My chat with Packio CS from the web or LINE LIFF (D-151).',
-  'admin.conversations': 'The CS inbox: LINE and web conversations, replies pushed to LINE, assignment (D-151, D-143).',
+  'admin.conversations':
+    'The CS inbox: LINE and web conversations, replies pushed to LINE, assignment (D-151, D-143).',
   'admin.line': 'The LINE official account: rich menus for guests and members (D-151).',
   'webhooks.line': 'LINE official account events, signature-verified (D-151).',
   'store.tracking': 'Public tracking from a carton label or a shared link — no personal data, rate-limited.',
@@ -131,7 +146,8 @@ export const API_TAGS: Record<string, string> = {
   'admin.factoryShippingRates':
     'Factory shipping payout cards: Packio drafts, the factory accepts per line; buy prices (D-013, D-042, D-141).',
   'partner.shippingRates': 'The own shipping payout card: read and accept or counter (D-013, D-042).',
-  'admin.documentSeries': 'Document numbering series per entity and document type (accounting-design §4, D-169).',
+  'admin.documentSeries':
+    'Document numbering series per entity and document type (accounting-design §4, D-169).',
   'admin.carriers': 'Delivery methods: the factory fleet and Packio-booked fallback carriers (D-013, D-114).',
   'webhooks.carriers': 'Carrier status callbacks, signature-verified and stored once (D-114).',
   'admin.customerShippingRates':
@@ -207,32 +223,45 @@ export const API_TAGS: Record<string, string> = {
   // --- B5.1 ledger
   'admin.ledgerAccounts':
     'Chart of accounts (accounting-design §3, codes are defaults ⚖) and cost centres; changes are proposals approved by a Finance Manager (`coa_change`, D-169).',
-  'admin.ledgerPeriods': 'Fiscal years and monthly periods open → soft closed → closed → locked (accounting-design §1.4, §7).',
+  'admin.ledgerPeriods':
+    'Fiscal years and monthly periods open → soft closed → closed → locked (accounting-design §1.4, §7).',
   'admin.journals':
     'Journal entries with drill-down to rule, document and event; manual and reversing journals under maker-checker (accounting-design §1, §8, D-169).',
-  'admin.recurringJournals': 'Recurring and auto-reversing journals, approved once by a Finance Manager (B5.1).',
-  'admin.postingRules': 'Posting rules as data: P01–P30 and supplementary rules, versioned and approved (`posting_rule_change`, ADR-0007).',
-  'admin.taxRates': 'VAT and withholding rates with dated versions (accounting-design §2 ⚖, D-174); changes approved (`tax_setting_change`).',
+  'admin.recurringJournals':
+    'Recurring and auto-reversing journals, approved once by a Finance Manager (B5.1).',
+  'admin.postingRules':
+    'Posting rules as data: P01–P30 and supplementary rules, versioned and approved (`posting_rule_change`, ADR-0007).',
+  'admin.taxRates':
+    'VAT and withholding rates with dated versions (accounting-design §2 ⚖, D-174); changes approved (`tax_setting_change`).',
   // --- B5.2 receivables
   'admin.customerDocuments':
     'Tax invoices, invoices, receipts, credit and debit notes issued by the entity under the Packio brand (D-010, D-092): PDFs, voids, credit notes under maker-checker (D-169).',
   'admin.receivables':
     'Customer AR: open items, aging, write-offs (maker-checker), allowance for doubtful accounts, 50 ทวิ collection, credit balances, company statements (D-121, D-125).',
-  'store.documents': 'My tax invoices, receipts and notes (and my company’s), my credit balance and company statements (D-010, D-125).',
+  'store.documents':
+    'My tax invoices, receipts and notes (and my company’s), my credit balance and company statements (D-010, D-125).',
   // --- B5.3 payables, payouts, banking
   'admin.payables':
     'Factory POs, goods receipts, billing statements and the factory’s own tax invoices (D-090, D-165); vendors, vendor bills and vendor bank accounts (§6, §8).',
-  'admin.payouts': 'Payout runs: eligible payables, WHT and retention, approval (D-166), bank files (D-093), confirmation, 50 ทวิ, exceptions.',
-  'admin.banking': 'Company bank accounts, statement imports, auto / manual matching, unidentified receipts, gateway settlements and the cash position (D-061, D-093).',
-  'partner.payables': 'My factory’s POs, goods receipts, billing statements to confirm, tax invoices to submit, payouts and 50 ทวิ (D-090, D-022).',
+  'admin.payouts':
+    'Payout runs: eligible payables, WHT and retention, approval (D-166), bank files (D-093), confirmation, 50 ทวิ, exceptions.',
+  'admin.banking':
+    'Company bank accounts, statement imports, auto / manual matching, unidentified receipts, gateway settlements and the cash position (D-061, D-093).',
+  'partner.payables':
+    'My factory’s POs, goods receipts, billing statements to confirm, tax invoices to submit, payouts and 50 ทวิ (D-090, D-022).',
   // --- B5.4 tax
-  'admin.tax': 'Sales / purchase tax reports, ภ.พ.30 and ภ.ง.ด.3 / 53 working papers with attachments, WHT registers, GL reconciliation and the tax calendar (§6, §7).',
+  'admin.tax':
+    'Sales / purchase tax reports, ภ.พ.30 and ภ.ง.ด.3 / 53 working papers with attachments, WHT registers, GL reconciliation and the tax calendar (§6, §7).',
   // --- B5.5 fixed assets
-  'admin.fixedAssets': 'Fixed-asset register (D-150): categories, registration from bills or manual (FA01), monthly straight-line depreciation (FA02), disposal / write-off (FA03), roll-forward with GL reconciliation.',
+  'admin.fixedAssets':
+    'Fixed-asset register (D-150): categories, registration from bills or manual (FA01), monthly straight-line depreciation (FA02), disposal / write-off (FA03), roll-forward with GL reconciliation.',
   // --- B5.6 close, reports & audit
-  'admin.financialReports': 'Trial balance, GL detail with drill-down, balance sheet, P&L by dimension and the indirect cash-flow statement from the posted ledger (D-031).',
-  'admin.close': 'Period close (§7): the nine steps with blocking checks, owners and evidence; submit → soft close, approval by another Finance Manager → close, lock (auditor sign-off at year end).',
-  'admin.auditSupport': 'Auditor support (§8): exception reports, reproducible samples and the prepared-by-client pack per month.',
+  'admin.financialReports':
+    'Trial balance, GL detail with drill-down, balance sheet, P&L by dimension and the indirect cash-flow statement from the posted ledger (D-031).',
+  'admin.close':
+    'Period close (§7): the nine steps with blocking checks, owners and evidence; submit → soft close, approval by another Finance Manager → close, lock (auditor sign-off at year end).',
+  'admin.auditSupport':
+    'Auditor support (§8): exception reports, reproducible samples and the prepared-by-client pack per month.',
   // --- B6.1 analytics
   'store.analytics':
     'Analytics events posted by the BFF with consent mode, and the visitor’s analytics-cookie consent (D-102, PDPA): no identifier is kept without consent.',

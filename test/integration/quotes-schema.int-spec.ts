@@ -54,7 +54,9 @@ describe('quotes, RFQ and shipping schema (PostgreSQL 18)', () => {
 
   it('refuses a document type without a series', async () => {
     // Every document type has a dev series now (B5): an entity without series has none.
-    await expect(prisma.withTx((tx) => numbering.next(tx, 'iv', new Date(), 987_654_321n))).rejects.toMatchObject({
+    await expect(
+      prisma.withTx((tx) => numbering.next(tx, 'iv', new Date(), 987_654_321n)),
+    ).rejects.toMatchObject({
       code: 'numbering.series_missing',
     });
   });

@@ -189,12 +189,18 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     'Changes to posting rules (accounting-design.md §8)',
     ['D-033'],
   ),
-  financeManagerOnly('coa_change', 'account_change', 'Changes to the chart of accounts (accounting-design.md §8)', [
-    'D-033',
-  ]),
-  financeManagerOnly('tax_setting_change', 'tax_rate_version', 'Changes to tax settings (accounting-design.md §8)', [
-    'D-033',
-  ]),
+  financeManagerOnly(
+    'coa_change',
+    'account_change',
+    'Changes to the chart of accounts (accounting-design.md §8)',
+    ['D-033'],
+  ),
+  financeManagerOnly(
+    'tax_setting_change',
+    'tax_rate_version',
+    'Changes to tax settings (accounting-design.md §8)',
+    ['D-033'],
+  ),
   financeManagerOnly(
     'document_series_change',
     'document_series',

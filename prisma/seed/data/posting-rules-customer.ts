@@ -72,7 +72,8 @@ export const CUSTOMER_POSTING_RULES: readonly PostingRuleSeed[] = [
     key: 'P01',
     eventType: 'customer_document.issued',
     name: 'Instalment paid by gateway — TR',
-    description: 'Instalment / deposit paid by 2C2P or SCB before delivery; tax invoice/receipt issued (§5 P01)',
+    description:
+      'Instalment / deposit paid by 2C2P or SCB before delivery; tax invoice/receipt issued (§5 P01)',
     decisions: ['D-020', 'D-033'],
     conditions: all(
       eq('docType', 'tr'),
@@ -107,14 +108,23 @@ export const CUSTOMER_POSTING_RULES: readonly PostingRuleSeed[] = [
     description:
       'The customer withholds tax: WHT receivable instead of cash on the receipts (instalment TR, RC); a final TR only restates what earlier receipts withheld (§5 P03)',
     decisions: ['D-033', 'D-174'],
-    conditions: all(any(all(eq('docType', 'tr'), eq('docKind', 'instalment')), eq('docType', 'rc')), gt0('whtAmount')),
+    conditions: all(
+      any(all(eq('docType', 'tr'), eq('docKind', 'instalment')), eq('docType', 'rc')),
+      gt0('whtAmount'),
+    ),
     template: {
       description: 'ภาษีถูกหัก ณ ที่จ่าย {docNumber}',
       documentDate: 'documentDate',
       source: DOC_SOURCE,
       dimensions: CUSTOMER_DIMS,
       lines: [
-        { account: '1230', side: 'debit', amount: 'whtAmount', taxCode: 'wht_receivable', taxBase: 'whtBase' },
+        {
+          account: '1230',
+          side: 'debit',
+          amount: 'whtAmount',
+          taxCode: 'wht_receivable',
+          taxBase: 'whtBase',
+        },
         { account: RECEIPT_ACCOUNT, side: 'credit', amount: 'whtAmount', description: 'ลดยอดรับชำระ' },
       ],
     },
@@ -136,7 +146,13 @@ export const CUSTOMER_POSTING_RULES: readonly PostingRuleSeed[] = [
         { account: '2310', side: 'debit', amount: 'appliedAdvanceNet', description: 'ตัดเงินรับล่วงหน้า' },
         { account: '1210', side: 'debit', amount: 'remainingGross' },
         DELIVERY_REVENUE,
-        { account: '2210', side: 'credit', amount: 'remainingVat', taxCode: 'output_vat', taxBase: 'remainingNet' },
+        {
+          account: '2210',
+          side: 'credit',
+          amount: 'remainingVat',
+          taxCode: 'output_vat',
+          taxBase: 'remainingNet',
+        },
       ],
     },
   },
@@ -171,7 +187,8 @@ export const CUSTOMER_POSTING_RULES: readonly PostingRuleSeed[] = [
     key: 'P07D',
     eventType: 'customer_document.issued',
     name: 'Debit note',
-    description: 'Debit note (ใบเพิ่มหนี้) against a tax invoice: receivable, other revenue and output VAT (§2, §4)',
+    description:
+      'Debit note (ใบเพิ่มหนี้) against a tax invoice: receivable, other revenue and output VAT (§2, §4)',
     decisions: ['D-033'],
     conditions: eq('docType', 'dn'),
     template: {
@@ -209,7 +226,13 @@ export const CUSTOMER_POSTING_RULES: readonly PostingRuleSeed[] = [
           taxCode: 'output_vat_not_due',
           taxBase: 'vatNotDueBase',
         },
-        { account: '2210', side: 'credit', amount: 'vatNotDueAmount', taxCode: 'output_vat', taxBase: 'vatNotDueBase' },
+        {
+          account: '2210',
+          side: 'credit',
+          amount: 'vatNotDueAmount',
+          taxCode: 'output_vat',
+          taxBase: 'vatNotDueBase',
+        },
       ],
     },
   },
@@ -364,12 +387,20 @@ export const CUSTOMER_POSTING_RULES: readonly PostingRuleSeed[] = [
       dimensions: CUSTOMER_DIMS,
       lines: [
         {
-          account: { switch: 'refundFrom', cases: { unapplied: '2340', unidentified: '1140' }, default: '2320' },
+          account: {
+            switch: 'refundFrom',
+            cases: { unapplied: '2340', unidentified: '1140' },
+            default: '2320',
+          },
           side: 'debit',
           amount: 'amount',
         },
         {
-          account: { switch: 'paidVia', cases: { twoc2p: '1131', scb: '1132' }, default: { path: 'bankAccountCode' } },
+          account: {
+            switch: 'paidVia',
+            cases: { twoc2p: '1131', scb: '1132' },
+            default: { path: 'bankAccountCode' },
+          },
           side: 'credit',
           amount: 'amount',
         },
@@ -404,7 +435,8 @@ export const CUSTOMER_POSTING_RULES: readonly PostingRuleSeed[] = [
     key: 'P23F',
     eventType: 'customer_deposit.forfeited',
     name: 'Forfeited deposit',
-    description: 'A deposit kept under the forfeited-deposit policy becomes other income; its VAT stays declared (§5 P23)',
+    description:
+      'A deposit kept under the forfeited-deposit policy becomes other income; its VAT stays declared (§5 P23)',
     decisions: ['D-020', 'D-033'],
     conditions: null,
     template: {

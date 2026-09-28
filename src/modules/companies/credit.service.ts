@@ -81,7 +81,10 @@ export class CreditService {
     const [limit, exposure, pending] = await Promise.all([
       this.currentLimit(db, companyId),
       this.exposure(db, companyId),
-      db.companyCreditLimitVersion.findFirst({ where: { creditLimit: { companyId }, status: 'proposed' }, orderBy: { versionNo: 'desc' } }),
+      db.companyCreditLimitVersion.findFirst({
+        where: { creditLimit: { companyId }, status: 'proposed' },
+        orderBy: { versionNo: 'desc' },
+      }),
     ]);
     const available = MoneyDecimal.max(D(limit?.limitAmount ?? 0).sub(exposure), D(0));
     return { creditStatus: company.creditStatus, limit, exposure, available, pending };
@@ -93,18 +96,36 @@ export class CreditService {
   @OnDomainEvent('order.fact_recorded', { consumer: 'companies.credit_eligibility' })
   async onFact(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     if (event.payload['fact'] !== 'paid_for_production') return;
-    const order = await tx.order.findUnique({ where: { publicId: String(event.payload['orderId']) }, include: { orderGroup: true } });
+    const order = await tx.order.findUnique({
+      where: { publicId: String(event.payload['orderId']) },
+      include: { orderGroup: true },
+    });
     if (!order?.orderGroup.companyId) return;
-    const paidInGroup = await tx.order.count({ where: { orderGroupId: order.orderGroupId, paidForProductionAt: { not: null } } });
+    const paidInGroup = await tx.order.count({
+      where: { orderGroupId: order.orderGroupId, paidForProductionAt: { not: null } },
+    });
     if (paidInGroup !== 1) return;
     const company = await tx.company.update({
       where: { id: order.orderGroup.companyId },
       data: { paidOrdersCount: { increment: 1 } },
     });
     const needed = Number((await this.settings.at('b2b.credit_eligibility_paid_orders', { tx })).value);
-    if (company.creditStatus === 'prepaid' && company.status === 'active' && company.paidOrdersCount >= needed) {
-      await tx.company.update({ where: { id: company.id }, data: { creditStatus: 'eligible', rowVersion: { increment: 1 } } });
-      await this.companies.record(tx, company, 'company.credit_eligible', { paidOrders: company.paidOrdersCount }, systemActor('companies.credit'));
+    if (
+      company.creditStatus === 'prepaid' &&
+      company.status === 'active' &&
+      company.paidOrdersCount >= needed
+    ) {
+      await tx.company.update({
+        where: { id: company.id },
+        data: { creditStatus: 'eligible', rowVersion: { increment: 1 } },
+      });
+      await this.companies.record(
+        tx,
+        company,
+        'company.credit_eligible',
+        { paidOrders: company.paidOrdersCount },
+        systemActor('companies.credit'),
+      );
     }
   }
 
@@ -113,25 +134,46 @@ export class CreditService {
   async requestLimit(
     actor: UserActor,
     companyPublicId: string,
-    input: { limitAmount: string; termDays?: number; basis: 'paid_orders' | 'financial_statement'; reason: string },
+    input: {
+      limitAmount: string;
+      termDays?: number;
+      basis: 'paid_orders' | 'financial_statement';
+      reason: string;
+    },
   ) {
-    const terms = (await this.settings.at('b2b.credit_terms')).value as { allowedDays: number[]; defaultDays: number };
+    const terms = (await this.settings.at('b2b.credit_terms')).value as {
+      allowedDays: number[];
+      defaultDays: number;
+    };
     const termDays = input.termDays ?? terms.defaultDays;
     if (!terms.allowedDays.includes(termDays))
-      throw new DomainException('validation.failed', { errors: [{ path: 'termDays', code: 'in', message: `one of ${terms.allowedDays.join(', ')}` }] });
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'termDays', code: 'in', message: `one of ${terms.allowedDays.join(', ')}` }],
+      });
     return this.prisma.withTx(async (tx) => {
       const company = await this.companies.get(companyPublicId, tx);
-      if (company.status !== 'active') throw new DomainException('companies.invalid_status', { params: { status: company.status } });
+      if (company.status !== 'active')
+        throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       if (input.basis === 'paid_orders' && company.creditStatus === 'prepaid')
         throw new DomainException('companies.credit_not_eligible');
-      if (input.basis === 'financial_statement' && !company.kycDocuments.some((d) => d.docType === 'financial_statement' && d.status === 'verified'))
+      if (
+        input.basis === 'financial_statement' &&
+        !company.kycDocuments.some((d) => d.docType === 'financial_statement' && d.status === 'verified')
+      )
         throw new DomainException('companies.credit_not_eligible');
       const identity =
         (await tx.companyCreditLimit.findUnique({ where: { companyId: company.id } })) ??
         (await tx.companyCreditLimit.create({ data: { companyId: company.id } }));
-      if (await tx.companyCreditLimitVersion.findFirst({ where: { creditLimitId: identity.id, status: 'proposed' } }))
+      if (
+        await tx.companyCreditLimitVersion.findFirst({
+          where: { creditLimitId: identity.id, status: 'proposed' },
+        })
+      )
         throw new DomainException('approval.already_pending');
-      const last = await tx.companyCreditLimitVersion.findFirst({ where: { creditLimitId: identity.id }, orderBy: { versionNo: 'desc' } });
+      const last = await tx.companyCreditLimitVersion.findFirst({
+        where: { creditLimitId: identity.id },
+        orderBy: { versionNo: 'desc' },
+      });
       const version = await tx.companyCreditLimitVersion.create({
         data: {
           creditLimitId: identity.id,
@@ -160,39 +202,79 @@ export class CreditService {
           reason: input.reason,
         },
       });
-      await tx.companyCreditLimitVersion.update({ where: { id: version.id }, data: { approvalRequestId: request.id } });
-      await this.companies.record(tx, company, 'company.credit_limit_requested', {
-        limitAmount: D(input.limitAmount).toFixed(2),
-        termDays,
-        approvalId: request.publicId,
-      }, actor);
+      await tx.companyCreditLimitVersion.update({
+        where: { id: version.id },
+        data: { approvalRequestId: request.id },
+      });
+      await this.companies.record(
+        tx,
+        company,
+        'company.credit_limit_requested',
+        {
+          limitAmount: D(input.limitAmount).toFixed(2),
+          termDays,
+          approvalId: request.publicId,
+        },
+        actor,
+      );
       return this.view(company.id, tx);
     });
   }
 
-  @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], { consumer: 'companies.credit_limit' })
+  @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], {
+    consumer: 'companies.credit_limit',
+  })
   async onApprovalOutcome(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     if (event.payload['policyKey'] !== POLICY) return;
     const request = await tx.approvalRequest.findUnique({ where: { publicId: event.aggregateId } });
     if (!request) return;
-    const version = await tx.companyCreditLimitVersion.findFirst({ where: { approvalRequestId: request.id, status: 'proposed' }, include: { creditLimit: { include: { company: true } } } });
+    const version = await tx.companyCreditLimitVersion.findFirst({
+      where: { approvalRequestId: request.id, status: 'proposed' },
+      include: { creditLimit: { include: { company: true } } },
+    });
     if (!version) return;
     const company = version.creditLimit.company;
     const actor = systemActor('companies.credit_limit');
     const now = new Date();
     if (event.type !== 'approval.approved') {
-      await tx.companyCreditLimitVersion.update({ where: { id: version.id }, data: { status: event.type === 'approval.rejected' ? 'rejected' : 'withdrawn', decidedAt: now } });
-      await this.companies.record(tx, company, 'company.credit_limit_rejected', { versionId: version.publicId }, actor);
+      await tx.companyCreditLimitVersion.update({
+        where: { id: version.id },
+        data: { status: event.type === 'approval.rejected' ? 'rejected' : 'withdrawn', decidedAt: now },
+      });
+      await this.companies.record(
+        tx,
+        company,
+        'company.credit_limit_rejected',
+        { versionId: version.publicId },
+        actor,
+      );
       return;
     }
-    await tx.companyCreditLimitVersion.update({ where: { id: version.id }, data: { status: 'approved', decidedAt: now, effectiveFrom: now } });
-    const creditStatus = company.creditStatus === 'blocked_overdue' ? 'blocked_overdue' : D(version.limitAmount).gt(0) ? 'credit' : 'eligible';
-    await tx.company.update({ where: { id: company.id }, data: { creditStatus, rowVersion: { increment: 1 } } });
-    await this.companies.record(tx, company, 'company.credit_limit_approved', {
-      limitAmount: version.limitAmount.toFixed(2),
-      termDays: version.termDays,
-      creditStatus,
-    }, actor);
+    await tx.companyCreditLimitVersion.update({
+      where: { id: version.id },
+      data: { status: 'approved', decidedAt: now, effectiveFrom: now },
+    });
+    const creditStatus =
+      company.creditStatus === 'blocked_overdue'
+        ? 'blocked_overdue'
+        : D(version.limitAmount).gt(0)
+          ? 'credit'
+          : 'eligible';
+    await tx.company.update({
+      where: { id: company.id },
+      data: { creditStatus, rowVersion: { increment: 1 } },
+    });
+    await this.companies.record(
+      tx,
+      company,
+      'company.credit_limit_approved',
+      {
+        limitAmount: version.limitAmount.toFixed(2),
+        termDays: version.termDays,
+        creditStatus,
+      },
+      actor,
+    );
   }
 
   // --- overdue and reminders (D-122) ----------------------------------------------------------------
@@ -208,7 +290,11 @@ export class CreditService {
     };
     const today = startOfBangkokDay(new Date(now.getTime() + 7 * 3_600_000).toISOString().slice(0, 10));
     const windows: [string, Date, Date][] = [
-      ['company.credit_due_soon', new Date(today.getTime() + rules.reminderDaysBeforeDue * DAY_MS), new Date(today.getTime() + (rules.reminderDaysBeforeDue + 1) * DAY_MS)],
+      [
+        'company.credit_due_soon',
+        new Date(today.getTime() + rules.reminderDaysBeforeDue * DAY_MS),
+        new Date(today.getTime() + (rules.reminderDaysBeforeDue + 1) * DAY_MS),
+      ],
       ['company.credit_due_today', today, new Date(today.getTime() + DAY_MS)],
     ];
     let reminders = 0;
@@ -217,21 +303,36 @@ export class CreditService {
         where: {
           status: { in: [...OPEN] },
           dueAt: { gte: from, lt: to },
-          schedule: { orderGroup: { companyId: { not: null }, status: { not: 'cancelled' } }, templateVersion: { template: { key: 'credit_term' } } },
+          schedule: {
+            orderGroup: { companyId: { not: null }, status: { not: 'cancelled' } },
+            templateVersion: { template: { key: 'credit_term' } },
+          },
         },
         include: { schedule: { include: { orderGroup: { include: { company: true } } } } },
       });
       for (const i of due) {
-        const already = await this.prisma.domainEvent.count({ where: { type, aggregateId: i.schedule.orderGroup.company!.publicId, payload: { path: ['instalmentId'], equals: i.publicId } } });
+        const already = await this.prisma.domainEvent.count({
+          where: {
+            type,
+            aggregateId: i.schedule.orderGroup.company!.publicId,
+            payload: { path: ['instalmentId'], equals: i.publicId },
+          },
+        });
         if (already > 0) continue;
         await this.prisma.withTx((tx) =>
-          this.companies.record(tx, i.schedule.orderGroup.company!, type, {
-            instalmentId: i.publicId,
-            groupId: i.schedule.orderGroup.publicId,
-            groupCode: i.schedule.orderGroup.groupCode,
-            dueAt: i.dueAt!.toISOString(),
-            amount: formatMoney(D(i.cashAmount).sub(i.paidAmount.toString())),
-          }, systemActor('companies.dunning')),
+          this.companies.record(
+            tx,
+            i.schedule.orderGroup.company!,
+            type,
+            {
+              instalmentId: i.publicId,
+              groupId: i.schedule.orderGroup.publicId,
+              groupCode: i.schedule.orderGroup.groupCode,
+              dueAt: i.dueAt!.toISOString(),
+              amount: formatMoney(D(i.cashAmount).sub(i.paidAmount.toString())),
+            },
+            systemActor('companies.dunning'),
+          ),
         );
         reminders += 1;
       }
@@ -240,15 +341,27 @@ export class CreditService {
     const late = await this.prisma.company.findMany({
       where: {
         creditStatus: 'credit',
-        orderGroups: { some: { status: { not: 'cancelled' }, paymentSchedule: { instalments: { some: { status: { in: [...OPEN] }, dueAt: { lt: cutoff } } } } } },
+        orderGroups: {
+          some: {
+            status: { not: 'cancelled' },
+            paymentSchedule: { instalments: { some: { status: { in: [...OPEN] }, dueAt: { lt: cutoff } } } },
+          },
+        },
       },
     });
-    for (const c of late) await this.setCreditStatus(c, 'blocked_overdue', { daysOverdue: rules.blockCreditOrdersAfterDaysOverdue });
+    for (const c of late)
+      await this.setCreditStatus(c, 'blocked_overdue', {
+        daysOverdue: rules.blockCreditOrdersAfterDaysOverdue,
+      });
     const blocked = await this.prisma.company.findMany({ where: { creditStatus: 'blocked_overdue' } });
     let released = 0;
     for (const c of blocked) {
       const stillLate = await this.prisma.instalment.count({
-        where: { status: { in: [...OPEN] }, dueAt: { lt: cutoff }, schedule: { orderGroup: { companyId: c.id, status: { not: 'cancelled' } } } },
+        where: {
+          status: { in: [...OPEN] },
+          dueAt: { lt: cutoff },
+          schedule: { orderGroup: { companyId: c.id, status: { not: 'cancelled' } } },
+        },
       });
       if (stillLate === 0) {
         await this.setCreditStatus(c, 'credit', {});
@@ -258,11 +371,24 @@ export class CreditService {
     return { reminders, blocked: late.length, released };
   }
 
-  private async setCreditStatus(company: Company, to: 'credit' | 'blocked_overdue', data: Record<string, unknown>) {
+  private async setCreditStatus(
+    company: Company,
+    to: 'credit' | 'blocked_overdue',
+    data: Record<string, unknown>,
+  ) {
     await this.prisma.withTx(async (tx) => {
-      const { count } = await tx.company.updateMany({ where: { id: company.id, creditStatus: company.creditStatus }, data: { creditStatus: to, rowVersion: { increment: 1 } } });
+      const { count } = await tx.company.updateMany({
+        where: { id: company.id, creditStatus: company.creditStatus },
+        data: { creditStatus: to, rowVersion: { increment: 1 } },
+      });
       if (count === 0) return;
-      await this.companies.record(tx, company, to === 'blocked_overdue' ? 'company.credit_blocked' : 'company.credit_released', data, systemActor('companies.dunning'));
+      await this.companies.record(
+        tx,
+        company,
+        to === 'blocked_overdue' ? 'company.credit_blocked' : 'company.credit_released',
+        data,
+        systemActor('companies.dunning'),
+      );
     });
   }
 
@@ -273,19 +399,32 @@ export class CreditService {
     const from = startOfBangkokMonth(new Date(`${month}-15T00:00:00+07:00`));
     const to = startOfBangkokMonth(new Date(from.getTime() + 40 * DAY_MS));
     const groups = await this.prisma.orderGroup.findMany({
-      where: { companyId, placedAt: { gte: from, lt: to }, status: { notIn: ['cancelled', 'pending_company_approval'] } },
+      where: {
+        companyId,
+        placedAt: { gte: from, lt: to },
+        status: { notIn: ['cancelled', 'pending_company_approval'] },
+      },
       include: { paymentSchedule: { include: { instalments: true } }, companyBranch: true },
       orderBy: { placedAt: 'asc' },
     });
     const lines = groups.map((g) => {
       const live = g.paymentSchedule?.instalments.filter((i) => i.status !== 'cancelled') ?? [];
       const paid = live.reduce((a, i) => a.add(i.paidAmount.toString()), D(0));
-      const open = live.filter((i) => (OPEN as readonly string[]).includes(i.status)).reduce((a, i) => a.add(D(i.cashAmount).sub(i.paidAmount.toString())), D(0));
-      const due = live.map((i) => i.dueAt).filter((d): d is Date => d !== null).sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
+      const open = live
+        .filter((i) => (OPEN as readonly string[]).includes(i.status))
+        .reduce((a, i) => a.add(D(i.cashAmount).sub(i.paidAmount.toString())), D(0));
+      const due =
+        live
+          .map((i) => i.dueAt)
+          .filter((d): d is Date => d !== null)
+          .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
       return { group: g, gross: D(g.grossAmount), cash: D(g.cashAmount), paid, open, dueAt: due };
     });
     const openAtEnd = await this.prisma.instalment.findMany({
-      where: { status: { in: [...OPEN] }, schedule: { orderGroup: { companyId, placedAt: { lt: to }, status: { not: 'cancelled' } } } },
+      where: {
+        status: { in: [...OPEN] },
+        schedule: { orderGroup: { companyId, placedAt: { lt: to }, status: { not: 'cancelled' } } },
+      },
       select: { cashAmount: true, paidAmount: true },
     });
     return {
@@ -304,13 +443,30 @@ export class CreditService {
     const lastMonth = startOfBangkokMonth(new Date(thisMonth.getTime() - DAY_MS));
     const month = new Date(lastMonth.getTime() + 7 * 3_600_000).toISOString().slice(0, 7);
     const companies = await this.prisma.company.findMany({
-      where: { status: { in: ['active', 'suspended'] }, orderGroups: { some: { placedAt: { gte: lastMonth, lt: thisMonth } } } },
+      where: {
+        status: { in: ['active', 'suspended'] },
+        orderGroups: { some: { placedAt: { gte: lastMonth, lt: thisMonth } } },
+      },
     });
     let sent = 0;
     for (const c of companies) {
-      const already = await this.prisma.domainEvent.count({ where: { type: 'company.statement_ready', aggregateId: c.publicId, payload: { path: ['month'], equals: month } } });
+      const already = await this.prisma.domainEvent.count({
+        where: {
+          type: 'company.statement_ready',
+          aggregateId: c.publicId,
+          payload: { path: ['month'], equals: month },
+        },
+      });
       if (already > 0) continue;
-      await this.prisma.withTx((tx) => this.companies.record(tx, c, 'company.statement_ready', { month }, systemActor('companies.statements')));
+      await this.prisma.withTx((tx) =>
+        this.companies.record(
+          tx,
+          c,
+          'company.statement_ready',
+          { month },
+          systemActor('companies.statements'),
+        ),
+      );
       sent += 1;
     }
     return sent;
@@ -349,12 +505,18 @@ export class CreditCheckout implements CheckoutExtension, OnModuleInit {
     const view = await this.credit.view(company.id, db);
     if (!view.limit) return;
     if (view.available.lt(draft.totals.cashAmount)) {
-      draft.notices.push({ code: 'company.credit_unavailable', params: { reason: 'insufficient', available: formatMoney(view.available) } });
+      draft.notices.push({
+        code: 'company.credit_unavailable',
+        params: { reason: 'insufficient', available: formatMoney(view.available) },
+      });
       return;
     }
     draft.state['creditApproved'] = true;
     draft.state['creditTermDays'] = view.limit.termDays;
-    draft.notices.push({ code: 'company.credit_order', params: { termDays: view.limit.termDays, available: formatMoney(view.available) } });
+    draft.notices.push({
+      code: 'company.credit_order',
+      params: { termDays: view.limit.termDays, available: formatMoney(view.available) },
+    });
   }
 }
 

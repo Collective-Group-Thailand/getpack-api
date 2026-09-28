@@ -102,7 +102,11 @@ export class ManualJournalsService {
     return this.prisma.withTx(async (tx) => {
       await this.periods.ensureYear(tx, entityId, input.documentDate);
       const period = await tx.fiscalPeriod.findFirstOrThrow({
-        where: { entityId, startDate: { lte: dateOnly(input.documentDate) }, endDate: { gte: dateOnly(input.documentDate) } },
+        where: {
+          entityId,
+          startDate: { lte: dateOnly(input.documentDate) },
+          endDate: { gte: dateOnly(input.documentDate) },
+        },
       });
       const lines = await this.checkedLines(tx, entityId, period.id, input);
       const entry = await tx.journalEntry.create({
@@ -213,10 +217,15 @@ export class ManualJournalsService {
   /** Requests the reversal of a posted manual / recurring entry, approved like a manual journal. */
   async requestReversal(actor: UserActor, publicId: string, input: { documentDate: string; reason: string }) {
     return this.prisma.withTx(async (tx) => {
-      const original = await tx.journalEntry.findUnique({ where: { publicId }, include: { lines: true, reversedBy: true } });
+      const original = await tx.journalEntry.findUnique({
+        where: { publicId },
+        include: { lines: true, reversedBy: true },
+      });
       if (!original) throw new DomainException('http.not_found');
-      if (original.status !== 'posted') throw new DomainException('ledger.not_reversible', { params: { reason: 'not posted' } });
-      if (original.reversedBy) throw new DomainException('ledger.not_reversible', { params: { reason: 'already reversed' } });
+      if (original.status !== 'posted')
+        throw new DomainException('ledger.not_reversible', { params: { reason: 'not posted' } });
+      if (original.reversedBy)
+        throw new DomainException('ledger.not_reversible', { params: { reason: 'already reversed' } });
       if (original.kind === 'auto' || original.kind === 'reversal')
         throw new DomainException('ledger.not_reversible', {
           params: { reason: 'sub-ledger entries are corrected by their documents (void, credit note)' },
@@ -352,13 +361,16 @@ export class ManualJournalsService {
   private async editable(tx: Tx, actor: UserActor, publicId: string) {
     const entry = await tx.journalEntry.findUnique({ where: { publicId } });
     if (!entry || !['manual', 'reversal'].includes(entry.kind)) throw new DomainException('http.not_found');
-    if (entry.status !== 'draft') throw new DomainException('ledger.journal_not_editable', { params: { status: entry.status } });
+    if (entry.status !== 'draft')
+      throw new DomainException('ledger.journal_not_editable', { params: { status: entry.status } });
     if (entry.createdById !== actor.userId) throw new DomainException('auth.forbidden');
     return entry;
   }
 
   private async requireJvSeries(tx: Tx, entityId: bigint) {
-    const series = await tx.documentSeries.findUnique({ where: { entityId_docType: { entityId, docType: 'jv' } } });
+    const series = await tx.documentSeries.findUnique({
+      where: { entityId_docType: { entityId, docType: 'jv' } },
+    });
     if (!series) throw new DomainException('numbering.series_missing', { params: { docType: 'jv' } });
   }
 
@@ -393,7 +405,10 @@ export class ManualJournalsService {
 
   private async draftLines(tx: Tx, lines: ReturnType<typeof swappedLines>): Promise<JournalDraftLine[]> {
     const accounts = new Map(
-      (await tx.account.findMany({ where: { id: { in: lines.map((l) => l.accountId) } } })).map((a) => [a.id, a.code]),
+      (await tx.account.findMany({ where: { id: { in: lines.map((l) => l.accountId) } } })).map((a) => [
+        a.id,
+        a.code,
+      ]),
     );
     const out: JournalDraftLine[] = [];
     for (const l of lines) {
@@ -411,7 +426,12 @@ export class ManualJournalsService {
     return out;
   }
 
-  private async record(tx: Tx, entry: JournalEntry, type: string, actor: UserActor | ReturnType<typeof systemActor>) {
+  private async record(
+    tx: Tx,
+    entry: JournalEntry,
+    type: string,
+    actor: UserActor | ReturnType<typeof systemActor>,
+  ) {
     const event = await this.events.record(
       tx,
       {
@@ -419,7 +439,12 @@ export class ManualJournalsService {
         aggregateType: 'journal_entry',
         aggregateId: entry.publicId,
         entityId: entry.entityId,
-        payload: { journalEntryId: entry.publicId, kind: entry.kind, status: entry.status, entryNo: entry.entryNo },
+        payload: {
+          journalEntryId: entry.publicId,
+          kind: entry.kind,
+          status: entry.status,
+          entryNo: entry.entryNo,
+        },
       },
       actor,
     );
@@ -486,7 +511,11 @@ export async function publicDimensions(
   >,
 ): Promise<Partial<Record<DimensionKey, string>>> {
   const out: Partial<Record<DimensionKey, string>> = {};
-  const pick = async (key: DimensionKey, id: bigint | null, find: (id: bigint) => Promise<{ publicId: string } | null>) => {
+  const pick = async (
+    key: DimensionKey,
+    id: bigint | null,
+    find: (id: bigint) => Promise<{ publicId: string } | null>,
+  ) => {
     if (id !== null) {
       const row = await find(id);
       if (row) out[key] = row.publicId;

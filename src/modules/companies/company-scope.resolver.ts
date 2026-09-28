@@ -22,10 +22,18 @@ export class CompanyScopeResolver implements ScopeResolver, OnModuleInit {
       const companyId = event.payload['companyId'];
       if (typeof companyId !== 'string') return [];
       const members = await tx.companyMember.findMany({
-        where: { company: { publicId: companyId }, status: 'active', user: { status: 'active', anonymisedAt: null } },
+        where: {
+          company: { publicId: companyId },
+          status: 'active',
+          user: { status: 'active', anonymisedAt: null },
+        },
         include: { user: true },
       });
-      return members.map((m) => ({ userId: m.userId, locale: m.user.locale, displayName: m.user.displayName }));
+      return members.map((m) => ({
+        userId: m.userId,
+        locale: m.user.locale,
+        displayName: m.user.displayName,
+      }));
     });
   }
 

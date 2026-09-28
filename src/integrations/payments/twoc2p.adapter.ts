@@ -66,7 +66,9 @@ export class TwoC2PAdapter implements TwoC2PGateway {
       amount: Number(request.amount),
       currencyCode: 'THB',
       paymentChannel:
-        request.channel === 'card' ? (this.config.cardChannels ?? ['CC']) : (this.config.onlineBankingChannels ?? []),
+        request.channel === 'card'
+          ? (this.config.cardChannels ?? ['CC'])
+          : (this.config.onlineBankingChannels ?? []),
       paymentExpiry: `${expiry.slice(0, 10)} ${expiry.slice(11, 19)}`,
       frontendReturnUrl: request.frontendReturnUrl,
       backendReturnUrl: request.backendReturnUrl,
@@ -89,7 +91,10 @@ export class TwoC2PAdapter implements TwoC2PGateway {
   }
 
   async inquiry(reference: string): Promise<TwoC2PResult> {
-    const answer = await this.call('paymentInquiry', { merchantID: this.required().merchantId, invoiceNo: reference });
+    const answer = await this.call('paymentInquiry', {
+      merchantID: this.required().merchantId,
+      invoiceNo: reference,
+    });
     return resultOf(answer, true);
   }
 
@@ -116,7 +121,9 @@ export class TwoC2PAdapter implements TwoC2PGateway {
     const jwe = await new CompactEncrypt(new TextEncoder().encode(xml))
       .setProtectedHeader({ alg: 'RSA-OAEP', enc: 'A256GCM' })
       .encrypt(theirKey);
-    const jws = await new CompactSign(new TextEncoder().encode(jwe)).setProtectedHeader({ alg: 'PS256' }).sign(signKey);
+    const jws = await new CompactSign(new TextEncoder().encode(jwe))
+      .setProtectedHeader({ alg: 'PS256' })
+      .sign(signKey);
     const { status, body } = await this.http.call(paymentActionUrl, {
       method: 'POST',
       headers: { 'content-type': 'text/plain' },
@@ -136,7 +143,11 @@ export class TwoC2PAdapter implements TwoC2PGateway {
     const respCode = tag('respCode');
     const state = tag('status');
     const result: RefundResult['status'] =
-      respCode === '00' && state === 'RF' ? 'succeeded' : respCode === '00' && state === 'RP' ? 'pending' : 'failed';
+      respCode === '00' && state === 'RF'
+        ? 'succeeded'
+        : respCode === '00' && state === 'RP'
+          ? 'pending'
+          : 'failed';
     return {
       status: result,
       providerRef: tag('refundReferenceNo') ?? tag('referenceNo'),
@@ -158,7 +169,9 @@ export class TwoC2PAdapter implements TwoC2PGateway {
 
   private async call(action: 'paymentToken' | 'paymentInquiry', payload: Record<string, unknown>) {
     const c = this.required();
-    const jwt = await new SignJWT(payload).setProtectedHeader({ alg: 'HS256', typ: 'JWT' }).sign(this.secret());
+    const jwt = await new SignJWT(payload)
+      .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+      .sign(this.secret());
     const { status, body } = await this.http.call(`${c.baseUrl}/payment/${c.version}/${action}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

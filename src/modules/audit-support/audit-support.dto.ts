@@ -6,7 +6,11 @@ import { POPULATIONS } from './audit-support.service';
 /** Audit support (B5.6, accounting-design §8). */
 
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
-const IDS = { sample: '0192f3a0-7c1e-7d2a-9b1f-000000570001', pbc: '0192f3a0-7c1e-7d2a-9b1f-000000570002', doc: '0192f3a0-7c1e-7d2a-9b1f-000000520001' };
+const IDS = {
+  sample: '0192f3a0-7c1e-7d2a-9b1f-000000570001',
+  pbc: '0192f3a0-7c1e-7d2a-9b1f-000000570002',
+  doc: '0192f3a0-7c1e-7d2a-9b1f-000000520001',
+};
 
 export class ExceptionItemDto {
   @ApiProperty({ type: String, nullable: true, example: IDS.doc })
@@ -27,7 +31,17 @@ export class ExceptionItemDto {
 
 export class ExceptionReportDto {
   @ApiProperty({
-    enum: ['series_gaps', 'outside_business_hours', 'back_dated_documents', 'manual_journals_by_user', 'reversals', 'duplicate_vendor_bank_accounts', 'duplicate_slip_references', 'credit_notes_after_period_end', 'payouts_without_valid_tax_invoice'],
+    enum: [
+      'series_gaps',
+      'outside_business_hours',
+      'back_dated_documents',
+      'manual_journals_by_user',
+      'reversals',
+      'duplicate_vendor_bank_accounts',
+      'duplicate_slip_references',
+      'credit_notes_after_period_end',
+      'payouts_without_valid_tax_invoice',
+    ],
     enumName: 'AuditExceptionKey',
     example: 'back_dated_documents',
   })
@@ -47,7 +61,15 @@ export const EXCEPTION_EXAMPLE: ExceptionReportDto = {
   key: 'back_dated_documents',
   description: 'Documents and manual journals dated before the day they were made',
   count: 1,
-  items: [{ id: IDS.doc, reference: 'DEVTR-2610-00007', date: '2026-10-31', amount: '1070.00', detail: 'issued 2026-11-02' }],
+  items: [
+    {
+      id: IDS.doc,
+      reference: 'DEVTR-2610-00007',
+      date: '2026-10-31',
+      amount: '1070.00',
+      detail: 'issued 2026-11-02',
+    },
+  ],
 };
 
 export class DrawSampleDto {
@@ -59,7 +81,12 @@ export class DrawSampleDto {
   @IsIn(POPULATIONS)
   population!: (typeof POPULATIONS)[number];
 
-  @ApiProperty({ enum: ['random', 'stratified'], enumName: 'SampleMethod', example: 'stratified', description: '`stratified`: three bands of equal value, sampled in proportion' })
+  @ApiProperty({
+    enum: ['random', 'stratified'],
+    enumName: 'SampleMethod',
+    example: 'stratified',
+    description: '`stratified`: three bands of equal value, sampled in proportion',
+  })
   @IsIn(['random', 'stratified'])
   method!: 'random' | 'stratified';
 
@@ -69,7 +96,11 @@ export class DrawSampleDto {
   @Max(500)
   size!: number;
 
-  @ApiPropertyOptional({ example: '20261031', pattern: '^[0-9]{1,15}$', description: 'Reproduce an earlier sample (default: random)' })
+  @ApiPropertyOptional({
+    example: '20261031',
+    pattern: '^[0-9]{1,15}$',
+    description: 'Reproduce an earlier sample (default: random)',
+  })
   @IsOptional()
   @Matches(/^[0-9]{1,15}$/)
   seed?: string;
@@ -140,4 +171,9 @@ export class PbcExportDto {
   generatedAt!: string;
 }
 
-export const PBC_EXAMPLE: PbcExportDto = { id: IDS.pbc, period: '2026-10', sha256: '3f5a0c1d2e3f405162738495a6b7c8d9e0f1a2b3c4d5e6f708192a3b4c5d6e7f', generatedAt: '2026-11-10T10:00:00+07:00' };
+export const PBC_EXAMPLE: PbcExportDto = {
+  id: IDS.pbc,
+  period: '2026-10',
+  sha256: '3f5a0c1d2e3f405162738495a6b7c8d9e0f1a2b3c4d5e6f708192a3b4c5d6e7f',
+  generatedAt: '2026-11-10T10:00:00+07:00',
+};

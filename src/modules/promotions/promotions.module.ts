@@ -25,6 +25,12 @@ import { ReferralsService } from './referrals.service';
     ReferralsService,
     PromotionsJobs,
   ],
-  exports: [PromotionsAdminService, PromotionCodes, PromotionRedemptions, IdentityFingerprints, ReferralsService],
+  exports: [
+    PromotionsAdminService,
+    PromotionCodes,
+    PromotionRedemptions,
+    IdentityFingerprints,
+    ReferralsService,
+  ],
 })
 export class PromotionsModule {}

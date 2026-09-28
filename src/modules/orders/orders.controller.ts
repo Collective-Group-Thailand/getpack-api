@@ -3,7 +3,13 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
-import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import {
+  ApiConcurrency,
+  ApiEndpoint,
+  ApiEtag,
+  ApiStandardErrors,
+  ApiSuccess,
+} from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
@@ -46,7 +52,8 @@ export class StoreOrdersController {
   @ApiEndpoint({
     id: 'store.orders.listGroups',
     summary: 'List my order groups',
-    description: 'Newest first; each group holds one order per configuration (D-060 expiry shown while unpaid).',
+    description:
+      'Newest first; each group holds one order per configuration (D-060 expiry shown while unpaid).',
     implements: DECISIONS,
   })
   @ApiPaginated(OrderGroupDto, { example: ORDER_GROUP_EXAMPLE })
@@ -137,7 +144,8 @@ export class StoreOrdersController {
   @ApiEndpoint({
     id: 'store.orders.get',
     summary: 'Get one of my orders',
-    description: 'Lines, destinations and the status driven by payment, artwork, production and shipping facts.',
+    description:
+      'Lines, destinations and the status driven by payment, artwork, production and shipping facts.',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Order', type: OrderDto, example: ORDER_EXAMPLE })
@@ -196,11 +204,16 @@ export class AdminOrdersController {
   @ApiEndpoint({
     id: 'admin.orders.getGroup',
     summary: 'Get an order group',
-    description: 'Staff view with CS remarks; factory cost and margin need `factory_cost.read` / `margin.read` (D-141).',
+    description:
+      'Staff view with CS remarks; factory cost and margin need `factory_cost.read` / `margin.read` (D-141).',
     implements: [...DECISIONS, 'D-141'],
   })
   @ApiEtag()
-  @ApiSuccess(200, { description: 'Order group', type: AdminOrderGroupDto, example: ADMIN_ORDER_GROUP_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Order group',
+    type: AdminOrderGroupDto,
+    example: ADMIN_ORDER_GROUP_EXAMPLE,
+  })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(
     @CurrentActor() actor: Actor,
@@ -222,7 +235,11 @@ export class AdminOrdersController {
     implements: [...DECISIONS, 'D-141'],
   })
   @ApiEtag()
-  @ApiSuccess(200, { description: 'Order', type: AdminOrderDto, example: ADMIN_ORDER_GROUP_EXAMPLE.orders[0] })
+  @ApiSuccess(200, {
+    description: 'Order',
+    type: AdminOrderDto,
+    example: ADMIN_ORDER_GROUP_EXAMPLE.orders[0],
+  })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async getOrder(
     @CurrentActor() actor: Actor,
@@ -267,7 +284,10 @@ export class AdminOrdersController {
     @IfMatch() ifMatch: string | undefined,
     @Body() body: CancelOrderDto,
   ) {
-    return adminOrderGroupDto(await this.orders.cancelGroup(actor, groupId, body, { ifMatch }), await this.grants(actor));
+    return adminOrderGroupDto(
+      await this.orders.cancelGroup(actor, groupId, body, { ifMatch }),
+      await this.grants(actor),
+    );
   }
 
   @Post('orders/:orderId/actions/cancel')

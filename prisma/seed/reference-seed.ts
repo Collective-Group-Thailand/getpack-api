@@ -621,7 +621,9 @@ async function ensureReferralPromotion(tx: Tx, count: (what: string) => void): P
 async function ensureLedger(tx: Tx, entityId: bigint, count: (what: string) => void): Promise<void> {
   const ids = new Map<string, bigint>();
   for (const account of CHART_OF_ACCOUNTS) {
-    const existing = await tx.account.findUnique({ where: { entityId_code: { entityId, code: account.code } } });
+    const existing = await tx.account.findUnique({
+      where: { entityId_code: { entityId, code: account.code } },
+    });
     if (existing) {
       ids.set(account.code, existing.id);
       continue;
@@ -659,7 +661,7 @@ async function ensureLedger(tx: Tx, entityId: bigint, count: (what: string) => v
             versionNo: 1,
             effectiveFrom: SEED_EFFECTIVE_FROM,
             status: 'approved',
-            conditions: (rule.conditions ?? undefined),
+            conditions: rule.conditions ?? undefined,
             template: rule.template as unknown as Prisma.InputJsonValue,
             reason: `Seed default from accounting-design.md §5 (${rule.decisions.join(', ')})`,
             decidedAt: new Date(),

@@ -10,7 +10,11 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { CreditNotesService } from './credit-notes.service';
-import { CustomerDocumentsService, type DocumentLineDraft, type PostingFields } from './customer-documents.service';
+import {
+  CustomerDocumentsService,
+  type DocumentLineDraft,
+  type PostingFields,
+} from './customer-documents.service';
 
 const D = (v: { toString(): string } | string | number) => new MoneyDecimal(v.toString());
 const ZERO = () => new MoneyDecimal(0);
@@ -55,7 +59,10 @@ export class DeliveryDocumentsService {
       where: { id: orderId },
       include: {
         orderGroup: { include: { paymentSchedule: { include: { instalments: true } } } },
-        lines: { orderBy: { lineNo: 'asc' }, include: { discounts: { include: { campaign: true, promotion: true } } } },
+        lines: {
+          orderBy: { lineNo: 'asc' },
+          include: { discounts: { include: { campaign: true, promotion: true } } },
+        },
         productType: { select: { publicId: true } },
       },
     });
@@ -67,9 +74,18 @@ export class DeliveryDocumentsService {
     const credited = await tx.customerDocumentLine.findMany({
       where: { orderId, document: { docType: 'cn', cnKind: 'cancellation', status: 'issued' } },
     });
-    const sum = (rows: { netAmount: { toString(): string }; discountAmount: { toString(): string }; vatAmount: { toString(): string } }[]) =>
+    const sum = (
+      rows: {
+        netAmount: { toString(): string };
+        discountAmount: { toString(): string };
+        vatAmount: { toString(): string };
+      }[],
+    ) =>
       rows.reduce(
-        (a, l) => ({ net: a.net.add(D(l.netAmount).sub(l.discountAmount.toString())), vat: a.vat.add(l.vatAmount.toString()) }),
+        (a, l) => ({
+          net: a.net.add(D(l.netAmount).sub(l.discountAmount.toString())),
+          vat: a.vat.add(l.vatAmount.toString()),
+        }),
         { net: ZERO(), vat: ZERO() },
       );
     const paid = sum(advances);
@@ -118,7 +134,16 @@ export class DeliveryDocumentsService {
           orderId: order.publicId,
         }));
         // Discount rows of the line that do not add up to its discount (rounding, caps) keep the rest.
-        if (total.gt(listed)) out.push({ source: 'other', category: l.revenueCategory, amount: formatMoney(total.sub(listed)), campaignId: null, promotionId: null, productTypeId, orderId: order.publicId });
+        if (total.gt(listed))
+          out.push({
+            source: 'other',
+            category: l.revenueCategory,
+            amount: formatMoney(total.sub(listed)),
+            campaignId: null,
+            promotionId: null,
+            productTypeId,
+            orderId: order.publicId,
+          });
         return total.gt(0) ? out : [];
       }),
     };
@@ -156,7 +181,9 @@ export class DeliveryDocumentsService {
         lines: docLines,
         deductedPrior: appliedNet.add(appliedVat),
         amountDue: remainingGross,
-        dueDate: remainingGross.gt(0) ? this.dueDate(order.orderGroup.paymentSchedule?.instalments ?? [], day) : null,
+        dueDate: remainingGross.gt(0)
+          ? this.dueDate(order.orderGroup.paymentSchedule?.instalments ?? [], day)
+          : null,
         receivable: hireOfWorkInvoice ? { vatNotDueAmount: remainingVat, vatNotDueBase: remainingNet } : null,
         links: instalmentDocs.map((d) => ({ documentId: d.id, kind: 'deducts_instalment' as const })),
         posting,
@@ -166,9 +193,15 @@ export class DeliveryDocumentsService {
   }
 
   /** The unpaid remainder is due on delivery, or the schedule's days after delivery (credit terms, D-121). */
-  private dueDate(instalments: { dueTrigger: string; dueOffsetDays: number | null; status: string }[], day: string): string {
+  private dueDate(
+    instalments: { dueTrigger: string; dueOffsetDays: number | null; status: string }[],
+    day: string,
+  ): string {
     const open = instalments.filter((i) => !['paid', 'cancelled', 'refunded'].includes(i.status));
-    const offset = Math.max(0, ...open.filter((i) => i.dueTrigger === 'days_after_delivery').map((i) => i.dueOffsetDays ?? 0));
+    const offset = Math.max(
+      0,
+      ...open.filter((i) => i.dueTrigger === 'days_after_delivery').map((i) => i.dueOffsetDays ?? 0),
+    );
     return addCalendarDays(day, offset);
   }
 
@@ -179,7 +212,11 @@ export class DeliveryDocumentsService {
     if (event.payload['outcome'] !== 'shortage_within' || !credit || !D(credit.gross).gt(0)) return;
     const order = await tx.order.findUnique({ where: { publicId: String(event.payload['orderId']) } });
     if (!order) return;
-    if ((await tx.customerDocument.count({ where: { orderId: order.id, docType: 'cn', cnKind: 'shortage' } })) > 0) return;
+    if (
+      (await tx.customerDocument.count({ where: { orderId: order.id, docType: 'cn', cnKind: 'shortage' } })) >
+      0
+    )
+      return;
     await this.ensureDeliveryDocument(tx, order.id);
     await this.creditNotes.issue(
       tx,
@@ -197,9 +234,17 @@ export class DeliveryDocumentsService {
   /** Cancellation after a deposit → credit note for what was paid, less the forfeited deposit (P23, P23F). */
   @OnDomainEvent('order.cancelled', { consumer: 'receivables.cancellation' })
   async onCancelled(event: DomainEventEnvelope, tx: Tx): Promise<void> {
-    const order = await tx.order.findUnique({ where: { publicId: event.aggregateId }, include: { orderGroup: true } });
+    const order = await tx.order.findUnique({
+      where: { publicId: event.aggregateId },
+      include: { orderGroup: true },
+    });
     if (!order) return;
-    if ((await tx.customerDocument.count({ where: { orderId: order.id, docType: 'cn', cnKind: 'cancellation' } })) > 0) return;
+    if (
+      (await tx.customerDocument.count({
+        where: { orderId: order.id, docType: 'cn', cnKind: 'cancellation' },
+      })) > 0
+    )
+      return;
     const advances = await tx.customerDocumentLine.findMany({
       where: { orderId: order.id, document: { docKind: 'instalment', status: 'issued' } },
     });
@@ -209,7 +254,10 @@ export class DeliveryDocumentsService {
     const pct = D((await this.settings.at('receivables.forfeited_deposit_policy', { tx })).value.forfeitPct);
     const keptNet = round(net.mul(pct).div(100));
     const keptVat = round(vat.mul(pct).div(100));
-    const customer = await tx.user.findUniqueOrThrow({ where: { id: order.customerUserId }, select: { publicId: true } });
+    const customer = await tx.user.findUniqueOrThrow({
+      where: { id: order.customerUserId },
+      select: { publicId: true },
+    });
     if (keptNet.gt(0)) {
       await this.events.record(
         tx,
@@ -237,7 +285,14 @@ export class DeliveryDocumentsService {
     if (creditNet.add(creditVat).gt(0))
       await this.creditNotes.issue(
         tx,
-        { orderId: order.id, cnKind: 'cancellation', net: creditNet, vat: creditVat, settleTo: 'store_credit', note: `ยกเลิกคำสั่งซื้อ ${order.orderCode}` },
+        {
+          orderId: order.id,
+          cnKind: 'cancellation',
+          net: creditNet,
+          vat: creditVat,
+          settleTo: 'store_credit',
+          note: `ยกเลิกคำสั่งซื้อ ${order.orderCode}`,
+        },
         ACTOR,
       );
   }

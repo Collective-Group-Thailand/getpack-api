@@ -30,7 +30,9 @@ export class FactoryScopeResolver implements ScopeResolver, OnModuleInit {
           validFrom: { lte: now },
           OR: [{ validTo: null }, { validTo: { gt: now } }],
           user: { kind: 'partner', status: 'active', anonymisedAt: null },
-          scopeId: (await tx.factory.findUnique({ where: { publicId: factoryId }, select: { id: true } }))?.id ?? -1n,
+          scopeId:
+            (await tx.factory.findUnique({ where: { publicId: factoryId }, select: { id: true } }))?.id ??
+            -1n,
         },
         include: { user: true },
       });

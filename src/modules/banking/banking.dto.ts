@@ -23,7 +23,14 @@ const SIGNED = /^-?\d{1,12}(\.\d{1,2})?$/;
 
 export const PURPOSES = ['collection', 'payout', 'both'] as const;
 export const MATCH_STATUSES = ['unmatched', 'matched', 'unidentified', 'ignored'] as const;
-export const MATCH_TARGETS = ['payment', 'gateway_settlement', 'payout_run', 'refund', 'unidentified_receipt', 'tax_payment'] as const;
+export const MATCH_TARGETS = [
+  'payment',
+  'gateway_settlement',
+  'payout_run',
+  'refund',
+  'unidentified_receipt',
+  'tax_payment',
+] as const;
 export const UNIDENTIFIED_STATUSES = ['open', 'matched', 'refunded'] as const;
 
 export const BANK_IDS = {
@@ -62,7 +69,11 @@ export class CompanyBankAccountDto {
   @ApiProperty({ example: 'generic_csv' })
   defaultBulkFormat!: string;
 
-  @ApiProperty({ enum: ['pending_approval', 'active', 'superseded', 'rejected'], enumName: 'BankAccountStatus', example: 'active' })
+  @ApiProperty({
+    enum: ['pending_approval', 'active', 'superseded', 'rejected'],
+    enumName: 'BankAccountStatus',
+    example: 'active',
+  })
   status!: string;
 
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: BANK_IDS.approval })
@@ -103,7 +114,10 @@ export class ProposeCompanyBankAccountDto {
   @Matches(/^[0-9][0-9 -]{4,28}[0-9]$/)
   accountNo!: string;
 
-  @ApiProperty({ example: '1121', description: 'A postable, active cash account not linked to another bank account' })
+  @ApiProperty({
+    example: '1121',
+    description: 'A postable, active cash account not linked to another bank account',
+  })
   @Matches(/^[0-9A-Z][0-9A-Z.-]*$/)
   glAccountCode!: string;
 
@@ -186,7 +200,11 @@ export class ImportResultDto {
   @ApiProperty({ format: 'uuid', example: BANK_IDS.import })
   importId!: string;
 
-  @ApiProperty({ type: 'integer', example: 12, description: 'New lines (lines already imported are skipped)' })
+  @ApiProperty({
+    type: 'integer',
+    example: 12,
+    description: 'New lines (lines already imported are skipped)',
+  })
   lines!: number;
 
   @ApiProperty({ type: 'integer', example: 9, description: 'Lines matched automatically' })
@@ -249,7 +267,14 @@ export const LINE_EXAMPLE: BankStatementLineDto = {
   reference: 'PR20261027-ABC',
   runningBalance: '94495.60',
   matchStatus: 'matched',
-  matches: [{ targetType: 'payout_run', targetId: '0192f3a0-7c1e-7d2a-9b1f-000000530101', amount: '-5504.40', auto: true }],
+  matches: [
+    {
+      targetType: 'payout_run',
+      targetId: '0192f3a0-7c1e-7d2a-9b1f-000000530101',
+      amount: '-5504.40',
+      auto: true,
+    },
+  ],
 };
 
 export class StatementLineQuery extends PageQuery {
@@ -275,7 +300,11 @@ export class ManualMatchDto {
 }
 
 export class IdentifyReceiptDto {
-  @ApiProperty({ format: 'uuid', description: 'The order group the money belongs to', example: BANK_IDS.group })
+  @ApiProperty({
+    format: 'uuid',
+    description: 'The order group the money belongs to',
+    example: BANK_IDS.group,
+  })
   @IsUUID()
   orderGroupId!: string;
 }
@@ -300,7 +329,14 @@ export class UnidentifiedReceiptDto {
   status!: string;
 }
 
-export const RECEIPT_EXAMPLE: UnidentifiedReceiptDto = { id: BANK_IDS.receipt, amount: '5350.00', receivedOn: '2026-10-27', description: 'TRF IN นาย ตัวอย่าง', reference: null, status: 'open' };
+export const RECEIPT_EXAMPLE: UnidentifiedReceiptDto = {
+  id: BANK_IDS.receipt,
+  amount: '5350.00',
+  receivedOn: '2026-10-27',
+  description: 'TRF IN นาย ตัวอย่าง',
+  reference: null,
+  status: 'open',
+};
 
 export class UnidentifiedQuery {
   @ApiPropertyOptional({ enum: UNIDENTIFIED_STATUSES, enumName: 'UnidentifiedReceiptStatus' })
@@ -338,7 +374,11 @@ export class ImportSettlementDto {
   @Matches(DAY)
   settlementDate!: string;
 
-  @ApiProperty({ example: '5.99', pattern: MONEY.source, description: 'VAT on the fees (claimable with the gateway’s tax invoice)' })
+  @ApiProperty({
+    example: '5.99',
+    pattern: MONEY.source,
+    description: 'VAT on the fees (claimable with the gateway’s tax invoice)',
+  })
   @Matches(MONEY)
   vatOnFee!: string;
 
@@ -379,7 +419,12 @@ export class SettlementDto {
   @ApiProperty({ example: '5258.41' })
   netAmount!: string;
 
-  @ApiProperty({ enum: ['imported', 'posted'], enumName: 'SettlementStatus', example: 'imported', description: '`posted` once matched to the bank line (P04)' })
+  @ApiProperty({
+    enum: ['imported', 'posted'],
+    enumName: 'SettlementStatus',
+    example: 'imported',
+    description: '`posted` once matched to the bank line (P04)',
+  })
   status!: string;
 
   @ApiProperty({ type: 'integer', example: 1 })
@@ -389,10 +434,25 @@ export class SettlementDto {
   unmatchedLines!: number;
 }
 
-export const SETTLEMENT_EXAMPLE: SettlementDto = { id: BANK_IDS.settlement, provider: 'scb', settlementDate: '2026-10-28', grossAmount: '5350.00', feeAmount: '85.60', vatOnFee: '5.99', netAmount: '5258.41', status: 'imported', lineCount: 1, unmatchedLines: 0 };
+export const SETTLEMENT_EXAMPLE: SettlementDto = {
+  id: BANK_IDS.settlement,
+  provider: 'scb',
+  settlementDate: '2026-10-28',
+  grossAmount: '5350.00',
+  feeAmount: '85.60',
+  vatOnFee: '5.99',
+  netAmount: '5258.41',
+  status: 'imported',
+  lineCount: 1,
+  unmatchedLines: 0,
+};
 
 export class CashPositionQuery {
-  @ApiPropertyOptional({ format: 'date', example: '2026-10-31', description: 'Default: today (Asia/Bangkok)' })
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-31',
+    description: 'Default: today (Asia/Bangkok)',
+  })
   @IsOptional()
   @Matches(DAY)
   asOf?: string;
@@ -433,12 +493,24 @@ export class CashPositionDto {
   @ApiProperty({ type: [CashBankRowDto] })
   banks!: CashBankRowDto[];
 
-  @ApiProperty({ type: [ClearingRowDto], description: 'Gateway / slip clearing (1131–1133) and unidentified receipts (1140)' })
+  @ApiProperty({
+    type: [ClearingRowDto],
+    description: 'Gateway / slip clearing (1131–1133) and unidentified receipts (1140)',
+  })
   clearing!: ClearingRowDto[];
 }
 
 export const CASH_EXAMPLE: CashPositionDto = {
   asOf: '2026-10-31',
-  banks: [{ companyBankAccountId: BANK_IDS.account, accountNoLast4: '1234', glAccountCode: '1121', glBalance: '94495.60', statementBalance: '94495.60', unmatchedLines: 0 }],
+  banks: [
+    {
+      companyBankAccountId: BANK_IDS.account,
+      accountNoLast4: '1234',
+      glAccountCode: '1121',
+      glBalance: '94495.60',
+      statementBalance: '94495.60',
+      unmatchedLines: 0,
+    },
+  ],
   clearing: [{ accountCode: '1131', balance: '0.00' }],
 };

@@ -199,7 +199,8 @@ export const SETTINGS: readonly SettingSeed[] = [
     valueType: 'integer',
     value: null,
     unset: true,
-    description: 'D-070 prepress queue: business hours to answer a submission; no decision gives it, no due time until set',
+    description:
+      'D-070 prepress queue: business hours to answer a submission; no decision gives it, no due time until set',
     decisions: ['D-070'],
     confirmation: 'pending_business',
   },
@@ -381,7 +382,10 @@ export const SETTINGS: readonly SettingSeed[] = [
     valueSchema: {
       type: 'object',
       required: ['dateWindowDays', 'amountTolerance'],
-      properties: { dateWindowDays: { type: 'integer', minimum: 0, maximum: 31 }, amountTolerance: { type: 'string' } },
+      properties: {
+        dateWindowDays: { type: 'integer', minimum: 0, maximum: 31 },
+        amountTolerance: { type: 'string' },
+      },
     },
     description:
       'D-093 / accounting-design §6 bank auto-matching: exact amount (± tolerance) + reference + date window (proposed)',
@@ -743,5 +747,8 @@ export const ENTITY_SETTING_KEYS = {
     key: 'entity.address_th',
     description: 'D-092 registered address (Thai) printed on documents of the issuing entity',
   },
-  phone: { key: 'entity.phone', description: 'D-092 contact phone printed on documents of the issuing entity' },
+  phone: {
+    key: 'entity.phone',
+    description: 'D-092 contact phone printed on documents of the issuing entity',
+  },
 } as const;

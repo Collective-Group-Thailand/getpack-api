@@ -15,7 +15,11 @@ export interface PostingRuleSeed {
   template: PostingTemplate;
 }
 
-export const eq = (field: string, value: string | boolean) => ({ field: `payload.${field}`, op: 'eq', value });
+export const eq = (field: string, value: string | boolean) => ({
+  field: `payload.${field}`,
+  op: 'eq',
+  value,
+});
 export const ne = (field: string, value: string) => ({ field: `payload.${field}`, op: 'ne', value });
 export const gt0 = (field: string) => ({ field: `payload.${field}`, op: 'gt', value: '0' });
 export const any = (...conditions: unknown[]) => ({ any: conditions });
@@ -24,7 +28,14 @@ export const all = (...conditions: unknown[]) => ({ all: conditions });
 /** Where customer cash lands, by how it was received (P01, P02, P03, P08, P01X). */
 export const RECEIPT_ACCOUNT = {
   switch: 'receiptVia',
-  cases: { twoc2p: '1131', scb: '1132', slip: '1133', bank: '1133', unidentified: '1140', store_credit: '2320' },
+  cases: {
+    twoc2p: '1131',
+    scb: '1132',
+    slip: '1133',
+    bank: '1133',
+    unidentified: '1140',
+    store_credit: '2320',
+  },
 };
 
 /** Revenue account per revenue category (P06, P07, P09). */
@@ -48,7 +59,10 @@ export const VAT_INPUT_CODE = {
   cases: { true: 'input_vat', false: 'input_vat_pending' },
 } as const;
 export const WHT_PAYABLE = { switch: 'whtForm', cases: { pnd53: '2231', pnd3: '2232' } };
-export const WHT_PAYABLE_CODE = { switch: 'whtForm', cases: { pnd53: 'wht_pnd53', pnd3: 'wht_pnd3' } } as const;
+export const WHT_PAYABLE_CODE = {
+  switch: 'whtForm',
+  cases: { pnd53: 'wht_pnd53', pnd3: 'wht_pnd3' },
+} as const;
 /** The GL account of the company bank account the event names (112x, D-093). */
 export const BANK = { path: 'bankAccountCode' };
 
@@ -59,7 +73,12 @@ export const CUSTOMER_DIMS = {
   company: 'companyId',
   channel: 'channel',
 };
-export const VENDOR_DIMS = { vendor: 'vendorId', factory: 'factoryId', order: 'orderId', productType: 'productTypeId' };
+export const VENDOR_DIMS = {
+  vendor: 'vendorId',
+  factory: 'factoryId',
+  order: 'orderId',
+  productType: 'productTypeId',
+};
 export const DOC_SOURCE = { type: 'customer_document', id: 'documentId', number: 'docNumber' };
 /** Points events carry the customer as `userId` (loyalty module, B3.4). */
 export const POINTS_SOURCE = { type: 'points_entry', id: 'entryId' };

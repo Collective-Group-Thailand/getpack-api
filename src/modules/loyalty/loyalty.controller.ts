@@ -88,9 +88,19 @@ export class StoreReviewsController {
       'credited at once).',
     implements: ['D-135', 'D-131'],
   })
-  @ApiBody({ type: SubmitReviewDto, examples: { default: { value: { rating: 5, comment: 'กล่องสวย ส่งตรงเวลา' } } } })
+  @ApiBody({
+    type: SubmitReviewDto,
+    examples: { default: { value: { rating: 5, comment: 'กล่องสวย ส่งตรงเวลา' } } },
+  })
   @ApiSuccess(201, { description: 'Review', type: ReviewDto, example: REVIEW_EXAMPLE })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed', 'reviews.not_delivered', 'reviews.exists')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'reviews.not_delivered',
+    'reviews.exists',
+  )
   async submit(
     @CurrentActor() actor: Actor,
     @Param('orderId', ParseUUIDPipe) orderId: string,
@@ -101,10 +111,18 @@ export class StoreReviewsController {
 
   @Get()
   @orderParam
-  @ApiEndpoint({ id: 'store.reviews.get', summary: 'Get my review of an order', description: 'With the points it earned (D-135).', implements: ['D-135'] })
+  @ApiEndpoint({
+    id: 'store.reviews.get',
+    summary: 'Get my review of an order',
+    description: 'With the points it earned (D-135).',
+    implements: ['D-135'],
+  })
   @ApiSuccess(200, { description: 'Review', type: ReviewDto, example: REVIEW_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async get(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string): Promise<ReviewDto> {
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ): Promise<ReviewDto> {
     return reviewDto(await this.reviews.forOrder(customer(actor).userId, orderId));
   }
 }
@@ -142,11 +160,20 @@ export class AdminLoyaltyController {
   @Get('ledger')
   @Can('loyalty.read')
   @customerParam
-  @ApiEndpoint({ id: 'admin.loyalty.ledger', summary: 'List a customer’s points history', description: 'Newest first, with staff adjustments and their reasons.', implements: DECISIONS })
+  @ApiEndpoint({
+    id: 'admin.loyalty.ledger',
+    summary: 'List a customer’s points history',
+    description: 'Newest first, with staff adjustments and their reasons.',
+    implements: DECISIONS,
+  })
   @ApiPaginated(PointsEntryDto, { example: ENTRY_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async ledger(@Param('customerId', ParseUUIDPipe) customerId: string, @Query() q: PageQuery) {
-    const [rows, total] = await this.loyalty.ledger(await this.customers.customerIdOf(customerId), q.page, q.perPage);
+    const [rows, total] = await this.loyalty.ledger(
+      await this.customers.customerIdOf(customerId),
+      q.page,
+      q.perPage,
+    );
     return { data: rows.map(entryDto), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
@@ -162,15 +189,43 @@ export class AdminLoyaltyController {
       'below zero) with a reason; audited as a finance action. Needs `Idempotency-Key`.',
     implements: ['D-131', 'D-132'],
   })
-  @ApiBody({ type: AdjustPointsDto, examples: { default: { value: { points: 40, reason: 'ชดเชยงานล่าช้า' } } } })
-  @ApiSuccess(201, { description: 'Ledger entry', type: PointsEntryDto, example: { ...ENTRY_EXAMPLE, entryType: 'adjust', points: 40, bahtValue: '100.00', status: 'available', availableAt: null, orderCode: null, groupCode: null, reason: 'ชดเชยงานล่าช้า' } })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed', 'loyalty.insufficient_points')
+  @ApiBody({
+    type: AdjustPointsDto,
+    examples: { default: { value: { points: 40, reason: 'ชดเชยงานล่าช้า' } } },
+  })
+  @ApiSuccess(201, {
+    description: 'Ledger entry',
+    type: PointsEntryDto,
+    example: {
+      ...ENTRY_EXAMPLE,
+      entryType: 'adjust',
+      points: 40,
+      bahtValue: '100.00',
+      status: 'available',
+      availableAt: null,
+      orderCode: null,
+      groupCode: null,
+      reason: 'ชดเชยงานล่าช้า',
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'loyalty.insufficient_points',
+  )
   async adjust(
     @CurrentActor() actor: Actor,
     @Param('customerId', ParseUUIDPipe) customerId: string,
     @Body() body: AdjustPointsDto,
   ): Promise<PointsEntryDto> {
-    const entry = await this.loyalty.adjust(staff(actor), await this.customers.customerIdOf(customerId), body.points, body.reason);
+    const entry = await this.loyalty.adjust(
+      staff(actor),
+      await this.customers.customerIdOf(customerId),
+      body.points,
+      body.reason,
+    );
     return entryDto({ ...entry, order: null, orderGroup: null });
   }
 }
@@ -182,7 +237,12 @@ export class AdminReviewsController {
 
   @Get()
   @Can('orders.read')
-  @ApiEndpoint({ id: 'admin.reviews.list', summary: 'List order reviews', description: 'Newest first; filter by status (D-135).', implements: ['D-135'] })
+  @ApiEndpoint({
+    id: 'admin.reviews.list',
+    summary: 'List order reviews',
+    description: 'Newest first; filter by status (D-135).',
+    implements: ['D-135'],
+  })
   @ApiPaginated(AdminReviewDto, { example: ADMIN_REVIEW_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@Query() q: ReviewListQuery) {

@@ -101,7 +101,8 @@ export class CheckoutService {
         break;
       }
     }
-    if (!taxProfile && input.taxProfileId) taxProfile = await this.taxProfile(who.customerUserId, input.taxProfileId);
+    if (!taxProfile && input.taxProfileId)
+      taxProfile = await this.taxProfile(who.customerUserId, input.taxProfileId);
     const nature = await this.settings.at('tax.nature_by_product_type', { at });
     const floor = await this.settings.at('pricing.margin_floor_pct', { at });
     const withholds = taxProfile !== null && taxProfile.withholdsTax && taxProfile.taxType !== 'individual';
@@ -190,7 +191,7 @@ export class CheckoutService {
             placedAt: draft.at,
             ccEmails: [...new Set((draft.input.ccEmails ?? []).map((e) => e.toLowerCase()))],
             csRemarks: draft.input.csRemarks ?? null,
-            utm: (draft.input.utm ?? undefined),
+            utm: draft.input.utm ?? undefined,
           },
         });
 
@@ -293,7 +294,12 @@ export class CheckoutService {
             });
           }
           for (const [i, leg] of o.legs.entries()) {
-            const s = leg.snapshot as { recipientName: string; phone: string; line1: string; line2: string | null };
+            const s = leg.snapshot as {
+              recipientName: string;
+              phone: string;
+              line1: string;
+              line2: string | null;
+            };
             await tx.orderDestination.create({
               data: {
                 orderId: order.id,
@@ -327,7 +333,6 @@ export class CheckoutService {
     );
   }
 
-
   /**
    * Prices one configuration (a cart item, or an order being re-priced by CS): locked quotation price,
    * shipping per destination, VAT and withholding per line. Shared by checkout and the CS re-price.
@@ -337,9 +342,12 @@ export class CheckoutService {
     index: number,
     at: Date,
     nature: { value: SettingValues['tax.nature_by_product_type']; versionId: bigint },
-    wht: { rates: Record<'hire_of_work' | 'transport' | 'service', string>; versionIds: Record<string, string> } | null,
+    wht: {
+      rates: Record<'hire_of_work' | 'transport' | 'service', string>;
+      versionIds: Record<string, string>;
+    } | null,
   ): Promise<{ order: DraftOrder; vatPct: string }> {
-        const option = item.quoteOption;
+    const option = item.quoteOption;
     const configRefs = (item.quote.configRefs ?? {}) as { vatRateVersionId?: string | null };
     const vatPct = await this.vatPct(configRefs.vatRateVersionId ?? null, at);
     const legs = await this.legs(item, index, at);
@@ -354,15 +362,16 @@ export class CheckoutService {
       shippingAmount: option.shippingAmount?.toFixed(2) ?? null,
       result: (option.result ?? {}) as QuoteOptionInput['result'],
     };
-    const shippingNet =
-      item.quote.source === 'instant' ? legs.reduce((a, l) => a.add(l.net), D(0)) : null;
+    const shippingNet = item.quote.source === 'instant' ? legs.reduce((a, l) => a.add(l.net), D(0)) : null;
     const lines = priceOrderLines(optionInput, shippingNet, {
       vatPct,
       nature: natureOf,
       productRevenue: productTypeCode === 'standard_product' ? 'standard_product' : 'made_to_order',
       wht: wht?.rates ?? null,
     });
-    const internal = (option.internalBreakdown ?? null) as { shipping?: { costAmount?: string } | null } | null;
+    const internal = (option.internalBreakdown ?? null) as {
+      shipping?: { costAmount?: string } | null;
+    } | null;
     const quoteShipCost = D(internal?.shipping?.costAmount ?? '0');
     const legCost = legs.reduce((a, l) => a.add(l.cost ?? 0), D(0));
     const buyCostNet = option.buyCostNet
@@ -429,7 +438,9 @@ export class CheckoutService {
       const covered = item.destinations.reduce((a, d) => a + d.quantity, 0);
       if (item.destinations.length === 0 || covered !== item.quantity) {
         throw new DomainException('checkout.destinations_incomplete', {
-          errors: [{ path: `items[${index}].destinations`, code: 'sum', message: `must add up to ${item.quantity}` }],
+          errors: [
+            { path: `items[${index}].destinations`, code: 'sum', message: `must add up to ${item.quantity}` },
+          ],
         });
       }
     }
@@ -439,7 +450,11 @@ export class CheckoutService {
   private async legs(item: PricingItem, index: number, at: Date): Promise<ShippingLeg[]> {
     const rows = await Promise.all(
       item.destinations.map(async (d) => {
-        const snap = d.addressSnapshot as { postcode: string; provinceId: string; subdistrictId: string | null };
+        const snap = d.addressSnapshot as {
+          postcode: string;
+          provinceId: string;
+          subdistrictId: string | null;
+        };
         const province = await this.prisma.geoProvince.findUnique({ where: { publicId: snap.provinceId } });
         const sub = snap.subdistrictId
           ? await this.prisma.geoSubdistrict.findUnique({ where: { publicId: snap.subdistrictId } })
@@ -492,7 +507,9 @@ export class CheckoutService {
       const p = priced[j]!;
       if (!p.available) {
         throw new DomainException('checkout.shipping_unavailable', {
-          errors: [{ path: `items[${index}].destinations[${j}]`, code: p.reason, message: 'no shipping price' }],
+          errors: [
+            { path: `items[${index}].destinations[${j}]`, code: p.reason, message: 'no shipping price' },
+          ],
         });
       }
       return {
@@ -561,7 +578,8 @@ export class CheckoutService {
     calendar: Awaited<ReturnType<BusinessCalendarService['calendar']>>,
   ): Date | null {
     const today = bangkokDate(at);
-    if (o.earliestShipDate && o.earliestShipDate.toISOString().slice(0, 10) >= today) return o.earliestShipDate;
+    if (o.earliestShipDate && o.earliestShipDate.toISOString().slice(0, 10) >= today)
+      return o.earliestShipDate;
     if (o.leadTimeDays === null) return null;
     const day = bangkokDate(calendar.addWorkingDays(startOfBangkokDay(today), o.leadTimeDays));
     return new Date(`${day}T00:00:00Z`);
@@ -589,10 +607,12 @@ export class CheckoutService {
       })),
       lines: o.lines,
       // Internal ids stay out of the snapshot; promotions carry their public ids in `meta`.
-      discounts: o.discounts.map(({ promotionId: _p, couponCodeId: _c, campaignId: _k, discountMemoId: _m, ...d }) => ({
-        ...d,
-        grantedByUserId: d.grantedByUserId?.toString() ?? null,
-      })),
+      discounts: o.discounts.map(
+        ({ promotionId: _p, couponCodeId: _c, campaignId: _k, discountMemoId: _m, ...d }) => ({
+          ...d,
+          grantedByUserId: d.grantedByUserId?.toString() ?? null,
+        }),
+      ),
       totals: o.totals,
       unpaidExpirySettingVersionId: expiryVersionId,
       ...o.snapshot,

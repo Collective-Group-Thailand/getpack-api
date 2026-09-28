@@ -13,7 +13,16 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestj
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { DownloadUrlDto } from '@platform/files/files.dto';
 
-import { AuditSampleDto, DrawSampleDto, EXCEPTION_EXAMPLE, ExceptionReportDto, PBC_EXAMPLE, PbcExportDto, SAMPLE_EXAMPLE, type SampleItemDto } from './audit-support.dto';
+import {
+  AuditSampleDto,
+  DrawSampleDto,
+  EXCEPTION_EXAMPLE,
+  ExceptionReportDto,
+  PBC_EXAMPLE,
+  PbcExportDto,
+  SAMPLE_EXAMPLE,
+  type SampleItemDto,
+} from './audit-support.dto';
 import { AuditSupportService } from './audit-support.service';
 
 const DOCS = ['D-033'];
@@ -40,7 +49,11 @@ export class AdminAuditSupportController {
       'Series gaps, journals posted outside business hours, back-dated documents, manual journals by user, reversals, duplicate vendor bank accounts, duplicate slip references, credit notes after the period end, payouts without a valid tax invoice (§8).',
     implements: DOCS,
   })
-  @ApiSuccess(200, { description: 'Exception reports', type: [ExceptionReportDto], example: [EXCEPTION_EXAMPLE] })
+  @ApiSuccess(200, {
+    description: 'Exception reports',
+    type: [ExceptionReportDto],
+    example: [EXCEPTION_EXAMPLE],
+  })
   @ApiStandardErrors('validation.failed')
   exceptions(@Query() q: MonthDto): Promise<ExceptionReportDto[]> {
     return this.support.exceptions(q.period);
@@ -52,20 +65,42 @@ export class AdminAuditSupportController {
   @ApiEndpoint({
     id: 'admin.auditSupport.drawSample',
     summary: 'Draw an audit sample',
-    description: 'A random or value-stratified sample of a month’s documents, journals, payouts or 50 ทวิ; kept with its seed so it can be reproduced (§8 sample selection helper). Requires `Idempotency-Key`.',
+    description:
+      'A random or value-stratified sample of a month’s documents, journals, payouts or 50 ทวิ; kept with its seed so it can be reproduced (§8 sample selection helper). Requires `Idempotency-Key`.',
     implements: DOCS,
   })
-  @ApiBody({ type: DrawSampleDto, examples: { default: { value: { period: '2026-10', population: 'customer_documents', method: 'stratified', size: 25 } } } })
+  @ApiBody({
+    type: DrawSampleDto,
+    examples: {
+      default: {
+        value: { period: '2026-10', population: 'customer_documents', method: 'stratified', size: 25 },
+      },
+    },
+  })
   @ApiSuccess(201, { description: 'Sample', type: AuditSampleDto, example: SAMPLE_EXAMPLE })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
   async draw(@CurrentActor() actor: Actor, @Body() body: DrawSampleDto): Promise<AuditSampleDto> {
     const s = await this.support.sample(staff(actor), body);
-    return { id: s.publicId, period: s.period, population: s.population, method: s.method, seed: s.seed.toString(), populationSize: s.populationSize, selected: s.selected as unknown as SampleItemDto[], createdAt: toBangkokIso(s.createdAt) };
+    return {
+      id: s.publicId,
+      period: s.period,
+      population: s.population,
+      method: s.method,
+      seed: s.seed.toString(),
+      populationSize: s.populationSize,
+      selected: s.selected as unknown as SampleItemDto[],
+      createdAt: toBangkokIso(s.createdAt),
+    };
   }
 
   @Get('samples')
   @Can('audit_support.read')
-  @ApiEndpoint({ id: 'admin.auditSupport.listSamples', summary: 'List audit samples', description: 'Newest first, with their seeds (§8).', implements: DOCS })
+  @ApiEndpoint({
+    id: 'admin.auditSupport.listSamples',
+    summary: 'List audit samples',
+    description: 'Newest first, with their seeds (§8).',
+    implements: DOCS,
+  })
   @ApiSuccess(200, { description: 'Samples', type: [AuditSampleDto], example: [SAMPLE_EXAMPLE] })
   @ApiStandardErrors()
   async samples(): Promise<AuditSampleDto[]> {
@@ -96,23 +131,50 @@ export class AdminAuditSupportController {
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
   async pbc(@CurrentActor() actor: Actor, @Body() body: MonthDto): Promise<PbcExportDto> {
     const row = await this.support.pbcExport(staff(actor), body.period);
-    return { id: row.publicId, period: row.period, sha256: row.sha256Hex, generatedAt: toBangkokIso(row.generatedAt) };
+    return {
+      id: row.publicId,
+      period: row.period,
+      sha256: row.sha256Hex,
+      generatedAt: toBangkokIso(row.generatedAt),
+    };
   }
 
   @Get('pbc-exports')
   @Can('audit_support.export')
-  @ApiEndpoint({ id: 'admin.auditSupport.listPbcExports', summary: 'List PBC packs', description: 'Newest first (§8).', implements: DOCS })
+  @ApiEndpoint({
+    id: 'admin.auditSupport.listPbcExports',
+    summary: 'List PBC packs',
+    description: 'Newest first (§8).',
+    implements: DOCS,
+  })
   @ApiSuccess(200, { description: 'Exports', type: [PbcExportDto], example: [PBC_EXAMPLE] })
   @ApiStandardErrors()
   async pbcList(): Promise<PbcExportDto[]> {
-    return (await this.support.pbcExports()).map((r) => ({ id: r.publicId, period: dayOf(r.fiscalPeriod.startDate).slice(0, 7), sha256: Buffer.from(r.sha256).toString('hex'), generatedAt: toBangkokIso(r.generatedAt) }));
+    return (await this.support.pbcExports()).map((r) => ({
+      id: r.publicId,
+      period: dayOf(r.fiscalPeriod.startDate).slice(0, 7),
+      sha256: Buffer.from(r.sha256).toString('hex'),
+      generatedAt: toBangkokIso(r.generatedAt),
+    }));
   }
 
   @Get('pbc-exports/:exportId/file')
   @Can('audit_support.export')
   @ApiParam({ name: 'exportId', format: 'uuid' })
-  @ApiEndpoint({ id: 'admin.auditSupport.pbcFile', summary: 'Download a PBC pack', description: 'A short-lived signed URL of the workbook.', implements: DOCS })
-  @ApiSuccess(200, { description: 'Signed URL', type: DownloadUrlDto, example: { url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300', expiresAt: '2026-11-10T10:05:00+07:00' } })
+  @ApiEndpoint({
+    id: 'admin.auditSupport.pbcFile',
+    summary: 'Download a PBC pack',
+    description: 'A short-lived signed URL of the workbook.',
+    implements: DOCS,
+  })
+  @ApiSuccess(200, {
+    description: 'Signed URL',
+    type: DownloadUrlDto,
+    example: {
+      url: 'https://packio-files.s3.example.com/…&X-Amz-Expires=300',
+      expiresAt: '2026-11-10T10:05:00+07:00',
+    },
+  })
   @ApiStandardErrors('http.not_found', 'validation.failed', 'file.not_ready')
   async pbcFile(@Param('exportId', ParseUUIDPipe) exportId: string): Promise<DownloadUrlDto> {
     const d = await this.files.downloadUrl(await this.support.pbcFile(exportId));

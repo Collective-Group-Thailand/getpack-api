@@ -17,8 +17,18 @@ import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.servi
 import { FilesService } from '@platform/files/files.service';
 import { PDFDocument } from 'pdf-lib';
 
-import { type BuyerSnapshot, CustomerDocumentsService, type SellerSnapshot } from './customer-documents.service';
-import { eTaxTypeCode, type RenderableDocument, renderDocumentHtml, renderETaxXml, renderStatementHtml } from './document-render';
+import {
+  type BuyerSnapshot,
+  CustomerDocumentsService,
+  type SellerSnapshot,
+} from './customer-documents.service';
+import {
+  eTaxTypeCode,
+  type RenderableDocument,
+  renderDocumentHtml,
+  renderETaxXml,
+  renderStatementHtml,
+} from './document-render';
 
 const PDF = 'application/pdf';
 const DOWNLOAD_TTL_SECONDS = 5 * 60;
@@ -113,7 +123,10 @@ export class DocumentFilesService {
     let pdf = await this.renderer.render(renderDocumentHtml(view));
     let xmlFileId: bigint | null = null;
     if (doc.isTaxInvoice) {
-      const xml = Buffer.from(renderETaxXml({ ...view, typeCode: eTaxTypeCode(view), issuedAt: toBangkokIso(doc.issuedAt) }), 'utf8');
+      const xml = Buffer.from(
+        renderETaxXml({ ...view, typeCode: eTaxTypeCode(view), issuedAt: toBangkokIso(doc.issuedAt) }),
+        'utf8',
+      );
       const stored = await this.files.storeSystem({
         body: xml,
         fileName: `${doc.docNumber}.xml`,
@@ -160,7 +173,11 @@ export class DocumentFilesService {
   private async embed(pdf: Buffer, xml: Buffer, name: string): Promise<Buffer> {
     try {
       const doc = await PDFDocument.load(pdf);
-      await doc.attach(xml, `${name}.xml`, { mimeType: 'application/xml', description: 'e-Tax invoice XML (ETDA)', afRelationship: 'Alternative' as never });
+      await doc.attach(xml, `${name}.xml`, {
+        mimeType: 'application/xml',
+        description: 'e-Tax invoice XML (ETDA)',
+        afRelationship: 'Alternative' as never,
+      });
       return Buffer.from(await doc.save());
     } catch {
       return pdf;
@@ -184,7 +201,7 @@ export class DocumentFilesService {
   @OnDomainEvent('company.statement_ready', { consumer: 'receivables.company_statements' })
   async onStatementReady(event: DomainEventEnvelope, tx: Tx): Promise<void> {
     const company = await tx.company.findUnique({ where: { publicId: event.aggregateId } });
-    const month = (typeof event.payload['month'] === 'string' ? event.payload['month'] : '');
+    const month = typeof event.payload['month'] === 'string' ? event.payload['month'] : '';
     if (!company || !/^\d{4}-\d{2}$/.test(month)) return;
     await this.statement(tx, company.id, month);
   }
@@ -192,7 +209,9 @@ export class DocumentFilesService {
   /** The month's statement of a company from its receivables: opening, invoiced, paid, credited, closing. */
   async statement(tx: Tx, companyId: bigint, month: string) {
     const first = `${month}-01`;
-    const existing = await tx.companyStatement.findUnique({ where: { companyId_periodMonth: { companyId, periodMonth: dateOnly(first) } } });
+    const existing = await tx.companyStatement.findUnique({
+      where: { companyId_periodMonth: { companyId, periodMonth: dateOnly(first) } },
+    });
     if (existing) return existing;
     const company = await tx.company.findUniqueOrThrow({ where: { id: companyId } });
     const from = startOfBangkokMonth(new Date(`${first}T12:00:00+07:00`));
@@ -205,13 +224,20 @@ export class DocumentFilesService {
     let invoiced = D(0);
     let paid = D(0);
     let credited = D(0);
-    const lines: { date: string; docNumber: string; description: string; debit: string; credit: string }[] = [];
+    const lines: { date: string; docNumber: string; description: string; debit: string; credit: string }[] =
+      [];
     for (const item of items) {
       const created = item.createdAt;
       if (created < from) opening = opening.add(item.amount.toString());
       else if (created < to) {
         invoiced = invoiced.add(item.amount.toString());
-        lines.push({ date: dayOf(item.customerDocument.documentDate), docNumber: item.customerDocument.docNumber, description: 'ใบแจ้งหนี้', debit: item.amount.toFixed(2), credit: '0.00' });
+        lines.push({
+          date: dayOf(item.customerDocument.documentDate),
+          docNumber: item.customerDocument.docNumber,
+          description: 'ใบแจ้งหนี้',
+          debit: item.amount.toFixed(2),
+          credit: '0.00',
+        });
       }
       for (const a of item.applications) {
         const isCredit = a.document?.docType === 'cn';
@@ -219,7 +245,13 @@ export class DocumentFilesService {
         else if (a.appliedAt < to) {
           if (isCredit) credited = credited.add(a.amount.toString());
           else paid = paid.add(a.amount.toString());
-          lines.push({ date: a.document ? dayOf(a.document.documentDate) : dayOf(a.appliedAt), docNumber: a.document?.docNumber ?? '-', description: isCredit ? 'ลดหนี้' : 'รับชำระ', debit: '0.00', credit: a.amount.toFixed(2) });
+          lines.push({
+            date: a.document ? dayOf(a.document.documentDate) : dayOf(a.appliedAt),
+            docNumber: a.document?.docNumber ?? '-',
+            description: isCredit ? 'ลดหนี้' : 'รับชำระ',
+            debit: '0.00',
+            credit: a.amount.toFixed(2),
+          });
         }
       }
       if (item.status === 'written_off' && item.writtenOffAt) {
@@ -227,7 +259,13 @@ export class DocumentFilesService {
         if (item.writtenOffAt < from) opening = opening.sub(open);
         else if (item.writtenOffAt < to) {
           credited = credited.add(open);
-          lines.push({ date: dayOf(item.writtenOffAt), docNumber: item.customerDocument.docNumber, description: 'ตัดหนี้สูญ', debit: '0.00', credit: formatMoney(open) });
+          lines.push({
+            date: dayOf(item.writtenOffAt),
+            docNumber: item.customerDocument.docNumber,
+            description: 'ตัดหนี้สูญ',
+            debit: '0.00',
+            credit: formatMoney(open),
+          });
         }
       }
     }

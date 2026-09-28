@@ -58,7 +58,10 @@ export class ReferralsService {
       for (let attempt = 0; attempt < 5; attempt += 1) {
         const candidate = [...randomBytes(8)].map((b) => ALPHABET[b % ALPHABET.length]).join('');
         if (await tx.customerProfile.findUnique({ where: { referralCode: candidate } })) continue;
-        await tx.customerProfile.update({ where: { userId }, data: { referralCode: candidate, rowVersion: { increment: 1 } } });
+        await tx.customerProfile.update({
+          where: { userId },
+          data: { referralCode: candidate, rowVersion: { increment: 1 } },
+        });
         return candidate;
       }
       throw new Error('could not allocate a referral code');
@@ -69,7 +72,9 @@ export class ReferralsService {
       _count: { _all: true },
     });
     const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid';
-    const byStatus = Object.fromEntries(counts.map((c) => [c.status, c._count._all])) as Partial<Record<ReferralStatus, number>>;
+    const byStatus = Object.fromEntries(counts.map((c) => [c.status, c._count._all])) as Partial<
+      Record<ReferralStatus, number>
+    >;
     return {
       code,
       link: `${web.replace(/\/$/, '')}/r/${code}`,
@@ -97,7 +102,9 @@ export class ReferralsService {
       if (referrer.userId === actor.userId) throw new DomainException('referrals.self_referral');
       if (await tx.referralAttribution.findUnique({ where: { refereeUserId: actor.userId } }))
         throw new DomainException('referrals.already_attributed');
-      const placed = await tx.orderGroup.count({ where: { customerUserId: actor.userId, status: { not: 'cancelled' } } });
+      const placed = await tx.orderGroup.count({
+        where: { customerUserId: actor.userId, status: { not: 'cancelled' } },
+      });
       if (placed > 0) throw new DomainException('referrals.not_new_customer');
       const row = await tx.referralAttribution.create({
         data: { referrerUserId: referrer.userId, refereeUserId: actor.userId, referralCode: code },
@@ -227,10 +234,22 @@ export class ReferralsService {
     if (thisMonth >= rules.maxRewardedReferralsPerMonth) flags.push('monthly_cap');
 
     if (flags.length > 0) {
-      const referrer = await tx.user.findUniqueOrThrow({ where: { id: a.referrerUserId }, select: { publicId: true } });
-      const referee = await tx.user.findUniqueOrThrow({ where: { id: a.refereeUserId }, select: { publicId: true } });
+      const referrer = await tx.user.findUniqueOrThrow({
+        where: { id: a.referrerUserId },
+        select: { publicId: true },
+      });
+      const referee = await tx.user.findUniqueOrThrow({
+        where: { id: a.refereeUserId },
+        select: { publicId: true },
+      });
       // The approval is about the referrer's reward; the referrer is its subject-side requester.
-      const requester: UserActor = { type: 'user', userId: a.referrerUserId, publicId: referrer.publicId, audience: 'customer', scopes: [] };
+      const requester: UserActor = {
+        type: 'user',
+        userId: a.referrerUserId,
+        publicId: referrer.publicId,
+        audience: 'customer',
+        scopes: [],
+      };
       const request = await this.approvals.create(tx, {
         policyKey: POLICY,
         subject: { type: 'referral_attribution', id: a.id, publicId: a.publicId },
@@ -262,14 +281,26 @@ export class ReferralsService {
       where: { id: a.id },
       data: { status: 'qualified', qualifiedAt: now, decidedAt: now },
     });
-    const referrer = await tx.user.findUniqueOrThrow({ where: { id: a.referrerUserId }, select: { publicId: true } });
-    const referee = await tx.user.findUniqueOrThrow({ where: { id: a.refereeUserId }, select: { publicId: true } });
+    const referrer = await tx.user.findUniqueOrThrow({
+      where: { id: a.referrerUserId },
+      select: { publicId: true },
+    });
+    const referee = await tx.user.findUniqueOrThrow({
+      where: { id: a.refereeUserId },
+      select: { publicId: true },
+    });
     // Loyalty (B3.4) issues the referrer's points from this event and marks the referral rewarded.
-    await this.record(tx, row, 'referral.qualified', {
-      referrerId: referrer.publicId,
-      refereeId: referee.publicId,
-      rewardBaht: rules.referrerRewardBaht,
-    }, actor);
+    await this.record(
+      tx,
+      row,
+      'referral.qualified',
+      {
+        referrerId: referrer.publicId,
+        refereeId: referee.publicId,
+        rewardBaht: rules.referrerRewardBaht,
+      },
+      actor,
+    );
   }
 
   @OnDomainEvent(['approval.approved', 'approval.rejected', 'approval.withdrawn', 'approval.expired'], {
@@ -279,7 +310,9 @@ export class ReferralsService {
     if (event.payload['policyKey'] !== POLICY) return;
     const request = await tx.approvalRequest.findUnique({ where: { publicId: event.aggregateId } });
     if (!request) return;
-    const a = await tx.referralAttribution.findFirst({ where: { approvalRequestId: request.id, status: 'under_review' } });
+    const a = await tx.referralAttribution.findFirst({
+      where: { approvalRequestId: request.id, status: 'under_review' },
+    });
     if (!a) return;
     const actor = systemActor('referrals.review');
     if (event.type === 'approval.approved') {
@@ -295,10 +328,21 @@ export class ReferralsService {
 
   // --- helpers ------------------------------------------------------------------------------------------
 
-  private async record(tx: Tx, a: ReferralAttribution, type: string, data: Record<string, unknown>, actor: Actor) {
+  private async record(
+    tx: Tx,
+    a: ReferralAttribution,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'referral_attribution', aggregateId: a.publicId, payload: { referralId: a.publicId, ...data } },
+      {
+        type,
+        aggregateType: 'referral_attribution',
+        aggregateId: a.publicId,
+        payload: { referralId: a.publicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {

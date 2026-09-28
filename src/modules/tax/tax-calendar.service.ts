@@ -58,7 +58,10 @@ export class TaxCalendarService {
     });
     for (const item of due)
       await this.prisma.withTx(async (tx) => {
-        const claimed = await tx.taxCalendarItem.updateMany({ where: { id: item.id, remindedAt: null }, data: { remindedAt: new Date() } });
+        const claimed = await tx.taxCalendarItem.updateMany({
+          where: { id: item.id, remindedAt: null },
+          data: { remindedAt: new Date() },
+        });
         if (claimed.count === 0) return;
         await this.events.record(
           tx,
@@ -67,7 +70,13 @@ export class TaxCalendarService {
             aggregateType: 'tax_calendar_item',
             aggregateId: item.publicId,
             entityId: item.entityId,
-            payload: { itemId: item.publicId, kind: item.kind, periodLabel: dayOf(item.fiscalPeriod.startDate).slice(0, 7), dueOn: dayOf(item.dueOn), overdue: dayOf(item.dueOn) < today },
+            payload: {
+              itemId: item.publicId,
+              kind: item.kind,
+              periodLabel: dayOf(item.fiscalPeriod.startDate).slice(0, 7),
+              dueOn: dayOf(item.dueOn),
+              overdue: dayOf(item.dueOn) < today,
+            },
           },
           ACTOR,
         );
@@ -78,13 +87,31 @@ export class TaxCalendarService {
   async markDone(tx: Tx, report: TaxReport): Promise<void> {
     if (!(FORMS as readonly string[]).includes(report.kind)) return;
     const item = await tx.taxCalendarItem.findUnique({
-      where: { entityId_kind_fiscalPeriodId: { entityId: report.entityId, kind: report.kind, fiscalPeriodId: report.fiscalPeriodId } },
+      where: {
+        entityId_kind_fiscalPeriodId: {
+          entityId: report.entityId,
+          kind: report.kind,
+          fiscalPeriodId: report.fiscalPeriodId,
+        },
+      },
     });
-    if (item) await tx.taxCalendarItem.update({ where: { id: item.id }, data: { status: 'done', doneAt: new Date(), taxReportId: report.id } });
+    if (item)
+      await tx.taxCalendarItem.update({
+        where: { id: item.id },
+        data: { status: 'done', doneAt: new Date(), taxReportId: report.id },
+      });
     else {
       const period = await tx.fiscalPeriod.findUniqueOrThrow({ where: { id: report.fiscalPeriodId } });
       await tx.taxCalendarItem.create({
-        data: { entityId: report.entityId, kind: report.kind, fiscalPeriodId: report.fiscalPeriodId, dueOn: dateOnly(addMonths(dayOf(period.startDate), 1)), status: 'done', doneAt: new Date(), taxReportId: report.id },
+        data: {
+          entityId: report.entityId,
+          kind: report.kind,
+          fiscalPeriodId: report.fiscalPeriodId,
+          dueOn: dateOnly(addMonths(dayOf(period.startDate), 1)),
+          status: 'done',
+          doneAt: new Date(),
+          taxReportId: report.id,
+        },
       });
     }
   }
@@ -92,7 +119,10 @@ export class TaxCalendarService {
   async list(status?: 'open' | 'done') {
     return this.prisma.taxCalendarItem.findMany({
       where: status ? { status } : {},
-      include: { fiscalPeriod: { select: { startDate: true } }, taxReport: { select: { publicId: true, status: true } } },
+      include: {
+        fiscalPeriod: { select: { startDate: true } },
+        taxReport: { select: { publicId: true, status: true } },
+      },
       orderBy: [{ dueOn: 'desc' }, { kind: 'asc' }],
       take: 120,
     });

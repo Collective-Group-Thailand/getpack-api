@@ -162,12 +162,25 @@ export class JournalPostingService {
    * Posts an existing draft / pending entry (manual journals after approval): the period is chosen again at
    * posting time, so an approval that arrives after the month closed lands in the next open month.
    */
-  async postExisting(tx: Tx, entryId: bigint, actor: Actor, extra: { approvedById?: bigint | null; allowSoftClosed?: boolean } = {}) {
-    const entry = await tx.journalEntry.findUniqueOrThrow({ where: { id: entryId }, include: { lines: true } });
+  async postExisting(
+    tx: Tx,
+    entryId: bigint,
+    actor: Actor,
+    extra: { approvedById?: bigint | null; allowSoftClosed?: boolean } = {},
+  ) {
+    const entry = await tx.journalEntry.findUniqueOrThrow({
+      where: { id: entryId },
+      include: { lines: true },
+    });
     if (entry.status === 'posted' || entry.status === 'rejected')
       throw new DomainException('ledger.journal_not_editable', { params: { status: entry.status } });
     const documentDate = entry.documentDate.toISOString().slice(0, 10);
-    const { period, entryDate } = await this.periods.postingPeriod(tx, entry.entityId, documentDate, extra.allowSoftClosed ?? false);
+    const { period, entryDate } = await this.periods.postingPeriod(
+      tx,
+      entry.entityId,
+      documentDate,
+      extra.allowSoftClosed ?? false,
+    );
     const moved = await tx.journalEntry.update({
       where: { id: entry.id },
       data: {
@@ -205,7 +218,9 @@ export class JournalPostingService {
       });
     } catch (error) {
       if (String(error).includes('ledger.period_closed'))
-        throw new DomainException('ledger.period_closed', { params: { date: entry.entryDate.toISOString().slice(0, 10), status: 'closed' } });
+        throw new DomainException('ledger.period_closed', {
+          params: { date: entry.entryDate.toISOString().slice(0, 10), status: 'closed' },
+        });
       throw error;
     } finally {
       if (allowSoftClosed) await tx.$executeRaw`SELECT set_config('packio.post_soft_closed', 'off', true)`;
@@ -213,15 +228,25 @@ export class JournalPostingService {
   }
 
   /** Validates lines against the chart of accounts and resolves their dimensions. */
-  async validate(tx: Tx, draft: Pick<JournalDraft, 'entityId' | 'kind' | 'lines' | 'strictDimensions' | 'reversesEntryId'>): Promise<ValidatedLine[]> {
-    if (draft.lines.length < 2) throw new DomainException('ledger.unbalanced', { params: { debit: '0.00', credit: '0.00' } });
+  async validate(
+    tx: Tx,
+    draft: Pick<JournalDraft, 'entityId' | 'kind' | 'lines' | 'strictDimensions' | 'reversesEntryId'>,
+  ): Promise<ValidatedLine[]> {
+    if (draft.lines.length < 2)
+      throw new DomainException('ledger.unbalanced', { params: { debit: '0.00', credit: '0.00' } });
     const codes = [...new Set(draft.lines.map((l) => l.accountCode))];
     const accounts = new Map(
-      (await tx.account.findMany({ where: { entityId: draft.entityId, code: { in: codes } } })).map((a) => [a.code, a]),
+      (await tx.account.findMany({ where: { entityId: draft.entityId, code: { in: codes } } })).map((a) => [
+        a.code,
+        a,
+      ]),
     );
     let fromSubLedger = draft.kind === 'auto';
     if (draft.kind === 'reversal' && draft.reversesEntryId) {
-      const original = await tx.journalEntry.findUnique({ where: { id: draft.reversesEntryId }, select: { kind: true } });
+      const original = await tx.journalEntry.findUnique({
+        where: { id: draft.reversesEntryId },
+        select: { kind: true },
+      });
       fromSubLedger = original?.kind === 'auto';
     }
     const resolver = new DimensionResolver(tx, draft.entityId);
@@ -235,7 +260,8 @@ export class JournalPostingService {
       if (!account) throw invalid('not in the chart of accounts');
       if (account.status !== 'active') throw invalid('inactive');
       if (!account.isPostable) throw invalid('a heading account');
-      if (account.isControl && !fromSubLedger) throw invalid('a control account takes sub-ledger postings only');
+      if (account.isControl && !fromSubLedger)
+        throw invalid('a control account takes sub-ledger postings only');
       const amount = new MoneyDecimal(line.amount.toString()).toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_UP);
       if (!amount.gt(0)) throw invalid('amounts must be positive');
       const dims: LineDimensionColumns = {};
@@ -266,11 +292,16 @@ export class JournalPostingService {
         description: line.description ?? null,
         dims,
         taxCode: line.taxCode ?? null,
-        taxBase: line.taxCode && line.taxBase !== null && line.taxBase !== undefined ? formatMoney(line.taxBase.toString()) : null,
+        taxBase:
+          line.taxCode && line.taxBase !== null && line.taxBase !== undefined
+            ? formatMoney(line.taxBase.toString())
+            : null,
       });
     }
     if (!debit.eq(credit))
-      throw new DomainException('ledger.unbalanced', { params: { debit: formatMoney(debit), credit: formatMoney(credit) } });
+      throw new DomainException('ledger.unbalanced', {
+        params: { debit: formatMoney(debit), credit: formatMoney(credit) },
+      });
     return out;
   }
 }
@@ -295,7 +326,13 @@ class DimensionResolver {
   private async lookup(key: DimensionKey, raw: string): Promise<bigint | string | null> {
     if (key === 'channel') return SALES_CHANNELS.includes(raw) ? raw : null;
     if (key === 'costCentre')
-      return (await this.tx.costCentre.findUnique({ where: { entityId_code: { entityId: this.entityId, code: raw } } }))?.id ?? null;
+      return (
+        (
+          await this.tx.costCentre.findUnique({
+            where: { entityId_code: { entityId: this.entityId, code: raw } },
+          })
+        )?.id ?? null
+      );
     if (!/^[0-9a-f-]{36}$/i.test(raw)) return null;
     const where = { where: { publicId: raw }, select: { id: true } } as const;
     const row = await (async () => {

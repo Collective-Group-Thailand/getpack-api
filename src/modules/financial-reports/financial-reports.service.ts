@@ -6,11 +6,19 @@ import { addMonths, dateOnly, dayOf, isDay, monthEnd } from '@modules/ledger/led
 import { Injectable } from '@nestjs/common';
 import { EntitiesService } from '@platform/entities/entities.service';
 
-const D = (v: { toString(): string } | string | number | null | undefined) => new MoneyDecimal((v ?? 0).toString());
+const D = (v: { toString(): string } | string | number | null | undefined) =>
+  new MoneyDecimal((v ?? 0).toString());
 const ZERO = () => new MoneyDecimal(0);
 const m = (v: MoneyValue) => formatMoney(v);
 
-export const PL_DIMENSIONS = ['none', 'factory', 'product_type', 'channel', 'campaign', 'cost_centre'] as const;
+export const PL_DIMENSIONS = [
+  'none',
+  'factory',
+  'product_type',
+  'channel',
+  'campaign',
+  'cost_centre',
+] as const;
 export type PlDimension = (typeof PL_DIMENSIONS)[number];
 
 interface AccountMovement {
@@ -49,7 +57,9 @@ export class FinancialReportsService {
   range(from: string, to: string): { start: string; end: string } {
     const ok = (v: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
     if (!ok(from) || !ok(to) || from > to)
-      throw new DomainException('validation.failed', { errors: [{ path: 'from', code: 'range', message: 'from and to are YYYY-MM with from ≤ to' }] });
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'from', code: 'range', message: 'from and to are YYYY-MM with from ≤ to' }],
+      });
     return { start: `${from}-01`, end: monthEnd(`${to}-01`) };
   }
 
@@ -85,7 +95,12 @@ export class FinancialReportsService {
       })
       .filter((r) => includeZero || !(r.opening.isZero() && r.debit.isZero() && r.credit.isZero()));
     const sum = (f: (r: (typeof rows)[number]) => MoneyValue) => rows.reduce((s, r) => s.add(f(r)), ZERO());
-    const totals = { opening: sum((r) => r.opening), debit: sum((r) => r.debit), credit: sum((r) => r.credit), closing: sum((r) => r.closing) };
+    const totals = {
+      opening: sum((r) => r.opening),
+      debit: sum((r) => r.debit),
+      credit: sum((r) => r.credit),
+      closing: sum((r) => r.closing),
+    };
     return {
       from,
       to,
@@ -100,7 +115,12 @@ export class FinancialReportsService {
         credit: m(r.credit),
         closing: m(r.closing),
       })),
-      totals: { opening: m(totals.opening), debit: m(totals.debit), credit: m(totals.credit), closing: m(totals.closing) },
+      totals: {
+        opening: m(totals.opening),
+        debit: m(totals.debit),
+        credit: m(totals.credit),
+        closing: m(totals.closing),
+      },
       // Balances are debit-positive, so a balanced ledger sums to 0 and Σ debit = Σ credit.
       balanced: totals.opening.isZero() && totals.closing.isZero() && totals.debit.eq(totals.credit),
     };
@@ -111,15 +131,28 @@ export class FinancialReportsService {
   async glDetail(accountCode: string, from: string, to: string, page: number, perPage: number) {
     const { start, end } = this.range(from, to);
     const entityId = await this.entities.defaultEntityId();
-    const account = await this.prisma.account.findUnique({ where: { entityId_code: { entityId, code: accountCode } } });
+    const account = await this.prisma.account.findUnique({
+      where: { entityId_code: { entityId, code: accountCode } },
+    });
     if (!account) throw new DomainException('http.not_found');
     const base: Prisma.JournalLineWhereInput = { accountId: account.id, journalEntry: { status: 'posted' } };
-    const before = await this.prisma.journalLine.aggregate({ where: { ...base, entryDate: { lt: dateOnly(start) } }, _sum: { debit: true, credit: true } });
-    const within: Prisma.JournalLineWhereInput = { ...base, entryDate: { gte: dateOnly(start), lte: dateOnly(end) } };
+    const before = await this.prisma.journalLine.aggregate({
+      where: { ...base, entryDate: { lt: dateOnly(start) } },
+      _sum: { debit: true, credit: true },
+    });
+    const within: Prisma.JournalLineWhereInput = {
+      ...base,
+      entryDate: { gte: dateOnly(start), lte: dateOnly(end) },
+    };
     const skipped = (page - 1) * perPage;
     // The running balance of the page starts after the lines of earlier pages.
     const earlier = skipped
-      ? await this.prisma.journalLine.findMany({ where: within, orderBy: [{ entryDate: 'asc' }, { id: 'asc' }], take: skipped, select: { debit: true, credit: true } })
+      ? await this.prisma.journalLine.findMany({
+          where: within,
+          orderBy: [{ entryDate: 'asc' }, { id: 'asc' }],
+          take: skipped,
+          select: { debit: true, credit: true },
+        })
       : [];
     const [lines, total, sums] = await Promise.all([
       this.prisma.journalLine.findMany({
@@ -196,9 +229,14 @@ export class FinancialReportsService {
   // --- balance sheet --------------------------------------------------------------------------------------
 
   async balanceSheet(asOf: string) {
-    if (!isDay(asOf)) throw new DomainException('validation.failed', { errors: [{ path: 'asOf', code: 'date', message: 'YYYY-MM-DD' }] });
+    if (!isDay(asOf))
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'asOf', code: 'date', message: 'YYYY-MM-DD' }],
+      });
     const entityId = await this.entities.defaultEntityId();
-    const year = await this.prisma.fiscalYear.findFirst({ where: { entityId, startDate: { lte: dateOnly(asOf) }, endDate: { gte: dateOnly(asOf) } } });
+    const year = await this.prisma.fiscalYear.findFirst({
+      where: { entityId, startDate: { lte: dateOnly(asOf) }, endDate: { gte: dateOnly(asOf) } },
+    });
     const yearStart = year ? dayOf(year.startDate) : `${asOf.slice(0, 4)}-01-01`;
     // Opening = before the fiscal year; movement = the year to date: P&L before the year is prior-year profit.
     const rows = await this.movements(entityId, yearStart, asOf);
@@ -207,7 +245,12 @@ export class FinancialReportsService {
         .filter((a) => a.account_type === type)
         .map((a) => ({ a, balance: D(a.opening).add(D(a.debit)).sub(D(a.credit)).mul(sign) }))
         .filter((r) => !r.balance.isZero())
-        .map((r) => ({ accountCode: r.a.code, nameTh: r.a.name_th, nameEn: r.a.name_en, balance: m(r.balance) }));
+        .map((r) => ({
+          accountCode: r.a.code,
+          nameTh: r.a.name_th,
+          nameEn: r.a.name_en,
+          balance: m(r.balance),
+        }));
     const total = (lines: { balance: string }[]) => lines.reduce((s, l) => s.add(l.balance), ZERO());
     const assets = section('asset', 1);
     const liabilities = section('liability', -1);
@@ -245,7 +288,9 @@ export class FinancialReportsService {
       campaign: Prisma.sql`c.name`,
       cost_centre: Prisma.sql`cc.code`,
     }[dimension];
-    const rows = await this.prisma.$queryRaw<{ dim: string | null; account_type: string; code: string; amount: Prisma.Decimal }[]>`
+    const rows = await this.prisma.$queryRaw<
+      { dim: string | null; account_type: string; code: string; amount: Prisma.Decimal }[]
+    >`
       SELECT ${column} AS dim, a.account_type::text AS account_type, a.code, sum(l.credit - l.debit) AS amount
       FROM journal_lines l
       JOIN journal_entries e ON e.id = l.journal_entry_id
@@ -259,10 +304,23 @@ export class FinancialReportsService {
         AND a.account_type IN ('revenue', 'cost_of_sales', 'expense')
       GROUP BY 1, 2, 3
       ORDER BY 1 NULLS LAST, 3`;
-    const groups = new Map<string, { revenue: MoneyValue; costOfSales: MoneyValue; expenses: MoneyValue; accounts: Map<string, MoneyValue> }>();
+    const groups = new Map<
+      string,
+      {
+        revenue: MoneyValue;
+        costOfSales: MoneyValue;
+        expenses: MoneyValue;
+        accounts: Map<string, MoneyValue>;
+      }
+    >();
     for (const r of rows) {
       const key = r.dim ?? '(none)';
-      const g = groups.get(key) ?? { revenue: ZERO(), costOfSales: ZERO(), expenses: ZERO(), accounts: new Map<string, MoneyValue>() };
+      const g = groups.get(key) ?? {
+        revenue: ZERO(),
+        costOfSales: ZERO(),
+        expenses: ZERO(),
+        accounts: new Map<string, MoneyValue>(),
+      };
       const amount = D(r.amount);
       if (r.account_type === 'revenue') g.revenue = g.revenue.add(amount);
       else if (r.account_type === 'cost_of_sales') g.costOfSales = g.costOfSales.sub(amount);
@@ -280,11 +338,27 @@ export class FinancialReportsService {
         grossMarginPct: g.revenue.isZero() ? null : gross.div(g.revenue).mul(100).toFixed(2),
         expenses: m(g.expenses),
         netProfit: m(gross.sub(g.expenses)),
-        accounts: [...g.accounts.entries()].map(([code, amount]) => ({ accountCode: code, amount: m(amount) })),
+        accounts: [...g.accounts.entries()].map(([code, amount]) => ({
+          accountCode: code,
+          amount: m(amount),
+        })),
       };
     });
-    const total = (k: 'revenue' | 'costOfSales' | 'grossMargin' | 'expenses' | 'netProfit') => m(lines.reduce((s, l) => s.add(l[k]), ZERO()));
-    return { from, to, dimension, lines, totals: { revenue: total('revenue'), costOfSales: total('costOfSales'), grossMargin: total('grossMargin'), expenses: total('expenses'), netProfit: total('netProfit') } };
+    const total = (k: 'revenue' | 'costOfSales' | 'grossMargin' | 'expenses' | 'netProfit') =>
+      m(lines.reduce((s, l) => s.add(l[k]), ZERO()));
+    return {
+      from,
+      to,
+      dimension,
+      lines,
+      totals: {
+        revenue: total('revenue'),
+        costOfSales: total('costOfSales'),
+        grossMargin: total('grossMargin'),
+        expenses: total('expenses'),
+        netProfit: total('netProfit'),
+      },
+    };
   }
 
   // --- cash flow (indirect) -------------------------------------------------------------------------------
@@ -297,8 +371,13 @@ export class FinancialReportsService {
     const { start, end } = this.range(from, to);
     const entityId = await this.entities.defaultEntityId();
     const rows = await this.movements(entityId, start, end);
-    const net = rows.filter((a) => PROFIT_AND_LOSS.includes(a.account_type)).reduce((s, a) => s.add(D(a.credit)).sub(D(a.debit)), ZERO());
-    const sections: Record<'operating' | 'investing' | 'financing' | 'equity', { accountCode: string; nameTh: string; amount: string }[]> = { operating: [], investing: [], financing: [], equity: [] };
+    const net = rows
+      .filter((a) => PROFIT_AND_LOSS.includes(a.account_type))
+      .reduce((s, a) => s.add(D(a.credit)).sub(D(a.debit)), ZERO());
+    const sections: Record<
+      'operating' | 'investing' | 'financing' | 'equity',
+      { accountCode: string; nameTh: string; amount: string }[]
+    > = { operating: [], investing: [], financing: [], equity: [] };
     let cash = ZERO();
     const totals = { operating: net, investing: ZERO(), financing: ZERO(), equity: ZERO() };
     for (const a of rows.filter((r) => BALANCE_SHEET.includes(r.account_type))) {
@@ -319,7 +398,10 @@ export class FinancialReportsService {
       netProfit: m(net),
       operating: { adjustments: sections.operating, total: m(totals.operating) },
       investing: { lines: sections.investing, total: m(totals.investing) },
-      financing: { lines: [...sections.financing, ...sections.equity], total: m(totals.financing.add(totals.equity)) },
+      financing: {
+        lines: [...sections.financing, ...sections.equity],
+        total: m(totals.financing.add(totals.equity)),
+      },
       netChange: m(change),
       cashMovement: m(cash),
       difference: m(change.sub(cash)),
@@ -329,7 +411,12 @@ export class FinancialReportsService {
   /** Helper for the close: the balance of accounts at a date (debit-positive). */
   async balanceOf(entityId: bigint, codes: string[], asOf: string): Promise<MoneyValue> {
     const sum = await this.prisma.journalLine.aggregate({
-      where: { entityId, account: { code: { in: codes } }, entryDate: { lte: dateOnly(asOf) }, journalEntry: { status: 'posted' } },
+      where: {
+        entityId,
+        account: { code: { in: codes } },
+        entryDate: { lte: dateOnly(asOf) },
+        journalEntry: { status: 'posted' },
+      },
       _sum: { debit: true, credit: true },
     });
     return D(sum._sum.debit).sub(D(sum._sum.credit));

@@ -117,7 +117,10 @@ describe('orders (e2e, B3.1)', () => {
       .post(`/v1/store/order-groups/${unpaid.id}/actions/cancel`, { reasonCode: 'duplicate_order' })
       .expect(422);
     const cancelled = await as(ctx, token)
-      .post(`/v1/store/order-groups/${unpaid.id}/actions/cancel`, { reasonCode: 'customer_request', note: 'เปลี่ยนแบบ' })
+      .post(`/v1/store/order-groups/${unpaid.id}/actions/cancel`, {
+        reasonCode: 'customer_request',
+        note: 'เปลี่ยนแบบ',
+      })
       .expect(200);
     expect(cancelled.body).toMatchObject({ status: 'cancelled', orders: [{ status: 'cancelled' }] });
     await as(ctx, token)
@@ -158,7 +161,9 @@ describe('orders (e2e, B3.1)', () => {
     });
     expect(row).toMatchObject({ status: 'cancelled', cancelReason: { code: 'payment_expired' } });
     expect(row.orders.every((o) => o.status === 'cancelled')).toBe(true);
-    expect(await ctx.prisma.domainEvent.count({ where: { type: 'order_group.expired', aggregateId: group.id } })).toBe(1);
+    expect(
+      await ctx.prisma.domainEvent.count({ where: { type: 'order_group.expired', aggregateId: group.id } }),
+    ).toBe(1);
     const paid = await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: paidToo.id } });
     expect(paid.status).toBe('in_progress');
   });

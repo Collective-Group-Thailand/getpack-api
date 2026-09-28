@@ -1,9 +1,21 @@
 import { MoneyDecimal } from '@common/money/money';
 import fc from 'fast-check';
 
-import { discountLine, priceOrderLines, type PricingContext, type QuoteOptionInput, totalsOf, vatOf } from './order-pricing';
+import {
+  discountLine,
+  priceOrderLines,
+  type PricingContext,
+  type QuoteOptionInput,
+  totalsOf,
+  vatOf,
+} from './order-pricing';
 
-const ctx: PricingContext = { vatPct: '7', nature: 'hire_of_work', productRevenue: 'made_to_order', wht: null };
+const ctx: PricingContext = {
+  vatPct: '7',
+  nature: 'hire_of_work',
+  productRevenue: 'made_to_order',
+  wht: null,
+};
 
 /** An instant option like the folding engine produces: pieces + design fee incl. VAT, shipping VAT-exclusive. */
 const instant: QuoteOptionInput = {
@@ -84,37 +96,44 @@ describe('priceOrderLines', () => {
   });
 
   it('property: lines always add up and the product side keeps the quotation’s gross and VAT', () => {
-    const cents = (min: number, max: number) => fc.integer({ min, max }).map((n) => new MoneyDecimal(n).div(100));
+    const cents = (min: number, max: number) =>
+      fc.integer({ min, max }).map((n) => new MoneyDecimal(n).div(100));
     fc.assert(
-      fc.property(cents(10_000, 50_000_000), cents(0, 1_000_000), cents(0, 500_000), cents(0, 100_000), (pieces, fee, ship, newShip) => {
-        const productSideGross = pieces.add(fee);
-        const productSideVat = productSideGross.sub(productSideGross.div(1.07)).toDecimalPlaces(2);
-        const shipVat = vatOf(ship, '7');
-        const option: QuoteOptionInput = {
-          source: 'instant',
-          quantity: 1000,
-          netAmount: productSideGross.sub(productSideVat).add(ship).toFixed(2),
-          vatAmount: productSideVat.add(shipVat).toFixed(2),
-          grossAmount: productSideGross.add(ship).add(shipVat).toFixed(2),
-          shippingAmount: ship.gt(0) ? ship.add(shipVat).toFixed(2) : null,
-          result: {
-            productAmount: pieces.toFixed(2),
-            designFeeAmount: fee.toFixed(2),
-            shippingNetAmount: ship.gt(0) ? ship.toFixed(2) : null,
-            shippingVatAmount: ship.gt(0) ? shipVat.toFixed(2) : null,
-          },
-        };
-        const lines = priceOrderLines(option, newShip, ctx);
-        const productSide = lines.filter((l) => l.lineType !== 'shipping');
-        const gross = productSide.reduce((a, l) => a.add(l.grossAmount), new MoneyDecimal(0));
-        const vat = productSide.reduce((a, l) => a.add(l.vatAmount), new MoneyDecimal(0));
-        expect(gross.toFixed(2)).toBe(productSideGross.toFixed(2));
-        expect(vat.toFixed(2)).toBe(productSideVat.toFixed(2));
-        for (const l of lines) {
-          expect(new MoneyDecimal(l.netAmount).gte(0)).toBe(true);
-          expect(new MoneyDecimal(l.netAmount).add(l.vatAmount).toFixed(2)).toBe(l.grossAmount);
-        }
-      }),
+      fc.property(
+        cents(10_000, 50_000_000),
+        cents(0, 1_000_000),
+        cents(0, 500_000),
+        cents(0, 100_000),
+        (pieces, fee, ship, newShip) => {
+          const productSideGross = pieces.add(fee);
+          const productSideVat = productSideGross.sub(productSideGross.div(1.07)).toDecimalPlaces(2);
+          const shipVat = vatOf(ship, '7');
+          const option: QuoteOptionInput = {
+            source: 'instant',
+            quantity: 1000,
+            netAmount: productSideGross.sub(productSideVat).add(ship).toFixed(2),
+            vatAmount: productSideVat.add(shipVat).toFixed(2),
+            grossAmount: productSideGross.add(ship).add(shipVat).toFixed(2),
+            shippingAmount: ship.gt(0) ? ship.add(shipVat).toFixed(2) : null,
+            result: {
+              productAmount: pieces.toFixed(2),
+              designFeeAmount: fee.toFixed(2),
+              shippingNetAmount: ship.gt(0) ? ship.toFixed(2) : null,
+              shippingVatAmount: ship.gt(0) ? shipVat.toFixed(2) : null,
+            },
+          };
+          const lines = priceOrderLines(option, newShip, ctx);
+          const productSide = lines.filter((l) => l.lineType !== 'shipping');
+          const gross = productSide.reduce((a, l) => a.add(l.grossAmount), new MoneyDecimal(0));
+          const vat = productSide.reduce((a, l) => a.add(l.vatAmount), new MoneyDecimal(0));
+          expect(gross.toFixed(2)).toBe(productSideGross.toFixed(2));
+          expect(vat.toFixed(2)).toBe(productSideVat.toFixed(2));
+          for (const l of lines) {
+            expect(new MoneyDecimal(l.netAmount).gte(0)).toBe(true);
+            expect(new MoneyDecimal(l.netAmount).add(l.vatAmount).toFixed(2)).toBe(l.grossAmount);
+          }
+        },
+      ),
     );
   });
 });
@@ -128,8 +147,12 @@ describe('discountLine', () => {
     const d = discountLine(product!, '1000.00');
     expect(d.discountAmount).toBe('1000.00');
     expect(new MoneyDecimal(product!.vatAmount).sub(d.vatAmount).toFixed(2)).toBe('70.00');
-    expect(d.grossAmount).toBe(new MoneyDecimal(d.netAmount).sub(d.discountAmount).add(d.vatAmount).toFixed(2));
-    expect(d.whtAmount).toBe(new MoneyDecimal(d.netAmount).sub('1000.00').mul('0.03').toDecimalPlaces(2).toFixed(2));
+    expect(d.grossAmount).toBe(
+      new MoneyDecimal(d.netAmount).sub(d.discountAmount).add(d.vatAmount).toFixed(2),
+    );
+    expect(d.whtAmount).toBe(
+      new MoneyDecimal(d.netAmount).sub('1000.00').mul('0.03').toDecimalPlaces(2).toFixed(2),
+    );
     expect(() => discountLine(d, d.netAmount)).toThrow(RangeError);
   });
 
@@ -137,9 +160,16 @@ describe('discountLine', () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 100 }), (pct) => {
         const [product] = priceOrderLines(instant, new MoneyDecimal('120.00'), ctx);
-        const amount = new MoneyDecimal(product!.netAmount).mul(pct).div(100).toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN);
+        const amount = new MoneyDecimal(product!.netAmount)
+          .mul(pct)
+          .div(100)
+          .toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN);
         const d = discountLine(product!, amount);
-        expect(new MoneyDecimal(d.grossAmount).eq(new MoneyDecimal(d.netAmount).sub(d.discountAmount).add(d.vatAmount))).toBe(true);
+        expect(
+          new MoneyDecimal(d.grossAmount).eq(
+            new MoneyDecimal(d.netAmount).sub(d.discountAmount).add(d.vatAmount),
+          ),
+        ).toBe(true);
         expect(new MoneyDecimal(d.vatAmount).gte(0)).toBe(true);
         expect(new MoneyDecimal(d.grossAmount).gte(0)).toBe(true);
       }),

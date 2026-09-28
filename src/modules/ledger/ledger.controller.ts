@@ -5,10 +5,28 @@ import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { formatMoney } from '@common/money/money';
-import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import {
+  ApiConcurrency,
+  ApiEndpoint,
+  ApiEtag,
+  ApiStandardErrors,
+  ApiSuccess,
+} from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { EntitiesService } from '@platform/entities/entities.service';
 import { type Response } from 'express';
@@ -100,7 +118,11 @@ export class AdminLedgerAccountsController {
     description: 'Proposed, approved and declined changes (maker-checker `coa_change`, §8, D-169).',
     implements: MAKER_CHECKER,
   })
-  @ApiSuccess(200, { description: 'Changes, newest first', type: [AccountChangeDto], example: [ACCOUNT_CHANGE_EXAMPLE] })
+  @ApiSuccess(200, {
+    description: 'Changes, newest first',
+    type: [AccountChangeDto],
+    example: [ACCOUNT_CHANGE_EXAMPLE],
+  })
   @ApiStandardErrors('validation.failed')
   async changes(@Query() q: AccountChangeListQuery): Promise<AccountChangeDto[]> {
     return (await this.config.accountChanges(q.status)).map(accountChangeDto);
@@ -121,15 +143,38 @@ export class AdminLedgerAccountsController {
       default: {
         value: {
           kind: 'create',
-          fields: { code: '1124', nameTh: 'เงินฝากธนาคาร บัญชีที่ 4', nameEn: 'Bank account 4', accountType: 'asset', normalSide: 'debit', parentCode: '1120', cashFlowClass: 'cash', allowedDimensions: ['cost_centre'] },
+          fields: {
+            code: '1124',
+            nameTh: 'เงินฝากธนาคาร บัญชีที่ 4',
+            nameEn: 'Bank account 4',
+            accountType: 'asset',
+            normalSide: 'debit',
+            parentCode: '1120',
+            cashFlowClass: 'cash',
+            allowedDimensions: ['cost_centre'],
+          },
           reason: 'เปิดบัญชีธนาคารใหม่สำหรับจ่ายโรงงาน',
         },
       },
     },
   })
-  @ApiSuccess(201, { description: 'Change awaiting approval', type: AccountChangeDto, example: ACCOUNT_CHANGE_EXAMPLE })
-  @ApiStandardErrors(...WRITE, 'http.not_found', 'ledger.account_exists', 'ledger.account_invalid', 'ledger.change_pending', 'approval.no_matching_step')
-  async propose(@CurrentActor() actor: Actor, @Body() body: ProposeAccountChangeDto): Promise<AccountChangeDto> {
+  @ApiSuccess(201, {
+    description: 'Change awaiting approval',
+    type: AccountChangeDto,
+    example: ACCOUNT_CHANGE_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    'ledger.account_exists',
+    'ledger.account_invalid',
+    'ledger.change_pending',
+    'approval.no_matching_step',
+  )
+  async propose(
+    @CurrentActor() actor: Actor,
+    @Body() body: ProposeAccountChangeDto,
+  ): Promise<AccountChangeDto> {
     return accountChangeDto(await this.config.proposeAccountChange(staff(actor), body));
   }
 
@@ -155,10 +200,16 @@ export class AdminLedgerAccountsController {
     description: 'A new cost-centre dimension value (audited).',
     implements: DECISIONS,
   })
-  @ApiBody({ type: CreateCostCentreDto, examples: { default: { value: { code: 'OPS', name: 'ฝ่ายปฏิบัติการ' } } } })
+  @ApiBody({
+    type: CreateCostCentreDto,
+    examples: { default: { value: { code: 'OPS', name: 'ฝ่ายปฏิบัติการ' } } },
+  })
   @ApiSuccess(201, { description: 'Cost centre', type: CostCentreDto, example: COST_CENTRE_EXAMPLE })
   @ApiStandardErrors(...WRITE, 'ledger.account_exists')
-  async createCostCentre(@CurrentActor() actor: Actor, @Body() body: CreateCostCentreDto): Promise<CostCentreDto> {
+  async createCostCentre(
+    @CurrentActor() actor: Actor,
+    @Body() body: CreateCostCentreDto,
+  ): Promise<CostCentreDto> {
     return costCentreDto(await this.config.createCostCentre(staff(actor), body));
   }
 }
@@ -180,7 +231,11 @@ export class AdminLedgerPeriodsController {
       'Fiscal years with their monthly periods `open → soft_closed → closed → locked` (accounting-design §1.4). Years are created on first use from the entity’s fiscal-year start month.',
     implements: DECISIONS,
   })
-  @ApiSuccess(200, { description: 'Years, newest first', type: [FiscalYearDto], example: [FISCAL_YEAR_EXAMPLE] })
+  @ApiSuccess(200, {
+    description: 'Years, newest first',
+    type: [FiscalYearDto],
+    example: [FISCAL_YEAR_EXAMPLE],
+  })
   @ApiStandardErrors()
   async list(): Promise<FiscalYearDto[]> {
     const entityId = await this.entities.defaultEntityId();
@@ -200,8 +255,15 @@ export class AdminLedgerPeriodsController {
       '`soft-close` (open → soft_closed; only `ledger.post_soft_closed` may still post), `reopen` (soft_closed → open), `close` (soft_closed → closed; earlier periods first) and `lock` (closed → locked, after the auditor’s sign-off at year end). Postings dated in a period that is not open go to the next open period with their document date kept (§1.4, §7). Audited.',
     implements: DECISIONS,
   })
-  @ApiBody({ type: PeriodTransitionDto, examples: { default: { value: { reason: 'ปิดงวดเบื้องต้นเพื่อให้ผู้จัดการตรวจ' } } } })
-  @ApiSuccess(200, { description: 'Period', type: FiscalPeriodDto, example: { ...PERIOD_EXAMPLE, status: 'soft_closed', statusChangedAt: '2026-11-02T09:00:00+07:00' } })
+  @ApiBody({
+    type: PeriodTransitionDto,
+    examples: { default: { value: { reason: 'ปิดงวดเบื้องต้นเพื่อให้ผู้จัดการตรวจ' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Period',
+    type: FiscalPeriodDto,
+    example: { ...PERIOD_EXAMPLE, status: 'soft_closed', statusChangedAt: '2026-11-02T09:00:00+07:00' },
+  })
   @ApiStandardErrors(...WRITE, 'http.not_found', 'ledger.period_transition')
   async transition(
     @CurrentActor() actor: Actor,
@@ -288,7 +350,20 @@ export class AdminJournalsController {
       },
     },
   })
-  @ApiSuccess(201, { description: 'Draft', type: JournalDto, example: { ...JOURNAL_EXAMPLE, kind: 'manual', status: 'draft', entryNo: null, postingRule: null, postingRuleVersion: null, source: null, domainEventId: null } })
+  @ApiSuccess(201, {
+    description: 'Draft',
+    type: JournalDto,
+    example: {
+      ...JOURNAL_EXAMPLE,
+      kind: 'manual',
+      status: 'draft',
+      entryNo: null,
+      postingRule: null,
+      postingRuleVersion: null,
+      source: null,
+      domainEventId: null,
+    },
+  })
   @ApiStandardErrors(...WRITE, 'ledger.account_invalid', 'ledger.unbalanced')
   async create(
     @CurrentActor() actor: Actor,
@@ -310,9 +385,33 @@ export class AdminJournalsController {
     description: 'Only the maker edits a draft, with `If-Match` (§8).',
     implements: MAKER_CHECKER,
   })
-  @ApiBody({ type: ManualJournalDto, examples: { default: { value: { documentDate: '2026-10-31', description: 'ตั้งค่าเช่าคลังค้างจ่าย', lines: [{ accountCode: '6900', side: 'debit', amount: '16000.00' }, { accountCode: '2410', side: 'credit', amount: '16000.00' }] } } } })
-  @ApiSuccess(200, { description: 'Draft', type: JournalDto, example: { ...JOURNAL_EXAMPLE, kind: 'manual', status: 'draft' } })
-  @ApiStandardErrors(...WRITE, 'http.not_found', 'ledger.journal_not_editable', 'ledger.account_invalid', 'ledger.unbalanced')
+  @ApiBody({
+    type: ManualJournalDto,
+    examples: {
+      default: {
+        value: {
+          documentDate: '2026-10-31',
+          description: 'ตั้งค่าเช่าคลังค้างจ่าย',
+          lines: [
+            { accountCode: '6900', side: 'debit', amount: '16000.00' },
+            { accountCode: '2410', side: 'credit', amount: '16000.00' },
+          ],
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Draft',
+    type: JournalDto,
+    example: { ...JOURNAL_EXAMPLE, kind: 'manual', status: 'draft' },
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    'ledger.journal_not_editable',
+    'ledger.account_invalid',
+    'ledger.unbalanced',
+  )
   async update(
     @CurrentActor() actor: Actor,
     @Param('journalId', ParseUUIDPipe) journalId: string,
@@ -337,7 +436,10 @@ export class AdminJournalsController {
   })
   @ApiSuccess(204, { description: 'Discarded' })
   @ApiStandardErrors('http.not_found', 'ledger.journal_not_editable')
-  async discard(@CurrentActor() actor: Actor, @Param('journalId', ParseUUIDPipe) journalId: string): Promise<void> {
+  async discard(
+    @CurrentActor() actor: Actor,
+    @Param('journalId', ParseUUIDPipe) journalId: string,
+  ): Promise<void> {
     await this.journals.discard(staff(actor), journalId);
   }
 
@@ -353,9 +455,21 @@ export class AdminJournalsController {
       'The maker submits; a Finance Manager other than the maker approves (policy `manual_journal`, D-169) and the approval posts it with a JV number — into the next open period when its own is closed (§1.4). Requires `Idempotency-Key`.',
     implements: MAKER_CHECKER,
   })
-  @ApiSuccess(200, { description: 'Awaiting approval', type: JournalDto, example: { ...JOURNAL_EXAMPLE, kind: 'manual', status: 'pending_approval' } })
-  @ApiStandardErrors('http.not_found', 'ledger.journal_not_editable', 'numbering.series_missing', 'approval.no_matching_step')
-  async submit(@CurrentActor() actor: Actor, @Param('journalId', ParseUUIDPipe) journalId: string): Promise<JournalDto> {
+  @ApiSuccess(200, {
+    description: 'Awaiting approval',
+    type: JournalDto,
+    example: { ...JOURNAL_EXAMPLE, kind: 'manual', status: 'pending_approval' },
+  })
+  @ApiStandardErrors(
+    'http.not_found',
+    'ledger.journal_not_editable',
+    'numbering.series_missing',
+    'approval.no_matching_step',
+  )
+  async submit(
+    @CurrentActor() actor: Actor,
+    @Param('journalId', ParseUUIDPipe) journalId: string,
+  ): Promise<JournalDto> {
     return journalDto(await this.journals.submit(staff(actor), journalId));
   }
 
@@ -371,9 +485,22 @@ export class AdminJournalsController {
       'Corrections are reversing entries linked to the original (§1.2). Manual and recurring entries only — sub-ledger entries are corrected by their documents (void, credit note). The reversal is approved like a manual journal (D-169). Requires `Idempotency-Key`.',
     implements: MAKER_CHECKER,
   })
-  @ApiBody({ type: ReverseJournalDto, examples: { default: { value: { documentDate: '2026-11-01', reason: 'บันทึกผิดบัญชี' } } } })
-  @ApiSuccess(201, { description: 'Reversal awaiting approval', type: JournalDto, example: { ...JOURNAL_EXAMPLE, kind: 'reversal', status: 'pending_approval' } })
-  @ApiStandardErrors(...WRITE, 'http.not_found', 'ledger.not_reversible', 'numbering.series_missing', 'approval.no_matching_step')
+  @ApiBody({
+    type: ReverseJournalDto,
+    examples: { default: { value: { documentDate: '2026-11-01', reason: 'บันทึกผิดบัญชี' } } },
+  })
+  @ApiSuccess(201, {
+    description: 'Reversal awaiting approval',
+    type: JournalDto,
+    example: { ...JOURNAL_EXAMPLE, kind: 'reversal', status: 'pending_approval' },
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    'ledger.not_reversible',
+    'numbering.series_missing',
+    'approval.no_matching_step',
+  )
   async reverse(
     @CurrentActor() actor: Actor,
     @Param('journalId', ParseUUIDPipe) journalId: string,
@@ -411,10 +538,34 @@ export class AdminRecurringJournalsController {
       'Posted every month on its day once approved by a Finance Manager (policy `recurring_journal`, D-169), optionally reversed on the first day of the next month (accruals, §7 step 6).',
     implements: MAKER_CHECKER,
   })
-  @ApiBody({ type: RecurringJournalInputDto, examples: { default: { value: { name: 'ค่าเช่าสำนักงานรายเดือน', description: 'ตั้งค่าเช่าสำนักงานค้างจ่ายทุกสิ้นเดือน', dayOfMonth: 28, startOn: '2026-10-01', autoReverse: true, lines: [{ accountCode: '6900', side: 'debit', amount: '15000.00' }, { accountCode: '2410', side: 'credit', amount: '15000.00' }] } } } })
-  @ApiSuccess(201, { description: 'Awaiting approval', type: RecurringJournalDto, example: { ...RECURRING_EXAMPLE, status: 'pending_approval' } })
+  @ApiBody({
+    type: RecurringJournalInputDto,
+    examples: {
+      default: {
+        value: {
+          name: 'ค่าเช่าสำนักงานรายเดือน',
+          description: 'ตั้งค่าเช่าสำนักงานค้างจ่ายทุกสิ้นเดือน',
+          dayOfMonth: 28,
+          startOn: '2026-10-01',
+          autoReverse: true,
+          lines: [
+            { accountCode: '6900', side: 'debit', amount: '15000.00' },
+            { accountCode: '2410', side: 'credit', amount: '15000.00' },
+          ],
+        },
+      },
+    },
+  })
+  @ApiSuccess(201, {
+    description: 'Awaiting approval',
+    type: RecurringJournalDto,
+    example: { ...RECURRING_EXAMPLE, status: 'pending_approval' },
+  })
   @ApiStandardErrors(...WRITE, 'ledger.account_invalid', 'ledger.unbalanced', 'approval.no_matching_step')
-  async create(@CurrentActor() actor: Actor, @Body() body: RecurringJournalInputDto): Promise<RecurringJournalDto> {
+  async create(
+    @CurrentActor() actor: Actor,
+    @Body() body: RecurringJournalInputDto,
+  ): Promise<RecurringJournalDto> {
     return recurringDto(await this.recurring.create(staff(actor), body));
   }
 
@@ -429,7 +580,11 @@ export class AdminRecurringJournalsController {
     description: 'Finance Manager; audited.',
     implements: DECISIONS,
   })
-  @ApiSuccess(200, { description: 'Definition', type: RecurringJournalDto, example: { ...RECURRING_EXAMPLE, status: 'paused' } })
+  @ApiSuccess(200, {
+    description: 'Definition',
+    type: RecurringJournalDto,
+    example: { ...RECURRING_EXAMPLE, status: 'paused' },
+  })
   @ApiStandardErrors('http.not_found', 'ledger.journal_not_editable')
   async setStatus(
     @CurrentActor() actor: Actor,
@@ -487,10 +642,42 @@ export class AdminPostingRulesController {
       'A validated template (accounts must exist and be postable) effective from now or later, applied when a Finance Manager other than the requester approves (policy `posting_rule_change`, §8, D-169). Postings keep the version they used.',
     implements: ['D-033', 'D-169', 'ADR-0007'],
   })
-  @ApiBody({ type: ProposeRuleVersionDto, examples: { default: { value: { effectiveFrom: '2026-11-01T00:00:00+07:00', template: { description: 'TR {docNumber}', documentDate: 'documentDate', lines: [{ account: '1132', side: 'debit', amount: 'grossAmount' }, { account: '2310', side: 'credit', amount: 'grossAmount' }] }, reason: 'ผู้สอบบัญชีให้แยกบัญชีพักตามธนาคาร' } } } })
-  @ApiSuccess(201, { description: 'Rule with the proposed version', type: PostingRuleDto, example: RULE_EXAMPLE })
-  @ApiStandardErrors(...WRITE, 'http.not_found', 'ledger.rule_invalid', 'ledger.change_pending', 'approval.no_matching_step')
-  async propose(@CurrentActor() actor: Actor, @Param('key') key: string, @Body() body: ProposeRuleVersionDto): Promise<PostingRuleDto> {
+  @ApiBody({
+    type: ProposeRuleVersionDto,
+    examples: {
+      default: {
+        value: {
+          effectiveFrom: '2026-11-01T00:00:00+07:00',
+          template: {
+            description: 'TR {docNumber}',
+            documentDate: 'documentDate',
+            lines: [
+              { account: '1132', side: 'debit', amount: 'grossAmount' },
+              { account: '2310', side: 'credit', amount: 'grossAmount' },
+            ],
+          },
+          reason: 'ผู้สอบบัญชีให้แยกบัญชีพักตามธนาคาร',
+        },
+      },
+    },
+  })
+  @ApiSuccess(201, {
+    description: 'Rule with the proposed version',
+    type: PostingRuleDto,
+    example: RULE_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    'ledger.rule_invalid',
+    'ledger.change_pending',
+    'approval.no_matching_step',
+  )
+  async propose(
+    @CurrentActor() actor: Actor,
+    @Param('key') key: string,
+    @Body() body: ProposeRuleVersionDto,
+  ): Promise<PostingRuleDto> {
     return ruleDto(
       await this.config.proposeRuleVersion(staff(actor), key, {
         effectiveFrom: new Date(body.effectiveFrom),
@@ -508,14 +695,36 @@ export class AdminPostingRulesController {
   @ApiEndpoint({
     id: 'admin.postingRules.preview',
     summary: 'Preview a rule on a sample event',
-    description: 'Renders the rule version (in force, or the one named) on a sample payload without posting: whether it applies, its lines and whether they balance.',
+    description:
+      'Renders the rule version (in force, or the one named) on a sample payload without posting: whether it applies, its lines and whether they balance.',
     implements: ['D-033', 'ADR-0007'],
   })
-  @ApiBody({ type: PreviewRuleDto, examples: { default: { value: { payload: { docType: 'tr', docKind: 'instalment', receiptVia: 'scb', docNumber: 'TR256910-00001', grossAmount: '1070.00', netAmount: '1000.00', vatAmount: '70.00' } } } } })
+  @ApiBody({
+    type: PreviewRuleDto,
+    examples: {
+      default: {
+        value: {
+          payload: {
+            docType: 'tr',
+            docKind: 'instalment',
+            receiptVia: 'scb',
+            docNumber: 'TR256910-00001',
+            grossAmount: '1070.00',
+            netAmount: '1000.00',
+            vatAmount: '70.00',
+          },
+        },
+      },
+    },
+  })
   @ApiSuccess(200, { description: 'Rendered journal', type: RulePreviewDto, example: PREVIEW_EXAMPLE })
   @ApiStandardErrors(...WRITE, 'http.not_found', 'ledger.rule_invalid')
   async preview(@Param('key') key: string, @Body() body: PreviewRuleDto): Promise<RulePreviewDto> {
-    const { rule, version, applies, journal } = await this.config.previewRule(key, body.payload, body.versionNo);
+    const { rule, version, applies, journal } = await this.config.previewRule(
+      key,
+      body.payload,
+      body.versionNo,
+    );
     return {
       key: rule.key,
       versionNo: version.versionNo,
@@ -565,10 +774,35 @@ export class AdminTaxRatesController {
       'Rates change by dated versions, never in place; applied when a Finance Manager other than the requester approves (policy `tax_setting_change`, §8, D-169). Not back-dated.',
     implements: ['D-033', 'D-169'],
   })
-  @ApiBody({ type: ProposeTaxRateDto, examples: { default: { value: { ratePct: '7', effectiveFrom: '2027-01-01T00:00:00+07:00', reason: 'พระราชกฤษฎีกาลดอัตราภาษีมูลค่าเพิ่ม' } } } })
-  @ApiSuccess(201, { description: 'Rate with the proposed version', type: TaxRateDto, example: TAX_RATE_EXAMPLE })
-  @ApiStandardErrors(...WRITE, 'http.not_found', 'settings.backdated', 'ledger.change_pending', 'approval.no_matching_step')
-  async propose(@CurrentActor() actor: Actor, @Param('code') code: string, @Body() body: ProposeTaxRateDto): Promise<TaxRateDto> {
+  @ApiBody({
+    type: ProposeTaxRateDto,
+    examples: {
+      default: {
+        value: {
+          ratePct: '7',
+          effectiveFrom: '2027-01-01T00:00:00+07:00',
+          reason: 'พระราชกฤษฎีกาลดอัตราภาษีมูลค่าเพิ่ม',
+        },
+      },
+    },
+  })
+  @ApiSuccess(201, {
+    description: 'Rate with the proposed version',
+    type: TaxRateDto,
+    example: TAX_RATE_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    'settings.backdated',
+    'ledger.change_pending',
+    'approval.no_matching_step',
+  )
+  async propose(
+    @CurrentActor() actor: Actor,
+    @Param('code') code: string,
+    @Body() body: ProposeTaxRateDto,
+  ): Promise<TaxRateDto> {
     return taxRateDto(
       await this.config.proposeTaxRate(staff(actor), code, {
         ratePct: body.ratePct,

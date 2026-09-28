@@ -198,7 +198,12 @@ export class OrdersService {
       throw new DomainException('order.invalid_transition', {
         params: { from: group.status, fact: 'cancelled', reason: `the group is ${group.status}` },
       });
-    const reason = await this.reason(tx, input.reasonCode, opts.customerUserId !== undefined, opts.system ?? false);
+    const reason = await this.reason(
+      tx,
+      input.reasonCode,
+      opts.customerUserId !== undefined,
+      opts.system ?? false,
+    );
     const paid = await this.paidAmount(tx, group.id);
     if (opts.customerUserId !== undefined && (group.status !== 'waiting_payment' || paid !== '0.00'))
       throw new DomainException('order.cancel_not_allowed');

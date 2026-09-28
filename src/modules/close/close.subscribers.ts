@@ -12,6 +12,9 @@ export class CloseSubscribers {
     if (event.payload['to'] !== 'open') return;
     const period = await tx.fiscalPeriod.findUnique({ where: { publicId: event.aggregateId } });
     if (!period) return;
-    await tx.closeChecklist.updateMany({ where: { fiscalPeriodId: period.id, status: 'in_review' }, data: { status: 'open', submittedAt: null, submittedById: null, rowVersion: { increment: 1 } } });
+    await tx.closeChecklist.updateMany({
+      where: { fiscalPeriodId: period.id, status: 'in_review' },
+      data: { status: 'open', submittedAt: null, submittedById: null, rowVersion: { increment: 1 } },
+    });
   }
 }

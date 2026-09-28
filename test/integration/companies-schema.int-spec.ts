@@ -21,7 +21,9 @@ describe('companies schema — companies, credit, discount memos (PostgreSQL 18)
     client = new Client({ connectionString: infra.env.DATABASE_URL });
     await client.connect();
     await seedDev(prisma);
-    const province = await prisma.geoProvince.create({ data: { code: 'INT-C1', nameTh: '[INT] จังหวัด', nameEn: '[INT] Province' } });
+    const province = await prisma.geoProvince.create({
+      data: { code: 'INT-C1', nameTh: '[INT] จังหวัด', nameEn: '[INT] Province' },
+    });
     fx = {
       entityId: (await prisma.entity.findFirstOrThrow({ where: { isDefault: true } })).id,
       customerId: (await prisma.user.findFirstOrThrow({ where: { kind: 'customer' } })).id,
@@ -59,12 +61,26 @@ describe('companies schema — companies, credit, discount memos (PostgreSQL 18)
 
   it('checks tax ids, KYC before activation, credit only for active companies, one open company per tax id', async () => {
     const c = await company();
-    expect(await state('UPDATE companies SET tax_id = $2 WHERE id = $1', [c.id, '12345'])).toBe(SQLSTATE.checkViolation);
-    expect(await state("UPDATE companies SET status = 'active' WHERE id = $1", [c.id])).toBe(SQLSTATE.checkViolation);
-    expect(await state("UPDATE companies SET credit_status = 'credit' WHERE id = $1", [c.id])).toBe(SQLSTATE.checkViolation);
-    expect(await state("UPDATE companies SET status = 'active', kyc_approved_at = now(), credit_status = 'credit' WHERE id = $1", [c.id])).toBeNull();
+    expect(await state('UPDATE companies SET tax_id = $2 WHERE id = $1', [c.id, '12345'])).toBe(
+      SQLSTATE.checkViolation,
+    );
+    expect(await state("UPDATE companies SET status = 'active' WHERE id = $1", [c.id])).toBe(
+      SQLSTATE.checkViolation,
+    );
+    expect(await state("UPDATE companies SET credit_status = 'credit' WHERE id = $1", [c.id])).toBe(
+      SQLSTATE.checkViolation,
+    );
     expect(
-      await state(`INSERT INTO companies (entity_id, legal_name, tax_id, applied_by) VALUES ($1, 'x', $2, $3)`, [fx.entityId, c.taxId, fx.customerId]),
+      await state(
+        "UPDATE companies SET status = 'active', kyc_approved_at = now(), credit_status = 'credit' WHERE id = $1",
+        [c.id],
+      ),
+    ).toBeNull();
+    expect(
+      await state(
+        `INSERT INTO companies (entity_id, legal_name, tax_id, applied_by) VALUES ($1, 'x', $2, $3)`,
+        [fx.entityId, c.taxId, fx.customerId],
+      ),
     ).toBe(SQLSTATE.uniqueViolation);
     expect(await state('DELETE FROM companies WHERE id = $1', [c.id])).toBe(SQLSTATE.restrictViolation);
   });
@@ -93,11 +109,24 @@ describe('companies schema — companies, credit, discount memos (PostgreSQL 18)
         reason: 'ทดสอบ',
       },
     });
-    expect(await state("UPDATE company_credit_limit_versions SET status = 'approved' WHERE id = $1", [v.id])).toBe(SQLSTATE.checkViolation);
-    expect(await state("UPDATE company_credit_limit_versions SET status = 'approved', decided_at = now() WHERE id = $1", [v.id])).toBeNull();
-    expect(await state('UPDATE company_credit_limit_versions SET limit_amount = 90000 WHERE id = $1', [v.id])).toBe(SQLSTATE.restrictViolation);
-    expect(await state("UPDATE company_credit_limit_versions SET status = 'withdrawn' WHERE id = $1", [v.id])).toBe(SQLSTATE.restrictViolation);
-    expect(await state('DELETE FROM company_credit_limit_versions WHERE id = $1', [v.id])).toBe(SQLSTATE.restrictViolation);
+    expect(
+      await state("UPDATE company_credit_limit_versions SET status = 'approved' WHERE id = $1", [v.id]),
+    ).toBe(SQLSTATE.checkViolation);
+    expect(
+      await state(
+        "UPDATE company_credit_limit_versions SET status = 'approved', decided_at = now() WHERE id = $1",
+        [v.id],
+      ),
+    ).toBeNull();
+    expect(
+      await state('UPDATE company_credit_limit_versions SET limit_amount = 90000 WHERE id = $1', [v.id]),
+    ).toBe(SQLSTATE.restrictViolation);
+    expect(
+      await state("UPDATE company_credit_limit_versions SET status = 'withdrawn' WHERE id = $1", [v.id]),
+    ).toBe(SQLSTATE.restrictViolation);
+    expect(await state('DELETE FROM company_credit_limit_versions WHERE id = $1', [v.id])).toBe(
+      SQLSTATE.restrictViolation,
+    );
   });
 
   it('checks discount memo amounts, scope and decisions', async () => {
@@ -105,11 +134,83 @@ describe('companies schema — companies, credit, discount memos (PostgreSQL 18)
                       requested_amount, reason, valid_until, status, approved_pct, decided_at)
                     VALUES ($1, $2, $3, $4, $5, 10000, $6, 800, 'คู่แข่งเสนอราคาต่ำกว่า', now() + interval '15 days', $7, $8, $9)`;
     const staff = (await prisma.user.findFirstOrThrow({ where: { kind: 'staff' } })).id;
-    expect(await state(insert, [fx.entityId, 'order', staff, fx.customerId, null, '8', 'pending_approval', null, null])).toBeNull();
-    expect(await state(insert, [fx.entityId, 'company', staff, fx.customerId, null, '8', 'pending_approval', null, null])).toBe(SQLSTATE.checkViolation);
-    expect(await state(insert, [fx.entityId, 'order', staff, fx.customerId, null, '0', 'pending_approval', null, null])).toBe(SQLSTATE.checkViolation);
-    expect(await state(insert, [fx.entityId, 'order', staff, fx.customerId, null, '8', 'approved', null, new Date()])).toBe(SQLSTATE.checkViolation);
-    expect(await state(insert, [fx.entityId, 'order', staff, fx.customerId, null, '8', 'approved', '9', new Date()])).toBe(SQLSTATE.checkViolation);
-    expect(await state(insert, [fx.entityId, 'order', staff, fx.customerId, null, '8', 'applied', '8', new Date()])).toBe(SQLSTATE.checkViolation);
+    expect(
+      await state(insert, [
+        fx.entityId,
+        'order',
+        staff,
+        fx.customerId,
+        null,
+        '8',
+        'pending_approval',
+        null,
+        null,
+      ]),
+    ).toBeNull();
+    expect(
+      await state(insert, [
+        fx.entityId,
+        'company',
+        staff,
+        fx.customerId,
+        null,
+        '8',
+        'pending_approval',
+        null,
+        null,
+      ]),
+    ).toBe(SQLSTATE.checkViolation);
+    expect(
+      await state(insert, [
+        fx.entityId,
+        'order',
+        staff,
+        fx.customerId,
+        null,
+        '0',
+        'pending_approval',
+        null,
+        null,
+      ]),
+    ).toBe(SQLSTATE.checkViolation);
+    expect(
+      await state(insert, [
+        fx.entityId,
+        'order',
+        staff,
+        fx.customerId,
+        null,
+        '8',
+        'approved',
+        null,
+        new Date(),
+      ]),
+    ).toBe(SQLSTATE.checkViolation);
+    expect(
+      await state(insert, [
+        fx.entityId,
+        'order',
+        staff,
+        fx.customerId,
+        null,
+        '8',
+        'approved',
+        '9',
+        new Date(),
+      ]),
+    ).toBe(SQLSTATE.checkViolation);
+    expect(
+      await state(insert, [
+        fx.entityId,
+        'order',
+        staff,
+        fx.customerId,
+        null,
+        '8',
+        'applied',
+        '8',
+        new Date(),
+      ]),
+    ).toBe(SQLSTATE.checkViolation);
   });
 });

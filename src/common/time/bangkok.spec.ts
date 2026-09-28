@@ -37,7 +37,11 @@ describe('Bangkok time helpers', () => {
 
   it('starts the Bangkok month at local midnight on the 1st', () => {
     // 2026-10-31T18:30Z is already 1 November in Bangkok.
-    expect(startOfBangkokMonth(new Date('2026-10-31T18:30:00Z')).toISOString()).toBe('2026-10-31T17:00:00.000Z');
-    expect(startOfBangkokMonth(new Date('2026-10-15T05:00:00Z')).toISOString()).toBe('2026-09-30T17:00:00.000Z');
+    expect(startOfBangkokMonth(new Date('2026-10-31T18:30:00Z')).toISOString()).toBe(
+      '2026-10-31T17:00:00.000Z',
+    );
+    expect(startOfBangkokMonth(new Date('2026-10-15T05:00:00Z')).toISOString()).toBe(
+      '2026-09-30T17:00:00.000Z',
+    );
   });
 });

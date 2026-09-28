@@ -136,9 +136,15 @@ export class PaymentsService implements OnModuleInit {
   // --- initiate -------------------------------------------------------------------------------------
 
   /** Starts a payment of open instalments; gateway methods return a QR or a redirect URL. */
-  async initiate(actor: Actor, groupPublicId: string, input: InitiateInput, customerUserId?: bigint): Promise<PaymentRow> {
+  async initiate(
+    actor: Actor,
+    groupPublicId: string,
+    input: InitiateInput,
+    customerUserId?: bigint,
+  ): Promise<PaymentRow> {
     const method = METHODS[input.method];
-    if (!method) throw new DomainException('payments.method_unavailable', { params: { method: input.method } });
+    if (!method)
+      throw new DomainException('payments.method_unavailable', { params: { method: input.method } });
     if (method.flag && !(await this.flags.isEnabled(method.flag, actor)))
       throw new DomainException('payments.method_unavailable', { params: { method: input.method } });
     const group = await this.prisma.orderGroup.findUnique({ where: { publicId: groupPublicId } });
@@ -149,7 +155,9 @@ export class PaymentsService implements OnModuleInit {
     // A promotion that names payment methods holds the group to them (D-053 "payment method").
     const allowed = await this.promotions.requiredPaymentMethods(this.prisma, group.id);
     if (allowed.length > 0 && !allowed.includes(input.method))
-      throw new DomainException('promotions.payment_method_required', { params: { methods: allowed.join(', ') } });
+      throw new DomainException('promotions.payment_method_required', {
+        params: { methods: allowed.join(', ') },
+      });
     const schedule = await this.schedules.forGroup(group.id);
     const open = schedule.instalments.filter((i) => (OPEN as readonly string[]).includes(i.status));
     const chosen = input.instalmentIds?.length
@@ -163,7 +171,11 @@ export class PaymentsService implements OnModuleInit {
     for (const i of selected) {
       const openCash = D(i.cashAmount).sub(i.paidAmount);
       cash = cash.add(openCash);
-      gross = gross.add(D(i.cashAmount).gt(0) ? openCash.mul(i.grossAmount.toString()).div(i.cashAmount.toString()) : openCash);
+      gross = gross.add(
+        D(i.cashAmount).gt(0)
+          ? openCash.mul(i.grossAmount.toString()).div(i.cashAmount.toString())
+          : openCash,
+      );
     }
     gross = gross.toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_UP);
     const now = new Date();
@@ -187,12 +199,18 @@ export class PaymentsService implements OnModuleInit {
           initiatedById: actor.type === 'user' ? actor.userId : null,
         },
       });
-      await this.record(tx, group.publicId, 'payment.initiated', {
-        paymentId: row.publicId,
-        method: input.method,
-        cashAmount: row.cashAmount.toFixed(2),
-        instalments: selected.map((i) => i.seq),
-      }, actor);
+      await this.record(
+        tx,
+        group.publicId,
+        'payment.initiated',
+        {
+          paymentId: row.publicId,
+          method: input.method,
+          cashAmount: row.cashAmount.toFixed(2),
+          instalments: selected.map((i) => i.seq),
+        },
+        actor,
+      );
       return row;
     });
     if (method.provider === 'slip') return this.payment(payment.publicId);
@@ -205,7 +223,11 @@ export class PaymentsService implements OnModuleInit {
     } catch (error) {
       await this.prisma.payment.update({
         where: { id: payment.id },
-        data: { status: 'failed', failureReason: (error as Error).message.slice(0, 500), rowVersion: { increment: 1 } },
+        data: {
+          status: 'failed',
+          failureReason: (error as Error).message.slice(0, 500),
+          rowVersion: { increment: 1 },
+        },
       });
       throw error;
     }
@@ -289,7 +311,13 @@ export class PaymentsService implements OnModuleInit {
         },
       });
       if (!confirmation) return;
-      await this.receive(tx, 'scb', confirmation.kind === 'qr30' ? 'scb_qr' : 'scb_qr_cross_bank', confirmation, actor);
+      await this.receive(
+        tx,
+        'scb',
+        confirmation.kind === 'qr30' ? 'scb_qr' : 'scb_qr_cross_bank',
+        confirmation,
+        actor,
+      );
     });
     return this.scb.callbackReply(transactionId);
   }
@@ -316,16 +344,25 @@ export class PaymentsService implements OnModuleInit {
       const payment = await tx.payment.findUnique({ where: { referenceCode: note.reference! } });
       if (!payment || payment.provider !== 'twoc2p') return;
       if (note.succeeded && inquiry.succeeded) {
-        await this.accept(tx, payment, {
-          cash: inquiry.amount ?? note.amount ?? payment.cashAmount.toFixed(2),
-          providerRef: inquiry.tranRef ?? note.tranRef ?? note.reference!,
-          paidAt: new Date(),
-          payload: inquiry.raw,
-        }, actor);
+        await this.accept(
+          tx,
+          payment,
+          {
+            cash: inquiry.amount ?? note.amount ?? payment.cashAmount.toFixed(2),
+            providerRef: inquiry.tranRef ?? note.tranRef ?? note.reference!,
+            paidAt: new Date(),
+            payload: inquiry.raw,
+          },
+          actor,
+        );
       } else if (!note.pending && ['initiated', 'pending'].includes(payment.status)) {
         await tx.payment.update({
           where: { id: payment.id },
-          data: { status: 'failed', failureReason: `2C2P ${note.respCode ?? '-'}`, rowVersion: { increment: 1 } },
+          data: {
+            status: 'failed',
+            failureReason: `2C2P ${note.respCode ?? '-'}`,
+            rowVersion: { increment: 1 },
+          },
         });
         await this.recordPayment(tx, payment, 'payment.failed', { respCode: note.respCode }, actor);
       }
@@ -339,10 +376,15 @@ export class PaymentsService implements OnModuleInit {
   async slipVerifyCallback(body: unknown): Promise<void> {
     const data = ((body ?? {}) as { data?: { queueId?: unknown; referenceId?: unknown } }).data ?? {};
     const referenceId =
-      typeof data.queueId === 'string' ? data.queueId : typeof data.referenceId === 'string' ? data.referenceId : null;
-    if (!referenceId) throw new DomainException('validation.failed', {
-      errors: [{ path: 'data.queueId', code: 'required', message: 'queueId or referenceId' }],
-    });
+      typeof data.queueId === 'string'
+        ? data.queueId
+        : typeof data.referenceId === 'string'
+          ? data.referenceId
+          : null;
+    if (!referenceId)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'data.queueId', code: 'required', message: 'queueId or referenceId' }],
+      });
     let check: SlipCheck | null = null;
     try {
       check = await this.slipVerifier.fetch(referenceId);
@@ -384,7 +426,12 @@ export class PaymentsService implements OnModuleInit {
   private async receive(tx: Tx, provider: 'scb', method: PaymentMethod, c: ScbConfirmation, actor: Actor) {
     const payment = await tx.payment.findUnique({ where: { referenceCode: c.reference } });
     if (payment && payment.provider === provider) {
-      await this.accept(tx, payment, { cash: c.amount, providerRef: c.transactionId, paidAt: c.paidAt, payload: c.raw }, actor);
+      await this.accept(
+        tx,
+        payment,
+        { cash: c.amount, providerRef: c.transactionId, paidAt: c.paidAt, payload: c.raw },
+        actor,
+      );
       return;
     }
     const entity = await tx.entity.findFirstOrThrow({ where: { isDefault: true } });
@@ -415,11 +462,20 @@ export class PaymentsService implements OnModuleInit {
   private async accept(
     tx: Tx,
     payment: Payment,
-    received: { cash: string; providerRef: string | null; paidAt: Date; payload?: Record<string, unknown>; verifiedById?: bigint },
+    received: {
+      cash: string;
+      providerRef: string | null;
+      paidAt: Date;
+      payload?: Record<string, unknown>;
+      verifiedById?: bigint;
+    },
     actor: Actor,
   ): Promise<void> {
     const { count } = await tx.payment.updateMany({
-      where: { id: payment.id, status: { in: ['initiated', 'pending', 'awaiting_verification', 'expired', 'failed'] } },
+      where: {
+        id: payment.id,
+        status: { in: ['initiated', 'pending', 'awaiting_verification', 'expired', 'failed'] },
+      },
       data: {
         status: 'succeeded',
         providerRef: received.providerRef,
@@ -433,19 +489,38 @@ export class PaymentsService implements OnModuleInit {
       },
     });
     if (count === 0) return; // already accepted: never twice (D-061)
-    await this.recordPayment(tx, payment, 'payment.received', {
-      method: payment.method,
-      provider: payment.provider,
-      cashAmount: received.cash,
-      providerRef: received.providerRef,
-    }, actor);
+    await this.recordPayment(
+      tx,
+      payment,
+      'payment.received',
+      {
+        method: payment.method,
+        provider: payment.provider,
+        cashAmount: received.cash,
+        providerRef: received.providerRef,
+      },
+      actor,
+    );
     if (!payment.orderGroupId) return;
     const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: payment.orderGroupId } });
     if (group.status === 'cancelled' || group.status === 'completed') {
-      await this.recordPayment(tx, payment, 'payment.refund_required', { cashAmount: received.cash, reason: 'group_closed' }, actor);
+      await this.recordPayment(
+        tx,
+        payment,
+        'payment.refund_required',
+        { cashAmount: received.cash, reason: 'group_closed' },
+        actor,
+      );
       return;
     }
-    const { leftover } = await this.schedules.applyPayment(tx, group.id, payment.id, received.cash, actor, received.paidAt);
+    const { leftover } = await this.schedules.applyPayment(
+      tx,
+      group.id,
+      payment.id,
+      received.cash,
+      actor,
+      received.paidAt,
+    );
     if (D(leftover).gt(0))
       await this.recordPayment(tx, payment, 'payment.overpaid', { leftoverAmount: leftover }, actor);
   }
@@ -500,7 +575,13 @@ export class PaymentsService implements OnModuleInit {
         where: { id: payment.id },
         data: { status: 'awaiting_verification', rowVersion: { increment: 1 } },
       });
-      await this.recordPayment(tx, payment, 'payment.slip_uploaded', { slipId: row.publicId, channel }, actor);
+      await this.recordPayment(
+        tx,
+        payment,
+        'payment.slip_uploaded',
+        { slipId: row.publicId, channel },
+        actor,
+      );
       return row;
     });
 
@@ -518,9 +599,10 @@ export class PaymentsService implements OnModuleInit {
         fileName: file.originalName,
         amount: payment.cashAmount.toFixed(2),
         // A transfer made before the order existed cannot pay it.
-        transferredAfter: payment.createdAt < (payment.orderGroup?.placedAt ?? payment.createdAt)
-          ? payment.createdAt
-          : (payment.orderGroup?.placedAt ?? payment.createdAt),
+        transferredAfter:
+          payment.createdAt < (payment.orderGroup?.placedAt ?? payment.createdAt)
+            ? payment.createdAt
+            : (payment.orderGroup?.placedAt ?? payment.createdAt),
         receivers,
       });
     } catch (error) {
@@ -563,33 +645,68 @@ export class PaymentsService implements OnModuleInit {
         check.result === 'duplicate' ||
         (check.transRef !== null &&
           (await tx.slip.count({
-            where: { bankTransRef: check.transRef, verificationStatus: { in: ['passed', 'manual_approved'] } },
+            where: {
+              bankTransRef: check.transRef,
+              verificationStatus: { in: ['passed', 'manual_approved'] },
+            },
           })) > 0);
       if (duplicate) {
-        await tx.slip.update({ where: { id: slipId }, data: { verificationStatus: 'failed', bankTransRef: check.transRef } });
+        await tx.slip.update({
+          where: { id: slipId },
+          data: { verificationStatus: 'failed', bankTransRef: check.transRef },
+        });
         await tx.payment.update({
           where: { id: slip.paymentId },
           data: { status: 'pending', rowVersion: { increment: 1 } },
         });
-        await this.recordPayment(tx, slip.payment, 'payment.slip_rejected', { slipId: slip.publicId, reason: 'duplicate' }, actor);
+        await this.recordPayment(
+          tx,
+          slip.payment,
+          'payment.slip_rejected',
+          { slipId: slip.publicId, reason: 'duplicate' },
+          actor,
+        );
         return;
       }
       if (check.result === 'pass' && receiverChecked && check.receiverMatched) {
-        await tx.slip.update({ where: { id: slipId }, data: { verificationStatus: 'passed', bankTransRef: check.transRef } });
-        await this.recordPayment(tx, slip.payment, 'payment.verified', { slipId: slip.publicId, via: 'automatic' }, actor);
-        await this.accept(tx, slip.payment, {
-          cash: check.amount ?? slip.payment.cashAmount.toFixed(2),
-          providerRef: null,
-          paidAt: check.transferredAt ?? slip.declaredTransferredAt,
-        }, actor);
+        await tx.slip.update({
+          where: { id: slipId },
+          data: { verificationStatus: 'passed', bankTransRef: check.transRef },
+        });
+        await this.recordPayment(
+          tx,
+          slip.payment,
+          'payment.verified',
+          { slipId: slip.publicId, via: 'automatic' },
+          actor,
+        );
+        await this.accept(
+          tx,
+          slip.payment,
+          {
+            cash: check.amount ?? slip.payment.cashAmount.toFixed(2),
+            providerRef: null,
+            paidAt: check.transferredAt ?? slip.declaredTransferredAt,
+          },
+          actor,
+        );
         return;
       }
-      await tx.slip.update({ where: { id: slipId }, data: { verificationStatus: 'manual_review', bankTransRef: check.transRef } });
-      await this.recordPayment(tx, slip.payment, 'payment.slip_review_required', {
-        slipId: slip.publicId,
-        result: check.result,
-        slaDueAt: slip.slaDueAt?.toISOString() ?? null,
-      }, actor);
+      await tx.slip.update({
+        where: { id: slipId },
+        data: { verificationStatus: 'manual_review', bankTransRef: check.transRef },
+      });
+      await this.recordPayment(
+        tx,
+        slip.payment,
+        'payment.slip_review_required',
+        {
+          slipId: slip.publicId,
+          result: check.result,
+          slaDueAt: slip.slaDueAt?.toISOString() ?? null,
+        },
+        actor,
+      );
     });
   }
 
@@ -600,11 +717,17 @@ export class PaymentsService implements OnModuleInit {
         data: { verificationStatus: 'manual_review' },
         include: { payment: true },
       });
-      await this.recordPayment(tx, slip.payment, 'payment.slip_review_required', {
-        slipId: slip.publicId,
-        reason,
-        slaDueAt: slip.slaDueAt?.toISOString() ?? null,
-      }, systemActor('payments.slip_verify'));
+      await this.recordPayment(
+        tx,
+        slip.payment,
+        'payment.slip_review_required',
+        {
+          slipId: slip.publicId,
+          reason,
+          slaDueAt: slip.slaDueAt?.toISOString() ?? null,
+        },
+        systemActor('payments.slip_verify'),
+      );
     });
   }
 
@@ -615,18 +738,38 @@ export class PaymentsService implements OnModuleInit {
     decision: { approve: boolean; bankTransRef?: string; receivedAmount?: string; note?: string },
   ): Promise<PaymentRow> {
     const payment = await this.prisma.withTx(async (tx) => {
-      const slip = await tx.slip.findUnique({ where: { publicId: slipPublicId }, include: { payment: true } });
+      const slip = await tx.slip.findUnique({
+        where: { publicId: slipPublicId },
+        include: { payment: true },
+      });
       if (!slip) throw new DomainException('http.not_found');
       if (slip.verificationStatus !== 'manual_review')
-        throw new DomainException('payments.slip_not_in_review', { params: { status: slip.verificationStatus } });
-      if (slip.createdById === actor.userId) throw new DomainException('iam.sod_conflict', { params: { rule: 'slip uploader ≠ reviewer' } });
+        throw new DomainException('payments.slip_not_in_review', {
+          params: { status: slip.verificationStatus },
+        });
+      if (slip.createdById === actor.userId)
+        throw new DomainException('iam.sod_conflict', { params: { rule: 'slip uploader ≠ reviewer' } });
       if (!decision.approve) {
         await tx.slip.update({
           where: { id: slip.id },
-          data: { verificationStatus: 'manual_rejected', reviewedById: actor.userId, reviewedAt: new Date(), reviewNote: decision.note ?? null },
+          data: {
+            verificationStatus: 'manual_rejected',
+            reviewedById: actor.userId,
+            reviewedAt: new Date(),
+            reviewNote: decision.note ?? null,
+          },
         });
-        await tx.payment.update({ where: { id: slip.paymentId }, data: { status: 'pending', rowVersion: { increment: 1 } } });
-        await this.recordPayment(tx, slip.payment, 'payment.slip_rejected', { slipId: slip.publicId, reason: 'finance' }, actor);
+        await tx.payment.update({
+          where: { id: slip.paymentId },
+          data: { status: 'pending', rowVersion: { increment: 1 } },
+        });
+        await this.recordPayment(
+          tx,
+          slip.payment,
+          'payment.slip_rejected',
+          { slipId: slip.publicId, reason: 'finance' },
+          actor,
+        );
         return slip.payment;
       }
       const transRef = decision.bankTransRef?.trim();
@@ -634,7 +777,11 @@ export class PaymentsService implements OnModuleInit {
         throw new DomainException('validation.failed', {
           errors: [{ path: 'bankTransRef', code: 'required', message: 'the bank transaction reference' }],
         });
-      if ((await tx.slip.count({ where: { bankTransRef: transRef, verificationStatus: { in: ['passed', 'manual_approved'] } } })) > 0)
+      if (
+        (await tx.slip.count({
+          where: { bankTransRef: transRef, verificationStatus: { in: ['passed', 'manual_approved'] } },
+        })) > 0
+      )
         throw new DomainException('payments.slip_duplicate');
       await tx.slip.update({
         where: { id: slip.id },
@@ -646,13 +793,24 @@ export class PaymentsService implements OnModuleInit {
           reviewNote: decision.note ?? null,
         },
       });
-      await this.recordPayment(tx, slip.payment, 'payment.verified', { slipId: slip.publicId, via: 'finance' }, actor);
-      await this.accept(tx, slip.payment, {
-        cash: decision.receivedAmount ?? slip.declaredAmount.toFixed(2),
-        providerRef: null,
-        paidAt: slip.declaredTransferredAt,
-        verifiedById: actor.userId,
-      }, actor);
+      await this.recordPayment(
+        tx,
+        slip.payment,
+        'payment.verified',
+        { slipId: slip.publicId, via: 'finance' },
+        actor,
+      );
+      await this.accept(
+        tx,
+        slip.payment,
+        {
+          cash: decision.receivedAmount ?? slip.declaredAmount.toFixed(2),
+          providerRef: null,
+          paidAt: slip.declaredTransferredAt,
+          verifiedById: actor.userId,
+        },
+        actor,
+      );
       return slip.payment;
     });
     return this.payment(payment.publicId);
@@ -663,7 +821,10 @@ export class PaymentsService implements OnModuleInit {
     const [rows, total] = await Promise.all([
       this.prisma.slip.findMany({
         where,
-        include: { payment: { include: { orderGroup: true } }, verifications: { orderBy: { requestedAt: 'desc' }, take: 1 } },
+        include: {
+          payment: { include: { orderGroup: true } },
+          verifications: { orderBy: { requestedAt: 'desc' }, take: 1 },
+        },
         orderBy: [{ slaDueAt: 'asc' }, { createdAt: 'asc' }],
         skip: (page - 1) * perPage,
         take: perPage,
@@ -686,10 +847,20 @@ export class PaymentsService implements OnModuleInit {
       if (!group) throw new DomainException('http.not_found');
       if (!['waiting_payment', 'in_progress'].includes(group.status))
         throw new DomainException('payments.group_not_payable', { params: { status: group.status } });
-      await tx.payment.update({ where: { id: payment.id }, data: { orderGroupId: group.id, rowVersion: { increment: 1 } } });
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: { orderGroupId: group.id, rowVersion: { increment: 1 } },
+      });
       await this.recordPayment(tx, payment, 'payment.allocated', { groupId: group.publicId }, actor);
-      const { leftover } = await this.schedules.applyPayment(tx, group.id, payment.id, payment.cashAmount.toFixed(2), actor);
-      if (D(leftover).gt(0)) await this.recordPayment(tx, payment, 'payment.overpaid', { leftoverAmount: leftover }, actor);
+      const { leftover } = await this.schedules.applyPayment(
+        tx,
+        group.id,
+        payment.id,
+        payment.cashAmount.toFixed(2),
+        actor,
+      );
+      if (D(leftover).gt(0))
+        await this.recordPayment(tx, payment, 'payment.overpaid', { leftoverAmount: leftover }, actor);
     });
     return this.payment(paymentPublicId);
   }
@@ -745,8 +916,16 @@ export class PaymentsService implements OnModuleInit {
     return Buffer.concat(chunks);
   }
 
-  private async recordPayment(tx: Tx, payment: Payment, type: string, data: Record<string, unknown>, actor: Actor) {
-    const group = payment.orderGroupId ? await tx.orderGroup.findUnique({ where: { id: payment.orderGroupId } }) : null;
+  private async recordPayment(
+    tx: Tx,
+    payment: Payment,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
+    const group = payment.orderGroupId
+      ? await tx.orderGroup.findUnique({ where: { id: payment.orderGroupId } })
+      : null;
     const event = await this.events.record(
       tx,
       {
@@ -776,10 +955,21 @@ export class PaymentsService implements OnModuleInit {
     });
   }
 
-  private async record(tx: Tx, groupPublicId: string, type: string, data: Record<string, unknown>, actor: Actor) {
+  private async record(
+    tx: Tx,
+    groupPublicId: string,
+    type: string,
+    data: Record<string, unknown>,
+    actor: Actor,
+  ) {
     const event = await this.events.record(
       tx,
-      { type, aggregateType: 'order_group', aggregateId: groupPublicId, payload: { groupId: groupPublicId, ...data } },
+      {
+        type,
+        aggregateType: 'order_group',
+        aggregateId: groupPublicId,
+        payload: { groupId: groupPublicId, ...data },
+      },
       actor,
     );
     await this.activity.record(tx, {

@@ -87,7 +87,12 @@ export class PurchaseOrderDto {
   @ApiProperty({ example: 'DEVPO-26-00001' })
   poNumber!: string;
 
-  @ApiProperty({ enum: PO_KINDS, enumName: 'JobKind', example: 'production', description: 'The kind of the released job' })
+  @ApiProperty({
+    enum: PO_KINDS,
+    enumName: 'JobKind',
+    example: 'production',
+    description: 'The kind of the released job',
+  })
   poKind!: string;
 
   @ApiProperty({ enum: PO_STATUSES, enumName: 'PoStatus', example: 'accepted' })
@@ -121,7 +126,17 @@ export class PurchaseOrderDto {
   lines!: ApLineDto[];
 }
 
-const LINE_EXAMPLE: ApLineDto = { lineNo: 1, lineType: 'production', description: 'กล่องพับ — JOB2610-00001', quantity: 1000, unitPrice: '8.000000', netAmount: '8000.00', vatAmount: '560.00', grossAmount: '8560.00', whtCategory: 'hire_of_work' };
+const LINE_EXAMPLE: ApLineDto = {
+  lineNo: 1,
+  lineType: 'production',
+  description: 'กล่องพับ — JOB2610-00001',
+  quantity: 1000,
+  unitPrice: '8.000000',
+  netAmount: '8000.00',
+  vatAmount: '560.00',
+  grossAmount: '8560.00',
+  whtCategory: 'hire_of_work',
+};
 export const PO_EXAMPLE: PurchaseOrderDto = {
   id: AP_IDS.po,
   poNumber: 'DEVPO-26-00001',
@@ -183,7 +198,18 @@ export class GoodsReceiptDto {
   lines!: ApLineDto[];
 }
 
-export const GR_EXAMPLE: GoodsReceiptDto = { id: AP_IDS.gr, grNumber: 'DEVGR-26-00001', poNumber: 'DEVPO-26-00001', receivedOn: '2026-10-20', receivedQuantity: 990, payableQuantity: 990, netAmount: '7960.00', vatAmount: '557.20', grossAmount: '8517.20', lines: [LINE_EXAMPLE] };
+export const GR_EXAMPLE: GoodsReceiptDto = {
+  id: AP_IDS.gr,
+  grNumber: 'DEVGR-26-00001',
+  poNumber: 'DEVPO-26-00001',
+  receivedOn: '2026-10-20',
+  receivedQuantity: 990,
+  payableQuantity: 990,
+  netAmount: '7960.00',
+  vatAmount: '557.20',
+  grossAmount: '8517.20',
+  lines: [LINE_EXAMPLE],
+};
 
 export class BillingStatementLineDto {
   @ApiProperty({ type: 'integer', example: 1 })
@@ -252,7 +278,15 @@ export const BS_EXAMPLE: BillingStatementDto = {
   grossAmount: '8517.20',
   disputeNote: null,
   confirmedAt: null,
-  lines: [{ lineNo: 1, description: 'DEVGR-26-00001 กล่องพับ', netAmount: '7920.00', vatAmount: '554.40', grossAmount: '8474.40' }],
+  lines: [
+    {
+      lineNo: 1,
+      description: 'DEVGR-26-00001 กล่องพับ',
+      netAmount: '7920.00',
+      vatAmount: '554.40',
+      grossAmount: '8474.40',
+    },
+  ],
 };
 
 export class DisputeStatementDto {
@@ -456,7 +490,20 @@ export class PayableDto {
   currency!: string;
 }
 
-export const PAYABLE_EXAMPLE: PayableDto = { id: AP_IDS.payable, vendorId: AP_IDS.vendor, vendorName: 'โรงพิมพ์ตัวอย่าง (fake)', source: 'goods_receipt', poNumber: 'DEVPO-26-00001', orderCode: 'O2610-00001', openNetAmount: '5560.00', openVatAmount: '389.20', retentionPct: '5.0000', eligibleAt: '2026-10-27T10:00:00+07:00', status: 'open', currency: 'THB' };
+export const PAYABLE_EXAMPLE: PayableDto = {
+  id: AP_IDS.payable,
+  vendorId: AP_IDS.vendor,
+  vendorName: 'โรงพิมพ์ตัวอย่าง (fake)',
+  source: 'goods_receipt',
+  poNumber: 'DEVPO-26-00001',
+  orderCode: 'O2610-00001',
+  openNetAmount: '5560.00',
+  openVatAmount: '389.20',
+  retentionPct: '5.0000',
+  eligibleAt: '2026-10-27T10:00:00+07:00',
+  status: 'open',
+  currency: 'THB',
+};
 
 export class PayableListQuery extends PageQuery {
   @ApiPropertyOptional({ enum: PAYABLE_STATUSES, enumName: 'PayableStatus' })
@@ -499,10 +546,24 @@ export class VendorDto {
   paymentTermsDays!: number;
 }
 
-export const VENDOR_EXAMPLE: VendorDto = { id: AP_IDS.vendor, kind: 'carrier', legalName: 'บริษัท ขนส่งตัวอย่าง จำกัด (fake)', juristicType: 'company', taxId: '0000000000002', branchCode: '00000', isVatRegistered: true, defaultWhtCategory: 'transport', paymentTermsDays: 30 };
+export const VENDOR_EXAMPLE: VendorDto = {
+  id: AP_IDS.vendor,
+  kind: 'carrier',
+  legalName: 'บริษัท ขนส่งตัวอย่าง จำกัด (fake)',
+  juristicType: 'company',
+  taxId: '0000000000002',
+  branchCode: '00000',
+  isVatRegistered: true,
+  defaultWhtCategory: 'transport',
+  paymentTermsDays: 30,
+};
 
 export class CreateVendorDto {
-  @ApiProperty({ enum: ['carrier', 'freelancer', 'service', 'other'], enumName: 'OtherVendorKind', example: 'carrier' })
+  @ApiProperty({
+    enum: ['carrier', 'freelancer', 'service', 'other'],
+    enumName: 'OtherVendorKind',
+    example: 'carrier',
+  })
   @IsIn(['carrier', 'freelancer', 'service', 'other'])
   kind!: 'carrier' | 'freelancer' | 'service' | 'other';
 
@@ -512,7 +573,12 @@ export class CreateVendorDto {
   @MaxLength(200)
   legalName!: string;
 
-  @ApiProperty({ enum: JURISTIC_TYPES, enumName: 'JuristicType', example: 'company', description: 'individual → ภ.ง.ด.3, else ภ.ง.ด.53' })
+  @ApiProperty({
+    enum: JURISTIC_TYPES,
+    enumName: 'JuristicType',
+    example: 'company',
+    description: 'individual → ภ.ง.ด.3, else ภ.ง.ด.53',
+  })
   @IsIn(JURISTIC_TYPES)
   juristicType!: (typeof JURISTIC_TYPES)[number];
 

@@ -2,7 +2,13 @@ import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type FiscalPeriod, type Prisma, type TaxCode, type TaxReport, type TaxReportKind } from '@generated/prisma/client';
+import {
+  type FiscalPeriod,
+  type Prisma,
+  type TaxCode,
+  type TaxReport,
+  type TaxReportKind,
+} from '@generated/prisma/client';
 import { CompanyBankAccountsService } from '@modules/banking/company-bank-accounts.service';
 import { dateOnly, dayOf, isDay } from '@modules/ledger/ledger-dates';
 import { PeriodsService } from '@modules/ledger/periods.service';
@@ -69,7 +75,9 @@ export class TaxReportsService {
 
   async period(month: string): Promise<FiscalPeriod> {
     if (!/^\d{4}-\d{2}$/.test(month) || !isDay(`${month}-01`))
-      throw new DomainException('validation.failed', { errors: [{ path: 'period', code: 'pattern', message: 'YYYY-MM' }] });
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'period', code: 'pattern', message: 'YYYY-MM' }],
+      });
     return this.periods.periodOf(await this.entities.defaultEntityId(), `${month}-01`);
   }
 
@@ -80,15 +88,25 @@ export class TaxReportsService {
   }
 
   async list(where: Prisma.TaxReportWhereInput) {
-    return this.prisma.taxReport.findMany({ where, include: REPORT_INCLUDE, orderBy: [{ fiscalPeriod: { startDate: 'desc' } }, { kind: 'asc' }], take: 200 });
+    return this.prisma.taxReport.findMany({
+      where,
+      include: REPORT_INCLUDE,
+      orderBy: [{ fiscalPeriod: { startDate: 'desc' } }, { kind: 'asc' }],
+      take: 200,
+    });
   }
 
   /** Builds (or rebuilds while draft) the report of a month. */
   async generate(actor: UserActor, kind: TaxReportKind, month: string): Promise<ReportRow> {
     const period = await this.period(month);
     const id = await this.prisma.withTx(async (tx) => {
-      const existing = await tx.taxReport.findUnique({ where: { entityId_kind_fiscalPeriodId: { entityId: period.entityId, kind, fiscalPeriodId: period.id } } });
-      if (existing && existing.status !== 'draft') throw new DomainException('tax.report_not_draft', { params: { status: existing.status } });
+      const existing = await tx.taxReport.findUnique({
+        where: {
+          entityId_kind_fiscalPeriodId: { entityId: period.entityId, kind, fiscalPeriodId: period.id },
+        },
+      });
+      if (existing && existing.status !== 'draft')
+        throw new DomainException('tax.report_not_draft', { params: { status: existing.status } });
       const built = await this.build(tx, kind, period);
       const data = {
         totals: built.totals,
@@ -101,8 +119,13 @@ export class TaxReportsService {
         generatedById: actor.userId,
       };
       const row = existing
-        ? await tx.taxReport.update({ where: { id: existing.id }, data: { ...data, rowVersion: { increment: 1 } } })
-        : await tx.taxReport.create({ data: { entityId: period.entityId, kind, fiscalPeriodId: period.id, ...data } });
+        ? await tx.taxReport.update({
+            where: { id: existing.id },
+            data: { ...data, rowVersion: { increment: 1 } },
+          })
+        : await tx.taxReport.create({
+            data: { entityId: period.entityId, kind, fiscalPeriodId: period.id, ...data },
+          });
       await this.audit.record(tx, {
         category: 'finance',
         action: 'tax_report.generated',
@@ -124,12 +147,19 @@ export class TaxReportsService {
   async finalise(actor: UserActor, publicId: string): Promise<ReportRow> {
     await this.prisma.withTx(async (tx) => {
       const report = await this.lock(tx, publicId);
-      if (report.status !== 'draft') throw new DomainException('tax.report_not_draft', { params: { status: report.status } });
+      if (report.status !== 'draft')
+        throw new DomainException('tax.report_not_draft', { params: { status: report.status } });
       const period = await tx.fiscalPeriod.findUniqueOrThrow({ where: { id: report.fiscalPeriodId } });
       const built = await this.build(tx, report.kind, period);
       const difference = built.gl.sub(built.report);
       if (!difference.isZero())
-        throw new DomainException('tax.gl_difference', { params: { difference: formatMoney(difference), report: formatMoney(built.report), gl: formatMoney(built.gl) } });
+        throw new DomainException('tax.gl_difference', {
+          params: {
+            difference: formatMoney(difference),
+            report: formatMoney(built.report),
+            gl: formatMoney(built.gl),
+          },
+        });
       const file = await this.files.storeSystem({
         body: this.csv(report.kind, built.lines),
         fileName: `${report.kind}-${label(period)}.csv`,
@@ -152,7 +182,15 @@ export class TaxReportsService {
           rowVersion: { increment: 1 },
         },
       });
-      await tx.taxReport.update({ where: { id: report.id }, data: { status: 'final', finalisedAt: new Date(), finalisedById: actor.userId, rowVersion: { increment: 1 } } });
+      await tx.taxReport.update({
+        where: { id: report.id },
+        data: {
+          status: 'final',
+          finalisedAt: new Date(),
+          finalisedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
       await this.audit.record(tx, {
         category: 'finance',
         action: 'tax_report.finalised',
@@ -169,7 +207,12 @@ export class TaxReportsService {
           aggregateType: 'tax_report',
           aggregateId: report.publicId,
           entityId: report.entityId,
-          payload: { taxReportId: report.publicId, kind: report.kind, periodLabel: label(period), reportAmount: formatMoney(built.report) },
+          payload: {
+            taxReportId: report.publicId,
+            kind: report.kind,
+            periodLabel: label(period),
+            reportAmount: formatMoney(built.report),
+          },
         },
         actor,
       );
@@ -198,16 +241,43 @@ export class TaxReportsService {
   }
 
   /** The return was filed with the Revenue Department (its reference); the calendar item is done. */
-  async file(actor: UserActor, publicId: string, input: { filingRef: string; filedAt?: Date }): Promise<ReportRow> {
+  async file(
+    actor: UserActor,
+    publicId: string,
+    input: { filingRef: string; filedAt?: Date },
+  ): Promise<ReportRow> {
     await this.prisma.withTx(async (tx) => {
       const report = await this.lock(tx, publicId);
-      if (report.status !== 'final') throw new DomainException('tax.report_not_final', { params: { status: report.status } });
-      await tx.taxReport.update({ where: { id: report.id }, data: { status: 'filed', filedAt: input.filedAt ?? new Date(), filingRef: input.filingRef, rowVersion: { increment: 1 } } });
+      if (report.status !== 'final')
+        throw new DomainException('tax.report_not_final', { params: { status: report.status } });
+      await tx.taxReport.update({
+        where: { id: report.id },
+        data: {
+          status: 'filed',
+          filedAt: input.filedAt ?? new Date(),
+          filingRef: input.filingRef,
+          rowVersion: { increment: 1 },
+        },
+      });
       await this.calendar.markDone(tx, report);
-      await this.audit.record(tx, { category: 'finance', action: 'tax_report.filed', actor, resourceType: 'tax_report', resourcePublicId: report.publicId, entityId: report.entityId, data: { filingRef: input.filingRef } });
+      await this.audit.record(tx, {
+        category: 'finance',
+        action: 'tax_report.filed',
+        actor,
+        resourceType: 'tax_report',
+        resourcePublicId: report.publicId,
+        entityId: report.entityId,
+        data: { filingRef: input.filingRef },
+      });
       await this.events.record(
         tx,
-        { type: 'tax_report.filed', aggregateType: 'tax_report', aggregateId: report.publicId, entityId: report.entityId, payload: { taxReportId: report.publicId, kind: report.kind, filingRef: input.filingRef } },
+        {
+          type: 'tax_report.filed',
+          aggregateType: 'tax_report',
+          aggregateId: report.publicId,
+          entityId: report.entityId,
+          payload: { taxReportId: report.publicId, kind: report.kind, filingRef: input.filingRef },
+        },
         actor,
       );
     });
@@ -215,20 +285,35 @@ export class TaxReportsService {
   }
 
   /** The VAT (P27P) or the withholding tax (P28) paid to the Revenue Department from a company bank account. */
-  async pay(actor: UserActor, publicId: string, input: { paidOn: string; companyBankAccountId: string }): Promise<ReportRow> {
-    if (!isDay(input.paidOn)) throw new DomainException('validation.failed', { errors: [{ path: 'paidOn', code: 'date', message: 'YYYY-MM-DD' }] });
+  async pay(
+    actor: UserActor,
+    publicId: string,
+    input: { paidOn: string; companyBankAccountId: string },
+  ): Promise<ReportRow> {
+    if (!isDay(input.paidOn))
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'paidOn', code: 'date', message: 'YYYY-MM-DD' }],
+      });
     await this.prisma.withTx(async (tx) => {
       const report = await this.lock(tx, publicId);
       if (!['pp30', 'pnd3', 'pnd53'].includes(report.kind) || report.status === 'draft' || report.paidOn)
-        throw new DomainException('tax.report_not_payable', { params: { kind: report.kind, status: report.status } });
+        throw new DomainException('tax.report_not_payable', {
+          params: { kind: report.kind, status: report.status },
+        });
       const bank = await this.accounts.active(input.companyBankAccountId, tx);
       const bankRow = await tx.companyBankAccount.findUniqueOrThrow({ where: { publicId: bank.publicId } });
       const period = await tx.fiscalPeriod.findUniqueOrThrow({ where: { id: report.fiscalPeriodId } });
       const totals = report.totals as Record<string, string>;
-      const amount = report.kind === 'pp30' ? MoneyDecimal.max(D(report.reportAmount), 0) : D(report.reportAmount);
+      const amount =
+        report.kind === 'pp30' ? MoneyDecimal.max(D(report.reportAmount), 0) : D(report.reportAmount);
       await tx.taxReport.update({
         where: { id: report.id },
-        data: { paidOn: dateOnly(input.paidOn), paidAmount: formatMoney(amount), companyBankAccountId: bankRow.id, rowVersion: { increment: 1 } },
+        data: {
+          paidOn: dateOnly(input.paidOn),
+          paidAmount: formatMoney(amount),
+          companyBankAccountId: bankRow.id,
+          rowVersion: { increment: 1 },
+        },
       });
       await this.audit.record(tx, {
         category: 'finance',
@@ -240,11 +325,23 @@ export class TaxReportsService {
         data: { amount: formatMoney(amount), paidOn: input.paidOn, account: bank.accountNoLast4 },
       });
       if (amount.isZero()) return;
-      const common: Record<string, string> = { taxReportId: report.publicId, periodLabel: label(period), paidOn: input.paidOn, amount: formatMoney(amount), bankAccountCode: bank.glAccount.code };
+      const common: Record<string, string> = {
+        taxReportId: report.publicId,
+        periodLabel: label(period),
+        paidOn: input.paidOn,
+        amount: formatMoney(amount),
+        bankAccountCode: bank.glAccount.code,
+      };
       await this.events.record(
         tx,
         report.kind === 'pp30'
-          ? { type: 'vat_return.paid', aggregateType: 'tax_report', aggregateId: report.publicId, entityId: report.entityId, payload: common }
+          ? {
+              type: 'vat_return.paid',
+              aggregateType: 'tax_report',
+              aggregateId: report.publicId,
+              entityId: report.entityId,
+              payload: common,
+            }
           : {
               type: 'wht_remittance.paid',
               aggregateType: 'tax_report',
@@ -282,12 +379,35 @@ export class TaxReportsService {
         const sales = await this.vatReport(tx, period, 'output_vat', gl.output_vat);
         const purchases = await this.vatReport(tx, period, 'input_vat', gl.input_vat);
         const net = sales.report.sub(purchases.report);
-        const lateOut = sales.lines.filter((l) => l['late'] === true).reduce((a, l) => a.add(String(l['vat'])), ZERO());
+        const lateOut = sales.lines
+          .filter((l) => l['late'] === true)
+          .reduce((a, l) => a.add(String(l['vat'])), ZERO());
         return {
           lines: [
-            { key: 'output_vat', label: 'ภาษีขาย', base: sales.totals['base']!, vat: sales.totals['vat']!, gl: formatMoney(sales.gl), documents: sales.lines.length },
-            { key: 'input_vat', label: 'ภาษีซื้อ', base: purchases.totals['base']!, vat: purchases.totals['vat']!, gl: formatMoney(purchases.gl), documents: purchases.lines.length },
-            { key: 'late_output_vat', label: 'ภาษีขายของเดือนก่อน (ยื่นเพิ่มเติม)', base: null, vat: formatMoney(lateOut), gl: null, documents: sales.lines.filter((l) => l['late'] === true).length },
+            {
+              key: 'output_vat',
+              label: 'ภาษีขาย',
+              base: sales.totals['base']!,
+              vat: sales.totals['vat']!,
+              gl: formatMoney(sales.gl),
+              documents: sales.lines.length,
+            },
+            {
+              key: 'input_vat',
+              label: 'ภาษีซื้อ',
+              base: purchases.totals['base']!,
+              vat: purchases.totals['vat']!,
+              gl: formatMoney(purchases.gl),
+              documents: purchases.lines.length,
+            },
+            {
+              key: 'late_output_vat',
+              label: 'ภาษีขายของเดือนก่อน (ยื่นเพิ่มเติม)',
+              base: null,
+              vat: formatMoney(lateOut),
+              gl: null,
+              documents: sales.lines.filter((l) => l['late'] === true).length,
+            },
           ],
           totals: {
             outputVat: sales.totals['vat']!,
@@ -312,7 +432,12 @@ export class TaxReportsService {
   }
 
   /** Σ of GL movement on `codes` in the period, credit-positive or debit-positive. */
-  private async glMovement(tx: Tx, period: FiscalPeriod, codes: string[], side: 'credit' | 'debit'): Promise<MoneyValue> {
+  private async glMovement(
+    tx: Tx,
+    period: FiscalPeriod,
+    codes: string[],
+    side: 'credit' | 'debit',
+  ): Promise<MoneyValue> {
     const sum = await tx.journalLine.aggregate({
       where: { fiscalPeriodId: period.id, account: { code: { in: codes } }, journalEntry: NOT_TAX_REPORT },
       _sum: { debit: true, credit: true },
@@ -322,12 +447,26 @@ export class TaxReportsService {
     return side === 'credit' ? cr.sub(dr) : dr.sub(cr);
   }
 
-  private async vatReport(tx: Tx, period: FiscalPeriod, code: Extract<TaxCode, 'output_vat' | 'input_vat'>, accounts: string[]): Promise<Built> {
+  private async vatReport(
+    tx: Tx,
+    period: FiscalPeriod,
+    code: Extract<TaxCode, 'output_vat' | 'input_vat'>,
+    accounts: string[],
+  ): Promise<Built> {
     const credit = code === 'output_vat';
     const rows = await tx.journalLine.findMany({
       where: { fiscalPeriodId: period.id, taxCode: code, journalEntry: NOT_TAX_REPORT },
       include: {
-        journalEntry: { select: { publicId: true, entryNo: true, documentDate: true, sourceDocumentType: true, sourceDocumentPublicId: true, sourceDocumentNo: true } },
+        journalEntry: {
+          select: {
+            publicId: true,
+            entryNo: true,
+            documentDate: true,
+            sourceDocumentType: true,
+            sourceDocumentPublicId: true,
+            sourceDocumentNo: true,
+          },
+        },
         vendor: { select: { legalName: true, taxId: true, branchCode: true } },
         customer: { select: { displayName: true } },
       },
@@ -345,11 +484,21 @@ export class TaxReportsService {
       acc.base = acc.base.add(base);
       byEntry.set(r.journalEntryId, acc);
     }
-    const docIds = [...byEntry.values()].filter((e) => e.row.journalEntry.sourceDocumentType === 'customer_document').map((e) => e.row.journalEntry.sourceDocumentPublicId!);
+    const docIds = [...byEntry.values()]
+      .filter((e) => e.row.journalEntry.sourceDocumentType === 'customer_document')
+      .map((e) => e.row.journalEntry.sourceDocumentPublicId!);
     const docs = new Map(
-      (await tx.customerDocument.findMany({ where: { publicId: { in: docIds } }, select: { publicId: true, buyerSnapshot: true, docType: true } })).map((d) => [d.publicId, d]),
+      (
+        await tx.customerDocument.findMany({
+          where: { publicId: { in: docIds } },
+          select: { publicId: true, buyerSnapshot: true, docType: true },
+        })
+      ).map((d) => [d.publicId, d]),
     );
-    const invoiceNos = await this.supplierInvoiceNumbers(tx, [...byEntry.values()].map((e) => e.row.journalEntry));
+    const invoiceNos = await this.supplierInvoiceNumbers(
+      tx,
+      [...byEntry.values()].map((e) => e.row.journalEntry),
+    );
     const lines: ReportLine[] = [];
     let vat = ZERO();
     let base = ZERO();
@@ -362,11 +511,14 @@ export class TaxReportsService {
       lines.push({
         seq: lines.length + 1,
         documentDate: dayOf(e.documentDate),
-        documentNo: (credit ? e.sourceDocumentNo : (invoiceNos.get(e.publicId) ?? e.sourceDocumentNo)) ?? e.entryNo,
+        documentNo:
+          (credit ? e.sourceDocumentNo : (invoiceNos.get(e.publicId) ?? e.sourceDocumentNo)) ?? e.entryNo,
         sourceType: e.sourceDocumentType,
         sourceId: e.sourceDocumentPublicId,
         journalEntryId: e.publicId,
-        partyName: credit ? (buyer?.name ?? row.customer?.displayName ?? null) : (row.vendor?.legalName ?? null),
+        partyName: credit
+          ? (buyer?.name ?? row.customer?.displayName ?? null)
+          : (row.vendor?.legalName ?? null),
         partyTaxId: credit ? (buyer?.taxId ?? null) : (row.vendor?.taxId ?? null),
         partyBranch: credit ? (buyer?.branchCode ?? null) : (row.vendor?.branchCode ?? null),
         base: formatMoney(b),
@@ -374,20 +526,44 @@ export class TaxReportsService {
         late: e.documentDate < period.startDate,
       });
     }
-    lines.sort((a, b) => String(a['documentDate']).localeCompare(String(b['documentDate'])) || String(a['documentNo']).localeCompare(String(b['documentNo'])));
+    lines.sort(
+      (a, b) =>
+        String(a['documentDate']).localeCompare(String(b['documentDate'])) ||
+        String(a['documentNo']).localeCompare(String(b['documentNo'])),
+    );
     lines.forEach((l, i) => (l['seq'] = i + 1));
-    return { lines, totals: { vat: formatMoney(vat), base: formatMoney(base) }, report: vat, gl: await this.glMovement(tx, period, accounts, credit ? 'credit' : 'debit') };
+    return {
+      lines,
+      totals: { vat: formatMoney(vat), base: formatMoney(base) },
+      report: vat,
+      gl: await this.glMovement(tx, period, accounts, credit ? 'credit' : 'debit'),
+    };
   }
 
   /** The supplier's own tax invoice numbers behind a payout (input VAT claimed at payment, P14 / P17). */
-  private async supplierInvoiceNumbers(tx: Tx, entries: { publicId: string; sourceDocumentType: string | null; sourceDocumentPublicId: string | null }[]) {
+  private async supplierInvoiceNumbers(
+    tx: Tx,
+    entries: { publicId: string; sourceDocumentType: string | null; sourceDocumentPublicId: string | null }[],
+  ) {
     const out = new Map<string, string>();
     for (const e of entries) {
       if (e.sourceDocumentType !== 'payout_item' || !e.sourceDocumentPublicId) continue;
       const invoices = await tx.vendorInvoice.findMany({
         where: {
           status: 'validated',
-          billingStatement: { lines: { some: { goodsReceipt: { po: { payableItems: { some: { allocations: { some: { payoutItem: { publicId: e.sourceDocumentPublicId } } } } } } } } } },
+          billingStatement: {
+            lines: {
+              some: {
+                goodsReceipt: {
+                  po: {
+                    payableItems: {
+                      some: { allocations: { some: { payoutItem: { publicId: e.sourceDocumentPublicId } } } },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
         select: { vendorInvoiceNo: true },
       });
@@ -396,10 +572,30 @@ export class TaxReportsService {
     return out;
   }
 
-  private async whtIssued(tx: Tx, period: FiscalPeriod, form: 'pnd3' | 'pnd53' | null, accounts: string[]): Promise<Built> {
+  private async whtIssued(
+    tx: Tx,
+    period: FiscalPeriod,
+    form: 'pnd3' | 'pnd53' | null,
+    accounts: string[],
+  ): Promise<Built> {
     const certs = await tx.whtCertificate.findMany({
-      where: { entityId: period.entityId, paidOn: { gte: period.startDate, lte: period.endDate }, ...(form && { form, status: 'issued' }) },
-      include: { vendor: { select: { legalName: true, taxId: true, branchCode: true, addressLine1: true, addressLine2: true, postcode: true } } },
+      where: {
+        entityId: period.entityId,
+        paidOn: { gte: period.startDate, lte: period.endDate },
+        ...(form && { form, status: 'issued' }),
+      },
+      include: {
+        vendor: {
+          select: {
+            legalName: true,
+            taxId: true,
+            branchCode: true,
+            addressLine1: true,
+            addressLine2: true,
+            postcode: true,
+          },
+        },
+      },
       orderBy: [{ paidOn: 'asc' }, { wtNumber: 'asc' }],
     });
     let wht = ZERO();
@@ -416,7 +612,8 @@ export class TaxReportsService {
         taxId: c.vendor.taxId,
         branch: c.vendor.branchCode,
         name: c.vendor.legalName,
-        address: [c.vendor.addressLine1, c.vendor.addressLine2, c.vendor.postcode].filter(Boolean).join(' ') || null,
+        address:
+          [c.vendor.addressLine1, c.vendor.addressLine2, c.vendor.postcode].filter(Boolean).join(' ') || null,
         paidOn: dayOf(c.paidOn),
         incomeType: c.incomeTypeCode,
         ratePct: c.whtRatePct.toFixed(2),
@@ -427,12 +624,20 @@ export class TaxReportsService {
         status: c.status,
       };
     });
-    return { lines, totals: { whtAmount: formatMoney(wht), whtBase: formatMoney(base), certificates: String(lines.length) }, report: wht, gl: await this.glMovement(tx, period, accounts, 'credit') };
+    return {
+      lines,
+      totals: { whtAmount: formatMoney(wht), whtBase: formatMoney(base), certificates: String(lines.length) },
+      report: wht,
+      gl: await this.glMovement(tx, period, accounts, 'credit'),
+    };
   }
 
   private async whtReceived(tx: Tx, period: FiscalPeriod, accounts: string[]): Promise<Built> {
     const certs = await tx.customerWhtCertificate.findMany({
-      where: { entityId: period.entityId, customerDocument: { documentDate: { gte: period.startDate, lte: period.endDate } } },
+      where: {
+        entityId: period.entityId,
+        customerDocument: { documentDate: { gte: period.startDate, lte: period.endDate } },
+      },
       include: { customerDocument: { select: { docNumber: true, documentDate: true, buyerSnapshot: true } } },
       orderBy: { id: 'asc' },
     });
@@ -454,10 +659,16 @@ export class TaxReportsService {
         certificateNo: c.certificateNo,
       };
     });
-    const pending = certs.filter((c) => c.status === 'pending').reduce((a, c) => a.add(D(c.whtAmount)), ZERO());
+    const pending = certs
+      .filter((c) => c.status === 'pending')
+      .reduce((a, c) => a.add(D(c.whtAmount)), ZERO());
     return {
       lines,
-      totals: { whtAmount: formatMoney(wht), whtBase: formatMoney(base), pendingAmount: formatMoney(pending) },
+      totals: {
+        whtAmount: formatMoney(wht),
+        whtBase: formatMoney(base),
+        pendingAmount: formatMoney(pending),
+      },
       report: wht,
       gl: await this.glMovement(tx, period, accounts, 'debit'),
     };
@@ -466,7 +677,9 @@ export class TaxReportsService {
   /** The report as CSV (UTF-8 with BOM for spreadsheet tools); for ภ.ง.ด.3 / 53 the attachment layout. */
   csv(kind: TaxReportKind, lines: ReportLine[]): Buffer {
     const columns = lines.length ? Object.keys(lines[0]!) : ['seq'];
-    const body = [columns.join(','), ...lines.map((l) => columns.map((c) => csvField(l[c])).join(','))].join('\r\n');
+    const body = [columns.join(','), ...lines.map((l) => columns.map((c) => csvField(l[c])).join(','))].join(
+      '\r\n',
+    );
     return Buffer.from(`\uFEFF${body}\r\n`, 'utf8');
   }
 }

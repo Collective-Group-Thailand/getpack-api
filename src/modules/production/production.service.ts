@@ -812,13 +812,24 @@ export class ProductionService {
    */
   async releaseReproduction(
     tx: Tx,
-    input: { originalJobId: bigint; claimId: bigint; claimNo: string; quantity: number; factoryLiable: boolean },
+    input: {
+      originalJobId: bigint;
+      claimId: bigint;
+      claimNo: string;
+      quantity: number;
+      factoryLiable: boolean;
+    },
     actor: UserActor,
   ) {
     const original = await tx.productionJob.findUniqueOrThrow({ where: { id: input.originalJobId } });
     const order = await this.loadOrder(tx, original.orderId);
     const buyPrice = input.factoryLiable
-      ? { priced: true, buyCostNet: '0.00', basis: 'P24 re-production by the liable factory', claimNo: input.claimNo }
+      ? {
+          priced: true,
+          buyCostNet: '0.00',
+          basis: 'P24 re-production by the liable factory',
+          claimNo: input.claimNo,
+        }
       : (original.buyPriceSnapshot as Record<string, unknown>);
     return this.release(tx, order, 'reproduction', 'manual_exception', `claim ${input.claimNo}`, actor, {
       reproductionOfJobId: original.id,

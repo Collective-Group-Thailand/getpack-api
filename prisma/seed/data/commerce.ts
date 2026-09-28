@@ -68,7 +68,8 @@ export interface ScheduleTemplateSeed {
     labelTh: string;
     labelEn: string;
     pct: string;
-    dueTrigger: 'at_checkout' | 'before_production' | 'before_shipping' | 'on_delivery' | 'days_after_delivery';
+    dueTrigger:
+      'at_checkout' | 'before_production' | 'before_shipping' | 'on_delivery' | 'days_after_delivery';
     dueOffsetDays?: number;
     requiredBefore: 'none' | 'production' | 'shipping';
   }[];
@@ -149,9 +150,18 @@ export const PAYMENT_SCHEDULE_TEMPLATES: readonly ScheduleTemplateSeed[] = [
 
 /** Payment providers stay off until Collective Group (Thailand) has its own accounts (D-005, D-176, D-111). */
 export const PAYMENT_FEATURE_FLAGS = [
-  { key: 'payments.scb', description: 'SCB QR payments (PromptPay QR 30, QR CS) — D-176, on once the merchant account exists' },
-  { key: 'payments.twoc2p', description: '2C2P card and online banking — D-176, on once the merchant account exists' },
-  { key: 'payments.slip_verify', description: 'Automatic slip verification (Slip2Go) — D-061 / D-176; off: slips go to Finance' },
+  {
+    key: 'payments.scb',
+    description: 'SCB QR payments (PromptPay QR 30, QR CS) — D-176, on once the merchant account exists',
+  },
+  {
+    key: 'payments.twoc2p',
+    description: '2C2P card and online banking — D-176, on once the merchant account exists',
+  },
+  {
+    key: 'payments.slip_verify',
+    description: 'Automatic slip verification (Slip2Go) — D-061 / D-176; off: slips go to Finance',
+  },
   { key: 'payments.twoc2p_ipp', description: '2C2P card instalments (IPP) — R2 (D-111), adapter stubbed' },
   { key: 'payments.scb_direct_debit', description: 'SCB direct debit — R2 (D-111), adapter stubbed' },
 ] as const;

@@ -53,19 +53,22 @@ export class Slip2GoAdapter implements SlipVerifier {
     });
     if (status >= 500 && !(body as Slip2GoResponse | null)?.code)
       throw new ProviderUnavailableError('slip2go', `HTTP ${status}`, status);
-    return checkOf((body ?? {}), request.receivers.length > 0);
+    return checkOf(body ?? {}, request.receivers.length > 0);
   }
 
   async fetch(referenceId: string): Promise<SlipCheck> {
     const { apiUrl, secretKey } = this.required();
-    const { status, body } = await this.http.call(`${apiUrl}/api/verify-slip/${encodeURIComponent(referenceId)}`, {
-      method: 'GET',
-      headers: { authorization: `Bearer ${secretKey}` },
-      timeoutMs: 10_000,
-      retries: 2,
-    });
+    const { status, body } = await this.http.call(
+      `${apiUrl}/api/verify-slip/${encodeURIComponent(referenceId)}`,
+      {
+        method: 'GET',
+        headers: { authorization: `Bearer ${secretKey}` },
+        timeoutMs: 10_000,
+        retries: 2,
+      },
+    );
     if (status >= 500) throw new ProviderUnavailableError('slip2go', `HTTP ${status}`, status);
-    return checkOf((body ?? {}), true);
+    return checkOf(body ?? {}, true);
   }
 
   private required() {
@@ -90,23 +93,65 @@ export function checkOf(response: Slip2GoResponse, receiverChecked: boolean): Sl
   switch (code) {
     case '200200':
     case '200001':
-      return { ...base, result: 'pass', receiverMatched: receiverChecked, amountMatched: true, dateMatched: true };
+      return {
+        ...base,
+        result: 'pass',
+        receiverMatched: receiverChecked,
+        amountMatched: true,
+        dateMatched: true,
+      };
     case '200401':
       return { ...base, result: 'mismatch', receiverMatched: false, amountMatched: true, dateMatched: true };
     case '200402':
-      return { ...base, result: 'mismatch', receiverMatched: receiverChecked, amountMatched: false, dateMatched: true };
+      return {
+        ...base,
+        result: 'mismatch',
+        receiverMatched: receiverChecked,
+        amountMatched: false,
+        dateMatched: true,
+      };
     case '200403':
-      return { ...base, result: 'mismatch', receiverMatched: receiverChecked, amountMatched: true, dateMatched: false };
+      return {
+        ...base,
+        result: 'mismatch',
+        receiverMatched: receiverChecked,
+        amountMatched: true,
+        dateMatched: false,
+      };
     case '200500':
-      return { ...base, result: 'mismatch', receiverMatched: false, amountMatched: false, dateMatched: false };
+      return {
+        ...base,
+        result: 'mismatch',
+        receiverMatched: false,
+        amountMatched: false,
+        dateMatched: false,
+      };
     case '200501':
-      return { ...base, result: 'duplicate', receiverMatched: false, amountMatched: false, dateMatched: false };
+      return {
+        ...base,
+        result: 'duplicate',
+        receiverMatched: false,
+        amountMatched: false,
+        dateMatched: false,
+      };
     case '200404':
     case '400001':
     case '400002':
     case '400005':
-      return { ...base, result: 'unreadable', receiverMatched: false, amountMatched: false, dateMatched: false };
+      return {
+        ...base,
+        result: 'unreadable',
+        receiverMatched: false,
+        amountMatched: false,
+        dateMatched: false,
+      };
     default:
-      return { ...base, result: 'provider_error', receiverMatched: false, amountMatched: false, dateMatched: false };
+      return {
+        ...base,
+        result: 'provider_error',
+        receiverMatched: false,
+        amountMatched: false,
+        dateMatched: false,
+      };
   }
 }

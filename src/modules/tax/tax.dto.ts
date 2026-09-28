@@ -4,7 +4,15 @@ import { IsDate, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLeng
 
 /** Tax reports and working papers (B5.4, accounting-design §2, §6, §7 step 7). Money: strings, THB. */
 
-export const REPORT_KINDS = ['sales_tax', 'purchase_tax', 'pp30', 'pnd3', 'pnd53', 'wht_issued_register', 'wht_received_register'] as const;
+export const REPORT_KINDS = [
+  'sales_tax',
+  'purchase_tax',
+  'pp30',
+  'pnd3',
+  'pnd53',
+  'wht_issued_register',
+  'wht_received_register',
+] as const;
 export const REPORT_STATUSES = ['draft', 'final', 'filed'] as const;
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -32,7 +40,11 @@ export class TaxReportSummaryDto {
   @ApiProperty({ enum: REPORT_STATUSES, enumName: 'TaxReportStatus', example: 'final' })
   status!: string;
 
-  @ApiProperty({ type: 'object', additionalProperties: { type: 'string' }, example: { outputVat: '700.00', inputVat: '560.00', netPayable: '140.00' } })
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { outputVat: '700.00', inputVat: '560.00', netPayable: '140.00' },
+  })
   totals!: Record<string, string>;
 
   @ApiProperty({ type: 'integer', example: 12 })
@@ -41,7 +53,10 @@ export class TaxReportSummaryDto {
   @ApiProperty({ example: '140.00', description: 'What the report says' })
   reportAmount!: string;
 
-  @ApiProperty({ example: '140.00', description: 'Movement of its GL control accounts (setting `tax.gl_accounts`)' })
+  @ApiProperty({
+    example: '140.00',
+    description: 'Movement of its GL control accounts (setting `tax.gl_accounts`)',
+  })
   glAmount!: string;
 
   @ApiProperty({ example: '0.00', description: 'Must be 0 to finalise (§7 step 7)' })
@@ -74,7 +89,19 @@ export class TaxReportDto extends TaxReportSummaryDto {
     type: 'array',
     items: { type: 'object', additionalProperties: true },
     description: 'Report lines (columns per kind: VAT reports by source document; WHT by certificate)',
-    example: [{ seq: 1, documentDate: '2026-10-05', documentNo: 'DEVTR-2610-00001', partyName: 'บริษัท ตัวอย่าง จำกัด (fake)', partyTaxId: '0000000000001', partyBranch: '00000', base: '1000.00', vat: '70.00', late: false }],
+    example: [
+      {
+        seq: 1,
+        documentDate: '2026-10-05',
+        documentNo: 'DEVTR-2610-00001',
+        partyName: 'บริษัท ตัวอย่าง จำกัด (fake)',
+        partyTaxId: '0000000000001',
+        partyBranch: '00000',
+        base: '1000.00',
+        vat: '70.00',
+        late: false,
+      },
+    ],
   })
   lines!: Record<string, unknown>[];
 }
@@ -97,7 +124,19 @@ export const REPORT_EXAMPLE: TaxReportDto = {
   paidOn: null,
   paidAmount: null,
   fileReady: false,
-  lines: [{ seq: 1, documentDate: '2026-10-05', documentNo: 'DEVTR-2610-00001', partyName: 'บริษัท ตัวอย่าง จำกัด (fake)', partyTaxId: '0000000000001', partyBranch: '00000', base: '1000.00', vat: '70.00', late: false }],
+  lines: [
+    {
+      seq: 1,
+      documentDate: '2026-10-05',
+      documentNo: 'DEVTR-2610-00001',
+      partyName: 'บริษัท ตัวอย่าง จำกัด (fake)',
+      partyTaxId: '0000000000001',
+      partyBranch: '00000',
+      base: '1000.00',
+      vat: '70.00',
+      late: false,
+    },
+  ],
 };
 const { lines: _lines, ...SUMMARY } = REPORT_EXAMPLE;
 export const SUMMARY_EXAMPLE: TaxReportSummaryDto = SUMMARY;
@@ -131,7 +170,11 @@ export class FileTaxReportDto {
   @MaxLength(100)
   filingRef!: string;
 
-  @ApiPropertyOptional({ format: 'date-time', example: '2026-11-14T10:00:00+07:00', description: 'Default: now' })
+  @ApiPropertyOptional({
+    format: 'date-time',
+    example: '2026-11-14T10:00:00+07:00',
+    description: 'Default: now',
+  })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
@@ -171,7 +214,15 @@ export class TaxCalendarItemDto {
   taxReportId!: string | null;
 }
 
-export const CALENDAR_EXAMPLE: TaxCalendarItemDto = { id: TAX_IDS.item, kind: 'pnd53', period: '2026-10', dueOn: '2026-11-07', status: 'open', remindedAt: '2026-11-04T08:00:00+07:00', taxReportId: null };
+export const CALENDAR_EXAMPLE: TaxCalendarItemDto = {
+  id: TAX_IDS.item,
+  kind: 'pnd53',
+  period: '2026-10',
+  dueOn: '2026-11-07',
+  status: 'open',
+  remindedAt: '2026-11-04T08:00:00+07:00',
+  taxReportId: null,
+};
 
 export class TaxCalendarQuery {
   @ApiPropertyOptional({ enum: ['open', 'done'], enumName: 'TaxCalendarStatus' })

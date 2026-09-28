@@ -66,7 +66,8 @@ export interface TaxProfileSnapshot {
   companyBranchId?: string;
 }
 
-export const addressEtag = (row: { publicId: string; rowVersion: number }) => etagOf(row.publicId, row.rowVersion);
+export const addressEtag = (row: { publicId: string; rowVersion: number }) =>
+  etagOf(row.publicId, row.rowVersion);
 export const customerEtag = (row: CustomerRow) =>
   etagOf(row.publicId, row.rowVersion, row.customerProfile?.rowVersion ?? 0);
 
@@ -176,14 +177,25 @@ export class CustomersService {
           },
         });
       }
-      await this.record(tx, current.publicId, 'customer.profile_updated', { fields: Object.keys(body) }, actor);
+      await this.record(
+        tx,
+        current.publicId,
+        'customer.profile_updated',
+        { fields: Object.keys(body) },
+        actor,
+      );
       return this.customer(userId, tx);
     });
   }
 
   // --- addresses ------------------------------------------------------------------------------------
 
-  async listAddresses(userId: bigint, kind: 'delivery' | 'billing' | undefined, page: number, perPage: number) {
+  async listAddresses(
+    userId: bigint,
+    kind: 'delivery' | 'billing' | undefined,
+    page: number,
+    perPage: number,
+  ) {
     const where: Prisma.CustomerAddressWhereInput = { userId, ...LIVE, ...(kind ? { kind } : {}) };
     const [rows, total] = await Promise.all([
       this.prisma.customerAddress.findMany({
@@ -294,7 +306,11 @@ export class CustomersService {
   }
 
   /** The snapshot of one of the customer's addresses (checkout, cart destinations). */
-  async addressSnapshot(tx: Tx, userId: bigint, publicId: string): Promise<{ id: bigint; snapshot: AddressSnapshot }> {
+  async addressSnapshot(
+    tx: Tx,
+    userId: bigint,
+    publicId: string,
+  ): Promise<{ id: bigint; snapshot: AddressSnapshot }> {
     const row = await this.address(userId, publicId, tx);
     return { id: row.id, snapshot: snapshotOf(row) };
   }
@@ -388,7 +404,9 @@ export class CustomersService {
           ...(body.line1 !== undefined && { line1: body.line1 }),
           ...(body.line2 !== undefined && { line2: body.line2 }),
           ...(body.withholdsTax !== undefined && { withholdsTax: body.withholdsTax }),
-          ...(body.documentEmail !== undefined && { documentEmail: body.documentEmail?.toLowerCase() ?? null }),
+          ...(body.documentEmail !== undefined && {
+            documentEmail: body.documentEmail?.toLowerCase() ?? null,
+          }),
           ...(body.isDefault !== undefined && { isDefault: body.isDefault }),
           postcode,
           provinceId: geo.provinceId,
@@ -399,7 +417,13 @@ export class CustomersService {
         include: GEO_INCLUDE,
       });
       const owner = await this.customer(userId, tx);
-      await this.record(tx, owner.publicId, 'customer.tax_profile_updated', { taxProfileId: row.publicId }, actor);
+      await this.record(
+        tx,
+        owner.publicId,
+        'customer.tax_profile_updated',
+        { taxProfileId: row.publicId },
+        actor,
+      );
       return row;
     });
   }
@@ -413,7 +437,13 @@ export class CustomersService {
         data: { deletedAt: new Date(), isDefault: false, rowVersion: { increment: 1 } },
       });
       const owner = await this.customer(userId, tx);
-      await this.record(tx, owner.publicId, 'customer.tax_profile_deleted', { taxProfileId: publicId }, actor);
+      await this.record(
+        tx,
+        owner.publicId,
+        'customer.tax_profile_deleted',
+        { taxProfileId: publicId },
+        actor,
+      );
     });
   }
 

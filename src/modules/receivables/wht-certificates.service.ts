@@ -31,7 +31,9 @@ export class WhtCertificatesService {
   async list(filter: { status?: WhtCertStatus; olderThanDays?: number }, page: number, perPage: number) {
     const where: Prisma.CustomerWhtCertificateWhereInput = {
       ...(filter.status && { status: filter.status }),
-      ...(filter.olderThanDays !== undefined && { createdAt: { lt: new Date(Date.now() - filter.olderThanDays * 86_400_000) } }),
+      ...(filter.olderThanDays !== undefined && {
+        createdAt: { lt: new Date(Date.now() - filter.olderThanDays * 86_400_000) },
+      }),
     };
     const [rows, total] = await Promise.all([
       this.prisma.customerWhtCertificate.findMany({
@@ -52,12 +54,17 @@ export class WhtCertificatesService {
     input: { certificateNo: string; certificateDate: string; fileId?: string | null },
   ): Promise<CertRow> {
     if (!isDay(input.certificateDate))
-      throw new DomainException('validation.failed', { errors: [{ path: 'certificateDate', code: 'date', message: 'YYYY-MM-DD' }] });
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'certificateDate', code: 'date', message: 'YYYY-MM-DD' }],
+      });
     await this.prisma.withTx(async (tx) => {
       const cert = await tx.customerWhtCertificate.findUnique({ where: { publicId } });
       if (!cert) throw new DomainException('http.not_found');
-      if (cert.status !== 'pending') throw new DomainException('receivables.certificate_invalid', { params: { status: cert.status } });
-      const file = input.fileId ? await tx.fileObject.findUnique({ where: { publicId: input.fileId } }) : null;
+      if (cert.status !== 'pending')
+        throw new DomainException('receivables.certificate_invalid', { params: { status: cert.status } });
+      const file = input.fileId
+        ? await tx.fileObject.findUnique({ where: { publicId: input.fileId } })
+        : null;
       if (input.fileId && (!file || file.uploadStatus !== 'uploaded' || file.scanStatus === 'infected'))
         throw new DomainException('file.not_ready');
       await tx.customerWhtCertificate.update({
@@ -72,7 +79,8 @@ export class WhtCertificatesService {
           rowVersion: { increment: 1 },
         },
       });
-      if (file) await tx.fileObject.update({ where: { id: file.id }, data: { retentionClass: 'financial_record' } });
+      if (file)
+        await tx.fileObject.update({ where: { id: file.id }, data: { retentionClass: 'financial_record' } });
       await this.audit.record(tx, {
         category: 'finance',
         action: 'customer_wht_certificate.received',
@@ -101,10 +109,16 @@ export class WhtCertificatesService {
     await this.prisma.withTx(async (tx) => {
       const cert = await tx.customerWhtCertificate.findUnique({ where: { publicId } });
       if (!cert) throw new DomainException('http.not_found');
-      if (cert.status !== 'pending') throw new DomainException('receivables.certificate_invalid', { params: { status: cert.status } });
+      if (cert.status !== 'pending')
+        throw new DomainException('receivables.certificate_invalid', { params: { status: cert.status } });
       await tx.customerWhtCertificate.update({
         where: { id: cert.id },
-        data: { status: 'waived', waivedReason: reason, recordedById: actor.userId, rowVersion: { increment: 1 } },
+        data: {
+          status: 'waived',
+          waivedReason: reason,
+          recordedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
       });
       await this.audit.record(tx, {
         category: 'finance',
@@ -120,7 +134,10 @@ export class WhtCertificatesService {
   }
 
   async get(publicId: string): Promise<CertRow> {
-    const row = await this.prisma.customerWhtCertificate.findUnique({ where: { publicId }, include: CERT_INCLUDE });
+    const row = await this.prisma.customerWhtCertificate.findUnique({
+      where: { publicId },
+      include: CERT_INCLUDE,
+    });
     if (!row) throw new DomainException('http.not_found');
     return row;
   }

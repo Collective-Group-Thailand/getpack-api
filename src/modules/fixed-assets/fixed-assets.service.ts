@@ -2,7 +2,13 @@ import { type Actor, actorColumns, systemActor, type UserActor } from '@common/c
 import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type Account, type AccountStatus, type AssetSource, type FiscalPeriod, type Prisma } from '@generated/prisma/client';
+import {
+  type Account,
+  type AccountStatus,
+  type AssetSource,
+  type FiscalPeriod,
+  type Prisma,
+} from '@generated/prisma/client';
 import { addMonths, dateOnly, dayOf, isDay } from '@modules/ledger/ledger-dates';
 import { PeriodsService } from '@modules/ledger/periods.service';
 import { Injectable } from '@nestjs/common';
@@ -15,7 +21,8 @@ import { SettingsService } from '@platform/settings/settings.service';
 const D = (v: { toString(): string } | string | number) => new MoneyDecimal(v.toString());
 const ZERO = () => new MoneyDecimal(0);
 const round = (v: MoneyValue) => v.toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_UP);
-const invalid = (path: string, message: string) => new DomainException('validation.failed', { errors: [{ path, code: 'invalid', message }] });
+const invalid = (path: string, message: string) =>
+  new DomainException('validation.failed', { errors: [{ path, code: 'invalid', message }] });
 
 export const CATEGORY_INCLUDE = {
   assetAccount: { select: { code: true } },
@@ -64,7 +71,9 @@ export interface AssetInput {
 
 /** Months from the first depreciated month to `periodStart` inclusive (both first days of months). */
 const monthIndex = (start: Date, periodStart: Date) =>
-  (periodStart.getUTCFullYear() - start.getUTCFullYear()) * 12 + (periodStart.getUTCMonth() - start.getUTCMonth()) + 1;
+  (periodStart.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+  (periodStart.getUTCMonth() - start.getUTCMonth()) +
+  1;
 
 /**
  * Fixed assets (D-150): categories with their life and GL accounts, a register (from a vendor bill, already
@@ -103,10 +112,34 @@ export class FixedAssetsService {
       if (await tx.assetCategory.findUnique({ where: { entityId_code: { entityId, code: input.code } } }))
         throw new DomainException('fixed_assets.category_exists', { params: { code: input.code } });
       const [asset, accumulated, expense, gainLoss] = await Promise.all([
-        this.account(tx, entityId, input.assetAccountCode, 'assetAccountCode', (a) => a.accountType === 'asset' && a.normalSide === 'debit' && a.cashFlowClass === 'investing'),
-        this.account(tx, entityId, input.accumulatedAccountCode, 'accumulatedAccountCode', (a) => a.accountType === 'asset' && a.normalSide === 'credit'),
-        this.account(tx, entityId, input.expenseAccountCode, 'expenseAccountCode', (a) => a.accountType === 'expense'),
-        this.account(tx, entityId, input.gainLossAccountCode, 'gainLossAccountCode', (a) => a.accountType === 'expense' || a.accountType === 'revenue'),
+        this.account(
+          tx,
+          entityId,
+          input.assetAccountCode,
+          'assetAccountCode',
+          (a) => a.accountType === 'asset' && a.normalSide === 'debit' && a.cashFlowClass === 'investing',
+        ),
+        this.account(
+          tx,
+          entityId,
+          input.accumulatedAccountCode,
+          'accumulatedAccountCode',
+          (a) => a.accountType === 'asset' && a.normalSide === 'credit',
+        ),
+        this.account(
+          tx,
+          entityId,
+          input.expenseAccountCode,
+          'expenseAccountCode',
+          (a) => a.accountType === 'expense',
+        ),
+        this.account(
+          tx,
+          entityId,
+          input.gainLossAccountCode,
+          'gainLossAccountCode',
+          (a) => a.accountType === 'expense' || a.accountType === 'revenue',
+        ),
       ]);
       const row = await tx.assetCategory.create({
         data: {
@@ -137,7 +170,12 @@ export class FixedAssetsService {
   }
 
   /** Names, life (new assets only — registered ones keep their snapshot) and status. */
-  async updateCategory(actor: UserActor, publicId: string, rowVersion: number, input: { nameTh?: string; nameEn?: string; usefulLifeMonths?: number; status?: AccountStatus }) {
+  async updateCategory(
+    actor: UserActor,
+    publicId: string,
+    rowVersion: number,
+    input: { nameTh?: string; nameEn?: string; usefulLifeMonths?: number; status?: AccountStatus },
+  ) {
     await this.prisma.withTx(async (tx) => {
       const row = await this.category(publicId, tx);
       const updated = await tx.assetCategory.updateMany({
@@ -152,15 +190,30 @@ export class FixedAssetsService {
         resourceType: 'asset_category',
         resourcePublicId: row.publicId,
         entityId: row.entityId,
-        data: { before: { nameTh: row.nameTh, nameEn: row.nameEn, usefulLifeMonths: row.usefulLifeMonths, status: row.status }, after: input },
+        data: {
+          before: {
+            nameTh: row.nameTh,
+            nameEn: row.nameEn,
+            usefulLifeMonths: row.usefulLifeMonths,
+            status: row.status,
+          },
+          after: input,
+        },
       });
     });
     return this.category(publicId);
   }
 
-  private async account(tx: Tx, entityId: bigint, code: string, path: string, ok: (a: Account) => boolean): Promise<Account> {
+  private async account(
+    tx: Tx,
+    entityId: bigint,
+    code: string,
+    path: string,
+    ok: (a: Account) => boolean,
+  ): Promise<Account> {
     const a = await tx.account.findUnique({ where: { entityId_code: { entityId, code } } });
-    if (!a || a.status !== 'active' || !a.isPostable || a.isControl || !ok(a)) throw new DomainException('fixed_assets.account_invalid', { params: { code, field: path } });
+    if (!a || a.status !== 'active' || !a.isPostable || a.isControl || !ok(a))
+      throw new DomainException('fixed_assets.account_invalid', { params: { code, field: path } });
     return a;
   }
 
@@ -174,7 +227,13 @@ export class FixedAssetsService {
 
   async list(where: Prisma.FixedAssetWhereInput, page: number, perPage: number) {
     const [rows, total] = await Promise.all([
-      this.prisma.fixedAsset.findMany({ where, include: ASSET_INCLUDE, orderBy: { assetNo: 'asc' }, skip: (page - 1) * perPage, take: perPage }),
+      this.prisma.fixedAsset.findMany({
+        where,
+        include: ASSET_INCLUDE,
+        orderBy: { assetNo: 'asc' },
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
       this.prisma.fixedAsset.count({ where }),
     ]);
     return { rows, total };
@@ -193,32 +252,62 @@ export class FixedAssetsService {
     if (!isDay(input.acquiredOn)) throw invalid('acquiredOn', 'YYYY-MM-DD');
     const cost = D(input.cost);
     const residual = D(input.residualValue ?? '0');
-    if (!cost.gt(0) || residual.isNegative() || !residual.lt(cost)) throw invalid('residualValue', 'residual value must be ≥ 0 and below cost');
+    if (!cost.gt(0) || residual.isNegative() || !residual.lt(cost))
+      throw invalid('residualValue', 'residual value must be ≥ 0 and below cost');
     const entityId = await this.entities.defaultEntityId();
     const id = await this.prisma.withTx(async (tx) => {
-      const category = await tx.assetCategory.findUnique({ where: { publicId: input.categoryId }, include: CATEGORY_INCLUDE });
+      const category = await tx.assetCategory.findUnique({
+        where: { publicId: input.categoryId },
+        include: CATEGORY_INCLUDE,
+      });
       if (!category || category.status !== 'active') throw new DomainException('http.not_found');
       let vendorInvoiceId: bigint | null = null;
       let credit: Account | null = null;
       if (input.source === 'vendor_bill') {
-        if (!input.vendorInvoiceId) throw invalid('vendorInvoiceId', 'required for an asset from a vendor bill');
-        const invoice = await tx.vendorInvoice.findUnique({ where: { publicId: input.vendorInvoiceId }, include: { lines: true } });
-        if (!invoice || !['recorded', 'validated'].includes(invoice.status)) throw new DomainException('http.not_found');
+        if (!input.vendorInvoiceId)
+          throw invalid('vendorInvoiceId', 'required for an asset from a vendor bill');
+        const invoice = await tx.vendorInvoice.findUnique({
+          where: { publicId: input.vendorInvoiceId },
+          include: { lines: true },
+        });
+        if (!invoice || !['recorded', 'validated'].includes(invoice.status))
+          throw new DomainException('http.not_found');
         // The bill capitalised this much on the category's asset account (P25); assets never exceed it.
-        const capitalised = invoice.lines.filter((l) => l.accountId === category.assetAccountId).reduce((a, l) => a.add(D(l.netAmount)), ZERO());
-        const registered = (await tx.fixedAsset.aggregate({ where: { vendorInvoiceId: invoice.id }, _sum: { cost: true } }))._sum.cost ?? 0;
+        const capitalised = invoice.lines
+          .filter((l) => l.accountId === category.assetAccountId)
+          .reduce((a, l) => a.add(D(l.netAmount)), ZERO());
+        const registered =
+          (await tx.fixedAsset.aggregate({ where: { vendorInvoiceId: invoice.id }, _sum: { cost: true } }))
+            ._sum.cost ?? 0;
         if (cost.add(D(registered)).gt(capitalised))
-          throw new DomainException('fixed_assets.cost_exceeds_bill', { params: { capitalised: formatMoney(capitalised), registered: formatMoney(D(registered)) } });
+          throw new DomainException('fixed_assets.cost_exceeds_bill', {
+            params: { capitalised: formatMoney(capitalised), registered: formatMoney(D(registered)) },
+          });
         vendorInvoiceId = invoice.id;
       } else {
         if (!input.creditAccountCode) throw invalid('creditAccountCode', 'required for a manual acquisition');
-        credit = await this.account(tx, entityId, input.creditAccountCode, 'creditAccountCode', (a) => ['asset', 'liability', 'equity'].includes(a.accountType) && a.id !== category.assetAccountId);
+        credit = await this.account(
+          tx,
+          entityId,
+          input.creditAccountCode,
+          'creditAccountCode',
+          (a) => ['asset', 'liability', 'equity'].includes(a.accountType) && a.id !== category.assetAccountId,
+        );
       }
-      const custodian = input.custodianUserId ? await tx.user.findUnique({ where: { publicId: input.custodianUserId } }) : null;
+      const custodian = input.custodianUserId
+        ? await tx.user.findUnique({ where: { publicId: input.custodianUserId } })
+        : null;
       if (input.custodianUserId && !custodian) throw new DomainException('http.not_found');
-      const costCentre = input.costCentreCode ? await tx.costCentre.findUnique({ where: { entityId_code: { entityId, code: input.costCentreCode } } }) : null;
-      if (input.costCentreCode && (!costCentre || costCentre.status !== 'active')) throw invalid('costCentreCode', 'unknown or inactive cost centre');
-      const start = (await this.settings.at('fixed_assets.depreciation_start', { at: dateOnly(input.acquiredOn), tx })).value;
+      const costCentre = input.costCentreCode
+        ? await tx.costCentre.findUnique({
+            where: { entityId_code: { entityId, code: input.costCentreCode } },
+          })
+        : null;
+      if (input.costCentreCode && (!costCentre || costCentre.status !== 'active'))
+        throw invalid('costCentreCode', 'unknown or inactive cost centre');
+      const start = (
+        await this.settings.at('fixed_assets.depreciation_start', { at: dateOnly(input.acquiredOn), tx })
+      ).value;
       const firstOfMonth = `${input.acquiredOn.slice(0, 7)}-01`;
       const row = await tx.fixedAsset.create({
         data: {
@@ -252,7 +341,12 @@ export class FixedAssetsService {
         resourceType: 'fixed_asset',
         resourcePublicId: row.publicId,
         entityId,
-        data: { assetNo: row.assetNo, source: input.source, cost: formatMoney(cost), category: category.code },
+        data: {
+          assetNo: row.assetNo,
+          source: input.source,
+          cost: formatMoney(cost),
+          category: category.code,
+        },
       });
       await this.events.record(
         tx,
@@ -282,10 +376,23 @@ export class FixedAssetsService {
   // --- depreciation ---------------------------------------------------------------------------------------
 
   /** Accumulated depreciation an asset should carry at the end of the month starting `periodStart`. */
-  expectedAccumulated(asset: { cost: { toString(): string }; residualValue: { toString(): string }; usefulLifeMonths: number; depreciationStartOn: Date }, periodStart: Date): MoneyValue {
-    const months = Math.min(Math.max(monthIndex(asset.depreciationStartOn, periodStart), 0), asset.usefulLifeMonths);
+  expectedAccumulated(
+    asset: {
+      cost: { toString(): string };
+      residualValue: { toString(): string };
+      usefulLifeMonths: number;
+      depreciationStartOn: Date;
+    },
+    periodStart: Date,
+  ): MoneyValue {
+    const months = Math.min(
+      Math.max(monthIndex(asset.depreciationStartOn, periodStart), 0),
+      asset.usefulLifeMonths,
+    );
     const depreciable = D(asset.cost).sub(D(asset.residualValue));
-    return months === asset.usefulLifeMonths ? depreciable : round(depreciable.mul(months).div(asset.usefulLifeMonths));
+    return months === asset.usefulLifeMonths
+      ? depreciable
+      : round(depreciable.mul(months).div(asset.usefulLifeMonths));
   }
 
   /** The month's run (FA02): once per month, into an open month only. */
@@ -297,24 +404,39 @@ export class FixedAssetsService {
       async (tx) => {
         await tx.$queryRaw`SELECT id FROM fiscal_periods WHERE id = ${period.id} FOR UPDATE`;
         const fresh = await tx.fiscalPeriod.findUniqueOrThrow({ where: { id: period.id } });
-        if (fresh.status !== 'open') throw new DomainException('ledger.period_closed', { params: { period: month } });
-        if (await tx.depreciationRun.findUnique({ where: { entityId_fiscalPeriodId: { entityId, fiscalPeriodId: period.id } } }))
+        if (fresh.status !== 'open')
+          throw new DomainException('ledger.period_closed', { params: { period: month } });
+        if (
+          await tx.depreciationRun.findUnique({
+            where: { entityId_fiscalPeriodId: { entityId, fiscalPeriodId: period.id } },
+          })
+        )
           throw new DomainException('fixed_assets.run_exists', { params: { period: month } });
         return this.runIn(tx, actor, fresh);
       },
       { timeout: 120_000 },
     );
-    return this.prisma.depreciationRun.findUniqueOrThrow({ where: { publicId: id }, include: { lines: true, fiscalPeriod: { select: { startDate: true } } } });
+    return this.prisma.depreciationRun.findUniqueOrThrow({
+      where: { publicId: id },
+      include: { lines: true, fiscalPeriod: { select: { startDate: true } } },
+    });
   }
 
   private async runIn(tx: Tx, actor: Actor, period: FiscalPeriod): Promise<string> {
     const assets = await tx.fixedAsset.findMany({
       where: { entityId: period.entityId, status: 'active', depreciationStartOn: { lte: period.startDate } },
-      include: { expenseAccount: { select: { code: true } }, accumulatedAccount: { select: { code: true } }, costCentre: { select: { code: true } } },
+      include: {
+        expenseAccount: { select: { code: true } },
+        accumulatedAccount: { select: { code: true } },
+        costCentre: { select: { code: true } },
+      },
       orderBy: { id: 'asc' },
     });
     const due = assets
-      .map((a) => ({ asset: a, amount: this.expectedAccumulated(a, period.startDate).sub(D(a.accumulatedDepreciation)) }))
+      .map((a) => ({
+        asset: a,
+        amount: this.expectedAccumulated(a, period.startDate).sub(D(a.accumulatedDepreciation)),
+      }))
       .filter((d) => d.amount.gt(0));
     const total = due.reduce((a, d) => a.add(d.amount), ZERO());
     const run = await tx.depreciationRun.create({
@@ -327,17 +449,42 @@ export class FixedAssetsService {
         createdById: actorColumns(actor).actorUserId,
       },
     });
-    const grouped = new Map<string, { expenseAccountCode: string; accumulatedAccountCode: string; costCentreCode: string | null; amount: MoneyValue }>();
+    const grouped = new Map<
+      string,
+      {
+        expenseAccountCode: string;
+        accumulatedAccountCode: string;
+        costCentreCode: string | null;
+        amount: MoneyValue;
+      }
+    >();
     for (const { asset, amount } of due) {
       const after = D(asset.accumulatedDepreciation).add(amount);
-      await tx.depreciationLine.create({ data: { runId: run.id, assetId: asset.id, fiscalPeriodId: period.id, amount: formatMoney(amount), accumulatedAfter: formatMoney(after) } });
+      await tx.depreciationLine.create({
+        data: {
+          runId: run.id,
+          assetId: asset.id,
+          fiscalPeriodId: period.id,
+          amount: formatMoney(amount),
+          accumulatedAfter: formatMoney(after),
+        },
+      });
       const fully = after.eq(D(asset.cost).sub(D(asset.residualValue)));
       await tx.fixedAsset.update({
         where: { id: asset.id },
-        data: { accumulatedDepreciation: formatMoney(after), ...(fully && { status: 'fully_depreciated' }), rowVersion: { increment: 1 } },
+        data: {
+          accumulatedDepreciation: formatMoney(after),
+          ...(fully && { status: 'fully_depreciated' }),
+          rowVersion: { increment: 1 },
+        },
       });
       const key = `${asset.expenseAccount.code}|${asset.accumulatedAccount.code}|${asset.costCentre?.code ?? ''}`;
-      const g = grouped.get(key) ?? { expenseAccountCode: asset.expenseAccount.code, accumulatedAccountCode: asset.accumulatedAccount.code, costCentreCode: asset.costCentre?.code ?? null, amount: ZERO() };
+      const g = grouped.get(key) ?? {
+        expenseAccountCode: asset.expenseAccount.code,
+        accumulatedAccountCode: asset.accumulatedAccount.code,
+        costCentreCode: asset.costCentre?.code ?? null,
+        amount: ZERO(),
+      };
       g.amount = g.amount.add(amount);
       grouped.set(key, g);
     }
@@ -378,13 +525,22 @@ export class FixedAssetsService {
     const entityId = await this.entities.defaultEntityId();
     const period = await this.periods.periodOf(entityId, `${month}-01`);
     if (period.status !== 'open') return 0;
-    if (await this.prisma.depreciationRun.findUnique({ where: { entityId_fiscalPeriodId: { entityId, fiscalPeriodId: period.id } } })) return 0;
+    if (
+      await this.prisma.depreciationRun.findUnique({
+        where: { entityId_fiscalPeriodId: { entityId, fiscalPeriodId: period.id } },
+      })
+    )
+      return 0;
     const run = await this.run(systemActor('fixed_assets.depreciation'), month);
     return run.assetCount;
   }
 
   async runs() {
-    return this.prisma.depreciationRun.findMany({ include: { fiscalPeriod: { select: { startDate: true } } }, orderBy: { runOn: 'desc' }, take: 60 });
+    return this.prisma.depreciationRun.findMany({
+      include: { fiscalPeriod: { select: { startDate: true } } },
+      orderBy: { runOn: 'desc' },
+      take: 60,
+    });
   }
 
   // --- disposal (FA03) ------------------------------------------------------------------------------------
@@ -393,23 +549,49 @@ export class FixedAssetsService {
    * Sold or written off: depreciation must be up to date to the month before (no depreciation in the month of
    * disposal); cost and accumulated depreciation leave the books, proceeds are recorded, the rest is gain / loss.
    */
-  async dispose(actor: UserActor, publicId: string, input: { kind: 'sold' | 'written_off'; disposedOn: string; proceeds?: string; proceedsAccountCode?: string; reason: string }) {
+  async dispose(
+    actor: UserActor,
+    publicId: string,
+    input: {
+      kind: 'sold' | 'written_off';
+      disposedOn: string;
+      proceeds?: string;
+      proceedsAccountCode?: string;
+      reason: string;
+    },
+  ) {
     if (!isDay(input.disposedOn)) throw invalid('disposedOn', 'YYYY-MM-DD');
     const proceeds = input.kind === 'written_off' ? ZERO() : D(input.proceeds ?? '0');
     if (proceeds.isNegative()) throw invalid('proceeds', 'must be ≥ 0');
     await this.prisma.withTx(async (tx) => {
-      const asset = await tx.fixedAsset.findUnique({ where: { publicId }, include: { assetAccount: true, accumulatedAccount: true, gainLossAccount: true } });
+      const asset = await tx.fixedAsset.findUnique({
+        where: { publicId },
+        include: { assetAccount: true, accumulatedAccount: true, gainLossAccount: true },
+      });
       if (!asset) throw new DomainException('http.not_found');
-      if (!['active', 'fully_depreciated'].includes(asset.status)) throw new DomainException('fixed_assets.already_disposed');
+      if (!['active', 'fully_depreciated'].includes(asset.status))
+        throw new DomainException('fixed_assets.already_disposed');
       if (input.disposedOn < dayOf(asset.acquiredOn)) throw invalid('disposedOn', 'before the acquisition');
       const lastMonth = dateOnly(addMonths(`${input.disposedOn.slice(0, 7)}-01`, -1));
       const expected = this.expectedAccumulated(asset, lastMonth);
       if (!D(asset.accumulatedDepreciation).eq(expected))
-        throw new DomainException('fixed_assets.depreciation_pending', { params: { expected: formatMoney(expected), accumulated: formatMoney(D(asset.accumulatedDepreciation)) } });
+        throw new DomainException('fixed_assets.depreciation_pending', {
+          params: {
+            expected: formatMoney(expected),
+            accumulated: formatMoney(D(asset.accumulatedDepreciation)),
+          },
+        });
       let proceedsAccount: Account | null = null;
       if (proceeds.gt(0)) {
-        if (!input.proceedsAccountCode) throw invalid('proceedsAccountCode', 'required when there are proceeds');
-        proceedsAccount = await this.account(tx, asset.entityId, input.proceedsAccountCode, 'proceedsAccountCode', (a) => a.accountType === 'asset');
+        if (!input.proceedsAccountCode)
+          throw invalid('proceedsAccountCode', 'required when there are proceeds');
+        proceedsAccount = await this.account(
+          tx,
+          asset.entityId,
+          input.proceedsAccountCode,
+          'proceedsAccountCode',
+          (a) => a.accountType === 'asset',
+        );
       }
       await tx.fixedAsset.update({
         where: { id: asset.id },
@@ -430,7 +612,12 @@ export class FixedAssetsService {
         resourceType: 'fixed_asset',
         resourcePublicId: asset.publicId,
         entityId: asset.entityId,
-        data: { disposedOn: input.disposedOn, proceeds: formatMoney(proceeds), gainLoss: formatMoney(gainLoss.neg()), reason: input.reason },
+        data: {
+          disposedOn: input.disposedOn,
+          proceeds: formatMoney(proceeds),
+          gainLoss: formatMoney(gainLoss.neg()),
+          reason: input.reason,
+        },
       });
       await this.events.record(
         tx,
@@ -473,21 +660,38 @@ export class FixedAssetsService {
     const end = endPeriod.endDate;
     const assets = await this.prisma.fixedAsset.findMany({
       where: { entityId, acquiredOn: { lte: end } },
-      include: { category: true, assetAccount: { select: { code: true } }, accumulatedAccount: { select: { code: true } }, depreciationLines: { include: { fiscalPeriod: { select: { startDate: true } } } } },
+      include: {
+        category: true,
+        assetAccount: { select: { code: true } },
+        accumulatedAccount: { select: { code: true } },
+        depreciationLines: { include: { fiscalPeriod: { select: { startDate: true } } } },
+      },
     });
     const byCategory = new Map<string, Record<string, MoneyValue | string>>();
     const reg = new Map<string, MoneyValue>();
-    const add = (m: Map<string, MoneyValue>, k: string, v: MoneyValue) => m.set(k, (m.get(k) ?? ZERO()).add(v));
+    const add = (m: Map<string, MoneyValue>, k: string, v: MoneyValue) =>
+      m.set(k, (m.get(k) ?? ZERO()).add(v));
     for (const a of assets) {
-      const row =
-        byCategory.get(a.category.code) ??
-        ({ category: a.category.code, name: a.category.nameTh, openingCost: ZERO(), additions: ZERO(), disposalsCost: ZERO(), openingAccumulated: ZERO(), depreciation: ZERO(), disposalsAccumulated: ZERO() });
+      const row = byCategory.get(a.category.code) ?? {
+        category: a.category.code,
+        name: a.category.nameTh,
+        openingCost: ZERO(),
+        additions: ZERO(),
+        disposalsCost: ZERO(),
+        openingAccumulated: ZERO(),
+        depreciation: ZERO(),
+        disposalsAccumulated: ZERO(),
+      };
       const m = (k: string, v: MoneyValue) => (row[k] = (row[k] as MoneyValue).add(v));
       const cost = D(a.cost);
       const disposedBefore = a.disposedOn !== null && a.disposedOn < start;
       const disposedIn = a.disposedOn !== null && a.disposedOn >= start && a.disposedOn <= end;
-      const accBefore = a.depreciationLines.filter((l) => l.fiscalPeriod.startDate < start).reduce((s, l) => s.add(D(l.amount)), ZERO());
-      const accIn = a.depreciationLines.filter((l) => l.fiscalPeriod.startDate >= start && l.fiscalPeriod.startDate <= end).reduce((s, l) => s.add(D(l.amount)), ZERO());
+      const accBefore = a.depreciationLines
+        .filter((l) => l.fiscalPeriod.startDate < start)
+        .reduce((s, l) => s.add(D(l.amount)), ZERO());
+      const accIn = a.depreciationLines
+        .filter((l) => l.fiscalPeriod.startDate >= start && l.fiscalPeriod.startDate <= end)
+        .reduce((s, l) => s.add(D(l.amount)), ZERO());
       if (!disposedBefore) {
         if (a.acquiredOn < start) {
           m('openingCost', cost);
@@ -507,7 +711,9 @@ export class FixedAssetsService {
     const rows = [...byCategory.values()].map((r) => {
       const n = (k: string) => r[k] as MoneyValue;
       const closingCost = n('openingCost').add(n('additions')).sub(n('disposalsCost'));
-      const closingAccumulated = n('openingAccumulated').add(n('depreciation')).sub(n('disposalsAccumulated'));
+      const closingAccumulated = n('openingAccumulated')
+        .add(n('depreciation'))
+        .sub(n('disposalsAccumulated'));
       return {
         category: r['category'] as string,
         name: r['name'] as string,
@@ -529,7 +735,12 @@ export class FixedAssetsService {
         _sum: { debit: true, credit: true },
       });
       const gl = D(sum._sum.debit ?? 0).sub(D(sum._sum.credit ?? 0));
-      reconciliation.push({ accountCode: code, register: formatMoney(register), gl: formatMoney(gl), difference: formatMoney(gl.sub(register)) });
+      reconciliation.push({
+        accountCode: code,
+        register: formatMoney(register),
+        gl: formatMoney(gl),
+        difference: formatMoney(gl.sub(register)),
+      });
     }
     reconciliation.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
     return { from, to, categories: rows, reconciliation };

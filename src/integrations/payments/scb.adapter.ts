@@ -80,7 +80,9 @@ export class ScbAdapter implements ScbGateway {
     };
   }
 
-  async confirm(body: unknown): Promise<{ transactionId: string | null; confirmation: ScbConfirmation | null }> {
+  async confirm(
+    body: unknown,
+  ): Promise<{ transactionId: string | null; confirmation: ScbConfirmation | null }> {
     const cb = (body ?? {}) as Record<string, unknown>;
     const transactionId = typeof cb['transactionId'] === 'string' ? cb['transactionId'] : null;
     if (!transactionId) return { transactionId: null, confirmation: null };
@@ -95,8 +97,12 @@ export class ScbAdapter implements ScbGateway {
         billerId: this.required().billerId,
         reference1: cb['billPaymentRef1'],
       });
-      const found = await this.get<Record<string, unknown>[]>(`/v1/payment/billpayment/inquiry?${params.toString()}`);
-      const match = (found ?? []).find((t) => t['transactionId'] === transactionId && t['reverseFlag'] !== 'R');
+      const found = await this.get<Record<string, unknown>[]>(
+        `/v1/payment/billpayment/inquiry?${params.toString()}`,
+      );
+      const match = (found ?? []).find(
+        (t) => t['transactionId'] === transactionId && t['reverseFlag'] !== 'R',
+      );
       if (!match) return { transactionId, confirmation: null };
       return {
         transactionId,
@@ -172,7 +178,11 @@ export class ScbAdapter implements ScbGateway {
     });
     const env = body as Envelope<{ accessToken?: string; expiresIn?: number }> | null;
     if (status >= 300 || env?.status?.code !== SUCCESS || !env.data?.accessToken)
-      throw new ProviderUnavailableError('scb', `token HTTP ${status} code ${env?.status?.code ?? '-'}`, status);
+      throw new ProviderUnavailableError(
+        'scb',
+        `token HTTP ${status} code ${env?.status?.code ?? '-'}`,
+        status,
+      );
     this.token = { value: env.data.accessToken, expiresAt: Date.now() + (env.data.expiresIn ?? 1800) * 1000 };
     return this.token.value;
   }
@@ -186,7 +196,11 @@ export class ScbAdapter implements ScbGateway {
     });
     const env = body as Envelope<T> | null;
     if (status >= 300 || env?.status?.code !== SUCCESS || env.data === undefined)
-      throw new ProviderUnavailableError('scb', `${path} HTTP ${status} code ${env?.status?.code ?? '-'}`, status);
+      throw new ProviderUnavailableError(
+        'scb',
+        `${path} HTTP ${status} code ${env?.status?.code ?? '-'}`,
+        status,
+      );
     return env.data;
   }
 
@@ -200,7 +214,11 @@ export class ScbAdapter implements ScbGateway {
     const env = body as Envelope<T> | null;
     if (status === 404 || env?.status?.code === 1104) return null;
     if (status >= 300 || env?.status?.code !== SUCCESS)
-      throw new ProviderUnavailableError('scb', `${path} HTTP ${status} code ${env?.status?.code ?? '-'}`, status);
+      throw new ProviderUnavailableError(
+        'scb',
+        `${path} HTTP ${status} code ${env?.status?.code ?? '-'}`,
+        status,
+      );
     return env.data ?? null;
   }
 }

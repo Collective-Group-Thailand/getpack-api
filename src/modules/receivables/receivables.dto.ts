@@ -1,7 +1,18 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, MaxLength, Min, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 /** Receivables & customer documents (B5.2). Money: decimal strings, THB. */
 
@@ -9,11 +20,25 @@ const MONEY = /^\d{1,12}\.\d{2}$/;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 export const CUSTOMER_DOCUMENT_TYPES = ['iv', 'tr', 'rc', 'cn', 'dn'] as const;
-export const CUSTOMER_DOCUMENT_KINDS = ['instalment', 'final', 'delivery', 'collection', 'credit_note', 'debit_note'] as const;
+export const CUSTOMER_DOCUMENT_KINDS = [
+  'instalment',
+  'final',
+  'delivery',
+  'collection',
+  'credit_note',
+  'debit_note',
+] as const;
 export const CUSTOMER_DOCUMENT_STATUSES = ['issued', 'void'] as const;
 export const RECEIPT_VIAS = ['scb', 'twoc2p', 'slip', 'bank', 'unidentified', 'store_credit'] as const;
 export const TAX_NATURES = ['sale_of_goods', 'hire_of_work'] as const;
-export const CREDIT_NOTE_KINDS = ['shortage', 'claim', 'cancellation', 'price_reduction', 'return', 'discount'] as const;
+export const CREDIT_NOTE_KINDS = [
+  'shortage',
+  'claim',
+  'cancellation',
+  'price_reduction',
+  'return',
+  'discount',
+] as const;
 export const CREDIT_SETTLEMENTS = ['store_credit', 'receivable'] as const;
 export const CREDIT_REQUEST_STATUSES = ['pending_approval', 'issued', 'rejected', 'withdrawn'] as const;
 export const WHT_CERT_STATUSES = ['pending', 'received', 'waived'] as const;
@@ -62,7 +87,11 @@ export class DocumentPartyDto {
   @ApiProperty({ type: String, nullable: true, example: '00000' })
   branchCode!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '99/9 ถนนตัวอย่าง แขวงทดสอบ เขตทดสอบ กรุงเทพมหานคร 10000' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '99/9 ถนนตัวอย่าง แขวงทดสอบ เขตทดสอบ กรุงเทพมหานคร 10000',
+  })
   address!: string | null;
 }
 
@@ -152,10 +181,19 @@ export class CustomerDocumentDto {
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: AR_IDS.payment })
   paymentId!: string | null;
 
-  @ApiProperty({ type: DocumentRefDto, nullable: true, description: 'The tax invoice a CN / DN / RC refers to' })
+  @ApiProperty({
+    type: DocumentRefDto,
+    nullable: true,
+    description: 'The tax invoice a CN / DN / RC refers to',
+  })
   originalDocument!: DocumentRefDto | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Credit / debit note reason (statutory list)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Credit / debit note reason (statutory list)',
+  })
   reason!: string | null;
 
   @ApiProperty({ enum: CREDIT_NOTE_KINDS, enumName: 'CreditNoteKind', nullable: true, example: null })
@@ -224,7 +262,12 @@ export const DOCUMENT_EXAMPLE: CustomerDocumentDto = {
   isTaxInvoice: true,
   isFullForm: false,
   buyer: { name: 'ลูกค้า ตัวอย่าง (fake)', taxId: null, branchCode: null, address: null },
-  seller: { name: 'บริษัท ตัวอย่าง จำกัด (fake)', taxId: '0000000000000', branchCode: '00000', address: '99/9 ถนนตัวอย่าง กรุงเทพมหานคร 10000' },
+  seller: {
+    name: 'บริษัท ตัวอย่าง จำกัด (fake)',
+    taxId: '0000000000000',
+    branchCode: '00000',
+    address: '99/9 ถนนตัวอย่าง กรุงเทพมหานคร 10000',
+  },
   orderGroupId: AR_IDS.group,
   groupCode: 'G2610-00001',
   orderId: AR_IDS.order,
@@ -246,7 +289,16 @@ export const DOCUMENT_EXAMPLE: CustomerDocumentDto = {
   amountDue: '0.00',
   currency: 'THB',
   lines: [
-    { lineNo: 1, description: 'งวดที่ 1 มัดจำ 50% — คำสั่งซื้อ O2610-00001', quantity: '1.000', netAmount: '1000.00', discountAmount: '0.00', vatAmount: '70.00', grossAmount: '1070.00', whtAmount: '0.00' },
+    {
+      lineNo: 1,
+      description: 'งวดที่ 1 มัดจำ 50% — คำสั่งซื้อ O2610-00001',
+      quantity: '1.000',
+      netAmount: '1000.00',
+      discountAmount: '0.00',
+      vatAmount: '70.00',
+      grossAmount: '1070.00',
+      whtAmount: '0.00',
+    },
   ],
   receivable: null,
   pdfReady: true,
@@ -292,7 +344,10 @@ export class DocumentListQuery extends PageQuery {
 }
 
 export class StoreDocumentListQuery extends PageQuery {
-  @ApiPropertyOptional({ format: 'uuid', description: 'A company the customer may read documents of (company_documents.read)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'A company the customer may read documents of (company_documents.read)',
+  })
   @IsOptional()
   @IsUUID()
   companyId?: string;
@@ -315,13 +370,20 @@ export class RequestCreditNoteDto {
   @IsIn(CREDIT_NOTE_KINDS)
   cnKind!: (typeof CREDIT_NOTE_KINDS)[number];
 
-  @ApiPropertyOptional({ example: 'price_reduction', description: 'Reason code (defaults to the kind’s statutory reason)' })
+  @ApiPropertyOptional({
+    example: 'price_reduction',
+    description: 'Reason code (defaults to the kind’s statutory reason)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(64)
   reasonCode?: string;
 
-  @ApiPropertyOptional({ enum: CREDIT_SETTLEMENTS, enumName: 'CreditSettlement', description: 'Default: reduce what is owed, else the customer credit balance' })
+  @ApiPropertyOptional({
+    enum: CREDIT_SETTLEMENTS,
+    enumName: 'CreditSettlement',
+    description: 'Default: reduce what is owed, else the customer credit balance',
+  })
   @IsOptional()
   @IsIn(CREDIT_SETTLEMENTS)
   settleTo?: (typeof CREDIT_SETTLEMENTS)[number];
@@ -358,7 +420,11 @@ export class CreditNoteRequestDto {
   @ApiProperty({ example: 'ลดราคาตามข้อตกลงกับลูกค้า' })
   note!: string;
 
-  @ApiProperty({ enum: CREDIT_REQUEST_STATUSES, enumName: 'CreditNoteRequestStatus', example: 'pending_approval' })
+  @ApiProperty({
+    enum: CREDIT_REQUEST_STATUSES,
+    enumName: 'CreditNoteRequestStatus',
+    example: 'pending_approval',
+  })
   status!: string;
 
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: AR_IDS.approval })
@@ -398,7 +464,11 @@ export class CreditNoteRequestListQuery extends PageQuery {
 }
 
 export class IssueDebitNoteDto {
-  @ApiProperty({ example: '500.00', pattern: MONEY.source, description: 'Net amount added (VAT at the invoice’s rate)' })
+  @ApiProperty({
+    example: '500.00',
+    pattern: MONEY.source,
+    description: 'Net amount added (VAT at the invoice’s rate)',
+  })
   @Matches(MONEY)
   net!: string;
 
@@ -456,7 +526,13 @@ export class ReceivableItemDto {
   @ApiProperty({ enum: AR_ITEM_STATUSES, enumName: 'ArItemStatus', example: 'open' })
   status!: string;
 
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null, description: 'Pending or decided write-off approval' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Pending or decided write-off approval',
+  })
   writeOffApprovalId!: string | null;
 }
 
@@ -547,10 +623,24 @@ export class AgingReportDto {
   currency!: string;
 }
 
-const BUCKETS_EXAMPLE = { current: '1000.00', d1_30: '0.00', d31_60: '0.00', d61_90: '0.00', over_90: '0.00' };
+const BUCKETS_EXAMPLE = {
+  current: '1000.00',
+  d1_30: '0.00',
+  d31_60: '0.00',
+  d61_90: '0.00',
+  over_90: '0.00',
+};
 export const AGING_EXAMPLE: AgingReportDto = {
   asOf: '2026-10-31',
-  parties: [{ customerId: AR_IDS.customer, customerName: 'ลูกค้า ตัวอย่าง (fake)', companyId: null, companyName: null, buckets: BUCKETS_EXAMPLE }],
+  parties: [
+    {
+      customerId: AR_IDS.customer,
+      customerName: 'ลูกค้า ตัวอย่าง (fake)',
+      companyId: null,
+      companyName: null,
+      buckets: BUCKETS_EXAMPLE,
+    },
+  ],
   totals: BUCKETS_EXAMPLE,
   currency: 'THB',
 };
@@ -572,7 +662,11 @@ export class ProvisionDto {
   @Matches(DAY)
   asOf!: string;
 
-  @ApiPropertyOptional({ example: '1000.00', pattern: MONEY.source, description: 'Target allowance; required while `receivables.allowance_rates` is not set' })
+  @ApiPropertyOptional({
+    example: '1000.00',
+    pattern: MONEY.source,
+    description: 'Target allowance; required while `receivables.allowance_rates` is not set',
+  })
   @IsOptional()
   @Matches(MONEY)
   amount?: string;
@@ -651,7 +745,11 @@ export class WhtCertificateListQuery extends PageQuery {
   @IsIn(WHT_CERT_STATUSES)
   status?: (typeof WHT_CERT_STATUSES)[number];
 
-  @ApiPropertyOptional({ type: 'integer', example: 30, description: 'Only certificates waiting longer than this (missing-certificate report)' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 30,
+    description: 'Only certificates waiting longer than this (missing-certificate report)',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -710,7 +808,16 @@ export class StoreCreditDto {
 export const STORE_CREDIT_EXAMPLE: StoreCreditDto = {
   balance: '10.70',
   currency: 'THB',
-  entries: [{ id: AR_IDS.entry, amount: '10.70', source: 'shortage_credit', docNumber: 'CN256911-00001', orderCode: 'O2610-00001', createdAt: '2026-11-04T10:00:00+07:00' }],
+  entries: [
+    {
+      id: AR_IDS.entry,
+      amount: '10.70',
+      source: 'shortage_credit',
+      docNumber: 'CN256911-00001',
+      orderCode: 'O2610-00001',
+      createdAt: '2026-11-04T10:00:00+07:00',
+    },
+  ],
 };
 
 export class CompanyStatementDto {

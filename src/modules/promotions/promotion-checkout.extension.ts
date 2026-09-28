@@ -94,7 +94,11 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
     const usable: Candidate[] = [];
     for (const c of candidates) {
       const reason = await this.limitReason(db, c, draft.customerUserId);
-      if (reason) draft.notices.push({ code: 'promotion.rejected', params: { promotionId: c.row.publicId, code: c.code, reason } });
+      if (reason)
+        draft.notices.push({
+          code: 'promotion.rejected',
+          params: { promotionId: c.row.publicId, code: c.code, reason },
+        });
       else usable.push(c);
     }
     if (usable.length === 0) return;
@@ -107,11 +111,20 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
     }));
     const ctx = await this.context(draft, db, String(floor.value));
     const byId = new Map(usable.map((c) => [c.row.publicId, c]));
-    const result = evaluatePromotions(usable.map((c) => this.candidateOf(c)), lines, orders, ctx);
+    const result = evaluatePromotions(
+      usable.map((c) => this.candidateOf(c)),
+      lines,
+      orders,
+      ctx,
+    );
 
     for (const r of result.rejected) {
       const c = byId.get(r.promotionId)!;
-      if (c.code) draft.notices.push({ code: 'promotion.rejected', params: { promotionId: r.promotionId, code: c.code, reason: r.reason } });
+      if (c.code)
+        draft.notices.push({
+          code: 'promotion.rejected',
+          params: { promotionId: r.promotionId, code: c.code, reason: r.reason },
+        });
     }
     const applied: AppliedPromotion[] = [];
     for (const promotionId of result.applied) {
@@ -127,9 +140,17 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
         order.lines[d.line] = discountLine(order.lines[d.line]!, d.amount);
         order.discounts.push({
           lineIndex: d.line,
-          source: c.row.kind === 'coupon' ? 'coupon' : c.row.kind === 'referral' ? 'referral' : 'automatic_promotion',
+          source:
+            c.row.kind === 'coupon'
+              ? 'coupon'
+              : c.row.kind === 'referral'
+                ? 'referral'
+                : 'automatic_promotion',
           amount: d.amount,
-          pct: c.row.benefit && (c.row.benefit as { type?: string }).type === 'percent' ? D((c.row.benefit as { pct: string }).pct).toFixed(4) : null,
+          pct:
+            c.row.benefit && (c.row.benefit as { type?: string }).type === 'percent'
+              ? D((c.row.benefit as { pct: string }).pct).toFixed(4)
+              : null,
           cappedAmount: d.cappedAmount,
           capReason: d.capReason,
           promotionId: c.row.id,
@@ -141,12 +162,31 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
       const perks = result.perks.filter((p) => p.promotionId === promotionId);
       if (amount.lte(0) && perks.length === 0) {
         if (capped.gt(0))
-          draft.notices.push({ code: 'promotion.capped', params: { promotionId, code: c.code, cappedAmount: formatMoney(capped), reason: mine[0]?.capReason ?? null } });
+          draft.notices.push({
+            code: 'promotion.capped',
+            params: {
+              promotionId,
+              code: c.code,
+              cappedAmount: formatMoney(capped),
+              reason: mine[0]?.capReason ?? null,
+            },
+          });
         continue;
       }
-      draft.notices.push({ code: 'promotion.applied', params: { promotionId, name: c.row.name, code: c.code, amount: formatMoney(amount) } });
+      draft.notices.push({
+        code: 'promotion.applied',
+        params: { promotionId, name: c.row.name, code: c.code, amount: formatMoney(amount) },
+      });
       if (capped.gt(0))
-        draft.notices.push({ code: 'promotion.capped', params: { promotionId, code: c.code, cappedAmount: formatMoney(capped), reason: mine.find((d) => d.capReason)?.capReason ?? null } });
+        draft.notices.push({
+          code: 'promotion.capped',
+          params: {
+            promotionId,
+            code: c.code,
+            cappedAmount: formatMoney(capped),
+            reason: mine.find((d) => d.capReason)?.capReason ?? null,
+          },
+        });
       applied.push({
         promotionId: c.row.id,
         promotionPublicId: c.row.publicId,
@@ -172,7 +212,10 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
       });
     }
     if (result.requiredPaymentMethods.length > 0 && applied.length > 0)
-      draft.notices.push({ code: 'promotion.payment_method_required', params: { methods: result.requiredPaymentMethods } });
+      draft.notices.push({
+        code: 'promotion.payment_method_required',
+        params: { methods: result.requiredPaymentMethods },
+      });
     draft.state[this.key] = { applied } satisfies PromotionState;
   }
 
@@ -188,7 +231,10 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
 
   private async candidates(draft: CheckoutDraft, db: Tx): Promise<Candidate[]> {
     const live = livePromotionWhere(draft.at);
-    const automatic = await db.promotion.findMany({ where: { ...live, kind: 'automatic' }, include: PROMOTION_WITH });
+    const automatic = await db.promotion.findMany({
+      where: { ...live, kind: 'automatic' },
+      include: PROMOTION_WITH,
+    });
     const out: Candidate[] = automatic.map((row) => ({ row, couponCodeId: null, code: null }));
     const codes = await db.cartCode.findMany({
       where: { cartId: draft.cartId, status: 'validated', couponCodeId: { not: null } },
@@ -197,16 +243,25 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
     });
     // D-136: a referred new customer gets the referee discount on the first order (system promotion,
     // values from `referral.rules`).
-    const attribution = await db.referralAttribution.findUnique({ where: { refereeUserId: draft.customerUserId } });
+    const attribution = await db.referralAttribution.findUnique({
+      where: { refereeUserId: draft.customerUserId },
+    });
     if (attribution?.status === 'pending' && attribution.firstOrderGroupId === null) {
-      const referral = await db.promotion.findFirst({ where: { kind: 'referral', status: 'active' }, include: PROMOTION_WITH });
+      const referral = await db.promotion.findFirst({
+        where: { kind: 'referral', status: 'active' },
+        include: PROMOTION_WITH,
+      });
       if (referral) {
         const rules = (await this.settings.at('referral.rules', { at: draft.at })).value;
         out.push({
           row: {
             ...referral,
             conditions: { firstOrderOnly: true },
-            benefit: { type: 'percent', pct: rules.refereeDiscountPct, maxAmount: rules.refereeDiscountMaxBaht },
+            benefit: {
+              type: 'percent',
+              pct: rules.refereeDiscountPct,
+              maxAmount: rules.refereeDiscountMaxBaht,
+            },
           },
           couponCodeId: null,
           code: null,
@@ -218,7 +273,10 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
       const coupon = cc.couponCode!;
       const reason = couponReason(coupon, draft.customerUserId, draft.at);
       if (reason) {
-        draft.notices.push({ code: 'promotion.rejected', params: { promotionId: coupon.promotion.publicId, code: cc.code, reason } });
+        draft.notices.push({
+          code: 'promotion.rejected',
+          params: { promotionId: coupon.promotion.publicId, code: cc.code, reason },
+        });
         continue;
       }
       // One code per promotion counts.
@@ -241,7 +299,11 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
       const related = await this.identity.relatedUserIds(db, customer);
       const relatedUsed = related.length
         ? await db.promotionRedemption.count({
-            where: { promotionId: c.row.id, customerUserId: { in: related }, status: { in: ['reserved', 'applied'] } },
+            where: {
+              promotionId: c.row.id,
+              customerUserId: { in: related },
+              status: { in: ['reserved', 'applied'] },
+            },
           })
         : 0;
       if (own + relatedUsed >= c.row.usageLimitPerCustomer) return 'customer_limit';
@@ -251,10 +313,13 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
 
   private candidateOf(c: Candidate): PromotionCandidate {
     const left = (budget: Prisma.Decimal | null | undefined, spent: Prisma.Decimal | undefined) =>
-      budget === null || budget === undefined ? null : MoneyDecimal.max(D(budget).sub(spent?.toString() ?? '0'), D(0));
-    const lefts = [left(c.row.budgetAmount, c.row.spentAmount), left(c.row.campaign?.budgetAmount, c.row.campaign?.spentAmount)].filter(
-      (x): x is MoneyValue => x !== null,
-    );
+      budget === null || budget === undefined
+        ? null
+        : MoneyDecimal.max(D(budget).sub(spent?.toString() ?? '0'), D(0));
+    const lefts = [
+      left(c.row.budgetAmount, c.row.spentAmount),
+      left(c.row.campaign?.budgetAmount, c.row.campaign?.spentAmount),
+    ].filter((x): x is MoneyValue => x !== null);
     return {
       id: c.row.publicId,
       kind: c.row.kind,
@@ -269,11 +334,17 @@ export class PromotionCheckout implements CheckoutExtension, OnModuleInit {
 
   private async cartLines(draft: CheckoutDraft, db: Tx): Promise<CartLine[]> {
     const typeIds = [...new Set(draft.orders.map((o) => o.productTypeId))];
-    const types = await db.productType.findMany({ where: { id: { in: typeIds } }, include: { category: true } });
+    const types = await db.productType.findMany({
+      where: { id: { in: typeIds } },
+      include: { category: true },
+    });
     const category = new Map(types.map((t) => [t.id, t.category.code]));
     const productIds = draft.orders.map((o) => o.catalogProductId).filter((x): x is bigint => x !== null);
     const products = productIds.length
-      ? await db.catalogProduct.findMany({ where: { id: { in: productIds } }, select: { id: true, publicId: true } })
+      ? await db.catalogProduct.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, publicId: true },
+        })
       : [];
     const productPublic = new Map(products.map((p) => [p.id, p.publicId]));
     return draft.orders.flatMap((o, order) =>
@@ -352,11 +423,13 @@ export function couponReason(
 ): string | null {
   const p = coupon.promotion;
   if (coupon.status === 'disabled') return 'disabled';
-  if (coupon.status === 'used_up' || (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit)) return 'used_up';
+  if (coupon.status === 'used_up' || (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit))
+    return 'used_up';
   if (coupon.assignedUserId !== null && coupon.assignedUserId !== customer) return 'not_yours';
   if (p.kind !== 'coupon' || p.status !== 'active') return 'inactive';
   if (p.startsAt > at || (p.campaign && p.campaign.startsAt > at)) return 'not_started';
   if ((p.endsAt && p.endsAt <= at) || (p.campaign?.endsAt && p.campaign.endsAt <= at)) return 'expired';
-  if (p.campaign && p.campaign.status !== 'active') return p.campaign.status === 'exhausted' ? 'budget_exhausted' : 'inactive';
+  if (p.campaign && p.campaign.status !== 'active')
+    return p.campaign.status === 'exhausted' ? 'budget_exhausted' : 'inactive';
   return null;
 }

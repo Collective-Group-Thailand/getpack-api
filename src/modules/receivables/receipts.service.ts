@@ -17,7 +17,9 @@ const ACTOR = systemActor('receivables.receipts');
 
 /** How a payment's money arrived, for the posting rules (P01, P02, P08, P01X). */
 export function receiptViaOf(provider: PaymentProvider): ReceiptVia {
-  return ({ scb: 'scb', twoc2p: 'twoc2p', slip: 'slip', bank: 'bank', internal: 'store_credit' } as const)[provider];
+  return ({ scb: 'scb', twoc2p: 'twoc2p', slip: 'slip', bank: 'bank', internal: 'store_credit' } as const)[
+    provider
+  ];
 }
 
 interface OrderShare {
@@ -57,8 +59,13 @@ export class ReceiptsService {
       },
     });
     if (!payment?.orderGroupId || payment.allocations.length === 0) return;
-    if ((await tx.customerDocument.count({ where: { paymentId: payment.id, docType: { in: ['tr', 'rc'] } } })) > 0) return;
-    const via: ReceiptVia = event.type === 'payment.allocated' ? 'unidentified' : receiptViaOf(payment.provider);
+    if (
+      (await tx.customerDocument.count({ where: { paymentId: payment.id, docType: { in: ['tr', 'rc'] } } })) >
+      0
+    )
+      return;
+    const via: ReceiptVia =
+      event.type === 'payment.allocated' ? 'unidentified' : receiptViaOf(payment.provider);
     const shares = this.shares(payment);
     const day = bangkokDate(payment.paidAt ?? new Date(event.occurredAt));
     const group = await tx.orderGroup.findUniqueOrThrow({ where: { id: payment.orderGroupId } });
@@ -135,16 +142,27 @@ export class ReceiptsService {
     buyer: Awaited<ReturnType<CustomerDocumentsService['buyerOfGroup']>>['buyer'],
     fullForm: boolean,
   ) {
-    const item = await tx.receivableItem.findUniqueOrThrow({ where: { id: c.itemId }, include: { customerDocument: true } });
+    const item = await tx.receivableItem.findUniqueOrThrow({
+      where: { id: c.itemId },
+      include: { customerDocument: true },
+    });
     const original = item.customerDocument;
     const open = D(item.openAmount);
     const full = c.applied.eq(open);
     // VAT not yet due moves with the money (P08), the last receipt taking what is left; it is also the VAT
     // this receipt carries as the hire-of-work tax point. Otherwise the VAT is shown for information only.
-    const notDue = full ? D(item.vatNotDueAmount) : MoneyDecimal.min(D(item.vatNotDueAmount), round(D(item.vatNotDueAmount).mul(c.applied).div(open)));
-    const notDueBase = full ? D(item.vatNotDueBase) : MoneyDecimal.min(D(item.vatNotDueBase), round(D(item.vatNotDueBase).mul(c.applied).div(open)));
+    const notDue = full
+      ? D(item.vatNotDueAmount)
+      : MoneyDecimal.min(D(item.vatNotDueAmount), round(D(item.vatNotDueAmount).mul(c.applied).div(open)));
+    const notDueBase = full
+      ? D(item.vatNotDueBase)
+      : MoneyDecimal.min(D(item.vatNotDueBase), round(D(item.vatNotDueBase).mul(c.applied).div(open)));
     const gross = D(original.grossAmount);
-    const vat = notDue.gt(0) ? notDue : gross.isZero() ? ZERO() : round(c.applied.mul(original.vatAmount.toString()).div(gross));
+    const vat = notDue.gt(0)
+      ? notDue
+      : gross.isZero()
+        ? ZERO()
+        : round(c.applied.mul(original.vatAmount.toString()).div(gross));
     const wht = c.share.gross.isZero() ? ZERO() : round(c.share.wht.mul(c.applied).div(c.share.gross));
     const order = await tx.order.findUniqueOrThrow({ where: { id: c.share.orderId } });
     const rc = await this.documents.issue(
@@ -186,7 +204,12 @@ export class ReceiptsService {
     );
     const left = open.sub(c.applied);
     await tx.receivableApplication.create({
-      data: { receivableItemId: item.id, paymentId: payment.id, documentId: rc.id, amount: formatMoney(c.applied) },
+      data: {
+        receivableItemId: item.id,
+        paymentId: payment.id,
+        documentId: rc.id,
+        amount: formatMoney(c.applied),
+      },
     });
     await tx.receivableItem.update({
       where: { id: item.id },
@@ -205,17 +228,24 @@ export class ReceiptsService {
    * covers a share of its instalment, split over the orders like the instalment (ADR-0008), the rounding
    * remainder on the last order.
    */
-  private shares(payment: Payment & {
-    allocations: {
-      grossAmount: { toString(): string };
-      instalment: {
-        seq: number;
-        labelTh: string;
+  private shares(
+    payment: Payment & {
+      allocations: {
         grossAmount: { toString(): string };
-        allocations: { orderId: bigint; grossAmount: { toString(): string }; vatAmount: { toString(): string }; whtAmount: { toString(): string } }[];
-      };
-    }[];
-  }): Map<bigint, OrderShare> {
+        instalment: {
+          seq: number;
+          labelTh: string;
+          grossAmount: { toString(): string };
+          allocations: {
+            orderId: bigint;
+            grossAmount: { toString(): string };
+            vatAmount: { toString(): string };
+            whtAmount: { toString(): string };
+          }[];
+        };
+      }[];
+    },
+  ): Map<bigint, OrderShare> {
     const shares = new Map<bigint, OrderShare>();
     for (const alloc of payment.allocations) {
       const inst = alloc.instalment;
@@ -227,7 +257,13 @@ export class ReceiptsService {
         const last = i === rows.length - 1;
         const gross = last ? grossLeft : round(D(ia.grossAmount).mul(ratio));
         grossLeft = grossLeft.sub(gross);
-        const share = shares.get(ia.orderId) ?? { orderId: ia.orderId, gross: ZERO(), vat: ZERO(), wht: ZERO(), labels: [] };
+        const share = shares.get(ia.orderId) ?? {
+          orderId: ia.orderId,
+          gross: ZERO(),
+          vat: ZERO(),
+          wht: ZERO(),
+          labels: [],
+        };
         share.gross = share.gross.add(gross);
         share.vat = share.vat.add(round(D(ia.vatAmount).mul(ratio)));
         share.wht = share.wht.add(round(D(ia.whtAmount).mul(ratio)));
@@ -246,13 +282,19 @@ export class ReceiptsService {
   /** Cash beyond what the schedule needs waits in unapplied receipts (P01X) for a refund. */
   @OnDomainEvent(['payment.overpaid', 'payment.refund_required'], { consumer: 'receivables.unapplied' })
   async onUnapplied(event: DomainEventEnvelope, tx: Tx): Promise<void> {
-    const payment = await tx.payment.findUnique({ where: { publicId: String(event.payload['paymentId']) }, include: { orderGroup: true } });
+    const payment = await tx.payment.findUnique({
+      where: { publicId: String(event.payload['paymentId']) },
+      include: { orderGroup: true },
+    });
     if (!payment) return;
     const raw = event.payload['leftoverAmount'] ?? event.payload['cashAmount'];
     const amount = typeof raw === 'string' ? raw : '0';
     if (!D(amount).gt(0)) return;
     const customer = payment.orderGroup
-      ? await tx.user.findUnique({ where: { id: payment.orderGroup.customerUserId }, select: { publicId: true } })
+      ? await tx.user.findUnique({
+          where: { id: payment.orderGroup.customerUserId },
+          select: { publicId: true },
+        })
       : null;
     await this.events.record(
       tx,

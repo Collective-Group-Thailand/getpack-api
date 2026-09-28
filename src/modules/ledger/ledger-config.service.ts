@@ -91,34 +91,61 @@ export class LedgerConfigService {
       const account =
         input.kind === 'create'
           ? null
-          : await tx.account.findUnique({ where: { entityId_code: { entityId, code: input.accountCode ?? '' } } });
+          : await tx.account.findUnique({
+              where: { entityId_code: { entityId, code: input.accountCode ?? '' } },
+            });
       if (input.kind !== 'create' && !account) throw new DomainException('http.not_found');
       const fields = input.fields ?? {};
       if (input.kind === 'create') {
-        const missing = (['code', 'nameTh', 'nameEn', 'accountType', 'normalSide', 'cashFlowClass'] as const).filter(
-          (k) => fields[k] === undefined,
-        );
+        const missing = (
+          ['code', 'nameTh', 'nameEn', 'accountType', 'normalSide', 'cashFlowClass'] as const
+        ).filter((k) => fields[k] === undefined);
         if (missing.length > 0)
           throw new DomainException('validation.failed', {
-            errors: missing.map((k) => ({ path: `fields.${k}`, code: 'required', message: `${k} is required` })),
+            errors: missing.map((k) => ({
+              path: `fields.${k}`,
+              code: 'required',
+              message: `${k} is required`,
+            })),
           });
         if (await tx.account.findUnique({ where: { entityId_code: { entityId, code: fields.code! } } }))
           throw new DomainException('ledger.account_exists', { params: { code: fields.code! } });
       }
-      if (fields.parentCode && !(await tx.account.findUnique({ where: { entityId_code: { entityId, code: fields.parentCode } } })))
-        throw new DomainException('ledger.account_invalid', { params: { code: fields.parentCode, reason: 'unknown parent' } });
-      if (fields.requiredDimensions && fields.allowedDimensions && !fields.requiredDimensions.every((d) => fields.allowedDimensions!.includes(d)))
+      if (
+        fields.parentCode &&
+        !(await tx.account.findUnique({ where: { entityId_code: { entityId, code: fields.parentCode } } }))
+      )
+        throw new DomainException('ledger.account_invalid', {
+          params: { code: fields.parentCode, reason: 'unknown parent' },
+        });
+      if (
+        fields.requiredDimensions &&
+        fields.allowedDimensions &&
+        !fields.requiredDimensions.every((d) => fields.allowedDimensions!.includes(d))
+      )
         throw new DomainException('validation.failed', {
-          errors: [{ path: 'fields.requiredDimensions', code: 'subset', message: 'required dimensions must be allowed' }],
+          errors: [
+            {
+              path: 'fields.requiredDimensions',
+              code: 'subset',
+              message: 'required dimensions must be allowed',
+            },
+          ],
         });
       if (input.kind === 'deactivate' && account) {
         const balance = await this.accountBalance(tx, account.id);
         if (!balance.isZero())
           throw new DomainException('ledger.account_invalid', {
-            params: { code: account.code, reason: `balance ${formatMoney(balance)} must be zero to deactivate` },
+            params: {
+              code: account.code,
+              reason: `balance ${formatMoney(balance)} must be zero to deactivate`,
+            },
           });
       }
-      if (account && (await tx.accountChange.count({ where: { accountId: account.id, status: 'proposed' } })) > 0)
+      if (
+        account &&
+        (await tx.accountChange.count({ where: { accountId: account.id, status: 'proposed' } })) > 0
+      )
         throw new DomainException('ledger.change_pending', { params: { subject: 'account' } });
       const change = await tx.accountChange.create({
         data: {
@@ -165,7 +192,11 @@ export class LedgerConfigService {
           ? undefined
           : f.parentCode === null
             ? null
-            : (await tx.account.findUniqueOrThrow({ where: { entityId_code: { entityId: change.entityId, code: f.parentCode } } })).id;
+            : (
+                await tx.account.findUniqueOrThrow({
+                  where: { entityId_code: { entityId: change.entityId, code: f.parentCode } },
+                })
+              ).id;
       const data = {
         ...(f.nameTh !== undefined && { nameTh: f.nameTh }),
         ...(f.nameEn !== undefined && { nameEn: f.nameEn }),
@@ -270,7 +301,12 @@ export class LedgerConfigService {
   async rule(key: string) {
     const rule = await this.prisma.postingRule.findUnique({
       where: { key },
-      include: { versions: { orderBy: { versionNo: 'desc' }, include: { approvalRequest: { select: { publicId: true } } } } },
+      include: {
+        versions: {
+          orderBy: { versionNo: 'desc' },
+          include: { approvalRequest: { select: { publicId: true } } },
+        },
+      },
     });
     if (!rule) throw new DomainException('http.not_found');
     return rule;
@@ -278,9 +314,12 @@ export class LedgerConfigService {
 
   async proposeRuleVersion(actor: UserActor, key: string, input: RuleVersionInput) {
     const problems = validateTemplate(input.template);
-    if (problems.length > 0) throw new DomainException('ledger.rule_invalid', { params: { reason: problems.join('; ') } });
+    if (problems.length > 0)
+      throw new DomainException('ledger.rule_invalid', { params: { reason: problems.join('; ') } });
     if (input.effectiveFrom.getTime() < Date.now() - 60_000)
-      throw new DomainException('ledger.rule_invalid', { params: { reason: 'a new version cannot be back-dated' } });
+      throw new DomainException('ledger.rule_invalid', {
+        params: { reason: 'a new version cannot be back-dated' },
+      });
     const entityId = await this.entities.defaultEntityId();
     await this.prisma.withTx(async (tx) => {
       const rule = await tx.postingRule.findUnique({ where: { key } });
@@ -288,18 +327,25 @@ export class LedgerConfigService {
       if ((await tx.postingRuleVersion.count({ where: { postingRuleId: rule.id, status: 'proposed' } })) > 0)
         throw new DomainException('ledger.change_pending', { params: { subject: 'posting rule' } });
       const codes = accountCodesOf(input.template as PostingTemplate);
-      const known = await tx.account.findMany({ where: { entityId, code: { in: codes }, status: 'active', isPostable: true } });
+      const known = await tx.account.findMany({
+        where: { entityId, code: { in: codes }, status: 'active', isPostable: true },
+      });
       const unknown = codes.filter((c) => !known.some((a) => a.code === c));
       if (unknown.length > 0)
-        throw new DomainException('ledger.rule_invalid', { params: { reason: `unknown or unpostable accounts ${unknown.join(', ')}` } });
-      const last = await tx.postingRuleVersion.aggregate({ where: { postingRuleId: rule.id }, _max: { versionNo: true } });
+        throw new DomainException('ledger.rule_invalid', {
+          params: { reason: `unknown or unpostable accounts ${unknown.join(', ')}` },
+        });
+      const last = await tx.postingRuleVersion.aggregate({
+        where: { postingRuleId: rule.id },
+        _max: { versionNo: true },
+      });
       const version = await tx.postingRuleVersion.create({
         data: {
           postingRuleId: rule.id,
           versionNo: (last._max.versionNo ?? 0) + 1,
           effectiveFrom: input.effectiveFrom,
           status: 'proposed',
-          conditions: (input.conditions ?? Prisma.DbNull),
+          conditions: input.conditions ?? Prisma.DbNull,
           template: input.template as Prisma.InputJsonValue,
           reason: input.reason,
           createdById: actor.userId,
@@ -310,9 +356,17 @@ export class LedgerConfigService {
         subject: { type: 'posting_rule_version', id: version.id, publicId: version.publicId },
         requester: actor,
         entityId,
-        payload: { rule: key, versionNo: version.versionNo, effectiveFrom: input.effectiveFrom.toISOString(), reason: input.reason },
+        payload: {
+          rule: key,
+          versionNo: version.versionNo,
+          effectiveFrom: input.effectiveFrom.toISOString(),
+          reason: input.reason,
+        },
       });
-      await tx.postingRuleVersion.update({ where: { id: version.id }, data: { approvalRequestId: request.id } });
+      await tx.postingRuleVersion.update({
+        where: { id: version.id },
+        data: { approvalRequestId: request.id },
+      });
       await this.audit.record(tx, {
         category: 'config',
         action: 'posting_rule.version_proposed',
@@ -327,9 +381,15 @@ export class LedgerConfigService {
   }
 
   async onRuleVersionDecided(tx: Tx, request: ApprovalRequest, approved: boolean): Promise<void> {
-    const version = await tx.postingRuleVersion.findUnique({ where: { id: request.subjectId }, include: { postingRule: true } });
+    const version = await tx.postingRuleVersion.findUnique({
+      where: { id: request.subjectId },
+      include: { postingRule: true },
+    });
     if (!version || version.status !== 'proposed') return;
-    const approver = await tx.approvalAction.findFirst({ where: { requestId: request.id, action: 'approve' }, orderBy: { createdAt: 'desc' } });
+    const approver = await tx.approvalAction.findFirst({
+      where: { requestId: request.id, action: 'approve' },
+      orderBy: { createdAt: 'desc' },
+    });
     const status = approved ? 'approved' : request.status === 'withdrawn' ? 'withdrawn' : 'rejected';
     await tx.postingRuleVersion.update({
       where: { id: version.id },
@@ -363,22 +423,33 @@ export class LedgerConfigService {
   // --- tax rates ---------------------------------------------------------------------------------------------
 
   async taxRates() {
-    return this.prisma.taxRate.findMany({ include: { versions: { orderBy: { versionNo: 'desc' } } }, orderBy: { code: 'asc' } });
+    return this.prisma.taxRate.findMany({
+      include: { versions: { orderBy: { versionNo: 'desc' } } },
+      orderBy: { code: 'asc' },
+    });
   }
 
-  async proposeTaxRate(actor: UserActor, code: string, input: { ratePct: string; effectiveFrom: Date; reason: string }) {
+  async proposeTaxRate(
+    actor: UserActor,
+    code: string,
+    input: { ratePct: string; effectiveFrom: Date; reason: string },
+  ) {
     const rate = new MoneyDecimal(input.ratePct);
     if (rate.lt(0) || rate.gt(100))
-      throw new DomainException('validation.failed', { errors: [{ path: 'ratePct', code: 'range', message: '0–100' }] });
-    if (input.effectiveFrom.getTime() < Date.now() - 60_000)
-      throw new DomainException('settings.backdated');
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'ratePct', code: 'range', message: '0–100' }],
+      });
+    if (input.effectiveFrom.getTime() < Date.now() - 60_000) throw new DomainException('settings.backdated');
     const entityId = await this.entities.defaultEntityId();
     return this.prisma.withTx(async (tx) => {
       const taxRate = await tx.taxRate.findUnique({ where: { code } });
       if (!taxRate) throw new DomainException('http.not_found');
       if ((await tx.taxRateVersion.count({ where: { taxRateId: taxRate.id, status: 'proposed' } })) > 0)
         throw new DomainException('ledger.change_pending', { params: { subject: 'tax rate' } });
-      const last = await tx.taxRateVersion.aggregate({ where: { taxRateId: taxRate.id }, _max: { versionNo: true } });
+      const last = await tx.taxRateVersion.aggregate({
+        where: { taxRateId: taxRate.id },
+        _max: { versionNo: true },
+      });
       const version = await tx.taxRateVersion.create({
         data: {
           taxRateId: taxRate.id,
@@ -396,7 +467,12 @@ export class LedgerConfigService {
         requester: actor,
         pct: input.ratePct,
         entityId,
-        payload: { code, ratePct: input.ratePct, effectiveFrom: input.effectiveFrom.toISOString(), reason: input.reason },
+        payload: {
+          code,
+          ratePct: input.ratePct,
+          effectiveFrom: input.effectiveFrom.toISOString(),
+          reason: input.reason,
+        },
       });
       await tx.taxRateVersion.update({ where: { id: version.id }, data: { approvalRequestId: request.id } });
       await this.audit.record(tx, {
@@ -408,14 +484,23 @@ export class LedgerConfigService {
         entityId,
         data: { code, ratePct: input.ratePct, effectiveFrom: input.effectiveFrom.toISOString() },
       });
-      return tx.taxRate.findUniqueOrThrow({ where: { id: taxRate.id }, include: { versions: { orderBy: { versionNo: 'desc' } } } });
+      return tx.taxRate.findUniqueOrThrow({
+        where: { id: taxRate.id },
+        include: { versions: { orderBy: { versionNo: 'desc' } } },
+      });
     });
   }
 
   async onTaxRateDecided(tx: Tx, request: ApprovalRequest, approved: boolean): Promise<void> {
-    const version = await tx.taxRateVersion.findUnique({ where: { id: request.subjectId }, include: { taxRate: true } });
+    const version = await tx.taxRateVersion.findUnique({
+      where: { id: request.subjectId },
+      include: { taxRate: true },
+    });
     if (!version || version.status !== 'proposed') return;
-    const approver = await tx.approvalAction.findFirst({ where: { requestId: request.id, action: 'approve' }, orderBy: { createdAt: 'desc' } });
+    const approver = await tx.approvalAction.findFirst({
+      where: { requestId: request.id, action: 'approve' },
+      orderBy: { createdAt: 'desc' },
+    });
     const status = approved ? 'approved' : request.status === 'withdrawn' ? 'withdrawn' : 'rejected';
     await tx.taxRateVersion.update({
       where: { id: version.id },
@@ -427,7 +512,12 @@ export class LedgerConfigService {
         type: approved ? 'tax_rate.version_approved' : 'tax_rate.version_declined',
         aggregateType: 'tax_rate',
         aggregateId: version.taxRate.publicId,
-        payload: { code: version.taxRate.code, versionNo: version.versionNo, ratePct: version.ratePct.toString(), status },
+        payload: {
+          code: version.taxRate.code,
+          versionNo: version.versionNo,
+          ratePct: version.ratePct.toString(),
+          status,
+        },
       },
       systemActor('ledger.approvals'),
     );
