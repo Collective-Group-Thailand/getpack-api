@@ -85,6 +85,42 @@ const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
       },
     },
   },
+  {
+    key: 'report_run.completed:assignee',
+    channel: 'in_app',
+    category: 'transactional',
+    description: 'Recipients of a report: the file is ready to download in Packio (B6.2)',
+    versions: {
+      th: { subject: 'รายงานพร้อมแล้ว', body: 'รายงาน {{payload.reportNameTh}} พร้อมดาวน์โหลดแล้ว ({{payload.rowCount}} แถว)' },
+      en: { subject: 'Report ready', body: 'The {{payload.reportNameEn}} report is ready to download ({{payload.rowCount}} rows)' },
+    },
+  },
+  {
+    key: 'report_run.completed:assignee',
+    channel: 'email',
+    category: 'transactional',
+    description: 'Recipients of a report: the file is ready to download in Packio — never attached (B6.2)',
+    versions: {
+      th: {
+        subject: 'รายงาน {{payload.reportNameTh}} พร้อมแล้ว',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>เรียน {{recipient.displayName}}</mj-text><mj-text>รายงาน {{payload.reportNameTh}} ({{payload.rowCount}} แถว) พร้อมดาวน์โหลดในเมนูรายงานของระบบ Packio</mj-text></mj-column></mj-section></mj-body></mjml>',
+      },
+      en: {
+        subject: 'The {{payload.reportNameEn}} report is ready',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>Dear {{recipient.displayName}}</mj-text><mj-text>The {{payload.reportNameEn}} report ({{payload.rowCount}} rows) is ready to download from Reports in Packio.</mj-text></mj-column></mj-section></mj-body></mjml>',
+      },
+    },
+  },
+  {
+    key: 'report_run.failed:assignee',
+    channel: 'in_app',
+    category: 'transactional',
+    description: 'Recipients of a report: the file could not be generated (B6.2)',
+    versions: {
+      th: { subject: 'สร้างรายงานไม่สำเร็จ', body: 'สร้างรายงาน {{payload.reportNameTh}} ไม่สำเร็จ กรุณาติดต่อผู้ดูแลระบบ' },
+      en: { subject: 'Report failed', body: 'The {{payload.reportNameEn}} report could not be generated; please contact an administrator' },
+    },
+  },
 ];
 
 const PLATFORM_ROUTES: readonly NotificationRouteSeed[] = [
@@ -110,6 +146,24 @@ const PLATFORM_ROUTES: readonly NotificationRouteSeed[] = [
     eventType: 'approval.sla_breached',
     audience: 'assignee',
     templateKey: 'approval.sla_breached:assignee',
+    channel: 'in_app',
+  },
+  {
+    eventType: 'report_run.completed',
+    audience: 'assignee',
+    templateKey: 'report_run.completed:assignee',
+    channel: 'in_app',
+  },
+  {
+    eventType: 'report_run.completed',
+    audience: 'assignee',
+    templateKey: 'report_run.completed:assignee',
+    channel: 'email',
+  },
+  {
+    eventType: 'report_run.failed',
+    audience: 'assignee',
+    templateKey: 'report_run.failed:assignee',
     channel: 'in_app',
   },
 ];

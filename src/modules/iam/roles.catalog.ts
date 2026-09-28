@@ -44,6 +44,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      'reports.export', 'reports.schedule',
       'analytics.read', 'analytics.read_factories', 'analytics.prospectus',
       'receivables.read',
       'ledger.read',
@@ -78,6 +79,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'รองประธาน',
     nameEn: 'VP',
     permissions: [
+      'reports.export', 'reports.schedule',
       'analytics.read', 'analytics.read_factories', 'analytics.prospectus',
       'ledger.read',
       ...APPROVER,
@@ -96,7 +98,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ผู้อำนวยการ',
     nameEn: 'Director',
-    permissions: [...APPROVER, 'analytics.read', 'analytics.read_factories', 'orders.read', 'discount_memos.read', 'production.read', 'shipments.read', 'claims.read'],
+    permissions: [...APPROVER, 'reports.export', 'reports.schedule', 'analytics.read', 'analytics.read_factories', 'orders.read', 'discount_memos.read', 'production.read', 'shipments.read', 'claims.read'],
   },
   {
     key: 'admin',
@@ -105,6 +107,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ดูแลระบบ',
     nameEn: 'Admin',
     permissions: [
+      'reports.export', 'reports.schedule',
       'analytics.read', 'analytics.manage',
       ...EVERY_STAFF_MEMBER,
       'conversations.read',
@@ -220,6 +223,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'หัวหน้าฝ่ายบริการลูกค้า',
     nameEn: 'CS Lead',
     permissions: [
+      'reports.export', 'reports.schedule',
       'receivables.read', 'credit_notes.request',
       ...EVERY_STAFF_MEMBER,
       'conversations.read',
@@ -294,6 +298,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายการเงิน',
     nameEn: 'Finance',
     permissions: [
+      'reports.export', 'reports.schedule',
       'receivables.read', 'receivables.manage', 'credit_notes.request', 'receivables.write_off.request',
       'ledger.read', 'ledger.journals.manage', 'ledger.config.propose',
       'payables.read', 'payables.manage', 'payables.vendors.manage', 'payables.bills.record',
@@ -330,6 +335,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการฝ่ายการเงิน',
     nameEn: 'Finance Manager',
     permissions: [
+      'reports.export', 'reports.schedule',
       'receivables.read', 'receivables.manage', 'credit_notes.request', 'receivables.write_off.request', 'receivables.debit_notes.issue',
       'ledger.read', 'ledger.journals.manage', 'ledger.config.propose', 'ledger.periods.manage', 'ledger.post_soft_closed',
       'payables.read', 'payables.manage', 'payables.vendors.manage', 'payables.bills.record',
@@ -373,6 +379,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Logistics',
     // Customer rates are sell prices; factory payout cards are buy prices and stay hidden (D-141).
     permissions: [
+      'reports.export',
       ...EVERY_STAFF_MEMBER,
       'shipping_rates.read',
       'shipping_rates.manage',
@@ -392,6 +399,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Marketing',
     // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
     permissions: [
+      'reports.export', 'reports.schedule',
       'analytics.read',
       ...EVERY_STAFF_MEMBER,
       'line.manage',
@@ -414,6 +422,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการพันธมิตร',
     nameEn: 'Partner Manager',
     permissions: [
+      'reports.export', 'reports.schedule',
       'analytics.read', 'analytics.read_factories', 'analytics.prospectus',
       ...APPROVER,
       ...COST_AND_MARGIN,
@@ -447,6 +456,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ตรวจสอบบัญชี',
     nameEn: 'Auditor (read-only)',
     permissions: [
+      'reports.export',
       'receivables.read',
       'ledger.read',
       'payables.read',

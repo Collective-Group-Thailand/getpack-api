@@ -277,6 +277,8 @@ export const ERROR_CODES = {
   'close.tasks_open': HttpStatus.CONFLICT,
   'close.review_by_approval': HttpStatus.UNPROCESSABLE_ENTITY,
   'close.auditor_sign_off_required': HttpStatus.CONFLICT,
+  'reports.recipient_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
+  'reports.schedule_state': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

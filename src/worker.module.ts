@@ -35,6 +35,7 @@ import { ProductionModule } from '@modules/production/production.module';
 import { PromotionsModule } from '@modules/promotions/promotions.module';
 import { QuotesModule } from '@modules/quotes/quotes.module';
 import { ReceivablesModule } from '@modules/receivables/receivables.module';
+import { ReportsModule } from '@modules/reports/reports.module';
 import { RfqModule } from '@modules/rfq/rfq.module';
 import { ShippingModule } from '@modules/shipping/shipping.module';
 import { TaxModule } from '@modules/tax/tax.module';
@@ -115,6 +116,7 @@ import { WorkerLifecycle } from './worker.lifecycle';
     CloseModule,
     AuditSupportModule,
     AnalyticsModule,
+    ReportsModule,
     DomainEventsWorkerModule,
   ],
   providers: [WorkerLifecycle],

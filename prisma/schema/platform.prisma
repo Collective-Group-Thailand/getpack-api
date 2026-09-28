@@ -870,6 +870,10 @@ model FileObject {
   gatewaySettlementReports GatewaySettlement[]   @relation("GatewaySettlementReport")
   // --- end Finance B5.3
 
+  // --- Reports B6.2
+  reportRuns ReportRun[] @relation("ReportRunFile")
+  // --- end Reports B6.2
+
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
   @@index([ownerUserId], map: "ix_file_objects__owner_user_id")

@@ -30,6 +30,7 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   { key: 'audit_logs', path: '/admin/audit-logs', permission: 'audit_logs.read' },
   { key: 'outbox', path: '/admin/outbox', permission: 'outbox.manage' },
   { key: 'analytics', path: '/admin/analytics', permission: 'analytics.read' },
+  { key: 'reports', path: '/admin/reports' },
 ];
 
 export function menuFor(permissions: ReadonlySet<string>): Pick<MenuEntry, 'key' | 'path'>[] {

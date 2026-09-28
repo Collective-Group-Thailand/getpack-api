@@ -150,6 +150,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `analytics.read_factories` — Read factory utilisation and on-time performance by named factory (staff-only) (D-102, D-044) | ● | ● | ● | ● |  |  |  |  |  |  |  |  | ● |  |
 | `analytics.manage` — Queue analytics rollup backfills and read their runs (D-102) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
 | `analytics.prospectus` — Generate and download the aggregated, anonymised partner prospectus (D-102, D-044, D-160) | ● | ● | ● |  |  |  |  |  |  |  |  |  | ● |  |
+| `reports.export` — Export operational reports as XLSX / CSV and download report files (each report also needs its data permission) (D-111) | ● | ● | ● | ● | ● |  | ● |  | ● | ● | ● | ● | ● | ● |
+| `reports.schedule` — Schedule operational reports for staff recipients and see every run of the reports the user may read (D-111) | ● | ● | ● | ● | ● |  | ● |  | ● | ● |  | ● | ● |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

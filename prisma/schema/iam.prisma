@@ -620,6 +620,12 @@ model User {
   pbcExports               PbcExport[]      @relation("PbcExportGeneratedBy")
   // --- end Finance B5.6
 
+  // --- Reports B6.2
+  reportSchedulesCreated ReportSchedule[] @relation("ReportScheduleCreatedBy")
+  reportSchedulesUpdated ReportSchedule[] @relation("ReportScheduleUpdatedBy")
+  reportRunsRequested    ReportRun[]      @relation("ReportRunRequestedBy")
+  // --- end Reports B6.2
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

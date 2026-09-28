@@ -974,6 +974,19 @@ export const PERMISSIONS = [
     description: 'Generate and download the aggregated, anonymised partner prospectus',
     decisionRefs: ['D-102', 'D-044', 'D-160'],
   },
+  // --- B6.2 reports (D-111)
+  {
+    key: 'reports.export',
+    audience: 'staff',
+    description: 'Export operational reports as XLSX / CSV and download report files (each report also needs its data permission)',
+    decisionRefs: ['D-111'],
+  },
+  {
+    key: 'reports.schedule',
+    audience: 'staff',
+    description: 'Schedule operational reports for staff recipients and see every run of the reports the user may read',
+    decisionRefs: ['D-111'],
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];

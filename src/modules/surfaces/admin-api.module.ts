@@ -33,6 +33,7 @@ import { PRODUCTION_ADMIN_CONTROLLERS } from '@modules/production/production.reg
 import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_ADMIN_CONTROLLERS } from '@modules/receivables/receivables.registry';
+import { REPORTS_ADMIN_CONTROLLERS } from '@modules/reports/reports.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
 import { TAX_ADMIN_CONTROLLERS } from '@modules/tax/tax.registry';
 import { TIMELINE_ADMIN_CONTROLLERS } from '@modules/timeline/timeline.registry';
@@ -114,6 +115,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...CLOSE_ADMIN_CONTROLLERS,
     ...AUDIT_SUPPORT_ADMIN_CONTROLLERS,
     ...ANALYTICS_ADMIN_CONTROLLERS,
+    ...REPORTS_ADMIN_CONTROLLERS,
   ],
 })
 export class AdminApiModule {}

@@ -2498,6 +2498,28 @@
           "type": "https://errors.packio/refunds.not_refundable"
         }
       },
+      "problem.reports.recipient_not_allowed": {
+        "summary": "reports.recipient_not_allowed",
+        "value": {
+          "code": "reports.recipient_not_allowed",
+          "detail": "ผู้รับทุกคนต้องเป็นพนักงานที่ใช้งานอยู่และมีสิทธิ์ดูและส่งออกรายงานนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ผู้รับรายงานไม่มีสิทธิ์",
+          "type": "https://errors.packio/reports.recipient_not_allowed"
+        }
+      },
+      "problem.reports.schedule_state": {
+        "summary": "reports.schedule_state",
+        "value": {
+          "code": "reports.schedule_state",
+          "detail": "ตารางส่งรายงานนี้อยู่ในสถานะ {status} อยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตารางรายงานอยู่ในสถานะ {status} แล้ว",
+          "type": "https://errors.packio/reports.schedule_state"
+        }
+      },
       "problem.reviews.exists": {
         "summary": "reviews.exists",
         "value": {
@@ -15609,6 +15631,110 @@
         "required": [
           "from",
           "to"
+        ],
+        "type": "object"
+      },
+      "CreateReportExportDto": {
+        "properties": {
+          "filters": {
+            "$ref": "#/components/schemas/ReportFiltersDto"
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ],
+            "example": "xlsx"
+          }
+        },
+        "required": [
+          "format",
+          "filters"
+        ],
+        "type": "object"
+      },
+      "CreateReportScheduleDto": {
+        "properties": {
+          "dayOfMonth": {
+            "description": "Monthly: day of month (1–28)",
+            "example": 1,
+            "maximum": 28,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "dayOfWeek": {
+            "description": "Weekly: ISO weekday (1 = Monday)",
+            "example": 1,
+            "maximum": 7,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "filters": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFiltersDto"
+              }
+            ],
+            "description": "With a relative `period` for the date filter"
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ],
+            "example": "xlsx"
+          },
+          "frequency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFrequency"
+              }
+            ],
+            "example": "weekly"
+          },
+          "name": {
+            "example": "AR aging — every Monday",
+            "maxLength": 120,
+            "type": "string"
+          },
+          "recipientIds": {
+            "description": "Staff who may read and export the report",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "reportKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ],
+            "example": "ar_aging"
+          },
+          "runAt": {
+            "description": "Asia/Bangkok",
+            "example": "07:00",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reportKey",
+          "name",
+          "format",
+          "frequency",
+          "runAt",
+          "filters",
+          "recipientIds"
         ],
         "type": "object"
       },
@@ -35117,6 +35243,16 @@
         ],
         "type": "object"
       },
+      "RelativePeriod": {
+        "enum": [
+          "previous_day",
+          "previous_week",
+          "previous_month",
+          "month_to_date",
+          "year_to_date"
+        ],
+        "type": "string"
+      },
       "RenderedMessageDto": {
         "properties": {
           "body": {
@@ -35396,6 +35532,519 @@
         },
         "required": [
           "postcodes"
+        ],
+        "type": "object"
+      },
+      "ReportColumnDto": {
+        "properties": {
+          "key": {
+            "example": "gross",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "Gross",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "รวมทั้งสิ้น",
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportColumnType"
+              }
+            ],
+            "example": "money"
+          }
+        },
+        "required": [
+          "key",
+          "labelTh",
+          "labelEn",
+          "type"
+        ],
+        "type": "object"
+      },
+      "ReportColumnType": {
+        "enum": [
+          "text",
+          "integer",
+          "money",
+          "decimal",
+          "percent",
+          "date",
+          "datetime",
+          "boolean"
+        ],
+        "type": "string"
+      },
+      "ReportDefinitionDto": {
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ReportColumnDto"
+            },
+            "type": "array"
+          },
+          "decisions": {
+            "example": [
+              "D-010",
+              "D-020"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": {
+            "example": "Every order of the order groups placed in the period…",
+            "type": "string"
+          },
+          "filters": {
+            "items": {
+              "$ref": "#/components/schemas/ReportFilterDefDto"
+            },
+            "type": "array"
+          },
+          "formats": {
+            "example": [
+              "xlsx",
+              "csv"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ReportFormat"
+            },
+            "type": "array"
+          },
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ],
+            "example": "sales"
+          },
+          "nameEn": {
+            "example": "Sales register",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "รายงานยอดขาย",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "nameTh",
+          "nameEn",
+          "description",
+          "decisions",
+          "filters",
+          "columns",
+          "formats"
+        ],
+        "type": "object"
+      },
+      "ReportFilterDefDto": {
+        "properties": {
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFilterKey"
+              }
+            ],
+            "description": "`period` is the date filter: its kind says which query parameters it takes",
+            "example": "period"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFilterKind"
+              }
+            ],
+            "description": "`range`: from + to (or period); `as_of`: asOf (or period); `month`: month (or period); `enum` / `uuid`: the key itself",
+            "example": "range"
+          },
+          "required": {
+            "example": true,
+            "type": "boolean"
+          },
+          "values": {
+            "description": "Allowed values of an `enum` filter",
+            "example": null,
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "required",
+          "values"
+        ],
+        "type": "object"
+      },
+      "ReportFilterKey": {
+        "description": "`period` is the date filter: its kind says which query parameters it takes",
+        "enum": [
+          "period",
+          "channel",
+          "productTypeId",
+          "factoryId",
+          "status",
+          "provider"
+        ],
+        "type": "string"
+      },
+      "ReportFilterKind": {
+        "description": "`range`: from + to (or period); `as_of`: asOf (or period); `month`: month (or period); `enum` / `uuid`: the key itself",
+        "enum": [
+          "range",
+          "as_of",
+          "month",
+          "enum",
+          "uuid"
+        ],
+        "type": "string"
+      },
+      "ReportFiltersDto": {
+        "properties": {
+          "asOf": {
+            "example": "2026-10-31",
+            "format": "date",
+            "type": "string"
+          },
+          "channel": {
+            "example": "web",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "factoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "from": {
+            "example": "2026-10-01",
+            "format": "date",
+            "type": "string"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "period": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RelativePeriod"
+              }
+            ],
+            "description": "Relative period (required on schedules); or explicit dates below",
+            "example": "previous_month"
+          },
+          "productTypeId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "provider": {
+            "example": "scb",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "status": {
+            "example": "completed",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "to": {
+            "example": "2026-10-31",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReportFormat": {
+        "enum": [
+          "xlsx",
+          "csv"
+        ],
+        "type": "string"
+      },
+      "ReportFrequency": {
+        "enum": [
+          "daily",
+          "weekly",
+          "monthly"
+        ],
+        "type": "string"
+      },
+      "ReportKey": {
+        "enum": [
+          "sales",
+          "sales_tax",
+          "payments_by_channel",
+          "orders",
+          "quotations",
+          "campaign_usage",
+          "points_liability",
+          "ar_aging",
+          "ap_aging",
+          "payout_history",
+          "factory_scorecards",
+          "claims"
+        ],
+        "type": "string"
+      },
+      "ReportPreviewDto": {
+        "properties": {
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/ReportColumnDto"
+            },
+            "type": "array"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/ResolvedReportFiltersDto"
+          },
+          "reportKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ],
+            "example": "sales"
+          },
+          "rows": {
+            "description": "Rows keyed by column key; money as decimal strings",
+            "example": [
+              {
+                "gross": "10700.00",
+                "orderCode": "ORD-2610-00012",
+                "quantity": 1000
+              }
+            ],
+            "items": {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "truncated": {
+            "description": "More rows than the preview limit (200): export the file for all of them",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "reportKey",
+          "filters",
+          "columns",
+          "rows",
+          "truncated"
+        ],
+        "type": "object"
+      },
+      "ReportRunDto": {
+        "properties": {
+          "error": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "filters": {
+            "$ref": "#/components/schemas/ResolvedReportFiltersDto"
+          },
+          "finishedAt": {
+            "example": "2026-11-01T07:00:12+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ],
+            "example": "xlsx"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000620001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "queuedAt": {
+            "example": "2026-11-01T07:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reportKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ],
+            "example": "sales"
+          },
+          "rowCount": {
+            "example": 128,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "scheduleId": {
+            "description": "The schedule that produced it",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobStatus"
+              }
+            ],
+            "example": "succeeded"
+          }
+        },
+        "required": [
+          "id",
+          "reportKey",
+          "format",
+          "status",
+          "filters",
+          "rowCount",
+          "error",
+          "scheduleId",
+          "queuedAt",
+          "finishedAt"
+        ],
+        "type": "object"
+      },
+      "ReportScheduleDto": {
+        "properties": {
+          "active": {
+            "example": true,
+            "type": "boolean"
+          },
+          "createdAt": {
+            "example": "2026-10-28T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "dayOfMonth": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "dayOfWeek": {
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "filters": {
+            "$ref": "#/components/schemas/ReportFiltersDto"
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ],
+            "example": "xlsx"
+          },
+          "frequency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFrequency"
+              }
+            ],
+            "example": "weekly"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000620002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastRunAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "AR aging — every Monday",
+            "type": "string"
+          },
+          "nextRunAt": {
+            "example": "2026-11-02T07:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipients": {
+            "items": {
+              "$ref": "#/components/schemas/UserRefDto"
+            },
+            "type": "array"
+          },
+          "reportKey": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportKey"
+              }
+            ],
+            "example": "ar_aging"
+          },
+          "runAt": {
+            "example": "07:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reportKey",
+          "name",
+          "format",
+          "frequency",
+          "runAt",
+          "dayOfWeek",
+          "dayOfMonth",
+          "filters",
+          "recipients",
+          "active",
+          "nextRunAt",
+          "lastRunAt",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -35721,6 +36370,79 @@
         "required": [
           "note"
         ],
+        "type": "object"
+      },
+      "ResolvedReportFiltersDto": {
+        "properties": {
+          "asOf": {
+            "example": null,
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel": {
+            "example": "web",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "factoryId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "from": {
+            "example": "2026-10-01",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "month": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productTypeId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "to": {
+            "example": "2026-10-31",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
         "type": "object"
       },
       "RespondConsultationDto": {
@@ -188447,6 +189169,2541 @@
         ]
       }
     },
+    "/v1/admin/report-runs": {
+      "get": {
+        "description": "Newest first (100): the runs of reports the caller may read that they requested or were sent (all of them with `reports.schedule`).\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.listRuns",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "reportKey",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ReportKey"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scheduleId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "error": null,
+                    "filters": {
+                      "from": "2026-10-01",
+                      "to": "2026-10-31"
+                    },
+                    "finishedAt": "2026-11-01T07:00:12+07:00",
+                    "format": "xlsx",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000620001",
+                    "queuedAt": "2026-11-01T07:00:00+07:00",
+                    "reportKey": "sales",
+                    "rowCount": 128,
+                    "scheduleId": null,
+                    "status": "succeeded"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReportRunDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Runs",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List report files",
+        "tags": [
+          "admin.reports"
+        ]
+      }
+    },
+    "/v1/admin/report-runs/{runId}": {
+      "get": {
+        "description": "`queued` / `running` until the worker has written it.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.getRun",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "runId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": null,
+                  "filters": {
+                    "from": "2026-10-01",
+                    "to": "2026-10-31"
+                  },
+                  "finishedAt": "2026-11-01T07:00:12+07:00",
+                  "format": "xlsx",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000620001",
+                  "queuedAt": "2026-11-01T07:00:00+07:00",
+                  "reportKey": "sales",
+                  "rowCount": 128,
+                  "scheduleId": null,
+                  "status": "succeeded"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReportRunDto"
+                }
+              }
+            },
+            "description": "Run",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a report file",
+        "tags": [
+          "admin.reports"
+        ]
+      }
+    },
+    "/v1/admin/report-runs/{runId}/file": {
+      "get": {
+        "description": "A 5-minute signed URL; each download is an audited export (`report.downloaded`).\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.runFile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "runId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-11-01T07:05:12+07:00",
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Signed URL",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Download a report file",
+        "tags": [
+          "admin.reports"
+        ],
+        "x-required-permissions": [
+          "reports.export"
+        ]
+      }
+    },
+    "/v1/admin/report-schedules": {
+      "get": {
+        "description": "Schedules of the reports the caller may read, newest first.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.listSchedules",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "active": true,
+                    "createdAt": "2026-10-28T15:00:00+07:00",
+                    "dayOfMonth": null,
+                    "dayOfWeek": 1,
+                    "filters": {
+                      "period": "previous_day"
+                    },
+                    "format": "xlsx",
+                    "frequency": "weekly",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000620002",
+                    "lastRunAt": null,
+                    "name": "AR aging — every Monday",
+                    "nextRunAt": "2026-11-02T07:00:00+07:00",
+                    "recipients": [
+                      {
+                        "displayName": "การเงิน ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                      }
+                    ],
+                    "reportKey": "ar_aging",
+                    "runAt": "07:00"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReportScheduleDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Schedules",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List report schedules",
+        "tags": [
+          "admin.reports"
+        ]
+      },
+      "post": {
+        "description": "Daily, weekly or monthly at a time of day (Asia/Bangkok) with a relative `period` (previous day / week / month, month or year to date). Recipients must be active staff who may read and export the report; they are told through the notification matrix (in-app + e-mail) and download the file in Packio — the data is never attached. Schedules are not edited: deactivate and create a new one.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.createSchedule",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "dayOfWeek": 1,
+                    "filters": {
+                      "period": "previous_day"
+                    },
+                    "format": "xlsx",
+                    "frequency": "weekly",
+                    "name": "AR aging — every Monday",
+                    "recipientIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    ],
+                    "reportKey": "ar_aging",
+                    "runAt": "07:00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportScheduleDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": true,
+                  "createdAt": "2026-10-28T15:00:00+07:00",
+                  "dayOfMonth": null,
+                  "dayOfWeek": 1,
+                  "filters": {
+                    "period": "previous_day"
+                  },
+                  "format": "xlsx",
+                  "frequency": "weekly",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000620002",
+                  "lastRunAt": null,
+                  "name": "AR aging — every Monday",
+                  "nextRunAt": "2026-11-02T07:00:00+07:00",
+                  "recipients": [
+                    {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    }
+                  ],
+                  "reportKey": "ar_aging",
+                  "runAt": "07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "reports.recipient_not_allowed": {
+                    "$ref": "#/components/examples/problem.reports.recipient_not_allowed"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `reports.recipient_not_allowed`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Schedule a report",
+        "tags": [
+          "admin.reports"
+        ],
+        "x-required-permissions": [
+          "reports.schedule"
+        ]
+      }
+    },
+    "/v1/admin/report-schedules/{scheduleId}": {
+      "get": {
+        "description": "With its recipients and next run.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.getSchedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": true,
+                  "createdAt": "2026-10-28T15:00:00+07:00",
+                  "dayOfMonth": null,
+                  "dayOfWeek": 1,
+                  "filters": {
+                    "period": "previous_day"
+                  },
+                  "format": "xlsx",
+                  "frequency": "weekly",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000620002",
+                  "lastRunAt": null,
+                  "name": "AR aging — every Monday",
+                  "nextRunAt": "2026-11-02T07:00:00+07:00",
+                  "recipients": [
+                    {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    }
+                  ],
+                  "reportKey": "ar_aging",
+                  "runAt": "07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleDto"
+                }
+              }
+            },
+            "description": "Schedule",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a report schedule",
+        "tags": [
+          "admin.reports"
+        ]
+      }
+    },
+    "/v1/admin/report-schedules/{scheduleId}/actions/activate": {
+      "post": {
+        "description": "Runs again from its next time.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.activateSchedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": true,
+                  "createdAt": "2026-10-28T15:00:00+07:00",
+                  "dayOfMonth": null,
+                  "dayOfWeek": 1,
+                  "filters": {
+                    "period": "previous_day"
+                  },
+                  "format": "xlsx",
+                  "frequency": "weekly",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000620002",
+                  "lastRunAt": null,
+                  "name": "AR aging — every Monday",
+                  "nextRunAt": "2026-11-02T07:00:00+07:00",
+                  "recipients": [
+                    {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    }
+                  ],
+                  "reportKey": "ar_aging",
+                  "runAt": "07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleDto"
+                }
+              }
+            },
+            "description": "Activated",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "reports.schedule_state": {
+                    "$ref": "#/components/examples/problem.reports.schedule_state"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `reports.schedule_state`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Activate a report schedule",
+        "tags": [
+          "admin.reports"
+        ],
+        "x-required-permissions": [
+          "reports.schedule"
+        ]
+      }
+    },
+    "/v1/admin/report-schedules/{scheduleId}/actions/deactivate": {
+      "post": {
+        "description": "No further runs; files already sent stay available.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.deactivateSchedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": false,
+                  "createdAt": "2026-10-28T15:00:00+07:00",
+                  "dayOfMonth": null,
+                  "dayOfWeek": 1,
+                  "filters": {
+                    "period": "previous_day"
+                  },
+                  "format": "xlsx",
+                  "frequency": "weekly",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000620002",
+                  "lastRunAt": null,
+                  "name": "AR aging — every Monday",
+                  "nextRunAt": null,
+                  "recipients": [
+                    {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    }
+                  ],
+                  "reportKey": "ar_aging",
+                  "runAt": "07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReportScheduleDto"
+                }
+              }
+            },
+            "description": "Deactivated",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "reports.schedule_state": {
+                    "$ref": "#/components/examples/problem.reports.schedule_state"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `reports.schedule_state`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Deactivate a report schedule",
+        "tags": [
+          "admin.reports"
+        ],
+        "x-required-permissions": [
+          "reports.schedule"
+        ]
+      }
+    },
+    "/v1/admin/report-schedules/{scheduleId}/actions/run": {
+      "post": {
+        "description": "Queues a run with the schedule’s filters resolved now; recipients are notified as usual. Poll `GET /v1/admin/report-runs/{runId}`.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.runSchedule",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scheduleId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": null,
+                  "filters": {
+                    "from": "2026-10-01",
+                    "to": "2026-10-31"
+                  },
+                  "finishedAt": null,
+                  "format": "xlsx",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000620001",
+                  "queuedAt": "2026-11-01T07:00:00+07:00",
+                  "reportKey": "sales",
+                  "rowCount": null,
+                  "scheduleId": "0192f3a0-7c1e-7d2a-9b1f-000000620002",
+                  "status": "queued"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReportRunDto"
+                }
+              }
+            },
+            "description": "Queued",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Run a report schedule now",
+        "tags": [
+          "admin.reports"
+        ],
+        "x-required-permissions": [
+          "reports.schedule"
+        ]
+      }
+    },
+    "/v1/admin/reports": {
+      "get": {
+        "description": "Operational reports (B6.2) whose data the caller may read: columns, filters and formats. Sales, sales tax, payments per channel (fees, VAT, WHT, net, settlement date), orders, quotations, campaign usage, points liability, AR / AP aging, payout history, factory scorecards, claims. Calculate / search / drawing / event-log reports are R2 (D-111).\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.catalogue",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "columns": [
+                      {
+                        "key": "gross",
+                        "labelEn": "Gross",
+                        "labelTh": "รวมทั้งสิ้น",
+                        "type": "money"
+                      }
+                    ],
+                    "decisions": [
+                      "D-010",
+                      "D-020"
+                    ],
+                    "description": "Every order of the order groups placed in the period…",
+                    "filters": [
+                      {
+                        "key": "period",
+                        "kind": "range",
+                        "required": true,
+                        "values": null
+                      }
+                    ],
+                    "formats": [
+                      "xlsx",
+                      "csv"
+                    ],
+                    "key": "sales",
+                    "nameEn": "Sales register",
+                    "nameTh": "รายงานยอดขาย"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReportDefinitionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Reports",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the reports I may run",
+        "tags": [
+          "admin.reports"
+        ]
+      }
+    },
+    "/v1/admin/reports/{reportKey}/exports": {
+      "post": {
+        "description": "Queues the file: the worker streams the rows into the workbook (or a UTF-8 CSV) and stores it; poll `GET /v1/admin/report-runs/{runId}` and download through `…/file` (a 5-minute signed URL, audited). Requires the report’s data permission and `reports.export`.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.export",
+        "parameters": [
+          {
+            "description": "A key from `GET /v1/admin/reports`",
+            "in": "path",
+            "name": "reportKey",
+            "required": true,
+            "schema": {
+              "example": "sales",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "filters": {
+                      "from": "2026-10-01",
+                      "to": "2026-10-31"
+                    },
+                    "format": "xlsx"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportExportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": null,
+                  "filters": {
+                    "from": "2026-10-01",
+                    "to": "2026-10-31"
+                  },
+                  "finishedAt": null,
+                  "format": "xlsx",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000620001",
+                  "queuedAt": "2026-11-01T07:00:00+07:00",
+                  "reportKey": "sales",
+                  "rowCount": null,
+                  "scheduleId": null,
+                  "status": "queued"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReportRunDto"
+                }
+              }
+            },
+            "description": "Queued",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export a report as XLSX or CSV",
+        "tags": [
+          "admin.reports"
+        ],
+        "x-required-permissions": [
+          "reports.export"
+        ]
+      }
+    },
+    "/v1/admin/reports/{reportKey}/preview": {
+      "get": {
+        "description": "The first 200 rows with the given filters (explicit dates or a relative `period`, Asia/Bangkok); `truncated` when there are more — export the file for all of them. Requires the report’s data permission.\n\nImplements: D-111, D-033.",
+        "operationId": "admin.reports.preview",
+        "parameters": [
+          {
+            "description": "A key from `GET /v1/admin/reports`",
+            "in": "path",
+            "name": "reportKey",
+            "required": true,
+            "schema": {
+              "example": "sales",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-01",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-10-31",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Aging reports",
+            "in": "query",
+            "name": "asOf",
+            "required": false,
+            "schema": {
+              "example": "2026-10-31",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Monthly reports (YYYY-MM)",
+            "in": "query",
+            "name": "month",
+            "required": false,
+            "schema": {
+              "example": "2026-10",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Instead of explicit dates (Asia/Bangkok)",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RelativePeriod"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "example": "web",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "productTypeId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "factoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "example": "completed",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "example": "scb",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "columns": [
+                    {
+                      "key": "gross",
+                      "labelEn": "Gross",
+                      "labelTh": "รวมทั้งสิ้น",
+                      "type": "money"
+                    }
+                  ],
+                  "filters": {
+                    "from": "2026-10-01",
+                    "to": "2026-10-31"
+                  },
+                  "reportKey": "sales",
+                  "rows": [
+                    {
+                      "gross": "10700.00",
+                      "orderCode": "ORD-2610-00012",
+                      "quantity": 1000
+                    }
+                  ],
+                  "truncated": false
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReportPreviewDto"
+                }
+              }
+            },
+            "description": "Preview",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Preview a report",
+        "tags": [
+          "admin.reports"
+        ]
+      }
+    },
     "/v1/admin/reviews": {
       "get": {
         "description": "Newest first; filter by status (D-135).\n\nImplements: D-135.",
@@ -272948,6 +276205,10 @@
     {
       "description": "Refunds: request, Finance Manager approval (maker-checker), gateway or bank-transfer execution (D-169).",
       "name": "admin.refunds"
+    },
+    {
+      "description": "Operational reports (B6.2): catalogue by permission, previews, XLSX / CSV files generated by the worker and downloaded through signed URLs (audited), and schedules that notify their recipients; calculate / search / drawing / event-log reports are R2 (D-111).",
+      "name": "admin.reports"
     },
     {
       "description": "Order reviews and their moderation (D-135).",

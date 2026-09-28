@@ -1192,5 +1192,15 @@
       "title": "Auditor sign-off required",
       "detail": "The last month of the fiscal year ({period}) is locked after the auditor signs off."
     }
+  },
+  "reports": {
+    "recipient_not_allowed": {
+      "title": "Recipient not allowed",
+      "detail": "Every recipient must be an active staff member who may read and export this report."
+    },
+    "schedule_state": {
+      "title": "Schedule already {status}",
+      "detail": "The report schedule is already {status}."
+    }
   }
 }

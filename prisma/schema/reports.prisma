@@ -1,0 +1,85 @@
+// B6.2 Operational reports (schema-design §3.9, A-48): scheduled reports and their runs. The report definitions
+// themselves (columns, filters, permission) live in code (`src/modules/reports/definitions`).
+
+enum ReportFormat {
+  xlsx
+  csv
+
+  @@map("report_format")
+}
+
+enum ReportFrequency {
+  daily
+  weekly
+  monthly
+
+  @@map("report_frequency")
+}
+
+/// A report sent on a schedule (Asia/Bangkok) to staff recipients who hold its permission.
+model ReportSchedule {
+  id               BigInt          @id(map: "pk_report_schedules") @default(autoincrement())
+  publicId         String          @unique(map: "ux_report_schedules__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  reportKey        String          @map("report_key")
+  name             String
+  /// Filters with a relative `period` (previous_day, previous_week, previous_month, month_to_date).
+  filters          Json            @default("{}")
+  format           ReportFormat
+  frequency        ReportFrequency
+  /// Minutes after midnight, Asia/Bangkok.
+  runAtMinute      Int             @map("run_at_minute") @db.SmallInt
+  /// ISO weekday (1 = Monday) of a weekly schedule.
+  dayOfWeek        Int?            @map("day_of_week") @db.SmallInt
+  /// 1–28 of a monthly schedule.
+  dayOfMonth       Int?            @map("day_of_month") @db.SmallInt
+  timezone         String          @default("Asia/Bangkok")
+  recipientUserIds BigInt[]        @map("recipient_user_ids")
+  active           Boolean         @default(true)
+  nextRunAt        DateTime?       @map("next_run_at") @db.Timestamptz(6)
+  lastRunAt        DateTime?       @map("last_run_at") @db.Timestamptz(6)
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt          @map("created_by")
+  updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?         @map("updated_by")
+  rowVersion       Int             @default(1) @map("row_version")
+
+  createdBy User        @relation("ReportScheduleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_report_schedules__created_by")
+  updatedBy User?       @relation("ReportScheduleUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_report_schedules__updated_by")
+  runs      ReportRun[]
+
+  @@index([nextRunAt], map: "ix_report_schedules__next_run_at", where: raw("(active = true)"))
+  @@index([createdById], map: "ix_report_schedules__created_by")
+  @@index([updatedById], map: "ix_report_schedules__updated_by")
+  @@map("report_schedules")
+}
+
+/// One generated report file: scheduled, or run on request; the export is audited.
+model ReportRun {
+  id            BigInt       @id(map: "pk_report_runs") @default(autoincrement())
+  publicId      String       @unique(map: "ux_report_runs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  scheduleId    BigInt?      @map("schedule_id")
+  reportKey     String       @map("report_key")
+  /// The resolved filters the file was generated with.
+  filters       Json         @default("{}")
+  format        ReportFormat
+  requestedById BigInt?      @map("requested_by")
+  status        JobStatus    @default(queued)
+  fileObjectId  BigInt?      @map("file_object_id")
+  rowCount      Int?         @map("row_count")
+  error         String?
+  attempts      Int          @default(0)
+  lockedUntil   DateTime?    @map("locked_until") @db.Timestamptz(6)
+  queuedAt      DateTime     @default(now()) @map("queued_at") @db.Timestamptz(6)
+  startedAt     DateTime?    @map("started_at") @db.Timestamptz(6)
+  finishedAt    DateTime?    @map("finished_at") @db.Timestamptz(6)
+
+  schedule    ReportSchedule? @relation(fields: [scheduleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_report_runs__schedule_id")
+  requestedBy User?           @relation("ReportRunRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_report_runs__requested_by")
+  file        FileObject?     @relation("ReportRunFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_report_runs__file_object_id")
+
+  @@index([status, queuedAt], map: "ix_report_runs__status__queued_at")
+  @@index([scheduleId, queuedAt(sort: Desc)], map: "ix_report_runs__schedule_id__queued_at")
+  @@index([requestedById], map: "ix_report_runs__requested_by")
+  @@index([fileObjectId], map: "ix_report_runs__file_object_id")
+  @@map("report_runs")
+}
