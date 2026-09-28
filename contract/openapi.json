@@ -782,6 +782,28 @@
           "type": "https://errors.packio/consent.purpose_unavailable"
         }
       },
+      "problem.conversations.closed": {
+        "summary": "conversations.closed",
+        "value": {
+          "code": "conversations.closed",
+          "detail": "การสนทนานี้ปิดแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ปิดการสนทนาแล้ว",
+          "type": "https://errors.packio/conversations.closed"
+        }
+      },
+      "problem.conversations.unreachable": {
+        "summary": "conversations.unreachable",
+        "value": {
+          "code": "conversations.unreachable",
+          "detail": "ส่งข้อความไม่ได้ ({reason})",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ติดต่อลูกค้าไม่ได้",
+          "type": "https://errors.packio/conversations.unreachable"
+        }
+      },
       "problem.design_services.fee_changed": {
         "summary": "design_services.fee_changed",
         "value": {
@@ -1121,6 +1143,17 @@
           "status": 500,
           "title": "เกิดข้อผิดพลาดในระบบ",
           "type": "https://errors.packio/internal.unexpected"
+        }
+      },
+      "problem.line.signature_invalid": {
+        "summary": "line.signature_invalid",
+        "value": {
+          "code": "line.signature_invalid",
+          "detail": "ลายเซ็น LINE ไม่ถูกต้อง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "ลายเซ็นไม่ถูกต้อง",
+          "type": "https://errors.packio/line.signature_invalid"
         }
       },
       "problem.loyalty.insufficient_points": {
@@ -6708,6 +6741,17 @@
         ],
         "type": "object"
       },
+      "AssignConversationDto": {
+        "properties": {
+          "userId": {
+            "description": "Default: me",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "AssignDesignerDto": {
         "properties": {
           "assigneeUserId": {
@@ -10061,6 +10105,117 @@
           "draft",
           "published",
           "archived"
+        ],
+        "type": "string"
+      },
+      "ConversationAssignee": {
+        "enum": [
+          "me",
+          "unassigned"
+        ],
+        "type": "string"
+      },
+      "ConversationChannel": {
+        "enum": [
+          "line",
+          "web"
+        ],
+        "type": "string"
+      },
+      "ConversationDto": {
+        "properties": {
+          "assignee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationChannel"
+              }
+            ],
+            "example": "line"
+          },
+          "customer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The customer, when known (linked LINE or web)"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastMessage": {
+            "example": "สอบถามสถานะคำสั่งซื้อค่ะ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastMessageAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lineDisplayName": {
+            "description": "LINE display name (PII)",
+            "example": "สมหญิง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineFriendStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LineFriendStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "followed"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationStatus"
+              }
+            ],
+            "example": "open"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "lastMessageAt",
+          "channel",
+          "customer",
+          "lineDisplayName",
+          "lineFriendStatus",
+          "assignee",
+          "lastMessage"
+        ],
+        "type": "object"
+      },
+      "ConversationStatus": {
+        "enum": [
+          "open",
+          "pending",
+          "closed"
         ],
         "type": "string"
       },
@@ -19778,6 +19933,14 @@
         ],
         "type": "object"
       },
+      "LineFriendStatus": {
+        "enum": [
+          "followed",
+          "blocked",
+          "unknown"
+        ],
+        "type": "string"
+      },
       "LineLoginDto": {
         "properties": {
           "idToken": {
@@ -19804,6 +19967,18 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "LineWebhookAckDto": {
+        "properties": {
+          "ok": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ],
         "type": "object"
       },
       "LinkedIdentityDto": {
@@ -20199,6 +20374,91 @@
           "path"
         ],
         "type": "object"
+      },
+      "MessageDirection": {
+        "description": "Inbound = from the customer",
+        "enum": [
+          "inbound",
+          "outbound"
+        ],
+        "type": "string"
+      },
+      "MessageDto": {
+        "properties": {
+          "body": {
+            "example": "สอบถามสถานะคำสั่งซื้อค่ะ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "direction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageDirection"
+              }
+            ],
+            "description": "Inbound = from the customer",
+            "example": "inbound"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageKind"
+              }
+            ],
+            "example": "text"
+          },
+          "readAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sender": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Staff who replied (outbound)"
+          },
+          "sentAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "direction",
+          "kind",
+          "body",
+          "sender",
+          "sentAt",
+          "readAt"
+        ],
+        "type": "object"
+      },
+      "MessageKind": {
+        "enum": [
+          "text",
+          "image",
+          "file",
+          "sticker",
+          "system"
+        ],
+        "type": "string"
       },
       "MessageVisibility": {
         "enum": [
@@ -28915,6 +29175,44 @@
         ],
         "type": "string"
       },
+      "RichMenuAudience": {
+        "enum": [
+          "guest",
+          "member"
+        ],
+        "type": "string"
+      },
+      "RichMenuDto": {
+        "properties": {
+          "active": {
+            "example": true,
+            "type": "boolean"
+          },
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RichMenuAudience"
+              }
+            ],
+            "example": "member"
+          },
+          "key": {
+            "example": "member_2026",
+            "type": "string"
+          },
+          "providerMenuId": {
+            "example": "richmenu-0000000000000000000000000000fake",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "audience",
+          "providerMenuId",
+          "active"
+        ],
+        "type": "object"
+      },
       "RoleDto": {
         "properties": {
           "audience": {
@@ -29295,6 +29593,35 @@
         "required": [
           "productTypeCode",
           "configuration"
+        ],
+        "type": "object"
+      },
+      "SaveRichMenuDto": {
+        "properties": {
+          "active": {
+            "description": "One active menu per audience; activating one deactivates the other",
+            "example": true,
+            "type": "boolean"
+          },
+          "audience": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RichMenuAudience"
+              }
+            ],
+            "example": "member"
+          },
+          "providerMenuId": {
+            "example": "richmenu-0000000000000000000000000000fake",
+            "maxLength": 100,
+            "pattern": "^richmenu-[A-Za-z0-9]+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "audience",
+          "providerMenuId",
+          "active"
         ],
         "type": "object"
       },
@@ -30017,6 +30344,20 @@
           "fontIds",
           "status",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SendMessageDto": {
+        "properties": {
+          "body": {
+            "example": "สอบถามสถานะคำสั่งซื้อค่ะ",
+            "maxLength": 5000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
         ],
         "type": "object"
       },
@@ -33588,6 +33929,34 @@
           "decisionNote",
           "photos",
           "resolutions"
+        ],
+        "type": "object"
+      },
+      "StoreConversationDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationStatus"
+              }
+            ],
+            "example": "open"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "lastMessageAt"
         ],
         "type": "object"
       },
@@ -93769,6 +94138,1409 @@
         ]
       }
     },
+    "/v1/admin/conversations": {
+      "get": {
+        "description": "Latest activity first; filter by status and assignee.\n\nImplements: D-151, D-143.",
+        "operationId": "admin.conversations.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ConversationStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assigned",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ConversationAssignee"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "assignee": null,
+                      "channel": "line",
+                      "customer": {
+                        "displayName": "ลูกค้า ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                      "lastMessage": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                      "lastMessageAt": "2026-10-20T10:00:00+07:00",
+                      "lineDisplayName": "ลูกค้า",
+                      "lineFriendStatus": "followed",
+                      "status": "open"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/ConversationDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "The CS inbox",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.read"
+        ]
+      }
+    },
+    "/v1/admin/conversations/{conversationId}": {
+      "get": {
+        "description": "With the customer when known.\n\nImplements: D-151.",
+        "operationId": "admin.conversations.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "channel": "line",
+                  "customer": {
+                    "displayName": "ลูกค้า ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "lastMessage": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                  "lastMessageAt": "2026-10-20T10:00:00+07:00",
+                  "lineDisplayName": "ลูกค้า",
+                  "lineFriendStatus": "followed",
+                  "status": "open"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDto"
+                }
+              }
+            },
+            "description": "Conversation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a conversation",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.read"
+        ]
+      }
+    },
+    "/v1/admin/conversations/{conversationId}/actions/assign": {
+      "post": {
+        "description": "To a staff member (default: me).\n\nImplements: D-151.",
+        "operationId": "admin.conversations.assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {}
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AssignConversationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "channel": "line",
+                  "customer": {
+                    "displayName": "ลูกค้า ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "lastMessage": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                  "lastMessageAt": "2026-10-20T10:00:00+07:00",
+                  "lineDisplayName": "ลูกค้า",
+                  "lineFriendStatus": "followed",
+                  "status": "open"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDto"
+                }
+              }
+            },
+            "description": "Assigned",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Assign a conversation",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.reply"
+        ]
+      }
+    },
+    "/v1/admin/conversations/{conversationId}/actions/close": {
+      "post": {
+        "description": "The next customer message opens a new one.\n\nImplements: D-151.",
+        "operationId": "admin.conversations.close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignee": null,
+                  "channel": "line",
+                  "customer": {
+                    "displayName": "ลูกค้า ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4003"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "lastMessage": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                  "lastMessageAt": "2026-10-20T10:00:00+07:00",
+                  "lineDisplayName": "ลูกค้า",
+                  "lineFriendStatus": "followed",
+                  "status": "closed"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDto"
+                }
+              }
+            },
+            "description": "Closed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Close a conversation",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.reply"
+        ]
+      }
+    },
+    "/v1/admin/conversations/{conversationId}/messages": {
+      "get": {
+        "description": "Newest first, cursor-paged.\n\nImplements: D-151.",
+        "operationId": "admin.conversations.messages",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                      "direction": "inbound",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+                      "kind": "text",
+                      "readAt": null,
+                      "sender": null,
+                      "sentAt": "2026-10-20T10:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/MessageDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Messages of a conversation",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.read"
+        ]
+      },
+      "post": {
+        "description": "Pushed to the customer’s LINE for LINE conversations; live on the web otherwise. Assigns the conversation to me when unassigned.\n\nImplements: D-151, D-143.",
+        "operationId": "admin.conversations.reply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conversationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "คำสั่งซื้อของคุณกำลังผลิตค่ะ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "body": "คำสั่งซื้อของคุณกำลังผลิตค่ะ",
+                  "direction": "outbound",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+                  "kind": "text",
+                  "readAt": null,
+                  "sender": {
+                    "displayName": "CS ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4004"
+                  },
+                  "sentAt": "2026-10-20T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            },
+            "description": "Sent",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "conversations.closed": {
+                    "$ref": "#/components/examples/problem.conversations.closed"
+                  },
+                  "conversations.unreachable": {
+                    "$ref": "#/components/examples/problem.conversations.unreachable"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `conversations.closed`, `conversations.unreachable`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "provider.unavailable": {
+                    "$ref": "#/components/examples/problem.provider.unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `provider.unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Reply to the customer",
+        "tags": [
+          "admin.conversations"
+        ],
+        "x-required-permissions": [
+          "conversations.reply"
+        ]
+      }
+    },
     "/v1/admin/cs/folding/calculate": {
       "post": {
         "description": "The store calculation plus the staff view: selected factory and print type, price-list version, production run, margin-floor flag (D-012) and each option’s reason when it has no price. Buy prices need `factory_cost.read`, the margin `margin.read` (D-141); they are null otherwise. Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
@@ -124215,6 +125987,358 @@
         ],
         "x-required-permissions": [
           "production.manage"
+        ]
+      }
+    },
+    "/v1/admin/line/rich-menus": {
+      "get": {
+        "description": "Registered menus per audience (D-151).\n\nImplements: D-151.",
+        "operationId": "admin.line.richMenus",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "active": true,
+                    "audience": "member",
+                    "key": "member_2026",
+                    "providerMenuId": "richmenu-0000000000000000000000000000fake"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RichMenuDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Menus",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "OA rich menus",
+        "tags": [
+          "admin.line"
+        ],
+        "x-required-permissions": [
+          "line.manage"
+        ]
+      }
+    },
+    "/v1/admin/line/rich-menus/{key}": {
+      "put": {
+        "description": "A menu created in LINE, by key: guest or member audience; one active per audience.\n\nImplements: D-151.",
+        "operationId": "admin.line.saveRichMenu",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "example": "member_2026",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "active": true,
+                    "audience": "member",
+                    "providerMenuId": "richmenu-0000000000000000000000000000fake"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SaveRichMenuDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": true,
+                  "audience": "member",
+                  "key": "member_2026",
+                  "providerMenuId": "richmenu-0000000000000000000000000000fake"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RichMenuDto"
+                }
+              }
+            },
+            "description": "Saved",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Register a rich menu",
+        "tags": [
+          "admin.line"
+        ],
+        "x-required-permissions": [
+          "line.manage"
         ]
       }
     },
@@ -202179,6 +204303,611 @@
         ]
       }
     },
+    "/v1/store/conversation": {
+      "get": {
+        "description": "The latest web / LIFF conversation, or 404 before the first message (D-151).\n\nImplements: D-151.",
+        "operationId": "store.conversations.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+                  "lastMessageAt": "2026-10-20T10:00:00+07:00",
+                  "status": "open"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreConversationDto"
+                }
+              }
+            },
+            "description": "Conversation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My chat with Packio",
+        "tags": [
+          "store.conversations"
+        ]
+      }
+    },
+    "/v1/store/conversation/messages": {
+      "get": {
+        "description": "Newest first; reading marks Packio’s replies as read.\n\nImplements: D-151.",
+        "operationId": "store.conversations.messages",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                      "direction": "inbound",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+                      "kind": "text",
+                      "readAt": null,
+                      "sender": null,
+                      "sentAt": "2026-10-20T10:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/MessageDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Messages of my chat",
+        "tags": [
+          "store.conversations"
+        ]
+      },
+      "post": {
+        "description": "Opens a conversation when none is live; CS answers from the inbox (D-151).\n\nImplements: D-151.",
+        "operationId": "store.conversations.send",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "สอบถามสถานะคำสั่งซื้อค่ะ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "body": "สอบถามสถานะคำสั่งซื้อค่ะ",
+                  "direction": "inbound",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f4002",
+                  "kind": "text",
+                  "readAt": null,
+                  "sender": null,
+                  "sentAt": "2026-10-20T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/MessageDto"
+                }
+              }
+            },
+            "description": "Sent",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Write to Packio CS",
+        "tags": [
+          "store.conversations"
+        ]
+      }
+    },
     "/v1/store/customer-profile": {
       "get": {
         "description": "Customer type (individual / juristic / government drives payment schedules, D-020) and the customer code, assigned at the first checkout.\n\nImplements: D-020, D-092.",
@@ -224040,6 +226769,223 @@
         ]
       }
     },
+    "/webhooks/line/messaging": {
+      "post": {
+        "description": "Sent by LINE for follows, unfollows and messages. Verified with `x-line-signature` (HMAC-SHA256 of the exact body with the channel secret), stored once per `webhookEventId` (redeliveries are no-ops). Messages reach the CS inbox (D-151).\n\nImplements: D-151, D-143.",
+        "operationId": "webhooks.line.messaging",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "destination": "U0000000000000000000000000000fake",
+                    "events": []
+                  }
+                }
+              },
+              "schema": {
+                "properties": {
+                  "destination": {
+                    "type": "string"
+                  },
+                  "events": {
+                    "items": {
+                      "properties": {
+                        "message": {
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "source": {
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            },
+                            "userId": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "timestamp": {
+                          "type": "integer"
+                        },
+                        "type": {
+                          "example": "message",
+                          "type": "string"
+                        },
+                        "webhookEventId": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "ok": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/LineWebhookAckDto"
+                }
+              }
+            },
+            "description": "Accepted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "line.signature_invalid": {
+                    "$ref": "#/components/examples/problem.line.signature_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `line.signature_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "LINE official account webhook",
+        "tags": [
+          "webhooks.line"
+        ]
+      }
+    },
     "/webhooks/scb/payment-confirmation": {
       "post": {
         "description": "Sent by SCB for a paid QR 30 / QR CS. The callback carries no signature: it is confirmed by the SCB inquiry before the payment is accepted, stored once per `transactionId` (SCB retries 3 times) and answered with `{\"resCode\":\"00\"}` (D-061, D-176).\n\nImplements: D-061, D-176.",
@@ -224629,6 +227575,10 @@
       "name": "admin.consentPurposes"
     },
     {
+      "description": "The CS inbox: LINE and web conversations, replies pushed to LINE, assignment (D-151, D-143).",
+      "name": "admin.conversations"
+    },
+    {
       "description": "The CS folding calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
       "name": "admin.csFolding"
     },
@@ -224691,6 +227641,10 @@
     {
       "description": "Packio risk-based inspections (D-076, ISO 2859-1) and factory scorecards (D-155).",
       "name": "admin.inspections"
+    },
+    {
+      "description": "The LINE official account: rich menus for guests and members (D-151).",
+      "name": "admin.line"
     },
     {
       "description": "Shipments for staff: fallback carrier booking (D-114), status corrections, PODs on behalf, delivery reconciliation (D-021, D-080, D-165).",
@@ -224941,6 +227895,10 @@
       "name": "store.companyCredit"
     },
     {
+      "description": "My chat with Packio CS from the web or LINE LIFF (D-151).",
+      "name": "store.conversations"
+    },
+    {
       "description": "The signed-in customer’s profile: customer type and customer code (D-020).",
       "name": "store.customerProfile"
     },
@@ -225027,6 +227985,10 @@
     {
       "description": "Carrier status callbacks, signature-verified and stored once (D-114).",
       "name": "webhooks.carriers"
+    },
+    {
+      "description": "LINE official account events, signature-verified (D-151).",
+      "name": "webhooks.line"
     },
     {
       "description": "SCB, 2C2P and slip-verification callbacks, confirmed before any payment is accepted (D-061).",

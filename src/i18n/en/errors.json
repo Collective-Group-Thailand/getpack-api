@@ -976,5 +976,21 @@
       "title": "Reorder unavailable",
       "detail": "This order cannot be reordered ({reason})"
     }
+  },
+  "line": {
+    "signature_invalid": {
+      "title": "Signature invalid",
+      "detail": "The LINE signature does not match"
+    }
+  },
+  "conversations": {
+    "closed": {
+      "title": "Conversation closed",
+      "detail": "This conversation is closed"
+    },
+    "unreachable": {
+      "title": "Customer unreachable",
+      "detail": "The message cannot be delivered ({reason})"
+    }
   }
 }

@@ -5,6 +5,7 @@ import { StoreCatalogController } from '@modules/catalog/store/store-catalog.con
 import { CHECKOUT_STORE_CONTROLLERS } from '@modules/checkout/checkout.registry';
 import { CLAIMS_STORE_CONTROLLERS } from '@modules/claims/claims.registry';
 import { COMPANIES_STORE_CONTROLLERS } from '@modules/companies/companies.registry';
+import { CONVERSATIONS_STORE_CONTROLLERS } from '@modules/conversations/conversations.registry';
 import { CUSTOMERS_STORE_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_STORE_CONTROLLERS } from '@modules/design-services/design-services.registry';
 import { DESIGNS_STORE_CONTROLLERS } from '@modules/designs/designs.registry';
@@ -49,6 +50,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
     ...ORDERS_STORE_CONTROLLERS,
     ...LOGISTICS_STORE_CONTROLLERS,
     ...CLAIMS_STORE_CONTROLLERS,
+    ...CONVERSATIONS_STORE_CONTROLLERS,
     ...TIMELINE_STORE_CONTROLLERS,
     ...PAYMENT_SCHEDULES_STORE_CONTROLLERS,
     ...PROMOTIONS_STORE_CONTROLLERS,

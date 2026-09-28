@@ -100,6 +100,9 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Admin',
     permissions: [
       ...EVERY_STAFF_MEMBER,
+      'conversations.read',
+      'conversations.reply',
+      'line.manage',
       'settings.read',
       'feature_flags.read',
       'users.read',
@@ -170,6 +173,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'CS',
     permissions: [
       ...EVERY_STAFF_MEMBER,
+      'conversations.read',
+      'conversations.reply',
       'margin.read_pct_when_discounting',
       'catalog.read',
       'quotes.calculate',
@@ -208,6 +213,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'CS Lead',
     permissions: [
       ...EVERY_STAFF_MEMBER,
+      'conversations.read',
+      'conversations.reply',
       'margin.read_pct_when_discounting',
       'catalog.read',
       'quotes.calculate',
@@ -366,6 +373,7 @@ export const ROLES: readonly RoleDefinition[] = [
     // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
     permissions: [
       ...EVERY_STAFF_MEMBER,
+      'line.manage',
       'approvals.act',
       'catalog.read',
       'cms.manage',

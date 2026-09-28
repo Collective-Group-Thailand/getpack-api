@@ -692,4 +692,36 @@ describe('fulfilment schema (PostgreSQL 18)', () => {
       );
     });
   });
+
+  describe('LINE and conversations (B4.6)', () => {
+    it('keeps one live conversation per LINE account or customer and messages consistent', async () => {
+      seq += 1;
+      const account = await prisma.lineAccount.create({
+        data: { lineUserId: `U-int-${seq}`, channelId: 'int' },
+      });
+      expect(await state("INSERT INTO conversations (channel) VALUES ('line')")).toBe(
+        SQLSTATE.checkViolation,
+      );
+      const c = await prisma.conversation.create({ data: { channel: 'line', lineAccountId: account.id } });
+      await expect(
+        prisma.conversation.create({ data: { channel: 'line', lineAccountId: account.id } }),
+      ).rejects.toThrow();
+      expect(await state("UPDATE conversations SET status = 'closed' WHERE id = $1", [c.id])).toBe(
+        SQLSTATE.checkViolation,
+      );
+      expect(
+        await state(
+          "INSERT INTO conversation_messages (conversation_id, direction, kind, sent_at) VALUES ($1, 'inbound', 'text', now())",
+          [c.id],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(
+        await state(
+          "INSERT INTO conversation_messages (conversation_id, direction, kind, body, sent_at) VALUES ($1, 'outbound', 'text', 'hi', now())",
+          [c.id],
+        ),
+      ).toBe(SQLSTATE.checkViolation);
+      expect(await state('DELETE FROM conversations WHERE id = $1', [c.id])).toBe(SQLSTATE.restrictViolation);
+    });
+  });
 });

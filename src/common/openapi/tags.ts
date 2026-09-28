@@ -87,6 +87,10 @@ export const API_TAGS: Record<string, string> = {
   'partner.claims': 'Claims about my factory’s jobs: accept or dispute (D-083).',
   'admin.claims':
     'Claims: review, information requests, factory review, liability rules and overrides (D-083), decisions and resolutions through existing mechanisms.',
+  'store.conversations': 'My chat with Packio CS from the web or LINE LIFF (D-151).',
+  'admin.conversations': 'The CS inbox: LINE and web conversations, replies pushed to LINE, assignment (D-151, D-143).',
+  'admin.line': 'The LINE official account: rich menus for guests and members (D-151).',
+  'webhooks.line': 'LINE official account events, signature-verified (D-151).',
   'store.tracking': 'Public tracking from a carton label or a shared link — no personal data, rate-limited.',
   'admin.timeline': 'An order’s full timeline with internal notes and @mentions, promised vs actual.',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',

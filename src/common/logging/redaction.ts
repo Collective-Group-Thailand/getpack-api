@@ -19,6 +19,7 @@ export const REDACTED_FIELDS = [
   'clientSecret',
   'apiKey',
   'x-api-key',
+  'x-line-signature',
   'secret',
   'cardNumber',
   'cvv',

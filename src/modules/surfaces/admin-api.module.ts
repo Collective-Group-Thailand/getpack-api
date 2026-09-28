@@ -5,6 +5,7 @@ import { CATALOG_ADMIN_CONTROLLERS } from '@modules/catalog/catalog.registry';
 import { CHECKOUT_ADMIN_CONTROLLERS } from '@modules/checkout/checkout.registry';
 import { CLAIMS_ADMIN_CONTROLLERS } from '@modules/claims/claims.registry';
 import { COMPANIES_ADMIN_CONTROLLERS } from '@modules/companies/companies.registry';
+import { CONVERSATIONS_ADMIN_CONTROLLERS } from '@modules/conversations/conversations.registry';
 import { CUSTOMERS_ADMIN_CONTROLLERS } from '@modules/customers/customers.registry';
 import { DESIGN_SERVICES_ADMIN_CONTROLLERS } from '@modules/design-services/design-services.registry';
 import { DESIGNS_ADMIN_CONTROLLERS } from '@modules/designs/designs.registry';
@@ -89,6 +90,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...PRODUCTION_ADMIN_CONTROLLERS,
     ...LOGISTICS_ADMIN_CONTROLLERS,
     ...CLAIMS_ADMIN_CONTROLLERS,
+    ...CONVERSATIONS_ADMIN_CONTROLLERS,
     ...TIMELINE_ADMIN_CONTROLLERS,
   ],
 })

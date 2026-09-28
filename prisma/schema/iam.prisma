@@ -545,6 +545,14 @@ model User {
   claimResolutionsExecuted  ClaimResolution[] @relation("ClaimResolutionExecutedBy")
   // --- end Fulfilment B4.5
 
+  // --- Fulfilment B4.6 (generated back-relations)
+  lineAccounts             LineAccount[]         @relation("LineAccountUser")
+  lineRichMenusUpdated     LineRichMenu[]        @relation("LineRichMenuUpdatedBy")
+  conversations            Conversation[]        @relation("ConversationCustomer")
+  conversationsAssigned    Conversation[]        @relation("ConversationAssignedUser")
+  conversationMessagesSent ConversationMessage[] @relation("ConversationMessageSender")
+  // --- end Fulfilment B4.6
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

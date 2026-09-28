@@ -496,6 +496,18 @@ const ROWS: Row[] = [
     'CS: factory response on a claim (D-083)',
   ),
 
+  T(
+    'conversation.opened',
+    'cs',
+    ['in_app', 'line'],
+    { th: 'มีลูกค้าทักแชทใหม่', en: 'New customer chat' },
+    {
+      th: 'ลูกค้าเริ่มแชทใหม่ ({{payload.channel}}) รอตอบในกล่องข้อความ',
+      en: 'A customer started a chat ({{payload.channel}}); answer it in the inbox',
+    },
+    'CS: new chat from LINE or the web (D-151)',
+  ),
+
   // --- factories -------------------------------------------------------------------------------------------
   F(
     'production_job.released',

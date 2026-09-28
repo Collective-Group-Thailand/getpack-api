@@ -228,6 +228,9 @@ export const ERROR_CODES = {
   'claims.liability_undetermined': HttpStatus.CONFLICT,
   'claims.action_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
   'orders.reorder_unavailable': HttpStatus.CONFLICT,
+  'line.signature_invalid': HttpStatus.UNAUTHORIZED,
+  'conversations.closed': HttpStatus.CONFLICT,
+  'conversations.unreachable': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

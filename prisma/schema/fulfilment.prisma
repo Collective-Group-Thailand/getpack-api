@@ -1460,3 +1460,150 @@ model ClaimResolution {
   @@index([executedById], map: "ix_claim_resolutions__executed_by")
   @@map("claim_resolutions")
 }
+
+// =====================================================================================================
+// LINE & conversations (D-143, D-151; B4.6)
+// =====================================================================================================
+
+enum LineFriendStatus {
+  followed
+  blocked
+  unknown
+
+  @@map("line_friend_status")
+}
+
+enum RichMenuAudience {
+  guest
+  member
+
+  @@map("rich_menu_audience")
+}
+
+enum ConversationChannel {
+  line
+  web
+
+  @@map("conversation_channel")
+}
+
+enum ConversationStatus {
+  open
+  pending
+  closed
+
+  @@map("conversation_status")
+}
+
+enum MessageDirection {
+  inbound
+  outbound
+
+  @@map("message_direction")
+}
+
+enum MessageKind {
+  text
+  image
+  file
+  sticker
+  system
+
+  @@map("message_kind")
+}
+
+/// A LINE user of Packio's official account (friend status from follow / unfollow), linked to a customer
+/// once they sign in with LINE Login / LIFF (D-151). PII: the LINE user id, name and picture.
+model LineAccount {
+  id           BigInt           @id(map: "pk_line_accounts") @default(autoincrement())
+  publicId     String           @unique(map: "ux_line_accounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId       BigInt?          @map("user_id")
+  lineUserId   String           @map("line_user_id")
+  channelId    String           @map("channel_id")
+  displayName  String?          @map("display_name")
+  pictureUrl   String?          @map("picture_url")
+  friendStatus LineFriendStatus @default(unknown) @map("friend_status")
+  richMenuKey  String?          @map("rich_menu_key")
+  linkedAt     DateTime?        @map("linked_at") @db.Timestamptz(6)
+  unlinkedAt   DateTime?        @map("unlinked_at") @db.Timestamptz(6)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user          User?          @relation("LineAccountUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_line_accounts__user_id")
+  conversations Conversation[]
+
+  @@unique([channelId, lineUserId], map: "ux_line_accounts__channel_id__line_user_id")
+  @@index([userId], map: "ix_line_accounts__user_id")
+  @@map("line_accounts")
+}
+
+/// The OA rich menus (created in LINE, registered here): one active per audience.
+model LineRichMenu {
+  id             BigInt           @id(map: "pk_line_rich_menus") @default(autoincrement())
+  key            String           @unique(map: "ux_line_rich_menus__key")
+  audience       RichMenuAudience
+  providerMenuId String           @map("provider_menu_id")
+  active         Boolean          @default(false)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById    BigInt?          @map("updated_by")
+
+  updatedBy User? @relation("LineRichMenuUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_line_rich_menus__updated_by")
+
+  @@unique([audience], map: "ux_line_rich_menus__one_active", where: raw("active"))
+  @@index([updatedById], map: "ix_line_rich_menus__updated_by")
+  @@map("line_rich_menus")
+}
+
+/// Chat with CS (D-151): from LINE or the web / LIFF; staff answer from the inbox.
+model Conversation {
+  id             BigInt              @id(map: "pk_conversations") @default(autoincrement())
+  publicId       String              @unique(map: "ux_conversations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  channel        ConversationChannel
+  customerUserId BigInt?             @map("customer_user_id")
+  lineAccountId  BigInt?             @map("line_account_id")
+  status         ConversationStatus  @default(open)
+  assignedUserId BigInt?             @map("assigned_user_id")
+  lastMessageAt  DateTime            @default(now()) @map("last_message_at") @db.Timestamptz(6)
+  closedAt       DateTime?           @map("closed_at") @db.Timestamptz(6)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion     Int                 @default(1) @map("row_version")
+
+  customer     User?                 @relation("ConversationCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conversations__customer_user_id")
+  lineAccount  LineAccount?          @relation(fields: [lineAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conversations__line_account_id")
+  assignedUser User?                 @relation("ConversationAssignedUser", fields: [assignedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conversations__assigned_user_id")
+  messages     ConversationMessage[]
+
+  @@unique([lineAccountId], map: "ux_conversations__one_live_line", where: raw("((line_account_id IS NOT NULL) AND (status <> 'closed'::conversation_status))"))
+  @@unique([customerUserId], map: "ux_conversations__one_live_web", where: raw("((channel = 'web'::conversation_channel) AND (status <> 'closed'::conversation_status))"))
+  @@index([status, lastMessageAt(sort: Desc)], map: "ix_conversations__status__last_message_at")
+  @@index([assignedUserId, status], map: "ix_conversations__assigned_user_id__status")
+  @@index([customerUserId], map: "ix_conversations__customer_user_id")
+  @@index([lineAccountId], map: "ix_conversations__line_account_id")
+  @@map("conversations")
+}
+
+model ConversationMessage {
+  id                BigInt           @id(map: "pk_conversation_messages") @default(autoincrement())
+  publicId          String           @unique(map: "ux_conversation_messages__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  conversationId    BigInt           @map("conversation_id")
+  direction         MessageDirection
+  senderUserId      BigInt?          @map("sender_user_id")
+  kind              MessageKind
+  body              String?
+  fileObjectId      BigInt?          @map("file_object_id")
+  providerMessageId String?          @unique(map: "ux_conversation_messages__provider_message_id") @map("provider_message_id")
+  sentAt            DateTime         @map("sent_at") @db.Timestamptz(6)
+  readAt            DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conversation_messages__conversation_id")
+  senderUser   User?        @relation("ConversationMessageSender", fields: [senderUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conversation_messages__sender_user_id")
+  fileObject   FileObject?  @relation("ConversationMessageFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conversation_messages__file_object_id")
+
+  @@index([conversationId, sentAt], map: "ix_conversation_messages__conversation_id__sent_at")
+  @@index([senderUserId], map: "ix_conversation_messages__sender_user_id")
+  @@index([fileObjectId], map: "ix_conversation_messages__file_object_id")
+  @@map("conversation_messages")
+}

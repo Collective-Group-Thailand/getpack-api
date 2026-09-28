@@ -1,13 +1,23 @@
+import { type IncomingMessage } from 'node:http';
+
 import { json, type RequestHandler } from 'express';
 
 import { DomainException } from '../errors/domain.exception';
+
+/** Webhook requests keep their exact bytes: providers sign the raw body (LINE `x-line-signature`). */
+export type RawBodyRequest = IncomingMessage & { rawBody?: Buffer };
 
 /**
  * JSON body parser registered before Nest's own (body-parser skips already-parsed requests), so that
  * parse failures become stable problem codes instead of Nest's generic 400 with the parser message.
  */
 export function jsonBodyParser(options: { limit?: string } = {}): RequestHandler {
-  const parse = json({ limit: options.limit ?? '1mb' });
+  const parse = json({
+    limit: options.limit ?? '1mb',
+    verify: (req: RawBodyRequest, _res, buf) => {
+      if (req.url?.startsWith('/webhooks/')) req.rawBody = Buffer.from(buf);
+    },
+  });
   return (req, res, next) => {
     parse(req, res, (error?: unknown) => {
       if (!error) return next();

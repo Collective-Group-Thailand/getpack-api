@@ -777,6 +777,10 @@ model FileObject {
   podSignatures        ProofOfDelivery[] @relation("ProofOfDeliverySignature")
   // --- end Fulfilment B4.3
 
+  // --- Fulfilment B4.6 (generated back-relations)
+  conversationMessages ConversationMessage[] @relation("ConversationMessageFile")
+  // --- end Fulfilment B4.6
+
   @@index([sha256], map: "ix_file_objects__sha256")
   @@index([uploadStatus, expiresAt], map: "ix_file_objects__upload_status__expires_at")
   @@index([ownerUserId], map: "ix_file_objects__owner_user_id")

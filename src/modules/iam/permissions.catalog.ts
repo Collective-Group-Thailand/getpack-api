@@ -529,6 +529,24 @@ export const PERMISSIONS = [
     decisionRefs: ['D-013', 'D-080'],
   },
   {
+    key: 'conversations.read',
+    audience: 'staff',
+    description: 'Read the CS inbox: LINE and web conversations',
+    decisionRefs: ['D-151'],
+  },
+  {
+    key: 'conversations.reply',
+    audience: 'staff',
+    description: 'Reply to customers, assign and close conversations',
+    decisionRefs: ['D-151'],
+  },
+  {
+    key: 'line.manage',
+    audience: 'staff',
+    description: 'Register the LINE official account rich menus',
+    decisionRefs: ['D-151'],
+  },
+  {
     key: 'claims.read',
     audience: 'staff',
     description: 'Read claims, their evidence and resolutions',

@@ -556,6 +556,15 @@ const CHECKS = [
   'ck_claims__resolved',
   'ck_claims__window',
   'ck_claims__window_order',
+  // --- B4.6 LINE & conversations
+  'ck_conversation_messages__content',
+  'ck_conversation_messages__sender',
+  'ck_conversations__closed',
+  'ck_conversations__party',
+  'ck_line_accounts__ids',
+  'ck_line_accounts__linked',
+  'ck_line_rich_menus__key',
+  'ck_line_rich_menus__provider',
 ];
 
 const TRIGGERS = [
@@ -689,6 +698,9 @@ const TRIGGERS = [
   // --- B4.5 claims
   'tg_claim_resolutions__write_once',
   'tg_claims__no_delete',
+  // --- B4.6 LINE & conversations
+  'tg_conversation_messages__append_only',
+  'tg_conversations__no_delete',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -777,6 +789,10 @@ const INDEXES = [
   'ux_job_milestones__job_id__client_ref',
   // --- B4.3 logistics
   'ux_shipment_events__shipment_id__carrier_event_id',
+  // --- B4.6 LINE & conversations
+  'ux_line_rich_menus__one_active',
+  'ux_conversations__one_live_line',
+  'ux_conversations__one_live_web',
 ];
 
 const EXPRESSION_INDEXES = [

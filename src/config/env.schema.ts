@@ -284,6 +284,16 @@ export class EnvironmentVariables {
   @IsString()
   LINE_MESSAGING_CHANNEL_ACCESS_TOKEN?: string;
 
+  /** LINE Messaging API channel secret: verifies `x-line-signature` on the OA webhook (B4.6). */
+  @IsOptional()
+  @IsString()
+  LINE_MESSAGING_CHANNEL_SECRET?: string;
+
+  /** LINE Messaging API channel id (the OA the webhook belongs to). */
+  @IsOptional()
+  @IsString()
+  LINE_MESSAGING_CHANNEL_ID?: string;
+
   /** Web push VAPID key pair (base64url) and contact (`mailto:` or URL). */
   @IsOptional()
   @IsString()

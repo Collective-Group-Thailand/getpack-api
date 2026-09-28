@@ -28,4 +28,16 @@ export class LineMessagingClient implements LineMessaging {
     const sent = (body as { sentMessages?: { id?: string }[] } | null)?.sentMessages?.[0]?.id;
     return { providerMessageId: sent ?? message.retryKey };
   }
+
+  /** `POST /v2/bot/user/{userId}/richmenu/{richMenuId}`. */
+  async linkRichMenu(lineUserId: string, richMenuId: string): Promise<void> {
+    if (!this.accessToken) throw new ProviderUnavailableError('line-messaging', 'not configured');
+    const url = `https://api.line.me/v2/bot/user/${encodeURIComponent(lineUserId)}/richmenu/${encodeURIComponent(richMenuId)}`;
+    const { status } = await this.http.call(url, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${this.accessToken}` },
+      retries: 2,
+    });
+    if (status !== 200) throw new ProviderUnavailableError('line-messaging', `HTTP ${status}`, status);
+  }
 }
