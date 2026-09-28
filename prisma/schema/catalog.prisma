@@ -263,6 +263,10 @@ model ProductType {
   milestoneRoutes MilestoneRoute[] @relation("MilestoneRouteProductType")
   // --- end Fulfilment B4.2
 
+  // --- Finance B5.1 (generated back-relations)
+  journalLines JournalLine[] @relation("JournalLineProductType")
+  // --- end Finance B5.1
+
   @@index([categoryId], map: "ix_product_types__category_id")
   @@map("product_types")
 }

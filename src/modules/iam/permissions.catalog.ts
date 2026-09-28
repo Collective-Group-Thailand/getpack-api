@@ -733,6 +733,38 @@ export const PERMISSIONS = [
     audience: 'customer',
     description: 'Read company invoices and statements',
   },
+
+  // --- Finance: ledger (B5.1, accounting-design §1, §8)
+  {
+    key: 'ledger.read',
+    audience: 'staff',
+    description: 'Read the chart of accounts, periods, journals with their lines, posting rules and tax rates',
+    decisionRefs: ['D-031'],
+  },
+  {
+    key: 'ledger.journals.manage',
+    audience: 'staff',
+    description: 'Draft and submit manual, recurring and reversing journals (approved by another person, §8)',
+    decisionRefs: ['D-033', 'D-169'],
+  },
+  {
+    key: 'ledger.periods.manage',
+    audience: 'staff',
+    description: 'Soft-close, reopen, close and lock fiscal periods (§1.4, §7)',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'ledger.post_soft_closed',
+    audience: 'staff',
+    description: 'Post into a soft-closed period (§1.4)',
+    decisionRefs: ['D-033'],
+  },
+  {
+    key: 'ledger.config.propose',
+    audience: 'staff',
+    description: 'Propose chart-of-accounts changes, posting-rule and tax-rate versions and cost centres (maker-checker, §8)',
+    decisionRefs: ['D-033', 'D-169'],
+  },
 ] as const satisfies readonly PermissionDefinition[];
 
 export type PermissionKey = (typeof PERMISSIONS)[number]['key'];

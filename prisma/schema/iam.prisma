@@ -553,6 +553,24 @@ model User {
   conversationMessagesSent ConversationMessage[] @relation("ConversationMessageSender")
   // --- end Fulfilment B4.6
 
+  // --- Finance B5.1 (generated back-relations)
+  fiscalYearsCreated         FiscalYear[]         @relation("FiscalYearCreatedBy")
+  fiscalPeriodsChanged       FiscalPeriod[]       @relation("FiscalPeriodStatusChangedBy")
+  accountsCreated            Account[]            @relation("AccountCreatedBy")
+  accountsUpdated            Account[]            @relation("AccountUpdatedBy")
+  accountChangesCreated      AccountChange[]      @relation("AccountChangeCreatedBy")
+  costCentresCreated         CostCentre[]         @relation("CostCentreCreatedBy")
+  journalEntriesCreated      JournalEntry[]       @relation("JournalEntryCreatedBy")
+  journalEntriesApproved     JournalEntry[]       @relation("JournalEntryApprovedBy")
+  journalEntriesPosted       JournalEntry[]       @relation("JournalEntryPostedBy")
+  journalLinesAsCustomer     JournalLine[]        @relation("JournalLineCustomer")
+  postingRulesCreated        PostingRule[]        @relation("PostingRuleCreatedBy")
+  postingRuleVersionsCreated PostingRuleVersion[] @relation("PostingRuleVersionCreatedBy")
+  postingRuleVersionsDecided PostingRuleVersion[] @relation("PostingRuleVersionDecidedBy")
+  recurringJournalsApproved  RecurringJournal[]   @relation("RecurringJournalApprovedBy")
+  recurringJournalsCreated   RecurringJournal[]   @relation("RecurringJournalCreatedBy")
+  // --- end Finance B5.1
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

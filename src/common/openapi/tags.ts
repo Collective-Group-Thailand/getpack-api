@@ -204,4 +204,13 @@ export const API_TAGS: Record<string, string> = {
   'admin.catalogStockProducts':
     'Ready-made stock products with attributes and photos; no prices here (D-100, D-044).',
   'admin.catalogSpecTitles': 'Titles of factory spec lines shown to customers (D-005).',
+  // --- B5.1 ledger
+  'admin.ledgerAccounts':
+    'Chart of accounts (accounting-design §3, codes are defaults ⚖) and cost centres; changes are proposals approved by a Finance Manager (`coa_change`, D-169).',
+  'admin.ledgerPeriods': 'Fiscal years and monthly periods open → soft closed → closed → locked (accounting-design §1.4, §7).',
+  'admin.journals':
+    'Journal entries with drill-down to rule, document and event; manual and reversing journals under maker-checker (accounting-design §1, §8, D-169).',
+  'admin.recurringJournals': 'Recurring and auto-reversing journals, approved once by a Finance Manager (B5.1).',
+  'admin.postingRules': 'Posting rules as data: P01–P30 and supplementary rules, versioned and approved (`posting_rule_change`, ADR-0007).',
+  'admin.taxRates': 'VAT and withholding rates with dated versions (accounting-design §2 ⚖, D-174); changes approved (`tax_setting_change`).',
 };

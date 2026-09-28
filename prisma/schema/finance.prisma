@@ -71,6 +71,10 @@ model Vendor {
   designServiceRequests DesignServiceRequest[] @relation("DesignServiceRequestVendor")
   // --- end Fulfilment B4.1
 
+  // --- Finance B5.1 (generated back-relations)
+  journalLines JournalLine[] @relation("JournalLineVendor")
+  // --- end Finance B5.1
+
   @@index([taxId, branchCode], map: "ix_vendors__tax_id__branch_code")
   @@index([subdistrictId], map: "ix_vendors__subdistrict_id")
   @@map("vendors")
@@ -154,4 +158,500 @@ model TaxRateVersion {
   @@index([taxRateId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_tax_rate_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
   @@index([approvalRequestId], map: "ix_tax_rate_versions__approval_request_id")
   @@map("tax_rate_versions")
+}
+
+// ================================================================================================
+// Ledger core (B5.1, accounting-design.md §1, §3, §5; schema-design §3.8). The ledger is the single
+// financial truth: sub-ledgers post to it only through the posting engine (ADR-0007). Balance, period,
+// control-account and immutability rules are enforced by hand-written triggers in the migration SQL.
+// ================================================================================================
+
+enum PeriodStatus {
+  open
+  soft_closed
+  closed
+  locked
+
+  @@map("period_status")
+}
+
+enum AccountType {
+  asset
+  liability
+  equity
+  revenue
+  cost_of_sales
+  expense
+
+  @@map("account_type")
+}
+
+enum LedgerSide {
+  debit
+  credit
+
+  @@map("ledger_side")
+}
+
+/// Dimensions a journal line may carry (accounting-design §3).
+enum LedgerDimension {
+  order
+  order_group
+  customer
+  company
+  factory
+  vendor
+  product_type
+  channel
+  campaign
+  promotion
+  cost_centre
+
+  @@map("ledger_dimension")
+}
+
+/// Not in the §4 catalogue (schema-design §7 A-41): accounts are deactivated, never deleted.
+enum AccountStatus {
+  active
+  inactive
+
+  @@map("account_status")
+}
+
+/// Indirect cash-flow classification of an account (B5.6, schema-design §7 A-41).
+enum CashFlowClass {
+  cash
+  operating
+  investing
+  financing
+  equity
+  non_cash
+
+  @@map("cash_flow_class")
+}
+
+enum JournalKind {
+  auto
+  manual
+  reversal
+  recurring
+  closing
+
+  @@map("journal_kind")
+}
+
+/// `rejected` added to the §4 catalogue (schema-design §7 A-41): a manual journal the checker refused.
+enum JournalStatus {
+  draft
+  pending_approval
+  posted
+  rejected
+
+  @@map("journal_status")
+}
+
+enum TaxCode {
+  output_vat
+  output_vat_not_due
+  input_vat
+  input_vat_pending
+  wht_receivable
+  wht_pnd3
+  wht_pnd53
+
+  @@map("tax_code")
+}
+
+enum AccountChangeKind {
+  create
+  update
+  deactivate
+  reactivate
+
+  @@map("account_change_kind")
+}
+
+enum RecurringJournalStatus {
+  pending_approval
+  active
+  paused
+  ended
+  rejected
+
+  @@map("recurring_journal_status")
+}
+
+model FiscalYear {
+  id          BigInt       @id(map: "pk_fiscal_years") @default(autoincrement())
+  publicId    String       @unique(map: "ux_fiscal_years__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId    BigInt       @map("entity_id")
+  label       String
+  startDate   DateTime     @map("start_date") @db.Date
+  endDate     DateTime     @map("end_date") @db.Date
+  status      PeriodStatus @default(open)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?      @map("created_by")
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  entity    Entity         @relation("FiscalYearEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fiscal_years__entity_id")
+  createdBy User?          @relation("FiscalYearCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fiscal_years__created_by")
+  periods   FiscalPeriod[]
+
+  @@unique([entityId, startDate], map: "ux_fiscal_years__entity_id__start_date")
+  @@index([createdById], map: "ix_fiscal_years__created_by")
+  @@map("fiscal_years")
+}
+
+/// Monthly periods `open → soft_closed → closed → locked` (accounting-design §1.4). Postings into a
+/// period that is not open are rejected by trigger (soft-closed: only with `ledger.post_soft_closed`).
+model FiscalPeriod {
+  id                BigInt       @id(map: "pk_fiscal_periods") @default(autoincrement())
+  publicId          String       @unique(map: "ux_fiscal_periods__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId          BigInt       @map("entity_id")
+  fiscalYearId      BigInt       @map("fiscal_year_id")
+  periodNo          Int          @map("period_no") @db.SmallInt
+  startDate         DateTime     @map("start_date") @db.Date
+  endDate           DateTime     @map("end_date") @db.Date
+  status            PeriodStatus @default(open)
+  statusChangedAt   DateTime?    @map("status_changed_at") @db.Timestamptz(6)
+  statusChangedById BigInt?      @map("status_changed_by")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  entity          Entity         @relation("FiscalPeriodEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fiscal_periods__entity_id")
+  fiscalYear      FiscalYear     @relation(fields: [fiscalYearId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fiscal_periods__fiscal_year_id")
+  statusChangedBy User?          @relation("FiscalPeriodStatusChangedBy", fields: [statusChangedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_fiscal_periods__status_changed_by")
+  journalEntries  JournalEntry[]
+  journalLines    JournalLine[]
+
+  @@unique([entityId, startDate], map: "ux_fiscal_periods__entity_id__start_date")
+  @@unique([fiscalYearId, periodNo], map: "ux_fiscal_periods__fiscal_year_id__period_no")
+  @@index([statusChangedById], map: "ix_fiscal_periods__status_changed_by")
+  @@map("fiscal_periods")
+}
+
+/// Chart of accounts (accounting-design §3; codes are defaults ⚖). Changes go through
+/// `account_changes` and the `coa_change` approval (§8, D-169).
+model Account {
+  id                 BigInt            @id(map: "pk_accounts") @default(autoincrement())
+  publicId           String            @unique(map: "ux_accounts__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId           BigInt            @map("entity_id")
+  code               String
+  nameTh             String            @map("name_th")
+  nameEn             String            @map("name_en")
+  accountType        AccountType       @map("account_type")
+  normalSide         LedgerSide        @map("normal_side")
+  parentId           BigInt?           @map("parent_id")
+  /// 1210, 2110, 2120, 1250: only sub-ledger (automatic) postings (§3).
+  isControl          Boolean           @default(false) @map("is_control")
+  isPostable         Boolean           @default(true) @map("is_postable")
+  allowedDimensions  LedgerDimension[] @map("allowed_dimensions")
+  requiredDimensions LedgerDimension[] @map("required_dimensions")
+  cashFlowClass      CashFlowClass     @map("cash_flow_class")
+  status             AccountStatus     @default(active)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt?           @map("created_by")
+  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById        BigInt?           @map("updated_by")
+  rowVersion         Int               @default(1) @map("row_version")
+
+  entity       Entity          @relation("AccountEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_accounts__entity_id")
+  parent       Account?        @relation("AccountParent", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_accounts__parent_id")
+  children     Account[]       @relation("AccountParent")
+  createdBy    User?           @relation("AccountCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_accounts__created_by")
+  updatedBy    User?           @relation("AccountUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_accounts__updated_by")
+  journalLines JournalLine[]
+  changes      AccountChange[]
+
+  @@unique([entityId, code], map: "ux_accounts__entity_id__code")
+  @@index([parentId], map: "ix_accounts__parent_id")
+  @@index([createdById], map: "ix_accounts__created_by")
+  @@index([updatedById], map: "ix_accounts__updated_by")
+  @@map("accounts")
+}
+
+/// A proposed chart-of-accounts change awaiting the `coa_change` approval (maker-checker, §8);
+/// applied to `accounts` only when approved (schema-design §7 A-41).
+model AccountChange {
+  id                BigInt              @id(map: "pk_account_changes") @default(autoincrement())
+  publicId          String              @unique(map: "ux_account_changes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId          BigInt              @map("entity_id")
+  accountId         BigInt?             @map("account_id")
+  kind              AccountChangeKind
+  proposed          Json
+  reason            String
+  status            ConfigVersionStatus @default(proposed)
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt              @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+
+  entity          Entity           @relation("AccountChangeEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_account_changes__entity_id")
+  account         Account?         @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_account_changes__account_id")
+  approvalRequest ApprovalRequest? @relation("AccountChangeApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_account_changes__approval_request_id")
+  createdBy       User             @relation("AccountChangeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_account_changes__created_by")
+
+  @@index([entityId], map: "ix_account_changes__entity_id")
+  @@index([accountId], map: "ix_account_changes__account_id")
+  @@index([approvalRequestId], map: "ix_account_changes__approval_request_id")
+  @@index([createdById], map: "ix_account_changes__created_by")
+  @@map("account_changes")
+}
+
+model CostCentre {
+  id          BigInt        @id(map: "pk_cost_centres") @default(autoincrement())
+  publicId    String        @unique(map: "ux_cost_centres__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId    BigInt        @map("entity_id")
+  code        String
+  name        String
+  status      AccountStatus @default(active)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?       @map("created_by")
+
+  entity       Entity        @relation("CostCentreEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cost_centres__entity_id")
+  createdBy    User?         @relation("CostCentreCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cost_centres__created_by")
+  journalLines JournalLine[]
+
+  @@unique([entityId, code], map: "ux_cost_centres__entity_id__code")
+  @@index([createdById], map: "ix_cost_centres__created_by")
+  @@map("cost_centres")
+}
+
+/// Immutable once posted; corrections are reversing entries linked to the original (§1.2). The posting
+/// engine is idempotent per (domain event, rule).
+model JournalEntry {
+  id                     BigInt        @id(map: "pk_journal_entries") @default(autoincrement())
+  publicId               String        @unique(map: "ux_journal_entries__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId               BigInt        @map("entity_id")
+  /// Per entity / month running number, assigned at posting.
+  entryNo                String?       @map("entry_no")
+  /// JV document number of a manual journal (§4).
+  jvNumber               String?       @map("jv_number")
+  fiscalPeriodId         BigInt        @map("fiscal_period_id")
+  /// Posting date.
+  entryDate              DateTime      @map("entry_date") @db.Date
+  /// Original document date, kept for tax when posted late (§1.4).
+  documentDate           DateTime      @map("document_date") @db.Date
+  kind                   JournalKind
+  status                 JournalStatus @default(draft)
+  sourceDocumentType     String?       @map("source_document_type")
+  sourceDocumentPublicId String?       @map("source_document_public_id") @db.Uuid
+  sourceDocumentNo       String?       @map("source_document_no")
+  domainEventId          String?       @map("domain_event_id") @db.Uuid
+  postingRuleId          BigInt?       @map("posting_rule_id")
+  postingRuleVersionId   BigInt?       @map("posting_rule_version_id")
+  reversesEntryId        BigInt?       @unique(map: "ux_journal_entries__reverses_entry_id") @map("reverses_entry_id")
+  recurringJournalId     BigInt?       @map("recurring_journal_id")
+  /// Auto-reversing journal: its reversal is posted on this date (B5.1).
+  autoReverseOn          DateTime?     @map("auto_reverse_on") @db.Date
+  description            String
+  totalDebit             Decimal       @default(0) @map("total_debit") @db.Decimal(14, 2)
+  totalCredit            Decimal       @default(0) @map("total_credit") @db.Decimal(14, 2)
+  approvalRequestId      BigInt?       @map("approval_request_id")
+  rejectionReason        String?       @map("rejection_reason")
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById            BigInt?       @map("created_by")
+  approvedAt             DateTime?     @map("approved_at") @db.Timestamptz(6)
+  approvedById           BigInt?       @map("approved_by")
+  postedAt               DateTime?     @map("posted_at") @db.Timestamptz(6)
+  postedById             BigInt?       @map("posted_by")
+  updatedAt              DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion             Int           @default(1) @map("row_version")
+
+  entity             Entity              @relation("JournalEntryEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__entity_id")
+  fiscalPeriod       FiscalPeriod        @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__fiscal_period_id")
+  domainEvent        DomainEvent?        @relation("JournalEntryDomainEvent", fields: [domainEventId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__domain_event_id")
+  postingRule        PostingRule?        @relation(fields: [postingRuleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__posting_rule_id")
+  postingRuleVersion PostingRuleVersion? @relation(fields: [postingRuleVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__posting_rule_version_id")
+  reverses           JournalEntry?       @relation("JournalEntryReversal", fields: [reversesEntryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__reverses_entry_id")
+  reversedBy         JournalEntry?       @relation("JournalEntryReversal")
+  recurringJournal   RecurringJournal?   @relation(fields: [recurringJournalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__recurring_journal_id")
+  approvalRequest    ApprovalRequest?    @relation("JournalEntryApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__approval_request_id")
+  createdBy          User?               @relation("JournalEntryCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__created_by")
+  approvedBy         User?               @relation("JournalEntryApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__approved_by")
+  postedBy           User?               @relation("JournalEntryPostedBy", fields: [postedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entries__posted_by")
+  lines              JournalLine[]
+
+  @@unique([entityId, entryNo], map: "ux_journal_entries__entity_id__entry_no")
+  @@unique([domainEventId, postingRuleId], map: "ux_journal_entries__domain_event_id__posting_rule_id", where: raw("(domain_event_id IS NOT NULL)"))
+  @@index([fiscalPeriodId, status], map: "ix_journal_entries__fiscal_period_id__status")
+  @@index([entityId, entryDate], map: "ix_journal_entries__entity_id__entry_date")
+  @@index([sourceDocumentType, sourceDocumentPublicId], map: "ix_journal_entries__source_document")
+  @@index([postingRuleId], map: "ix_journal_entries__posting_rule_id")
+  @@index([postingRuleVersionId], map: "ix_journal_entries__posting_rule_version_id")
+  @@index([recurringJournalId], map: "ix_journal_entries__recurring_journal_id")
+  @@index([approvalRequestId], map: "ix_journal_entries__approval_request_id")
+  @@index([createdById], map: "ix_journal_entries__created_by")
+  @@index([approvedById], map: "ix_journal_entries__approved_by")
+  @@index([postedById], map: "ix_journal_entries__posted_by")
+  @@index([autoReverseOn], map: "ix_journal_entries__auto_reverse_on", where: raw("(auto_reverse_on IS NOT NULL)"))
+  @@map("journal_entries")
+}
+
+/// One side of a journal (debit xor credit) with the dimensions of accounting-design §3 and the tax
+/// tagging the tax reports reconcile to (B5.4). `entity_id`, `fiscal_period_id`, `entry_date` are copied
+/// from the entry (trigger) for reporting.
+model JournalLine {
+  id             BigInt        @id(map: "pk_journal_lines") @default(autoincrement())
+  journalEntryId BigInt        @map("journal_entry_id")
+  lineNo         Int           @map("line_no") @db.SmallInt
+  accountId      BigInt        @map("account_id")
+  debit          Decimal       @default(0) @db.Decimal(14, 2)
+  credit         Decimal       @default(0) @db.Decimal(14, 2)
+  description    String?
+  orderId        BigInt?       @map("order_id")
+  orderGroupId   BigInt?       @map("order_group_id")
+  customerUserId BigInt?       @map("customer_user_id")
+  companyId      BigInt?       @map("company_id")
+  factoryId      BigInt?       @map("factory_id")
+  vendorId       BigInt?       @map("vendor_id")
+  productTypeId  BigInt?       @map("product_type_id")
+  channel        SalesChannel?
+  campaignId     BigInt?       @map("campaign_id")
+  promotionId    BigInt?       @map("promotion_id")
+  costCentreId   BigInt?       @map("cost_centre_id")
+  taxCode        TaxCode?      @map("tax_code")
+  taxBaseAmount  Decimal?      @map("tax_base_amount") @db.Decimal(14, 2)
+  entityId       BigInt        @map("entity_id")
+  fiscalPeriodId BigInt        @map("fiscal_period_id")
+  entryDate      DateTime      @map("entry_date") @db.Date
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  journalEntry JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__journal_entry_id")
+  account      Account      @relation(fields: [accountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__account_id")
+  order        Order?       @relation("JournalLineOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__order_id")
+  orderGroup   OrderGroup?  @relation("JournalLineOrderGroup", fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__order_group_id")
+  customer     User?        @relation("JournalLineCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__customer_user_id")
+  company      Company?     @relation("JournalLineCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__company_id")
+  factory      Factory?     @relation("JournalLineFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__factory_id")
+  vendor       Vendor?      @relation("JournalLineVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__vendor_id")
+  productType  ProductType? @relation("JournalLineProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__product_type_id")
+  campaign     Campaign?    @relation("JournalLineCampaign", fields: [campaignId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__campaign_id")
+  promotion    Promotion?   @relation("JournalLinePromotion", fields: [promotionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__promotion_id")
+  costCentre   CostCentre?  @relation(fields: [costCentreId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__cost_centre_id")
+  entity       Entity       @relation("JournalLineEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__entity_id")
+  fiscalPeriod FiscalPeriod @relation(fields: [fiscalPeriodId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_lines__fiscal_period_id")
+
+  @@unique([journalEntryId, lineNo], map: "ux_journal_lines__journal_entry_id__line_no")
+  @@index([accountId, entryDate], map: "ix_journal_lines__account_id__entry_date")
+  @@index([entityId, fiscalPeriodId, accountId], map: "ix_journal_lines__entity_id__fiscal_period_id__account_id")
+  @@index([fiscalPeriodId], map: "ix_journal_lines__fiscal_period_id")
+  @@index([orderId], map: "ix_journal_lines__order_id", where: raw("(order_id IS NOT NULL)"))
+  @@index([orderGroupId], map: "ix_journal_lines__order_group_id", where: raw("(order_group_id IS NOT NULL)"))
+  @@index([customerUserId], map: "ix_journal_lines__customer_user_id", where: raw("(customer_user_id IS NOT NULL)"))
+  @@index([companyId], map: "ix_journal_lines__company_id", where: raw("(company_id IS NOT NULL)"))
+  @@index([factoryId], map: "ix_journal_lines__factory_id", where: raw("(factory_id IS NOT NULL)"))
+  @@index([vendorId], map: "ix_journal_lines__vendor_id", where: raw("(vendor_id IS NOT NULL)"))
+  @@index([productTypeId], map: "ix_journal_lines__product_type_id", where: raw("(product_type_id IS NOT NULL)"))
+  @@index([campaignId], map: "ix_journal_lines__campaign_id", where: raw("(campaign_id IS NOT NULL)"))
+  @@index([promotionId], map: "ix_journal_lines__promotion_id", where: raw("(promotion_id IS NOT NULL)"))
+  @@index([costCentreId], map: "ix_journal_lines__cost_centre_id", where: raw("(cost_centre_id IS NOT NULL)"))
+  @@index([taxCode, entryDate], map: "ix_journal_lines__tax_code__entry_date", where: raw("(tax_code IS NOT NULL)"))
+  @@map("journal_lines")
+}
+
+/// Posting rules as data (ADR-0007): the identity names the event it listens to; versions hold the
+/// conditions and the journal template. Changes go through `posting_rule_change` (§8, D-169).
+model PostingRule {
+  id           BigInt   @id(map: "pk_posting_rules") @default(autoincrement())
+  publicId     String   @unique(map: "ux_posting_rules__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  /// `P01` … `P30` (accounting-design §5) and the supplementary rules of ADR-0007.
+  key          String   @unique(map: "ux_posting_rules__key")
+  eventType    String   @map("event_type")
+  name         String
+  description  String
+  decisionRefs String[] @map("decision_refs")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by")
+
+  createdBy      User?                @relation("PostingRuleCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_posting_rules__created_by")
+  versions       PostingRuleVersion[]
+  journalEntries JournalEntry[]
+
+  @@index([eventType], map: "ix_posting_rules__event_type")
+  @@index([createdById], map: "ix_posting_rules__created_by")
+  @@map("posting_rules")
+}
+
+/// Versioned (schema-design §2.1).
+model PostingRuleVersion {
+  id                BigInt              @id(map: "pk_posting_rule_versions") @default(autoincrement())
+  publicId          String              @unique(map: "ux_posting_rule_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  postingRuleId     BigInt              @map("posting_rule_id")
+  versionNo         Int                 @map("version_no")
+  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
+  status            ConfigVersionStatus @default(draft)
+  /// Approval-engine condition shape over `payload.<path>` of the event (null = always).
+  conditions        Json?
+  /// Journal template: description, date, source, dimensions and lines (ADR-0007).
+  template          Json
+  reason            String
+  approvalRequestId BigInt?             @map("approval_request_id")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt?             @map("created_by")
+  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById       BigInt?             @map("decided_by")
+
+  postingRule     PostingRule      @relation(fields: [postingRuleId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_posting_rule_versions__posting_rule_id")
+  approvalRequest ApprovalRequest? @relation("PostingRuleVersionApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_posting_rule_versions__approval_request_id")
+  createdBy       User?            @relation("PostingRuleVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_posting_rule_versions__created_by")
+  decidedBy       User?            @relation("PostingRuleVersionDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_posting_rule_versions__decided_by")
+  journalEntries  JournalEntry[]
+
+  @@unique([postingRuleId, versionNo], map: "ux_posting_rule_versions__posting_rule_id__version_no")
+  @@index([postingRuleId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_posting_rule_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
+  @@index([approvalRequestId], map: "ix_posting_rule_versions__approval_request_id")
+  @@index([createdById], map: "ix_posting_rule_versions__created_by")
+  @@index([decidedById], map: "ix_posting_rule_versions__decided_by")
+  @@map("posting_rule_versions")
+}
+
+/// A recurring journal definition, approved once like a manual journal; each run posts a
+/// `recurring` entry (optionally auto-reversed next period).
+model RecurringJournal {
+  id                BigInt                 @id(map: "pk_recurring_journals") @default(autoincrement())
+  publicId          String                 @unique(map: "ux_recurring_journals__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId          BigInt                 @map("entity_id")
+  name              String
+  description       String
+  dayOfMonth        Int                    @map("day_of_month") @db.SmallInt
+  /// Lines: account code, side, amount, description, dimensions.
+  template          Json
+  autoReverse       Boolean                @default(false) @map("auto_reverse")
+  startOn           DateTime               @map("start_on") @db.Date
+  endOn             DateTime?              @map("end_on") @db.Date
+  nextRunOn         DateTime               @map("next_run_on") @db.Date
+  status            RecurringJournalStatus @default(pending_approval)
+  approvalRequestId BigInt?                @map("approval_request_id")
+  approvedAt        DateTime?              @map("approved_at") @db.Timestamptz(6)
+  approvedById      BigInt?                @map("approved_by")
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById       BigInt                 @map("created_by")
+  updatedAt         DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion        Int                    @default(1) @map("row_version")
+
+  entity          Entity           @relation("RecurringJournalEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_recurring_journals__entity_id")
+  approvalRequest ApprovalRequest? @relation("RecurringJournalApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_recurring_journals__approval_request_id")
+  approvedBy      User?            @relation("RecurringJournalApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_recurring_journals__approved_by")
+  createdBy       User             @relation("RecurringJournalCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_recurring_journals__created_by")
+  entries         JournalEntry[]
+
+  @@index([status, nextRunOn], map: "ix_recurring_journals__status__next_run_on")
+  @@index([entityId], map: "ix_recurring_journals__entity_id")
+  @@index([approvalRequestId], map: "ix_recurring_journals__approval_request_id")
+  @@index([approvedById], map: "ix_recurring_journals__approved_by")
+  @@index([createdById], map: "ix_recurring_journals__created_by")
+  @@map("recurring_journals")
+}
+
+/// Running entry numbers per entity and month (not a statutory series; schema-design §7 A-41).
+model JournalEntryCounter {
+  entityId  BigInt   @map("entity_id")
+  periodKey String   @map("period_key")
+  nextValue BigInt   @map("next_value")
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  entity Entity @relation("JournalEntryCounterEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_journal_entry_counters__entity_id")
+
+  @@id([entityId, periodKey], map: "pk_journal_entry_counters")
+  @@map("journal_entry_counters")
 }

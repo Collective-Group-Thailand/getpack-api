@@ -646,7 +646,15 @@ export class LoyaltyService {
         type,
         aggregateType: 'user',
         aggregateId: user.publicId,
-        payload: { userId: user.publicId, entryId: entry.publicId, ...data },
+        // Amounts the ledger posts (P10–P12, ADR-0007): the entry's baht value and the liability rate.
+        payload: {
+          userId: user.publicId,
+          entryId: entry.publicId,
+          bahtValue: D(entry.bahtValue).abs().toFixed(2),
+          signedBahtValue: (entry.points < 0 ? D(entry.bahtValue).abs().neg() : D(entry.bahtValue).abs()).toFixed(2),
+          expectedRedemptionRatePct: String((await this.settings.at('loyalty.expected_redemption_rate_pct', { tx })).value),
+          ...data,
+        },
       },
       actor,
     );

@@ -44,6 +44,20 @@ export interface SettingValues {
     default: 'sale_of_goods' | 'hire_of_work';
     overrides: Record<string, 'sale_of_goods' | 'hire_of_work'>;
   };
+  /** B5 finance (accounting-design §1.5, §2, §6, §7; ⚖ items pending the CPA). */
+  'tax.rounding_mode': 'line' | 'document';
+  'receivables.forfeited_deposit_policy': { forfeitPct: string };
+  /** Not seeded: % of the open balance per days-overdue band (`fromDays` inclusive) for P30. */
+  'receivables.allowance_rates': { fromDays: number; pct: string }[];
+  'documents.retention_years': number;
+  'banking.auto_match': { dateWindowDays: number; amountTolerance: string };
+  'tax.calendar': {
+    pp30: { dayOfNextMonth: number };
+    pnd3: { dayOfNextMonth: number };
+    pnd53: { dayOfNextMonth: number };
+    reminderDaysBefore: number;
+  };
+  'close.unmatched_items_threshold': number;
   'orders.auto_complete_days': number;
   'claims.window_days': number;
   'discounts.cs_limit_pct': string;

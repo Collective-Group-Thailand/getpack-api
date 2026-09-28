@@ -63,6 +63,13 @@ describe('seed data (B1.2 step 3)', () => {
       // B4.1: D-070 fixes four severities only; the rest and every threshold are proposed (ADR-0009).
       'artwork.preflight_rules': 'proposed',
       'artwork.prepress_sla_business_hours': 'pending_business',
+      // B5: accounting-design ⚖ positions and proposed operating values of Finance.
+      'tax.rounding_mode': 'pending_cpa',
+      'receivables.forfeited_deposit_policy': 'pending_business',
+      'receivables.allowance_rates': 'pending_cpa',
+      'banking.auto_match': 'proposed',
+      'tax.calendar': 'proposed',
+      'close.unmatched_items_threshold': 'proposed',
     });
   });
 

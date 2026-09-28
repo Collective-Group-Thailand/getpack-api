@@ -7,6 +7,6 @@
 | 0004 | [Auth audiences & tokens](0004-auth-audiences-and-tokens.md) | Accepted (implemented in B1.3) |
 | 0005 | [Effective-dated configuration](0005-effective-dated-configuration.md) | Accepted |
 | 0006 | [Approval-matrix engine](0006-approval-matrix-engine.md) | Accepted (implemented in B1.3) |
-| 0007 | Posting-rule engine | B5.1 |
+| 0007 | [Posting-rule engine](0007-posting-rule-engine.md) | Accepted (B5.1) |
 | 0008 | [Payment schedules: instalment amounts and allocation](0008-payment-schedule-allocation.md) | Accepted (B3.2) |
 | 0009 | [Artwork preflight tooling](0009-artwork-preflight.md) | Accepted (B4.1) |

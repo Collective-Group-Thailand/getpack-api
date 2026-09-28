@@ -77,7 +77,25 @@ describe('seeds (PostgreSQL 18)', () => {
       { code: 'wht_customer_hire_of_work', rate: '3.0000', status: 'approved', versions: '1' },
       { code: 'wht_customer_service', rate: '3.0000', status: 'approved', versions: '1' },
       { code: 'wht_customer_transport', rate: '1.0000', status: 'approved', versions: '1' },
+      { code: 'wht_hire_of_work', rate: '3.0000', status: 'approved', versions: '1' },
+      { code: 'wht_service', rate: '3.0000', status: 'approved', versions: '1' },
+      { code: 'wht_transport', rate: '1.0000', status: 'approved', versions: '1' },
     ]);
+  });
+
+  it('seeds the chart of accounts and the default posting rules as approved versions (B5.1, §3, §5)', async () => {
+    const { rows } = await db.client.query<{ code: string; control: boolean; required: string }>(`
+      SELECT code, is_control AS control, required_dimensions::text AS required FROM accounts WHERE is_control ORDER BY code`);
+    expect(rows).toEqual([
+      { code: '1210', control: true, required: '{customer}' },
+      { code: '1250', control: true, required: '{vendor}' },
+      { code: '2110', control: true, required: '{vendor}' },
+      { code: '2120', control: true, required: '{vendor}' },
+    ]);
+    const rules = await db.client.query<{ key: string; status: string }>(`
+      SELECT r.key, v.status::text AS status FROM posting_rules r JOIN posting_rule_versions v ON v.posting_rule_id = r.id ORDER BY r.key`);
+    for (let n = 1; n <= 30; n++) expect(rules.rows.map((r) => r.key)).toContain(`P${String(n).padStart(2, '0')}`);
+    expect(new Set(rules.rows.map((r) => r.status))).toEqual(new Set(['approved']));
   });
 
   it('seeds the D-020 payment schedule templates and the payment flags off (B3.2)', async () => {

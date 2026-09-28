@@ -10,6 +10,7 @@ import {
   PAYMENT_SCHEDULE_TEMPLATES,
   REFERRAL_PROMOTION,
 } from './data/commerce';
+import { ALL_DIMENSIONS, CHART_OF_ACCOUNTS, VENDOR_WHT_RATES } from './data/finance-accounts';
 import {
   FULFILMENT_FEATURE_FLAGS,
   MILESTONE_ROUTE_FAMILIES,
@@ -17,6 +18,8 @@ import {
 } from './data/fulfilment';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
+import { CUSTOMER_POSTING_RULES } from './data/posting-rules-customer';
+import { VENDOR_POSTING_RULES } from './data/posting-rules-vendor';
 import { UNMET_DEMAND_REASONS } from './data/quotes';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import { ENTITY_SETTING_KEYS, SETTINGS, type SettingSeed } from './data/settings';
@@ -80,6 +83,7 @@ export async function seedReference(prisma: PrismaClient, entity: EntitySeedInpu
       await ensurePaymentFeatureFlags(tx, count);
       await ensureMilestoneRoutes(tx, count);
       await ensureReferralPromotion(tx, count);
+      await ensureLedger(tx, entityId, count);
 
       if (Object.keys(report).length > 0) {
         await tx.auditLog.create({
@@ -419,7 +423,7 @@ async function ensureAgreementTemplates(tx: Tx, count: (what: string) => void): 
 }
 
 async function ensureTaxRates(tx: Tx, count: (what: string) => void): Promise<void> {
-  for (const rate of TAX_RATES) {
+  for (const rate of [...TAX_RATES, ...VENDOR_WHT_RATES]) {
     if (await tx.taxRate.findUnique({ where: { code: rate.code } })) continue;
     await tx.taxRate.create({
       data: {
@@ -427,7 +431,7 @@ async function ensureTaxRates(tx: Tx, count: (what: string) => void): Promise<vo
         nameTh: rate.nameTh,
         nameEn: rate.nameEn,
         description: rate.description,
-        decisionRefs: rate.decisions,
+        decisionRefs: [...rate.decisions],
         versions: {
           create: {
             versionNo: 1,
@@ -607,4 +611,61 @@ async function ensureReferralPromotion(tx: Tx, count: (what: string) => void): P
     },
   });
   count('promotions');
+}
+
+/**
+ * Ledger reference data (B5.1): the chart of accounts of the entity (accounting-design §3) and the default
+ * posting rules P01–P30 with the supplementary rules of ADR-0007, each as an approved version 1.
+ */
+async function ensureLedger(tx: Tx, entityId: bigint, count: (what: string) => void): Promise<void> {
+  const ids = new Map<string, bigint>();
+  for (const account of CHART_OF_ACCOUNTS) {
+    const existing = await tx.account.findUnique({ where: { entityId_code: { entityId, code: account.code } } });
+    if (existing) {
+      ids.set(account.code, existing.id);
+      continue;
+    }
+    const created = await tx.account.create({
+      data: {
+        entityId,
+        code: account.code,
+        nameTh: account.nameTh,
+        nameEn: account.nameEn,
+        accountType: account.type,
+        normalSide: account.side,
+        parentId: account.parent ? (ids.get(account.parent) ?? null) : null,
+        isControl: account.control ?? false,
+        isPostable: account.postable ?? true,
+        allowedDimensions: [...ALL_DIMENSIONS],
+        requiredDimensions: account.required ?? [],
+        cashFlowClass: account.cashFlow,
+      },
+    });
+    ids.set(account.code, created.id);
+    count('accounts');
+  }
+  for (const rule of [...CUSTOMER_POSTING_RULES, ...VENDOR_POSTING_RULES]) {
+    if (await tx.postingRule.findUnique({ where: { key: rule.key } })) continue;
+    await tx.postingRule.create({
+      data: {
+        key: rule.key,
+        eventType: rule.eventType,
+        name: rule.name,
+        description: rule.description,
+        decisionRefs: rule.decisions,
+        versions: {
+          create: {
+            versionNo: 1,
+            effectiveFrom: SEED_EFFECTIVE_FROM,
+            status: 'approved',
+            conditions: (rule.conditions ?? undefined),
+            template: rule.template as unknown as Prisma.InputJsonValue,
+            reason: `Seed default from accounting-design.md §5 (${rule.decisions.join(', ')})`,
+            decidedAt: new Date(),
+          },
+        },
+      },
+    });
+    count('posting_rules');
+  }
 }

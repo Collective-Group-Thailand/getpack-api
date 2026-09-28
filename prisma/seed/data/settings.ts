@@ -326,6 +326,96 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-122'],
   },
 
+  // --- Finance (B5, accounting-design.md; ⚖ items are pending the CPA)
+  {
+    key: 'tax.rounding_mode',
+    valueType: 'enum',
+    value: 'line',
+    valueSchema: { enum: ['line', 'document'] },
+    description:
+      'D-033 / accounting-design §1.5 VAT and WHT rounding per line or per document (⚖); a document-level difference is an explicit rounding amount',
+    decisions: ['D-033'],
+    confirmation: 'pending_cpa',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'receivables.forfeited_deposit_policy',
+    valueType: 'json',
+    value: { forfeitPct: '0' },
+    valueSchema: {
+      type: 'object',
+      required: ['forfeitPct'],
+      properties: { forfeitPct: { type: 'string', pattern: '^\\d{1,3}(\\.\\d{1,4})?$' } },
+    },
+    description:
+      'D-033 / accounting-design §10 forfeited deposit policy (⚖): % of the paid deposit kept when an order is cancelled before production; 0 until the business decides (P23)',
+    decisions: ['D-033', 'D-020'],
+    confirmation: 'pending_business',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'receivables.allowance_rates',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    description:
+      'D-033 / accounting-design §10 allowance method (⚖): % of open receivables per days-overdue band for P30; not seeded — until set, Finance enters the allowance amount',
+    decisions: ['D-033'],
+    confirmation: 'pending_cpa',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'documents.retention_years',
+    valueType: 'integer',
+    value: 10,
+    valueSchema: { minimum: 5, maximum: 50 },
+    description:
+      'D-033 / accounting-design §2 record retention of documents and ledgers (≥ 10 years, above the 5-year statutory minimum)',
+    decisions: ['D-033'],
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'banking.auto_match',
+    valueType: 'json',
+    value: { dateWindowDays: 3, amountTolerance: '0.00' },
+    valueSchema: {
+      type: 'object',
+      required: ['dateWindowDays', 'amountTolerance'],
+      properties: { dateWindowDays: { type: 'integer', minimum: 0, maximum: 31 }, amountTolerance: { type: 'string' } },
+    },
+    description:
+      'D-093 / accounting-design §6 bank auto-matching: exact amount (± tolerance) + reference + date window (proposed)',
+    decisions: ['D-093', 'D-061'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'tax.calendar',
+    valueType: 'json',
+    value: {
+      pp30: { dayOfNextMonth: 15 },
+      pnd3: { dayOfNextMonth: 7 },
+      pnd53: { dayOfNextMonth: 7 },
+      reminderDaysBefore: 3,
+    },
+    description:
+      'D-033 / accounting-design §6 tax calendar: filing due day of the following month per form (paper-filing days; e-filing extensions are a Finance choice) and the reminder lead time (proposed)',
+    decisions: ['D-033'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'close.unmatched_items_threshold',
+    valueType: 'integer',
+    value: 0,
+    valueSchema: { minimum: 0 },
+    description:
+      'D-033 / accounting-design §7 step 1: unmatched bank / gateway items allowed at close before each must be explained (proposed: none)',
+    decisions: ['D-033'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+
   // --- Orders & tax (B3.1)
   {
     key: 'orders.unpaid_expiry_days',

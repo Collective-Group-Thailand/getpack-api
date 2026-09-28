@@ -565,6 +565,48 @@ const CHECKS = [
   'ck_line_accounts__linked',
   'ck_line_rich_menus__key',
   'ck_line_rich_menus__provider',
+  // --- B5.1 ledger
+  'ck_account_changes__decided',
+  'ck_account_changes__reason',
+  'ck_account_changes__status',
+  'ck_account_changes__target',
+  'ck_accounts__code',
+  'ck_accounts__names',
+  'ck_accounts__not_own_parent',
+  'ck_accounts__required_allowed',
+  'ck_cost_centres__code',
+  'ck_cost_centres__name',
+  'ck_fiscal_periods__dates',
+  'ck_fiscal_periods__period_no',
+  'ck_fiscal_periods__status_changed',
+  'ck_fiscal_years__dates',
+  'ck_fiscal_years__label',
+  'ck_journal_entries__auto',
+  'ck_journal_entries__description',
+  'ck_journal_entries__manual',
+  'ck_journal_entries__posted',
+  'ck_journal_entries__recurring',
+  'ck_journal_entries__rejected',
+  'ck_journal_entries__reversal',
+  'ck_journal_entries__source',
+  'ck_journal_entries__totals',
+  'ck_journal_entry_counters__next_value',
+  'ck_journal_lines__line_no',
+  'ck_journal_lines__sides',
+  'ck_journal_lines__tax',
+  'ck_posting_rule_versions__decided',
+  'ck_posting_rule_versions__reason',
+  'ck_posting_rule_versions__status',
+  'ck_posting_rule_versions__template',
+  'ck_posting_rule_versions__version_no',
+  'ck_posting_rules__decision_refs',
+  'ck_posting_rules__event_type',
+  'ck_posting_rules__key',
+  'ck_recurring_journals__approved',
+  'ck_recurring_journals__day_of_month',
+  'ck_recurring_journals__name',
+  'ck_recurring_journals__template',
+  'ck_recurring_journals__window',
 ];
 
 const TRIGGERS = [
@@ -701,6 +743,17 @@ const TRIGGERS = [
   // --- B4.6 LINE & conversations
   'tg_conversation_messages__append_only',
   'tg_conversations__no_delete',
+  // --- B5.1 ledger
+  'tg_account_changes__immutable',
+  'tg_accounts__no_delete',
+  'tg_fiscal_periods__guard',
+  'tg_fiscal_years__no_delete',
+  'tg_journal_entries__balanced',
+  'tg_journal_entries__guard',
+  'tg_journal_entries__period',
+  'tg_journal_entries__sync_lines',
+  'tg_journal_lines__guard',
+  'tg_posting_rule_versions__immutable',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */
@@ -793,6 +846,12 @@ const INDEXES = [
   'ux_line_rich_menus__one_active',
   'ux_conversations__one_live_line',
   'ux_conversations__one_live_web',
+  // --- B5.1 ledger
+  'ux_journal_entries__domain_event_id__posting_rule_id',
+  'ix_posting_rule_versions__resolution',
+  'ix_journal_lines__order_id',
+  'ix_journal_lines__tax_code__entry_date',
+  'ix_journal_entries__auto_reverse_on',
 ];
 
 const EXPRESSION_INDEXES = [
@@ -828,7 +887,7 @@ const TRIGRAM_INDEXES = [
 ];
 
 /** Exclusion constraints (non-overlapping bands, B2.3+). */
-const EXCLUSIONS = ['ex_sell_margin_lines__no_overlap', 'ex_geometry_bands__no_overlap'];
+const EXCLUSIONS = ['ex_sell_margin_lines__no_overlap', 'ex_geometry_bands__no_overlap', 'ex_fiscal_periods__no_overlap', 'ex_fiscal_years__no_overlap'];
 
 const EXTENSIONS = ['vector', 'pgcrypto', 'pg_trgm', 'citext', 'btree_gist'];
 

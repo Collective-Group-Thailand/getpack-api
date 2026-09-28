@@ -114,6 +114,11 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `claims.override_liability` — Override the liability rule of a claim with a reason (D-083) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
 | `claims.resolve` — Resolve approved claims: re-production, refund request, credit, deductions (D-083, D-022) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
 | `shipments.manage` — Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments (D-013, D-114) | ● |  |  |  | ● |  | ● |  |  |  | ● |  |  |  |
+| `ledger.read` — Read the chart of accounts, periods, journals with their lines, posting rules and tax rates (D-031) | ● | ● | ● |  |  |  |  |  | ● | ● |  |  |  | ● |
+| `ledger.journals.manage` — Draft and submit manual, recurring and reversing journals (approved by another person, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `ledger.periods.manage` — Soft-close, reopen, close and lock fiscal periods (§1.4, §7) (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
+| `ledger.post_soft_closed` — Post into a soft-closed period (§1.4) (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
+| `ledger.config.propose` — Propose chart-of-accounts changes, posting-rule and tax-rate versions and cost centres (maker-checker, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|
@@ -193,10 +198,10 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 |---|---|---|---|---|
 | The creator of a payout run cannot approve it (D-022, §8) | action_pair | `payout_run.create` → `payout_run.approve` | same_subject | D-022, D-033 |
 | Whoever records a vendor bill cannot change that vendor's bank account (§8) | action_pair | `vendor_invoice.record` → `vendor_bank_account.change` | same_vendor | D-033 |
-| The maker of a manual journal cannot approve it (§8) | action_pair | `journal.create` → `journal.approve` | same_subject | D-033 |
-| Whoever requests a credit note cannot issue it (§8) | action_pair | `credit_note.request` → `credit_note.issue` | same_subject | D-033 |
+| The maker of a manual journal cannot approve it (§8) | action_pair | `journal_entry.create` → `journal_entry.approve` | same_subject | D-033 |
+| Whoever requests a credit note cannot issue it (§8) | action_pair | `customer_document.request` → `customer_document.approve` | same_subject | D-033 |
 | Whoever requests a refund cannot approve it (§8) | action_pair | `refund.request` → `refund.approve` | same_subject | D-033 |
-| Whoever proposes a write-off cannot approve it (§8) | action_pair | `write_off.request` → `write_off.approve` | same_subject | D-033 |
+| Whoever proposes a write-off cannot approve it (§8) | action_pair | `receivable_item.request` → `receivable_item.approve` | same_subject | D-033 |
 | Whoever changes a bank account cannot approve the change (§8) | action_pair | `vendor_bank_account.change` → `vendor_bank_account.approve` | same_subject | D-033 |
 | D-168 the time-boxed Auditor role is never combined with Finance (auditor independence, §8) | role_pair | `auditor` × `finance` | — | D-168, D-140 |
 | D-168 the time-boxed Auditor role is never combined with Finance Manager (auditor independence, §8) | role_pair | `auditor` × `finance_manager` | — | D-168, D-140 |

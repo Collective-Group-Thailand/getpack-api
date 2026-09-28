@@ -44,6 +44,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      'ledger.read',
       ...APPROVER,
       ...COST_AND_MARGIN,
       'settings.read_sensitive',
@@ -74,6 +75,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'รองประธาน',
     nameEn: 'VP',
     permissions: [
+      'ledger.read',
       ...APPROVER,
       ...COST_AND_MARGIN,
       'partners.read',
@@ -285,6 +287,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายการเงิน',
     nameEn: 'Finance',
     permissions: [
+      'ledger.read', 'ledger.journals.manage', 'ledger.config.propose',
       ...APPROVER,
       ...COST_AND_MARGIN,
       'audit_logs.read',
@@ -316,6 +319,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการฝ่ายการเงิน',
     nameEn: 'Finance Manager',
     permissions: [
+      'ledger.read', 'ledger.journals.manage', 'ledger.config.propose', 'ledger.periods.manage', 'ledger.post_soft_closed',
       ...APPROVER,
       ...COST_AND_MARGIN,
       'settings.read_sensitive',
@@ -425,6 +429,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ตรวจสอบบัญชี',
     nameEn: 'Auditor (read-only)',
     permissions: [
+      'ledger.read',
       'settings.read',
       'approvals.read',
       'audit_logs.read',

@@ -33,7 +33,7 @@ export const SOD_RULES: readonly SodRuleSeed[] = [
     description: 'The maker of a manual journal cannot approve it (§8)',
     decisions: ['D-033'],
     kind: 'action_pair',
-    actions: ['journal.create', 'journal.approve'],
+    actions: ['journal_entry.create', 'journal_entry.approve'],
     subjectMatch: 'same_subject',
   },
   {
@@ -41,7 +41,7 @@ export const SOD_RULES: readonly SodRuleSeed[] = [
     description: 'Whoever requests a credit note cannot issue it (§8)',
     decisions: ['D-033'],
     kind: 'action_pair',
-    actions: ['credit_note.request', 'credit_note.issue'],
+    actions: ['customer_document.request', 'customer_document.approve'],
     subjectMatch: 'same_subject',
   },
   {
@@ -57,7 +57,7 @@ export const SOD_RULES: readonly SodRuleSeed[] = [
     description: 'Whoever proposes a write-off cannot approve it (§8)',
     decisions: ['D-033'],
     kind: 'action_pair',
-    actions: ['write_off.request', 'write_off.approve'],
+    actions: ['receivable_item.request', 'receivable_item.approve'],
     subjectMatch: 'same_subject',
   },
   {

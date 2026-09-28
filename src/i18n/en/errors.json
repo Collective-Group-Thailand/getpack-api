@@ -992,5 +992,43 @@
       "title": "Customer unreachable",
       "detail": "The message cannot be delivered ({reason})"
     }
+  },
+  "ledger": {
+    "period_closed": {
+      "title": "Period closed",
+      "detail": "The fiscal period for {date} is {status}; nothing can be posted into it."
+    },
+    "unbalanced": {
+      "title": "Journal does not balance",
+      "detail": "Debits {debit} and credits {credit} must be equal."
+    },
+    "account_invalid": {
+      "title": "Account not usable",
+      "detail": "Account {code} cannot take this line: {reason}."
+    },
+    "rule_invalid": {
+      "title": "Posting rule invalid",
+      "detail": "The posting rule cannot be used: {reason}."
+    },
+    "journal_not_editable": {
+      "title": "Journal not editable",
+      "detail": "A {status} journal cannot be changed."
+    },
+    "period_transition": {
+      "title": "Period status change not allowed",
+      "detail": "A {from} period cannot become {to}."
+    },
+    "not_reversible": {
+      "title": "Entry cannot be reversed",
+      "detail": "This entry cannot be reversed: {reason}."
+    },
+    "change_pending": {
+      "title": "Change already pending",
+      "detail": "A change of this {subject} is already waiting for approval."
+    },
+    "account_exists": {
+      "title": "Account code exists",
+      "detail": "Account {code} already exists."
+    }
   }
 }

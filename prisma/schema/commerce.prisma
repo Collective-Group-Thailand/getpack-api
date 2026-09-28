@@ -492,6 +492,10 @@ model OrderGroup {
   discountMemo           DiscountMemo?    @relation("OrderGroupDiscountMemo", fields: [discountMemoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_groups__discount_memo_id")
   appliedMemos           DiscountMemo[]   @relation("DiscountMemoAppliedGroup")
 
+  // --- Finance B5.1 (generated back-relations)
+  journalLines JournalLine[] @relation("JournalLineOrderGroup")
+  // --- end Finance B5.1
+
   @@index([companyId, createdAt(sort: Desc)], map: "ix_order_groups__company_id__created_at")
   @@index([companyBranchId], map: "ix_order_groups__company_branch_id")
   @@index([companyApprovalRequestId], map: "ix_order_groups__company_approval_request_id")
@@ -629,6 +633,10 @@ model Order {
   // --- Fulfilment B4.5 (generated back-relations)
   claims Claim[] @relation("ClaimOrder")
   // --- end Fulfilment B4.5
+
+  // --- Finance B5.1 (generated back-relations)
+  journalLines JournalLine[] @relation("JournalLineOrder")
+  // --- end Finance B5.1
 
   @@index([companyId, createdAt(sort: Desc)], map: "ix_orders__company_id__created_at")
   @@index([orderGroupId], map: "ix_orders__order_group_id")
@@ -1385,6 +1393,10 @@ model Campaign {
   redemptions PromotionRedemption[]
   discounts   OrderDiscount[]       @relation("OrderDiscountCampaign")
 
+  // --- Finance B5.1 (generated back-relations)
+  journalLines JournalLine[] @relation("JournalLineCampaign")
+  // --- end Finance B5.1
+
   @@index([status, startsAt], map: "ix_campaigns__status__starts_at")
   @@index([entityId], map: "ix_campaigns__entity_id")
   @@index([ownerUserId], map: "ix_campaigns__owner_user_id")
@@ -1431,6 +1443,10 @@ model Promotion {
   redemptions PromotionRedemption[]
   cartCodes   CartCode[]              @relation("CartCodePromotion")
   discounts   OrderDiscount[]         @relation("OrderDiscountPromotion")
+
+  // --- Finance B5.1 (generated back-relations)
+  journalLines JournalLine[] @relation("JournalLinePromotion")
+  // --- end Finance B5.1
 
   @@index([status, kind, startsAt], map: "ix_promotions__status__kind__starts_at")
   @@index([entityId], map: "ix_promotions__entity_id")
@@ -1864,6 +1880,10 @@ model Company {
   // --- Fulfilment B4.1 (generated back-relations)
   designDocuments DesignDocument[] @relation("DesignDocumentCompany")
   // --- end Fulfilment B4.1
+
+  // --- Finance B5.1 (generated back-relations)
+  journalLines JournalLine[] @relation("JournalLineCompany")
+  // --- end Finance B5.1
 
   @@unique([taxId], map: "ux_companies__tax_id", where: raw("(status <> 'closed'::company_status)"))
   @@index([status], map: "ix_companies__status")

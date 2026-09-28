@@ -231,6 +231,15 @@ export const ERROR_CODES = {
   'line.signature_invalid': HttpStatus.UNAUTHORIZED,
   'conversations.closed': HttpStatus.CONFLICT,
   'conversations.unreachable': HttpStatus.CONFLICT,
+  'ledger.period_closed': HttpStatus.CONFLICT,
+  'ledger.unbalanced': HttpStatus.UNPROCESSABLE_ENTITY,
+  'ledger.account_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'ledger.rule_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
+  'ledger.journal_not_editable': HttpStatus.CONFLICT,
+  'ledger.period_transition': HttpStatus.CONFLICT,
+  'ledger.not_reversible': HttpStatus.CONFLICT,
+  'ledger.change_pending': HttpStatus.CONFLICT,
+  'ledger.account_exists': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

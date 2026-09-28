@@ -172,6 +172,12 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
   financeManagerOnly('manual_journal', 'journal_entry', 'Manual journals (accounting-design.md §8)', [
     'D-033',
   ]),
+  financeManagerOnly(
+    'recurring_journal',
+    'recurring_journal',
+    'Recurring journal definitions, approved once like a manual journal (accounting-design.md §8, B5.1)',
+    ['D-033'],
+  ),
   financeManagerOnly('credit_note', 'customer_document', 'Credit notes (accounting-design.md §8)', ['D-033']),
   financeManagerOnly('refund', 'refund', 'Refunds (accounting-design.md §8)', ['D-033']),
   financeManagerOnly('write_off', 'receivable_item', 'Bad-debt write-offs (accounting-design.md §8)', [
@@ -179,14 +185,14 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
   ]),
   financeManagerOnly(
     'posting_rule_change',
-    'posting_rule',
+    'posting_rule_version',
     'Changes to posting rules (accounting-design.md §8)',
     ['D-033'],
   ),
-  financeManagerOnly('coa_change', 'account', 'Changes to the chart of accounts (accounting-design.md §8)', [
+  financeManagerOnly('coa_change', 'account_change', 'Changes to the chart of accounts (accounting-design.md §8)', [
     'D-033',
   ]),
-  financeManagerOnly('tax_setting_change', 'tax_rate', 'Changes to tax settings (accounting-design.md §8)', [
+  financeManagerOnly('tax_setting_change', 'tax_rate_version', 'Changes to tax settings (accounting-design.md §8)', [
     'D-033',
   ]),
   financeManagerOnly(

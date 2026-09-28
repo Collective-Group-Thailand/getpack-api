@@ -379,6 +379,18 @@ model Entity {
   claims Claim[] @relation("ClaimEntity")
   // --- end Fulfilment B4.5
 
+  // --- Finance B5.1 (generated back-relations)
+  fiscalYears          FiscalYear[]          @relation("FiscalYearEntity")
+  fiscalPeriods        FiscalPeriod[]        @relation("FiscalPeriodEntity")
+  accounts             Account[]             @relation("AccountEntity")
+  accountChanges       AccountChange[]       @relation("AccountChangeEntity")
+  costCentres          CostCentre[]          @relation("CostCentreEntity")
+  journalEntries       JournalEntry[]        @relation("JournalEntryEntity")
+  journalLines         JournalLine[]         @relation("JournalLineEntity")
+  recurringJournals    RecurringJournal[]    @relation("RecurringJournalEntity")
+  journalEntryCounters JournalEntryCounter[] @relation("JournalEntryCounterEntity")
+  // --- end Finance B5.1
+
   @@unique([isDefault], map: "ux_entities__is_default", where: raw("is_default"))
   @@map("entities")
 }
@@ -606,6 +618,13 @@ model ApprovalRequest {
   // --- Fulfilment B4.2 (generated back-relations)
   milestoneRouteVersions MilestoneRouteVersion[] @relation("MilestoneRouteVersionApprovalRequest")
   // --- end Fulfilment B4.2
+
+  // --- Finance B5.1 (generated back-relations)
+  accountChanges      AccountChange[]      @relation("AccountChangeApprovalRequest")
+  journalEntries      JournalEntry[]       @relation("JournalEntryApprovalRequest")
+  postingRuleVersions PostingRuleVersion[] @relation("PostingRuleVersionApprovalRequest")
+  recurringJournals   RecurringJournal[]   @relation("RecurringJournalApprovalRequest")
+  // --- end Finance B5.1
 
   @@unique([policyId, subjectType, subjectId], map: "ux_approval_requests__one_pending_per_subject", where: raw("status = 'pending'"))
   @@index([subjectType, subjectId], map: "ix_approval_requests__subject")
@@ -906,6 +925,10 @@ model DomainEvent {
   // --- Fulfilment B4.3 (generated back-relations)
   deliveryReconciliations DeliveryReconciliation[] @relation("DeliveryReconciliationEvent")
   // --- end Fulfilment B4.3
+
+  // --- Finance B5.1 (generated back-relations)
+  journalEntries JournalEntry[] @relation("JournalEntryDomainEvent")
+  // --- end Finance B5.1
 
   @@index([aggregateType, aggregateId, occurredAt], map: "ix_domain_events__aggregate")
   @@index([type, occurredAt], map: "ix_domain_events__type__occurred_at")
