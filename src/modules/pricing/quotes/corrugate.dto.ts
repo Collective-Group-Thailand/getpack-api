@@ -25,6 +25,7 @@ export const CORRUGATE_IDS = {
   subPattern: '0192f3a0-7c1e-7d2a-9b1f-00000000b103',
   coating: '0192f3a0-7c1e-7d2a-9b1f-00000000b104',
   assembly: '0192f3a0-7c1e-7d2a-9b1f-00000000b105',
+  catalogProduct: '0192f3a0-7c1e-7d2a-9b1f-00000000b106',
 };
 
 const MM = { unit: 'mm', scale: 2 };
@@ -131,10 +132,11 @@ export class CorrugateConfigurationDto {
   patternId!: string;
 
   @RefField({
-    example: IDS.pattern,
+    example: CORRUGATE_IDS.catalogProduct,
     optional: true,
     description:
-      'The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`)',
+      'The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`). Required on ' +
+      'the store, where the difficulty level must be the product’s own (configurator `difficultyLevelId`, quirk C9)',
   })
   catalogProductId?: string;
 
@@ -197,6 +199,7 @@ export class CsCorrugateConfigurationDto extends CorrugateConfigurationDto {
 
 export const CORRUGATE_CONFIGURATION_EXAMPLE = {
   patternId: CORRUGATE_IDS.pattern,
+  catalogProductId: CORRUGATE_IDS.catalogProduct,
   w: 300,
   l: 400,
   d: 250,

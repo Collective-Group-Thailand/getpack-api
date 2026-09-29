@@ -7,7 +7,7 @@ import { MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma, type QuoteStatus, type SalesChannel } from '@generated/prisma/client';
 import { canonical } from '@modules/catalog/imports/import-engine';
-import { validateConfiguration } from '@modules/pricing/quotes/configurations';
+import { assertStoreRules, validateConfiguration } from '@modules/pricing/quotes/configurations';
 import {
   QuoteEngineService,
   type QuoteStepView,
@@ -87,6 +87,7 @@ export class SavedQuotesService {
     const configuration = await validateConfiguration(type.calculatorKey, input.configuration, {
       staff: owner.kind === 'staff',
     });
+    if (owner.kind !== 'staff') await assertStoreRules(this.prisma, type.calculatorKey, configuration);
     const now = new Date();
     const view = await this.engine.price(type.calculatorKey, configuration, {
       channel,

@@ -21,7 +21,7 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiExtraModels, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import { validateConfiguration } from './configurations';
+import { assertStoreRules, validateConfiguration } from './configurations';
 import {
   CORRUGATE_CONFIGURATION_EXAMPLE,
   CorrugateConfigurationDto,
@@ -157,6 +157,7 @@ export class StoreQuotesController {
     const configuration = await validateConfiguration(type.calculatorKey, body.configuration, {
       staff: false,
     });
+    await assertStoreRules(this.prisma, type.calculatorKey, configuration);
     const view = await this.engine.price(type.calculatorKey, configuration, {
       channel: 'web',
       actorUserId: actor?.type === 'user' ? actor.userId : undefined,

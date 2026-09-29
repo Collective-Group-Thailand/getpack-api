@@ -51,6 +51,7 @@ describe('corrugate quotes (e2e, U-B6)', () => {
 
   const configuration = (over: Record<string, unknown> = {}) => ({
     patternId: fixture.rscPatternPublicId,
+    catalogProductId: fixture.catalogProductPublicId,
     w: 300,
     l: 400,
     d: 250,
@@ -147,7 +148,97 @@ describe('corrugate quotes (e2e, U-B6)', () => {
       })
       .expect(422);
     expect(noArea.body.errors[0].path).toBe('parts[0].printFront[0]');
+    const noProduct = await request(server)
+      .post('/v1/store/quotes/actions/calculate')
+      .send({ ...body, configuration: configuration({ catalogProductId: undefined }) })
+      .expect(422);
+    expect(noProduct.body.errors[0]).toMatchObject({
+      path: 'configuration.catalogProductId',
+      code: 'required',
+    });
     await prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'rfq' } });
+  });
+
+  it('publishes the configurator of a calculator-priced product, with the ids the configuration takes', async () => {
+    const res = await request(server)
+      .get('/v1/store/catalog/products/dev-rsc-carton/configurator')
+      .expect(200);
+    expect(res.body).toMatchObject({
+      catalogProductId: fixture.catalogProductPublicId,
+      productTypeCode: 'corrugated',
+      calculator: 'corrugate',
+      instant: false, // corrugate is still RFQ
+      difficultyLevelId: fixture.difficultyLevelPublicId,
+      printAreas: ['top', 'side', 'top_side', 'all_round'],
+    });
+    expect(res.body.quoteValidityDays).toBeGreaterThan(0);
+    const [pattern] = res.body.patterns as {
+      id: string;
+      rules: Record<string, unknown>;
+      fluteTypeIds: string[];
+    }[];
+    expect(pattern).toMatchObject({
+      id: fixture.rscPatternPublicId,
+      fluteTypeIds: [fixture.fluteTypePublicId],
+    });
+    expect(pattern!.rules).toMatchObject({ minWMm: 100, maxHMm: 800, widthMustExceedHeight: true });
+    const material = (
+      res.body.optionGroups as { kind: string; options: { id: string; attributes: object }[] }[]
+    ).find((g) => g.kind === 'material')!;
+    expect(material.options[0]).toMatchObject({ id: fixture.boardPublicId, attributes: { coatable: true } });
+    expect(JSON.stringify(res.body)).not.toMatch(/factory|buyPrice|margin/i);
+    // A folding product without a difficulty level is not priced online; a type without a calculator is not found.
+    const folding = await request(server)
+      .get('/v1/store/catalog/products/dev-tuck-end-box/configurator')
+      .expect(200);
+    expect(folding.body).toMatchObject({
+      calculator: 'folding',
+      instant: false,
+      difficultyLevelId: null,
+      printAreas: [],
+    });
+    await request(server).get('/v1/store/catalog/products/no-such-product/configurator').expect(404);
+  });
+
+  it('prices a store request at the catalogue product’s own difficulty only (quirk C9)', async () => {
+    await prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'instant' } });
+    try {
+      const other = await prisma.difficultyLevel.upsert({
+        where: { code: 'dev-e2e-easy' },
+        create: { code: 'dev-e2e-easy', nameTh: 'ง่าย (ทดสอบ)', nameEn: 'Easy (fake)', status: 'active' },
+        update: {},
+      });
+      const cheaper = configuration({ difficultyLevelId: other.publicId });
+      const res = await request(server)
+        .post('/v1/store/quotes/actions/calculate')
+        .send({ productTypeCode: 'corrugated', configuration: cheaper })
+        .expect(422);
+      expect(res.body.errors[0]).toMatchObject({ path: 'configuration.difficultyLevelId', code: 'in' });
+      // CS chooses the level (legacy CS difficulty groups).
+      await as('cs').post('/v1/admin/cs/corrugate/calculate', cheaper).expect(200);
+    } finally {
+      await prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'rfq' } });
+    }
+  });
+
+  it('checks the pattern size rules on the store, not for CS (legacy validateInput)', async () => {
+    await prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'instant' } });
+    try {
+      // 0.95 × 300 = 285 < 286.
+      const tooTall = configuration({ d: 286 });
+      const res = await request(server)
+        .post('/v1/store/quotes/actions/calculate')
+        .send({ productTypeCode: 'corrugated', configuration: tooTall })
+        .expect(422);
+      expect(res.body.errors[0]).toMatchObject({ path: 'configuration.d', code: 'size' });
+      await as('cs').post('/v1/admin/cs/corrugate/calculate', tooTall).expect(200);
+      const configurator = await request(server)
+        .get('/v1/store/catalog/products/dev-rsc-carton/configurator')
+        .expect(200);
+      expect(configurator.body.instant).toBe(true);
+    } finally {
+      await prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'rfq' } });
+    }
   });
 
   it('lets CS save a corrugate quotation, priced on the server (D-051)', async () => {

@@ -340,39 +340,42 @@ model PrintType {
 
 /// The customer-facing product (legacy `mapping_inputs`, e.g. "กล่องฝาเสียบ").
 model CatalogProduct {
-  id                   BigInt               @id(map: "pk_catalog_products") @default(autoincrement())
-  publicId             String               @unique(map: "ux_catalog_products__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  productTypeId        BigInt               @map("product_type_id")
-  slug                 String               @unique(map: "ux_catalog_products__slug")
-  nameTh               String               @map("name_th")
-  nameEn               String               @map("name_en")
-  descriptionTh        String?              @map("description_th")
-  descriptionEn        String?              @map("description_en")
-  isCombination        Boolean              @default(false) @map("is_combination")
-  templateAvailability TemplateAvailability @default(none) @map("template_availability")
-  videoUrl             String?              @map("video_url")
-  seoPageId            BigInt?              @map("seo_page_id")
-  sort                 Int                  @default(0)
-  status               CatalogStatus        @default(draft)
-  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById          BigInt?              @map("created_by")
-  updatedAt            DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById          BigInt?              @map("updated_by")
-  rowVersion           Int                  @default(1) @map("row_version")
+  id                       BigInt               @id(map: "pk_catalog_products") @default(autoincrement())
+  publicId                 String               @unique(map: "ux_catalog_products__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId            BigInt               @map("product_type_id")
+  slug                     String               @unique(map: "ux_catalog_products__slug")
+  nameTh                   String               @map("name_th")
+  nameEn                   String               @map("name_en")
+  descriptionTh            String?              @map("description_th")
+  descriptionEn            String?              @map("description_en")
+  isCombination            Boolean              @default(false) @map("is_combination")
+  templateAvailability     TemplateAvailability @default(none) @map("template_availability")
+  videoUrl                 String?              @map("video_url")
+  seoPageId                BigInt?              @map("seo_page_id")
+  /// The difficulty level online prices use (legacy SME hard-coded group 5, U-B6 quirk C9); null = not priced online.
+  defaultDifficultyLevelId BigInt?              @map("default_difficulty_level_id")
+  sort                     Int                  @default(0)
+  status                   CatalogStatus        @default(draft)
+  createdAt                DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById              BigInt?              @map("created_by")
+  updatedAt                DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById              BigInt?              @map("updated_by")
+  rowVersion               Int                  @default(1) @map("row_version")
 
-  productType       ProductType             @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__product_type_id")
-  seoPage           SeoPage?                @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__seo_page_id")
-  patterns          CatalogProductPattern[]
-  options           CatalogProductOption[]
-  images            CatalogProductImage[]
-  standardSizes     StandardSize[]
-  showcaseProducts  ShowcaseProduct[]
-  semiDesigns       SemiDesign[]
-  productEmbeddings ProductEmbedding[]
-  createdBy         User?                   @relation("CatalogProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__created_by")
-  updatedBy         User?                   @relation("CatalogProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__updated_by")
+  productType            ProductType             @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__product_type_id")
+  seoPage                SeoPage?                @relation(fields: [seoPageId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__seo_page_id")
+  defaultDifficultyLevel DifficultyLevel?        @relation("CatalogProductDefaultDifficulty", fields: [defaultDifficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__default_difficulty_level_id")
+  patterns               CatalogProductPattern[]
+  options                CatalogProductOption[]
+  images                 CatalogProductImage[]
+  standardSizes          StandardSize[]
+  showcaseProducts       ShowcaseProduct[]
+  semiDesigns            SemiDesign[]
+  productEmbeddings      ProductEmbedding[]
+  createdBy              User?                   @relation("CatalogProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__created_by")
+  updatedBy              User?                   @relation("CatalogProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__updated_by")
   // --- Pricing (generated back-relations)
-  calculateLogs     CalculateLog[]          @relation("CalculateLogCatalogProduct")
+  calculateLogs          CalculateLog[]          @relation("CalculateLogCatalogProduct")
   // --- end Pricing
 
   // --- Quotes & RFQ (generated back-relations)
@@ -389,6 +392,7 @@ model CatalogProduct {
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_th_trgm")
   @@index([nameEn(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_en_trgm")
+  @@index([defaultDifficultyLevelId], map: "ix_catalog_products__default_difficulty_level_id")
   @@map("catalog_products")
 }
 
@@ -979,6 +983,7 @@ model DifficultyLevel {
   rowVersion  Int           @default(1) @map("row_version")
 
   group                              DifficultyLevelGroup?    @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__group_id")
+  catalogProductsDefault             CatalogProduct[]         @relation("CatalogProductDefaultDifficulty")
   createdBy                          User?                    @relation("DifficultyLevelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__created_by")
   updatedBy                          User?                    @relation("DifficultyLevelUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__updated_by")
   // --- Pricing (generated back-relations)

@@ -194,7 +194,7 @@ export class StoreCatalogService {
   }
 
   /** Active definitions offered by a product, grouped by kind in configurator order. */
-  private async optionGroups(
+  async optionGroups(
     options: { optionKind: CatalogOptionKind; optionId: bigint; isDefault: boolean }[],
   ): Promise<StoreOptionGroupDto[]> {
     const ids = (kind: CatalogOptionKind) =>
@@ -208,6 +208,7 @@ export class StoreCatalogService {
       include: { fluteType: { select: { code: true } } },
     })) {
       put('material', m.id, {
+        id: m.publicId,
         code: m.code,
         nameTh: m.nameTh,
         nameEn: m.nameEn,
@@ -217,6 +218,7 @@ export class StoreCatalogService {
           micron: num(m.micron),
           flute: m.fluteType?.code ?? null,
           isFoodGrade: m.isFoodGrade,
+          coatable: m.coatable,
         },
       });
     }
@@ -225,6 +227,7 @@ export class StoreCatalogService {
         where: { id: { in: ids(kind) }, status: ACTIVE },
       })) {
         put(kind, f.id, {
+          id: f.publicId,
           code: f.code,
           nameTh: f.nameTh,
           nameEn: f.nameEn,
@@ -241,6 +244,7 @@ export class StoreCatalogService {
       where: { id: { in: ids('ink_colour') }, status: ACTIVE },
     })) {
       put('ink_colour', c.id, {
+        id: c.publicId,
         code: c.code,
         nameTh: c.name,
         nameEn: c.name,
@@ -250,12 +254,19 @@ export class StoreCatalogService {
     for (const d of await this.prisma.diecutType.findMany({
       where: { id: { in: ids('diecut') }, status: ACTIVE },
     })) {
-      put('diecut', d.id, { code: d.code, nameTh: d.nameTh, nameEn: d.nameEn, attributes: {} });
+      put('diecut', d.id, {
+        id: d.publicId,
+        code: d.code,
+        nameTh: d.nameTh,
+        nameEn: d.nameEn,
+        attributes: {},
+      });
     }
     for (const a of await this.prisma.assembly.findMany({
       where: { id: { in: ids('assembly') }, status: ACTIVE },
     })) {
       put('assembly', a.id, {
+        id: a.publicId,
         code: a.code,
         nameTh: a.nameTh,
         nameEn: a.nameEn,
@@ -269,12 +280,19 @@ export class StoreCatalogService {
     for (const t of await this.prisma.printType.findMany({
       where: { id: { in: ids('print_type') }, status: ACTIVE },
     })) {
-      put('print_type', t.id, { code: t.code, nameTh: t.nameTh, nameEn: t.nameEn, attributes: {} });
+      put('print_type', t.id, {
+        id: t.publicId,
+        code: t.code,
+        nameTh: t.nameTh,
+        nameEn: t.nameEn,
+        attributes: {},
+      });
     }
     for (const t of await this.prisma.pattern.findMany({
       where: { id: { in: ids('pattern') }, status: ACTIVE },
     })) {
       put('pattern', t.id, {
+        id: t.publicId,
         code: t.code,
         nameTh: t.name,
         nameEn: t.technicalName ?? t.name,

@@ -87,6 +87,13 @@ export class StorePatternDto {
 }
 
 export class StoreOptionDto {
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000c010',
+    description: 'Public id of the offered row: the id the quote configuration takes',
+  })
+  id!: string;
+
   @ApiProperty({ example: 'art-card-350', description: 'Code of the offered row' })
   code!: string;
 

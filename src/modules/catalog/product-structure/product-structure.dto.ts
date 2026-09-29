@@ -398,6 +398,16 @@ export class CatalogProductDto {
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
   seoPageId!: string | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description:
+      'The difficulty level online prices use (legacy SME hard-coded group 5, U-B6); null = not priced online',
+  })
+  defaultDifficultyLevelId!: string | null;
+
   @ApiProperty({ type: 'integer', example: 10 })
   sort!: number;
 
@@ -447,6 +457,9 @@ export class CreateCatalogProductDto {
 
   @RefField({ example: null, nullable: true })
   seoPageId?: string | null;
+
+  @RefField({ example: null, nullable: true, description: 'Difficulty level for online prices' })
+  defaultDifficultyLevelId?: string | null;
 
   @SortField()
   sort?: number;

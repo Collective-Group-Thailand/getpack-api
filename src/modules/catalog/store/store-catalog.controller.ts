@@ -36,6 +36,8 @@ import {
   StoreStockProductListQuery,
 } from './store-catalog.dto';
 import { StoreCatalogService } from './store-catalog.service';
+import { CONFIGURATOR_EXAMPLE, StoreConfiguratorDto } from './store-configurator.dto';
+import { StoreConfiguratorService } from './store-configurator.service';
 import { StoreMediaService } from './store-media.service';
 
 /** Catalogue reads change rarely: short shared caching; CMS in-window checks keep it short. */
@@ -104,6 +106,7 @@ export class StoreCatalogController {
   constructor(
     private readonly catalog: StoreCatalogService,
     private readonly media: StoreMediaService,
+    private readonly configurator: StoreConfiguratorService,
   ) {}
 
   // --- catalogue ------------------------------------------------------------------------------
@@ -180,6 +183,7 @@ export class StoreCatalogController {
           kind: 'material',
           options: [
             {
+              id: '0192f3a0-7c1e-7d2a-9b1f-00000000c010',
               code: 'art-card-350',
               nameTh: 'อาร์ตการ์ด 350 แกรม',
               nameEn: 'Art card 350 gsm',
@@ -200,6 +204,31 @@ export class StoreCatalogController {
   @ApiStandardErrors('http.not_found', 'validation.failed')
   product(@Param('slug') slug: string): Promise<StoreProductDetailDto> {
     return this.catalog.product(slug);
+  }
+
+  @Get('products/:slug/configurator')
+  @Public()
+  @Header('Cache-Control', CACHE)
+  @ApiParam({ name: 'slug', example: 'rsc-carton' })
+  @ApiEndpoint({
+    id: 'store.catalog.getConfigurator',
+    summary: 'Get the configurator of a calculator-priced product',
+    description:
+      'What the configurator needs to build the quote configuration of the product’s calculator (folding, corrugate): ' +
+      'patterns with their parts, flutes and typed size rules, standard sizes, the options offered with the ids the ' +
+      'configuration takes, the product’s difficulty level, print areas and the D-051 validity; `instant` says whether ' +
+      'it is priced online now (D-043, D-100). A product of a type priced by RFQ only is not found. No prices or ' +
+      'factory data (D-050).',
+    implements: ['D-100', 'D-043', 'D-050', 'D-051'],
+  })
+  @ApiSuccess(200, {
+    description: 'The configurator',
+    type: StoreConfiguratorDto,
+    example: CONFIGURATOR_EXAMPLE,
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  configuratorOf(@Param('slug') slug: string): Promise<StoreConfiguratorDto> {
+    return this.configurator.get(slug);
   }
 
   @Get('products/:slug/semi-designs')

@@ -10697,6 +10697,15 @@
       },
       "CatalogProductDto": {
         "properties": {
+          "defaultDifficultyLevelId": {
+            "description": "The difficulty level online prices use (legacy SME hard-coded group 5, U-B6); null = not priced online",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "descriptionEn": {
             "example": "Reverse tuck-end folding box",
             "type": [
@@ -10808,6 +10817,7 @@
           "templateAvailability",
           "videoUrl",
           "seoPageId",
+          "defaultDifficultyLevelId",
           "sort",
           "status",
           "patterns",
@@ -12989,8 +12999,8 @@
       "CorrugateConfigurationDto": {
         "properties": {
           "catalogProductId": {
-            "description": "The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`)",
-            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "description": "The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`). Required on the store, where the difficulty level must be the product’s own (configurator `difficultyLevelId`, quirk C9)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
             "format": "uuid",
             "type": "string"
           },
@@ -13425,7 +13435,7 @@
         "type": "object"
       },
       "CorrugatePrintArea": {
-        "description": "Where the colour prints (legacy pattern areas top, side, top + side, all round); the % of the blank follows from the box. Give this or `percent`.",
+        "description": "Corrugate: where a colour can print; empty for the other calculators",
         "enum": [
           "top",
           "side",
@@ -14200,6 +14210,15 @@
       },
       "CreateCatalogProductDto": {
         "properties": {
+          "defaultDifficultyLevelId": {
+            "description": "Difficulty level for online prices",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "descriptionEn": {
             "example": "Reverse tuck-end folding box",
             "type": [
@@ -17670,8 +17689,8 @@
       "CsCorrugateConfigurationDto": {
         "properties": {
           "catalogProductId": {
-            "description": "The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`)",
-            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "description": "The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`). Required on the store, where the difficulty level must be the product’s own (configurator `difficultyLevelId`, quirk C9)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
             "format": "uuid",
             "type": "string"
           },
@@ -43428,6 +43447,218 @@
         ],
         "type": "object"
       },
+      "StoreConfiguratorDto": {
+        "properties": {
+          "calculator": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CalculatorKey"
+              }
+            ],
+            "example": "corrugate"
+          },
+          "catalogProductId": {
+            "description": "The configuration’s `catalogProductId`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "difficultyLevelId": {
+            "description": "The configuration’s `difficultyLevelId` (the product’s, not the customer’s choice)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e006",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "instant": {
+            "description": "Priced online now: the type is instant (D-043, D-100) and the product has a difficulty level; else the configurator routes to RFQ",
+            "example": true,
+            "type": "boolean"
+          },
+          "optionGroups": {
+            "description": "The options offered, with the ids the configuration takes",
+            "items": {
+              "$ref": "#/components/schemas/StoreOptionGroupDto"
+            },
+            "type": "array"
+          },
+          "patterns": {
+            "items": {
+              "$ref": "#/components/schemas/StoreConfiguratorPatternDto"
+            },
+            "type": "array"
+          },
+          "printAreas": {
+            "description": "Corrugate: where a colour can print; empty for the other calculators",
+            "example": [
+              "top",
+              "side",
+              "top_side",
+              "all_round"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CorrugatePrintArea"
+            },
+            "type": "array"
+          },
+          "productTypeCode": {
+            "example": "corrugated",
+            "type": "string"
+          },
+          "quoteValidityDays": {
+            "description": "Days a saved price holds (D-051)",
+            "example": 15,
+            "type": "number"
+          },
+          "slug": {
+            "example": "rsc-carton",
+            "type": "string"
+          },
+          "standardSizes": {
+            "description": "Standard sizes (corrugate: no die block on them)",
+            "items": {
+              "$ref": "#/components/schemas/StoreConfiguratorSizeDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "catalogProductId",
+          "productTypeCode",
+          "calculator",
+          "instant",
+          "difficultyLevelId",
+          "patterns",
+          "standardSizes",
+          "optionGroups",
+          "printAreas",
+          "quoteValidityDays"
+        ],
+        "type": "object"
+      },
+      "StoreConfiguratorPartDto": {
+        "properties": {
+          "name": {
+            "example": "ตัวกล่อง",
+            "type": "string"
+          },
+          "seq": {
+            "example": 1,
+            "type": "number"
+          },
+          "subPatternId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e003",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subPatternId",
+          "seq",
+          "name"
+        ],
+        "type": "object"
+      },
+      "StoreConfiguratorPatternDto": {
+        "properties": {
+          "code": {
+            "example": "RSC-01",
+            "type": "string"
+          },
+          "dielineKey": {
+            "description": "Key for `@packio/dieline`",
+            "example": "rsc",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fluteTypeIds": {
+            "description": "Corrugate: the flutes offered (a board of another flute is refused); empty = any",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000e004"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "กล่องฝาชน",
+            "type": "string"
+          },
+          "parts": {
+            "description": "The parts to configure (a Tele body and lid…); empty = one part, sent without `subPatternId`",
+            "items": {
+              "$ref": "#/components/schemas/StoreConfiguratorPartDto"
+            },
+            "type": "array"
+          },
+          "rules": {
+            "$ref": "#/components/schemas/StoreSizeRulesDto"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "dielineKey",
+          "parts",
+          "fluteTypeIds",
+          "rules"
+        ],
+        "type": "object"
+      },
+      "StoreConfiguratorSizeDto": {
+        "properties": {
+          "code": {
+            "example": "M",
+            "type": "string"
+          },
+          "heightMm": {
+            "description": "Unit: mm.",
+            "example": 250,
+            "type": "number"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lengthMm": {
+            "description": "Unit: mm.",
+            "example": 400,
+            "type": "number"
+          },
+          "name": {
+            "example": "30×40×25 ซม.",
+            "type": "string"
+          },
+          "widthMm": {
+            "description": "Unit: mm.",
+            "example": 300,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "lengthMm",
+          "widthMm",
+          "heightMm"
+        ],
+        "type": "object"
+      },
       "StoreConversationDto": {
         "properties": {
           "id": {
@@ -43822,6 +44053,12 @@
             "example": "art-card-350",
             "type": "string"
           },
+          "id": {
+            "description": "Public id of the offered row: the id the quote configuration takes",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+            "format": "uuid",
+            "type": "string"
+          },
           "isDefault": {
             "example": true,
             "type": "boolean"
@@ -43836,6 +44073,7 @@
           }
         },
         "required": [
+          "id",
           "code",
           "nameTh",
           "nameEn",
@@ -44554,6 +44792,85 @@
           "descriptionTh",
           "imageUrl",
           "preset"
+        ],
+        "type": "object"
+      },
+      "StoreSizeRulesDto": {
+        "properties": {
+          "lengthMustExceedHeight": {
+            "description": "The length must be at least the height",
+            "example": false,
+            "type": "boolean"
+          },
+          "lengthMustExceedWidth": {
+            "description": "The length must be at least the width",
+            "example": false,
+            "type": "boolean"
+          },
+          "maxHMm": {
+            "description": "Unit: mm.",
+            "example": 800,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxLMm": {
+            "description": "Unit: mm.",
+            "example": 1000,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxWMm": {
+            "description": "Unit: mm.",
+            "example": 800,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minHMm": {
+            "description": "Unit: mm.",
+            "example": 50,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minLMm": {
+            "description": "Unit: mm.",
+            "example": 100,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minWMm": {
+            "description": "Unit: mm.",
+            "example": 100,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "widthMustExceedHeight": {
+            "description": "Corrugate: the height at most 0.95 × the width",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "minWMm",
+          "maxWMm",
+          "minLMm",
+          "maxLMm",
+          "minHMm",
+          "maxHMm",
+          "lengthMustExceedWidth",
+          "lengthMustExceedHeight",
+          "widthMustExceedHeight"
         ],
         "type": "object"
       },
@@ -47414,6 +47731,15 @@
       },
       "UpdateCatalogProductDto": {
         "properties": {
+          "defaultDifficultyLevelId": {
+            "description": "Difficulty level for online prices",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "descriptionEn": {
             "example": "Reverse tuck-end folding box",
             "type": [
@@ -65302,6 +65628,7 @@
                 "example": {
                   "data": [
                     {
+                      "defaultDifficultyLevelId": null,
                       "descriptionEn": "Reverse tuck-end folding box",
                       "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
@@ -65539,6 +65866,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "defaultDifficultyLevelId": null,
                   "descriptionEn": "Reverse tuck-end folding box",
                   "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
@@ -65794,6 +66122,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "defaultDifficultyLevelId": null,
                   "descriptionEn": "Reverse tuck-end folding box",
                   "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
@@ -66041,6 +66370,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "defaultDifficultyLevelId": null,
                   "descriptionEn": "Reverse tuck-end folding box",
                   "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
@@ -66374,6 +66704,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "defaultDifficultyLevelId": null,
                   "descriptionEn": "Reverse tuck-end folding box",
                   "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
@@ -66675,6 +67006,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "defaultDifficultyLevelId": null,
                   "descriptionEn": "Reverse tuck-end folding box",
                   "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
@@ -66968,6 +67300,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "defaultDifficultyLevelId": null,
                   "descriptionEn": "Reverse tuck-end folding box",
                   "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
@@ -67285,6 +67618,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "defaultDifficultyLevelId": null,
                   "descriptionEn": "Reverse tuck-end folding box",
                   "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
@@ -118088,6 +118422,7 @@
               "examples": {
                 "default": {
                   "value": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
                     "d": 250,
                     "design": {
                       "graphic": false,
@@ -228401,6 +228736,7 @@
               "examples": {
                 "default": {
                   "value": {
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
                     "d": 250,
                     "design": {
                       "graphic": false,
@@ -246391,6 +246727,7 @@
                             "kind": "paper"
                           },
                           "code": "art-card-350",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
                           "isDefault": true,
                           "nameEn": "Art card 350 gsm",
                           "nameTh": "อาร์ตการ์ด 350 แกรม"
@@ -246546,6 +246883,208 @@
         },
         "security": [],
         "summary": "Get a catalogue product for the configurator",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/products/{slug}/configurator": {
+      "get": {
+        "description": "What the configurator needs to build the quote configuration of the product’s calculator (folding, corrugate): patterns with their parts, flutes and typed size rules, standard sizes, the options offered with the ids the configuration takes, the product’s difficulty level, print areas and the D-051 validity; `instant` says whether it is priced online now (D-043, D-100). A product of a type priced by RFQ only is not found. No prices or factory data (D-050).\n\nImplements: D-100, D-043, D-050, D-051.",
+        "operationId": "store.catalog.getConfigurator",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "rsc-carton",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculator": "corrugate",
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000e006",
+                  "instant": true,
+                  "optionGroups": [
+                    {
+                      "kind": "material",
+                      "options": [
+                        {
+                          "attributes": {
+                            "coatable": false,
+                            "flute": "B",
+                            "gsm": 450,
+                            "kind": "corrugated_board"
+                          },
+                          "code": "ka125-b",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e007",
+                          "isDefault": true,
+                          "nameEn": "Kraft board KA125 B-flute",
+                          "nameTh": "กระดาษลัง KA125 ลอน B"
+                        }
+                      ]
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "code": "RSC-01",
+                      "dielineKey": "rsc",
+                      "fluteTypeIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-00000000e004"
+                      ],
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                      "name": "กล่องฝาชน",
+                      "parts": [],
+                      "rules": {
+                        "lengthMustExceedHeight": false,
+                        "lengthMustExceedWidth": false,
+                        "maxHMm": 800,
+                        "maxLMm": 1000,
+                        "maxWMm": 800,
+                        "minHMm": 50,
+                        "minLMm": 100,
+                        "minWMm": 100,
+                        "widthMustExceedHeight": true
+                      }
+                    }
+                  ],
+                  "printAreas": [
+                    "top",
+                    "side",
+                    "top_side",
+                    "all_round"
+                  ],
+                  "productTypeCode": "corrugated",
+                  "quoteValidityDays": 15,
+                  "slug": "rsc-carton",
+                  "standardSizes": [
+                    {
+                      "code": "M",
+                      "heightMm": 250,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e005",
+                      "lengthMm": 400,
+                      "name": "30×40×25 ซม.",
+                      "widthMm": 300
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreConfiguratorDto"
+                }
+              }
+            },
+            "description": "The configurator",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the configurator of a calculator-priced product",
         "tags": [
           "store.catalog"
         ]
@@ -270074,6 +270613,7 @@
                 "corrugate": {
                   "value": {
                     "configuration": {
+                      "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000b106",
                       "d": 250,
                       "design": {
                         "graphic": false,

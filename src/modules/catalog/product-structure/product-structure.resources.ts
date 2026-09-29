@@ -288,6 +288,7 @@ export const printTypes = defineResource({
 export const CATALOG_PRODUCT_INCLUDE = {
   productType: { select: { publicId: true } },
   seoPage: { select: { publicId: true } },
+  defaultDifficultyLevel: { select: { publicId: true } },
   patterns: { include: { pattern: { select: { publicId: true, code: true } } }, orderBy: { sort: 'asc' } },
   options: { orderBy: [{ sort: 'asc' }, { optionKind: 'asc' }] },
   images: { include: { fileObject: { select: { publicId: true } } }, orderBy: { sort: 'asc' } },
@@ -308,6 +309,7 @@ export function catalogProductDto(row: CatalogProductRow, optionIds: OptionPubli
     templateAvailability: row.templateAvailability,
     videoUrl: row.videoUrl,
     seoPageId: row.seoPage?.publicId ?? null,
+    defaultDifficultyLevelId: row.defaultDifficultyLevel?.publicId ?? null,
     sort: row.sort,
     status: row.status,
     patterns: row.patterns.map((p) => ({
@@ -348,6 +350,7 @@ export const CATALOG_PRODUCT_EXAMPLE: CatalogProductDto = {
   templateAvailability: 'drawing',
   videoUrl: null,
   seoPageId: null,
+  defaultDifficultyLevelId: null,
   sort: 10,
   status: 'active',
   patterns: [
@@ -403,6 +406,11 @@ export const catalogProducts = defineResource({
     templateAvailability: input.templateAvailability,
     videoUrl: input.videoUrl ?? null,
     seoPageId: await refs.optional('seoPage', input.seoPageId, 'seoPageId'),
+    defaultDifficultyLevelId: await refs.optional(
+      'difficultyLevel',
+      input.defaultDifficultyLevelId,
+      'defaultDifficultyLevelId',
+    ),
     sort: input.sort,
     status: input.status,
   }),
@@ -421,6 +429,11 @@ export const catalogProducts = defineResource({
       templateAvailability: input.templateAvailability,
       videoUrl: input.videoUrl,
       seoPageId: await refs.optional('seoPage', input.seoPageId, 'seoPageId'),
+      defaultDifficultyLevelId: await refs.optional(
+        'difficultyLevel',
+        input.defaultDifficultyLevelId,
+        'defaultDifficultyLevelId',
+      ),
       sort: input.sort,
       status: input.status,
     }),

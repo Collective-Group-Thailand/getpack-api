@@ -97,7 +97,8 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
       productTypeId: corrugated.id,
       code: 'DEV-RSC',
       name: '[DEV] กล่องฝาชน',
-      constraints: {},
+      // Fake size rules (the configurator publishes them; customer requests are checked).
+      constraints: { minW: 100, maxW: 800, minL: 100, maxL: 1000, minH: 50, maxH: 800, wMustExceedH: true },
       corrugateFormula: 'rsc',
       status: 'active',
       fluteTypes: { create: { fluteTypeId: flute.id } },
@@ -169,6 +170,7 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
       nameEn: '[DEV] Test RSC carton',
       templateAvailability: 'drawing',
       status: 'active',
+      defaultDifficultyLevelId: difficulty.id,
       patterns: { create: { patternId: rsc.id } },
       options: { create: [{ optionKind: 'material', optionId: board.id, isDefault: true }] },
       standardSizes: {

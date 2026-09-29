@@ -343,6 +343,39 @@ describe('catalogue admin (e2e, B2.1)', () => {
       .expect(422);
   });
 
+  it('keeps the default difficulty level of a catalogue product, which prices it online (U-B6)', async () => {
+    const type = await productType('corrugate');
+    const level = await admin
+      .post('/v1/admin/catalog/difficulty-levels', {
+        code: `e2e-std-${run}`,
+        nameTh: 'มาตรฐาน',
+        nameEn: 'Standard',
+      })
+      .expect(201);
+    const product = await admin
+      .post('/v1/admin/catalog/catalog-products', {
+        productTypeId: type.id,
+        slug: `e2e-carton-${run}`,
+        nameTh: 'กล่องลูกฟูกทดสอบ',
+        nameEn: 'Test carton',
+        defaultDifficultyLevelId: level.body.id,
+      })
+      .expect(201);
+    expect(product.body.defaultDifficultyLevelId).toBe(level.body.id);
+    const url = `/v1/admin/catalog/catalog-products/${product.body.id}`;
+    const cleared = await admin
+      .patch(url, { defaultDifficultyLevelId: null }, product.headers['etag'] as string)
+      .expect(200);
+    expect(cleared.body.defaultDifficultyLevelId).toBeNull();
+    await admin
+      .patch(
+        url,
+        { defaultDifficultyLevelId: '0192f3a0-7c1e-7d2a-9b1f-0000000000ff' },
+        cleared.headers['etag'] as string,
+      )
+      .expect(422);
+  });
+
   it('lets Marketing read the catalogue but not edit it', async () => {
     await as('marketing').get('/v1/admin/catalog/product-types').expect(200);
     await as('marketing')
