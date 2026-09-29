@@ -5,7 +5,8 @@ import { Injectable } from '@nestjs/common';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { CarriersService } from './carriers/carriers.service';
-import { type CartonSpec, type FoldingPackInput, packFolding } from './packing/folding-packing';
+import { type CartonSpec } from './packing/folding-packing';
+import { packPart, type ShipmentPart } from './packing/packer';
 import { type PalletSpec, shipment, type ShipmentPack } from './packing/shipment';
 import { type RateMissReason } from './rates/customer-rates.dto';
 import { type RateResolution, ShippingRatesResolver } from './rates/shipping-rates.resolver';
@@ -17,7 +18,7 @@ import { type RateResolution, ShippingRatesResolver } from './rates/shipping-rat
  * cheapest enabled fallback carrier (D-114). A factory with neither has no delivery path for the
  * postcode (fail closed). Used by the quote engine (B2.4) and saved quotes (B2.5).
  */
-export type ShipmentPart = Omit<FoldingPackInput, 'qty'>;
+export type { ShipmentPart } from './packing/packer';
 
 export interface PreparedShipment {
   postcode: string | null;
@@ -60,7 +61,7 @@ export class ShippingQuoteService {
     const settingVersionIds: Record<string, string> = {};
     const carton = await this.optional<CartonSpec>('shipping.carton_spec', at, settingVersionIds);
     const pallet = await this.optional<PalletSpec>('shipping.pallet_spec', at, settingVersionIds);
-    const packed = parts.map((p) => packFolding({ ...p, qty }, carton));
+    const packed = parts.map((p) => packPart(p, qty, carton));
     const pack = shipment(packed, pallet);
     const parcels: CarrierParcel[] = packed.flatMap((p) =>
       p.carton

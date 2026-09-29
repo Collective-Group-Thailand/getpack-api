@@ -7,8 +7,8 @@ import {
   type PatternGeometry,
 } from '@modules/pricing/calculators/folding/geometry/types';
 import { type PartRequest } from '@modules/pricing/calculators/folding/request';
-import { type SellSnapshot } from '@modules/pricing/calculators/folding/sell';
 import { type DigitalTables, type OffsetTables } from '@modules/pricing/calculators/folding/tables';
+import { type SellSnapshot } from '@modules/pricing/calculators/shared/sell';
 
 /**
  * The 20 folding validation cases (B2.3). Each case is a complete, made-up price list and a configuration;

@@ -92,20 +92,4 @@ export function excludedProcess(
   return null;
 }
 
-/** Why a factory cannot price a part (legacy computes with 0 or drops silently — quirks Q14, Q16). */
-export class PricingError extends Error {
-  constructor(
-    readonly code:
-      | 'price_line_missing'
-      | 'process_not_possible'
-      | 'no_priced_layout'
-      | 'geometry_condition_missing'
-      | 'geometry_band_missing'
-      | 'geometry_standard_blank_missing'
-      | 'geometry_no_layout',
-    readonly detail: string,
-  ) {
-    super(`${code}: ${detail}`);
-    this.name = 'PricingError';
-  }
-}
+export { PricingError } from '../shared/pricing-error';

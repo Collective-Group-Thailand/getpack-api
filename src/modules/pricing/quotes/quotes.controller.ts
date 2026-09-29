@@ -108,7 +108,7 @@ export class StoreQuotesController {
     });
     if (!type || type.quoteMode !== 'instant' || type.calculatorKey !== 'folding')
       throw new DomainException('pricing.not_instant');
-    const view = await this.engine.priceFolding(body.configuration, {
+    const view = await this.engine.price('folding', body.configuration, {
       channel: 'web',
       actorUserId: actor?.type === 'user' ? actor.userId : undefined,
       ip: RequestContext.current()?.ip,
@@ -177,7 +177,7 @@ export class AdminCsFoldingController {
     @Body() body: FoldingConfigurationDto,
     @Query('deliveryPostcode', new ParseOptionalPostcodePipe()) deliveryPostcode?: string,
   ): Promise<AdminQuoteCalculationDto> {
-    const view = await this.engine.priceFolding(body, {
+    const view = await this.engine.price('folding', body, {
       deliveryPostcode,
       channel: 'cs',
       actorUserId: actor.type === 'user' ? actor.userId : undefined,
@@ -241,6 +241,6 @@ export class PartnerFoldingPricingController {
     @Body() body: FoldingConfigurationDto,
   ): Promise<FactoryQuoteDto> {
     const factory = await this.access.factory(actor, factoryId);
-    return this.engine.priceFoldingForFactory(body, factory);
+    return this.engine.priceForFactory('folding', body, factory);
   }
 }

@@ -1,8 +1,8 @@
 import { convertTo2Decimal } from '../../engine/php';
+import { saleMargin, sellMargins, type SellSnapshot } from '../shared/sell';
 import { foldingCalculator, type FoldingOption } from './folding-calculator';
 import { type GeometrySnapshot } from './geometry/types';
 import { type PartRequest, PricingError } from './request';
-import { saleMargin, sellMargins, type SellSnapshot } from './sell';
 import { type OffsetTables } from './tables';
 
 /** Sell side and the folding calculator (B2.3), vectors from `Calculator::SaleMargin` and `calculate_cs`. */

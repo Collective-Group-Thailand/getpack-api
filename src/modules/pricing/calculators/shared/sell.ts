@@ -1,9 +1,10 @@
 import { convertTo2Decimal } from '../../engine/php';
-import { PricingError } from './request';
+import { PricingError } from './pricing-error';
 
 /**
  * Packio's sell side on top of a factory buy price (legacy `Calculator::SaleMargin`,
- * `app/Models/Calculator.php:223-449`, called from `FoldingCalculator::calculate:1400-1455`). The
+ * `app/Models/Calculator.php:223-449`, called from `FoldingCalculator::calculate:1400-1455` and
+ * `CorrugateCalculator::calculate_cs:877-932`), shared by every calculator. The
  * margin tiers, fix cost and design fees are Packio's `sell_margin_tables` (D-063), VAT the dated
  * `vat_standard` rate. Customer prices include VAT, as legacy; shipping is its own quote line
  * (B2.4, D-013: `ShippingQuoteService`), so `shippingCost` stays 0 on this path.
@@ -29,16 +30,27 @@ export interface SellSnapshot {
   /** Structure design fee (legacy `SALE_MARGIN_STRUCTURE_DESIGN_FEE`); null = not offered. */
   structureDesignFee: number | null;
   vatPct: number;
+  /**
+   * Upper price bound of a tier: folding reads it half-open (`max_price > price`,
+   * `FoldingCalculator.php:1415,1425`), corrugate inclusive (`max_price >= price`,
+   * `CorrugateCalculator.php:883,894`) — at a shared bound corrugate takes the first line. Absent = half-open.
+   */
+  priceMaxInclusive?: boolean;
 }
 
-/** A tier: run inclusive on both ends, price half-open (`FoldingCalculator.php:1419-1427`). */
-function tier(lines: readonly SellMarginLine[], qty: number, price: number): number | undefined {
+/** A tier: run inclusive on both ends, price half-open or inclusive (see `priceMaxInclusive`). */
+function tier(
+  lines: readonly SellMarginLine[],
+  qty: number,
+  price: number,
+  priceMaxInclusive: boolean,
+): number | undefined {
   return lines.find(
     (l) =>
       (l.qtyMin === null || l.qtyMin <= qty) &&
       (l.qtyMax === null || l.qtyMax >= qty) &&
       (l.priceMin === null || l.priceMin <= price) &&
-      (l.priceMax === null || l.priceMax > price),
+      (l.priceMax === null || (priceMaxInclusive ? l.priceMax >= price : l.priceMax > price)),
   )?.valuePct;
 }
 
@@ -51,8 +63,9 @@ export function sellMargins(
   runQty: number,
   buyPrice: number,
 ): { target: number; base: number } {
-  const target = tier(sell.marginLines, runQty, buyPrice);
-  if (target !== undefined) return { target, base: tier(sell.marginLines, 1, 1) ?? 0 };
+  const inclusive = sell.priceMaxInclusive === true;
+  const target = tier(sell.marginLines, runQty, buyPrice, inclusive);
+  if (target !== undefined) return { target, base: tier(sell.marginLines, 1, 1, inclusive) ?? 0 };
   if (sell.marginFallbackPct === null) throw new PricingError('price_line_missing', 'sell margin');
   return { target: sell.marginFallbackPct, base: sell.marginFallbackPct };
 }

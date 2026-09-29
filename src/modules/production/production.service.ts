@@ -771,8 +771,9 @@ export class ProductionService {
   private async marginAt(tx: Tx, order: OrderForRelease, factory: { id: bigint; publicId: string }) {
     const cfg = ((order.quote.input ?? {}) as { configuration?: Record<string, unknown> }).configuration;
     if (!cfg || order.productType.code !== 'folding_carton') return null;
-    const view = await this.quotes.priceFoldingForFactory(
-      { ...cfg, quantities: [order.quantityOrdered] } as never,
+    const view = await this.quotes.priceForFactory(
+      'folding',
+      { ...cfg, quantities: [order.quantityOrdered] },
       factory,
     );
     const prices = view.options.flatMap((o) => o.steps.flatMap((s) => (s?.buyPrice ? [D(s.buyPrice)] : [])));

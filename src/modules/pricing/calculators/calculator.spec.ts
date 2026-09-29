@@ -1,23 +1,20 @@
-import { type Calculator, CalculatorRegistry } from './calculator';
+import { type AnyCalculatorAdapter } from './adapter';
+import { CalculatorRegistry } from './calculator';
 
-const echo: Calculator<number, number, number> = {
-  key: 'folding',
-  version: '0.0.0',
-  calculate: (input, snapshot) => input + snapshot,
-};
+const adapter = { key: 'folding', version: '0.0.0' } as AnyCalculatorAdapter;
 
 describe('CalculatorRegistry', () => {
-  it('resolves a registered calculator by key', () => {
+  it('resolves a registered adapter by key', () => {
     const registry = new CalculatorRegistry();
-    registry.register(echo);
+    registry.register(adapter);
     expect(registry.has('folding')).toBe(true);
-    expect(registry.get('folding').calculate(1, 2)).toBe(3);
+    expect(registry.get('folding')).toBe(adapter);
   });
 
-  it('refuses a second calculator for the same key and unknown keys', () => {
+  it('refuses a second adapter for the same key and unknown keys', () => {
     const registry = new CalculatorRegistry();
-    registry.register(echo);
-    expect(() => registry.register(echo)).toThrow('already registered');
+    registry.register(adapter);
+    expect(() => registry.register(adapter)).toThrow('already registered');
     expect(registry.has('label')).toBe(false);
     expect(() => registry.get('label')).toThrow('No calculator registered for label');
   });

@@ -3,6 +3,7 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
+import { type LoadedSell, loadSellSnapshot } from '../shared/sell-snapshot';
 import { type FoldingEngine, type FoldingOption, type FoldingPart } from './folding-calculator';
 import {
   type GeometryCondition,
@@ -18,7 +19,6 @@ import {
   type PrintColour,
   type ProcessExclusion,
 } from './request';
-import { type SellMarginLine, type SellSnapshot } from './sell';
 import { type DigitalTables, type OffsetTables } from './tables';
 
 /**
@@ -653,60 +653,8 @@ export class FoldingSnapshotLoader {
 
   // --- sell side -------------------------------------------------------------------------------
 
-  /** Packio's sell side at `at`: the print type's own table of each kind, else the product type's. */
-  async sell(
-    productTypeId: bigint,
-    printTypeId: bigint,
-    at: Date,
-    db: Tx = this.prisma,
-  ): Promise<{ snapshot: SellSnapshot; versionIds: bigint[]; vatRateVersionId: bigint }> {
-    const tables = await db.sellMarginTable.findMany({
-      where: { productTypeId, OR: [{ printTypeId }, { printTypeId: null }] },
-      include: {
-        versions: {
-          where: { status: 'approved', effectiveFrom: { lte: at } },
-          orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
-          take: 1,
-          include: { lines: { orderBy: { id: 'asc' } } },
-        },
-      },
-    });
-    const pick = (kind: string) =>
-      (
-        tables.find((t) => t.kind === kind && t.printTypeId === printTypeId) ??
-        tables.find((t) => t.kind === kind && t.printTypeId === null)
-      )?.versions[0];
-    const margin = pick('margin');
-    const fixCost = pick('fix_cost');
-    const design = pick('design_fee');
-    const structure = pick('structure_design_fee');
-    const amount = (v: typeof margin): number | null =>
-      v ? (num(v.lines[0]?.valueAmount) ?? num(v.fallbackAmount)) : null;
-    const vat = await db.taxRateVersion.findFirst({
-      where: { taxRate: { code: 'vat_standard' }, status: 'approved', effectiveFrom: { lte: at } },
-      orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
-    });
-    if (!vat) throw new DomainException('pricing.vat_rate_missing');
-    const lines: SellMarginLine[] = (margin?.lines ?? [])
-      .filter((l) => l.valuePct !== null)
-      .map((l) => ({
-        qtyMin: l.qtyMin,
-        qtyMax: l.qtyMax,
-        priceMin: num(l.priceMin),
-        priceMax: num(l.priceMax),
-        valuePct: num0(l.valuePct),
-      }));
-    return {
-      snapshot: {
-        marginLines: lines,
-        marginFallbackPct: margin ? num(margin.fallbackPct) : null,
-        fixCost: amount(fixCost) ?? 0,
-        designFee: amount(design),
-        structureDesignFee: amount(structure),
-        vatPct: num0(vat.ratePct),
-      },
-      versionIds: [margin, fixCost, design, structure].flatMap((x) => (x ? [x.id] : [])),
-      vatRateVersionId: vat.id,
-    };
+  /** Packio's sell side at `at` (shared with every calculator, `shared/sell-snapshot.ts`). */
+  sell(productTypeId: bigint, printTypeId: bigint, at: Date, db: Tx = this.prisma): Promise<LoadedSell> {
+    return loadSellSnapshot(db, productTypeId, printTypeId, at);
   }
 }

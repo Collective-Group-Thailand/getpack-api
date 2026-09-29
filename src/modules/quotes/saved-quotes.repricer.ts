@@ -7,11 +7,8 @@ import {
   type RepriceRequest,
   type RepriceResult,
 } from '@modules/partners/pricing/quote-repricer.port';
-import { foldingCalculator } from '@modules/pricing/calculators/folding/folding-calculator';
-import {
-  type FoldingConfiguration,
-  FoldingSnapshotLoader,
-} from '@modules/pricing/calculators/folding/folding-snapshot.loader';
+import { type LoadedOptionBase, type ResolvedBase } from '@modules/pricing/calculators/adapter';
+import { CalculatorRegistry } from '@modules/pricing/calculators/calculator';
 import { Injectable, Logger } from '@nestjs/common';
 
 /** Thrown to roll the simulation transaction back once the numbers are taken. */
@@ -39,7 +36,7 @@ export class SavedQuotesRepricer implements QuoteRepricer {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly loader: FoldingSnapshotLoader,
+    private readonly calculators: CalculatorRegistry,
     private readonly builder: PriceListBuilder,
   ) {}
 
@@ -78,29 +75,34 @@ export class SavedQuotesRepricer implements QuoteRepricer {
         async (tx) => {
           const versionId = await this.draftFromProposal(tx, request.proposalId);
           const factory = await tx.factory.findUniqueOrThrow({ where: { id: request.factoryId } });
+          const type = await tx.productType.findUniqueOrThrow({ where: { id: request.productTypeId } });
+          if (!type.calculatorKey || !this.calculators.has(type.calculatorKey)) {
+            throw new Error(`no calculator for product type ${type.code}`);
+          }
+          const adapter = this.calculators.get(type.calculatorKey);
           const priceChanges: MoneyValue[] = [];
           const marginChanges: MoneyValue[] = [];
           const byQuote = new Map<bigint, typeof options>();
           for (const o of options) byQuote.set(o.quote.id, [...(byQuote.get(o.quote.id) ?? []), o]);
           for (const quoteOptions of byQuote.values()) {
-            const input = quoteOptions[0]!.quote.input as unknown as { configuration: FoldingConfiguration };
+            const input = quoteOptions[0]!.quote.input as unknown as { configuration: unknown };
             const at = quoteOptions[0]!.quote.createdAt;
             try {
-              const cfg = { ...input.configuration, quantities: quoteOptions.map((o) => o.quantity) };
-              const resolved = await this.loader.resolve(cfg, tx);
-              const loaded = await this.loader.options(factory, versionId, resolved, at, tx);
-              const result = foldingCalculator.calculate(
-                {
-                  quantities: cfg.quantities,
-                  parts: resolved.parts,
-                  design: cfg.design ?? { graphic: false, structure: false },
-                },
-                { options: loaded.map((l) => l.option) },
-              );
+              const cfg = adapter.withQuantities(
+                input.configuration,
+                quoteOptions.map((o) => o.quantity),
+              ) as unknown;
+              const resolved = (await adapter.resolve(cfg, tx)) as ResolvedBase;
+              const loaded = (await adapter.options(
+                factory,
+                versionId,
+                resolved,
+                at,
+                tx,
+              )) as LoadedOptionBase[];
+              const result = adapter.calculate(resolved, loaded, { withDesign: true });
               quoteOptions.forEach((o, index) => {
-                const steps = result.options
-                  .map((r) => r.steps[index])
-                  .filter((s) => s !== null && s !== undefined);
+                const steps = result.map((r) => r.steps[index]).filter((s) => s !== null && s !== undefined);
                 const best = steps.sort((a, b) => a.buyPrice - b.buyPrice)[0];
                 if (!best) return;
                 const shipping = o.shippingAmount

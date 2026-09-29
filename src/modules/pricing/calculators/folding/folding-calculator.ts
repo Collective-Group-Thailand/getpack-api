@@ -1,10 +1,10 @@
 import { type Calculator } from '../calculator';
+import { type ForSale, saleMargin, type SellSnapshot } from '../shared/sell';
 import { type PricedLayout } from './a/cost';
 import { type DigitalPricedLayout } from './a/digital';
 import { priceDigitalPart, priceOffsetPart } from './a/engine';
 import { type GeometryInput, type GeometrySnapshot } from './geometry/types';
 import { type PartRequest, PricingError, type ProcessExclusion } from './request';
-import { type ForSale, saleMargin, type SellSnapshot } from './sell';
 import { type DigitalTables, type OffsetTables } from './tables';
 
 /**

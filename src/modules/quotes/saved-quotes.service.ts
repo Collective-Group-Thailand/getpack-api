@@ -84,7 +84,7 @@ export class SavedQuotesService {
       throw new DomainException('pricing.not_instant');
     }
     const now = new Date();
-    const view = await this.engine.priceFolding(input.configuration, {
+    const view = await this.engine.price(type.calculatorKey, input.configuration, {
       channel,
       at: now,
       actorUserId:

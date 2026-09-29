@@ -498,6 +498,7 @@ export class CheckoutService {
     if (!factoryId) throw new DomainException('checkout.shipping_unavailable');
     const input = item.quote.input as unknown as { configuration: FoldingConfiguration };
     const priced = await this.engine.destinationShipping(
+      'folding',
       input.configuration,
       factoryId,
       rows.map((r) => ({ postcode: r.snap.postcode, quantity: r.d.quantity })),
