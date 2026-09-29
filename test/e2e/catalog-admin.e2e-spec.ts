@@ -376,6 +376,160 @@ describe('catalogue admin (e2e, B2.1)', () => {
       .expect(422);
   });
 
+  it('edits the geometry the calculators read: band tables, conditions, pattern slots, standard blanks (U-B6)', async () => {
+    const table = await admin
+      .post('/v1/admin/catalog/geometry-band-tables', {
+        code: `e2e_w_${run}`,
+        name: 'เผื่อตาม W',
+        status: 'active',
+      })
+      .expect(201);
+    const bandsUrl = `/v1/admin/catalog/geometry-band-tables/${table.body.id}/bands`;
+    const overlap = await admin
+      .put(
+        bandsUrl,
+        {
+          bands: [
+            { lower: 0, upper: 100, value: 3 },
+            { lower: 100, upper: 200, value: 4 },
+          ],
+        },
+        table.headers['etag'] as string,
+      )
+      .expect(422);
+    expect(overlap.body.errors[0]).toMatchObject({ path: 'bands[1]', code: 'overlap' });
+    const banded = await admin
+      .put(
+        bandsUrl,
+        {
+          bands: [
+            { lower: 100.01, upper: 900, value: 4 },
+            { lower: 0, upper: 100, value: -1.5 },
+          ],
+        },
+        table.headers['etag'] as string,
+      )
+      .expect(200);
+    // Kept in the order given: the calculators read bands in that order.
+    expect(banded.body.bands).toEqual([
+      { lower: 100.01, upper: 900, value: 4 },
+      { lower: 0, upper: 100, value: -1.5 },
+    ]);
+    await admin.put(bandsUrl, { bands: [] }, table.headers['etag'] as string).expect(412);
+
+    const byW = await admin
+      .post('/v1/admin/catalog/geometry-conditions', {
+        code: `e2e_i_${run}`,
+        bandTableId: table.body.id,
+        variable: 'i',
+        determinant: 'w',
+        status: 'active',
+      })
+      .expect(201);
+    expect(byW.body).toMatchObject({ bandTableId: table.body.id, determinant: 'w' });
+    const listed = await admin
+      .get(`/v1/admin/catalog/geometry-conditions?bandTableId=${table.body.id}`)
+      .expect(200);
+    expect((listed.body.data as { id: string }[]).map((c) => c.id)).toEqual([byW.body.id]);
+
+    const type = await productType('corrugate');
+    const pattern = await admin
+      .post('/v1/admin/catalog/patterns', {
+        productTypeId: type.id,
+        code: `E2E-GEO-${run}`,
+        name: 'ฝาชน',
+        corrugateFormula: 'rsc',
+      })
+      .expect(201);
+    const geometryUrl = `/v1/admin/catalog/patterns/${pattern.body.id}`;
+    // `j` is read by W ÷ L; a folding slot does not belong on a corrugate pattern.
+    const wrongDim = await admin
+      .put(
+        `${geometryUrl}/geometry-conditions`,
+        { conditions: [{ slot: 'j', conditionId: byW.body.id }] },
+        pattern.headers['etag'] as string,
+      )
+      .expect(422);
+    expect(wrongDim.body.errors[0]).toMatchObject({ path: 'conditions[0].conditionId', code: 'determinant' });
+    await admin
+      .put(
+        `${geometryUrl}/geometry-conditions`,
+        { conditions: [{ slot: 'dw', conditionId: byW.body.id }] },
+        pattern.headers['etag'] as string,
+      )
+      .expect(422);
+    const slotted = await admin
+      .put(
+        `${geometryUrl}/geometry-conditions`,
+        {
+          conditions: [
+            { slot: 'i', conditionId: byW.body.id },
+            { slot: 'k', conditionId: byW.body.id },
+          ],
+        },
+        pattern.headers['etag'] as string,
+      )
+      .expect(200);
+    expect(slotted.body.conditions).toEqual([
+      { subPatternId: null, slot: 'i', seq: 1, conditionId: byW.body.id },
+      { subPatternId: null, slot: 'k', seq: 1, conditionId: byW.body.id },
+    ]);
+    // The condition is read in slot i: it cannot move to W ÷ L.
+    const inUse = await admin
+      .patch(
+        `/v1/admin/catalog/geometry-conditions/${byW.body.id}`,
+        { determinant: 'w_over_l' },
+        byW.headers['etag'] as string,
+      )
+      .expect(422);
+    expect(inUse.body.errors[0]).toMatchObject({ path: 'determinant', code: 'inUse' });
+
+    const product = await admin
+      .post('/v1/admin/catalog/catalog-products', {
+        productTypeId: type.id,
+        slug: `e2e-geo-${run}`,
+        nameTh: 'กล่องทดสอบ',
+        nameEn: 'Test box',
+      })
+      .expect(201);
+    const size = await admin
+      .post('/v1/admin/catalog/standard-sizes', {
+        catalogProductId: product.body.id,
+        code: 'M',
+        name: 'M',
+        lengthMm: 300,
+        widthMm: 200,
+        heightMm: 150,
+      })
+      .expect(201);
+    const blank = { standardSizeId: size.body.id, dwMm: 520, dlMm: 1030 };
+    await admin
+      .put(
+        `${geometryUrl}/standard-blanks`,
+        { standardBlanks: [blank, blank] },
+        slotted.headers['etag'] as string,
+      )
+      .expect(422);
+    const blanks = await admin
+      .put(`${geometryUrl}/standard-blanks`, { standardBlanks: [blank] }, slotted.headers['etag'] as string)
+      .expect(200);
+    expect(blanks.body.standardBlanks).toEqual([blank]);
+
+    const read = await admin.get(`${geometryUrl}/geometry`).expect(200);
+    expect(read.headers['etag']).toBe(blanks.headers['etag']);
+    expect(read.body).toMatchObject({ patternId: pattern.body.id, standardBlanks: [blank] });
+    expect(read.body.conditions).toHaveLength(2);
+    expect(
+      await prisma.auditLog.count({
+        where: { action: 'catalog.pattern_updated', resourcePublicId: pattern.body.id },
+      }),
+    ).toBe(2);
+    await as('marketing').get(`${geometryUrl}/geometry`).expect(200);
+    await as('marketing')
+      .put(`${geometryUrl}/standard-blanks`, { standardBlanks: [] }, blanks.headers['etag'] as string)
+      .expect(403);
+  });
+
   it('lets Marketing read the catalogue but not edit it', async () => {
     await as('marketing').get('/v1/admin/catalog/product-types').expect(200);
     await as('marketing')

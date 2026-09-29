@@ -19,6 +19,11 @@ import {
 import { catalogCrudController } from './crud/catalog-crud.controller';
 import { type AnyCatalogResource } from './crud/catalog-resource';
 import { geoDistricts, geoProvinces, geoSubdistricts } from './geography/geography.resources';
+import {
+  GeometryBandTableActionsController,
+  PatternGeometryController,
+} from './geometry/geometry.controller';
+import { geometryBandTables, geometryConditions } from './geometry/geometry.resources';
 import { CatalogImportsController } from './imports/imports.controller';
 import {
   assemblies,
@@ -71,6 +76,8 @@ export const CATALOG_RESOURCES: readonly AnyCatalogResource[] = [
   standardSizes,
   patterns,
   subPatterns,
+  geometryBandTables,
+  geometryConditions,
   materialFamilies,
   fluteTypes,
   materials,
@@ -116,6 +123,8 @@ export const CATALOG_ADMIN_CONTROLLERS: Type<unknown>[] = [
   ProductTypeActionsController,
   CatalogProductRelationsController,
   PatternRelationsController,
+  PatternGeometryController,
+  GeometryBandTableActionsController,
   StockProductRelationsController,
   HomeSectionActionsController,
   ArticleActionsController,

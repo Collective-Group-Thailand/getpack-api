@@ -11,6 +11,7 @@ import {
   type CorrugatePrintColour,
   type FixedOption,
 } from './corrugate-calculator';
+import { CORRUGATE_CONDITION_DETERMINANTS } from './formulas';
 import { type ConditionBands, type FluteFactors, type PrintArea } from './geometry';
 
 /**
@@ -84,7 +85,7 @@ const num0 = (d: Prisma.Decimal | number | null | undefined): number => num(d) ?
 /** Coatings are finish-1 kinds (legacy corrugate `mapping_inputs` type 4). */
 const COATING_KINDS = new Set(['coating', 'lamination']);
 /** Legacy condition variables and the dimension each is read by (`CalculatorCorrugate.php:309-312`). */
-const CONDITION_DETERMINANTS = { i: 'w', j: 'w_over_l', k: 'w', m: 'w' } as const;
+const CONDITION_DETERMINANTS = CORRUGATE_CONDITION_DETERMINANTS;
 
 @Injectable()
 export class CorrugateSnapshotLoader {

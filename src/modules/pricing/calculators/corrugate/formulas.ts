@@ -1,4 +1,4 @@
-import { type CorrugateFormula } from '@generated/prisma/client';
+import { type CorrugateFormula, type GeometryDeterminant } from '@generated/prisma/client';
 
 /**
  * Corrugate blank formulas (U-B6, port map §6.1): legacy `CalculatorCorrugate::calculate:314-463` by pattern
@@ -26,3 +26,14 @@ export const CORRUGATE_FORMULAS = [
 /** Every Prisma value is listed (compile-time check the other way round). */
 const _exhaustive: readonly (typeof CORRUGATE_FORMULAS)[number][] = [] as CorrugateFormula[];
 void _exhaustive;
+
+/**
+ * The corrugate condition slots and the dimension each is read by (legacy `conditions` variables: `i`, `k`, `m`
+ * by W, `j` by W ÷ L; port map §6.1). They belong to the pattern, not to a part.
+ */
+export const CORRUGATE_CONDITION_DETERMINANTS = {
+  i: 'w',
+  j: 'w_over_l',
+  k: 'w',
+  m: 'w',
+} as const satisfies Record<string, GeometryDeterminant>;

@@ -201,6 +201,10 @@ export const API_TAGS: Record<string, string> = {
     'Customer-facing catalogue products with their patterns, options and images (D-100, D-005).',
   'admin.catalogStandardSizes': 'Standard sizes offered for a catalogue product (D-005).',
   'admin.catalogPatterns': 'Box styles (patterns), size constraints and matching flute types (D-100).',
+  'admin.catalogGeometryBandTables':
+    'Allowance tables by box dimension read by the folding and corrugate calculators (legacy `conditions`, D-100).',
+  'admin.catalogGeometryConditions':
+    'Band tables read by one box dimension, used in pattern slots (legacy `calculate_conditions`, D-100).',
   'admin.catalogSubPatterns':
     'Parts of a pattern with their geometry factors (indicative until the calculator port, B2.3).',
   'admin.catalogMaterialFamilies': 'Material families behind the material price index (D-040 group 1).',

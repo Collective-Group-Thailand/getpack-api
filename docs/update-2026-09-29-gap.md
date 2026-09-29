@@ -27,6 +27,7 @@ Legacy traced from `/Users/superball/Abbon/Loco_Pack/locopack-web`. Live paths: 
 | C.17 | Dev fixture | missing | `prisma/seed/dev-folding.ts` only | `prisma/seed/dev-corrugate.ts` (fake factory, fake prices) |
 | C.18 | Tier-B envelopes (D-043) | out of scope | after the last calculator (U-B6 tail) | — |
 | C.19 | Contract release tag | needed | latest tag `v0.2.0` | Bump + tag after the endpoint slice |
+| C.20 | Admin editing of geometry data (band tables + bands, conditions, pattern condition slots, standard blanks) — found in slice 3 | missing | `geometry_band_tables`, `geometry_bands`, `geometry_conditions`, `pattern_geometry_conditions`, `pattern_standard_blanks` (`catalog.prisma:1826-1940`) are written by seeds only; no admin resource in `catalog.registry.ts` (folding shipped without it) | Slice 7d: `admin.catalogGeometryBandTables.*` (+ `replaceBands`), `admin.catalogGeometryConditions.*`, `admin.catalogPatterns.getGeometry` / `replaceGeometryConditions` / `replaceStandardBlanks`; the calculators' slot rules checked on edit |
 
 ## U-B0 steps 1–2 — contract release tag and contract-requests triage (2026-09-29)
 

@@ -15269,6 +15269,78 @@
         ],
         "type": "object"
       },
+      "CreateGeometryBandTableDto": {
+        "properties": {
+          "code": {
+            "example": "rte_dw",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "name": {
+            "example": "ฝาเสียบ — ระยะเผื่อ DW",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogStatus"
+              }
+            ],
+            "description": "`archived` replaces deletion (schema-design §1.6)",
+            "example": "active"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreateGeometryConditionDto": {
+        "properties": {
+          "bandTableId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "example": "rte_dw_by_w",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "determinant": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeometryDeterminant"
+              }
+            ],
+            "description": "The box dimension the band table is read by: `w`, `l`, `d`, `x`, `c` (folding), `w_over_l` (W ÷ L, corrugate `j`)",
+            "example": "w"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogStatus"
+              }
+            ],
+            "description": "`archived` replaces deletion (schema-design §1.6)",
+            "example": "active"
+          },
+          "variable": {
+            "description": "Legacy variable name (only the lock-bottom formula reads `b`)",
+            "example": "a",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "bandTableId",
+          "variable",
+          "determinant"
+        ],
+        "type": "object"
+      },
       "CreateHomeSectionDto": {
         "properties": {
           "config": {
@@ -23372,6 +23444,171 @@
         ],
         "type": "object"
       },
+      "GeometryBandDto": {
+        "properties": {
+          "lower": {
+            "description": "Lower bound, inclusive",
+            "example": 0,
+            "type": "number"
+          },
+          "upper": {
+            "description": "Upper bound, inclusive",
+            "example": 100,
+            "type": "number"
+          },
+          "value": {
+            "description": "The allowance read for a dimension in the band",
+            "example": 12.5,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lower",
+          "upper",
+          "value"
+        ],
+        "type": "object"
+      },
+      "GeometryBandInputDto": {
+        "properties": {
+          "lower": {
+            "description": "Lower bound, inclusive",
+            "example": 0,
+            "minimum": 0,
+            "type": "number"
+          },
+          "upper": {
+            "description": "Upper bound, inclusive; at least `lower`",
+            "example": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "value": {
+            "description": "The allowance read for a dimension in the band (may be negative; 4 decimals)",
+            "example": 12.5,
+            "type": "number"
+          }
+        },
+        "required": [
+          "lower",
+          "upper",
+          "value"
+        ],
+        "type": "object"
+      },
+      "GeometryBandTableDto": {
+        "properties": {
+          "bands": {
+            "description": "Bands in evaluation order; bounds inclusive, never overlapping (legacy `conditions`)",
+            "items": {
+              "$ref": "#/components/schemas/GeometryBandDto"
+            },
+            "type": "array"
+          },
+          "code": {
+            "example": "rte_dw",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "ฝาเสียบ — ระยะเผื่อ DW",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "updatedAt": {
+            "example": "2026-09-29T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "bands",
+          "status",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "GeometryConditionDto": {
+        "properties": {
+          "bandTableId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "example": "rte_dw_by_w",
+            "type": "string"
+          },
+          "determinant": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeometryDeterminant"
+              }
+            ],
+            "description": "The box dimension the band table is read by: `w`, `l`, `d`, `x`, `c` (folding), `w_over_l` (W ÷ L, corrugate `j`)",
+            "example": "w"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "updatedAt": {
+            "example": "2026-09-29T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "variable": {
+            "description": "Legacy variable name (only the lock-bottom formula reads `b`)",
+            "example": "a",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "bandTableId",
+          "variable",
+          "determinant",
+          "status",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "GeometryDeterminant": {
+        "description": "The box dimension the band table is read by: `w`, `l`, `d`, `x`, `c` (folding), `w_over_l` (W ÷ L, corrugate `j`)",
+        "enum": [
+          "w",
+          "l",
+          "d",
+          "x",
+          "c",
+          "w_over_l"
+        ],
+        "type": "string"
+      },
       "GeometryFormula": {
         "description": "Blank formula of the folding calculator; null = not priceable by folding (B2.3, A-25)",
         "enum": [
@@ -23397,6 +23634,23 @@
           "cover_base",
           "flat_extended",
           "standard_blank"
+        ],
+        "type": "string"
+      },
+      "GeometrySlot": {
+        "description": "Folding slots `dw dl nd nl nw aux_f aux_f10`; corrugate slots `i j k m` (read by W, W ÷ L, W, W)",
+        "enum": [
+          "dw",
+          "dl",
+          "nd",
+          "nl",
+          "nw",
+          "aux_f",
+          "aux_f10",
+          "i",
+          "j",
+          "k",
+          "m"
         ],
         "type": "string"
       },
@@ -29200,6 +29454,84 @@
         ],
         "type": "object"
       },
+      "PatternConditionSlotDto": {
+        "properties": {
+          "conditionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "seq": {
+            "description": "Order of the conditions in one slot",
+            "example": 1,
+            "type": "integer"
+          },
+          "slot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeometrySlot"
+              }
+            ],
+            "description": "Folding slots `dw dl nd nl nw aux_f aux_f10`; corrugate slots `i j k m` (read by W, W ÷ L, W, W)",
+            "example": "dw"
+          },
+          "subPatternId": {
+            "description": "The part the slot belongs to; null for the pattern itself",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "subPatternId",
+          "slot",
+          "seq",
+          "conditionId"
+        ],
+        "type": "object"
+      },
+      "PatternConditionSlotInputDto": {
+        "properties": {
+          "conditionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "seq": {
+            "description": "Order in the slot (default 1)",
+            "example": 1,
+            "maximum": 20,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "slot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeometrySlot"
+              }
+            ],
+            "description": "Folding slots `dw dl nd nl nw aux_f aux_f10`; corrugate slots `i j k m` (read by W, W ÷ L, W, W)",
+            "example": "dw"
+          },
+          "subPatternId": {
+            "description": "A part of this pattern (folding only); omit or null for the pattern itself",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "slot",
+          "conditionId"
+        ],
+        "type": "object"
+      },
       "PatternDto": {
         "properties": {
           "code": {
@@ -29317,6 +29649,34 @@
         ],
         "type": "object"
       },
+      "PatternGeometryDto": {
+        "properties": {
+          "conditions": {
+            "items": {
+              "$ref": "#/components/schemas/PatternConditionSlotDto"
+            },
+            "type": "array"
+          },
+          "patternId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "standardBlanks": {
+            "description": "The die-cut blank at a standard size (folding formula `standard_blank`)",
+            "items": {
+              "$ref": "#/components/schemas/PatternStandardBlankDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "patternId",
+          "conditions",
+          "standardBlanks"
+        ],
+        "type": "object"
+      },
       "PatternLinkInput": {
         "properties": {
           "factorNd": {
@@ -29358,6 +29718,58 @@
         },
         "required": [
           "patternId"
+        ],
+        "type": "object"
+      },
+      "PatternStandardBlankDto": {
+        "properties": {
+          "dlMm": {
+            "description": "Blank length. Unit: mm.",
+            "example": 320,
+            "type": "number"
+          },
+          "dwMm": {
+            "description": "Blank width. Unit: mm.",
+            "example": 210,
+            "type": "number"
+          },
+          "standardSizeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e005",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "standardSizeId",
+          "dwMm",
+          "dlMm"
+        ],
+        "type": "object"
+      },
+      "PatternStandardBlankInputDto": {
+        "properties": {
+          "dlMm": {
+            "description": "Blank length Unit: mm.",
+            "example": 320,
+            "minimum": 0,
+            "type": "number"
+          },
+          "dwMm": {
+            "description": "Blank width Unit: mm.",
+            "example": 210,
+            "minimum": 0,
+            "type": "number"
+          },
+          "standardSizeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e005",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "standardSizeId",
+          "dwMm",
+          "dlMm"
         ],
         "type": "object"
       },
@@ -36341,6 +36753,22 @@
         ],
         "type": "object"
       },
+      "ReplaceGeometryBandsDto": {
+        "properties": {
+          "bands": {
+            "description": "Every band of the table, in evaluation order (the whole set is replaced)",
+            "items": {
+              "$ref": "#/components/schemas/GeometryBandInputDto"
+            },
+            "maxItems": 500,
+            "type": "array"
+          }
+        },
+        "required": [
+          "bands"
+        ],
+        "type": "object"
+      },
       "ReplaceOptionsDto": {
         "properties": {
           "options": {
@@ -36352,6 +36780,22 @@
         },
         "required": [
           "options"
+        ],
+        "type": "object"
+      },
+      "ReplacePatternConditionsDto": {
+        "properties": {
+          "conditions": {
+            "description": "Every slot of the pattern and its parts",
+            "items": {
+              "$ref": "#/components/schemas/PatternConditionSlotInputDto"
+            },
+            "maxItems": 100,
+            "type": "array"
+          }
+        },
+        "required": [
+          "conditions"
         ],
         "type": "object"
       },
@@ -36381,6 +36825,22 @@
         },
         "required": [
           "lines"
+        ],
+        "type": "object"
+      },
+      "ReplaceStandardBlanksDto": {
+        "properties": {
+          "standardBlanks": {
+            "description": "One blank per standard size",
+            "items": {
+              "$ref": "#/components/schemas/PatternStandardBlankInputDto"
+            },
+            "maxItems": 200,
+            "type": "array"
+          }
+        },
+        "required": [
+          "standardBlanks"
         ],
         "type": "object"
       },
@@ -48497,6 +48957,68 @@
           "postcode": {
             "example": "10200",
             "pattern": "^[0-9]{5}$",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateGeometryBandTableDto": {
+        "properties": {
+          "code": {
+            "example": "rte_dw",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "name": {
+            "example": "ฝาเสียบ — ระยะเผื่อ DW",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogStatus"
+              }
+            ],
+            "description": "`archived` replaces deletion (schema-design §1.6)",
+            "example": "active"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateGeometryConditionDto": {
+        "properties": {
+          "bandTableId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "code": {
+            "example": "rte_dw_by_w",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "determinant": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GeometryDeterminant"
+              }
+            ],
+            "description": "The box dimension the band table is read by: `w`, `l`, `d`, `x`, `c` (folding), `w_over_l` (W ÷ L, corrugate `j`)",
+            "example": "w"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CatalogStatus"
+              }
+            ],
+            "description": "`archived` replaces deletion (schema-design §1.6)",
+            "example": "active"
+          },
+          "variable": {
+            "description": "Legacy variable name (only the lock-bottom formula reads `b`)",
+            "example": "a",
+            "pattern": "^[a-z][a-z0-9_]*$",
             "type": "string"
           }
         },
@@ -76780,6 +77302,2278 @@
         ]
       }
     },
+    "/v1/admin/catalog/geometry-band-tables": {
+      "get": {
+        "description": "Filters, sort and `q` (free text over code, name). Allowances by box dimension (legacy `conditions`); bands are replaced with `PUT …/bands`. Read by the folding and corrugate calculators when they price a pattern; a change applies to the next quote (quotes keep their frozen inputs).\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryBandTables.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CatalogStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "bands": [
+                        {
+                          "lower": 0,
+                          "upper": 100,
+                          "value": 12.5
+                        },
+                        {
+                          "lower": 100.01,
+                          "upper": 300,
+                          "value": 15
+                        }
+                      ],
+                      "code": "rte_dw",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                      "name": "ฝาเสียบ — ระยะเผื่อ DW",
+                      "status": "active",
+                      "updatedAt": "2026-09-29T10:00:00+07:00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/GeometryBandTableDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List geometry band tables",
+        "tags": [
+          "admin.catalogGeometryBandTables"
+        ],
+        "x-required-permissions": [
+          "catalog.read"
+        ]
+      },
+      "post": {
+        "description": "Audited (config) and published as `catalog.geometry_band_table.created`. Allowances by box dimension (legacy `conditions`); bands are replaced with `PUT …/bands`. Read by the folding and corrugate calculators when they price a pattern; a change applies to the next quote (quotes keep their frozen inputs).\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryBandTables.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "code": "rte_dw",
+                    "name": "ฝาเสียบ — ระยะเผื่อ DW"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateGeometryBandTableDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "bands": [
+                    {
+                      "lower": 0,
+                      "upper": 100,
+                      "value": 12.5
+                    },
+                    {
+                      "lower": 100.01,
+                      "upper": 300,
+                      "value": 15
+                    }
+                  ],
+                  "code": "rte_dw",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "name": "ฝาเสียบ — ระยะเผื่อ DW",
+                  "status": "active",
+                  "updatedAt": "2026-09-29T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GeometryBandTableDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a geometry band table",
+        "tags": [
+          "admin.catalogGeometryBandTables"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/catalog/geometry-band-tables/{id}": {
+      "get": {
+        "description": "Returns the geometry band table and its ETag for a later update. Allowances by box dimension (legacy `conditions`); bands are replaced with `PUT …/bands`. Read by the folding and corrugate calculators when they price a pattern; a change applies to the next quote (quotes keep their frozen inputs).\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryBandTables.get",
+        "parameters": [
+          {
+            "description": "Public id of the geometry band table",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "bands": [
+                    {
+                      "lower": 0,
+                      "upper": 100,
+                      "value": 12.5
+                    },
+                    {
+                      "lower": 100.01,
+                      "upper": 300,
+                      "value": 15
+                    }
+                  ],
+                  "code": "rte_dw",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "name": "ฝาเสียบ — ระยะเผื่อ DW",
+                  "status": "active",
+                  "updatedAt": "2026-09-29T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GeometryBandTableDto"
+                }
+              }
+            },
+            "description": "The geometry band table",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get one geometry band table",
+        "tags": [
+          "admin.catalogGeometryBandTables"
+        ],
+        "x-required-permissions": [
+          "catalog.read"
+        ]
+      },
+      "patch": {
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.geometry_band_table.updated`. Allowances by box dimension (legacy `conditions`); bands are replaced with `PUT …/bands`. Read by the folding and corrugate calculators when they price a pattern; a change applies to the next quote (quotes keep their frozen inputs).\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryBandTables.update",
+        "parameters": [
+          {
+            "description": "Public id of the geometry band table",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "status": "active"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGeometryBandTableDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "bands": [
+                    {
+                      "lower": 0,
+                      "upper": 100,
+                      "value": 12.5
+                    },
+                    {
+                      "lower": 100.01,
+                      "upper": 300,
+                      "value": 15
+                    }
+                  ],
+                  "code": "rte_dw",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "name": "ฝาเสียบ — ระยะเผื่อ DW",
+                  "status": "active",
+                  "updatedAt": "2026-09-29T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GeometryBandTableDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Update a geometry band table",
+        "tags": [
+          "admin.catalogGeometryBandTables"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/catalog/geometry-band-tables/{id}/bands": {
+      "put": {
+        "description": "Legacy `conditions` rows of one table: bounds inclusive (`lower ≤ v ≤ upper`), never overlapping (422 `overlap` on the band), read in the order given. The whole set is replaced in one transaction; guarded by the table ETag; audited and published as `catalog.geometry_band_table.updated`. Applies to the next quote.\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryBandTables.replaceBands",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "bands": [
+                      {
+                        "lower": 0,
+                        "upper": 100,
+                        "value": 12.5
+                      },
+                      {
+                        "lower": 100.01,
+                        "upper": 300,
+                        "value": 15
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceGeometryBandsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "bands": [
+                    {
+                      "lower": 0,
+                      "upper": 100,
+                      "value": 12.5
+                    },
+                    {
+                      "lower": 100.01,
+                      "upper": 300,
+                      "value": 15
+                    }
+                  ],
+                  "code": "rte_dw",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "name": "ฝาเสียบ — ระยะเผื่อ DW",
+                  "status": "active",
+                  "updatedAt": "2026-09-29T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GeometryBandTableDto"
+                }
+              }
+            },
+            "description": "The band table",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replace the bands of a geometry band table",
+        "tags": [
+          "admin.catalogGeometryBandTables"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/catalog/geometry-conditions": {
+      "get": {
+        "description": "Filters, sort and `q` (free text over code, variable). A band table read by one box dimension (legacy `calculate_conditions`); patterns use conditions in their slots (`PUT /v1/admin/catalog/patterns/{id}/geometry-conditions`). Read by the folding and corrugate calculators when they price a pattern; a change applies to the next quote (quotes keep their frozen inputs).\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryConditions.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CatalogStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bandTableId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "determinant",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/GeometryDeterminant"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "bandTableId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                      "code": "rte_dw_by_w",
+                      "determinant": "w",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                      "status": "active",
+                      "updatedAt": "2026-09-29T10:00:00+07:00",
+                      "variable": "a"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/GeometryConditionDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List geometry conditions",
+        "tags": [
+          "admin.catalogGeometryConditions"
+        ],
+        "x-required-permissions": [
+          "catalog.read"
+        ]
+      },
+      "post": {
+        "description": "Audited (config) and published as `catalog.geometry_condition.created`. A band table read by one box dimension (legacy `calculate_conditions`); patterns use conditions in their slots (`PUT /v1/admin/catalog/patterns/{id}/geometry-conditions`). Read by the folding and corrugate calculators when they price a pattern; a change applies to the next quote (quotes keep their frozen inputs).\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryConditions.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "bandTableId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                    "code": "rte_dw_by_w",
+                    "determinant": "w",
+                    "variable": "a"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateGeometryConditionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "bandTableId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "code": "rte_dw_by_w",
+                  "determinant": "w",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                  "status": "active",
+                  "updatedAt": "2026-09-29T10:00:00+07:00",
+                  "variable": "a"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GeometryConditionDto"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Location": {
+                "$ref": "#/components/headers/Location"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a geometry condition",
+        "tags": [
+          "admin.catalogGeometryConditions"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/catalog/geometry-conditions/{id}": {
+      "get": {
+        "description": "Returns the geometry condition and its ETag for a later update. A band table read by one box dimension (legacy `calculate_conditions`); patterns use conditions in their slots (`PUT /v1/admin/catalog/patterns/{id}/geometry-conditions`). Read by the folding and corrugate calculators when they price a pattern; a change applies to the next quote (quotes keep their frozen inputs).\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryConditions.get",
+        "parameters": [
+          {
+            "description": "Public id of the geometry condition",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "bandTableId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "code": "rte_dw_by_w",
+                  "determinant": "w",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                  "status": "active",
+                  "updatedAt": "2026-09-29T10:00:00+07:00",
+                  "variable": "a"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GeometryConditionDto"
+                }
+              }
+            },
+            "description": "The geometry condition",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get one geometry condition",
+        "tags": [
+          "admin.catalogGeometryConditions"
+        ],
+        "x-required-permissions": [
+          "catalog.read"
+        ]
+      },
+      "patch": {
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.geometry_condition.updated`. A band table read by one box dimension (legacy `calculate_conditions`); patterns use conditions in their slots (`PUT /v1/admin/catalog/patterns/{id}/geometry-conditions`). Read by the folding and corrugate calculators when they price a pattern; a change applies to the next quote (quotes keep their frozen inputs).\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogGeometryConditions.update",
+        "parameters": [
+          {
+            "description": "Public id of the geometry condition",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "determinant": "l"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateGeometryConditionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "bandTableId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "code": "rte_dw_by_w",
+                  "determinant": "w",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                  "status": "active",
+                  "updatedAt": "2026-09-29T10:00:00+07:00",
+                  "variable": "a"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/GeometryConditionDto"
+                }
+              }
+            },
+            "description": "Updated",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "catalog.code_taken": {
+                    "$ref": "#/components/examples/problem.catalog.code_taken"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `catalog.code_taken`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Update a geometry condition",
+        "tags": [
+          "admin.catalogGeometryConditions"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
     "/v1/admin/catalog/imports": {
       "get": {
         "description": "Each kind is a workbook with one sheet per table (row 1 = headers). References use natural keys (codes, slugs, SKUs) — never internal ids. Export a kind to get a filled template.\n\nImplements: D-005, D-170.",
@@ -83724,6 +86518,787 @@
           }
         ],
         "summary": "Replace the flute types a pattern matches",
+        "tags": [
+          "admin.catalogPatterns"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/catalog/patterns/{id}/geometry": {
+      "get": {
+        "description": "The condition slots of the pattern and its parts (legacy `pattern.condition_*`) and its standard blanks (legacy `pattern_rel_standard_sizes`), with the pattern ETag for a later replace.\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogPatterns.getGeometry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "conditions": [
+                    {
+                      "conditionId": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                      "seq": 1,
+                      "slot": "dw",
+                      "subPatternId": null
+                    }
+                  ],
+                  "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000e003",
+                  "standardBlanks": [
+                    {
+                      "dlMm": 320,
+                      "dwMm": 210,
+                      "standardSizeId": "0192f3a0-7c1e-7d2a-9b1f-00000000e005"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PatternGeometryDto"
+                }
+              }
+            },
+            "description": "The pattern geometry",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get the geometry of a pattern",
+        "tags": [
+          "admin.catalogPatterns"
+        ],
+        "x-required-permissions": [
+          "catalog.read"
+        ]
+      }
+    },
+    "/v1/admin/catalog/patterns/{id}/geometry-conditions": {
+      "put": {
+        "description": "Which geometry condition each slot reads, for the pattern and its parts. A folding type takes the slots `dw dl nd nl nw aux_f aux_f10` read by `w l d x c`; a corrugate type the pattern slots `i k m` read by W and `j` by W ÷ L (U-B6, port map §6.1). Archived conditions are refused. The whole set is replaced in one transaction; guarded by the pattern ETag; audited and published as `catalog.pattern.updated`.\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogPatterns.replaceGeometryConditions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "conditions": [
+                      {
+                        "conditionId": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                        "seq": 1,
+                        "slot": "dw"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReplacePatternConditionsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "conditions": [
+                    {
+                      "conditionId": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                      "seq": 1,
+                      "slot": "dw",
+                      "subPatternId": null
+                    }
+                  ],
+                  "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000e003",
+                  "standardBlanks": [
+                    {
+                      "dlMm": 320,
+                      "dwMm": 210,
+                      "standardSizeId": "0192f3a0-7c1e-7d2a-9b1f-00000000e005"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PatternGeometryDto"
+                }
+              }
+            },
+            "description": "The pattern geometry",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replace the condition slots of a pattern",
+        "tags": [
+          "admin.catalogPatterns"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/catalog/patterns/{id}/standard-blanks": {
+      "put": {
+        "description": "The die-cut blank (DW × DL) of the pattern at each standard size, read by the folding formula `standard_blank`. One blank per standard size. The whole set is replaced in one transaction; guarded by the pattern ETag; audited and published as `catalog.pattern.updated`.\n\nImplements: D-100, D-005.",
+        "operationId": "admin.catalogPatterns.replaceStandardBlanks",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "standardBlanks": [
+                      {
+                        "dlMm": 320,
+                        "dwMm": 210,
+                        "standardSizeId": "0192f3a0-7c1e-7d2a-9b1f-00000000e005"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceStandardBlanksDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "conditions": [
+                    {
+                      "conditionId": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                      "seq": 1,
+                      "slot": "dw",
+                      "subPatternId": null
+                    }
+                  ],
+                  "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000e003",
+                  "standardBlanks": [
+                    {
+                      "dlMm": 320,
+                      "dwMm": 210,
+                      "standardSizeId": "0192f3a0-7c1e-7d2a-9b1f-00000000e005"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PatternGeometryDto"
+                }
+              }
+            },
+            "description": "The pattern geometry",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replace the standard blanks of a pattern",
         "tags": [
           "admin.catalogPatterns"
         ],
@@ -278398,6 +281973,14 @@
     {
       "description": "Foil types (platform definitions, D-005).",
       "name": "admin.catalogFoilTypes"
+    },
+    {
+      "description": "Allowance tables by box dimension read by the folding and corrugate calculators (legacy `conditions`, D-100).",
+      "name": "admin.catalogGeometryBandTables"
+    },
+    {
+      "description": "Band tables read by one box dimension, used in pattern slots (legacy `calculate_conditions`, D-100).",
+      "name": "admin.catalogGeometryConditions"
     },
     {
       "description": "Excel import (preview → confirm) and export of the large catalogue tables and geography (D-005, D-170).",
