@@ -213,5 +213,11 @@ Consequences: all 7 calculators are ported with golden tests before launch; the 
 | D-175 | **Business hours for SLA clocks: 09:00–18:00 on working days** (national calendar, D-161), setting `calendar.business_hours`; drives the 4-business-hour slip review SLA (D-061) and any later business-hour SLA. | Accepted (2026-09-27) — value proposed |
 | D-176 | **Slip verification provider: Slip2Go first** behind the slip-verification adapter (D-061); others (e.g. SCB slip verify) can be added as adapters. SCB (QR) and 2C2P adapters are built from the providers' public documentation, disabled by feature flag until Packio's own merchant accounts exist (D-005). | Accepted (2026-09-27) |
 
+## Storefront design direction (2026-09-29)
+| ID | Decision | Status |
+|---|---|---|
+| D-180 | **Packio visual direction** (no brand kit yet): warm paper/kraft neutrals as the base, near-black warm ink for text, **one primary accent (deep teal-green)** for actions and links, amber as a secondary highlight for campaign badges only, generous white space, product photography on clean paper/white with soft shadows, 12–16 px radii, hairline warm borders, no heavy gradients. Token values are proposed in `packio-web/docs/prompts/design-system.md` §Art direction and are replaced wholesale when a real brand kit arrives (tokens only, no component changes). Layout patterns are informed by a reference packaging store the business supplied; its design, imagery, fonts and copy are never copied. | Accepted (values Proposed) |
+| D-181 | **No manufactured urgency on the storefront**: no countdown timers, "only N left" or struck-through reference prices unless they come from a real promotion/campaign in the promotions engine with a real end date (D-053). Product cards for made-to-order items show starting price per piece, the quantity that price assumes, MOQ and lead time instead of retail discount framing. | Accepted |
+
 ## Still open
 Approval tier boundaries in D-052 (proposed 5–10 % Director, 10–15 % VP, > 15 % C-Level) · carrier choice in D-114 (proposed Flash Express + Deliveree) · all ⚖ items in `accounting-design.md` §10 (CPA review; defaults are in place). · ~~D-161 geography entry method~~ → D-170
