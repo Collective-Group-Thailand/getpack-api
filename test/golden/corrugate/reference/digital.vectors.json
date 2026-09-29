@@ -1,0 +1,2148 @@
+[
+  {
+    "name": "one colour front, job die-cut",
+    "part": {
+      "dw": 420.25,
+      "dl": 380,
+      "qty": 300,
+      "materialId": "ka150",
+      "front": ["black"],
+      "back": [],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": false,
+        "minLotPrice": null,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": [
+      {
+        "sheetWIn": 40,
+        "sheetLIn": 60,
+        "across": 2,
+        "along": 2,
+        "sheets": 88,
+        "paperCost": 3436.447693207887,
+        "printCost": 383.26800000000003,
+        "dieCut": 900,
+        "dieBlock": 0,
+        "printingFixCost": 574.9019999999999,
+        "fixCostPct": null,
+        "costPerPcs": 20.76,
+        "buyPrice": 6228.961992009279
+      },
+      {
+        "sheetWIn": 48,
+        "sheetLIn": 72,
+        "across": 2,
+        "along": 4,
+        "sheets": 50,
+        "paperCost": 3436.447693207887,
+        "printCost": 383.26800000000003,
+        "dieCut": 900,
+        "dieBlock": 0,
+        "printingFixCost": 574.9019999999999,
+        "fixCostPct": null,
+        "costPerPcs": 20.76,
+        "buyPrice": 6228.961992009279
+      },
+      {
+        "sheetWIn": 36,
+        "sheetLIn": 48,
+        "across": 2,
+        "along": 3,
+        "sheets": 62,
+        "paperCost": 3436.447693207887,
+        "printCost": 383.26800000000003,
+        "dieCut": 900,
+        "dieBlock": 0,
+        "printingFixCost": 574.9019999999999,
+        "fixCostPct": null,
+        "costPerPcs": 20.76,
+        "buyPrice": 6228.961992009279
+      }
+    ]
+  },
+  {
+    "name": "both sides, coating, assemblies, fix cost % by blank area",
+    "part": {
+      "dw": 420.25,
+      "dl": 380,
+      "qty": 1200,
+      "materialId": "ka150",
+      "front": ["cyan", "black"],
+      "back": ["black"],
+      "frontCoveragePct": null,
+      "finishFrontId": "matt",
+      "finishBackId": null,
+      "assemblyTotal": 1440,
+      "hasAssemblies": true,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": false,
+        "minLotPrice": null,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": [
+        {
+          "basis": "box_area_sqm",
+          "minValue": 0.1,
+          "maxValue": 0.2,
+          "percent": 8
+        },
+        {
+          "basis": "pcs",
+          "minValue": 1,
+          "maxValue": null,
+          "percent": 3
+        }
+      ]
+    },
+    "expect": [
+      {
+        "sheetWIn": 40,
+        "sheetLIn": 60,
+        "across": 2,
+        "along": 2,
+        "sheets": 359,
+        "paperCost": 12476.948547647096,
+        "printCost": 4120.131,
+        "dieCut": 1320.0,
+        "dieBlock": 0,
+        "printingFixCost": 2299.6079999999997,
+        "fixCostPct": 8,
+        "costPerPcs": 26.7,
+        "buyPrice": 32045.616520661
+      },
+      {
+        "sheetWIn": 36,
+        "sheetLIn": 48,
+        "across": 2,
+        "along": 3,
+        "sheets": 249,
+        "paperCost": 12476.948547647096,
+        "printCost": 4120.131,
+        "dieCut": 1320.0,
+        "dieBlock": 0,
+        "printingFixCost": 2299.6079999999997,
+        "fixCostPct": 8,
+        "costPerPcs": 26.7,
+        "buyPrice": 32045.616520661
+      },
+      {
+        "sheetWIn": 48,
+        "sheetLIn": 72,
+        "across": 2,
+        "along": 4,
+        "sheets": 194,
+        "paperCost": 13745.790772831548,
+        "printCost": 4120.131,
+        "dieCut": 1320.0,
+        "dieBlock": 0,
+        "printingFixCost": 2299.6079999999997,
+        "fixCostPct": 8,
+        "costPerPcs": 28.05,
+        "buyPrice": 33657.792524424774
+      }
+    ]
+  },
+  {
+    "name": "factory-16 two-sided add-on, white on its own board",
+    "part": {
+      "dw": 420.25,
+      "dl": 380,
+      "qty": 800,
+      "materialId": "ka125",
+      "front": ["white"],
+      "back": ["cyan"],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": false,
+        "minLotPrice": null,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": true
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": [
+      {
+        "sheetWIn": 40,
+        "sheetLIn": 60,
+        "across": 2,
+        "along": 2,
+        "sheets": 237,
+        "paperCost": 8317.965698431397,
+        "printCost": 3513.29,
+        "dieCut": 880.0000000000001,
+        "dieBlock": 0,
+        "printingFixCost": 1533.072,
+        "fixCostPct": null,
+        "costPerPcs": 20.95,
+        "buyPrice": 16758.03258638988
+      },
+      {
+        "sheetWIn": 48,
+        "sheetLIn": 72,
+        "across": 2,
+        "along": 4,
+        "sheets": 129,
+        "paperCost": 9163.860515221031,
+        "printCost": 3513.29,
+        "dieCut": 880.0000000000001,
+        "dieBlock": 0,
+        "printingFixCost": 1533.072,
+        "fixCostPct": null,
+        "costPerPcs": 22.19,
+        "buyPrice": 17753.202959083566
+      },
+      {
+        "sheetWIn": 36,
+        "sheetLIn": 48,
+        "across": 2,
+        "along": 3,
+        "sheets": 166,
+        "paperCost": 9163.860515221031,
+        "printCost": 3513.29,
+        "dieCut": 880.0000000000001,
+        "dieBlock": 0,
+        "printingFixCost": 1533.072,
+        "fixCostPct": null,
+        "costPerPcs": 22.19,
+        "buyPrice": 17753.202959083566
+      }
+    ]
+  },
+  {
+    "name": "factory-9 flat back rate, board band by order quantity",
+    "part": {
+      "dw": 420.25,
+      "dl": 380,
+      "qty": 2500,
+      "materialId": "ka150",
+      "front": ["black"],
+      "back": ["cyan", "black"],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": true,
+        "digitalDieBlock": false,
+        "minLotPrice": null,
+        "backPrintPricePerM2": 18,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": [
+      {
+        "sheetWIn": 40,
+        "sheetLIn": 60,
+        "across": 2,
+        "along": 2,
+        "sheets": 697,
+        "paperCost": 22469.081070974644,
+        "printCost": 9581.7,
+        "dieCut": 958.17,
+        "dieBlock": 0,
+        "printingFixCost": 4790.849999999999,
+        "fixCostPct": null,
+        "costPerPcs": 17.79,
+        "buyPrice": 44470.35420114664
+      },
+      {
+        "sheetWIn": 48,
+        "sheetLIn": 72,
+        "across": 2,
+        "along": 4,
+        "sheets": 360,
+        "paperCost": 22469.081070974644,
+        "printCost": 9581.7,
+        "dieCut": 958.17,
+        "dieBlock": 0,
+        "printingFixCost": 4790.849999999999,
+        "fixCostPct": null,
+        "costPerPcs": 17.79,
+        "buyPrice": 44470.35420114664
+      },
+      {
+        "sheetWIn": 36,
+        "sheetLIn": 48,
+        "across": 2,
+        "along": 3,
+        "sheets": 472,
+        "paperCost": 22469.081070974644,
+        "printCost": 9581.7,
+        "dieCut": 958.17,
+        "dieBlock": 0,
+        "printingFixCost": 4790.849999999999,
+        "fixCostPct": null,
+        "costPerPcs": 17.79,
+        "buyPrice": 44470.35420114664
+      }
+    ]
+  },
+  {
+    "name": "die block per m\u00b2, minimum lot, fix cost % by pieces",
+    "part": {
+      "dw": 210,
+      "dl": 180,
+      "qty": 50,
+      "materialId": "ka150",
+      "front": [],
+      "back": [],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": true,
+        "minLotPrice": 500,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": [
+        {
+          "basis": "pcs",
+          "minValue": 1,
+          "maxValue": 99,
+          "percent": 20
+        }
+      ]
+    },
+    "expect": [
+      {
+        "sheetWIn": 40,
+        "sheetLIn": 60,
+        "across": 4,
+        "along": 8,
+        "sheets": 2,
+        "paperCost": 139.1437244680045,
+        "printCost": 0,
+        "dieCut": 900,
+        "dieBlock": 7.1594999999999995,
+        "printingFixCost": 7.5600000000000005,
+        "fixCostPct": 20,
+        "costPerPcs": 29.76,
+        "buyPrice": 1487.8069051313
+      },
+      {
+        "sheetWIn": 48,
+        "sheetLIn": 72,
+        "across": 5,
+        "along": 8,
+        "sheets": 2,
+        "paperCost": 139.1437244680045,
+        "printCost": 0,
+        "dieCut": 900,
+        "dieBlock": 7.1594999999999995,
+        "printingFixCost": 7.5600000000000005,
+        "fixCostPct": 20,
+        "costPerPcs": 29.76,
+        "buyPrice": 1487.8069051313
+      },
+      {
+        "sheetWIn": 36,
+        "sheetLIn": 48,
+        "across": 4,
+        "along": 6,
+        "sheets": 3,
+        "paperCost": 139.1437244680045,
+        "printCost": 0,
+        "dieCut": 900,
+        "dieBlock": 7.1594999999999995,
+        "printingFixCost": 7.5600000000000005,
+        "fixCostPct": 20,
+        "costPerPcs": 29.76,
+        "buyPrice": 1487.8069051313
+      }
+    ]
+  },
+  {
+    "name": "tiny lot raised to the minimum lot price",
+    "part": {
+      "dw": 150,
+      "dl": 120,
+      "qty": 10,
+      "materialId": "ka150",
+      "front": [],
+      "back": [],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": false,
+        "minLotPrice": 500,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": 0.5,
+          "pricePerM2": null
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": [
+      {
+        "sheetWIn": 40,
+        "sheetLIn": 60,
+        "across": 6,
+        "along": 12,
+        "sheets": 1,
+        "paperCost": 13.555799681043807,
+        "printCost": 0,
+        "dieCut": 5.0,
+        "dieBlock": 0,
+        "printingFixCost": 0.72,
+        "fixCostPct": null,
+        "costPerPcs": 50.0,
+        "buyPrice": 500
+      },
+      {
+        "sheetWIn": 48,
+        "sheetLIn": 72,
+        "across": 6,
+        "along": 13,
+        "sheets": 1,
+        "paperCost": 13.555799681043807,
+        "printCost": 0,
+        "dieCut": 5.0,
+        "dieBlock": 0,
+        "printingFixCost": 0.72,
+        "fixCostPct": null,
+        "costPerPcs": 50.0,
+        "buyPrice": 500
+      },
+      {
+        "sheetWIn": 36,
+        "sheetLIn": 48,
+        "across": 4,
+        "along": 8,
+        "sheets": 1,
+        "paperCost": 13.555799681043807,
+        "printCost": 0,
+        "dieCut": 5.0,
+        "dieBlock": 0,
+        "printingFixCost": 0.72,
+        "fixCostPct": null,
+        "costPerPcs": 50.0,
+        "buyPrice": 500
+      }
+    ]
+  },
+  {
+    "name": "standard size: no die block",
+    "part": {
+      "dw": 420.25,
+      "dl": 380,
+      "qty": 1500,
+      "materialId": "ka150",
+      "front": ["black"],
+      "back": [],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": true
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": true,
+        "minLotPrice": null,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": [
+      {
+        "sheetWIn": 40,
+        "sheetLIn": 60,
+        "across": 2,
+        "along": 2,
+        "sheets": 400,
+        "paperCost": 15596.18568455887,
+        "printCost": 1437.255,
+        "dieCut": 1650.0000000000002,
+        "dieBlock": 0,
+        "printingFixCost": 2874.5099999999998,
+        "fixCostPct": null,
+        "costPerPcs": 16.91,
+        "buyPrice": 25362.294923010435
+      },
+      {
+        "sheetWIn": 48,
+        "sheetLIn": 72,
+        "across": 2,
+        "along": 4,
+        "sheets": 206,
+        "paperCost": 15596.18568455887,
+        "printCost": 1437.255,
+        "dieCut": 1650.0000000000002,
+        "dieBlock": 0,
+        "printingFixCost": 2874.5099999999998,
+        "fixCostPct": null,
+        "costPerPcs": 16.91,
+        "buyPrice": 25362.294923010435
+      },
+      {
+        "sheetWIn": 36,
+        "sheetLIn": 48,
+        "across": 2,
+        "along": 3,
+        "sheets": 270,
+        "paperCost": 15596.18568455887,
+        "printCost": 1437.255,
+        "dieCut": 1650.0000000000002,
+        "dieBlock": 0,
+        "printingFixCost": 2874.5099999999998,
+        "fixCostPct": null,
+        "costPerPcs": 16.91,
+        "buyPrice": 25362.294923010435
+      }
+    ]
+  },
+  {
+    "name": "front coverage 60 % (type 2)",
+    "part": {
+      "dw": 420.25,
+      "dl": 380,
+      "qty": 700,
+      "materialId": "ka150",
+      "front": ["cyan", "black"],
+      "back": [],
+      "frontCoveragePct": 60,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": false,
+        "minLotPrice": null,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": [
+      {
+        "sheetWIn": 40,
+        "sheetLIn": 60,
+        "across": 2,
+        "along": 2,
+        "sheets": 192,
+        "paperCost": 8018.3779508184025,
+        "printCost": 1039.61445,
+        "dieCut": 770.0000000000001,
+        "dieBlock": 0,
+        "printingFixCost": 1341.4379999999999,
+        "fixCostPct": null,
+        "costPerPcs": 18.77,
+        "buyPrice": 13140.506353904004
+      },
+      {
+        "sheetWIn": 48,
+        "sheetLIn": 72,
+        "across": 2,
+        "along": 4,
+        "sheets": 102,
+        "paperCost": 8018.3779508184025,
+        "printCost": 1039.61445,
+        "dieCut": 770.0000000000001,
+        "dieBlock": 0,
+        "printingFixCost": 1341.4379999999999,
+        "fixCostPct": null,
+        "costPerPcs": 18.77,
+        "buyPrice": 13140.506353904004
+      },
+      {
+        "sheetWIn": 36,
+        "sheetLIn": 48,
+        "across": 2,
+        "along": 3,
+        "sheets": 132,
+        "paperCost": 8018.3779508184025,
+        "printCost": 1039.61445,
+        "dieCut": 770.0000000000001,
+        "dieBlock": 0,
+        "printingFixCost": 1341.4379999999999,
+        "fixCostPct": null,
+        "costPerPcs": 18.77,
+        "buyPrice": 13140.506353904004
+      }
+    ]
+  },
+  {
+    "name": "no board band for the sheets",
+    "part": {
+      "dw": 420.25,
+      "dl": 380,
+      "qty": 300,
+      "materialId": "ka150",
+      "front": ["black"],
+      "back": [],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": false,
+        "minLotPrice": null,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": 500,
+          "maxSheet": null,
+          "pricePerSqft": 5.0
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": "price_line_missing"
+  },
+  {
+    "name": "no sheet fits",
+    "part": {
+      "dw": 1500,
+      "dl": 1300,
+      "qty": 300,
+      "materialId": "ka150",
+      "front": ["black"],
+      "back": [],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": false,
+        "minLotPrice": null,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": "process_not_possible"
+  },
+  {
+    "name": "colour without a price",
+    "part": {
+      "dw": 420.25,
+      "dl": 380,
+      "qty": 300,
+      "materialId": "ka150",
+      "front": ["gold"],
+      "back": [],
+      "frontCoveragePct": null,
+      "finishFrontId": null,
+      "finishBackId": null,
+      "assemblyTotal": 0,
+      "hasAssemblies": false,
+      "standardSize": false
+    },
+    "tables": {
+      "terms": {
+        "factoryMarginPct": 15,
+        "trimDlMm": 5,
+        "trimDwMm": 5,
+        "printFixCostPerSqm": 12,
+        "nonPrintFixCostPerSqm": 4,
+        "paperPriceByOrderAmount": false,
+        "digitalDieBlock": false,
+        "minLotPrice": null,
+        "backPrintPricePerM2": null,
+        "twoSideAddon": false
+      },
+      "process": {
+        "gapMm": 5,
+        "tlMm": 10,
+        "twMm": 10
+      },
+      "sheetSizes": [
+        {
+          "wIn": 40,
+          "lIn": 60
+        },
+        {
+          "wIn": 48,
+          "lIn": 72
+        },
+        {
+          "wIn": 36,
+          "lIn": 48
+        }
+      ],
+      "boardPrices": [
+        {
+          "minSheet": null,
+          "maxSheet": 199,
+          "pricePerSqft": 6.5
+        },
+        {
+          "minSheet": 200,
+          "maxSheet": 999,
+          "pricePerSqft": 5.9
+        },
+        {
+          "minSheet": 1000,
+          "maxSheet": null,
+          "pricePerSqft": 5.1
+        }
+      ],
+      "difficulty": {
+        "printPlatePricePerIn2": 0,
+        "minPricePerPcs": 0,
+        "printWastePct": 4,
+        "printSetupSheets": 10,
+        "diecutWastePct": 3,
+        "diecutWasteSheets": 5,
+        "assemblyWastePct": 2,
+        "assemblySetupSheets": 6
+      },
+      "printPrices": [
+        {
+          "inkColourId": "cyan",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 9.5,
+          "addTwoSidePerSqm": 3
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerM2": 8.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "black",
+          "materialId": null,
+          "minQty": 500,
+          "maxQty": null,
+          "pricePerM2": 6.0,
+          "addTwoSidePerSqm": 2.5
+        },
+        {
+          "inkColourId": "white",
+          "materialId": "ka125",
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 14.0,
+          "addTwoSidePerSqm": 4
+        },
+        {
+          "inkColourId": "white",
+          "materialId": null,
+          "minQty": null,
+          "maxQty": null,
+          "pricePerM2": 16.0,
+          "addTwoSidePerSqm": 4
+        }
+      ],
+      "finishPrices": [
+        {
+          "finishId": "matt",
+          "priceByAreaPerIn2": 0.012
+        }
+      ],
+      "diecutPrices": [
+        {
+          "minQty": null,
+          "maxQty": 499,
+          "pricePerJob": 900,
+          "pricePerPcs": null,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 500,
+          "maxQty": 1999,
+          "pricePerJob": null,
+          "pricePerPcs": 1.1,
+          "pricePerM2": null
+        },
+        {
+          "minQty": 2000,
+          "maxQty": null,
+          "pricePerJob": null,
+          "pricePerPcs": null,
+          "pricePerM2": 2.4
+        }
+      ],
+      "dieBlocks": [
+        {
+          "minPcs": null,
+          "maxPcs": 999,
+          "pricePerSqm": 180
+        },
+        {
+          "minPcs": 1000,
+          "maxPcs": null,
+          "pricePerSqm": 120
+        }
+      ],
+      "fixCostPcts": []
+    },
+    "expect": "price_line_missing"
+  }
+]
