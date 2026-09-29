@@ -36,14 +36,16 @@ export const GEOMETRY_FORMULAS = [
 export type GeometryFormula = (typeof GEOMETRY_FORMULAS)[number];
 
 /** Which box dimension a condition is looked up by (legacy `calculate_conditions.determinant`). */
-export type GeometryDeterminant = 'w' | 'l' | 'd' | 'x' | 'c';
+export const FOLDING_DETERMINANTS = ['w', 'l', 'd', 'x', 'c'] as const;
+export type GeometryDeterminant = (typeof FOLDING_DETERMINANTS)[number];
 
 /**
  * Condition slots of a pattern (legacy `pattern.condition_dw … condition_nw`), plus the band tables
  * legacy hard-codes by id: `aux_f` (condition group 1 by length, cases 9, 13, 16) and `aux_f10`
  * (group 10 by length, case 13).
  */
-export type GeometrySlot = 'dw' | 'dl' | 'nd' | 'nl' | 'nw' | 'aux_f' | 'aux_f10';
+export const FOLDING_SLOTS = ['dw', 'dl', 'nd', 'nl', 'nw', 'aux_f', 'aux_f10'] as const;
+export type GeometrySlot = (typeof FOLDING_SLOTS)[number];
 
 /** One band of a condition table (legacy `conditions`): inclusive on both ends. */
 export interface GeometryBand {

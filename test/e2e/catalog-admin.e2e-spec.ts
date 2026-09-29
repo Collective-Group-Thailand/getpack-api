@@ -254,6 +254,95 @@ describe('catalogue admin (e2e, B2.1)', () => {
     expect(read.body.options).toHaveLength(2);
   });
 
+  it('carries the corrugate calculator data: formulas, flute ct, coatable board, automatic assemblies (U-B6)', async () => {
+    const type = await productType('corrugate');
+    const flute = await admin
+      .post('/v1/admin/catalog/flute-types', {
+        code: `E2E-B-${run}`,
+        name: 'ลอน B',
+        layers: 3,
+        colFh: 3,
+        ct: 2,
+      })
+      .expect(201);
+    expect(flute.body.ct).toBe(2);
+    const board = await admin
+      .post('/v1/admin/catalog/materials', {
+        code: `e2e-ka125-${run}`,
+        kind: 'corrugated_board',
+        nameTh: 'KA125',
+        nameEn: 'KA125',
+        gsm: 450,
+        fluteTypeId: flute.body.id,
+        coatable: true,
+      })
+      .expect(201);
+    expect(board.body.coatable).toBe(true);
+    const packing = await admin
+      .post('/v1/admin/catalog/assemblies', {
+        code: `e2e-packing-${run}`,
+        nameTh: 'ค่าห่อ',
+        nameEn: 'Packing',
+        autoAdd: true,
+      })
+      .expect(201);
+    expect(packing.body.autoAdd).toBe(true);
+
+    const tele = await admin
+      .post('/v1/admin/catalog/patterns', { productTypeId: type.id, code: `E2E-TELE-${run}`, name: 'Tele' })
+      .expect(201);
+    expect(tele.body).toMatchObject({ geometryFormula: null, corrugateFormula: null });
+    const lid = await admin
+      .post('/v1/admin/catalog/sub-patterns', {
+        patternId: tele.body.id,
+        seq: 2,
+        name: 'ฝา',
+        corrugateFormula: 'tele_lid',
+      })
+      .expect(201);
+    expect(lid.body).toMatchObject({
+      corrugateFormula: 'tele_lid',
+      geometryFormula: null,
+      swapDimensions: false,
+    });
+
+    const rsc = await admin
+      .post('/v1/admin/catalog/patterns', {
+        productTypeId: type.id,
+        code: `E2E-RSC-${run}`,
+        name: 'ฝาชน',
+        corrugateFormula: 'rsc',
+      })
+      .expect(201);
+    expect(rsc.body.corrugateFormula).toBe('rsc');
+    // One calculator per pattern: refused on create and on an update that would set the other formula.
+    const both = await admin
+      .post('/v1/admin/catalog/patterns', {
+        productTypeId: type.id,
+        code: `E2E-BOTH-${run}`,
+        name: 'x',
+        geometryFormula: 'flat',
+        corrugateFormula: 'rsc',
+      })
+      .expect(422);
+    expect(both.body.errors[0].path).toBe('corrugateFormula');
+    await admin
+      .patch(
+        `/v1/admin/catalog/patterns/${rsc.body.id}`,
+        { geometryFormula: 'flat' },
+        rsc.headers['etag'] as string,
+      )
+      .expect(422);
+    await admin
+      .post('/v1/admin/catalog/patterns', {
+        productTypeId: type.id,
+        code: `E2E-X-${run}`,
+        name: 'x',
+        corrugateFormula: 'box',
+      })
+      .expect(422);
+  });
+
   it('lets Marketing read the catalogue but not edit it', async () => {
     await as('marketing').get('/v1/admin/catalog/product-types').expect(200);
     await as('marketing')

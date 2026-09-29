@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 
 import { CalculatorRegistry } from './calculators/calculator';
+import { CorrugatePriceComponentsRegistrar } from './calculators/corrugate/price-components.registrar';
 import { FoldingQuoteAdapter } from './calculators/folding/folding.adapter';
 import { FoldingSnapshotLoader } from './calculators/folding/folding-snapshot.loader';
 import { FoldingPriceComponentsRegistrar } from './calculators/folding/price-components.registrar';
@@ -23,7 +24,7 @@ const SERVICES = [
  */
 @Global()
 @Module({
-  providers: [...SERVICES, FoldingPriceComponentsRegistrar],
+  providers: [...SERVICES, FoldingPriceComponentsRegistrar, CorrugatePriceComponentsRegistrar],
   exports: SERVICES,
 })
 export class PricingModule {}

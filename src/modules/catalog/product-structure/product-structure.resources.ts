@@ -1,3 +1,4 @@
+import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 
@@ -432,7 +433,10 @@ export const catalogProducts = defineResource({
 
 // ------------------------------------------------------------------------------------------------
 
-const SIZE_INCLUDE = { catalogProduct: { select: { publicId: true } } } satisfies Prisma.StandardSizeInclude;
+const SIZE_INCLUDE = {
+  catalogProduct: { select: { publicId: true } },
+  calcFluteType: { select: { publicId: true } },
+} satisfies Prisma.StandardSizeInclude;
 type SizeRow = Prisma.StandardSizeGetPayload<{ include: typeof SIZE_INCLUDE }>;
 
 export const standardSizes = defineResource({
@@ -463,6 +467,7 @@ export const standardSizes = defineResource({
     calcLengthMm: null,
     calcWidthMm: null,
     calcHeightMm: null,
+    calcFluteTypeId: null,
     sort: 10,
     status: 'active',
     updatedAt: TS,
@@ -487,6 +492,7 @@ export const standardSizes = defineResource({
     calcLengthMm: num(row.calcLengthMm),
     calcWidthMm: num(row.calcWidthMm),
     calcHeightMm: num(row.calcHeightMm),
+    calcFluteTypeId: row.calcFluteType?.publicId ?? null,
     sort: row.sort,
     status: row.status,
     updatedAt: toBangkokIso(row.updatedAt),
@@ -501,10 +507,18 @@ export const standardSizes = defineResource({
     calcLengthMm: input.calcLengthMm ?? null,
     calcWidthMm: input.calcWidthMm ?? null,
     calcHeightMm: input.calcHeightMm ?? null,
+    calcFluteTypeId: await refs.optional('fluteType', input.calcFluteTypeId, 'calcFluteTypeId'),
     sort: input.sort,
     status: input.status,
   }),
-  updateData: (input: UpdateStandardSizeDto) => compact({ ...input }),
+  updateData: async (input: UpdateStandardSizeDto, refs) =>
+    compact({
+      ...input,
+      calcFluteTypeId:
+        input.calcFluteTypeId === undefined
+          ? undefined
+          : await refs.optional('fluteType', input.calcFluteTypeId, 'calcFluteTypeId'),
+    }),
   where: (q: StandardSizeListQuery) =>
     compact({
       status: q.status,
@@ -516,6 +530,26 @@ export const standardSizes = defineResource({
 });
 
 // ------------------------------------------------------------------------------------------------
+
+/** A pattern or part is priced by at most one calculator (DB check `ck_*__one_formula`, A-49) → 422, not 500. */
+function oneFormula(
+  input: { geometryFormula?: unknown; corrugateFormula?: unknown },
+  current?: { geometryFormula: unknown; corrugateFormula: unknown },
+): void {
+  const geometry = input.geometryFormula !== undefined ? input.geometryFormula : current?.geometryFormula;
+  const corrugate = input.corrugateFormula !== undefined ? input.corrugateFormula : current?.corrugateFormula;
+  if (geometry != null && corrugate != null) {
+    throw new DomainException('validation.failed', {
+      errors: [
+        {
+          path: 'corrugateFormula',
+          code: 'invalid',
+          message: 'set either geometryFormula (folding) or corrugateFormula (corrugate), not both',
+        },
+      ],
+    });
+  }
+}
 
 const PATTERN_INCLUDE = {
   productType: { select: { publicId: true } },
@@ -549,6 +583,8 @@ export const patterns = defineResource({
     patternKind: null,
     constraints: { minW: 30, maxW: 500 },
     dielineKey: 'rte',
+    geometryFormula: 'tuck_top',
+    corrugateFormula: null,
     fluteTypeIds: [EXAMPLE_IDS.fluteType],
     status: 'active',
     updatedAt: TS,
@@ -569,22 +605,30 @@ export const patterns = defineResource({
     patternKind: row.patternKind,
     constraints: row.constraints as Record<string, unknown>,
     dielineKey: row.dielineKey,
+    geometryFormula: row.geometryFormula,
+    corrugateFormula: row.corrugateFormula,
     fluteTypeIds: row.fluteTypes.map((f) => f.fluteType.publicId),
     status: row.status,
     updatedAt: toBangkokIso(row.updatedAt),
   }),
-  createData: async (input: CreatePatternDto, refs) => ({
-    productTypeId: await refs.id('productType', input.productTypeId, 'productTypeId'),
-    code: input.code,
-    name: input.name,
-    technicalName: input.technicalName ?? null,
-    patternKind: input.patternKind ?? null,
-    constraints: (input.constraints ?? {}) as Prisma.InputJsonValue,
-    dielineKey: input.dielineKey ?? null,
-    status: input.status,
-  }),
-  updateData: async (input: UpdatePatternDto, refs) =>
-    compact({
+  createData: async (input: CreatePatternDto, refs) => {
+    oneFormula(input);
+    return {
+      productTypeId: await refs.id('productType', input.productTypeId, 'productTypeId'),
+      code: input.code,
+      name: input.name,
+      technicalName: input.technicalName ?? null,
+      patternKind: input.patternKind ?? null,
+      constraints: (input.constraints ?? {}) as Prisma.InputJsonValue,
+      dielineKey: input.dielineKey ?? null,
+      geometryFormula: input.geometryFormula ?? null,
+      corrugateFormula: input.corrugateFormula ?? null,
+      status: input.status,
+    };
+  },
+  updateData: async (input: UpdatePatternDto, refs, current) => {
+    oneFormula(input, current);
+    return compact({
       productTypeId:
         input.productTypeId === undefined
           ? undefined
@@ -595,8 +639,11 @@ export const patterns = defineResource({
       patternKind: input.patternKind,
       constraints: input.constraints as Prisma.InputJsonValue | undefined,
       dielineKey: input.dielineKey,
+      geometryFormula: input.geometryFormula,
+      corrugateFormula: input.corrugateFormula,
       status: input.status,
-    }),
+    });
+  },
   where: (q: PatternListQuery) =>
     compact({ status: q.status, productType: q.productTypeId ? { publicId: q.productTypeId } : undefined }),
   search: ['code', 'name', 'technicalName'],
@@ -638,6 +685,9 @@ export const subPatterns = defineResource({
     nw: 2,
     nh: 1,
     conditions: null,
+    geometryFormula: null,
+    corrugateFormula: 'tele_body',
+    swapDimensions: false,
     updatedAt: TS,
   },
   createExample: { patternId: EXAMPLE_IDS.pattern, seq: 1, name: 'ตัวกล่อง', nl: 2, nw: 2, nh: 1 },
@@ -654,21 +704,33 @@ export const subPatterns = defineResource({
     nw: num(row.nw),
     nh: num(row.nh),
     conditions: (row.conditions as Record<string, unknown> | null) ?? null,
+    geometryFormula: row.geometryFormula,
+    corrugateFormula: row.corrugateFormula,
+    swapDimensions: row.swapDimensions,
     updatedAt: toBangkokIso(row.updatedAt),
   }),
-  createData: async (input: CreateSubPatternDto, refs) => ({
-    patternId: await refs.id('pattern', input.patternId, 'patternId'),
-    seq: input.seq,
-    name: input.name,
-    dl: input.dl ?? null,
-    dw: input.dw ?? null,
-    dh: input.dh ?? null,
-    nl: input.nl ?? null,
-    nw: input.nw ?? null,
-    nh: input.nh ?? null,
-    conditions: jsonField(input.conditions),
-  }),
-  updateData: (input: UpdateSubPatternDto) => compact({ ...input, conditions: jsonField(input.conditions) }),
+  createData: async (input: CreateSubPatternDto, refs) => {
+    oneFormula(input);
+    return {
+      patternId: await refs.id('pattern', input.patternId, 'patternId'),
+      seq: input.seq,
+      name: input.name,
+      dl: input.dl ?? null,
+      dw: input.dw ?? null,
+      dh: input.dh ?? null,
+      nl: input.nl ?? null,
+      nw: input.nw ?? null,
+      nh: input.nh ?? null,
+      conditions: jsonField(input.conditions),
+      geometryFormula: input.geometryFormula ?? null,
+      corrugateFormula: input.corrugateFormula ?? null,
+      swapDimensions: input.swapDimensions,
+    };
+  },
+  updateData: (input: UpdateSubPatternDto, _refs, current) => {
+    oneFormula(input, current);
+    return compact({ ...input, conditions: jsonField(input.conditions) });
+  },
   where: (q: SubPatternListQuery) =>
     compact({ pattern: q.patternId ? { publicId: q.patternId } : undefined }),
   search: ['name'],

@@ -203,6 +203,15 @@ enum PriceComponent {
   pattern_conditions
   process_exclusions
   spec_details
+  board_prices
+  corrugate_print_type_terms
+  corrugate_process_terms
+  corrugate_die_blocks
+  corrugate_print_prices
+  corrugate_diecut_prices
+  corrugate_assembly_prices
+  corrugate_pattern_conditions
+  fixed_options
 
   @@map("price_component")
 }
@@ -1108,8 +1117,24 @@ model PriceListVersion {
   // --- end Fulfilment B4.2
 
   // --- Finance B5.3 (generated back-relations)
-  purchaseOrders PurchaseOrder[] @relation("PurchaseOrderPriceListVersion")
+  purchaseOrders             PurchaseOrder[]               @relation("PurchaseOrderPriceListVersion")
   // --- end Finance B5.3
+  // --- Corrugate price components (U-B6)
+  corrugatePrintTypeTerms    PlCorrugatePrintTypeTerm[]    @relation("PlCorrugatePrintTypeTermPriceListVersion")
+  corrugateProcessTerms      PlCorrugateProcessTerm[]      @relation("PlCorrugateProcessTermPriceListVersion")
+  paperRollWidths            PlPaperRollWidth[]            @relation("PlPaperRollWidthPriceListVersion")
+  boardPrices                PlBoardPrice[]                @relation("PlBoardPricePriceListVersion")
+  difficultyLevels           PlDifficultyLevel[]           @relation("PlDifficultyLevelPriceListVersion")
+  difficultyMargins          PlDifficultyMargin[]          @relation("PlDifficultyMarginPriceListVersion")
+  percentReduces             PlPercentReduce[]             @relation("PlPercentReducePriceListVersion")
+  fixCostPcts                PlFixCostPct[]                @relation("PlFixCostPctPriceListVersion")
+  corrugateFixedOptions      PlCorrugateFixedOption[]      @relation("PlCorrugateFixedOptionPriceListVersion")
+  corrugatePatternConditions PlCorrugatePatternCondition[] @relation("PlCorrugatePatternConditionPriceListVersion")
+  corrugateDieBlocks         PlCorrugateDieBlock[]         @relation("PlCorrugateDieBlockPriceListVersion")
+  corrugatePrintPrices       PlCorrugatePrintPrice[]       @relation("PlCorrugatePrintPricePriceListVersion")
+  corrugateDiecutPrices      PlCorrugateDiecutPrice[]      @relation("PlCorrugateDiecutPricePriceListVersion")
+  corrugateAssemblyPrices    PlCorrugateAssemblyPrice[]    @relation("PlCorrugateAssemblyPricePriceListVersion")
+  // --- end Corrugate price components
 
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
   @@index([priceListId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_price_list_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))
@@ -1841,4 +1866,385 @@ model PlAssemblySheet {
 
   @@unique([priceListVersionId, lineKey], map: "ux_pl_assembly_sheets__price_list_version_id__line_key")
   @@map("pl_assembly_sheets")
+}
+
+// ------------------------------------------------------------------------------------------------
+// Corrugate price components (U-B6, schema-design §3.4, A-49): the folding tables are reused where the
+// legacy columns are the same (finish prices, paper trims, paper sizes, ink colours)
+// ------------------------------------------------------------------------------------------------
+
+/// Corrugate terms per print type (legacy `factory_match_print_type` + the corrugate flags of `factory`, and the terms that replace legacy's hard-coded factories); commercial terms (D-040 group 4).
+model PlCorrugatePrintTypeTerm {
+  id                         BigInt   @id(map: "pk_pl_corrugate_print_type_terms") @default(autoincrement())
+  priceListVersionId         BigInt   @map("price_list_version_id")
+  lineKey                    String   @map("line_key")
+  printTypeId                BigInt   @map("print_type_id")
+  /// `flexo` (legacy "Flexography": RSC roll or die-cut) or `digital` (legacy "Digital").
+  engineVariant              String   @map("engine_variant")
+  factoryMarginPct           Decimal  @map("factory_margin_pct") @db.Decimal(7, 4)
+  minOrderAmount             Int?     @map("min_order_amount")
+  leadTimeDays               Decimal? @map("lead_time_days") @db.Decimal(6, 2)
+  /// From this quantity the lead time is `bulk_lead_time_days` (legacy `getCustomLeadTime`, factory 9).
+  bulkLeadTimeMinQty         Int?     @map("bulk_lead_time_min_qty")
+  bulkLeadTimeDays           Decimal? @map("bulk_lead_time_days") @db.Decimal(6, 2)
+  /// Most colours per side (legacy `factory.max_amount_color`); null = no limit.
+  maxColours                 Int?     @map("max_colours") @db.SmallInt
+  /// Legacy `factory.paper_cut` (LOC-426): RSC blanks laid several to a cut sheet.
+  paperCut                   Boolean  @default(false) @map("paper_cut")
+  /// Legacy `corrugate_cal_pattern_area_percent_type` (0, 1, 2): the side-area formulas.
+  patternAreaPercentMethod   Int      @default(0) @map("pattern_area_percent_method") @db.SmallInt
+  /// Legacy factory 4: its own top + side area formulas.
+  topSideCombined            Boolean  @default(false) @map("top_side_combined")
+  trimDlMm                   Decimal  @default(0) @map("trim_dl_mm") @db.Decimal(10, 2)
+  trimDwMm                   Decimal  @default(0) @map("trim_dw_mm") @db.Decimal(10, 2)
+  printFixCostPerSqm         Decimal? @map("print_fix_cost_per_sqm") @db.Decimal(18, 6)
+  nonPrintFixCostPerSqm      Decimal? @map("non_print_fix_cost_per_sqm") @db.Decimal(18, 6)
+  /// Legacy `corrugate_use_amount_find_paper_price`: digital board band read at the order quantity.
+  paperPriceByOrderAmount    Boolean  @default(false) @map("paper_price_by_order_amount")
+  /// Legacy `corrugate_cal_diecut_block_price`: digital die block per m² (quirk C10).
+  digitalDieBlock            Boolean  @default(false) @map("digital_die_block")
+  /// Lowest buy price of a digital lot (legacy `corrugate_fix_min_cost`: 500).
+  minLotPrice                Decimal? @map("min_lot_price") @db.Decimal(18, 6)
+  /// Legacy factory 9: back print at a flat rate per m² (15 × 1.2) instead of the colour prices.
+  digitalBackPrintPricePerM2 Decimal? @map("digital_back_print_price_per_m2") @db.Decimal(18, 6)
+  /// Legacy factory 16: two-sided add-on per m² when both sides print.
+  digitalTwoSideAddon        Boolean  @default(false) @map("digital_two_side_addon")
+  /// Legacy factory 9: automatic packing per piece for RSC / Tele / full-overlap boxes (0.8)…
+  packingPriceRscPerPcs      Decimal? @map("packing_price_rsc_per_pcs") @db.Decimal(18, 6)
+  /// …and for other boxes (0.4).
+  packingPriceOtherPerPcs    Decimal? @map("packing_price_other_per_pcs") @db.Decimal(18, 6)
+  /// Legacy factory 4: no packing charge on RSC.
+  packingFreeOnRsc           Boolean  @default(false) @map("packing_free_on_rsc")
+  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCorrugatePrintTypeTermPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_corrugate_print_type_terms__price_list_version_id")
+  printType        PrintType        @relation("PlCorrugatePrintTypeTermPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_print_type_terms__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_corrugate_print_type_terms__version__line_key")
+  @@index([printTypeId], map: "ix_pl_corrugate_print_type_terms__print_type_id")
+  @@map("pl_corrugate_print_type_terms")
+}
+
+/// Corrugate process limits per print type × flute (legacy `find_pattern_type`): trims, run limits, RSC limits, die lay-out gaps; rule.
+model PlCorrugateProcessTerm {
+  id                  BigInt   @id(map: "pk_pl_corrugate_process_terms") @default(autoincrement())
+  priceListVersionId  BigInt   @map("price_list_version_id")
+  lineKey             String   @map("line_key")
+  printTypeId         BigInt   @map("print_type_id")
+  fluteTypeId         BigInt   @map("flute_type_id")
+  trimMm              Decimal  @map("trim_mm") @db.Decimal(10, 2)
+  minLengthM          Decimal  @map("min_length_m") @db.Decimal(10, 2)
+  minSheet            Int      @map("min_sheet")
+  widthLayoutMax      Int      @map("width_layout_max")
+  plRscMinIn          Decimal  @map("pl_rsc_min_in") @db.Decimal(10, 4)
+  plRscMaxIn          Decimal  @map("pl_rsc_max_in") @db.Decimal(10, 4)
+  pwRscMinIn          Decimal  @map("pw_rsc_min_in") @db.Decimal(10, 4)
+  pwRscMaxIn          Decimal  @map("pw_rsc_max_in") @db.Decimal(10, 4)
+  minRscFlapMm        Decimal  @map("min_rsc_flap_mm") @db.Decimal(10, 2)
+  minRscSlhMm         Decimal  @map("min_rsc_slh_mm") @db.Decimal(10, 2)
+  minSllMm            Decimal  @map("min_sll_mm") @db.Decimal(10, 2)
+  minSlwMm            Decimal  @map("min_slw_mm") @db.Decimal(10, 2)
+  gapMm               Decimal  @map("gap_mm") @db.Decimal(10, 2)
+  tlMm                Decimal  @map("tl_mm") @db.Decimal(10, 2)
+  twMm                Decimal  @map("tw_mm") @db.Decimal(10, 2)
+  minLengthLayoutSlot Decimal  @map("min_length_layout_slot") @db.Decimal(10, 4)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCorrugateProcessTermPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_corrugate_process_terms__price_list_version_id")
+  printType        PrintType        @relation("PlCorrugateProcessTermPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_process_terms__print_type_id")
+  fluteType        FluteType        @relation("PlCorrugateProcessTermFluteType", fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_process_terms__flute_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_corrugate_process_terms__price_list_version_id__line_key")
+  @@index([printTypeId], map: "ix_pl_corrugate_process_terms__print_type_id")
+  @@index([fluteTypeId], map: "ix_pl_corrugate_process_terms__flute_type_id")
+  @@map("pl_corrugate_process_terms")
+}
+
+/// Board roll widths the factory runs (legacy `paper_roll_widths`); a list.
+model PlPaperRollWidth {
+  id                 BigInt   @id(map: "pk_pl_paper_roll_widths") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  widthIn            Decimal  @map("width_in") @db.Decimal(10, 4)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPaperRollWidthPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_paper_roll_widths__price_list_version_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_paper_roll_widths__price_list_version_id__line_key")
+  @@map("pl_paper_roll_widths")
+}
+
+/// Corrugated board buy prices per material and print type by sheet band (legacy `paper_grade_match_flute`, THB per sq ft); materials, index-linked (D-040 group 1).
+model PlBoardPrice {
+  id                 BigInt   @id(map: "pk_pl_board_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  materialId         BigInt   @map("material_id")
+  printTypeId        BigInt   @map("print_type_id")
+  minSheet           Int?     @map("min_sheet")
+  maxSheet           Int?     @map("max_sheet")
+  pricePerSqft       Decimal  @map("price_per_sqft") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlBoardPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_board_prices__price_list_version_id")
+  material         Material         @relation("PlBoardPriceMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_board_prices__material_id")
+  printType        PrintType        @relation("PlBoardPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_board_prices__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_board_prices__price_list_version_id__line_key")
+  @@index([materialId], map: "ix_pl_board_prices__material_id")
+  @@index([printTypeId], map: "ix_pl_board_prices__print_type_id")
+  @@map("pl_board_prices")
+}
+
+/// The factory's terms at a difficulty level (legacy corrugate `difficult_level`: plate price, minimum per piece, digital waste); the row's presence is the factory accepting the level.
+model PlDifficultyLevel {
+  id                    BigInt   @id(map: "pk_pl_difficulty_levels") @default(autoincrement())
+  priceListVersionId    BigInt   @map("price_list_version_id")
+  lineKey               String   @map("line_key")
+  difficultyLevelId     BigInt   @map("difficulty_level_id")
+  printTypeId           BigInt   @map("print_type_id")
+  printPlatePricePerIn2 Decimal  @map("print_plate_price_per_in2") @db.Decimal(18, 6)
+  minPricePerPcs        Decimal  @map("min_price_per_pcs") @db.Decimal(18, 6)
+  printWastePct         Decimal  @map("print_waste_pct") @db.Decimal(7, 4)
+  printSetupSheets      Int      @map("print_setup_sheets")
+  diecutWastePct        Decimal  @map("diecut_waste_pct") @db.Decimal(7, 4)
+  diecutWasteSheets     Int      @map("diecut_waste_sheets")
+  assemblyWastePct      Decimal  @map("assembly_waste_pct") @db.Decimal(7, 4)
+  assemblySetupSheets   Int      @map("assembly_setup_sheets")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlDifficultyLevelPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_difficulty_levels__price_list_version_id")
+  difficultyLevel  DifficultyLevel  @relation("PlDifficultyLevelDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_difficulty_levels__difficulty_level_id")
+  printType        PrintType        @relation("PlDifficultyLevelPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_difficulty_levels__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_difficulty_levels__price_list_version_id__line_key")
+  @@index([difficultyLevelId], map: "ix_pl_difficulty_levels__difficulty_level_id")
+  @@index([printTypeId], map: "ix_pl_difficulty_levels__print_type_id")
+  @@map("pl_difficulty_levels")
+}
+
+/// Print margin and profit floors by difficulty and colour count (legacy `difficult_match_margin`); commercial terms.
+model PlDifficultyMargin {
+  id                 BigInt   @id(map: "pk_pl_difficulty_margins") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  difficultyLevelId  BigInt   @map("difficulty_level_id")
+  printTypeId        BigInt   @map("print_type_id")
+  colourAmount       Int      @map("colour_amount") @db.SmallInt
+  percentMargin      Decimal  @map("percent_margin") @db.Decimal(7, 4)
+  minMarginPerPcs    Decimal  @map("min_margin_per_pcs") @db.Decimal(18, 6)
+  minMarginPerJob    Decimal  @map("min_margin_per_job") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlDifficultyMarginPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_difficulty_margins__price_list_version_id")
+  difficultyLevel  DifficultyLevel  @relation("PlDifficultyMarginDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_difficulty_margins__difficulty_level_id")
+  printType        PrintType        @relation("PlDifficultyMarginPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_difficulty_margins__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_difficulty_margins__price_list_version_id__line_key")
+  @@index([difficultyLevelId], map: "ix_pl_difficulty_margins__difficulty_level_id")
+  @@index([printTypeId], map: "ix_pl_difficulty_margins__print_type_id")
+  @@map("pl_difficulty_margins")
+}
+
+/// Volume reduction from a job value (legacy `percent_reduces`, `Calculator::calculatePercentReduce`); commercial terms.
+model PlPercentReduce {
+  id                 BigInt   @id(map: "pk_pl_percent_reduces") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  minPrice           Decimal  @map("min_price") @db.Decimal(18, 6)
+  percent            Decimal  @map("percent") @db.Decimal(7, 4)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlPercentReducePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_percent_reduces__price_list_version_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_percent_reduces__price_list_version_id__line_key")
+  @@map("pl_percent_reduces")
+}
+
+/// Uplift % of a digital job by blank area or quantity band (legacy `factory_fix_cost_percents`); commercial terms.
+model PlFixCostPct {
+  id                 BigInt   @id(map: "pk_pl_fix_cost_pcts") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  /// `box_area_sqm` (band `min < v ≤ max`, read first) or `pcs` (`min ≤ v ≤ max`).
+  basis              String   @map("basis")
+  minValue           Decimal? @map("min_value") @db.Decimal(18, 6)
+  maxValue           Decimal? @map("max_value") @db.Decimal(18, 6)
+  percent            Decimal  @map("percent") @db.Decimal(7, 4)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlFixCostPctPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_fix_cost_pcts__price_list_version_id")
+  printType        PrintType        @relation("PlFixCostPctPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_fix_cost_pcts__print_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_fix_cost_pcts__price_list_version_id__line_key")
+  @@index([printTypeId], map: "ix_pl_fix_cost_pcts__print_type_id")
+  @@map("pl_fix_cost_pcts")
+}
+
+/// What the factory always adds to a pattern (legacy `fixed_options`): an assembly, or die-cut delivery rounds, per RSC / die-cut style; rule.
+model PlCorrugateFixedOption {
+  id                 BigInt   @id(map: "pk_pl_corrugate_fixed_options") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  patternId          BigInt   @map("pattern_id")
+  subPatternId       BigInt?  @map("sub_pattern_id")
+  /// `rsc` or `die_cut` (legacy `pattern_type` 1 / 2).
+  boxStyle           String   @map("box_style")
+  /// `assembly` or `diecut_delivery_rounds` (legacy `input_type` 1 / 2).
+  kind               String   @map("kind")
+  assemblyId         BigInt?  @map("assembly_id")
+  deliveryRounds     Int?     @map("delivery_rounds") @db.SmallInt
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCorrugateFixedOptionPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_corrugate_fixed_options__price_list_version_id")
+  pattern          Pattern          @relation("PlCorrugateFixedOptionPattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_fixed_options__pattern_id")
+  subPattern       SubPattern?      @relation("PlCorrugateFixedOptionSubPattern", fields: [subPatternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_fixed_options__sub_pattern_id")
+  assembly         Assembly?        @relation("PlCorrugateFixedOptionAssembly", fields: [assemblyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_fixed_options__assembly_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_corrugate_fixed_options__price_list_version_id__line_key")
+  @@index([patternId], map: "ix_pl_corrugate_fixed_options__pattern_id")
+  @@index([subPatternId], map: "ix_pl_corrugate_fixed_options__sub_pattern_id")
+  @@index([assemblyId], map: "ix_pl_corrugate_fixed_options__assembly_id")
+  @@map("pl_corrugate_fixed_options")
+}
+
+/// The factory's adjustment of a corrugate blank per flute (legacy `factory_rel_pattern_conditions`); rule.
+model PlCorrugatePatternCondition {
+  id                 BigInt   @id(map: "pk_pl_corrugate_pattern_conditions") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  fluteTypeId        BigInt   @map("flute_type_id")
+  patternId          BigInt   @map("pattern_id")
+  subPatternId       BigInt?  @map("sub_pattern_id")
+  plusDlMm           Decimal  @map("plus_dl_mm") @db.Decimal(10, 2)
+  plusDwMm           Decimal  @map("plus_dw_mm") @db.Decimal(10, 2)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCorrugatePatternConditionPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_corrugate_pattern_conditions__price_list_version_id")
+  fluteType        FluteType        @relation("PlCorrugatePatternConditionFluteType", fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_pattern_conditions__flute_type_id")
+  pattern          Pattern          @relation("PlCorrugatePatternConditionPattern", fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_pattern_conditions__pattern_id")
+  subPattern       SubPattern?      @relation("PlCorrugatePatternConditionSubPattern", fields: [subPatternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_pattern_conditions__sub_pattern_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_corrugate_pattern_conditions__version__line_key")
+  @@index([fluteTypeId], map: "ix_pl_corrugate_pattern_conditions__flute_type_id")
+  @@index([patternId], map: "ix_pl_corrugate_pattern_conditions__pattern_id")
+  @@index([subPatternId], map: "ix_pl_corrugate_pattern_conditions__sub_pattern_id")
+  @@map("pl_corrugate_pattern_conditions")
+}
+
+/// Die blocks and die-cutting (legacy corrugate `diecut_block_price`): flexo blocks by maximum size, digital block price per m² by quantity band; process rates.
+model PlCorrugateDieBlock {
+  id                 BigInt   @id(map: "pk_pl_corrugate_die_blocks") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  /// `flexo` (block by size, die-cut per sheet) or `digital` (block per m² by quantity band).
+  kind               String   @map("kind")
+  /// Blocks made for one flute (legacy factory 20); null = any flute.
+  fluteTypeId        BigInt?  @map("flute_type_id")
+  blockMaxWIn        Decimal? @map("block_max_w_in") @db.Decimal(10, 4)
+  blockMaxLIn        Decimal? @map("block_max_l_in") @db.Decimal(10, 4)
+  sideType           String?  @map("side_type")
+  minPcs             Int?     @map("min_pcs")
+  maxPcs             Int?     @map("max_pcs")
+  blockPrice         Decimal? @map("block_price") @db.Decimal(18, 6)
+  min1layDiecutPrice Decimal? @map("min1lay_diecut_price") @db.Decimal(18, 6)
+  stepDiecutPrice    Decimal? @map("step_diecut_price") @db.Decimal(18, 6)
+  pricePerPcs        Decimal? @map("price_per_pcs") @db.Decimal(18, 6)
+  minDiecutPrice     Decimal? @map("min_diecut_price") @db.Decimal(18, 6)
+  deliveryCost       Decimal? @map("delivery_cost") @db.Decimal(18, 6)
+  pricePerSqm        Decimal? @map("price_per_sqm") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCorrugateDieBlockPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_corrugate_die_blocks__price_list_version_id")
+  printType        PrintType        @relation("PlCorrugateDieBlockPrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_die_blocks__print_type_id")
+  fluteType        FluteType?       @relation("PlCorrugateDieBlockFluteType", fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_die_blocks__flute_type_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_corrugate_die_blocks__price_list_version_id__line_key")
+  @@index([printTypeId], map: "ix_pl_corrugate_die_blocks__print_type_id")
+  @@index([fluteTypeId], map: "ix_pl_corrugate_die_blocks__flute_type_id")
+  @@map("pl_corrugate_die_blocks")
+}
+
+/// Digital corrugate ink prices per colour, THB per m² per piece (legacy `print_prices` `print_price_per_pcs` / `price_ink_thb_per_m2`); per material (legacy factory 16) or quantity band (legacy factory 9) when set; process rates.
+model PlCorrugatePrintPrice {
+  id                 BigInt   @id(map: "pk_pl_corrugate_print_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  inkColourId        BigInt   @map("ink_colour_id")
+  materialId         BigInt?  @map("material_id")
+  minQty             Int?     @map("min_qty")
+  maxQty             Int?     @map("max_qty")
+  pricePerM2         Decimal  @map("price_per_m2") @db.Decimal(18, 6)
+  addTwoSidePerSqm   Decimal? @map("add_two_side_per_sqm") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCorrugatePrintPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_corrugate_print_prices__price_list_version_id")
+  printType        PrintType        @relation("PlCorrugatePrintPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_print_prices__print_type_id")
+  inkColour        InkColour        @relation("PlCorrugatePrintPriceInkColour", fields: [inkColourId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_print_prices__ink_colour_id")
+  material         Material?        @relation("PlCorrugatePrintPriceMaterial", fields: [materialId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_print_prices__material_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_corrugate_print_prices__price_list_version_id__line_key")
+  @@index([printTypeId], map: "ix_pl_corrugate_print_prices__print_type_id")
+  @@index([inkColourId], map: "ix_pl_corrugate_print_prices__ink_colour_id")
+  @@index([materialId], map: "ix_pl_corrugate_print_prices__material_id")
+  @@map("pl_corrugate_print_prices")
+}
+
+/// Digital corrugate die-cutting by difficulty and order-quantity band (legacy `diecut_price`: per job, per piece or per m²); process rates.
+model PlCorrugateDiecutPrice {
+  id                 BigInt   @id(map: "pk_pl_corrugate_diecut_prices") @default(autoincrement())
+  priceListVersionId BigInt   @map("price_list_version_id")
+  lineKey            String   @map("line_key")
+  printTypeId        BigInt   @map("print_type_id")
+  difficultyLevelId  BigInt   @map("difficulty_level_id")
+  minQty             Int?     @map("min_qty")
+  maxQty             Int?     @map("max_qty")
+  pricePerJob        Decimal? @map("price_per_job") @db.Decimal(18, 6)
+  pricePerPcs        Decimal? @map("price_per_pcs") @db.Decimal(18, 6)
+  pricePerM2         Decimal? @map("price_per_m2") @db.Decimal(18, 6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCorrugateDiecutPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_corrugate_diecut_prices__price_list_version_id")
+  printType        PrintType        @relation("PlCorrugateDiecutPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_diecut_prices__print_type_id")
+  difficultyLevel  DifficultyLevel  @relation("PlCorrugateDiecutPriceDifficultyLevel", fields: [difficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_diecut_prices__difficulty_level_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_corrugate_diecut_prices__price_list_version_id__line_key")
+  @@index([printTypeId], map: "ix_pl_corrugate_diecut_prices__print_type_id")
+  @@index([difficultyLevelId], map: "ix_pl_corrugate_diecut_prices__difficulty_level_id")
+  @@map("pl_corrugate_diecut_prices")
+}
+
+/// Corrugate assembly prices (legacy `assembly_prices` read by `CalculatorCorrugate::calculateAssembly`): by quantity range, optionally by window area (legacy factory 9) or blank length (legacy factory 20); process rates.
+model PlCorrugateAssemblyPrice {
+  id                  BigInt   @id(map: "pk_pl_corrugate_assembly_prices") @default(autoincrement())
+  priceListVersionId  BigInt   @map("price_list_version_id")
+  lineKey             String   @map("line_key")
+  printTypeId         BigInt   @map("print_type_id")
+  assemblyId          BigInt   @map("assembly_id")
+  rangeMin            Int?     @map("range_min")
+  rangeMax            Int?     @map("range_max")
+  /// Area band `min < area ≤ max` (legacy `:1972-1973`).
+  minAreaSqcm         Decimal? @map("min_area_sqcm") @db.Decimal(12, 2)
+  maxAreaSqcm         Decimal? @map("max_area_sqcm") @db.Decimal(12, 2)
+  /// Blank-length band `min ≤ dL < max` (legacy `:1975-1976`).
+  minDlMm             Decimal? @map("min_dl_mm") @db.Decimal(10, 2)
+  maxDlMm             Decimal? @map("max_dl_mm") @db.Decimal(10, 2)
+  /// `per_piece` or `per_area_piece` (qty × amount × price, at least the minimum; legacy window, `:1981-1983`).
+  method              String   @map("method")
+  pricePerPcs         Decimal  @map("price_per_pcs") @db.Decimal(18, 6)
+  minPrice            Decimal? @map("min_price") @db.Decimal(18, 6)
+  materialPricePerIn2 Decimal? @map("material_price_per_in2") @db.Decimal(18, 6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  priceListVersion PriceListVersion @relation("PlCorrugateAssemblyPricePriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_pl_corrugate_assembly_prices__price_list_version_id")
+  printType        PrintType        @relation("PlCorrugateAssemblyPricePrintType", fields: [printTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_assembly_prices__print_type_id")
+  assembly         Assembly         @relation("PlCorrugateAssemblyPriceAssembly", fields: [assemblyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pl_corrugate_assembly_prices__assembly_id")
+
+  @@unique([priceListVersionId, lineKey], map: "ux_pl_corrugate_assembly_prices__version__line_key")
+  @@index([printTypeId], map: "ix_pl_corrugate_assembly_prices__print_type_id")
+  @@index([assemblyId], map: "ix_pl_corrugate_assembly_prices__assembly_id")
+  @@map("pl_corrugate_assembly_prices")
 }

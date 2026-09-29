@@ -1,4 +1,6 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { CORRUGATE_FORMULAS } from '@modules/pricing/calculators/corrugate/formulas';
+import { GEOMETRY_FORMULAS } from '@modules/pricing/calculators/folding/geometry/types';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsObject, IsOptional, IsUUID, ValidateNested } from 'class-validator';
@@ -566,6 +568,16 @@ export class StandardSizeDto {
   @ApiProperty({ type: Number, nullable: true, example: null })
   calcHeightMm!: number | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description:
+      'Corrugate: the flute the calculation size was measured for; null = any flute (port map quirk C12)',
+  })
+  calcFluteTypeId!: string | null;
+
   @ApiProperty({ type: 'integer', example: 10 })
   sort!: number;
 
@@ -603,6 +615,9 @@ export class CreateStandardSizeDto {
 
   @DecimalField({ example: null, nullable: true, unit: 'mm' })
   calcHeightMm?: number | null;
+
+  @RefField({ example: null, nullable: true })
+  calcFluteTypeId?: string | null;
 
   @SortField()
   sort?: number;
@@ -665,6 +680,25 @@ export class PatternDto {
   dielineKey!: string | null;
 
   @ApiProperty({
+    enum: GEOMETRY_FORMULAS,
+    enumName: 'GeometryFormula',
+    nullable: true,
+    example: 'tuck_top',
+    description: 'Blank formula of the folding calculator; null = not priceable by folding (B2.3, A-25)',
+  })
+  geometryFormula!: (typeof GEOMETRY_FORMULAS)[number] | null;
+
+  @ApiProperty({
+    enum: CORRUGATE_FORMULAS,
+    enumName: 'CorrugateFormula',
+    nullable: true,
+    example: null,
+    description:
+      'Blank formula of the corrugate calculator; never together with `geometryFormula` (U-B6, A-49)',
+  })
+  corrugateFormula!: (typeof CORRUGATE_FORMULAS)[number] | null;
+
+  @ApiProperty({
     type: [String],
     format: 'uuid',
     example: [EXAMPLE_IDS.fluteType],
@@ -702,6 +736,12 @@ export class CreatePatternDto {
 
   @TextField({ example: 'rte', nullable: true, max: 64 })
   dielineKey?: string | null;
+
+  @EnumField(GEOMETRY_FORMULAS, 'GeometryFormula', { example: 'tuck_top', nullable: true })
+  geometryFormula?: (typeof GEOMETRY_FORMULAS)[number] | null;
+
+  @EnumField(CORRUGATE_FORMULAS, 'CorrugateFormula', { example: null, nullable: true })
+  corrugateFormula?: (typeof CORRUGATE_FORMULAS)[number] | null;
 
   @StatusField()
   status?: (typeof CATALOG_STATUSES)[number];
@@ -757,6 +797,31 @@ export class SubPatternDto {
   @ApiProperty({ type: 'object', additionalProperties: true, nullable: true, example: null })
   conditions!: Record<string, unknown> | null;
 
+  @ApiProperty({
+    enum: GEOMETRY_FORMULAS,
+    enumName: 'GeometryFormula',
+    nullable: true,
+    example: null,
+    description: "Multi-part folding patterns: the part's own blank formula",
+  })
+  geometryFormula!: (typeof GEOMETRY_FORMULAS)[number] | null;
+
+  @ApiProperty({
+    enum: CORRUGATE_FORMULAS,
+    enumName: 'CorrugateFormula',
+    nullable: true,
+    example: 'tele_body',
+    description:
+      "Multi-part corrugate patterns: the part's own blank formula (Tele body / lid, slide tray / sleeve)",
+  })
+  corrugateFormula!: (typeof CORRUGATE_FORMULAS)[number] | null;
+
+  @ApiProperty({
+    example: false,
+    description: 'Folding: the part is laid with its box turned (l ← w, w ← d, d ← l)',
+  })
+  swapDimensions!: boolean;
+
   @TimestampField(TS)
   updatedAt!: string;
 }
@@ -793,6 +858,15 @@ export class CreateSubPatternDto {
   @IsOptional()
   @IsObject()
   conditions?: Record<string, unknown> | null;
+
+  @EnumField(GEOMETRY_FORMULAS, 'GeometryFormula', { example: null, nullable: true })
+  geometryFormula?: (typeof GEOMETRY_FORMULAS)[number] | null;
+
+  @EnumField(CORRUGATE_FORMULAS, 'CorrugateFormula', { example: 'tele_body', nullable: true })
+  corrugateFormula?: (typeof CORRUGATE_FORMULAS)[number] | null;
+
+  @BoolField({ example: false, optional: true })
+  swapDimensions?: boolean;
 }
 
 export class UpdateSubPatternDto extends PartialType(OmitType(CreateSubPatternDto, ['patternId'] as const)) {}

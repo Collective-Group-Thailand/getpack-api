@@ -202,6 +202,14 @@ export class FluteTypeDto {
   @ApiProperty({ type: Number, nullable: true, example: null })
   z!: number | null;
 
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: null,
+    description: 'Board caliper allowance of a telescope lid (legacy `flute_type.ct`, corrugate calculator)',
+  })
+  ct!: number | null;
+
   @ApiProperty({ enum: CATALOG_STATUSES, enumName: 'CatalogStatus', example: 'active' })
   status!: Status;
 
@@ -236,6 +244,9 @@ export class CreateFluteTypeDto {
 
   @DecimalField({ example: null, nullable: true, scale: 4 })
   z?: number | null;
+
+  @DecimalField({ example: null, nullable: true, scale: 4 })
+  ct?: number | null;
 
   @StatusField()
   status?: Status;
@@ -290,6 +301,13 @@ export class MaterialDto {
   @ApiProperty({ example: false })
   isFoodGrade!: boolean;
 
+  @ApiProperty({
+    example: false,
+    description:
+      'The board takes a coating (legacy `paper_grade.can_finish`; the corrugate calculator refuses coating otherwise)',
+  })
+  coatable!: boolean;
+
   @ApiProperty({ enum: CATALOG_STATUSES, enumName: 'CatalogStatus', example: 'active' })
   status!: Status;
 
@@ -336,6 +354,9 @@ export class CreateMaterialDto {
 
   @BoolField({ example: false, optional: true })
   isFoodGrade?: boolean;
+
+  @BoolField({ example: false, optional: true })
+  coatable?: boolean;
 
   @StatusField()
   status?: Status;
@@ -581,6 +602,12 @@ export class AssemblyDto {
   @ApiProperty({ example: false, description: 'Indicative (calculator port)' })
   skipWaste!: boolean;
 
+  @ApiProperty({
+    example: false,
+    description: 'Added to every corrugate part, e.g. packing (legacy assembly group 22, U-B6 quirk C8)',
+  })
+  autoAdd!: boolean;
+
   @ApiProperty({ enum: CATALOG_STATUSES, enumName: 'CatalogStatus', example: 'active' })
   status!: Status;
 
@@ -615,6 +642,9 @@ export class CreateAssemblyDto {
 
   @BoolField({ example: false, optional: true })
   skipWaste?: boolean;
+
+  @BoolField({ example: false, optional: true })
+  autoAdd?: boolean;
 
   @StatusField()
   status?: Status;

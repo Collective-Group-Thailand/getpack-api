@@ -236,7 +236,7 @@ type FluteRow = Timestamped & {
   name: string;
   layers: number;
   status: CatalogStatusValue;
-} & Record<'colA' | 'colC' | 'colDd' | 'colG' | 'colFh' | 'z', Prisma.Decimal | null>;
+} & Record<'colA' | 'colC' | 'colDd' | 'colG' | 'colFh' | 'z' | 'ct', Prisma.Decimal | null>;
 
 export const fluteTypes = defineResource({
   key: 'flute_type',
@@ -265,6 +265,7 @@ export const fluteTypes = defineResource({
     colG: null,
     colFh: null,
     z: null,
+    ct: null,
     status: 'active',
     updatedAt: TS,
   },
@@ -281,6 +282,7 @@ export const fluteTypes = defineResource({
     colG: num(row.colG),
     colFh: num(row.colFh),
     z: num(row.z),
+    ct: num(row.ct),
     status: row.status,
     updatedAt: toBangkokIso(row.updatedAt),
   }),
@@ -307,6 +309,7 @@ interface MaterialRow extends Named {
   outsideColour: string | null;
   strength: string | null;
   isFoodGrade: boolean;
+  coatable: boolean;
   family: { publicId: string } | null;
   fluteType: { publicId: string } | null;
 }
@@ -326,6 +329,7 @@ export const materialDto = (row: MaterialRow): MaterialDto => ({
   outsideColour: row.outsideColour,
   strength: row.strength,
   isFoodGrade: row.isFoodGrade,
+  coatable: row.coatable,
   status: row.status,
   updatedAt: toBangkokIso(row.updatedAt),
 });
@@ -362,6 +366,7 @@ export const materials = defineResource({
     outsideColour: 'ขาว',
     strength: null,
     isFoodGrade: false,
+    coatable: false,
     status: 'active',
     updatedAt: TS,
   },
@@ -627,6 +632,7 @@ interface AssemblyRow extends Named, WithGroup {
   requiresLength: boolean;
   isDoubleItem: boolean;
   skipWaste: boolean;
+  autoAdd: boolean;
 }
 
 export const assemblies = defineResource({
@@ -657,6 +663,7 @@ export const assemblies = defineResource({
     requiresLength: false,
     isDoubleItem: false,
     skipWaste: false,
+    autoAdd: false,
     status: 'active',
     updatedAt: TS,
   },
@@ -673,6 +680,7 @@ export const assemblies = defineResource({
     requiresLength: row.requiresLength,
     isDoubleItem: row.isDoubleItem,
     skipWaste: row.skipWaste,
+    autoAdd: row.autoAdd,
     status: row.status,
     updatedAt: toBangkokIso(row.updatedAt),
   }),

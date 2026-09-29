@@ -319,8 +319,20 @@ model PrintType {
   // --- end Folding price components
 
   // --- Fulfilment B4.2 (generated back-relations)
-  milestoneRoutes MilestoneRoute[] @relation("MilestoneRoutePrintType")
+  milestoneRoutes           MilestoneRoute[]           @relation("MilestoneRoutePrintType")
   // --- end Fulfilment B4.2
+  // --- Corrugate price components (U-B6)
+  plCorrugatePrintTypeTerms PlCorrugatePrintTypeTerm[] @relation("PlCorrugatePrintTypeTermPrintType")
+  plCorrugateProcessTerms   PlCorrugateProcessTerm[]   @relation("PlCorrugateProcessTermPrintType")
+  plBoardPrices             PlBoardPrice[]             @relation("PlBoardPricePrintType")
+  plDifficultyLevels        PlDifficultyLevel[]        @relation("PlDifficultyLevelPrintType")
+  plDifficultyMargins       PlDifficultyMargin[]       @relation("PlDifficultyMarginPrintType")
+  plFixCostPcts             PlFixCostPct[]             @relation("PlFixCostPctPrintType")
+  plCorrugateDieBlocks      PlCorrugateDieBlock[]      @relation("PlCorrugateDieBlockPrintType")
+  plCorrugatePrintPrices    PlCorrugatePrintPrice[]    @relation("PlCorrugatePrintPricePrintType")
+  plCorrugateDiecutPrices   PlCorrugateDiecutPrice[]   @relation("PlCorrugateDiecutPricePrintType")
+  plCorrugateAssemblyPrices PlCorrugateAssemblyPrice[] @relation("PlCorrugateAssemblyPricePrintType")
+  // --- end Corrugate price components
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
   @@map("print_types")
@@ -454,6 +466,8 @@ model StandardSize {
   calcLengthMm     Decimal?      @map("calc_length_mm") @db.Decimal(10, 2)
   calcWidthMm      Decimal?      @map("calc_width_mm") @db.Decimal(10, 2)
   calcHeightMm     Decimal?      @map("calc_height_mm") @db.Decimal(10, 2)
+  /// Corrugate: the flute the calculation size was measured for (legacy applies it to flute id 1 only, quirk C12); null = any.
+  calcFluteTypeId  BigInt?       @map("calc_flute_type_id")
   sort             Int           @default(0)
   status           CatalogStatus @default(draft)
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -463,36 +477,40 @@ model StandardSize {
   rowVersion       Int           @default(1) @map("row_version")
 
   catalogProduct      CatalogProduct         @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__catalog_product_id")
+  calcFluteType       FluteType?             @relation("StandardSizeCalcFluteType", fields: [calcFluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__calc_flute_type_id")
   semiDesignTemplates SemiDesignTemplate[]
   createdBy           User?                  @relation("StandardSizeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__created_by")
   updatedBy           User?                  @relation("StandardSizeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_standard_sizes__updated_by")
   standardBlanks      PatternStandardBlank[]
 
   @@unique([catalogProductId, code], map: "ux_standard_sizes__catalog_product_id__code")
+  @@index([calcFluteTypeId], map: "ix_standard_sizes__calc_flute_type_id")
   @@map("standard_sizes")
 }
 
 /// `pattern_kind` and `constraints` are indicative (schema-design §0): validated by the calculator ports.
 model Pattern {
-  id              BigInt           @id(map: "pk_patterns") @default(autoincrement())
-  publicId        String           @unique(map: "ux_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  productTypeId   BigInt           @map("product_type_id")
-  code            String           @unique(map: "ux_patterns__code")
-  name            String
-  technicalName   String?          @map("technical_name")
-  patternKind     Int?             @map("pattern_kind") @db.SmallInt
+  id               BigInt            @id(map: "pk_patterns") @default(autoincrement())
+  publicId         String            @unique(map: "ux_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  productTypeId    BigInt            @map("product_type_id")
+  code             String            @unique(map: "ux_patterns__code")
+  name             String
+  technicalName    String?           @map("technical_name")
+  patternKind      Int?              @map("pattern_kind") @db.SmallInt
   /// min/max w/l/h/b/s/cs/dl/dw, required_x/c (legacy `pattern` size constraints).
-  constraints     Json             @default("{}")
+  constraints      Json              @default("{}")
   /// Key understood by `@packio/dieline`.
-  dielineKey      String?          @map("dieline_key")
+  dielineKey       String?           @map("dieline_key")
   /// Blank formula of the folding calculator (B2.3, schema-design A-25); null = not priceable.
-  geometryFormula GeometryFormula? @map("geometry_formula")
-  status          CatalogStatus    @default(draft)
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById     BigInt?          @map("created_by")
-  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById     BigInt?          @map("updated_by")
-  rowVersion      Int              @default(1) @map("row_version")
+  geometryFormula  GeometryFormula?  @map("geometry_formula")
+  /// Blank formula of the corrugate calculator (U-B6, schema-design A-49); never together with `geometry_formula`.
+  corrugateFormula CorrugateFormula? @map("corrugate_formula")
+  status           CatalogStatus     @default(draft)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?           @map("created_by")
+  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?           @map("updated_by")
+  rowVersion       Int               @default(1) @map("row_version")
 
   productType         ProductType                @relation(fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__product_type_id")
   subPatterns         SubPattern[]
@@ -507,9 +525,13 @@ model Pattern {
   // --- end Folding price components
 
   // --- Fulfilment B4.1 (generated back-relations)
-  designDocuments DesignDocument[] @relation("DesignDocumentPattern")
-  drawingJobs     DrawingJob[]     @relation("DrawingJobPattern")
+  designDocuments              DesignDocument[]              @relation("DesignDocumentPattern")
+  drawingJobs                  DrawingJob[]                  @relation("DrawingJobPattern")
   // --- end Fulfilment B4.1
+  // --- Corrugate price components (U-B6)
+  plCorrugateFixedOptions      PlCorrugateFixedOption[]      @relation("PlCorrugateFixedOptionPattern")
+  plCorrugatePatternConditions PlCorrugatePatternCondition[] @relation("PlCorrugatePatternConditionPattern")
+  // --- end Corrugate price components
 
   @@index([productTypeId], map: "ix_patterns__product_type_id")
   @@map("patterns")
@@ -517,35 +539,41 @@ model Pattern {
 
 /// Geometry factors and conditions are indicative (fixed by the calculator ports, B2.3).
 model SubPattern {
-  id              BigInt           @id(map: "pk_sub_patterns") @default(autoincrement())
-  publicId        String           @unique(map: "ux_sub_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  patternId       BigInt           @map("pattern_id")
-  seq             Int              @db.SmallInt
-  name            String
-  dl              Decimal?         @db.Decimal(10, 4)
-  dw              Decimal?         @db.Decimal(10, 4)
-  dh              Decimal?         @db.Decimal(10, 4)
-  nl              Decimal?         @db.Decimal(10, 4)
-  nw              Decimal?         @db.Decimal(10, 4)
-  nh              Decimal?         @db.Decimal(10, 4)
-  conditions      Json?
+  id               BigInt            @id(map: "pk_sub_patterns") @default(autoincrement())
+  publicId         String            @unique(map: "ux_sub_patterns__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  patternId        BigInt            @map("pattern_id")
+  seq              Int               @db.SmallInt
+  name             String
+  dl               Decimal?          @db.Decimal(10, 4)
+  dw               Decimal?          @db.Decimal(10, 4)
+  dh               Decimal?          @db.Decimal(10, 4)
+  nl               Decimal?          @db.Decimal(10, 4)
+  nw               Decimal?          @db.Decimal(10, 4)
+  nh               Decimal?          @db.Decimal(10, 4)
+  conditions       Json?
   /// Multi-part patterns: the part's own blank formula (legacy cases 31/32 by sub-pattern).
-  geometryFormula GeometryFormula? @map("geometry_formula")
+  geometryFormula  GeometryFormula?  @map("geometry_formula")
+  /// Multi-part corrugate patterns: the part's own blank formula (legacy Tele 29, slide 30 by sub-pattern).
+  corrugateFormula CorrugateFormula? @map("corrugate_formula")
   /// The part is laid with its box turned (legacy sub-pattern 6: l ← w, w ← d, d ← l).
-  swapDimensions  Boolean          @default(false) @map("swap_dimensions")
-  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById     BigInt?          @map("created_by")
-  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById     BigInt?          @map("updated_by")
-  rowVersion      Int              @default(1) @map("row_version")
+  swapDimensions   Boolean           @default(false) @map("swap_dimensions")
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?           @map("created_by")
+  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById      BigInt?           @map("updated_by")
+  rowVersion       Int               @default(1) @map("row_version")
 
-  pattern             Pattern                    @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__pattern_id")
-  geometryConditions  PatternGeometryCondition[]
-  createdBy           User?                      @relation("SubPatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__created_by")
-  updatedBy           User?                      @relation("SubPatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__updated_by")
+  pattern                      Pattern                       @relation(fields: [patternId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__pattern_id")
+  geometryConditions           PatternGeometryCondition[]
+  createdBy                    User?                         @relation("SubPatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__created_by")
+  updatedBy                    User?                         @relation("SubPatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sub_patterns__updated_by")
   // --- Folding price components (B2.3)
-  plPatternConditions PlPatternCondition[]       @relation("PlPatternConditionSubPattern")
+  plPatternConditions          PlPatternCondition[]          @relation("PlPatternConditionSubPattern")
   // --- end Folding price components
+  // --- Corrugate price components (U-B6)
+  plCorrugateFixedOptions      PlCorrugateFixedOption[]      @relation("PlCorrugateFixedOptionSubPattern")
+  plCorrugatePatternConditions PlCorrugatePatternCondition[] @relation("PlCorrugatePatternConditionSubPattern")
+  // --- end Corrugate price components
 
   @@unique([patternId, seq], map: "ux_sub_patterns__pattern_id__seq")
   @@map("sub_patterns")
@@ -610,6 +638,8 @@ model FluteType {
   colG        Decimal?      @map("col_g") @db.Decimal(10, 4)
   colFh       Decimal?      @map("col_fh") @db.Decimal(10, 4)
   z           Decimal?      @db.Decimal(10, 4)
+  /// Board caliper allowance of a telescope lid (legacy `flute_type.ct`, corrugate port).
+  ct          Decimal?      @db.Decimal(10, 4)
   status      CatalogStatus @default(draft)
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById BigInt?       @map("created_by")
@@ -617,10 +647,16 @@ model FluteType {
   updatedById BigInt?       @map("updated_by")
   rowVersion  Int           @default(1) @map("row_version")
 
-  materials Material[]
-  patterns  PatternFluteType[]
-  createdBy User?              @relation("FluteTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_flute_types__created_by")
-  updatedBy User?              @relation("FluteTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_flute_types__updated_by")
+  materials                    Material[]
+  patterns                     PatternFluteType[]
+  standardSizesCalc            StandardSize[]                @relation("StandardSizeCalcFluteType")
+  createdBy                    User?                         @relation("FluteTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_flute_types__created_by")
+  updatedBy                    User?                         @relation("FluteTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_flute_types__updated_by")
+  // --- Corrugate price components (U-B6)
+  plCorrugateProcessTerms      PlCorrugateProcessTerm[]      @relation("PlCorrugateProcessTermFluteType")
+  plCorrugatePatternConditions PlCorrugatePatternCondition[] @relation("PlCorrugatePatternConditionFluteType")
+  plCorrugateDieBlocks         PlCorrugateDieBlock[]         @relation("PlCorrugateDieBlockFluteType")
+  // --- end Corrugate price components
 
   @@map("flute_types")
 }
@@ -642,6 +678,8 @@ model Material {
   outsideColour String?       @map("outside_colour")
   strength      String?
   isFoodGrade   Boolean       @default(false) @map("is_food_grade")
+  /// The board takes a coating (legacy `paper_grade.can_finish`, corrugate port).
+  coatable      Boolean       @default(false)
   status        CatalogStatus @default(draft)
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById   BigInt?       @map("created_by")
@@ -661,8 +699,12 @@ model Material {
   // --- end Folding price components
 
   // --- Fulfilment B4.1 (generated back-relations)
-  designDocuments DesignDocument[] @relation("DesignDocumentMaterial")
+  designDocuments        DesignDocument[]        @relation("DesignDocumentMaterial")
   // --- end Fulfilment B4.1
+  // --- Corrugate price components (U-B6)
+  plBoardPrices          PlBoardPrice[]          @relation("PlBoardPriceMaterial")
+  plCorrugatePrintPrices PlCorrugatePrintPrice[] @relation("PlCorrugatePrintPriceMaterial")
+  // --- end Corrugate price components
 
   @@index([familyId], map: "ix_materials__family_id")
   @@index([fluteTypeId], map: "ix_materials__flute_type_id")
@@ -779,13 +821,16 @@ model InkColour {
   updatedById BigInt?       @map("updated_by")
   rowVersion  Int           @default(1) @map("row_version")
 
-  group                  InkColourGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__group_id")
-  createdBy              User?           @relation("InkColourCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__created_by")
-  updatedBy              User?           @relation("InkColourUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__updated_by")
+  group                  InkColourGroup?         @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__group_id")
+  createdBy              User?                   @relation("InkColourCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__created_by")
+  updatedBy              User?                   @relation("InkColourUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__updated_by")
   // --- Folding price components (B2.3)
-  plInkColoursInkColour  PlInkColour[]   @relation("PlInkColourInkColour")
-  plPrintPricesInkColour PlPrintPrice[]  @relation("PlPrintPriceInkColour")
+  plInkColoursInkColour  PlInkColour[]           @relation("PlInkColourInkColour")
+  plPrintPricesInkColour PlPrintPrice[]          @relation("PlPrintPriceInkColour")
   // --- end Folding price components
+  // --- Corrugate price components (U-B6)
+  plCorrugatePrintPrices PlCorrugatePrintPrice[] @relation("PlCorrugatePrintPriceInkColour")
+  // --- end Corrugate price components
 
   @@index([groupId], map: "ix_ink_colours__group_id")
   @@map("ink_colours")
@@ -871,6 +916,8 @@ model Assembly {
   requiresLength Boolean       @default(false) @map("requires_length")
   isDoubleItem   Boolean       @default(false) @map("is_double_item")
   skipWaste      Boolean       @default(false) @map("skip_waste")
+  /// Added to every corrugate part (legacy packing group 22, port map quirk C8).
+  autoAdd        Boolean       @default(false) @map("auto_add")
   status         CatalogStatus @default(draft)
   createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById    BigInt?       @map("created_by")
@@ -878,14 +925,18 @@ model Assembly {
   updatedById    BigInt?       @map("updated_by")
   rowVersion     Int           @default(1) @map("row_version")
 
-  group                       AssemblyGroup?       @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__group_id")
-  createdBy                   User?                @relation("AssemblyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__created_by")
-  updatedBy                   User?                @relation("AssemblyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__updated_by")
+  group                       AssemblyGroup?             @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__group_id")
+  createdBy                   User?                      @relation("AssemblyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__created_by")
+  updatedBy                   User?                      @relation("AssemblyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__updated_by")
   // --- Folding price components (B2.3)
-  plProcessExclusionsAssembly PlProcessExclusion[] @relation("PlProcessExclusionAssembly")
-  plAssemblyWastesAssembly    PlAssemblyWaste[]    @relation("PlAssemblyWasteAssembly")
-  plAssemblyPricesAssembly    PlAssemblyPrice[]    @relation("PlAssemblyPriceAssembly")
+  plProcessExclusionsAssembly PlProcessExclusion[]       @relation("PlProcessExclusionAssembly")
+  plAssemblyWastesAssembly    PlAssemblyWaste[]          @relation("PlAssemblyWasteAssembly")
+  plAssemblyPricesAssembly    PlAssemblyPrice[]          @relation("PlAssemblyPriceAssembly")
   // --- end Folding price components
+  // --- Corrugate price components (U-B6)
+  plCorrugateFixedOptions     PlCorrugateFixedOption[]   @relation("PlCorrugateFixedOptionAssembly")
+  plCorrugateAssemblyPrices   PlCorrugateAssemblyPrice[] @relation("PlCorrugateAssemblyPriceAssembly")
+  // --- end Corrugate price components
 
   @@index([groupId], map: "ix_assemblies__group_id")
   @@map("assemblies")
@@ -927,25 +978,30 @@ model DifficultyLevel {
   updatedById BigInt?       @map("updated_by")
   rowVersion  Int           @default(1) @map("row_version")
 
-  group                              DifficultyLevelGroup? @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__group_id")
-  createdBy                          User?                 @relation("DifficultyLevelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__created_by")
-  updatedBy                          User?                 @relation("DifficultyLevelUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__updated_by")
+  group                              DifficultyLevelGroup?    @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__group_id")
+  createdBy                          User?                    @relation("DifficultyLevelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__created_by")
+  updatedBy                          User?                    @relation("DifficultyLevelUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_difficulty_levels__updated_by")
   // --- Pricing (generated back-relations)
-  sellMarginLines                    SellMarginLine[]      @relation("SellMarginLineDifficultyLevel")
+  sellMarginLines                    SellMarginLine[]         @relation("SellMarginLineDifficultyLevel")
   // --- end Pricing
   // --- Folding price components (B2.3)
-  plPrintWastesDifficultyLevel       PlPrintWaste[]        @relation("PlPrintWasteDifficultyLevel")
-  plFinishWastesDifficultyLevel      PlFinishWaste[]       @relation("PlFinishWasteDifficultyLevel")
-  plDiecutWastesDifficultyLevel      PlDiecutWaste[]       @relation("PlDiecutWasteDifficultyLevel")
-  plAssemblyWastesDifficultyLevel    PlAssemblyWaste[]     @relation("PlAssemblyWasteDifficultyLevel")
-  plPrintPlatesDifficultyLevel       PlPrintPlate[]        @relation("PlPrintPlateDifficultyLevel")
-  plPrintPricesDifficultyLevel       PlPrintPrice[]        @relation("PlPrintPriceDifficultyLevel")
-  plFinishPricesDifficultyLevel      PlFinishPrice[]       @relation("PlFinishPriceDifficultyLevel")
-  plFinishPlatesDifficultyLevel      PlFinishPlate[]       @relation("PlFinishPlateDifficultyLevel")
-  plDiecutPricesDifficultyLevel      PlDiecutPrice[]       @relation("PlDiecutPriceDifficultyLevel")
-  plDiecutBlockPricesDifficultyLevel PlDiecutBlockPrice[]  @relation("PlDiecutBlockPriceDifficultyLevel")
-  plAssemblyPricesDifficultyLevel    PlAssemblyPrice[]     @relation("PlAssemblyPriceDifficultyLevel")
+  plPrintWastesDifficultyLevel       PlPrintWaste[]           @relation("PlPrintWasteDifficultyLevel")
+  plFinishWastesDifficultyLevel      PlFinishWaste[]          @relation("PlFinishWasteDifficultyLevel")
+  plDiecutWastesDifficultyLevel      PlDiecutWaste[]          @relation("PlDiecutWasteDifficultyLevel")
+  plAssemblyWastesDifficultyLevel    PlAssemblyWaste[]        @relation("PlAssemblyWasteDifficultyLevel")
+  plPrintPlatesDifficultyLevel       PlPrintPlate[]           @relation("PlPrintPlateDifficultyLevel")
+  plPrintPricesDifficultyLevel       PlPrintPrice[]           @relation("PlPrintPriceDifficultyLevel")
+  plFinishPricesDifficultyLevel      PlFinishPrice[]          @relation("PlFinishPriceDifficultyLevel")
+  plFinishPlatesDifficultyLevel      PlFinishPlate[]          @relation("PlFinishPlateDifficultyLevel")
+  plDiecutPricesDifficultyLevel      PlDiecutPrice[]          @relation("PlDiecutPriceDifficultyLevel")
+  plDiecutBlockPricesDifficultyLevel PlDiecutBlockPrice[]     @relation("PlDiecutBlockPriceDifficultyLevel")
+  plAssemblyPricesDifficultyLevel    PlAssemblyPrice[]        @relation("PlAssemblyPriceDifficultyLevel")
   // --- end Folding price components
+  // --- Corrugate price components (U-B6)
+  plDifficultyLevels                 PlDifficultyLevel[]      @relation("PlDifficultyLevelDifficultyLevel")
+  plDifficultyMargins                PlDifficultyMargin[]     @relation("PlDifficultyMarginDifficultyLevel")
+  plCorrugateDiecutPrices            PlCorrugateDiecutPrice[] @relation("PlCorrugateDiecutPriceDifficultyLevel")
+  // --- end Corrugate price components
 
   @@index([groupId], map: "ix_difficulty_levels__group_id")
   @@map("difficulty_levels")
@@ -1710,12 +1766,36 @@ enum GeometryFormula {
   @@map("geometry_formula")
 }
 
+/// Corrugate blank formulas (legacy `CalculatorCorrugate::calculate:314-463` by pattern and sub-pattern, port map §6.1).
+enum CorrugateFormula {
+  rsc
+  single_tuck
+  double_tuck
+  double_tuck_top_wall
+  double_tuck_side_wall
+  flat_sheet
+  seafood
+  open_top
+  handle
+  handle_rim
+  tele_body
+  tele_lid
+  slide_tray
+  slide_sleeve
+  tray
+  full_overlap
+
+  @@map("corrugate_formula")
+}
+
 enum GeometryDeterminant {
   w
   l
   d
   x
   c
+  /// W ÷ L (corrugate condition `j`).
+  w_over_l
 
   @@map("geometry_determinant")
 }
@@ -1728,6 +1808,11 @@ enum GeometrySlot {
   nw
   aux_f
   aux_f10
+  /// Corrugate condition values (legacy `conditions` variables `i j k m`).
+  i
+  j
+  k
+  m
 
   @@map("geometry_slot")
 }

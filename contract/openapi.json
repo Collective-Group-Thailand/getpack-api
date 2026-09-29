@@ -7854,6 +7854,11 @@
       },
       "AssemblyDto": {
         "properties": {
+          "autoAdd": {
+            "description": "Added to every corrugate part, e.g. packing (legacy assembly group 22, U-B6 quirk C8)",
+            "example": false,
+            "type": "boolean"
+          },
           "code": {
             "example": "side-glue",
             "type": "string"
@@ -7926,6 +7931,7 @@
           "requiresLength",
           "isDoubleItem",
           "skipWaste",
+          "autoAdd",
           "status",
           "updatedAt"
         ],
@@ -12921,6 +12927,28 @@
         ],
         "type": "string"
       },
+      "CorrugateFormula": {
+        "description": "Blank formula of the corrugate calculator; never together with `geometryFormula` (U-B6, A-49)",
+        "enum": [
+          "rsc",
+          "single_tuck",
+          "double_tuck",
+          "double_tuck_top_wall",
+          "double_tuck_side_wall",
+          "flat_sheet",
+          "seafood",
+          "open_top",
+          "handle",
+          "handle_rim",
+          "tele_body",
+          "tele_lid",
+          "slide_tray",
+          "slide_sleeve",
+          "tray",
+          "full_overlap"
+        ],
+        "type": "string"
+      },
       "CostCentreDto": {
         "properties": {
           "code": {
@@ -13297,6 +13325,10 @@
       },
       "CreateAssemblyDto": {
         "properties": {
+          "autoAdd": {
+            "example": false,
+            "type": "boolean"
+          },
           "code": {
             "example": "side-glue",
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
@@ -14540,6 +14572,14 @@
               "null"
             ]
           },
+          "ct": {
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "layers": {
             "example": 5,
             "maximum": 15,
@@ -14956,6 +14996,10 @@
       },
       "CreateMaterialDto": {
         "properties": {
+          "coatable": {
+            "example": false,
+            "type": "boolean"
+          },
           "code": {
             "description": "Natural key used by Excel import",
             "example": "art-card-350",
@@ -15205,12 +15249,34 @@
             },
             "type": "object"
           },
+          "corrugateFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrugateFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
           "dielineKey": {
             "example": "rte",
             "type": [
               "string",
               "null"
             ]
+          },
+          "geometryFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeometryFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "tuck_top"
           },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
@@ -16242,6 +16308,14 @@
       },
       "CreateStandardSizeDto": {
         "properties": {
+          "calcFluteTypeId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "calcHeightMm": {
             "description": "Unit: mm.",
             "example": null,
@@ -16505,6 +16579,17 @@
               "null"
             ]
           },
+          "corrugateFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrugateFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "tele_body"
+          },
           "dh": {
             "example": 1,
             "minimum": 0,
@@ -16528,6 +16613,17 @@
               "number",
               "null"
             ]
+          },
+          "geometryFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeometryFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
           },
           "name": {
             "example": "ตัวกล่อง",
@@ -16567,6 +16663,10 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "swapDimensions": {
+            "example": false,
+            "type": "boolean"
           }
         },
         "required": [
@@ -22029,6 +22129,14 @@
               "null"
             ]
           },
+          "ct": {
+            "description": "Board caliper allowance of a telescope lid (legacy `flute_type.ct`, corrugate calculator)",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d002",
             "format": "uuid",
@@ -22074,6 +22182,7 @@
           "colG",
           "colFh",
           "z",
+          "ct",
           "status",
           "updatedAt"
         ],
@@ -22639,6 +22748,34 @@
           "updatedAt"
         ],
         "type": "object"
+      },
+      "GeometryFormula": {
+        "description": "Blank formula of the folding calculator; null = not priceable by folding (B2.3, A-25)",
+        "enum": [
+          "tuck_top",
+          "tray",
+          "sleeve",
+          "lid",
+          "insert",
+          "hanger_tuck_top",
+          "popup_tuck_top",
+          "popup_hanger",
+          "house",
+          "fold_flap",
+          "wagashi",
+          "wagashi_side_tuck",
+          "wagashi_open_top",
+          "flat_overlap",
+          "flat",
+          "lock_bottom_top",
+          "flat_overlap_combined",
+          "slide_tray",
+          "slide_sleeve",
+          "cover_base",
+          "flat_extended",
+          "standard_blank"
+        ],
+        "type": "string"
       },
       "GlDetailDto": {
         "properties": {
@@ -25609,6 +25746,11 @@
       },
       "MaterialDto": {
         "properties": {
+          "coatable": {
+            "description": "The board takes a coating (legacy `paper_grade.can_finish`; the corrugate calculator refuses coating otherwise)",
+            "example": false,
+            "type": "boolean"
+          },
           "code": {
             "example": "art-card-350",
             "type": "string"
@@ -25727,6 +25869,7 @@
           "outsideColour",
           "strength",
           "isFoodGrade",
+          "coatable",
           "status",
           "updatedAt"
         ],
@@ -28449,6 +28592,18 @@
             },
             "type": "object"
           },
+          "corrugateFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrugateFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Blank formula of the corrugate calculator; never together with `geometryFormula` (U-B6, A-49)",
+            "example": null
+          },
           "dielineKey": {
             "example": "rte",
             "type": [
@@ -28466,6 +28621,18 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "geometryFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeometryFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Blank formula of the folding calculator; null = not priceable by folding (B2.3, A-25)",
+            "example": "tuck_top"
           },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
@@ -28519,6 +28686,8 @@
           "patternKind",
           "constraints",
           "dielineKey",
+          "geometryFormula",
+          "corrugateFormula",
           "fluteTypeIds",
           "status",
           "updatedAt"
@@ -30614,7 +30783,16 @@
           "production_conditions",
           "pattern_conditions",
           "process_exclusions",
-          "spec_details"
+          "spec_details",
+          "board_prices",
+          "corrugate_print_type_terms",
+          "corrugate_process_terms",
+          "corrugate_die_blocks",
+          "corrugate_print_prices",
+          "corrugate_diecut_prices",
+          "corrugate_assembly_prices",
+          "corrugate_pattern_conditions",
+          "fixed_options"
         ],
         "type": "string"
       },
@@ -41693,6 +41871,15 @@
       },
       "StandardSizeDto": {
         "properties": {
+          "calcFluteTypeId": {
+            "description": "Corrugate: the flute the calculation size was measured for; null = any flute (port map quirk C12)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "calcHeightMm": {
             "example": null,
             "type": [
@@ -41777,6 +41964,7 @@
           "calcLengthMm",
           "calcWidthMm",
           "calcHeightMm",
+          "calcFluteTypeId",
           "sort",
           "status",
           "updatedAt"
@@ -43943,6 +44131,18 @@
               "null"
             ]
           },
+          "corrugateFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrugateFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Multi-part corrugate patterns: the part's own blank formula (Tele body / lid, slide tray / sleeve)",
+            "example": "tele_body"
+          },
           "dh": {
             "example": 1,
             "type": [
@@ -43963,6 +44163,18 @@
               "number",
               "null"
             ]
+          },
+          "geometryFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeometryFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Multi-part folding patterns: the part's own blank formula",
+            "example": null
           },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c007",
@@ -44003,6 +44215,11 @@
             "example": 1,
             "type": "integer"
           },
+          "swapDimensions": {
+            "description": "Folding: the part is laid with its box turned (l ← w, w ← d, d ← l)",
+            "example": false,
+            "type": "boolean"
+          },
           "updatedAt": {
             "example": "2026-09-25T10:00:00+07:00",
             "format": "date-time",
@@ -44021,6 +44238,9 @@
           "nw",
           "nh",
           "conditions",
+          "geometryFormula",
+          "corrugateFormula",
+          "swapDimensions",
           "updatedAt"
         ],
         "type": "object"
@@ -46228,6 +46448,10 @@
       },
       "UpdateAssemblyDto": {
         "properties": {
+          "autoAdd": {
+            "example": false,
+            "type": "boolean"
+          },
           "code": {
             "example": "side-glue",
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
@@ -47176,6 +47400,14 @@
               "null"
             ]
           },
+          "ct": {
+            "example": null,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "layers": {
             "example": 5,
             "maximum": 15,
@@ -47452,6 +47684,10 @@
       },
       "UpdateMaterialDto": {
         "properties": {
+          "coatable": {
+            "example": false,
+            "type": "boolean"
+          },
           "code": {
             "description": "Natural key used by Excel import",
             "example": "art-card-350",
@@ -47794,12 +48030,34 @@
             },
             "type": "object"
           },
+          "corrugateFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrugateFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
           "dielineKey": {
             "example": "rte",
             "type": [
               "string",
               "null"
             ]
+          },
+          "geometryFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeometryFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "tuck_top"
           },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
@@ -48357,6 +48615,14 @@
       },
       "UpdateStandardSizeDto": {
         "properties": {
+          "calcFluteTypeId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "calcHeightMm": {
             "description": "Unit: mm.",
             "example": null,
@@ -48594,6 +48860,17 @@
               "null"
             ]
           },
+          "corrugateFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrugateFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "tele_body"
+          },
           "dh": {
             "example": 1,
             "minimum": 0,
@@ -48617,6 +48894,17 @@
               "number",
               "null"
             ]
+          },
+          "geometryFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeometryFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
           },
           "name": {
             "example": "ตัวกล่อง",
@@ -48651,6 +48939,10 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "swapDimensions": {
+            "example": false,
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -62419,6 +62711,7 @@
                 "example": {
                   "data": [
                     {
+                      "autoAdd": false,
                       "code": "side-glue",
                       "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
@@ -62624,6 +62917,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "autoAdd": false,
                   "code": "side-glue",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
@@ -62849,6 +63143,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "autoAdd": false,
                   "code": "side-glue",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
@@ -63066,6 +63361,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "autoAdd": false,
                   "code": "side-glue",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
@@ -73658,6 +73954,7 @@
                       "colDd": null,
                       "colFh": null,
                       "colG": null,
+                      "ct": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d002",
                       "layers": 5,
                       "name": "ลอน BC (5 ชั้น)",
@@ -73863,6 +74160,7 @@
                   "colDd": null,
                   "colFh": null,
                   "colG": null,
+                  "ct": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d002",
                   "layers": 5,
                   "name": "ลอน BC (5 ชั้น)",
@@ -74088,6 +74386,7 @@
                   "colDd": null,
                   "colFh": null,
                   "colG": null,
+                  "ct": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d002",
                   "layers": 5,
                   "name": "ลอน BC (5 ชั้น)",
@@ -74305,6 +74604,7 @@
                   "colDd": null,
                   "colFh": null,
                   "colG": null,
+                  "ct": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d002",
                   "layers": 5,
                   "name": "ลอน BC (5 ชั้น)",
@@ -79271,6 +79571,7 @@
                 "example": {
                   "data": [
                     {
+                      "coatable": false,
                       "code": "art-card-350",
                       "familyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
                       "fluteTypeId": null,
@@ -79483,6 +79784,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "coatable": false,
                   "code": "art-card-350",
                   "familyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
                   "fluteTypeId": null,
@@ -79712,6 +80014,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "coatable": false,
                   "code": "art-card-350",
                   "familyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
                   "fluteTypeId": null,
@@ -79933,6 +80236,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "coatable": false,
                   "code": "art-card-350",
                   "familyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
                   "fluteTypeId": null,
@@ -81239,10 +81543,12 @@
                         "maxW": 500,
                         "minW": 30
                       },
+                      "corrugateFormula": null,
                       "dielineKey": "rte",
                       "fluteTypeIds": [
                         "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                       ],
+                      "geometryFormula": "tuck_top",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                       "name": "ฝาเสียบกลับด้าน",
                       "patternKind": null,
@@ -81452,10 +81758,12 @@
                     "maxW": 500,
                     "minW": 30
                   },
+                  "corrugateFormula": null,
                   "dielineKey": "rte",
                   "fluteTypeIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                   ],
+                  "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
@@ -81681,10 +81989,12 @@
                     "maxW": 500,
                     "minW": 30
                   },
+                  "corrugateFormula": null,
                   "dielineKey": "rte",
                   "fluteTypeIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                   ],
+                  "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
@@ -81902,10 +82212,12 @@
                     "maxW": 500,
                     "minW": 30
                   },
+                  "corrugateFormula": null,
                   "dielineKey": "rte",
                   "fluteTypeIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                   ],
+                  "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
@@ -82208,10 +82520,12 @@
                     "maxW": 500,
                     "minW": 30
                   },
+                  "corrugateFormula": null,
                   "dielineKey": "rte",
                   "fluteTypeIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                   ],
+                  "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
@@ -91452,6 +91766,7 @@
                 "example": {
                   "data": [
                     {
+                      "calcFluteTypeId": null,
                       "calcHeightMm": null,
                       "calcLengthMm": null,
                       "calcWidthMm": null,
@@ -91661,6 +91976,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "calcFluteTypeId": null,
                   "calcHeightMm": null,
                   "calcLengthMm": null,
                   "calcWidthMm": null,
@@ -91887,6 +92203,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "calcFluteTypeId": null,
                   "calcHeightMm": null,
                   "calcLengthMm": null,
                   "calcWidthMm": null,
@@ -92105,6 +92422,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "calcFluteTypeId": null,
                   "calcHeightMm": null,
                   "calcLengthMm": null,
                   "calcWidthMm": null,
@@ -95363,9 +95681,11 @@
                   "data": [
                     {
                       "conditions": null,
+                      "corrugateFormula": "tele_body",
                       "dh": 1,
                       "dl": 1,
                       "dw": 1,
+                      "geometryFormula": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c007",
                       "name": "ตัวกล่อง",
                       "nh": 1,
@@ -95373,6 +95693,7 @@
                       "nw": 2,
                       "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                       "seq": 1,
+                      "swapDimensions": false,
                       "updatedAt": "2026-09-25T10:00:00+07:00"
                     }
                   ],
@@ -95571,9 +95892,11 @@
               "application/json": {
                 "example": {
                   "conditions": null,
+                  "corrugateFormula": "tele_body",
                   "dh": 1,
                   "dl": 1,
                   "dw": 1,
+                  "geometryFormula": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c007",
                   "name": "ตัวกล่อง",
                   "nh": 1,
@@ -95581,6 +95904,7 @@
                   "nw": 2,
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "seq": 1,
+                  "swapDimensions": false,
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
                 "schema": {
@@ -95796,9 +96120,11 @@
               "application/json": {
                 "example": {
                   "conditions": null,
+                  "corrugateFormula": "tele_body",
                   "dh": 1,
                   "dl": 1,
                   "dw": 1,
+                  "geometryFormula": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c007",
                   "name": "ตัวกล่อง",
                   "nh": 1,
@@ -95806,6 +96132,7 @@
                   "nw": 2,
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "seq": 1,
+                  "swapDimensions": false,
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
                 "schema": {
@@ -96013,9 +96340,11 @@
               "application/json": {
                 "example": {
                   "conditions": null,
+                  "corrugateFormula": "tele_body",
                   "dh": 1,
                   "dl": 1,
                   "dw": 1,
+                  "geometryFormula": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c007",
                   "name": "ตัวกล่อง",
                   "nh": 1,
@@ -96023,6 +96352,7 @@
                   "nw": 2,
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
                   "seq": 1,
+                  "swapDimensions": false,
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
                 "schema": {

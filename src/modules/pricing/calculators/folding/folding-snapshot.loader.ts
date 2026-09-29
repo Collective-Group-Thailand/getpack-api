@@ -6,7 +6,10 @@ import { Injectable } from '@nestjs/common';
 import { type LoadedSell, loadSellSnapshot } from '../shared/sell-snapshot';
 import { type FoldingEngine, type FoldingOption, type FoldingPart } from './folding-calculator';
 import {
+  FOLDING_DETERMINANTS,
+  FOLDING_SLOTS,
   type GeometryCondition,
+  type GeometryDeterminant,
   type GeometrySlot,
   type GeometrySnapshot,
   type PaperSheet,
@@ -89,6 +92,11 @@ const id = (v: bigint | null | undefined): string | null =>
   v === null || v === undefined ? null : v.toString();
 
 /** F1 is a coating or lamination; F2 the special finishes legacy processes, in legacy order (`:702`). */
+const isFoldingSlot = (slot: string): slot is GeometrySlot =>
+  (FOLDING_SLOTS as readonly string[]).includes(slot);
+const isFoldingDeterminant = (d: string): d is GeometryDeterminant =>
+  (FOLDING_DETERMINANTS as readonly string[]).includes(d);
+
 const FINISH1_KINDS = new Set(['coating', 'lamination']);
 const FINISH2_ORDER = ['foil', 'spot_uv', 'emboss', 'deboss'];
 
@@ -128,6 +136,8 @@ export class FoldingSnapshotLoader {
     const conditionsOf = (subPatternId: bigint | null): PatternGeometry['conditions'] => {
       const bySlot: Partial<Record<GeometrySlot, GeometryCondition[]>> = {};
       for (const g of pattern.geometryConditions.filter((c) => c.subPatternId === subPatternId)) {
+        // Slots and determinants of the other calculators (corrugate `i j k m`, `w/l`) are not folding's.
+        if (!isFoldingSlot(g.slot) || !isFoldingDeterminant(g.condition.determinant)) continue;
         const condition: GeometryCondition = {
           variable: g.condition.variable,
           determinant: g.condition.determinant,
