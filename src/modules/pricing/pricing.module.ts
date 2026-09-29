@@ -1,6 +1,8 @@
 import { Global, Module } from '@nestjs/common';
 
 import { CalculatorRegistry } from './calculators/calculator';
+import { CorrugateQuoteAdapter } from './calculators/corrugate/corrugate.adapter';
+import { CorrugateSnapshotLoader } from './calculators/corrugate/corrugate-snapshot.loader';
 import { CorrugatePriceComponentsRegistrar } from './calculators/corrugate/price-components.registrar';
 import { FoldingQuoteAdapter } from './calculators/folding/folding.adapter';
 import { FoldingSnapshotLoader } from './calculators/folding/folding-snapshot.loader';
@@ -13,6 +15,8 @@ const SERVICES = [
   CalculatorRegistry,
   FoldingSnapshotLoader,
   FoldingQuoteAdapter,
+  CorrugateSnapshotLoader,
+  CorrugateQuoteAdapter,
   QuoteEngineService,
   FoldingInputDataService,
   SellMarginsService,

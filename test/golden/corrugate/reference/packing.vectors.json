@@ -1,0 +1,242 @@
+[
+  {
+    "name": "rsc folded in half",
+    "input": {
+      "formula": "rsc",
+      "dw": 563,
+      "dl": 1444,
+      "gsm": 450,
+      "flute": {
+        "g": 35,
+        "c": 4,
+        "fh": 3
+      },
+      "qty": 1000
+    },
+    "spec": {
+      "gridCm": 60,
+      "maxStackHeightCm": 60,
+      "maxWeightKg": 20
+    },
+    "expect": {
+      "weightAllKg": 366,
+      "weightPerBoxKg": 0.3658374,
+      "flatWCm": 57,
+      "flatLCm": 71,
+      "thicknessMm": 7.5,
+      "layW": 1,
+      "layL": 1,
+      "carton": {
+        "count": 19,
+        "wCm": 57,
+        "lCm": 71,
+        "hCm": 40,
+        "weightKg": 20
+      }
+    }
+  },
+  {
+    "name": "tele lid (rsc family)",
+    "input": {
+      "formula": "tele_lid",
+      "dw": 169,
+      "dl": 760,
+      "gsm": 450,
+      "flute": {
+        "g": 35,
+        "c": 4,
+        "fh": 3
+      },
+      "qty": 500
+    },
+    "spec": {
+      "gridCm": 60,
+      "maxStackHeightCm": 60,
+      "maxWeightKg": 20
+    },
+    "expect": {
+      "weightAllKg": 29,
+      "weightPerBoxKg": 0.057798,
+      "flatWCm": 17,
+      "flatLCm": 37,
+      "thicknessMm": 7.5,
+      "layW": 3,
+      "layL": 1,
+      "carton": {
+        "count": 3,
+        "wCm": 51,
+        "lCm": 37,
+        "hCm": 42,
+        "weightKg": 11
+      }
+    }
+  },
+  {
+    "name": "slide sleeve folded along its width",
+    "input": {
+      "formula": "slide_sleeve",
+      "dw": 520.5,
+      "dl": 318,
+      "gsm": 450,
+      "flute": {
+        "g": 35,
+        "c": 4,
+        "fh": 3
+      },
+      "qty": 800
+    },
+    "spec": {
+      "gridCm": 60,
+      "maxStackHeightCm": 60,
+      "maxWeightKg": 20
+    },
+    "expect": {
+      "weightAllKg": 60,
+      "weightPerBoxKg": 0.07448355,
+      "flatWCm": 25,
+      "flatLCm": 32,
+      "thicknessMm": 3,
+      "layW": 2,
+      "layL": 1,
+      "carton": {
+        "count": 4,
+        "wCm": 50,
+        "lCm": 32,
+        "hCm": 30,
+        "weightKg": 16
+      }
+    }
+  },
+  {
+    "name": "single tuck flat",
+    "input": {
+      "formula": "single_tuck",
+      "dw": 620,
+      "dl": 399.5,
+      "gsm": 350,
+      "flute": {
+        "g": 35,
+        "c": 4,
+        "fh": 3
+      },
+      "qty": 2000
+    },
+    "spec": {
+      "gridCm": 60,
+      "maxStackHeightCm": 60,
+      "maxWeightKg": 20
+    },
+    "expect": {
+      "weightAllKg": 174,
+      "weightPerBoxKg": 0.08669149999999999,
+      "flatWCm": 62,
+      "flatLCm": 40,
+      "thicknessMm": 3,
+      "layW": 1,
+      "layL": 1,
+      "carton": {
+        "count": 10,
+        "wCm": 62,
+        "lCm": 40,
+        "hCm": 60,
+        "weightKg": 18
+      }
+    }
+  },
+  {
+    "name": "heavy board: cartons by weight",
+    "input": {
+      "formula": "tray",
+      "dw": 300,
+      "dl": 250,
+      "gsm": 900,
+      "flute": {
+        "g": 40,
+        "c": 8,
+        "fh": 6
+      },
+      "qty": 3000
+    },
+    "spec": {
+      "gridCm": 60,
+      "maxStackHeightCm": 60,
+      "maxWeightKg": 15
+    },
+    "expect": {
+      "weightAllKg": 203,
+      "weightPerBoxKg": 0.0675,
+      "flatWCm": 30,
+      "flatLCm": 25,
+      "thicknessMm": 6,
+      "layW": 2,
+      "layL": 2,
+      "carton": {
+        "count": 14,
+        "wCm": 60,
+        "lCm": 50,
+        "hCm": 33,
+        "weightKg": 15
+      }
+    }
+  },
+  {
+    "name": "blank wider than a grid cell",
+    "input": {
+      "formula": "flat_sheet",
+      "dw": 700,
+      "dl": 900,
+      "gsm": 450,
+      "flute": {
+        "g": 35,
+        "c": 4,
+        "fh": 3
+      },
+      "qty": 100
+    },
+    "spec": {
+      "gridCm": 60,
+      "maxStackHeightCm": 60,
+      "maxWeightKg": 20
+    },
+    "expect": {
+      "weightAllKg": 29,
+      "weightPerBoxKg": 0.2835,
+      "flatWCm": 70,
+      "flatLCm": 90,
+      "thicknessMm": 3,
+      "layW": 1,
+      "layL": 1,
+      "carton": {
+        "count": 2,
+        "wCm": 70,
+        "lCm": 90,
+        "hCm": 15,
+        "weightKg": 15
+      }
+    }
+  },
+  {
+    "name": "no carton spec: weight only",
+    "input": {
+      "formula": "rsc",
+      "dw": 563,
+      "dl": 1444,
+      "gsm": 450,
+      "flute": {
+        "g": 35,
+        "c": 4,
+        "fh": 3
+      },
+      "qty": 1000
+    },
+    "spec": null,
+    "expect": {
+      "weightAllKg": 366,
+      "weightPerBoxKg": 0.3658374,
+      "flatWCm": 57,
+      "flatLCm": 71,
+      "thicknessMm": 7.5,
+      "carton": null
+    }
+  }
+]

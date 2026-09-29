@@ -92,6 +92,7 @@ export class FoldingQuoteAdapter
               productAmount: s.sum,
               designFee: s.designFee,
               structureDesignFee: s.structureDesignFee,
+              toolingAmount: 0,
               vatAmount: s.vatPrice,
               total: s.total,
               parts: s.parts.map((p) => ({

@@ -60,6 +60,8 @@ export interface PricedStep {
   productAmount: number;
   designFee: number;
   structureDesignFee: number;
+  /** Print plates and die blocks charged apart, VAT included (corrugate flexo; 0 otherwise). */
+  toolingAmount: number;
   vatAmount: number;
   /** Customer price, VAT included, shipping excluded (its own line, D-013). */
   total: number;
