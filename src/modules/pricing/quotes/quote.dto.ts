@@ -1,6 +1,6 @@
 import { BoolField, DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -8,6 +8,7 @@ import {
   IsArray,
   IsInt,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   Matches,
@@ -17,7 +18,10 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-/** Folding configuration and quote calculation DTOs (B2.3). Money is a 2-decimal string (contract §3). */
+/**
+ * Folding configuration and quote calculation DTOs (B2.3; corrugate's configuration in `corrugate.dto.ts`, U-B6).
+ * Money is a 2-decimal string (contract §3).
+ */
 
 export const IDS = {
   pattern: '0192f3a0-7c1e-7d2a-9b1f-00000000a101',
@@ -232,10 +236,17 @@ export class CalculateQuoteDto {
   @Matches(/^[a-z][a-z0-9_]*$/)
   productTypeCode!: string;
 
-  @ApiProperty({ type: FoldingConfigurationDto })
-  @ValidateNested()
-  @Type(() => FoldingConfigurationDto)
-  configuration!: FoldingConfigurationDto;
+  @ApiProperty({
+    anyOf: [
+      { $ref: getSchemaPath(FoldingConfigurationDto) },
+      { $ref: getSchemaPath('CorrugateConfigurationDto') },
+    ],
+    description:
+      "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, " +
+      '`CorrugateConfigurationDto` for corrugated boxes (validated against it; paths under `configuration`)',
+  })
+  @IsObject()
+  configuration!: Record<string, unknown>;
 
   @ApiPropertyOptional({
     example: '10110',
@@ -285,6 +296,16 @@ export class QuoteStepDto {
 
   @ApiProperty({ type: String, nullable: true, example: '0.00' })
   structureDesignFeeAmount!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '0.00',
+    description:
+      'Print plates and die blocks, incl. VAT, charged apart from the pieces (corrugate flexo, legacy ' +
+      '`calculate_cs:835-837`); 0.00 for the other calculators',
+  })
+  toolingAmount!: string | null;
 
   @ApiProperty({
     type: String,
@@ -524,6 +545,7 @@ export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
       productAmount: '13380.00',
       designFeeAmount: '0.00',
       structureDesignFeeAmount: '0.00',
+      toolingAmount: '0.00',
       shippingAmount: '128.40',
       shippingNetAmount: '120.00',
       shippingVatAmount: '8.40',

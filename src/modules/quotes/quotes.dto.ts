@@ -9,7 +9,7 @@ import {
   STORE_CALCULATION_EXAMPLE,
 } from '@modules/pricing/quotes/quote.dto';
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { IsIn, IsOptional, IsUUID } from 'class-validator';
 
@@ -185,8 +185,15 @@ export class SavedQuoteDto {
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;
 
-  @ApiProperty({ type: FoldingConfigurationDto, nullable: true, description: 'Null for RFQ quotes' })
-  configuration!: FoldingConfigurationDto | null;
+  @ApiProperty({
+    anyOf: [
+      { $ref: getSchemaPath(FoldingConfigurationDto) },
+      { $ref: getSchemaPath('CorrugateConfigurationDto') },
+    ],
+    nullable: true,
+    description: "The configuration of the product type's calculator; null for RFQ quotes",
+  })
+  configuration!: Record<string, unknown> | null;
 
   @ApiProperty({ type: String, nullable: true, example: '10110' })
   deliveryPostcode!: string | null;

@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { CORRUGATE_FORMULAS } from '../calculators/corrugate/formulas';
+import { CORRUGATE_IDS, PRINT_AREAS } from './corrugate.dto';
 import { IDS } from './quote.dto';
 
 /** CS folding input data and the partner's buy-side calculation (B2.3). */
@@ -140,6 +142,132 @@ export class FoldingInputDataDto {
   difficultyLevels!: InputNamedDto[];
 }
 
+// --- corrugate CS input data (U-B6, legacy `CorrugateController@getCSData:104-189`) ------------------
+
+class CorrugateInputSubPatternDto extends InputSubPatternDto {
+  @ApiProperty({
+    enum: CORRUGATE_FORMULAS,
+    enumName: 'CorrugateFormula',
+    nullable: true,
+    example: 'tele_body',
+    description: "The part's blank formula; null = the pattern's",
+  })
+  corrugateFormula!: (typeof CORRUGATE_FORMULAS)[number] | null;
+}
+
+class CorrugateInputPatternDto {
+  @ApiProperty({ format: 'uuid', example: CORRUGATE_IDS.pattern })
+  id!: string;
+
+  @ApiProperty({ example: 'RSC-01' })
+  code!: string;
+
+  @ApiProperty({ example: 'กล่องฝาชน' })
+  name!: string;
+
+  @ApiProperty({
+    enum: CORRUGATE_FORMULAS,
+    enumName: 'CorrugateFormula',
+    nullable: true,
+    example: 'rsc',
+    description: 'Blank formula (port map §6.1); null when each part has its own',
+  })
+  corrugateFormula!: (typeof CORRUGATE_FORMULAS)[number] | null;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    example: [IDS.material],
+    description: 'Flutes offered; empty = any',
+  })
+  fluteTypeIds!: string[];
+
+  @ApiProperty({ type: [CorrugateInputSubPatternDto], description: 'Parts to configure; empty = one part' })
+  subPatterns!: CorrugateInputSubPatternDto[];
+}
+
+class CorrugateInputFluteDto {
+  @ApiProperty({ format: 'uuid', example: IDS.material })
+  id!: string;
+
+  @ApiProperty({ example: 'B' })
+  code!: string;
+
+  @ApiProperty({ example: 'ลอน B (3 ชั้น)' })
+  name!: string;
+
+  @ApiProperty({ example: 3 })
+  layers!: number;
+}
+
+class CorrugateInputBoardDto {
+  @ApiProperty({ format: 'uuid', example: CORRUGATE_IDS.board })
+  id!: string;
+
+  @ApiProperty({ example: 'ka125-b' })
+  code!: string;
+
+  @ApiProperty({ example: 'กระดาษลัง KA125 ลอน B' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Kraft board KA125 B-flute' })
+  nameEn!: string;
+
+  @ApiProperty({ type: Number, nullable: true, example: 450 })
+  gsm!: number | null;
+
+  @ApiProperty({ type: CorrugateInputFluteDto })
+  flute!: CorrugateInputFluteDto;
+
+  @ApiProperty({ example: false, description: 'Takes a coating (legacy `can_finish`)' })
+  coatable!: boolean;
+
+  @ApiProperty({ type: String, nullable: true, example: 'น้ำตาล' })
+  insideColour!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'น้ำตาล' })
+  outsideColour!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  strength!: string | null;
+}
+
+class CorrugateInputCoatingDto extends InputNamedDto {
+  @ApiProperty({ example: 'coating' })
+  finishKind!: string;
+}
+
+export class CorrugateInputDataDto {
+  @ApiProperty({ type: [CorrugateInputPatternDto] })
+  patterns!: CorrugateInputPatternDto[];
+
+  @ApiProperty({ type: [CorrugateInputBoardDto] })
+  boards!: CorrugateInputBoardDto[];
+
+  @ApiProperty({ type: [InputInkColourDto] })
+  inkColours!: InputInkColourDto[];
+
+  @ApiProperty({ type: [CorrugateInputCoatingDto], description: 'Digital print on a coatable board only' })
+  coatings!: CorrugateInputCoatingDto[];
+
+  @ApiProperty({
+    type: [InputAssemblyDto],
+    description: 'Without the automatic ones (packing), added by the calculator',
+  })
+  assemblies!: InputAssemblyDto[];
+
+  @ApiProperty({ type: [InputNamedDto] })
+  difficultyLevels!: InputNamedDto[];
+
+  @ApiProperty({
+    enum: PRINT_AREAS,
+    enumName: 'CorrugatePrintArea',
+    isArray: true,
+    example: ['top', 'side', 'top_side', 'all_round'],
+  })
+  printAreas!: (typeof PRINT_AREAS)[number][];
+}
+
 class FactoryQuotePartDto {
   @ApiProperty({ example: 'main' })
   partKey!: string;
@@ -270,4 +398,44 @@ export const FACTORY_QUOTE_EXAMPLE: FactoryQuoteDto = {
       ],
     },
   ],
+};
+
+export const CORRUGATE_INPUT_DATA_EXAMPLE: CorrugateInputDataDto = {
+  patterns: [
+    {
+      id: CORRUGATE_IDS.pattern,
+      code: 'RSC-01',
+      name: 'กล่องฝาชน',
+      corrugateFormula: 'rsc',
+      fluteTypeIds: [IDS.material],
+      subPatterns: [],
+    },
+  ],
+  boards: [
+    {
+      id: CORRUGATE_IDS.board,
+      code: 'ka125-b',
+      nameTh: 'กระดาษลัง KA125 ลอน B',
+      nameEn: 'Kraft board KA125 B-flute',
+      gsm: 450,
+      flute: { id: IDS.material, code: 'B', name: 'ลอน B (3 ชั้น)', layers: 3 },
+      coatable: false,
+      insideColour: 'น้ำตาล',
+      outsideColour: 'น้ำตาล',
+      strength: null,
+    },
+  ],
+  inkColours: [{ id: IDS.ink, code: 'black', name: 'ดำ', colourKind: 'spot' }],
+  coatings: [
+    {
+      id: CORRUGATE_IDS.coating,
+      code: 'aqueous',
+      nameTh: 'เคลือบวานิช',
+      nameEn: 'Aqueous coating',
+      finishKind: 'coating',
+    },
+  ],
+  assemblies: [],
+  difficultyLevels: [{ id: IDS.difficulty, code: 'normal', nameTh: 'ปกติ', nameEn: 'Normal' }],
+  printAreas: ['top', 'side', 'top_side', 'all_round'],
 };

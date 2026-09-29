@@ -7,7 +7,7 @@ import { MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma, type QuoteStatus, type SalesChannel } from '@generated/prisma/client';
 import { canonical } from '@modules/catalog/imports/import-engine';
-import { type FoldingConfiguration } from '@modules/pricing/calculators/folding/folding-snapshot.loader';
+import { validateConfiguration } from '@modules/pricing/quotes/configurations';
 import {
   QuoteEngineService,
   type QuoteStepView,
@@ -32,7 +32,8 @@ export type QuoteRow = Prisma.QuoteGetPayload<{ include: typeof QUOTE_INCLUDE }>
 
 export interface SaveQuoteInput {
   productTypeCode: string;
-  configuration: FoldingConfiguration;
+  /** The configuration of the product type's calculator (validated here against its DTO). */
+  configuration: Record<string, unknown>;
   deliveryPostcode?: string;
   anonymousId?: string;
 }
@@ -77,14 +78,17 @@ export class SavedQuotesService {
       where: { code: input.productTypeCode, status: 'active' },
     });
     if (
-      !type ||
-      type.calculatorKey !== 'folding' ||
+      !type?.calculatorKey ||
+      !this.engine.hasCalculator(type.calculatorKey) ||
       (owner.kind !== 'staff' && type.quoteMode !== 'instant')
     ) {
       throw new DomainException('pricing.not_instant');
     }
+    const configuration = await validateConfiguration(type.calculatorKey, input.configuration, {
+      staff: owner.kind === 'staff',
+    });
     const now = new Date();
-    const view = await this.engine.price(type.calculatorKey, input.configuration, {
+    const view = await this.engine.price(type.calculatorKey, configuration, {
       channel,
       at: now,
       actorUserId:
@@ -101,7 +105,7 @@ export class SavedQuotesService {
     const versions = await this.priceListVersionIds(steps);
     const snapshotInput = {
       productTypeCode: input.productTypeCode,
-      configuration: input.configuration,
+      configuration: configuration,
       deliveryPostcode: input.deliveryPostcode ?? null,
     };
     const configRefs = {
@@ -128,7 +132,7 @@ export class SavedQuotesService {
           createdById: owner.kind === 'staff' ? owner.actor.userId : null,
           anonymousId: owner.kind === 'anonymous' ? owner.anonymousId : null,
           productTypeId: type.id,
-          catalogProductId: await this.catalogProductId(input.configuration),
+          catalogProductId: await this.catalogProductId(configuration),
           input: snapshotInput as unknown as Prisma.InputJsonValue,
           inputSchemaVersion: 1,
           calculatorVersion: view.calculatorVersion,
@@ -254,7 +258,7 @@ export class SavedQuotesService {
       throw new DomainException('quotes.not_repriceable');
     const input = quote.input as unknown as {
       productTypeCode: string;
-      configuration: FoldingConfiguration;
+      configuration: Record<string, unknown>;
       deliveryPostcode: string | null;
     };
     return this.save(
@@ -390,10 +394,10 @@ export class SavedQuotesService {
     return new Map(rows.map((r) => [r.publicId, r.id]));
   }
 
-  private async catalogProductId(cfg: FoldingConfiguration): Promise<bigint | null> {
-    if (!cfg.catalogProductId) return null;
+  private async catalogProductId(cfg: Record<string, unknown>): Promise<bigint | null> {
+    if (typeof cfg['catalogProductId'] !== 'string') return null;
     const row = await this.prisma.catalogProduct.findUnique({
-      where: { publicId: cfg.catalogProductId },
+      where: { publicId: cfg['catalogProductId'] },
       select: { id: true },
     });
     return row?.id ?? null;

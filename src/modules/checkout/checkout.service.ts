@@ -8,7 +8,6 @@ import { type DesignOption, type MockupOption, Prisma, type ProductUnit } from '
 import { type CartActor, type CartItemRow, type CartRow, CartsService } from '@modules/carts/carts.service';
 import { canonical } from '@modules/catalog/imports/import-engine';
 import { CustomersService, type TaxProfileSnapshot } from '@modules/customers/customers.service';
-import { type FoldingConfiguration } from '@modules/pricing/calculators/folding/folding-snapshot.loader';
 import { QuoteEngineService } from '@modules/pricing/quotes/quote-engine.service';
 import { QuoteConversionService } from '@modules/quotes/quote-conversion.service';
 import { Injectable } from '@nestjs/common';
@@ -496,9 +495,11 @@ export class CheckoutService {
     }
     const factoryId = item.quoteOption.selectedFactoryId;
     if (!factoryId) throw new DomainException('checkout.shipping_unavailable');
-    const input = item.quote.input as unknown as { configuration: FoldingConfiguration };
+    const calculator = item.quote.productType.calculatorKey;
+    if (!calculator) throw new DomainException('checkout.shipping_unavailable');
+    const input = item.quote.input as unknown as { configuration: Record<string, unknown> };
     const priced = await this.engine.destinationShipping(
-      'folding',
+      calculator,
       input.configuration,
       factoryId,
       rows.map((r) => ({ postcode: r.snap.postcode, quantity: r.d.quantity })),

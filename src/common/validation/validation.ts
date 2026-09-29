@@ -1,5 +1,6 @@
-import { ValidationPipe } from '@nestjs/common';
-import { type ValidationError } from 'class-validator';
+import { type Type, ValidationPipe } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { validate, type ValidationError } from 'class-validator';
 
 import { DomainException } from '../errors/domain.exception';
 import { type ProblemFieldError } from '../errors/problem-details.dto';
@@ -30,4 +31,27 @@ export function createValidationPipe(): ValidationPipe {
     exceptionFactory: (errors) =>
       new DomainException('validation.failed', { errors: flattenValidationErrors(errors) }),
   });
+}
+
+/**
+ * Validates a nested payload whose DTO is only known at run time (e.g. a quote `configuration` chosen by the
+ * product type's calculator), with the global pipe's rules: unknown fields refused, errors under `path`.
+ */
+export async function validateAs<T extends object>(dto: Type<T>, value: unknown, path: string): Promise<T> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new DomainException('validation.failed', {
+      errors: [{ path, code: 'isObject', message: `${path} must be an object` }],
+    });
+  }
+  const instance = plainToInstance(dto, value, { enableImplicitConversion: false });
+  const errors = await validate(instance, {
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    validationError: { target: false, value: false },
+    stopAtFirstError: false,
+  });
+  if (errors.length > 0) {
+    throw new DomainException('validation.failed', { errors: flattenValidationErrors(errors, path) });
+  }
+  return instance;
 }

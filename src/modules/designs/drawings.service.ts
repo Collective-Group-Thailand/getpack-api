@@ -35,7 +35,7 @@ export interface DrawingInput {
   designId?: string;
 }
 
-/** Folding quote input (B2.3): the box style and its dimensions, in mm. */
+/** Quote input of a box calculator (folding B2.3, corrugate U-B6): the box style and its dimensions, in mm. */
 interface BoxInput {
   patternId?: unknown;
   w?: unknown;
@@ -296,7 +296,7 @@ export class DrawingsService {
     return pattern;
   }
 
-  /** Pattern and dimensions of a folding quote input, when its pattern has a dieline. */
+  /** Pattern and dimensions of a box quote input, when its pattern has a dieline. */
   private async boxOf(input: unknown, db: Tx = this.prisma) {
     const box = ((input as { configuration?: BoxInput } | null)?.configuration ?? input) as BoxInput | null;
     if (!box || typeof box.patternId !== 'string') return null;

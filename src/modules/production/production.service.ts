@@ -767,12 +767,13 @@ export class ProductionService {
     });
   }
 
-  /** The order's margin at another factory's buy price (folding calculator), customer price unchanged. */
+  /** The order's margin at another factory's buy price (its calculator), customer price unchanged. */
   private async marginAt(tx: Tx, order: OrderForRelease, factory: { id: bigint; publicId: string }) {
     const cfg = ((order.quote.input ?? {}) as { configuration?: Record<string, unknown> }).configuration;
-    if (!cfg || order.productType.code !== 'folding_carton') return null;
+    const calculator = order.productType.calculatorKey;
+    if (!cfg || !calculator || !this.quotes.hasCalculator(calculator)) return null;
     const view = await this.quotes.priceForFactory(
-      'folding',
+      calculator,
       { ...cfg, quantities: [order.quantityOrdered] },
       factory,
     );

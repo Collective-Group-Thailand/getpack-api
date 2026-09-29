@@ -49,6 +49,8 @@ export interface QuoteStepView {
   productAmount: string | null;
   designFeeAmount: string | null;
   structureDesignFeeAmount: string | null;
+  /** Print plates and die blocks charged apart, incl. VAT (corrugate flexo). */
+  toolingAmount: string | null;
   /** Shipping incl. VAT; null while shipping is not priced. */
   shippingAmount: string | null;
   shippingNetAmount: string | null;
@@ -177,6 +179,10 @@ export class QuoteEngineService {
     private readonly events: DomainEvents,
   ) {}
 
+  hasCalculator(key: CalculatorKey): boolean {
+    return this.calculators.has(key);
+  }
+
   /** The adapter of a calculator key (throws for a key with no ported calculator). */
   adapter(key: CalculatorKey): AnyCalculatorAdapter {
     return this.calculators.get(key);
@@ -289,6 +295,7 @@ export class QuoteEngineService {
         productAmount: formatMoney(s.productAmount),
         designFeeAmount: formatMoney(s.designFee),
         structureDesignFeeAmount: formatMoney(s.structureDesignFee),
+        toolingAmount: formatMoney(s.toolingAmount),
         shippingAmount: shipGross ? formatMoney(shipGross) : null,
         shippingNetAmount: shipNet ? formatMoney(shipNet) : null,
         shippingVatAmount: shipVat ? formatMoney(shipVat) : null,
@@ -429,6 +436,7 @@ export class QuoteEngineService {
       productAmount: null,
       designFeeAmount: null,
       structureDesignFeeAmount: null,
+      toolingAmount: null,
       shippingAmount: null,
       shippingNetAmount: null,
       shippingVatAmount: null,

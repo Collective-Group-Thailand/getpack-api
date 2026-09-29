@@ -5614,6 +5614,14 @@
               "null"
             ]
           },
+          "toolingAmount": {
+            "description": "Print plates and die blocks, incl. VAT, charged apart from the pieces (corrugate flexo, legacy `calculate_cs:835-837`); 0.00 for the other calculators",
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping (its own line, D-013)",
             "example": "13.38",
@@ -5639,6 +5647,7 @@
           "productAmount",
           "designFeeAmount",
           "structureDesignFeeAmount",
+          "toolingAmount",
           "shippingAmount",
           "shippingNetAmount",
           "shippingVatAmount",
@@ -5833,15 +5842,23 @@
             "example": "web"
           },
           "configuration": {
+            "additionalProperties": true,
             "anyOf": [
               {
-                "$ref": "#/components/schemas/FoldingConfigurationDto"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/FoldingConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CorrugateConfigurationDto"
+                  }
+                ]
               },
               {
                 "type": "null"
               }
             ],
-            "description": "Null for RFQ quotes"
+            "description": "The configuration of the product type's calculator; null for RFQ quotes"
           },
           "createdAt": {
             "example": "2026-10-01T09:00:00+07:00",
@@ -9154,7 +9171,16 @@
       "CalculateQuoteDto": {
         "properties": {
           "configuration": {
-            "$ref": "#/components/schemas/FoldingConfigurationDto"
+            "additionalProperties": true,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoldingConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/CorrugateConfigurationDto"
+              }
+            ],
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -12927,6 +12953,122 @@
         ],
         "type": "string"
       },
+      "CorrugateAssemblyDto": {
+        "properties": {
+          "amount": {
+            "description": "Pieces per box, when the assembly takes sizes",
+            "example": 1,
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "assemblyId": {
+            "description": "Window film, handle, insert… (not packing: automatic)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "l": {
+            "description": "Length of a piece Unit: mm.",
+            "example": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "w": {
+            "description": "Width of a piece Unit: mm.",
+            "example": 80,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "assemblyId"
+        ],
+        "type": "object"
+      },
+      "CorrugateConfigurationDto": {
+        "properties": {
+          "catalogProductId": {
+            "description": "The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "d": {
+            "description": "Box height (0 for a flat sheet) Unit: mm.",
+            "example": 250,
+            "minimum": 0,
+            "type": "number"
+          },
+          "design": {
+            "$ref": "#/components/schemas/DesignOptionsDto"
+          },
+          "difficultyLevelId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "l": {
+            "description": "Box length Unit: mm.",
+            "example": 400,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialId": {
+            "description": "The corrugated board; its flute is the box’s flute",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "parts": {
+            "description": "One entry per part (one for single-part patterns)",
+            "items": {
+              "$ref": "#/components/schemas/CorrugatePartDto"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          },
+          "patternId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "Quantities to price, 1 to 10",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "w": {
+            "description": "Box width Unit: mm.",
+            "example": 300,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "patternId",
+          "w",
+          "l",
+          "d",
+          "materialId",
+          "difficultyLevelId",
+          "quantities",
+          "parts"
+        ],
+        "type": "object"
+      },
       "CorrugateFormula": {
         "description": "Blank formula of the corrugate calculator; never together with `geometryFormula` (U-B6, A-49)",
         "enum": [
@@ -12948,6 +13090,378 @@
           "full_overlap"
         ],
         "type": "string"
+      },
+      "CorrugateInputBoardDto": {
+        "properties": {
+          "coatable": {
+            "description": "Takes a coating (legacy `can_finish`)",
+            "example": false,
+            "type": "boolean"
+          },
+          "code": {
+            "example": "ka125-b",
+            "type": "string"
+          },
+          "flute": {
+            "$ref": "#/components/schemas/CorrugateInputFluteDto"
+          },
+          "gsm": {
+            "example": 450,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "insideColour": {
+            "example": "น้ำตาล",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameEn": {
+            "example": "Kraft board KA125 B-flute",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กระดาษลัง KA125 ลอน B",
+            "type": "string"
+          },
+          "outsideColour": {
+            "example": "น้ำตาล",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "strength": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "gsm",
+          "flute",
+          "coatable",
+          "insideColour",
+          "outsideColour",
+          "strength"
+        ],
+        "type": "object"
+      },
+      "CorrugateInputCoatingDto": {
+        "properties": {
+          "code": {
+            "example": "standard",
+            "type": "string"
+          },
+          "finishKind": {
+            "example": "coating",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Standard die-cut",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ไดคัททั่วไป",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "finishKind"
+        ],
+        "type": "object"
+      },
+      "CorrugateInputDataDto": {
+        "properties": {
+          "assemblies": {
+            "description": "Without the automatic ones (packing), added by the calculator",
+            "items": {
+              "$ref": "#/components/schemas/InputAssemblyDto"
+            },
+            "type": "array"
+          },
+          "boards": {
+            "items": {
+              "$ref": "#/components/schemas/CorrugateInputBoardDto"
+            },
+            "type": "array"
+          },
+          "coatings": {
+            "description": "Digital print on a coatable board only",
+            "items": {
+              "$ref": "#/components/schemas/CorrugateInputCoatingDto"
+            },
+            "type": "array"
+          },
+          "difficultyLevels": {
+            "items": {
+              "$ref": "#/components/schemas/InputNamedDto"
+            },
+            "type": "array"
+          },
+          "inkColours": {
+            "items": {
+              "$ref": "#/components/schemas/InputInkColourDto"
+            },
+            "type": "array"
+          },
+          "patterns": {
+            "items": {
+              "$ref": "#/components/schemas/CorrugateInputPatternDto"
+            },
+            "type": "array"
+          },
+          "printAreas": {
+            "example": [
+              "top",
+              "side",
+              "top_side",
+              "all_round"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CorrugatePrintArea"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "patterns",
+          "boards",
+          "inkColours",
+          "coatings",
+          "assemblies",
+          "difficultyLevels",
+          "printAreas"
+        ],
+        "type": "object"
+      },
+      "CorrugateInputFluteDto": {
+        "properties": {
+          "code": {
+            "example": "B",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "layers": {
+            "example": 3,
+            "type": "number"
+          },
+          "name": {
+            "example": "ลอน B (3 ชั้น)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "layers"
+        ],
+        "type": "object"
+      },
+      "CorrugateInputPatternDto": {
+        "properties": {
+          "code": {
+            "example": "RSC-01",
+            "type": "string"
+          },
+          "corrugateFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrugateFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Blank formula (port map §6.1); null when each part has its own",
+            "example": "rsc"
+          },
+          "fluteTypeIds": {
+            "description": "Flutes offered; empty = any",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000a102"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "กล่องฝาชน",
+            "type": "string"
+          },
+          "subPatterns": {
+            "description": "Parts to configure; empty = one part",
+            "items": {
+              "$ref": "#/components/schemas/CorrugateInputSubPatternDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "corrugateFormula",
+          "fluteTypeIds",
+          "subPatterns"
+        ],
+        "type": "object"
+      },
+      "CorrugateInputSubPatternDto": {
+        "properties": {
+          "corrugateFormula": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrugateFormula"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The part's blank formula; null = the pattern's",
+            "example": "tele_body"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "ถาด",
+            "type": "string"
+          },
+          "seq": {
+            "example": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "name",
+          "corrugateFormula"
+        ],
+        "type": "object"
+      },
+      "CorrugatePartDto": {
+        "properties": {
+          "assemblies": {
+            "items": {
+              "$ref": "#/components/schemas/CorrugateAssemblyDto"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "coatingBackId": {
+            "description": "Coating inside (digital, coatable board)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "coatingFrontId": {
+            "description": "Coating outside (digital, coatable board)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "printBack": {
+            "description": "Colours printed inside",
+            "items": {
+              "$ref": "#/components/schemas/CorrugatePrintColourDto"
+            },
+            "maxItems": 8,
+            "type": "array"
+          },
+          "printFront": {
+            "description": "Colours printed outside",
+            "items": {
+              "$ref": "#/components/schemas/CorrugatePrintColourDto"
+            },
+            "maxItems": 8,
+            "type": "array"
+          },
+          "subPatternId": {
+            "description": "The part of a combination (Tele body / lid, slide tray / sleeve)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b103",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CorrugatePrintArea": {
+        "description": "Where the colour prints (legacy pattern areas top, side, top + side, all round); the % of the blank follows from the box. Give this or `percent`.",
+        "enum": [
+          "top",
+          "side",
+          "top_side",
+          "all_round"
+        ],
+        "type": "string"
+      },
+      "CorrugatePrintColourDto": {
+        "properties": {
+          "area": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CorrugatePrintArea"
+              }
+            ],
+            "description": "Where the colour prints (legacy pattern areas top, side, top + side, all round); the % of the blank follows from the box. Give this or `percent`.",
+            "example": "top"
+          },
+          "inkColourId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "percent": {
+            "description": "The % of the blank the colour covers, when no area is given",
+            "example": 30,
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "inkColourId"
+        ],
+        "type": "object"
       },
       "CostCentreDto": {
         "properties": {
@@ -17152,6 +17666,96 @@
           "blocked_overdue"
         ],
         "type": "string"
+      },
+      "CsCorrugateConfigurationDto": {
+        "properties": {
+          "catalogProductId": {
+            "description": "The catalogue product: its standard sizes carry no die block (legacy `recheckStandardSize`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "d": {
+            "description": "Box height (0 for a flat sheet) Unit: mm.",
+            "example": 250,
+            "minimum": 0,
+            "type": "number"
+          },
+          "design": {
+            "$ref": "#/components/schemas/DesignOptionsDto"
+          },
+          "difficultyLevelId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "digitalFrontCoveragePct": {
+            "description": "Digital only: the outside print covers this % of the blank (legacy CS option `printing_calculate_type` 2); omit for the whole blank",
+            "example": 60,
+            "maximum": 100,
+            "minimum": 0,
+            "type": "number"
+          },
+          "l": {
+            "description": "Box length Unit: mm.",
+            "example": 400,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialId": {
+            "description": "The corrugated board; its flute is the box’s flute",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "parts": {
+            "description": "One entry per part (one for single-part patterns)",
+            "items": {
+              "$ref": "#/components/schemas/CorrugatePartDto"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          },
+          "patternId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "Quantities to price, 1 to 10",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "type": "array"
+          },
+          "w": {
+            "description": "Box width Unit: mm.",
+            "example": 300,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "patternId",
+          "w",
+          "l",
+          "d",
+          "materialId",
+          "difficultyLevelId",
+          "quantities",
+          "parts"
+        ],
+        "type": "object"
       },
       "Currency": {
         "description": "Always THB (one currency)",
@@ -34165,6 +34769,14 @@
               "null"
             ]
           },
+          "toolingAmount": {
+            "description": "Print plates and die blocks, incl. VAT, charged apart from the pieces (corrugate flexo, legacy `calculate_cs:835-837`); 0.00 for the other calculators",
+            "example": "0.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping (its own line, D-013)",
             "example": "13.38",
@@ -34190,6 +34802,7 @@
           "productAmount",
           "designFeeAmount",
           "structureDesignFeeAmount",
+          "toolingAmount",
           "shippingAmount",
           "shippingNetAmount",
           "shippingVatAmount",
@@ -38200,7 +38813,16 @@
             "type": "string"
           },
           "configuration": {
-            "$ref": "#/components/schemas/FoldingConfigurationDto"
+            "additionalProperties": true,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoldingConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/CorrugateConfigurationDto"
+              }
+            ],
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -38253,15 +38875,23 @@
       "SavedQuoteDto": {
         "properties": {
           "configuration": {
+            "additionalProperties": true,
             "anyOf": [
               {
-                "$ref": "#/components/schemas/FoldingConfigurationDto"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/FoldingConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CorrugateConfigurationDto"
+                  }
+                ]
               },
               {
                 "type": "null"
               }
             ],
-            "description": "Null for RFQ quotes"
+            "description": "The configuration of the product type's calculator; null for RFQ quotes"
           },
           "createdAt": {
             "example": "2026-10-01T09:00:00+07:00",
@@ -41620,7 +42250,16 @@
       "StaffSaveQuoteDto": {
         "properties": {
           "configuration": {
-            "$ref": "#/components/schemas/FoldingConfigurationDto"
+            "additionalProperties": true,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoldingConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/CorrugateConfigurationDto"
+              }
+            ],
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes (validated against it; paths under `configuration`)"
           },
           "customerUserId": {
             "description": "The customer the quote is for",
@@ -117423,6 +118062,511 @@
         ]
       }
     },
+    "/v1/admin/cs/corrugate/calculate": {
+      "post": {
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). Plates and die blocks are their own tooling line. Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). CS may price digital print on its coverage. Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "operationId": "admin.csCorrugate.calculate",
+        "parameters": [
+          {
+            "description": "Prices shipping on the customer rate card (D-013)",
+            "in": "query",
+            "name": "deliveryPostcode",
+            "required": false,
+            "schema": {
+              "example": "10110",
+              "pattern": "^[0-9]{5}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "d": 250,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 400,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+                    "parts": [
+                      {
+                        "printFront": [
+                          {
+                            "area": "top",
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 300
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CsCorrugateConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "optionKey": "0192f3a0-7c1e-7d2a-9b1f-00000000f001:0192f3a0-7c1e-7d2a-9b1f-00000000a107"
+                    }
+                  ],
+                  "steps": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "instant": true,
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "shippingAmount": "128.40",
+                      "shippingNetAmount": "120.00",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": "8.40",
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuoteCalculationDto"
+                }
+              }
+            },
+            "description": "Prices per quantity with the staff view",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a corrugate configuration for a customer (CS)",
+        "tags": [
+          "admin.csCorrugate"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/corrugate/input-data": {
+      "get": {
+        "description": "Active corrugate patterns with their parts and blank formulas, corrugated boards with their flute, ink colours, coatings, assemblies (the automatic packing is added by the calculator), difficulty levels and print areas (legacy `cs/corrugate`, D-100).\n\nImplements: D-100.",
+        "operationId": "admin.csCorrugate.inputData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assemblies": [],
+                  "boards": [
+                    {
+                      "coatable": false,
+                      "code": "ka125-b",
+                      "flute": {
+                        "code": "B",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                        "layers": 3,
+                        "name": "ลอน B (3 ชั้น)"
+                      },
+                      "gsm": 450,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+                      "insideColour": "น้ำตาล",
+                      "nameEn": "Kraft board KA125 B-flute",
+                      "nameTh": "กระดาษลัง KA125 ลอน B",
+                      "outsideColour": "น้ำตาล",
+                      "strength": null
+                    }
+                  ],
+                  "coatings": [
+                    {
+                      "code": "aqueous",
+                      "finishKind": "coating",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b104",
+                      "nameEn": "Aqueous coating",
+                      "nameTh": "เคลือบวานิช"
+                    }
+                  ],
+                  "difficultyLevels": [
+                    {
+                      "code": "normal",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "nameEn": "Normal",
+                      "nameTh": "ปกติ"
+                    }
+                  ],
+                  "inkColours": [
+                    {
+                      "code": "black",
+                      "colourKind": "spot",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                      "name": "ดำ"
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "code": "RSC-01",
+                      "corrugateFormula": "rsc",
+                      "fluteTypeIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-00000000a102"
+                      ],
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+                      "name": "กล่องฝาชน",
+                      "subPatterns": []
+                    }
+                  ],
+                  "printAreas": [
+                    "top",
+                    "side",
+                    "top_side",
+                    "all_round"
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CorrugateInputDataDto"
+                }
+              }
+            },
+            "description": "Input data",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Catalogue choices of the CS corrugate calculator",
+        "tags": [
+          "admin.csCorrugate"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
     "/v1/admin/cs/folding/calculate": {
       "post": {
         "description": "The store calculation plus the staff view: selected factory and print type, price-list version, production run, margin-floor flag (D-012) and each option’s reason when it has no price. Buy prices need `factory_cost.read`, the margin `margin.read` (D-141); they are null otherwise. Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
@@ -117557,6 +118701,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -227232,6 +228377,277 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/pricing/corrugate/calculate": {
+      "post": {
+        "description": "The buy side only, on the factory’s own price list in force: cost, buy price per part (plates and die blocks included), layouts, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
+        "operationId": "partner.pricingCorrugate.calculate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "d": 250,
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "l": 400,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+                    "parts": [
+                      {
+                        "printFront": [
+                          {
+                            "area": "top",
+                            "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                          }
+                        ]
+                      }
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 300
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CorrugateConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                      "steps": [
+                        {
+                          "buyPrice": "10123.45",
+                          "leadTimeDays": 7,
+                          "parts": [
+                            {
+                              "buyPrice": "10123.45",
+                              "layoutAmount": 10,
+                              "layoutStandard": false,
+                              "partKey": "main",
+                              "sheets": 225,
+                              "totalCost": "9111.11"
+                            }
+                          ],
+                          "productionRun": 1000,
+                          "quantity": 1000
+                        }
+                      ]
+                    }
+                  ],
+                  "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryQuoteDto"
+                }
+              }
+            },
+            "description": "Buy side per print type",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Price a corrugate configuration on my own price list",
+        "tags": [
+          "partner.pricingCorrugate"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/pricing/folding/calculate": {
       "post": {
         "description": "The buy side only, on the factory’s own price list in force: cost, buy price per part, layouts, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
@@ -268644,7 +270060,7 @@
     },
     "/v1/store/quotes/actions/calculate": {
       "post": {
-        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
+        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
         "operationId": "store.quotes.calculate",
         "parameters": [
           {
@@ -268655,7 +270071,37 @@
           "content": {
             "application/json": {
               "examples": {
-                "default": {
+                "corrugate": {
+                  "value": {
+                    "configuration": {
+                      "d": 250,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "l": 400,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000b102",
+                      "parts": [
+                        {
+                          "printFront": [
+                            {
+                              "area": "top",
+                              "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104"
+                            }
+                          ]
+                        }
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 300
+                    },
+                    "productTypeCode": "corrugated"
+                  }
+                },
+                "folding": {
                   "value": {
                     "configuration": {
                       "d": 120,
@@ -268732,6 +270178,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -276553,6 +278000,10 @@
       "name": "admin.conversations"
     },
     {
+      "description": "The CS corrugate calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
+      "name": "admin.csCorrugate"
+    },
+    {
       "description": "The CS folding calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
       "name": "admin.csFolding"
     },
@@ -276871,6 +278322,10 @@
     {
       "description": "My price proposals (factory price-list mode) and Packio rate cards to accept or negotiate (D-042).",
       "name": "partner.priceProposals"
+    },
+    {
+      "description": "A factory prices a corrugate configuration on its own price list (D-044).",
+      "name": "partner.pricingCorrugate"
     },
     {
       "description": "A factory prices a folding configuration on its own price list (D-044).",
