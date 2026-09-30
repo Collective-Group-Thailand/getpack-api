@@ -461,7 +461,7 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
       reason: 'โรงงานไม่มีรถวิ่งพื้นที่นี้',
     }).expect(200);
     expect(booked.body).toMatchObject({ carrier: 'flash_express', status: 'ready' });
-    expect((booked.body as Shipment & { events: { note: string | null }[] }).events.at(-1)!.note).toBe(
+    expect((booked.body as { events: { note: string | null }[] }).events.at(-1)!.note).toBe(
       'booked with flash_express: โรงงานไม่มีรถวิ่งพื้นที่นี้',
     );
     const ref = booked.body.carrierBookingRef as string;
