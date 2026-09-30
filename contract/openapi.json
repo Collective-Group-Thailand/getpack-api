@@ -9895,6 +9895,265 @@
         ],
         "type": "object"
       },
+      "BulkReorderAddDto": {
+        "properties": {
+          "previewToken": {
+            "example": "Hq3v…",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "previewToken"
+        ],
+        "type": "object"
+      },
+      "BulkReorderAddedDto": {
+        "properties": {
+          "cartItemId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f3010",
+            "format": "uuid",
+            "type": "string"
+          },
+          "line": {
+            "example": 2,
+            "type": "integer"
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "orderCode",
+          "cartItemId"
+        ],
+        "type": "object"
+      },
+      "BulkReorderFailedDto": {
+        "properties": {
+          "code": {
+            "example": "cart.item_exists",
+            "type": "string"
+          },
+          "line": {
+            "example": 3,
+            "type": "integer"
+          },
+          "orderCode": {
+            "example": "PK-2610-0002-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "orderCode",
+          "code"
+        ],
+        "type": "object"
+      },
+      "BulkReorderPreviewDto": {
+        "properties": {
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "grossAmount": {
+            "description": "Sum of the rows that can be reordered",
+            "example": "9630.00",
+            "type": "string"
+          },
+          "okCount": {
+            "example": 1,
+            "type": "integer"
+          },
+          "previewExpiresAt": {
+            "example": "2026-10-30T10:30:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previewToken": {
+            "description": "Null when no row can be reordered",
+            "example": "Hq3v…",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "refusedCount": {
+            "example": 0,
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/BulkReorderPreviewRowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows",
+          "okCount",
+          "refusedCount",
+          "grossAmount",
+          "currency",
+          "previewToken",
+          "previewExpiresAt"
+        ],
+        "type": "object"
+      },
+      "BulkReorderPreviewRequestDto": {
+        "properties": {
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/BulkReorderRowDto"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "BulkReorderPreviewRowDto": {
+        "properties": {
+          "grossAmount": {
+            "description": "Today’s price incl. VAT",
+            "example": "9630.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "line": {
+            "example": 2,
+            "type": "integer"
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "proofSkipped": {
+            "description": "The approved artwork carries over (D-153)",
+            "example": true,
+            "type": "boolean"
+          },
+          "quantity": {
+            "example": 2000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "reason": {
+            "description": "Why the row cannot be reordered: an error code (e.g. `orders.not_found`, `orders.reorder_unavailable`)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BulkReorderRowStatus"
+              }
+            ],
+            "example": "ok"
+          },
+          "unitPrice": {
+            "example": "4.250000",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "line",
+          "orderCode",
+          "orderId",
+          "quantity",
+          "status",
+          "reason",
+          "unitPrice",
+          "grossAmount",
+          "proofSkipped"
+        ],
+        "type": "object"
+      },
+      "BulkReorderResultDto": {
+        "properties": {
+          "added": {
+            "items": {
+              "$ref": "#/components/schemas/BulkReorderAddedDto"
+            },
+            "type": "array"
+          },
+          "failed": {
+            "description": "Rows the cart refused; the others were added",
+            "items": {
+              "$ref": "#/components/schemas/BulkReorderFailedDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "added",
+          "failed"
+        ],
+        "type": "object"
+      },
+      "BulkReorderRowDto": {
+        "properties": {
+          "line": {
+            "description": "The row of the uploaded sheet",
+            "example": 2,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Default: the past quantity",
+            "example": 2000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "line",
+          "orderCode"
+        ],
+        "type": "object"
+      },
+      "BulkReorderRowStatus": {
+        "enum": [
+          "ok",
+          "refused"
+        ],
+        "type": "string"
+      },
       "BusinessDayRangeDto": {
         "properties": {
           "max": {
@@ -266834,6 +267093,557 @@
         "summary": "Remove a brand asset",
         "tags": [
           "store.companyAssets"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/bulk-reorders": {
+      "post": {
+        "description": "Adds the rows the preview accepted to my cart as reorders at today’s price (D-153). 409 `orders.reorder_repriced` when any price changed since the preview, `orders.reorder_preview_expired` when the token expired; a row the cart refuses is listed under `failed`, the others are added.\n\nImplements: D-153.",
+        "operationId": "store.claims.bulkReorder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "previewToken": "Hq3v…"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/BulkReorderAddDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "added": [
+                    {
+                      "cartItemId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3010",
+                      "line": 2,
+                      "orderCode": "PK-2610-0001-01"
+                    }
+                  ],
+                  "failed": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/BulkReorderResultDto"
+                }
+              }
+            },
+            "description": "Added to my cart",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "orders.reorder_preview_expired": {
+                    "$ref": "#/components/examples/problem.orders.reorder_preview_expired"
+                  },
+                  "orders.reorder_repriced": {
+                    "$ref": "#/components/examples/problem.orders.reorder_repriced"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.invalid_status`, `idempotency.in_progress`, `orders.reorder_preview_expired`, `orders.reorder_repriced`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `pricing.not_instant`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Reorder several company orders",
+        "tags": [
+          "store.claims"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/bulk-reorders/actions/preview": {
+      "post": {
+        "description": "For members who order for the company (`company_orders.place`): each row {line, orderCode, quantity} is checked against the company’s delivered orders and priced at today’s cost, or refused with the reason; totals and a `previewToken` (30 minutes) for `store.claims.bulkReorder` (D-153). Nothing is saved.\n\nImplements: D-153, D-125.",
+        "operationId": "store.claims.previewBulkReorder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "rows": [
+                      {
+                        "line": 2,
+                        "orderCode": "PK-2610-0001-01",
+                        "quantity": 2000
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/BulkReorderPreviewRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "grossAmount": "9630.00",
+                  "okCount": 1,
+                  "previewExpiresAt": "2026-10-30T10:30:00+07:00",
+                  "previewToken": "Hq3v…",
+                  "refusedCount": 1,
+                  "rows": [
+                    {
+                      "grossAmount": "9630.00",
+                      "line": 2,
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                      "proofSkipped": true,
+                      "quantity": 2000,
+                      "reason": null,
+                      "status": "ok",
+                      "unitPrice": "4.250000"
+                    },
+                    {
+                      "grossAmount": null,
+                      "line": 3,
+                      "orderCode": "PK-2610-0099-01",
+                      "orderId": null,
+                      "proofSkipped": false,
+                      "quantity": 500,
+                      "reason": "orders.not_found",
+                      "status": "refused",
+                      "unitPrice": null
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/BulkReorderPreviewDto"
+                }
+              }
+            },
+            "description": "The preview",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Preview reordering several company orders",
+        "tags": [
+          "store.claims"
         ]
       }
     },

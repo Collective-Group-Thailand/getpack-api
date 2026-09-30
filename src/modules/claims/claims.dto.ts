@@ -774,3 +774,167 @@ export const REORDER_PREVIEW_EXAMPLE: ReorderPreviewDto = {
   previewToken: 'Hq3v…',
   previewExpiresAt: '2026-10-30T10:30:00+07:00',
 };
+
+// --- company bulk reorder (U-B0.1, D-153) --------------------------------------------------------------
+
+/** Rows one bulk reorder takes (technical bound: each row is priced). */
+export const MAX_BULK_REORDER_ROWS = 100;
+
+export class BulkReorderRowDto {
+  @ApiProperty({ type: 'integer', minimum: 1, example: 2, description: 'The row of the uploaded sheet' })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  line!: number;
+
+  @ApiProperty({ example: 'PK-2610-0001-01', maxLength: 40 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(40)
+  orderCode!: string;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, example: 2000, description: 'Default: the past quantity' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantity?: number;
+}
+
+export class BulkReorderPreviewRequestDto {
+  @ApiProperty({ type: [BulkReorderRowDto], minItems: 1, maxItems: MAX_BULK_REORDER_ROWS })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(MAX_BULK_REORDER_ROWS)
+  @ValidateNested({ each: true })
+  @Type(() => BulkReorderRowDto)
+  rows!: BulkReorderRowDto[];
+}
+
+export class BulkReorderPreviewRowDto {
+  @ApiProperty({ type: 'integer', example: 2 })
+  line!: number;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: CLAIM_IDS.order })
+  orderId!: string | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 2000 })
+  quantity!: number | null;
+
+  @ApiProperty({ enum: ['ok', 'refused'], enumName: 'BulkReorderRowStatus', example: 'ok' })
+  status!: 'ok' | 'refused';
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Why the row cannot be reordered: an error code (e.g. `orders.not_found`, `orders.reorder_unavailable`)',
+  })
+  reason!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '4.250000' })
+  unitPrice!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '9630.00', description: 'Today’s price incl. VAT' })
+  grossAmount!: string | null;
+
+  @ApiProperty({ example: true, description: 'The approved artwork carries over (D-153)' })
+  proofSkipped!: boolean;
+}
+
+export class BulkReorderPreviewDto {
+  @ApiProperty({ type: [BulkReorderPreviewRowDto] })
+  rows!: BulkReorderPreviewRowDto[];
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  okCount!: number;
+
+  @ApiProperty({ type: 'integer', example: 0 })
+  refusedCount!: number;
+
+  @ApiProperty({ example: '9630.00', description: 'Sum of the rows that can be reordered' })
+  grossAmount!: string;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'Hq3v…', description: 'Null when no row can be reordered' })
+  previewToken!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-30T10:30:00+07:00' })
+  previewExpiresAt!: string | null;
+}
+
+export class BulkReorderAddDto {
+  @ApiProperty({ example: 'Hq3v…', maxLength: 100 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  previewToken!: string;
+}
+
+export class BulkReorderAddedDto {
+  @ApiProperty({ type: 'integer', example: 2 })
+  line!: number;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000f3010' })
+  cartItemId!: string;
+}
+
+export class BulkReorderFailedDto {
+  @ApiProperty({ type: 'integer', example: 3 })
+  line!: number;
+
+  @ApiProperty({ example: 'PK-2610-0002-01' })
+  orderCode!: string;
+
+  @ApiProperty({ example: 'cart.item_exists' })
+  code!: string;
+}
+
+export class BulkReorderResultDto {
+  @ApiProperty({ type: [BulkReorderAddedDto] })
+  added!: BulkReorderAddedDto[];
+
+  @ApiProperty({ type: [BulkReorderFailedDto], description: 'Rows the cart refused; the others were added' })
+  failed!: BulkReorderFailedDto[];
+}
+
+export const BULK_PREVIEW_EXAMPLE: BulkReorderPreviewDto = {
+  rows: [
+    {
+      line: 2,
+      orderCode: 'PK-2610-0001-01',
+      orderId: CLAIM_IDS.order,
+      quantity: 2000,
+      status: 'ok',
+      reason: null,
+      unitPrice: '4.250000',
+      grossAmount: '9630.00',
+      proofSkipped: true,
+    },
+    {
+      line: 3,
+      orderCode: 'PK-2610-0099-01',
+      orderId: null,
+      quantity: 500,
+      status: 'refused',
+      reason: 'orders.not_found',
+      unitPrice: null,
+      grossAmount: null,
+      proofSkipped: false,
+    },
+  ],
+  okCount: 1,
+  refusedCount: 1,
+  grossAmount: '9630.00',
+  currency: 'THB',
+  previewToken: 'Hq3v…',
+  previewExpiresAt: '2026-10-30T10:30:00+07:00',
+};

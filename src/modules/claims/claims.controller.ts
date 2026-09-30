@@ -5,10 +5,12 @@ import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { cartDto } from '@modules/carts/cart-views';
 import { CART_EXAMPLE, CartDto } from '@modules/carts/carts.dto';
 import { cartEtag } from '@modules/carts/carts.service';
+import { CompaniesService } from '@modules/companies/companies.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
@@ -18,6 +20,11 @@ import { adminClaimDto, partnerClaimDto, storeClaimDto } from './claim-views';
 import {
   ADMIN_CLAIM_EXAMPLE,
   AdminClaimDto,
+  BULK_PREVIEW_EXAMPLE,
+  BulkReorderAddDto,
+  BulkReorderPreviewDto,
+  BulkReorderPreviewRequestDto,
+  BulkReorderResultDto,
   CLAIM_FORM_EXAMPLE,
   CLAIM_IDS,
   ClaimFormDto,
@@ -272,6 +279,83 @@ export class StoreClaimsController extends ClaimViews {
     const cart = await this.reorders.reorder(customer(actor), orderId, body);
     res.setHeader('ETag', cartEtag(cart));
     return cartDto(cart);
+  }
+}
+
+// =====================================================================================================
+// Store: company bulk reorder (U-B0.1, D-153)
+// =====================================================================================================
+
+@ApiSurface('store', 'claims')
+@Controller('companies/:companyId/bulk-reorders')
+export class StoreBulkReorderController {
+  constructor(
+    private readonly reorders: ReorderService,
+    private readonly companies: CompaniesService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  private async company(actor: Actor, id: string) {
+    return this.companies.orderingCompany(this.prisma, customer(actor).userId, id);
+  }
+
+  @Post('actions/preview')
+  @HttpCode(200)
+  @ApiParam({ name: 'companyId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.claims.previewBulkReorder',
+    summary: 'Preview reordering several company orders',
+    description:
+      'For members who order for the company (`company_orders.place`): each row {line, orderCode, quantity} is ' +
+      'checked against the company’s delivered orders and priced at today’s cost, or refused with the reason; ' +
+      'totals and a `previewToken` (30 minutes) for `store.claims.bulkReorder` (D-153). Nothing is saved.',
+    implements: ['D-153', 'D-125'],
+  })
+  @ApiBody({
+    type: BulkReorderPreviewRequestDto,
+    examples: { default: { value: { rows: [{ line: 2, orderCode: 'PK-2610-0001-01', quantity: 2000 }] } } },
+  })
+  @ApiSuccess(200, { description: 'The preview', type: BulkReorderPreviewDto, example: BULK_PREVIEW_EXAMPLE })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed', 'companies.invalid_status')
+  async preview(
+    @CurrentActor() actor: Actor,
+    @Param('companyId', ParseUUIDPipe) id: string,
+    @Body() body: BulkReorderPreviewRequestDto,
+  ): Promise<BulkReorderPreviewDto> {
+    return this.reorders.bulkPreview(customer(actor), await this.company(actor, id), body.rows);
+  }
+
+  @Post()
+  @Idempotent()
+  @ApiParam({ name: 'companyId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.claims.bulkReorder',
+    summary: 'Reorder several company orders',
+    description:
+      'Adds the rows the preview accepted to my cart as reorders at today’s price (D-153). 409 ' +
+      '`orders.reorder_repriced` when any price changed since the preview, `orders.reorder_preview_expired` when ' +
+      'the token expired; a row the cart refuses is listed under `failed`, the others are added.',
+    implements: ['D-153'],
+  })
+  @ApiBody({ type: BulkReorderAddDto, examples: { default: { value: { previewToken: 'Hq3v…' } } } })
+  @ApiSuccess(201, {
+    description: 'Added to my cart',
+    type: BulkReorderResultDto,
+    example: { added: [{ line: 2, orderCode: 'PK-2610-0001-01', cartItemId: '0192f3a0-7c1e-7d2a-9b1f-0000000f3010' }], failed: [] },
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'companies.invalid_status',
+    'orders.reorder_repriced',
+    'orders.reorder_preview_expired',
+    'pricing.not_instant',
+  )
+  async add(
+    @CurrentActor() actor: Actor,
+    @Param('companyId', ParseUUIDPipe) id: string,
+    @Body() body: BulkReorderAddDto,
+  ): Promise<BulkReorderResultDto> {
+    return this.reorders.bulkAdd(customer(actor), await this.company(actor, id), body.previewToken);
   }
 }
 

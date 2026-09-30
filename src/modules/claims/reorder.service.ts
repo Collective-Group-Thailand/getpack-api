@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { sha256 } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
+import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
@@ -16,10 +17,16 @@ import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { type Redis } from 'ioredis';
 
-import { type ReorderPreviewDto } from './claims.dto';
+import { type BulkReorderPreviewDto, type BulkReorderResultDto, type ReorderPreviewDto } from './claims.dto';
 
 /** Technical bound: how long a reorder preview's token is honoured (the price itself is re-checked). */
 const PREVIEW_TTL_SECONDS = 30 * 60;
+
+interface BulkBinding {
+  companyId: string;
+  userId: string;
+  rows: { line: number; orderCode: string; quantity: number; grossAmount: string }[];
+}
 
 interface PreviewBinding {
   orderId: string;
@@ -110,6 +117,19 @@ export class ReorderService {
       if (step.grossAmount !== bound.grossAmount)
         throw new DomainException('orders.reorder_repriced', { params: { grossAmount: step.grossAmount! } });
     }
+    const { cart } = await this.add(actor, order, spec, proof, quantity);
+    if (input.previewToken) await this.redis.del(this.key(input.previewToken));
+    return cart;
+  }
+
+  /** The same specification saved as a new quote at today's price and added to my cart as a reorder of `order`. */
+  private async add(
+    actor: UserActor,
+    order: Awaited<ReturnType<ReorderService['source']>>['order'],
+    spec: Awaited<ReturnType<ReorderService['source']>>['spec'],
+    proof: Awaited<ReturnType<ReorderService['source']>>['proof'],
+    quantity: number,
+  ) {
     const quote = await this.quotes.save(
       { kind: 'customer', userId: actor.userId },
       'web',
@@ -126,14 +146,127 @@ export class ReorderService {
       },
       { orderId: order.id, reuseArtworkProofId: proof?.id ?? null },
     );
-    if (input.previewToken) await this.redis.del(this.key(input.previewToken));
-    return cart;
+    const item = cart.items.find((i) => i.quote.publicId === quote.publicId)!;
+    return { cart, cartItemId: item.publicId };
   }
 
-  /** My delivered order with an instant specification, and the approved proof a reorder reuses. */
-  private async source(actor: UserActor, orderPublicId: string, reuseArtwork: boolean | undefined) {
+  // --- company bulk reorder (U-B0.1, D-153) -----------------------------------------------------------------
+
+  /**
+   * Checks rows {line, orderCode, quantity} against the company's delivered orders and prices each at today's cost
+   * (never the old price); a row that cannot be reordered carries the reason (an error code). A short-lived token
+   * binds the rows that can.
+   */
+  async bulkPreview(
+    actor: UserActor,
+    company: { id: bigint; publicId: string },
+    rows: { line: number; orderCode: string; quantity?: number }[],
+  ): Promise<BulkReorderPreviewDto> {
+    const results: BulkReorderPreviewDto['rows'] = [];
+    let total = new MoneyDecimal(0);
+    for (const row of rows) {
+      try {
+        const { order, spec, proof } = await this.source(actor, '', undefined, {
+          companyId: company.id,
+          orderCode: row.orderCode,
+        });
+        const quantity = row.quantity ?? order.quantityOrdered;
+        const step = await this.price(actor, spec, quantity);
+        total = total.add(step.grossAmount!);
+        results.push({
+          line: row.line,
+          orderCode: row.orderCode,
+          orderId: order.publicId,
+          quantity,
+          status: 'ok',
+          reason: null,
+          unitPrice: step.unitPrice,
+          grossAmount: step.grossAmount,
+          proofSkipped: proof !== null,
+        });
+      } catch (error) {
+        if (!(error instanceof DomainException)) throw error;
+        results.push({
+          line: row.line,
+          orderCode: row.orderCode,
+          orderId: null,
+          quantity: row.quantity ?? null,
+          status: 'refused',
+          reason: error.code === 'http.not_found' ? 'orders.not_found' : error.code,
+          unitPrice: null,
+          grossAmount: null,
+          proofSkipped: false,
+        });
+      }
+    }
+    const ok = results.filter((r) => r.status === 'ok');
+    const token = randomBytes(24).toString('base64url');
+    const binding: BulkBinding = {
+      companyId: company.publicId,
+      userId: String(actor.userId),
+      rows: ok.map((r) => ({ line: r.line, orderCode: r.orderCode, quantity: r.quantity!, grossAmount: r.grossAmount! })),
+    };
+    if (ok.length) await this.redis.set(this.key(token), JSON.stringify(binding), 'EX', PREVIEW_TTL_SECONDS);
+    return {
+      rows: results,
+      okCount: ok.length,
+      refusedCount: results.length - ok.length,
+      grossAmount: formatMoney(total),
+      currency: 'THB',
+      previewToken: ok.length ? token : null,
+      previewExpiresAt: ok.length ? toBangkokIso(new Date(Date.now() + PREVIEW_TTL_SECONDS * 1000)) : null,
+    };
+  }
+
+  /**
+   * Adds the rows a preview accepted to my cart as reorders (D-153). Refused as a whole when the token expired or
+   * any price changed since the preview; a row the cart refuses (e.g. already in it) is reported, the others added.
+   */
+  async bulkAdd(
+    actor: UserActor,
+    company: { id: bigint; publicId: string },
+    previewToken: string,
+  ): Promise<BulkReorderResultDto> {
+    const raw = await this.redis.get(this.key(previewToken));
+    const bound = raw ? (JSON.parse(raw) as BulkBinding) : null;
+    if (!bound || bound.companyId !== company.publicId || bound.userId !== String(actor.userId))
+      throw new DomainException('orders.reorder_preview_expired');
+    const sources = [];
+    for (const row of bound.rows) {
+      const source = await this.source(actor, '', undefined, { companyId: company.id, orderCode: row.orderCode });
+      const step = await this.price(actor, source.spec, row.quantity);
+      if (step.grossAmount !== row.grossAmount)
+        throw new DomainException('orders.reorder_repriced', { params: { grossAmount: step.grossAmount! } });
+      sources.push({ row, ...source });
+    }
+    const result: BulkReorderResultDto = { added: [], failed: [] };
+    for (const { row, order, spec, proof } of sources) {
+      try {
+        const { cartItemId } = await this.add(actor, order, spec, proof, row.quantity);
+        result.added.push({ line: row.line, orderCode: row.orderCode, cartItemId });
+      } catch (error) {
+        if (!(error instanceof DomainException)) throw error;
+        result.failed.push({ line: row.line, orderCode: row.orderCode, code: error.code });
+      }
+    }
+    await this.redis.del(this.key(previewToken));
+    return result;
+  }
+
+  /**
+   * My delivered order with an instant specification (or, for a company bulk reorder, the company's order by its
+   * code), and the approved proof a reorder reuses.
+   */
+  private async source(
+    actor: UserActor,
+    orderPublicId: string,
+    reuseArtwork: boolean | undefined,
+    company?: { companyId: bigint; orderCode: string },
+  ) {
     const order = await this.prisma.order.findFirst({
-      where: { publicId: orderPublicId, customerUserId: actor.userId },
+      where: company
+        ? { orderCode: company.orderCode, orderGroup: { companyId: company.companyId } }
+        : { publicId: orderPublicId, customerUserId: actor.userId },
       include: {
         quote: true,
         catalogProduct: { select: { quantityMin: true, quantityMax: true } },

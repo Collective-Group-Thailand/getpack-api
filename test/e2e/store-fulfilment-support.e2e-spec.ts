@@ -6,6 +6,7 @@ import request from 'supertest';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {
+  activeCompany,
   as,
   customerToken,
   foldingBackToRfq,
@@ -65,10 +66,10 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
     });
 
   /** A paid order in production; `deliver` ships and delivers it (as the claims e2e). */
-  async function paidOrder(n: number) {
-    const { token } = await customerToken(ctx, n);
+  async function paidOrder(n: number, known?: { token: string }, body: Record<string, unknown> = {}) {
+    const { token } = known ?? (await customerToken(ctx, n));
     const prepress = await staffToken(ctx, 'prepress');
-    const group = await placeOrder(ctx, token, fixture, code);
+    const group = await placeOrder(ctx, token, fixture, code, [1000], body);
     const orderId = group.orders[0]!.id;
     await payDue(ctx, token, group.id);
     await approveArtwork(ctx, token, prepress, orderId);
@@ -212,6 +213,34 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
     expect(cart.body.items).toContainEqual(
       expect.objectContaining({ reorderOf: expect.objectContaining({ orderId: o.orderId }) }),
     );
+  });
+
+  it('reorders several company orders from a sheet with a preview (D-153)', async () => {
+    const admin = await customerToken(ctx, 5);
+    const accountant = await customerToken(ctx, 6);
+    const companyId = await activeCompany(ctx, admin.token, 5, [{ ...accountant, roles: ['company_accountant'] }]);
+    const o = await paidOrder(5, admin, { companyId });
+    await deliver(o);
+    const order = await ctx.prisma.order.findUniqueOrThrow({ where: { publicId: o.orderId } });
+    const rows = [
+      { line: 2, orderCode: order.orderCode, quantity: 2000 },
+      { line: 3, orderCode: 'PK-NOPE-0001-01' },
+    ];
+    await post(accountant.token, `/v1/store/companies/${companyId}/bulk-reorders/actions/preview`, { rows }).expect(403);
+    const preview = (await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders/actions/preview`, { rows }).expect(200)).body;
+    expect(preview).toMatchObject({ okCount: 1, refusedCount: 1, previewToken: expect.any(String) });
+    expect(preview.rows).toEqual([
+      expect.objectContaining({ line: 2, status: 'ok', orderId: o.orderId, quantity: 2000, proofSkipped: true }),
+      expect.objectContaining({ line: 3, status: 'refused', reason: 'orders.not_found' }),
+    ]);
+    expect(preview.grossAmount).toBe(preview.rows[0].grossAmount);
+    expect(
+      (await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders`, { previewToken: 'nope' }).expect(409)).body.code,
+    ).toBe('orders.reorder_preview_expired');
+    const added = (await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders`, { previewToken: preview.previewToken }).expect(201)).body;
+    expect(added).toMatchObject({ added: [expect.objectContaining({ line: 2, cartItemId: expect.any(String) })], failed: [] });
+    const cart = (await as(ctx, admin.token).get('/v1/store/cart').expect(200)).body;
+    expect(cart.items).toContainEqual(expect.objectContaining({ id: added.added[0].cartItemId, reorderOf: expect.objectContaining({ orderId: o.orderId }) }));
   });
 
   it('opens CS tickets from the contact form and the hand-off, for guests and customers (D-221)', async () => {
