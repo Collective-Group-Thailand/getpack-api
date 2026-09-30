@@ -1,6 +1,9 @@
 import { PrismaService } from '@database/prisma.service';
+import { sizeRulesOf } from '@modules/catalog/store/size-rules';
 import { Injectable } from '@nestjs/common';
+import { SettingsService } from '@platform/settings/settings.service';
 
+import { csInputExtras } from './cs-input-extras';
 import { type FoldingInputDataDto } from './quotes.io.dto';
 
 const F1 = new Set(['coating', 'lamination']);
@@ -10,7 +13,10 @@ const num = (d: { toString(): string } | null) => (d === null ? null : Number(d.
 /** What the CS folding calculator offers (legacy `GET cs/folding`, `Api/FoldingBoxController.php:75-155`). */
 @Injectable()
 export class FoldingInputDataService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settings: SettingsService,
+  ) {}
 
   async get(): Promise<FoldingInputDataDto> {
     const active = { status: 'active' as const };
@@ -31,10 +37,12 @@ export class FoldingInputDataService {
       this.prisma.difficultyLevel.findMany({ where: active, orderBy: [{ sort: 'asc' }, { code: 'asc' }] }),
     ]);
     return {
+      ...(await csInputExtras(this.prisma, this.settings, 'folding')),
       patterns: patterns.map((p) => ({
         id: p.publicId,
         code: p.code,
         name: p.name,
+        rules: sizeRulesOf(p.constraints),
         geometryFormula: p.geometryFormula!,
         subPatterns: p.subPatterns.map((s) => ({ id: s.publicId, seq: s.seq, name: s.name })),
       })),

@@ -66,6 +66,9 @@ export function adminQuoteDto(q: QuoteRow, grants: { cost: boolean; margin: bool
     channel: q.channel,
     customer: q.customer ? { id: q.customer.publicId, displayName: q.customer.displayName } : null,
     createdBy: q.createdBy ? { id: q.createdBy.publicId, displayName: q.createdBy.displayName } : null,
+    customerCode: q.customer?.customerProfile?.customerCode ?? null,
+    rfq: q.rfqQuote ? { id: q.rfqQuote.rfq.publicId, rfqCode: q.rfqQuote.rfq.rfqCode } : null,
+    note: q.staffNote,
     options: q.options.map((o, i) => {
       const internal = o.internalBreakdown as unknown as Internal | null;
       return {

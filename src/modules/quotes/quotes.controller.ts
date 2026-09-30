@@ -11,7 +11,7 @@ import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam, ApiPropertyOptional, ApiQuery } from '@nestjs/swagger';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsIn, IsOptional, IsUUID } from 'class-validator';
 
 import { QuotePdfService } from './quote-pdf.service';
 import { adminQuoteDto, quoteDto } from './quote-views';
@@ -297,6 +297,11 @@ class AdminQuoteListQuery extends QuoteListQuery {
   @IsOptional()
   @IsUUID()
   customerId?: string;
+
+  @ApiPropertyOptional({ enum: ['web', 'cs', 'line', 'b2b'], enumName: 'SalesChannel' })
+  @IsOptional()
+  @IsIn(['web', 'cs', 'line', 'b2b'])
+  channel?: 'web' | 'cs' | 'line' | 'b2b';
 }
 
 @ApiSurface('admin', 'quotes')
@@ -313,7 +318,7 @@ export class AdminQuotesController {
   @ApiEndpoint({
     id: 'admin.quotes.list',
     summary: 'List saved quotations',
-    description: '`q` matches the QT number; filter by status or customer (D-051).',
+    description: '`q` matches the QT number; filter by status, customer or channel (D-051).',
     implements: DECISIONS,
   })
   @ApiPaginated(AdminSavedQuoteDto, { example: ADMIN_QUOTE_EXAMPLE })
@@ -323,6 +328,7 @@ export class AdminQuotesController {
       ...(query.status ? { status: query.status } : {}),
       ...(query.q ? { quoteCode: { contains: query.q, mode: 'insensitive' } } : {}),
       ...(query.customerId ? { customer: { publicId: query.customerId } } : {}),
+      ...(query.channel && { channel: query.channel }),
     };
     const { rows, total } = await this.quotes.list(where, query.page, query.perPage);
     const grants = await this.grants(actor);
@@ -382,6 +388,7 @@ export class AdminQuotesController {
     const quote = await this.quotes.save({ kind: 'staff', actor: actor as UserActor }, 'cs', body, {
       customerUserId: customer?.id,
       ip: RequestContext.current()?.ip,
+      staffNote: body.note,
     });
     return adminQuoteDto(quote, await this.grants(actor));
   }

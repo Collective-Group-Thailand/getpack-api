@@ -543,6 +543,8 @@ model Quote {
   validUntil         DateTime     @map("valid_until") @db.Timestamptz(6)
   shareTokenHash     Bytes?       @unique(map: "ux_quotes__share_token_hash") @map("share_token_hash")
   sharedAt           DateTime?    @map("shared_at") @db.Timestamptz(6)
+  /// CS's internal note on a quotation (U-B0.2); never shown to the customer or on the PDF.
+  staffNote          String?      @map("staff_note")
   pdfFileId          BigInt?      @map("pdf_file_id")
   pdfRequestedAt     DateTime?    @map("pdf_requested_at") @db.Timestamptz(6)
   deliveryPostcode   String?      @map("delivery_postcode") @db.Char(5)

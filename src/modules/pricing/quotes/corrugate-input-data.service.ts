@@ -1,7 +1,10 @@
 import { PrismaService } from '@database/prisma.service';
+import { sizeRulesOf } from '@modules/catalog/store/size-rules';
 import { Injectable } from '@nestjs/common';
+import { SettingsService } from '@platform/settings/settings.service';
 
 import { PRINT_AREAS } from './corrugate.dto';
+import { csInputExtras } from './cs-input-extras';
 import { type CorrugateInputDataDto } from './quotes.io.dto';
 
 const COATING_KINDS = ['coating', 'lamination'] as const;
@@ -10,7 +13,10 @@ const num = (d: { toString(): string } | null) => (d === null ? null : Number(d.
 /** What the CS corrugate calculator offers (legacy `GET cs/corrugate`, `Api/Corrugate/CorrugateController.php:104-189`). */
 @Injectable()
 export class CorrugateInputDataService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settings: SettingsService,
+  ) {}
 
   async get(): Promise<CorrugateInputDataDto> {
     const active = { status: 'active' as const };
@@ -44,10 +50,12 @@ export class CorrugateInputDataService {
       this.prisma.difficultyLevel.findMany({ where: active, orderBy: [{ sort: 'asc' }, { code: 'asc' }] }),
     ]);
     return {
+      ...(await csInputExtras(this.prisma, this.settings, 'corrugate')),
       patterns: patterns.map((p) => ({
         id: p.publicId,
         code: p.code,
         name: p.name,
+        rules: sizeRulesOf(p.constraints),
         corrugateFormula: p.corrugateFormula,
         fluteTypeIds: p.fluteTypes.map((f) => f.fluteType.publicId),
         subPatterns: p.subPatterns.map((s) => ({

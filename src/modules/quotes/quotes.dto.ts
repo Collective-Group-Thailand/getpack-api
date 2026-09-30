@@ -11,7 +11,7 @@ import {
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
-import { IsIn, IsOptional, IsUUID } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 import { LINE_SUMMARY_EXAMPLE, LineSummaryDto } from './line-summary.dto';
 
@@ -55,6 +55,24 @@ export class StaffSaveQuoteDto extends CalculateQuoteDto {
   @IsOptional()
   @IsUUID()
   customerUserId?: string;
+
+  @ApiPropertyOptional({
+    example: 'ลูกค้าขอเทียบกับราคาเดิม',
+    maxLength: 1000,
+    description: 'Internal note of CS; never shown to the customer or on the PDF',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  note?: string;
+}
+
+export class QuoteRfqRefDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca010' })
+  id!: string;
+
+  @ApiProperty({ example: 'RFQ-2610-0001' })
+  rfqCode!: string;
 }
 
 export class ClaimQuoteDto {
@@ -256,6 +274,15 @@ export class AdminSavedQuoteDto extends SavedQuoteDto {
   @ApiProperty({ type: UserRefDto, nullable: true, description: 'CS member who saved it' })
   createdBy!: UserRefDto | null;
 
+  @ApiProperty({ type: String, nullable: true, example: 'CU-000042' })
+  customerCode!: string | null;
+
+  @ApiProperty({ type: QuoteRfqRefDto, nullable: true, description: 'The RFQ it answers (source `rfq`)' })
+  rfq!: QuoteRfqRefDto | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'CS’s internal note' })
+  note!: string | null;
+
   @ApiProperty({ type: [AdminSavedQuoteOptionDto] })
   override options: AdminSavedQuoteOptionDto[] = [];
 }
@@ -325,6 +352,9 @@ export const ADMIN_QUOTE_EXAMPLE: AdminSavedQuoteDto = {
   channel: 'cs',
   customer: { id: IDS.customer, displayName: 'Fake Customer' },
   createdBy: { id: '0192f3a0-7c1e-7d2a-9b1f-00000000e605', displayName: 'Dev CS' },
+  customerCode: 'CU-000042',
+  rfq: null,
+  note: null,
   options: [{ ...OPTION_EXAMPLE, internal: ADMIN_CALCULATION_EXAMPLE.steps[0]!.internal }],
 };
 

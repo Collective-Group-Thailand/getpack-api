@@ -6533,6 +6533,13 @@
               }
             ]
           },
+          "customerCode": {
+            "example": "CU-000042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "deliveryPostcode": {
             "example": "10110",
             "type": [
@@ -6544,6 +6551,14 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
             "format": "uuid",
             "type": "string"
+          },
+          "note": {
+            "description": "CS’s internal note",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "options": {
             "default": [],
@@ -6576,6 +6591,17 @@
               "string",
               "null"
             ]
+          },
+          "rfq": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteRfqRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The RFQ it answers (source `rfq`)"
           },
           "sharedAt": {
             "example": null,
@@ -6635,7 +6661,10 @@
           "createdAt",
           "channel",
           "customer",
-          "createdBy"
+          "createdBy",
+          "customerCode",
+          "rfq",
+          "note"
         ],
         "type": "object"
       },
@@ -15611,6 +15640,13 @@
             },
             "type": "array"
           },
+          "catalogProducts": {
+            "description": "The calculator’s catalogue products",
+            "items": {
+              "$ref": "#/components/schemas/CsCatalogProductDto"
+            },
+            "type": "array"
+          },
           "coatings": {
             "description": "Digital print on a coatable board only",
             "items": {
@@ -15623,6 +15659,9 @@
               "$ref": "#/components/schemas/CodeNameRefDto"
             },
             "type": "array"
+          },
+          "discountPolicy": {
+            "$ref": "#/components/schemas/CsDiscountPolicyDto"
           },
           "inkColours": {
             "items": {
@@ -15650,6 +15689,8 @@
           }
         },
         "required": [
+          "catalogProducts",
+          "discountPolicy",
           "patterns",
           "boards",
           "inkColours",
@@ -15726,6 +15767,14 @@
             "example": "กล่องฝาชน",
             "type": "string"
           },
+          "rules": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreSizeRulesDto"
+              }
+            ],
+            "description": "Size rules of the box style"
+          },
           "subPatterns": {
             "description": "Parts to configure; empty = one part",
             "items": {
@@ -15740,7 +15789,8 @@
           "name",
           "corrugateFormula",
           "fluteTypeIds",
-          "subPatterns"
+          "subPatterns",
+          "rules"
         ],
         "type": "object"
       },
@@ -20449,6 +20499,50 @@
         ],
         "type": "string"
       },
+      "CsCatalogProductDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a108",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck-end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          },
+          "quantity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreConfiguratorQuantityDto"
+              }
+            ],
+            "description": "Quantity limits and presets of the product"
+          },
+          "slug": {
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "standardSizes": {
+            "items": {
+              "$ref": "#/components/schemas/StoreConfiguratorSizeDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "nameTh",
+          "nameEn",
+          "standardSizes",
+          "quantity"
+        ],
+        "type": "object"
+      },
       "CsCorrugateConfigurationDto": {
         "properties": {
           "catalogProductId": {
@@ -20535,6 +20629,19 @@
           "difficultyLevelId",
           "quantities",
           "parts"
+        ],
+        "type": "object"
+      },
+      "CsDiscountPolicyDto": {
+        "properties": {
+          "directLimitPct": {
+            "description": "Discount % CS may give without a discount memo (`discounts.cs_limit_pct`, D-052)",
+            "example": "5",
+            "type": "string"
+          }
+        },
+        "required": [
+          "directLimitPct"
         ],
         "type": "object"
       },
@@ -23537,6 +23644,13 @@
               }
             ]
           },
+          "evidence": {
+            "description": "The evidence files the memo was raised with (D-052)",
+            "items": {
+              "$ref": "#/components/schemas/AttachedFileDto"
+            },
+            "type": "array"
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d1001",
             "format": "uuid",
@@ -23611,7 +23725,8 @@
           "approvalId",
           "validUntil",
           "appliedGroupCode",
-          "createdAt"
+          "createdAt",
+          "evidence"
         ],
         "type": "object"
       },
@@ -26507,6 +26622,13 @@
             },
             "type": "array"
           },
+          "catalogProducts": {
+            "description": "The calculator’s catalogue products",
+            "items": {
+              "$ref": "#/components/schemas/CsCatalogProductDto"
+            },
+            "type": "array"
+          },
           "diecutTypes": {
             "items": {
               "$ref": "#/components/schemas/CodeNameRefDto"
@@ -26518,6 +26640,9 @@
               "$ref": "#/components/schemas/CodeNameRefDto"
             },
             "type": "array"
+          },
+          "discountPolicy": {
+            "$ref": "#/components/schemas/CsDiscountPolicyDto"
           },
           "finishes": {
             "items": {
@@ -26545,6 +26670,8 @@
           }
         },
         "required": [
+          "catalogProducts",
+          "discountPolicy",
           "patterns",
           "materials",
           "inkColours",
@@ -28674,6 +28801,14 @@
             "example": "ฝาเสียบกลับด้าน",
             "type": "string"
           },
+          "rules": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreSizeRulesDto"
+              }
+            ],
+            "description": "Size rules of the box style"
+          },
           "subPatterns": {
             "description": "Parts to configure; empty = one part",
             "items": {
@@ -28687,7 +28822,8 @@
           "code",
           "name",
           "geometryFormula",
-          "subPatterns"
+          "subPatterns",
+          "rules"
         ],
         "type": "object"
       },
@@ -39817,6 +39953,24 @@
         ],
         "type": "string"
       },
+      "QuoteRfqRefDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca010",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rfqCode": {
+            "example": "RFQ-2610-0001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rfqCode"
+        ],
+        "type": "object"
+      },
       "QuoteShippingInternalDto": {
         "properties": {
           "cartons": {
@@ -48608,6 +48762,12 @@
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
             "example": "10110",
             "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "note": {
+            "description": "Internal note of CS; never shown to the customer or on the PDF",
+            "example": "ลูกค้าขอเทียบกับราคาเดิม",
+            "maxLength": 1000,
             "type": "string"
           },
           "productTypeCode": {
@@ -126488,6 +126648,14 @@
                   "companyId": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "customer": null,
+                  "evidence": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "quote-competitor.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1001",
                   "orderValue": "0.00",
                   "reason": "คู่แข่งเสนอราคาต่ำกว่า 8%",
@@ -130255,6 +130423,35 @@
                       "strength": null
                     }
                   ],
+                  "catalogProducts": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a108",
+                      "nameEn": "RSC carton",
+                      "nameTh": "กล่องลูกฟูก",
+                      "quantity": {
+                        "default": 1000,
+                        "max": 100000,
+                        "maxTiers": 10,
+                        "min": 500,
+                        "presets": [
+                          500,
+                          1000,
+                          3000
+                        ]
+                      },
+                      "slug": "rsc-carton",
+                      "standardSizes": [
+                        {
+                          "code": "S",
+                          "heightMm": 50,
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a109",
+                          "lengthMm": 100,
+                          "name": "ขนาดเล็ก",
+                          "widthMm": 100
+                        }
+                      ]
+                    }
+                  ],
                   "coatings": [
                     {
                       "code": "aqueous",
@@ -130272,6 +130469,9 @@
                       "nameTh": "ปกติ"
                     }
                   ],
+                  "discountPolicy": {
+                    "directLimitPct": "5"
+                  },
                   "inkColours": [
                     {
                       "code": "black",
@@ -130289,6 +130489,17 @@
                       ],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000b101",
                       "name": "กล่องฝาชน",
+                      "rules": {
+                        "lengthMustExceedHeight": false,
+                        "lengthMustExceedWidth": false,
+                        "maxHMm": 500,
+                        "maxLMm": 500,
+                        "maxWMm": 500,
+                        "minHMm": 10,
+                        "minLMm": 30,
+                        "minWMm": 30,
+                        "widthMustExceedHeight": false
+                      },
                       "subPatterns": []
                     }
                   ],
@@ -130755,6 +130966,35 @@
               "application/json": {
                 "example": {
                   "assemblies": [],
+                  "catalogProducts": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a108",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "quantity": {
+                        "default": 1000,
+                        "max": 100000,
+                        "maxTiers": 10,
+                        "min": 500,
+                        "presets": [
+                          500,
+                          1000,
+                          3000
+                        ]
+                      },
+                      "slug": "tuck-end-box",
+                      "standardSizes": [
+                        {
+                          "code": "S",
+                          "heightMm": 50,
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a109",
+                          "lengthMm": 100,
+                          "name": "ขนาดเล็ก",
+                          "widthMm": 100
+                        }
+                      ]
+                    }
+                  ],
                   "diecutTypes": [
                     {
                       "code": "standard",
@@ -130771,6 +131011,9 @@
                       "nameTh": "ปกติ"
                     }
                   ],
+                  "discountPolicy": {
+                    "directLimitPct": "5"
+                  },
                   "finishes": [
                     {
                       "code": "matt-lamination",
@@ -130807,6 +131050,17 @@
                       "geometryFormula": "tuck_top",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
                       "name": "ฝาเสียบกลับด้าน",
+                      "rules": {
+                        "lengthMustExceedHeight": false,
+                        "lengthMustExceedWidth": false,
+                        "maxHMm": 500,
+                        "maxLMm": 500,
+                        "maxWMm": 500,
+                        "minHMm": 10,
+                        "minLMm": 30,
+                        "minWMm": 30,
+                        "widthMustExceedHeight": false
+                      },
                       "subPatterns": []
                     }
                   ]
@@ -142841,6 +143095,16 @@
             }
           },
           {
+            "description": "Memos raised by this staff member",
+            "in": "query",
+            "name": "requestedBy",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -142861,6 +143125,14 @@
                         "displayName": "สมหญิง ทดสอบ",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1002"
                       },
+                      "evidence": [
+                        {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                          "mimeType": "application/pdf",
+                          "originalName": "quote-competitor.pdf",
+                          "sizeBytes": 245760
+                        }
+                      ],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1001",
                       "orderValue": "42800.00",
                       "reason": "คู่แข่งเสนอราคาต่ำกว่า 8%",
@@ -143077,6 +143349,14 @@
                     "displayName": "สมหญิง ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1002"
                   },
+                  "evidence": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "quote-competitor.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1001",
                   "orderValue": "42800.00",
                   "reason": "คู่แข่งเสนอราคาต่ำกว่า 8%",
@@ -143335,6 +143615,14 @@
                     "displayName": "สมหญิง ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1002"
                   },
+                  "evidence": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "quote-competitor.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1001",
                   "orderValue": "42800.00",
                   "reason": "คู่แข่งเสนอราคาต่ำกว่า 8%",
@@ -143541,6 +143829,14 @@
                     "displayName": "สมหญิง ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1002"
                   },
+                  "evidence": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "quote-competitor.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d1001",
                   "orderValue": "42800.00",
                   "reason": "คู่แข่งเสนอราคาต่ำกว่า 8%",
@@ -200954,7 +201250,7 @@
     },
     "/v1/admin/quotes": {
       "get": {
-        "description": "`q` matches the QT number; filter by status or customer (D-051).\n\nImplements: D-051, D-010, D-050.",
+        "description": "`q` matches the QT number; filter by status, customer or channel (D-051).\n\nImplements: D-051, D-010, D-050.",
         "operationId": "admin.quotes.list",
         "parameters": [
           {
@@ -201026,6 +201322,14 @@
             }
           },
           {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesChannel"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -201086,8 +201390,10 @@
                         "displayName": "Fake Customer",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
                       },
+                      "customerCode": "CU-000042",
                       "deliveryPostcode": "10110",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                      "note": null,
                       "options": [
                         {
                           "designFeeAmount": "0.00",
@@ -201144,6 +201450,7 @@
                       "priceLocked": true,
                       "productTypeCode": "folding_carton",
                       "quoteCode": null,
+                      "rfq": null,
                       "sharedAt": null,
                       "source": "instant",
                       "status": "saved",
@@ -201464,8 +201771,10 @@
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
                   },
+                  "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "note": null,
                   "options": [
                     {
                       "designFeeAmount": "0.00",
@@ -201522,6 +201831,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
+                  "rfq": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -201823,8 +202133,10 @@
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
                   },
+                  "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "note": null,
                   "options": [
                     {
                       "designFeeAmount": "0.00",
@@ -201881,6 +202193,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
+                  "rfq": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -202153,8 +202466,10 @@
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
                   },
+                  "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "note": null,
                   "options": [
                     {
                       "designFeeAmount": "0.00",
@@ -202211,6 +202526,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
+                  "rfq": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
@@ -202512,8 +202828,10 @@
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e603"
                   },
+                  "customerCode": "CU-000042",
                   "deliveryPostcode": "10110",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e601",
+                  "note": null,
                   "options": [
                     {
                       "designFeeAmount": "0.00",
@@ -202570,6 +202888,7 @@
                   "priceLocked": true,
                   "productTypeCode": "folding_carton",
                   "quoteCode": null,
+                  "rfq": null,
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",

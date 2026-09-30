@@ -69,6 +69,15 @@ describe('folding quotes (e2e, B2.3)', () => {
     const res = await as('cs').get('/v1/admin/cs/folding/input-data').expect(200);
     const body = res.body as { patterns: { code: string }[]; finishes: { id: string; slot: string }[] };
     expect(body.patterns.map((p) => p.code)).toContain('DEV-FLAT');
+    // U-B0.2: size rules, the calculator's catalogue products and the CS discount limit (D-052).
+    const extras = res.body as {
+      patterns: { rules: object }[];
+      catalogProducts: { slug: string; quantity: { maxTiers: number } }[];
+      discountPolicy: { directLimitPct: string };
+    };
+    expect(extras.patterns[0]!.rules).toEqual(expect.objectContaining({ lengthMustExceedWidth: expect.any(Boolean) }));
+    expect(extras.catalogProducts).toContainEqual(expect.objectContaining({ slug: 'dev-tuck-end-box' }));
+    expect(extras.discountPolicy.directLimitPct).toMatch(/^\d+(\.\d+)?$/);
     expect(body.finishes.find((f) => f.id === fixture.finishPublicId)).toMatchObject({
       slot: 'finish1',
     });

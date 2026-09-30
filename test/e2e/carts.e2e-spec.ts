@@ -165,8 +165,16 @@ describe('carts (e2e, B3.1)', () => {
         productTypeCode: 'folding_carton',
         configuration: foldingConfiguration(fixture, [5000]),
         customerUserId: me.body.id,
+        note: 'ลูกค้าโทรมา (fake)',
       })
       .expect(201);
+    // U-B0.2: CS's internal note, the customer code and the channel filter.
+    expect(saved.body).toMatchObject({ note: 'ลูกค้าโทรมา (fake)', channel: 'cs', rfq: null });
+    const byChannel = await as(ctx, cs).get(`/v1/admin/quotes?channel=cs&customerId=${me.body.id as string}`).expect(200);
+    expect((byChannel.body.data as { id: string }[]).map((q) => q.id)).toContain(saved.body.id);
+    expect(
+      (await as(ctx, cs).get(`/v1/admin/quotes?channel=web&customerId=${me.body.id as string}`).expect(200)).body.data,
+    ).not.toContainEqual(expect.objectContaining({ id: saved.body.id }));
     const cart = await as(ctx, cs)
       .post(`/v1/admin/customers/${me.body.id}/cart/items`, {
         quoteId: saved.body.id,

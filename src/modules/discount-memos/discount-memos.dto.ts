@@ -2,6 +2,7 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
+import { AttachedFileDto } from '@platform/files/files.dto';
 import {
   ArrayMaxSize,
   IsArray,
@@ -153,6 +154,9 @@ export class DiscountMemoDto {
 
   @TimestampField()
   createdAt!: string;
+
+  @ApiProperty({ type: [AttachedFileDto], description: 'The evidence files the memo was raised with (D-052)' })
+  evidence!: AttachedFileDto[];
 }
 
 export const MEMO_EXAMPLE: DiscountMemoDto = {
@@ -173,6 +177,9 @@ export const MEMO_EXAMPLE: DiscountMemoDto = {
   validUntil: '2026-10-16T10:00:00+07:00',
   appliedGroupCode: null,
   createdAt: '2026-10-01T10:00:00+07:00',
+  evidence: [
+    { id: '0192f3a0-7c1e-7d2a-9b1f-00000000f001', originalName: 'quote-competitor.pdf', mimeType: 'application/pdf', sizeBytes: 245760 },
+  ],
 };
 
 export class MemoListQuery extends PageQuery {
@@ -185,4 +192,9 @@ export class MemoListQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   customerId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Memos raised by this staff member' })
+  @IsOptional()
+  @IsUUID()
+  requestedBy?: string;
 }

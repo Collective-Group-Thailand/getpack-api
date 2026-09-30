@@ -5,6 +5,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
+import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
@@ -28,7 +29,7 @@ function staff(actor: Actor): UserActor {
   return actor;
 }
 
-function memoDto(m: MemoRow, showMargin: boolean): DiscountMemoDto {
+function memoDto(m: MemoRow, showMargin: boolean): Omit<DiscountMemoDto, 'evidence'> {
   return {
     id: m.publicId,
     scope: m.scope,
@@ -56,7 +57,24 @@ export class AdminDiscountMemosController {
   constructor(
     private readonly memos: DiscountMemosService,
     private readonly permissions: PermissionResolver,
+    private readonly prisma: PrismaService,
   ) {}
+
+  /** The memo with its evidence files (D-052). */
+  private async memoView(m: MemoRow, showMargin: boolean): Promise<DiscountMemoDto> {
+    const files = m.evidenceFileIds.length
+      ? await this.prisma.fileObject.findMany({ where: { id: { in: m.evidenceFileIds } }, orderBy: { id: 'asc' } })
+      : [];
+    return {
+      ...memoDto(m, showMargin),
+      evidence: files.map((f) => ({
+        id: f.publicId,
+        originalName: f.originalName,
+        mimeType: f.mimeType,
+        sizeBytes: Number(f.sizeBytes),
+      })),
+    };
+  }
 
   private async showMargin(actor: Actor): Promise<boolean> {
     if (actor.type !== 'user') return false;
@@ -99,7 +117,7 @@ export class AdminDiscountMemosController {
     'approval.no_matching_step',
   )
   async raise(@CurrentActor() actor: Actor, @Body() body: RaiseOrderMemoDto): Promise<DiscountMemoDto> {
-    return memoDto(await this.memos.raiseForOrder(staff(actor), body), await this.showMargin(actor));
+    return this.memoView(await this.memos.raiseForOrder(staff(actor), body), await this.showMargin(actor));
   }
 
   @Post('companies/:companyId/discount-memos')
@@ -142,7 +160,7 @@ export class AdminDiscountMemosController {
     @Param('companyId', ParseUUIDPipe) companyId: string,
     @Body() body: RaiseCompanyMemoDto,
   ): Promise<DiscountMemoDto> {
-    return memoDto(
+    return this.memoView(
       await this.memos.raiseForCompany(staff(actor), companyId, body),
       await this.showMargin(actor),
     );
@@ -162,10 +180,14 @@ export class AdminDiscountMemosController {
     const where: Prisma.DiscountMemoWhereInput = {
       ...(q.status && { status: q.status }),
       ...(q.customerId && { customer: { publicId: q.customerId } }),
+      ...(q.requestedBy && { requestedBy: { publicId: q.requestedBy } }),
     };
     const [rows, total] = await this.memos.list(where, q.page, q.perPage);
     const show = await this.showMargin(actor);
-    return { data: rows.map((m) => memoDto(m, show)), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: await Promise.all(rows.map((m) => this.memoView(m, show))),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get('discount-memos/:memoId')
@@ -183,7 +205,7 @@ export class AdminDiscountMemosController {
     @CurrentActor() actor: Actor,
     @Param('memoId', ParseUUIDPipe) id: string,
   ): Promise<DiscountMemoDto> {
-    return memoDto(await this.memos.get(id), await this.showMargin(actor));
+    return this.memoView(await this.memos.get(id), await this.showMargin(actor));
   }
 
   @Post('discount-memos/:memoId/actions/withdraw')
@@ -206,6 +228,6 @@ export class AdminDiscountMemosController {
     @CurrentActor() actor: Actor,
     @Param('memoId', ParseUUIDPipe) id: string,
   ): Promise<DiscountMemoDto> {
-    return memoDto(await this.memos.withdraw(staff(actor), id), await this.showMargin(actor));
+    return this.memoView(await this.memos.withdraw(staff(actor), id), await this.showMargin(actor));
   }
 }

@@ -1,4 +1,9 @@
 import { CodeNameRefDto } from '@common/dto/code-name-ref.dto';
+import {
+  StoreConfiguratorQuantityDto,
+  StoreConfiguratorSizeDto,
+  StoreSizeRulesDto,
+} from '@modules/catalog/store/store-configurator.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { CORRUGATE_FORMULAS } from '../calculators/corrugate/formulas';
@@ -33,6 +38,37 @@ class InputPatternDto {
 
   @ApiProperty({ type: [InputSubPatternDto], description: 'Parts to configure; empty = one part' })
   subPatterns!: InputSubPatternDto[];
+
+  @ApiProperty({ type: StoreSizeRulesDto, description: 'Size rules of the box style' })
+  rules!: StoreSizeRulesDto;
+}
+
+export class CsCatalogProductDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000a108' })
+  id!: string;
+
+  @ApiProperty({ example: 'tuck-end-box' })
+  slug!: string;
+
+  @ApiProperty({ example: 'กล่องฝาเสียบ' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Tuck-end box' })
+  nameEn!: string;
+
+  @ApiProperty({ type: [StoreConfiguratorSizeDto] })
+  standardSizes!: StoreConfiguratorSizeDto[];
+
+  @ApiProperty({ type: StoreConfiguratorQuantityDto, description: 'Quantity limits and presets of the product' })
+  quantity!: StoreConfiguratorQuantityDto;
+}
+
+export class CsDiscountPolicyDto {
+  @ApiProperty({
+    example: '5',
+    description: 'Discount % CS may give without a discount memo (`discounts.cs_limit_pct`, D-052)',
+  })
+  directLimitPct!: string;
 }
 
 class InputMaterialDto {
@@ -107,6 +143,12 @@ class InputAssemblyDto extends CodeNameRefDto {
 }
 
 export class FoldingInputDataDto {
+  @ApiProperty({ type: [CsCatalogProductDto], description: 'The calculator’s catalogue products' })
+  catalogProducts!: CsCatalogProductDto[];
+
+  @ApiProperty({ type: CsDiscountPolicyDto })
+  discountPolicy!: CsDiscountPolicyDto;
+
   @ApiProperty({ type: [InputPatternDto] })
   patterns!: InputPatternDto[];
 
@@ -171,6 +213,9 @@ class CorrugateInputPatternDto {
 
   @ApiProperty({ type: [CorrugateInputSubPatternDto], description: 'Parts to configure; empty = one part' })
   subPatterns!: CorrugateInputSubPatternDto[];
+
+  @ApiProperty({ type: StoreSizeRulesDto, description: 'Size rules of the box style' })
+  rules!: StoreSizeRulesDto;
 }
 
 class CorrugateInputFluteDto {
@@ -225,6 +270,12 @@ class CorrugateInputCoatingDto extends CodeNameRefDto {
 }
 
 export class CorrugateInputDataDto {
+  @ApiProperty({ type: [CsCatalogProductDto], description: 'The calculator’s catalogue products' })
+  catalogProducts!: CsCatalogProductDto[];
+
+  @ApiProperty({ type: CsDiscountPolicyDto })
+  discountPolicy!: CsDiscountPolicyDto;
+
   @ApiProperty({ type: [CorrugateInputPatternDto] })
   patterns!: CorrugateInputPatternDto[];
 
@@ -321,6 +372,19 @@ export class FactoryQuoteDto {
 }
 
 export const INPUT_DATA_EXAMPLE: FoldingInputDataDto = {
+  catalogProducts: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000a108',
+      slug: 'tuck-end-box',
+      nameTh: 'กล่องฝาเสียบ',
+      nameEn: 'Tuck-end box',
+      standardSizes: [
+        { id: '0192f3a0-7c1e-7d2a-9b1f-00000000a109', code: 'S', name: 'ขนาดเล็ก', lengthMm: 100, widthMm: 100, heightMm: 50 },
+      ],
+      quantity: { min: 500, max: 100000, default: 1000, presets: [500, 1000, 3000], maxTiers: 10 },
+    },
+  ],
+  discountPolicy: { directLimitPct: '5' },
   patterns: [
     {
       id: IDS.pattern,
@@ -328,6 +392,17 @@ export const INPUT_DATA_EXAMPLE: FoldingInputDataDto = {
       name: 'ฝาเสียบกลับด้าน',
       geometryFormula: 'tuck_top',
       subPatterns: [],
+      rules: {
+        minWMm: 30,
+        maxWMm: 500,
+        minLMm: 30,
+        maxLMm: 500,
+        minHMm: 10,
+        maxHMm: 500,
+        lengthMustExceedWidth: false,
+        lengthMustExceedHeight: false,
+        widthMustExceedHeight: false,
+      },
     },
   ],
   materials: [
@@ -388,6 +463,19 @@ export const FACTORY_QUOTE_EXAMPLE: FactoryQuoteDto = {
 };
 
 export const CORRUGATE_INPUT_DATA_EXAMPLE: CorrugateInputDataDto = {
+  catalogProducts: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000a108',
+      slug: 'rsc-carton',
+      nameTh: 'กล่องลูกฟูก',
+      nameEn: 'RSC carton',
+      standardSizes: [
+        { id: '0192f3a0-7c1e-7d2a-9b1f-00000000a109', code: 'S', name: 'ขนาดเล็ก', lengthMm: 100, widthMm: 100, heightMm: 50 },
+      ],
+      quantity: { min: 500, max: 100000, default: 1000, presets: [500, 1000, 3000], maxTiers: 10 },
+    },
+  ],
+  discountPolicy: { directLimitPct: '5' },
   patterns: [
     {
       id: CORRUGATE_IDS.pattern,
@@ -396,6 +484,17 @@ export const CORRUGATE_INPUT_DATA_EXAMPLE: CorrugateInputDataDto = {
       corrugateFormula: 'rsc',
       fluteTypeIds: [IDS.material],
       subPatterns: [],
+      rules: {
+        minWMm: 30,
+        maxWMm: 500,
+        minLMm: 30,
+        maxLMm: 500,
+        minHMm: 10,
+        maxHMm: 500,
+        lengthMustExceedWidth: false,
+        lengthMustExceedHeight: false,
+        widthMustExceedHeight: false,
+      },
     },
   ],
   boards: [
