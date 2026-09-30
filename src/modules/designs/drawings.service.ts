@@ -22,7 +22,7 @@ const MAX_ATTEMPTS = 3;
 export const JOB_INCLUDE = {
   pattern: { select: { publicId: true } },
   order: { select: { publicId: true } },
-  outputFile: { select: { publicId: true } },
+  outputFile: { select: { publicId: true, originalName: true, mimeType: true, sizeBytes: true } },
 } satisfies Prisma.DrawingJobInclude;
 export type DrawingJobRow = Prisma.DrawingJobGetPayload<{ include: typeof JOB_INCLUDE }>;
 
@@ -106,6 +106,17 @@ export class DrawingsService {
       orderId: order.id,
       ...box,
       format,
+    });
+  }
+
+  /** The drawings requested for an order, newest first (staff). */
+  async forOrder(orderPublicId: string): Promise<DrawingJobRow[]> {
+    const order = await this.prisma.order.findUnique({ where: { publicId: orderPublicId }, select: { id: true } });
+    if (!order) throw new DomainException('http.not_found');
+    return this.prisma.drawingJob.findMany({
+      where: { orderId: order.id },
+      include: JOB_INCLUDE,
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -322,6 +333,14 @@ export function drawingDto(job: DrawingJobRow): DrawingJobDto {
     heightMm: job.heightMm.toNumber(),
     orderId: job.order?.publicId ?? null,
     outputFileId: job.outputFile?.publicId ?? null,
+    outputFile: job.outputFile
+      ? {
+          id: job.outputFile.publicId,
+          originalName: job.outputFile.originalName,
+          mimeType: job.outputFile.mimeType,
+          sizeBytes: Number(job.outputFile.sizeBytes),
+        }
+      : null,
     engineVersion: job.engineVersion,
     error: job.error,
     createdAt: toBangkokIso(job.createdAt),

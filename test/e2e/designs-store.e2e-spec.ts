@@ -328,4 +328,33 @@ describe('store designs (e2e, U-B0.1)', () => {
     await ctx.prisma.semiDesignTemplate.update({ where: { id: template.id }, data: { status: 'inactive' } });
     await pub.get(`/v1/store/designer/templates/${template.publicId}`).expect(404);
   });
+
+  it('lets staff copy a customer’s design to edit it, never the original (U-B0.2)', async () => {
+    const { token } = await customerToken(ctx, 9);
+    const design = await create(token, 'ของลูกค้า');
+    const prepress = await staffToken(ctx, 'prepress');
+    const admin = await staffToken(ctx, 'admin');
+    const seen = await as(ctx, admin).get(`/v1/admin/designs/${design.body.id as string}`).expect(200);
+    expect(seen.body).toMatchObject({ editable: false, owner: { kind: 'customer' } });
+    expect(
+      (
+        await as(ctx, admin)
+          .put(`/v1/admin/designs/${design.body.id as string}`, { schemaVersion: 1, document: DOC2 })
+          .set('If-Match', seen.headers['etag'] as string)
+          .expect(409)
+      ).body.code,
+    ).toBe('designs.read_only');
+    const copy = await as(ctx, prepress)
+      .post(`/v1/admin/designs/${design.body.id as string}/actions/copy`, { title: 'สำเนา (fake)' })
+      .expect(201);
+    expect(copy.body).toMatchObject({ editable: true, owner: { kind: 'staff' }, document: DOC, title: 'สำเนา (fake)' });
+    expect(copy.body.id).not.toBe(design.body.id);
+    expect(
+      await ctx.prisma.domainEvent.count({ where: { type: 'design.copied_by_staff', aggregateId: copy.body.id } }),
+    ).toBe(1);
+    // The customer's design is untouched and not theirs to see as a copy.
+    expect((await as(ctx, token).get(`/v1/store/designs/${design.body.id as string}`).expect(200)).body.versionNo).toBe(1);
+    await as(ctx, token).get(`/v1/store/designs/${copy.body.id as string}`).expect(404);
+    await as(ctx, admin).get(`/v1/admin/orders/${design.body.id as string}/drawings`).expect(404);
+  });
 });

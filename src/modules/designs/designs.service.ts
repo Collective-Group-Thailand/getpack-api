@@ -34,6 +34,7 @@ export const DESIGN_INCLUDE = {
   catalogProduct: {
     select: { publicId: true, slug: true, nameTh: true, nameEn: true, productType: { select: { code: true } } },
   },
+  owner: { select: { publicId: true, displayName: true, kind: true } },
   pattern: { select: { publicId: true, dielineKey: true } },
   material: { select: { publicId: true } },
   semiDesignTemplate: { select: { publicId: true } },
@@ -308,14 +309,17 @@ export class DesignsService implements OnModuleInit {
     });
   }
 
-  /** A new design of mine from the current version and assets of one of mine (unlinked, not shared). */
-  async duplicate(actor: UserActor, publicId: string, title: string): Promise<DesignRow> {
+  /**
+   * A new design of mine from the current version and assets of one of mine (unlinked, not shared) — or, for staff
+   * (`anyOwner`), an editable staff-owned copy of a customer's design; the source is never changed.
+   */
+  async duplicate(actor: UserActor, publicId: string, title: string, anyOwner = false): Promise<DesignRow> {
     return this.prisma.withTx(async (tx) => {
-      const source = await this.get(publicId, actor.userId, tx);
+      const source = await this.get(publicId, anyOwner ? undefined : actor.userId, tx);
       const doc = await tx.designDocument.create({
         data: {
-          ownerUserId: source.ownerUserId,
-          companyId: source.companyId,
+          ownerUserId: actor.userId,
+          companyId: anyOwner ? null : source.companyId,
           catalogProductId: source.catalogProductId,
           patternId: source.patternId,
           lengthMm: source.lengthMm,
@@ -342,7 +346,13 @@ export class DesignsService implements OnModuleInit {
         await tx.designAsset.createMany({
           data: source.assets.map((a) => ({ documentId: doc.id, fileObjectId: a.fileObjectId, kind: a.kind })),
         });
-      await this.record(tx, doc.publicId, 'design.duplicated', { fromDesignId: source.publicId }, actor);
+      await this.record(
+        tx,
+        doc.publicId,
+        anyOwner ? 'design.copied_by_staff' : 'design.duplicated',
+        { fromDesignId: source.publicId },
+        actor,
+      );
       return this.get(doc.publicId, undefined, tx);
     });
   }

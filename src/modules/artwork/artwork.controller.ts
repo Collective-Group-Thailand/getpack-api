@@ -10,9 +10,12 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } fr
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import {
+  AcceptSubmissionDto,
+  ARTWORK_IDS,
   ARTWORK_RULES_EXAMPLE,
   ArtworkRulesDto,
   ArtworkSubmissionDto,
+  AssignPrepressDto,
   PrepressQueueItemDto,
   PrepressQueueQuery,
   QUEUE_EXAMPLE,
@@ -155,13 +158,15 @@ export class AdminArtworkController {
     description:
       '`submissions`: preflighted files waiting for review, oldest first; `changes_requested`: proofs the customer ' +
       'sent back; `proofs_waiting`: proofs waiting for the customer. `dueAt` follows ' +
-      '`artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set.',
+      '`artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set. Filter by the ' +
+      'Prepress owner (`assigneeId`, `none` = unowned), product type and artwork status; rows carry the customer, ' +
+      'product type, artwork status and owner.',
     implements: ['D-070', 'D-175'],
   })
   @ApiPaginated(PrepressQueueItemDto, { example: QUEUE_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async queue(@Query() q: PrepressQueueQuery) {
-    const { data, total } = await this.artwork.queue(q.kind, q.page, q.perPage);
+    const { data, total } = await this.artwork.queue(q.kind, q.page, q.perPage, new Date(), q);
     return { data, meta: { page: q.page, perPage: q.perPage, total } };
   }
 
@@ -236,15 +241,19 @@ export class AdminArtworkController {
     summary: 'Accept a submission for a proof',
     description:
       'Prepress takes the version into proof preparation (order artwork status `in_review`). Refused while ' +
-      'preflight runs or when it blocked — D-070 blocks on size mismatch or missing bleed.',
+      'preflight runs or when it blocked — D-070 blocks on size mismatch or missing bleed. An optional `note` is ' +
+      'kept on the internal timeline.',
     implements: DECISIONS,
   })
+  @ApiBody({ type: AcceptSubmissionDto, required: false, examples: { default: { value: { note: 'ไฟล์ครบ' } } } })
   @ApiSuccess(200, {
     description: 'Accepted',
     type: ArtworkSubmissionDto,
     example: { ...SUBMISSION_EXAMPLE, status: 'accepted_for_proof', preflightStatus: 'passed' },
   })
   @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
     'http.not_found',
     'validation.failed',
     'artwork.invalid_status',
@@ -252,8 +261,35 @@ export class AdminArtworkController {
     'artwork.preflight_blocked',
     'artwork.not_accepting',
   )
-  async accept(@CurrentActor() actor: Actor, @Param('submissionId', ParseUUIDPipe) submissionId: string) {
-    return submissionDto(await this.artwork.accept(staff(actor), submissionId));
+  async accept(
+    @CurrentActor() actor: Actor,
+    @Param('submissionId', ParseUUIDPipe) submissionId: string,
+    @Body() body: AcceptSubmissionDto,
+  ) {
+    return submissionDto(await this.artwork.accept(staff(actor), submissionId, body.note));
+  }
+
+  @Post('orders/:orderId/actions/assign-prepress')
+  @HttpCode(204)
+  @Can('prepress.review')
+  @orderParam
+  @ApiEndpoint({
+    id: 'admin.artwork.assignPrepress',
+    summary: 'Assign the Prepress owner of an order’s artwork',
+    description:
+      'An active staff member owns the order’s artwork work (queue filter `assigneeId`); `null` unassigns. Recorded ' +
+      'on the order’s internal timeline (D-070).',
+    implements: DECISIONS,
+  })
+  @ApiBody({ type: AssignPrepressDto, examples: { default: { value: { assigneeId: ARTWORK_IDS.order } } } })
+  @ApiSuccess(204, { description: 'Assigned' })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async assignPrepress(
+    @CurrentActor() actor: Actor,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Body() body: AssignPrepressDto,
+  ): Promise<void> {
+    await this.artwork.assignPrepress(staff(actor), orderId, body.assigneeId);
   }
 
   @Post('artwork-submissions/:submissionId/actions/reject')

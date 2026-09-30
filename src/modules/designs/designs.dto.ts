@@ -2,6 +2,7 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { OrderRefDto } from '@modules/carts/carts.dto';
 import { applyDecorators } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AttachedFileDto } from '@platform/files/files.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -562,6 +563,27 @@ export class DesignDocumentDto {
   updatedAt!: string;
 }
 
+export class DesignOwnerDto {
+  @ApiProperty({ format: 'uuid', example: DESIGN_IDS.design })
+  id!: string;
+
+  @ApiProperty({ example: 'สมชาย ทดสอบ' })
+  displayName!: string;
+
+  @ApiProperty({ enum: ['customer', 'staff'], enumName: 'AnnotationAuthorKind', example: 'customer' })
+  kind!: string;
+}
+
+/** The staff view of a design: whose it is and whether I may save it (my own copies only). */
+export class AdminDesignDocumentDto extends DesignDocumentDto {
+  @ApiProperty({ type: DesignOwnerDto })
+  owner!: DesignOwnerDto;
+
+  @ApiProperty({ example: false, description: 'True only for my own designs (a customer’s design is copied first)' })
+  editable!: boolean;
+}
+
+
 export class DesignVersionDto {
   @ApiProperty({ type: 'integer', example: 2 })
   versionNo!: number;
@@ -681,6 +703,9 @@ export class DrawingJobDto {
   })
   outputFileId!: string | null;
 
+  @ApiProperty({ type: AttachedFileDto, nullable: true, description: 'The drawing file (name, type, size)' })
+  outputFile!: AttachedFileDto | null;
+
   @ApiProperty({ type: String, nullable: true, example: null })
   engineVersion!: string | null;
 
@@ -738,6 +763,12 @@ export const DESIGN_EXAMPLE: DesignDocumentDto = {
   updatedAt: '2026-09-27T10:00:00+07:00',
 };
 
+export const ADMIN_DESIGN_EXAMPLE: AdminDesignDocumentDto = {
+  ...DESIGN_EXAMPLE,
+  owner: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000e5010', displayName: 'สมชาย ทดสอบ', kind: 'customer' },
+  editable: false,
+};
+
 export const SHARED_DESIGN_EXAMPLE: SharedDesignDto = {
   title: DESIGN_EXAMPLE.title,
   product: PRODUCT_REF_EXAMPLE,
@@ -764,6 +795,7 @@ export const DRAWING_EXAMPLE: DrawingJobDto = {
   heightMm: 40,
   orderId: null,
   outputFileId: null,
+  outputFile: null,
   engineVersion: null,
   error: null,
   createdAt: '2026-09-27T10:00:00+07:00',

@@ -247,6 +247,7 @@ export class AdminProofsController {
 
   @Post('orders/:orderId/proofs')
   @Can('prepress.review')
+  @Idempotent({ optional: true })
   @orderParam
   @ApiEndpoint({
     id: 'admin.artwork.sendProof',
@@ -469,6 +470,7 @@ export class AdminProofsController {
 
   @Post('orders/:orderId/templates')
   @Can('prepress.review')
+  @Idempotent({ optional: true })
   @orderParam
   @ApiEndpoint({
     id: 'admin.artwork.sendTemplate',

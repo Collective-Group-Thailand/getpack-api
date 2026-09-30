@@ -1,5 +1,8 @@
+import { OptionalNoteDto } from '@common/dto/optional-note.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { ARTWORK_STATUSES as ARTWORK_STATUS_VALUES } from '@modules/orders/orders.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -11,6 +14,7 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -118,7 +122,37 @@ export class PrepressQueueQuery extends PageQuery {
   @IsOptional()
   @IsIn(['submissions', 'proofs_waiting', 'changes_requested'])
   kind: 'submissions' | 'proofs_waiting' | 'changes_requested' = 'submissions';
+
+  @ApiPropertyOptional({
+    type: String,
+    example: 'none',
+    description: 'A Prepress member’s id, or `none` for work nobody owns yet',
+  })
+  @IsOptional()
+  @Matches(/^(none|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/)
+  assigneeId?: string;
+
+  @ApiPropertyOptional({ example: 'folding_box' })
+  @IsOptional()
+  @Matches(/^[a-z][a-z0-9_]{0,59}$/)
+  productTypeCode?: string;
+
+  @ApiPropertyOptional({ enum: ARTWORK_STATUS_VALUES, enumName: 'ArtworkStatus' })
+  @IsOptional()
+  @IsIn(ARTWORK_STATUS_VALUES)
+  artworkStatus?: (typeof ARTWORK_STATUS_VALUES)[number];
 }
+
+export class AssignPrepressDto {
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: ARTWORK_IDS.order, description: 'null unassigns' })
+  @ValidateIf((o: { assigneeId: unknown }) => o.assigneeId !== null)
+  @IsUUID()
+  assigneeId!: string | null;
+}
+
+/** Prepress's optional acknowledgement note (kept on the internal timeline). */
+export const AcceptSubmissionDto = OptionalNoteDto;
+export type AcceptSubmissionDto = OptionalNoteDto;
 
 export class ArtworkFileDto {
   @ApiProperty({ format: 'uuid', example: ARTWORK_IDS.submissionFile })
@@ -316,6 +350,18 @@ export class PrepressQueueItemDto {
 
   @ApiProperty({ example: false })
   overdue!: boolean;
+
+  @ApiProperty({ type: UserRefDto, description: 'The customer' })
+  customer!: UserRefDto;
+
+  @ApiProperty({ example: 'folding_box' })
+  productTypeCode!: string;
+
+  @ApiProperty({ enum: ARTWORK_STATUS_VALUES, enumName: 'ArtworkStatus', example: 'in_review' })
+  artworkStatus!: string;
+
+  @ApiProperty({ type: UserRefDto, nullable: true, description: 'The Prepress owner' })
+  assignee!: UserRefDto | null;
 }
 
 export const SUBMISSION_EXAMPLE: ArtworkSubmissionDto = {
@@ -381,6 +427,10 @@ export const QUEUE_EXAMPLE: PrepressQueueItemDto = {
   since: '2026-09-27T10:00:00+07:00',
   dueAt: null,
   overdue: false,
+  customer: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0001', displayName: 'สมชาย ทดสอบ' },
+  productTypeCode: 'folding_box',
+  artworkStatus: 'in_review',
+  assignee: null,
 };
 
 export const SUBMIT_EXAMPLE = {

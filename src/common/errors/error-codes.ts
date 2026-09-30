@@ -206,6 +206,7 @@ export const ERROR_CODES = {
   'mockups.exists': HttpStatus.CONFLICT,
   'designs.document_too_large': HttpStatus.UNPROCESSABLE_ENTITY,
   'designs.template_without_design': HttpStatus.CONFLICT,
+  'designs.read_only': HttpStatus.CONFLICT,
   'drawing.engine_unavailable': HttpStatus.NOT_IMPLEMENTED,
   'drawing.pattern_not_drawable': HttpStatus.UNPROCESSABLE_ENTITY,
   'production.already_released': HttpStatus.CONFLICT,

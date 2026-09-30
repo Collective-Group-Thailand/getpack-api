@@ -271,7 +271,35 @@ export class ArtworkService implements OnModuleInit {
 
   // --- prepress review -------------------------------------------------------------------------------
 
-  async accept(actor: UserActor, publicId: string): Promise<SubmissionRow> {
+  /** The Prepress owner of an order's artwork (U-B0.2): an active staff member, or null to unassign (activity + event). */
+  async assignPrepress(actor: UserActor, orderPublicId: string, assigneePublicId: string | null): Promise<void> {
+    const assignee = assigneePublicId
+      ? await this.prisma.user.findFirst({ where: { publicId: assigneePublicId, kind: 'staff', status: 'active' } })
+      : null;
+    if (assigneePublicId && !assignee)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'assigneeId', code: 'exists', message: 'not an active staff user' }],
+      });
+    await this.prisma.withTx(async (tx) => {
+      const order = await tx.order.findUnique({ where: { publicId: orderPublicId } });
+      if (!order) throw new DomainException('http.not_found');
+      await tx.order.update({
+        where: { id: order.id },
+        data: { prepressAssigneeId: assignee?.id ?? null, rowVersion: { increment: 1 } },
+      });
+      await this.record(
+        tx,
+        order.publicId,
+        'artwork.prepress_assigned',
+        { assigneeId: assignee?.publicId ?? null },
+        actor,
+        null,
+        ['internal'],
+      );
+    });
+  }
+
+  async accept(actor: UserActor, publicId: string, note?: string): Promise<SubmissionRow> {
     return this.prisma.withTx(async (tx) => {
       const row = await this.lockSubmission(tx, publicId);
       if (row.status !== 'submitted')
@@ -303,6 +331,10 @@ export class ArtworkService implements OnModuleInit {
         actor,
         await this.customerPublicId(tx, order.customerUserId),
       );
+      if (note?.trim())
+        await this.record(tx, order.publicId, 'artwork.review_note', { submissionId: row.publicId, note: note.trim() }, actor, null, [
+          'internal',
+        ]);
       return tx.artworkSubmission.findUniqueOrThrow({ where: { id: row.id }, include: SUBMISSION_INCLUDE });
     });
   }
@@ -380,10 +412,29 @@ export class ArtworkService implements OnModuleInit {
     page: number,
     perPage: number,
     now = new Date(),
+    filters: { assigneeId?: string; productTypeCode?: string; artworkStatus?: ArtworkStatus } = {},
   ): Promise<{ data: PrepressQueueItemDto[]; total: number }> {
     const skip = (page - 1) * perPage;
-    const liveOrder = { status: { not: 'cancelled' as const } };
+    const liveOrder: Prisma.OrderWhereInput = {
+      status: { not: 'cancelled' as const },
+      ...(filters.assigneeId === 'none' && { prepressAssigneeId: null }),
+      ...(filters.assigneeId && filters.assigneeId !== 'none' && { prepressAssignee: { publicId: filters.assigneeId } }),
+      ...(filters.productTypeCode && { productType: { code: filters.productTypeCode } }),
+      ...(filters.artworkStatus && { artworkStatus: filters.artworkStatus }),
+    };
+    const orderRef = {
+      select: {
+        publicId: true,
+        orderCode: true,
+        artworkStatus: true,
+        productType: { select: { code: true } },
+        orderGroup: { select: { customer: { select: { publicId: true, displayName: true } } } },
+        prepressAssignee: { select: { publicId: true, displayName: true } },
+      },
+    } as const;
+    type OrderRef = Prisma.OrderGetPayload<typeof orderRef>;
     let items: {
+      order: OrderRef;
       orderId: string;
       orderCode: string;
       itemId: string;
@@ -401,7 +452,7 @@ export class ArtworkService implements OnModuleInit {
       const [rows, count] = await Promise.all([
         this.prisma.artworkSubmission.findMany({
           where,
-          include: { order: { select: { publicId: true, orderCode: true } } },
+          include: { order: orderRef },
           orderBy: { submittedAt: 'asc' },
           skip,
           take: perPage,
@@ -409,6 +460,7 @@ export class ArtworkService implements OnModuleInit {
         this.prisma.artworkSubmission.count({ where }),
       ]);
       items = rows.map((r) => ({
+        order: r.order,
         orderId: r.order.publicId,
         orderCode: r.order.orderCode,
         itemId: r.publicId,
@@ -426,7 +478,7 @@ export class ArtworkService implements OnModuleInit {
       const [rows, count] = await Promise.all([
         this.prisma.proof.findMany({
           where,
-          include: { order: { select: { publicId: true, orderCode: true } } },
+          include: { order: orderRef },
           orderBy: kind === 'proofs_waiting' ? { sentAt: 'asc' } : { decidedAt: 'asc' },
           skip,
           take: perPage,
@@ -434,6 +486,7 @@ export class ArtworkService implements OnModuleInit {
         this.prisma.proof.count({ where }),
       ]);
       items = rows.map((r) => ({
+        order: r.order,
         orderId: r.order.publicId,
         orderCode: r.order.orderCode,
         itemId: r.publicId,
@@ -458,6 +511,15 @@ export class ArtworkService implements OnModuleInit {
           since: toBangkokIso(i.since),
           dueAt: dueAt ? toBangkokIso(dueAt) : null,
           overdue: dueAt !== null && dueAt < now,
+          customer: {
+            id: i.order.orderGroup.customer.publicId,
+            displayName: i.order.orderGroup.customer.displayName,
+          },
+          productTypeCode: i.order.productType.code,
+          artworkStatus: i.order.artworkStatus,
+          assignee: i.order.prepressAssignee
+            ? { id: i.order.prepressAssignee.publicId, displayName: i.order.prepressAssignee.displayName }
+            : null,
         };
       }),
     );

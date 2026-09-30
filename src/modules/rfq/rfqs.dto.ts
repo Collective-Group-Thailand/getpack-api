@@ -1,3 +1,4 @@
+import { OptionalNoteDto } from '@common/dto/optional-note.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
 import { SpecLineDto } from '@modules/quotes/line-summary.dto';
@@ -208,13 +209,9 @@ export class AcceptRfqQuoteDto {
   quantities?: number[];
 }
 
-export class DeclineRfqDto {
-  @ApiPropertyOptional({ example: 'Found another supplier (fake)', maxLength: 1000 })
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  note?: string;
-}
+/** The customer's decline: an optional note (shared shape). */
+export const DeclineRfqDto = OptionalNoteDto;
+export type DeclineRfqDto = OptionalNoteDto;
 
 export class StaffDeclineRfqDto extends DeclineRfqDto {
   @ApiProperty({

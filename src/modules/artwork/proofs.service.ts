@@ -30,6 +30,7 @@ export const PROOF_INCLUDE = {
     include: {
       author: { select: { kind: true, displayName: true } },
       parent: { select: { publicId: true } },
+      resolvedBy: { select: { kind: true, displayName: true } },
     },
     orderBy: { createdAt: 'asc' },
   },
@@ -504,6 +505,12 @@ export function proofDto(row: ProofRow, forCustomer: boolean): ProofDto {
       displayName: a.author.kind !== 'customer' && forCustomer ? 'Packio' : a.author.displayName,
     },
     resolvedAt: a.resolvedAt ? toBangkokIso(a.resolvedAt) : null,
+    resolvedBy: a.resolvedBy
+      ? {
+          kind: a.resolvedBy.kind === 'customer' ? 'customer' : 'staff',
+          displayName: a.resolvedBy.kind !== 'customer' && forCustomer ? 'Packio' : a.resolvedBy.displayName,
+        }
+      : null,
     createdAt: toBangkokIso(a.createdAt),
   });
   const previous = row.previousProof;

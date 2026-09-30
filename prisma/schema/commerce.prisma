@@ -541,6 +541,8 @@ model Order {
   designNote              String?              @map("design_note")
   /// The customer's online design (B4.1).
   designDocumentId        BigInt?              @map("design_document_id")
+  /// The Prepress member who owns the order's artwork (U-B0.2); null while unassigned.
+  prepressAssigneeId      BigInt?              @map("prepress_assignee_id")
   /// Reorder with unchanged artwork: the approved proof carried over, proof skipped (D-153).
   reuseArtworkProofId     BigInt?              @map("reuse_artwork_proof_id")
   mockupOption            MockupOption         @default(none) @map("mockup_option")
@@ -617,6 +619,7 @@ model Order {
   company Company? @relation("OrderCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__company_id")
 
   designDocument    DesignDocument? @relation("OrderDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_id")
+  prepressAssignee  User?           @relation("OrderPrepressAssignee", fields: [prepressAssigneeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__prepress_assignee_id")
   reuseArtworkProof Proof?          @relation("OrderReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reuse_artwork_proof_id")
 
   // --- Fulfilment B4.1 (generated back-relations)
@@ -676,6 +679,7 @@ model Order {
   @@index([selectedFactoryId], map: "ix_orders__selected_factory_id")
   @@index([updatedById], map: "ix_orders__updated_by")
   @@index([designDocumentId], map: "ix_orders__design_document_id")
+  @@index([prepressAssigneeId], map: "ix_orders__prepress_assignee_id")
   @@index([reuseArtworkProofId], map: "ix_orders__reuse_artwork_proof_id")
   @@index([shippedAt], map: "ix_orders__shipped_at", where: raw("(shipped_at IS NOT NULL)"))
   @@map("orders")

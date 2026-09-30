@@ -231,6 +231,7 @@ export class AdminDesignServicesController {
   @Post('design-services/:designServiceId/actions/deliver')
   @HttpCode(200)
   @Can('design_services.manage')
+  @Idempotent({ optional: true })
   @idParam
   @ApiEndpoint({
     id: 'admin.designServices.deliver',
@@ -268,6 +269,7 @@ export class AdminDesignServicesController {
   @Post('design-services/:designServiceId/actions/requote')
   @HttpCode(200)
   @Can('design_services.manage')
+  @Idempotent({ optional: true })
   @idParam
   @ApiEndpoint({
     id: 'admin.designServices.requote',

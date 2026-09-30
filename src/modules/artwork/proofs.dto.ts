@@ -214,6 +214,9 @@ export class AnnotationDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   resolvedAt!: string | null;
 
+  @ApiProperty({ type: AnnotationAuthorDto, nullable: true, description: 'Who resolved it' })
+  resolvedBy!: AnnotationAuthorDto | null;
+
   @ApiProperty({ example: '2026-09-27T11:00:00+07:00' })
   createdAt!: string;
 }
@@ -369,6 +372,7 @@ export const ANNOTATION_EXAMPLE: AnnotationDto = {
   comment: 'ขอโลโก้ใหญ่ขึ้นอีกนิด',
   author: { kind: 'customer', displayName: 'ลูกค้า ทดสอบ' },
   resolvedAt: null,
+  resolvedBy: null,
   createdAt: '2026-09-27T11:05:00+07:00',
 };
 

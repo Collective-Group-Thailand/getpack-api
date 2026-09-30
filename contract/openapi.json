@@ -1046,6 +1046,17 @@
           "type": "https://errors.packio/designs.document_too_large"
         }
       },
+      "problem.designs.read_only": {
+        "summary": "designs.read_only",
+        "value": {
+          "code": "designs.read_only",
+          "detail": "แบบนี้เป็นของผู้อื่น คัดลอกก่อนแก้ไข",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "แก้ไขไม่ได้",
+          "type": "https://errors.packio/designs.read_only"
+        }
+      },
       "problem.designs.template_without_design": {
         "summary": "designs.template_without_design",
         "value": {
@@ -4870,6 +4881,193 @@
         ],
         "type": "object"
       },
+      "AdminDesignDocumentDto": {
+        "properties": {
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/DesignAssetDto"
+            },
+            "type": "array"
+          },
+          "catalogProductId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "example": "2026-09-20T10:00:00+07:00",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "description": "The current version (null in lists)",
+            "example": {
+              "pages": [
+                {
+                  "objects": [
+                    {
+                      "text": "Packio",
+                      "type": "text",
+                      "x": 10,
+                      "y": 20
+                    }
+                  ],
+                  "side": "front"
+                }
+              ]
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "editable": {
+            "description": "True only for my own designs (a customer’s design is copied first)",
+            "example": false,
+            "type": "boolean"
+          },
+          "heightMm": {
+            "description": "mm",
+            "example": 40,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lengthMm": {
+            "description": "mm",
+            "example": 100,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "materialId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orders": {
+            "description": "Orders placed with this design or whose artwork was submitted from it, newest first",
+            "items": {
+              "$ref": "#/components/schemas/OrderRefDto"
+            },
+            "type": "array"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/DesignOwnerDto"
+          },
+          "patternId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/DesignProductRefDto"
+          },
+          "schemaVersion": {
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "semiDesignTemplateId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "share": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DesignShareStateDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The live view-only link (D-226)"
+          },
+          "thumbnailFileId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "thumbnailUrl": {
+            "description": "Signed URL of the preview image (5 minutes)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "example": "กล่องกาแฟของฉัน",
+            "type": "string"
+          },
+          "updatedAt": {
+            "example": "2026-09-27T10:00:00+07:00",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 3,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "widthMm": {
+            "description": "mm",
+            "example": 60,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "catalogProductId",
+          "patternId",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "materialId",
+          "semiDesignTemplateId",
+          "thumbnailFileId",
+          "versionNo",
+          "schemaVersion",
+          "document",
+          "assets",
+          "product",
+          "thumbnailUrl",
+          "orders",
+          "share",
+          "createdAt",
+          "updatedAt",
+          "owner",
+          "editable"
+        ],
+        "type": "object"
+      },
       "AdminJobDto": {
         "properties": {
           "acceptDueAt": {
@@ -7681,6 +7879,17 @@
               "string",
               "null"
             ]
+          },
+          "resolvedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnnotationAuthorDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who resolved it"
           }
         },
         "required": [
@@ -7692,6 +7901,7 @@
           "comment",
           "author",
           "resolvedAt",
+          "resolvedBy",
           "createdAt"
         ],
         "type": "object"
@@ -9092,6 +9302,23 @@
             ]
           }
         },
+        "type": "object"
+      },
+      "AssignPrepressDto": {
+        "properties": {
+          "assigneeId": {
+            "description": "null unassigns",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "assigneeId"
+        ],
         "type": "object"
       },
       "AssignRfqDto": {
@@ -21704,16 +21931,6 @@
         },
         "type": "object"
       },
-      "DeclineRfqDto": {
-        "properties": {
-          "note": {
-            "example": "Found another supplier (fake)",
-            "maxLength": 1000,
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
       "DefectSeverity": {
         "enum": [
           "critical",
@@ -22570,6 +22787,33 @@
         "required": [
           "graphic",
           "structure"
+        ],
+        "type": "object"
+      },
+      "DesignOwnerDto": {
+        "properties": {
+          "displayName": {
+            "example": "สมชาย ทดสอบ",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AnnotationAuthorKind"
+              }
+            ],
+            "example": "customer"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "kind"
         ],
         "type": "object"
       },
@@ -24237,6 +24481,17 @@
               "null"
             ]
           },
+          "outputFile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttachedFileDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The drawing file (name, type, size)"
+          },
           "outputFileId": {
             "description": "The drawing; download via files",
             "example": null,
@@ -24275,6 +24530,7 @@
           "heightMm",
           "orderId",
           "outputFileId",
+          "outputFile",
           "engineVersion",
           "error",
           "createdAt",
@@ -32048,6 +32304,16 @@
         ],
         "type": "object"
       },
+      "OptionalNoteDto": {
+        "properties": {
+          "note": {
+            "example": "บันทึกเพิ่มเติม (fake)",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "OrderCustomerRefDto": {
         "properties": {
           "companyName": {
@@ -35918,6 +36184,33 @@
       },
       "PrepressQueueItemDto": {
         "properties": {
+          "artworkStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ArtworkStatus"
+              }
+            ],
+            "example": "in_review"
+          },
+          "assignee": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Prepress owner"
+          },
+          "customer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              }
+            ],
+            "description": "The customer"
+          },
           "dueAt": {
             "description": "SLA due time (`artwork.prepress_sla_business_hours`); null while no SLA is set",
             "example": null,
@@ -35964,6 +36257,10 @@
             ],
             "example": "passed_with_warnings"
           },
+          "productTypeCode": {
+            "example": "folding_box",
+            "type": "string"
+          },
           "since": {
             "description": "When it entered the queue",
             "example": "2026-09-27T10:00:00+07:00",
@@ -35983,7 +36280,11 @@
           "preflightStatus",
           "since",
           "dueAt",
-          "overdue"
+          "overdue",
+          "customer",
+          "productTypeCode",
+          "artworkStatus",
+          "assignee"
         ],
         "type": "object"
       },
@@ -48477,7 +48778,7 @@
       "StaffDeclineRfqDto": {
         "properties": {
           "note": {
-            "example": "Found another supplier (fake)",
+            "example": "บันทึกเพิ่มเติม (fake)",
             "maxLength": 1000,
             "type": "string"
           },
@@ -64617,7 +64918,7 @@
     },
     "/v1/admin/artwork-submissions/{submissionId}/actions/accept": {
       "post": {
-        "description": "Prepress takes the version into proof preparation (order artwork status `in_review`). Refused while preflight runs or when it blocked — D-070 blocks on size mismatch or missing bleed.\n\nImplements: D-070, D-073.",
+        "description": "Prepress takes the version into proof preparation (order artwork status `in_review`). Refused while preflight runs or when it blocked — D-070 blocks on size mismatch or missing bleed. An optional `note` is kept on the internal timeline.\n\nImplements: D-070, D-073.",
         "operationId": "admin.artwork.accept",
         "parameters": [
           {
@@ -64633,6 +64934,23 @@
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "ไฟล์ครบ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OptionalNoteDto"
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "200": {
             "content": {
@@ -64711,6 +65029,29 @@
               "X-RateLimit-Reset": {
                 "$ref": "#/components/headers/RateLimitReset"
               },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
               }
@@ -141833,6 +142174,9 @@
             }
           },
           {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -141908,6 +142252,9 @@
             },
             "description": "Delivered",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -141931,6 +142278,9 @@
                   },
                   "http.malformed_json": {
                     "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
                   }
                 },
                 "schema": {
@@ -141938,7 +142288,7 @@
                 }
               }
             },
-            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -142014,6 +142364,9 @@
                   },
                   "design_services.invalid_status": {
                     "$ref": "#/components/examples/problem.design_services.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
                   }
                 },
                 "schema": {
@@ -142021,7 +142374,7 @@
                 }
               }
             },
-            "description": "Problem: `artwork.not_accepting`, `design_services.invalid_status`",
+            "description": "Problem: `artwork.not_accepting`, `design_services.invalid_status`, `idempotency.in_progress`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -142035,6 +142388,9 @@
                   "artwork.file_not_usable": {
                     "$ref": "#/components/examples/problem.artwork.file_not_usable"
                   },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -142044,7 +142400,7 @@
                 }
               }
             },
-            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "description": "Problem: `artwork.file_not_usable`, `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -142124,6 +142480,9 @@
             }
           },
           {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -142196,6 +142555,9 @@
             },
             "description": "Re-quoted",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -142219,6 +142581,9 @@
                   },
                   "http.malformed_json": {
                     "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
                   }
                 },
                 "schema": {
@@ -142226,7 +142591,7 @@
                 }
               }
             },
-            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -142299,6 +142664,9 @@
                 "examples": {
                   "design_services.invalid_status": {
                     "$ref": "#/components/examples/problem.design_services.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
                   }
                 },
                 "schema": {
@@ -142306,7 +142674,7 @@
                 }
               }
             },
-            "description": "Problem: `design_services.invalid_status`",
+            "description": "Problem: `design_services.invalid_status`, `idempotency.in_progress`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -142317,6 +142685,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -142326,7 +142697,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -142474,6 +142845,7 @@
                       }
                     ]
                   },
+                  "editable": false,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
@@ -142484,6 +142856,11 @@
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009"
                     }
                   ],
+                  "owner": {
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5010",
+                    "kind": "customer"
+                  },
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
@@ -142503,7 +142880,7 @@
                   "widthMm": 60
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/DesignDocumentDto"
+                  "$ref": "#/components/schemas/AdminDesignDocumentDto"
                 }
               }
             },
@@ -142764,6 +143141,7 @@
                       }
                     ]
                   },
+                  "editable": false,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
@@ -142774,6 +143152,11 @@
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009"
                     }
                   ],
+                  "owner": {
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5010",
+                    "kind": "customer"
+                  },
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
@@ -142793,7 +143176,7 @@
                   "widthMm": 60
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/DesignDocumentDto"
+                  "$ref": "#/components/schemas/AdminDesignDocumentDto"
                 }
               }
             },
@@ -142954,7 +143337,7 @@
         ]
       },
       "put": {
-        "description": "Only the staff author’s designs; `If-Match` required.\n\nImplements: D-005.",
+        "description": "Only my own designs (409 `designs.read_only` for another’s — copy it first with `admin.designs.copy`); `If-Match` required.\n\nImplements: D-005.",
         "operationId": "admin.designs.save",
         "parameters": [
           {
@@ -143044,6 +143427,7 @@
                       }
                     ]
                   },
+                  "editable": false,
                   "heightMm": 40,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
                   "lengthMm": 100,
@@ -143054,6 +143438,11 @@
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009"
                     }
                   ],
+                  "owner": {
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5010",
+                    "kind": "customer"
+                  },
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                   "product": {
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
@@ -143073,7 +143462,7 @@
                   "widthMm": 60
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/DesignDocumentDto"
+                  "$ref": "#/components/schemas/AdminDesignDocumentDto"
                 }
               }
             },
@@ -143173,6 +143562,26 @@
               }
             },
             "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "designs.read_only": {
+                    "$ref": "#/components/examples/problem.designs.read_only"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `designs.read_only`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -143300,6 +143709,328 @@
         ],
         "x-required-permissions": [
           "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/designs/{designId}/actions/copy": {
+      "post": {
+        "description": "An editable copy owned by me of any design (a customer’s, with its current version and assets); the source is never changed and the copy records where it came from (event `design.copied_by_staff`).\n\nImplements: D-152, D-070.",
+        "operationId": "admin.designs.copy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "designId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "title": "สำเนาเพื่อแก้ไข — กล่องกาแฟ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DuplicateDesignDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assets": [
+                    {
+                      "createdAt": "2026-09-27T10:00:00+07:00",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5006",
+                      "heightPx": 800,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5007",
+                      "kind": "logo",
+                      "mimeType": "image/png",
+                      "sizeBytes": 48213,
+                      "url": "https://files.example.test/customer_content/2026/09/0192f3a0?X-Amz-Signature=fake",
+                      "urlExpiresAt": "2026-09-27T10:05:00+07:00",
+                      "widthPx": 1200
+                    }
+                  ],
+                  "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
+                  "createdAt": "2026-09-20T10:00:00+07:00",
+                  "document": {
+                    "pages": [
+                      {
+                        "objects": [
+                          {
+                            "text": "Packio",
+                            "type": "text",
+                            "x": 10,
+                            "y": 20
+                          }
+                        ],
+                        "side": "front"
+                      }
+                    ]
+                  },
+                  "editable": true,
+                  "heightMm": 40,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5001",
+                  "lengthMm": 100,
+                  "materialId": null,
+                  "orders": [
+                    {
+                      "orderCode": "PK-2610-0001-01",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009"
+                    }
+                  ],
+                  "owner": {
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5010",
+                    "kind": "staff"
+                  },
+                  "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                  "product": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5002",
+                    "nameEn": "Tuck-end box",
+                    "nameTh": "กล่องฝาเสียบ",
+                    "productTypeCode": "folding_box",
+                    "slug": "tuck-end-box"
+                  },
+                  "schemaVersion": 1,
+                  "semiDesignTemplateId": null,
+                  "share": null,
+                  "thumbnailFileId": null,
+                  "thumbnailUrl": null,
+                  "title": "กล่องกาแฟของฉัน",
+                  "updatedAt": "2026-09-27T10:00:00+07:00",
+                  "versionNo": 3,
+                  "widthMm": 60
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminDesignDocumentDto"
+                }
+              }
+            },
+            "description": "The copy",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Copy a design to edit it",
+        "tags": [
+          "admin.designs"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
         ]
       }
     },
@@ -180494,6 +181225,220 @@
         ]
       }
     },
+    "/v1/admin/orders/{orderId}/actions/assign-prepress": {
+      "post": {
+        "description": "An active staff member owns the order’s artwork work (queue filter `assigneeId`); `null` unassigns. Recorded on the order’s internal timeline (D-070).\n\nImplements: D-070, D-073.",
+        "operationId": "admin.artwork.assignPrepress",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "assigneeId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AssignPrepressDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Assigned",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Assign the Prepress owner of an order’s artwork",
+        "tags": [
+          "admin.artwork"
+        ],
+        "x-required-permissions": [
+          "prepress.review"
+        ]
+      }
+    },
     "/v1/admin/orders/{orderId}/actions/cancel": {
       "post": {
         "description": "Before production only (afterwards: claims, B4.5); the group follows its orders.\n\nImplements: D-060, D-073, D-142, D-050.",
@@ -183494,6 +184439,206 @@
       }
     },
     "/v1/admin/orders/{orderId}/drawings": {
+      "get": {
+        "description": "Newest first, with status, format and the drawn file (D-070).\n\nImplements: D-070.",
+        "operationId": "admin.designs.listOrderDrawings",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "completedAt": null,
+                    "createdAt": "2026-09-27T10:00:00+07:00",
+                    "engineVersion": null,
+                    "error": null,
+                    "format": "pdf",
+                    "heightMm": 40,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5008",
+                    "lengthMm": 100,
+                    "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                    "outputFile": null,
+                    "outputFileId": null,
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
+                    "status": "queued",
+                    "widthMm": 60
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DrawingJobDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Drawings",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the dieline drawings of an order",
+        "tags": [
+          "admin.designs"
+        ],
+        "x-required-permissions": [
+          "artwork.read"
+        ]
+      },
       "post": {
         "description": "Box style and size from the order’s quotation; the template goes to the customer once drawn (like the automatic one after payment, legacy `sendDrawingAutov2`). `501 drawing.engine_unavailable` until the engine is on — send a template by hand meanwhile (`admin.artwork.sendTemplate`).\n\nImplements: D-070.",
         "operationId": "admin.designs.drawForOrder",
@@ -183542,6 +184687,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5008",
                   "lengthMm": 100,
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5009",
+                  "outputFile": null,
                   "outputFileId": null,
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                   "status": "queued",
@@ -184772,7 +185918,8 @@
                         "kind": "pin",
                         "page": 1,
                         "parentId": null,
-                        "resolvedAt": null
+                        "resolvedAt": null,
+                        "resolvedBy": null
                       }
                     ],
                     "approvedFileId": null,
@@ -184983,6 +186130,9 @@
             }
           },
           {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -185026,7 +186176,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -185068,6 +186219,9 @@
             },
             "description": "Sent",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -185091,6 +186245,9 @@
                   },
                   "http.malformed_json": {
                     "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
                   }
                 },
                 "schema": {
@@ -185098,7 +186255,7 @@
                 }
               }
             },
-            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -185172,6 +186329,9 @@
                   "artwork.not_accepting": {
                     "$ref": "#/components/examples/problem.artwork.not_accepting"
                   },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
                   "proofs.no_accepted_artwork": {
                     "$ref": "#/components/examples/problem.proofs.no_accepted_artwork"
                   }
@@ -185181,7 +186341,7 @@
                 }
               }
             },
-            "description": "Problem: `artwork.not_accepting`, `proofs.no_accepted_artwork`",
+            "description": "Problem: `artwork.not_accepting`, `idempotency.in_progress`, `proofs.no_accepted_artwork`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -185195,6 +186355,9 @@
                   "artwork.file_not_usable": {
                     "$ref": "#/components/examples/problem.artwork.file_not_usable"
                   },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -185204,7 +186367,7 @@
                 }
               }
             },
-            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "description": "Problem: `artwork.file_not_usable`, `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -185475,6 +186638,9 @@
             }
           },
           {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -185514,6 +186680,9 @@
             },
             "description": "Sent",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -185537,6 +186706,9 @@
                   },
                   "http.malformed_json": {
                     "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
                   }
                 },
                 "schema": {
@@ -185544,7 +186716,7 @@
                 }
               }
             },
-            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -185617,6 +186789,9 @@
                 "examples": {
                   "artwork.not_accepting": {
                     "$ref": "#/components/examples/problem.artwork.not_accepting"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
                   }
                 },
                 "schema": {
@@ -185624,7 +186799,7 @@
                 }
               }
             },
-            "description": "Problem: `artwork.not_accepting`",
+            "description": "Problem: `artwork.not_accepting`, `idempotency.in_progress`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -185638,6 +186813,9 @@
                   "artwork.file_not_usable": {
                     "$ref": "#/components/examples/problem.artwork.file_not_usable"
                   },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -185647,7 +186825,7 @@
                 }
               }
             },
-            "description": "Problem: `artwork.file_not_usable`, `validation.failed`",
+            "description": "Problem: `artwork.file_not_usable`, `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -191217,7 +192395,7 @@
     },
     "/v1/admin/prepress/queue": {
       "get": {
-        "description": "`submissions`: preflighted files waiting for review, oldest first; `changes_requested`: proofs the customer sent back; `proofs_waiting`: proofs waiting for the customer. `dueAt` follows `artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set.\n\nImplements: D-070, D-175.",
+        "description": "`submissions`: preflighted files waiting for review, oldest first; `changes_requested`: proofs the customer sent back; `proofs_waiting`: proofs waiting for the customer. `dueAt` follows `artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set. Filter by the Prepress owner (`assigneeId`, `none` = unowned), product type and artwork status; rows carry the customer, product type, artwork status and owner.\n\nImplements: D-070, D-175.",
         "operationId": "admin.artwork.queue",
         "parameters": [
           {
@@ -191280,6 +192458,35 @@
             }
           },
           {
+            "description": "A Prepress member’s id, or `none` for work nobody owns yet",
+            "in": "query",
+            "name": "assigneeId",
+            "required": false,
+            "schema": {
+              "example": "none",
+              "pattern": "^(none|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "productTypeCode",
+            "required": false,
+            "schema": {
+              "example": "folding_box",
+              "pattern": "^[a-z][a-z0-9_]{0,59}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "artworkStatus",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ArtworkStatus"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -191290,6 +192497,12 @@
                 "example": {
                   "data": [
                     {
+                      "artworkStatus": "in_review",
+                      "assignee": null,
+                      "customer": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001"
+                      },
                       "dueAt": null,
                       "itemId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1002",
                       "kind": "submissions",
@@ -191297,6 +192510,7 @@
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000e1001",
                       "overdue": false,
                       "preflightStatus": "passed_with_warnings",
+                      "productTypeCode": "folding_box",
                       "since": "2026-09-27T10:00:00+07:00",
                       "versionNo": 2
                     }
@@ -199705,7 +200919,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -199938,7 +201153,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -200192,7 +201408,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2009",
@@ -200508,7 +201725,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -200811,7 +202029,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -281437,6 +282656,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5008",
                   "lengthMm": 100,
                   "orderId": null,
+                  "outputFile": null,
                   "outputFileId": null,
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                   "status": "queued",
@@ -281676,6 +282896,12 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5008",
                   "lengthMm": 100,
                   "orderId": null,
+                  "outputFile": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e5006",
+                    "mimeType": "application/pdf",
+                    "originalName": "dieline.pdf",
+                    "sizeBytes": 48213
+                  },
                   "outputFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5006",
                   "patternId": "0192f3a0-7c1e-7d2a-9b1f-0000000e5003",
                   "status": "succeeded",
@@ -291492,7 +292718,8 @@
                         "kind": "pin",
                         "page": 1,
                         "parentId": null,
-                        "resolvedAt": null
+                        "resolvedAt": null,
+                        "resolvedBy": null
                       }
                     ],
                     "approvedFileId": null,
@@ -294164,7 +295391,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -294394,7 +295622,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -294647,7 +295876,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2009",
@@ -294952,7 +296182,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -295251,7 +296482,8 @@
                       "kind": "pin",
                       "page": 1,
                       "parentId": null,
-                      "resolvedAt": null
+                      "resolvedAt": null,
+                      "resolvedBy": null
                     }
                   ],
                   "approvedFileId": null,
@@ -300571,7 +301803,7 @@
                 }
               },
               "schema": {
-                "$ref": "#/components/schemas/DeclineRfqDto"
+                "$ref": "#/components/schemas/OptionalNoteDto"
               }
             }
           },

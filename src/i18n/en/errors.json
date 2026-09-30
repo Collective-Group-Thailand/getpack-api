@@ -883,6 +883,10 @@
     "template_without_design": {
       "title": "Template has no design",
       "detail": "This semi-design template has no design to start from"
+    },
+    "read_only": {
+      "title": "Read-only design",
+      "detail": "This design belongs to someone else; copy it to edit"
     }
   },
   "drawing": {

@@ -185,10 +185,30 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       (due.body.data as { itemId: string; dueAt: string | null }[]).find((i) => i.itemId === v3.body.id)
         ?.dueAt,
     ).not.toBeNull();
+    // U-B0.2: the Prepress owner and the queue's filters and refs.
+    const me = await ctx.prisma.user.findFirstOrThrow({ where: { email: 'prepress@example.invalid' } });
+    await as(ctx, prepress).post(`/v1/admin/orders/${orderId}/actions/assign-prepress`, { assigneeId: me.publicId }).expect(204);
+    const mine = await as(ctx, prepress)
+      .get(`/v1/admin/prepress/queue?kind=submissions&perPage=100&assigneeId=${me.publicId}`)
+      .expect(200);
+    expect(mine.body.data).toContainEqual(
+      expect.objectContaining({
+        itemId: v3.body.id,
+        assignee: { id: me.publicId, displayName: me.displayName },
+        productTypeCode: expect.any(String),
+        customer: expect.objectContaining({ id: expect.any(String) }),
+      }),
+    );
+    const unowned = await as(ctx, prepress).get('/v1/admin/prepress/queue?kind=submissions&perPage=100&assigneeId=none').expect(200);
+    expect((unowned.body.data as { itemId: string }[]).map((i) => i.itemId)).not.toContain(v3.body.id);
     const accepted = await as(ctx, prepress)
-      .post(`/v1/admin/artwork-submissions/${v3.body.id as string}/actions/accept`)
+      .post(`/v1/admin/artwork-submissions/${v3.body.id as string}/actions/accept`, { note: 'ไฟล์ครบ (fake)' })
       .expect(200);
     expect(accepted.body).toMatchObject({ status: 'accepted_for_proof', preflightStatus: 'passed' });
+    expect(
+      await ctx.prisma.activityLog.count({ where: { aggregatePublicId: orderId, action: 'artwork.review_note', visibility: { has: 'customer' } } }),
+    ).toBe(0);
+    expect(await ctx.prisma.activityLog.count({ where: { aggregatePublicId: orderId, action: 'artwork.review_note' } })).toBe(1);
     expect((await as(ctx, token).get(`/v1/store/orders/${orderId}`).expect(200)).body.artworkStatus).toBe(
       'in_review',
     );

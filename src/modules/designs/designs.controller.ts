@@ -39,6 +39,8 @@ import { type Response } from 'express';
 
 import {
   AddDesignAssetDto,
+  ADMIN_DESIGN_EXAMPLE,
+  AdminDesignDocumentDto,
   CREATE_DESIGN_EXAMPLE,
   CreateDesignDto,
   DESIGN_EXAMPLE,
@@ -61,7 +63,7 @@ import {
   ShareDesignResultDto,
   SubmitFromDesignDto,
 } from './designs.dto';
-import { designEtag, DesignsService } from './designs.service';
+import { designEtag, type DesignRow, DesignsService } from './designs.service';
 import { drawingDto, DrawingsService } from './drawings.service';
 
 const designParam = ApiParam({ name: 'designId', format: 'uuid' });
@@ -592,6 +594,7 @@ export class StoreDesignsController {
       ...DRAWING_EXAMPLE,
       status: 'succeeded',
       outputFileId: DESIGN_IDS.file,
+      outputFile: { id: DESIGN_IDS.file, originalName: 'dieline.pdf', mimeType: 'application/pdf', sizeBytes: 48213 },
       completedAt: '2026-09-27T10:00:05+07:00',
     },
   })
@@ -619,12 +622,47 @@ export class AdminDesignsController {
     implements: DECISIONS,
   })
   @ApiEtag()
-  @ApiSuccess(200, { description: 'Design', type: DesignDocumentDto, example: DESIGN_EXAMPLE })
+  @ApiSuccess(200, { description: 'Design', type: AdminDesignDocumentDto, example: ADMIN_DESIGN_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async get(@Param('designId', ParseUUIDPipe) id: string, @Res({ passthrough: true }) res: Response) {
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) id: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const row = await this.designs.get(id);
     res.setHeader('ETag', designEtag(row));
-    return this.designs.view(row);
+    return this.adminView(actor, row);
+  }
+
+  @Post('designs/:designId/actions/copy')
+  @Can('prepress.review')
+  @Idempotent({ optional: true })
+  @designParam
+  @ApiEndpoint({
+    id: 'admin.designs.copy',
+    summary: 'Copy a design to edit it',
+    description:
+      'An editable copy owned by me of any design (a customer’s, with its current version and assets); the source ' +
+      'is never changed and the copy records where it came from (event `design.copied_by_staff`).',
+    implements: DECISIONS,
+  })
+  @ApiBody({ type: DuplicateDesignDto, examples: { default: { value: { title: 'สำเนาเพื่อแก้ไข — กล่องกาแฟ' } } } })
+  @ApiEtag()
+  @ApiSuccess(201, {
+    description: 'The copy',
+    type: AdminDesignDocumentDto,
+    example: { ...ADMIN_DESIGN_EXAMPLE, editable: true, owner: { ...ADMIN_DESIGN_EXAMPLE.owner, kind: 'staff' } },
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async copy(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) id: string,
+    @Body() body: DuplicateDesignDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.designs.duplicate(staff(actor), id, body.title, true);
+    res.setHeader('ETag', designEtag(row));
+    return this.adminView(actor, row);
   }
 
   @Post('designs')
@@ -637,7 +675,7 @@ export class AdminDesignsController {
   })
   @ApiBody({ type: CreateDesignDto, examples: { default: { value: CREATE_DESIGN_EXAMPLE } } })
   @ApiEtag()
-  @ApiSuccess(201, { description: 'Design', type: DesignDocumentDto, example: DESIGN_EXAMPLE })
+  @ApiSuccess(201, { description: 'Design', type: AdminDesignDocumentDto, example: ADMIN_DESIGN_EXAMPLE })
   @ApiStandardErrors(
     'http.bad_request',
     'http.malformed_json',
@@ -653,7 +691,7 @@ export class AdminDesignsController {
   ) {
     const row = await this.designs.create(staff(actor), body);
     res.setHeader('ETag', designEtag(row));
-    return this.designs.view(row);
+    return this.adminView(actor, row);
   }
 
   @Put('designs/:designId')
@@ -662,12 +700,14 @@ export class AdminDesignsController {
   @ApiEndpoint({
     id: 'admin.designs.save',
     summary: 'Save a template design as a new version',
-    description: 'Only the staff author’s designs; `If-Match` required.',
+    description:
+      'Only my own designs (409 `designs.read_only` for another’s — copy it first with `admin.designs.copy`); ' +
+      '`If-Match` required.',
     implements: ['D-005'],
   })
   @ApiConcurrency()
   @ApiBody({ type: SaveDesignDto, examples: { default: { value: SAVE_EXAMPLE } } })
-  @ApiSuccess(200, { description: 'Saved', type: DesignDocumentDto, example: DESIGN_EXAMPLE })
+  @ApiSuccess(200, { description: 'Saved', type: AdminDesignDocumentDto, example: ADMIN_DESIGN_EXAMPLE })
   @ApiStandardErrors(
     'http.bad_request',
     'http.malformed_json',
@@ -675,6 +715,7 @@ export class AdminDesignsController {
     'validation.failed',
     'designs.document_too_large',
     'artwork.file_not_usable',
+    'designs.read_only',
   )
   async save(
     @CurrentActor() actor: Actor,
@@ -684,9 +725,22 @@ export class AdminDesignsController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const me = staff(actor);
+    if ((await this.designs.get(id)).ownerUserId !== me.userId) throw new DomainException('designs.read_only');
     const row = await this.designs.save(me, id, ifMatch, body, me.userId);
     res.setHeader('ETag', designEtag(row));
-    return this.designs.view(row);
+    return this.adminView(actor, row);
+  }
+
+  private async adminView(actor: Actor, row: DesignRow): Promise<AdminDesignDocumentDto> {
+    return {
+      ...(await this.designs.view(row)),
+      owner: {
+        id: row.owner.publicId,
+        displayName: row.owner.displayName,
+        kind: row.owner.kind === 'customer' ? 'customer' : 'staff',
+      },
+      editable: actor.type === 'user' && row.ownerUserId === actor.userId,
+    };
   }
 
   @Post('catalog/semi-design-templates/:templateId/actions/set-design')
@@ -714,6 +768,25 @@ export class AdminDesignsController {
     @Body() body: SetTemplateDesignDto,
   ) {
     await this.designs.setTemplateDesign(staff(actor), templateId, body.designId);
+  }
+
+  @Get('orders/:orderId/drawings')
+  @Can('artwork.read')
+  @ApiParam({ name: 'orderId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.designs.listOrderDrawings',
+    summary: 'List the dieline drawings of an order',
+    description: 'Newest first, with status, format and the drawn file (D-070).',
+    implements: ['D-070'],
+  })
+  @ApiSuccess(200, {
+    description: 'Drawings',
+    type: [DrawingJobDto],
+    example: [{ ...DRAWING_EXAMPLE, orderId: DESIGN_IDS.order }],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async orderDrawings(@Param('orderId', ParseUUIDPipe) orderId: string): Promise<DrawingJobDto[]> {
+    return (await this.drawings.forOrder(orderId)).map(drawingDto);
   }
 
   @Post('orders/:orderId/drawings')
