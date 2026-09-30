@@ -179,20 +179,22 @@ enum CancelReasonAppliesTo {
 /// One per customer user (`users.kind = customer`), created on first use. `customer_code` is assigned
 /// from the `customer` series when the customer first orders or CS creates the account (Q-2).
 model CustomerProfile {
-  userId           BigInt          @id(map: "pk_customer_profiles") @map("user_id")
-  customerCode     String?         @unique(map: "ux_customer_profiles__customer_code") @map("customer_code")
-  customerType     CustomerType    @default(individual) @map("customer_type")
+  userId             BigInt          @id(map: "pk_customer_profiles") @map("user_id")
+  customerCode       String?         @unique(map: "ux_customer_profiles__customer_code") @map("customer_code")
+  customerType       CustomerType    @default(individual) @map("customer_type")
   /// UTM / channel of the first touch (D-102 acquisition); no PII.
-  firstTouch       Json?           @map("first_touch")
-  createdVia       CreationChannel @map("created_via")
+  firstTouch         Json?           @map("first_touch")
+  createdVia         CreationChannel @map("created_via")
   /// Shared by the customer to invite others (D-136); generated on first use.
-  referralCode     String?         @unique(map: "ux_customer_profiles__referral_code") @map("referral_code")
-  referredByUserId BigInt?         @map("referred_by_user_id")
-  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById      BigInt?         @map("created_by")
-  updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById      BigInt?         @map("updated_by")
-  rowVersion       Int             @default(1) @map("row_version")
+  referralCode       String?         @unique(map: "ux_customer_profiles__referral_code") @map("referral_code")
+  referredByUserId   BigInt?         @map("referred_by_user_id")
+  /// When the customer first saved their profile (U-B0.1): the storefront stops prompting for it.
+  profileCompletedAt DateTime?       @map("profile_completed_at") @db.Timestamptz(6)
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById        BigInt?         @map("created_by")
+  updatedAt          DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById        BigInt?         @map("updated_by")
+  rowVersion         Int             @default(1) @map("row_version")
 
   user       User  @relation("CustomerProfileUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__user_id")
   createdBy  User? @relation("CustomerProfileCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_profiles__created_by")

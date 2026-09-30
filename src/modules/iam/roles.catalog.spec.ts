@@ -5,7 +5,7 @@ describe('IAM catalogues (D-140, D-141)', () => {
   const byKey = new Map(ROLES.map((role) => [role.key, role]));
   const permission = new Map<string, (typeof PERMISSIONS)[number]>(PERMISSIONS.map((p) => [p.key, p]));
 
-  it('has exactly the roles of D-140', () => {
+  it('has exactly the roles of D-140 (+ the Data Protection Officer of D-222)', () => {
     expect(ROLES.map((r) => r.key).sort()).toEqual(
       [
         'superadmin',
@@ -22,6 +22,7 @@ describe('IAM catalogues (D-140, D-141)', () => {
         'marketing',
         'partner_manager',
         'auditor',
+        'dpo',
         'factory_owner',
         'factory_planner',
         'factory_operator',

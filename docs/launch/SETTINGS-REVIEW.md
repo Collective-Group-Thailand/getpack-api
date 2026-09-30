@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**67 settings** — 36 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 10 defined without a value (not set until their owner sets them).
+**69 settings** — 38 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 10 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -61,6 +61,8 @@
 | `payouts.retention_pct` | `5` | confirmed | superadmin | D-022 | D-022 default retention held from the factory balance payout |
 | `payouts.retention_release_days` | `30` | confirmed | superadmin | D-164, D-022 | D-164 days after the claim window closes until the retention is released |
 | `pricing.margin_floor_pct` | `10` | confirmed | superadmin | D-012, D-063 | D-012 margin floor: reassignment, discounts and promotions never go below it |
+| `privacy.export_link_days` | `7` | confirmed | superadmin | D-222 | D-222 days a PDPA data export stays downloadable after the Data Protection Officer completes it |
+| `privacy.response_days` | `30` | confirmed | superadmin | D-222 | D-222 calendar days to answer a PDPA data-subject request (export or deletion); ⚖ legal counsel may adjust |
 | `production.factory_acceptance_sla_business_days` | `1` | confirmed | superadmin | D-074 | D-074 time a factory has to accept a released job (business days) |
 | `promotions.code_attempt_limits` | `{"perCustomerPerHour":10,"perIpPerHour":30,"perDevicePerHour":10}` | proposed | superadmin | D-053 | D-053 abuse control: coupon code attempts allowed per customer, IP and device each hour |
 | `qc.inspection_sampling` | `{"fullInspectionFromValue":"300000.00","sampledBandFromValue":"100000.00","sampledBandRatePct":"20","trialFactoryJobs":3,"trialFactoryRatePct":"100","highDefectRateThresholdPct":"3","highDefectWindowDays":90,"highDefectRatePct":"50","specialFinishOrFoodUpliftPp":"20","isoInspectionLevel":"II","aql":{"critical":"0","major":"2.5","minor":"4.0"}}` | confirmed | superadmin | D-076 | D-076 Packio risk-based inspection sampling (ISO 2859-1) |

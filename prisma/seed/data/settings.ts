@@ -727,6 +727,26 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-160', 'D-044'],
   },
 
+  // --- PDPA requests (U-B0.1, D-222): Superadmin (D-063).
+  {
+    key: 'privacy.response_days',
+    valueType: 'integer',
+    value: 30,
+    valueSchema: { minimum: 1, maximum: 90 },
+    description: 'D-222 calendar days to answer a PDPA data-subject request (export or deletion); ⚖ legal counsel may adjust',
+    decisions: ['D-222'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'privacy.export_link_days',
+    valueType: 'integer',
+    value: 7,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description: 'D-222 days a PDPA data export stays downloadable after the Data Protection Officer completes it',
+    decisions: ['D-222'],
+    ownerRole: 'superadmin',
+  },
+
   // --- Support (U-B0.1, D-221): owned by the CS Lead.
   {
     key: 'storefront.support_channels',

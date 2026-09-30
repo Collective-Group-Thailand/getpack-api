@@ -177,6 +177,17 @@
           "type": "https://errors.packio/auth.forbidden"
         }
       },
+      "problem.auth.identity_last_method": {
+        "summary": "auth.identity_last_method",
+        "value": {
+          "code": "auth.identity_last_method",
+          "detail": "นี่คือช่องทางเข้าสู่ระบบเดียวของคุณ กรุณาเชื่อมช่องทางอื่นก่อนยกเลิก",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เป็นช่องทางเข้าสู่ระบบสุดท้าย",
+          "type": "https://errors.packio/auth.identity_last_method"
+        }
+      },
       "problem.auth.identity_linked_elsewhere": {
         "summary": "auth.identity_linked_elsewhere",
         "value": {
@@ -186,6 +197,17 @@
           "status": 409,
           "title": "บัญชีนี้ผูกกับผู้ใช้อื่นแล้ว",
           "type": "https://errors.packio/auth.identity_linked_elsewhere"
+        }
+      },
+      "problem.auth.identity_not_unlinkable": {
+        "summary": "auth.identity_not_unlinkable",
+        "value": {
+          "code": "auth.identity_not_unlinkable",
+          "detail": "ไม่สามารถยกเลิกการเชื่อมเบอร์โทรศัพท์ของบัญชีได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยกเลิกช่องทางนี้ไม่ได้",
+          "type": "https://errors.packio/auth.identity_not_unlinkable"
         }
       },
       "problem.auth.identity_token_invalid": {
@@ -2067,6 +2089,39 @@
           "status": 503,
           "title": "ยังไม่ได้ตั้งอัตราภาษีมูลค่าเพิ่ม",
           "type": "https://errors.packio/pricing.vat_rate_missing"
+        }
+      },
+      "problem.privacy.deletion_blocked": {
+        "summary": "privacy.deletion_blocked",
+        "value": {
+          "code": "privacy.deletion_blocked",
+          "detail": "บัญชียังมี {open} ที่ต้องดำเนินการให้เสร็จก่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังลบข้อมูลไม่ได้",
+          "type": "https://errors.packio/privacy.deletion_blocked"
+        }
+      },
+      "problem.privacy.request_closed": {
+        "summary": "privacy.request_closed",
+        "value": {
+          "code": "privacy.request_closed",
+          "detail": "คำขอนี้ได้รับการตอบแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "คำขอได้รับการตอบแล้ว",
+          "type": "https://errors.packio/privacy.request_closed"
+        }
+      },
+      "problem.privacy.request_open": {
+        "summary": "privacy.request_open",
+        "value": {
+          "code": "privacy.request_open",
+          "detail": "คุณมีคำขอประเภทนี้ที่ยังดำเนินการอยู่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีคำขออยู่แล้ว",
+          "type": "https://errors.packio/privacy.request_open"
         }
       },
       "problem.production.already_released": {
@@ -4572,6 +4627,15 @@
               "null"
             ]
           },
+          "profileCompletedAt": {
+            "description": "When I first saved my profile; null → the storefront asks for it (the customer type defaults to individual)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "status": {
             "description": "Account status",
             "example": "active",
@@ -4588,6 +4652,7 @@
           "email",
           "phone",
           "createdVia",
+          "profileCompletedAt",
           "createdAt",
           "status",
           "lastLoginAt"
@@ -5538,6 +5603,108 @@
           "openAmount",
           "instalments",
           "overrideReason"
+        ],
+        "type": "object"
+      },
+      "AdminPrivacyRequestDto": {
+        "properties": {
+          "answer": {
+            "description": "The Data Protection Officer's answer",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customer": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "decidedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dueAt": {
+            "description": "`privacy.response_days` after the request",
+            "example": "2026-10-31T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "export": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrivacyExportDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A completed export while it can still be downloaded (`privacy.export_link_days`)"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f100",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrivacyRequestKind"
+              }
+            ],
+            "example": "export"
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overdue": {
+            "example": false,
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrivacyRequestStatus"
+              }
+            ],
+            "example": "completed"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "note",
+          "answer",
+          "requestedAt",
+          "dueAt",
+          "decidedAt",
+          "export",
+          "customer",
+          "decidedBy",
+          "overdue"
         ],
         "type": "object"
       },
@@ -12967,6 +13134,19 @@
         ],
         "type": "string"
       },
+      "CompletePrivacyRequestDto": {
+        "properties": {
+          "answer": {
+            "example": "ส่งไฟล์ข้อมูลของคุณแล้ว",
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "CompleteRefundDto": {
         "properties": {
           "providerRef": {
@@ -16652,6 +16832,30 @@
         ],
         "type": "object"
       },
+      "CreatePrivacyRequestDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrivacyRequestKind"
+              }
+            ],
+            "example": "export"
+          },
+          "note": {
+            "example": null,
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
       "CreateProductCategoryDto": {
         "properties": {
           "code": {
@@ -18915,6 +19119,15 @@
               "string",
               "null"
             ]
+          },
+          "profileCompletedAt": {
+            "description": "When I first saved my profile; null → the storefront asks for it (the customer type defaults to individual)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -18927,6 +19140,7 @@
           "email",
           "phone",
           "createdVia",
+          "profileCompletedAt",
           "createdAt"
         ],
         "type": "object"
@@ -34329,6 +34543,123 @@
         ],
         "type": "object"
       },
+      "PrivacyExportDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-10-08T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "Download it with `store.files.download`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f101",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "PrivacyRequestDto": {
+        "properties": {
+          "answer": {
+            "description": "The Data Protection Officer's answer",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueAt": {
+            "description": "`privacy.response_days` after the request",
+            "example": "2026-10-31T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "export": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrivacyExportDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A completed export while it can still be downloaded (`privacy.export_link_days`)"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f100",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrivacyRequestKind"
+              }
+            ],
+            "example": "export"
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requestedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrivacyRequestStatus"
+              }
+            ],
+            "example": "completed"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "note",
+          "answer",
+          "requestedAt",
+          "dueAt",
+          "decidedAt",
+          "export"
+        ],
+        "type": "object"
+      },
+      "PrivacyRequestKind": {
+        "enum": [
+          "export",
+          "deletion"
+        ],
+        "type": "string"
+      },
+      "PrivacyRequestStatus": {
+        "enum": [
+          "submitted",
+          "completed",
+          "rejected"
+        ],
+        "type": "string"
+      },
       "ProblemDetails": {
         "properties": {
           "attemptsRemaining": {
@@ -38170,6 +38501,20 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "RejectPrivacyRequestDto": {
+        "properties": {
+          "answer": {
+            "example": "ไม่สามารถยืนยันตัวตนได้",
+            "maxLength": 2000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer"
         ],
         "type": "object"
       },
@@ -128681,6 +129026,7 @@
                       "lastLoginAt": null,
                       "lastName": "ทดสอบ",
                       "phone": "+66810001234",
+                      "profileCompletedAt": "2026-10-01T10:05:00+07:00",
                       "status": "active"
                     }
                   ],
@@ -128887,6 +129233,7 @@
                     "lastLoginAt": null,
                     "lastName": "ทดสอบ",
                     "phone": "+66810001234",
+                    "profileCompletedAt": "2026-10-01T10:05:00+07:00",
                     "status": "active"
                   }
                 },
@@ -128928,6 +129275,7 @@
                     "lastLoginAt": null,
                     "lastName": "ทดสอบ",
                     "phone": "+66810001234",
+                    "profileCompletedAt": "2026-10-01T10:05:00+07:00",
                     "status": "active"
                   }
                 },
@@ -129147,6 +129495,7 @@
                   "lastLoginAt": null,
                   "lastName": "ทดสอบ",
                   "phone": "+66810001234",
+                  "profileCompletedAt": "2026-10-01T10:05:00+07:00",
                   "status": "active"
                 },
                 "schema": {
@@ -188358,6 +188707,809 @@
         ],
         "x-required-permissions": [
           "price_suggestions.read"
+        ]
+      }
+    },
+    "/v1/admin/privacy-requests": {
+      "get": {
+        "description": "Oldest due first; `overdue` once `dueAt` has passed (D-222).\n\nImplements: D-222.",
+        "operationId": "admin.privacyRequests.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PrivacyRequestStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "answer": "ส่งไฟล์ข้อมูลของคุณแล้ว",
+                      "customer": {
+                        "displayName": "Somchai Test",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c001"
+                      },
+                      "decidedAt": "2026-10-01T11:00:00+07:00",
+                      "decidedBy": {
+                        "displayName": "Dev DPO",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e801"
+                      },
+                      "dueAt": "2026-10-31T10:00:00+07:00",
+                      "export": {
+                        "expiresAt": "2026-10-08T11:00:00+07:00",
+                        "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f101"
+                      },
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f100",
+                      "kind": "export",
+                      "note": null,
+                      "overdue": false,
+                      "requestedAt": "2026-10-01T10:00:00+07:00",
+                      "status": "completed"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminPrivacyRequestDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List PDPA requests",
+        "tags": [
+          "admin.privacyRequests"
+        ],
+        "x-required-permissions": [
+          "privacy_requests.manage"
+        ]
+      }
+    },
+    "/v1/admin/privacy-requests/{requestId}/actions/complete": {
+      "post": {
+        "description": "An export builds a JSON file of the customer’s own data (profile, sign-ins, addresses, tax profiles, consents, orders, quotes, RFQs — never costs or margins) that the customer can download for `privacy.export_link_days`. A deletion anonymises the customer (irreversible): refused with 409 `privacy.deletion_blocked` while orders, claims or receivables are open. Audited (D-222).\n\nImplements: D-222.",
+        "operationId": "admin.privacyRequests.complete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "answer": "ส่งไฟล์ข้อมูลของคุณแล้ว"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CompletePrivacyRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "answer": "ส่งไฟล์ข้อมูลของคุณแล้ว",
+                  "customer": {
+                    "displayName": "Somchai Test",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c001"
+                  },
+                  "decidedAt": "2026-10-01T11:00:00+07:00",
+                  "decidedBy": {
+                    "displayName": "Dev DPO",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e801"
+                  },
+                  "dueAt": "2026-10-31T10:00:00+07:00",
+                  "export": {
+                    "expiresAt": "2026-10-08T11:00:00+07:00",
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f101"
+                  },
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f100",
+                  "kind": "export",
+                  "note": null,
+                  "overdue": false,
+                  "requestedAt": "2026-10-01T10:00:00+07:00",
+                  "status": "completed"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPrivacyRequestDto"
+                }
+              }
+            },
+            "description": "Completed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "privacy.deletion_blocked": {
+                    "$ref": "#/components/examples/problem.privacy.deletion_blocked"
+                  },
+                  "privacy.request_closed": {
+                    "$ref": "#/components/examples/problem.privacy.request_closed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `privacy.deletion_blocked`, `privacy.request_closed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Complete a PDPA request",
+        "tags": [
+          "admin.privacyRequests"
+        ],
+        "x-required-permissions": [
+          "privacy_requests.manage"
+        ]
+      }
+    },
+    "/v1/admin/privacy-requests/{requestId}/actions/reject": {
+      "post": {
+        "description": "For example when the requester could not be verified; the answer is shown to the customer (D-222).\n\nImplements: D-222.",
+        "operationId": "admin.privacyRequests.reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "answer": "ไม่สามารถยืนยันตัวตนได้"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RejectPrivacyRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "answer": "ส่งไฟล์ข้อมูลของคุณแล้ว",
+                  "customer": {
+                    "displayName": "Somchai Test",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c001"
+                  },
+                  "decidedAt": "2026-10-01T11:00:00+07:00",
+                  "decidedBy": {
+                    "displayName": "Dev DPO",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e801"
+                  },
+                  "dueAt": "2026-10-31T10:00:00+07:00",
+                  "export": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f100",
+                  "kind": "export",
+                  "note": null,
+                  "overdue": false,
+                  "requestedAt": "2026-10-01T10:00:00+07:00",
+                  "status": "rejected"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPrivacyRequestDto"
+                }
+              }
+            },
+            "description": "Rejected",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "privacy.request_closed": {
+                    "$ref": "#/components/examples/problem.privacy.request_closed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `privacy.request_closed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Reject a PDPA request with the reason",
+        "tags": [
+          "admin.privacyRequests"
+        ],
+        "x-required-permissions": [
+          "privacy_requests.manage"
         ]
       }
     },
@@ -264198,7 +265350,8 @@
                   "firstName": "สมชาย",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "lastName": "ทดสอบ",
-                  "phone": "+66810001234"
+                  "phone": "+66810001234",
+                  "profileCompletedAt": "2026-10-01T10:05:00+07:00"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CustomerProfileDto"
@@ -264380,7 +265533,8 @@
                   "firstName": "สมชาย",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "lastName": "ทดสอบ",
-                  "phone": "+66810001234"
+                  "phone": "+66810001234",
+                  "profileCompletedAt": "2026-10-01T10:05:00+07:00"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CustomerProfileDto"
@@ -270243,6 +271397,222 @@
         ]
       }
     },
+    "/v1/store/me/identities/{provider}": {
+      "delete": {
+        "description": "Google, Apple or LINE. The account phone cannot be removed (409 `auth.identity_not_unlinkable`: it is the account’s key for OTP sign-in), nor the last method (409 `auth.identity_last_method`). Sessions opened with that method are signed out; audited (D-143).\n\nImplements: ADR-0004, D-143.",
+        "operationId": "store.me.unlinkIdentity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/IdentityProvider"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "displayName": "ลูกค้า ทดสอบ",
+                  "email": "customer.one@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                  "identities": [
+                    {
+                      "linkedAt": "2026-09-23T14:05:00+07:00",
+                      "provider": "phone_otp"
+                    }
+                  ],
+                  "locale": "th",
+                  "permissions": [],
+                  "phone": "+66810001234",
+                  "roles": [],
+                  "scopes": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreMeDto"
+                }
+              }
+            },
+            "description": "The customer",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.identity_last_method": {
+                    "$ref": "#/components/examples/problem.auth.identity_last_method"
+                  },
+                  "auth.identity_not_unlinkable": {
+                    "$ref": "#/components/examples/problem.auth.identity_not_unlinkable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.identity_last_method`, `auth.identity_not_unlinkable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove one of my sign-in methods",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
     "/v1/store/me/notification-preferences": {
       "get": {
         "description": "Unset = default on. Order and finance e-mails cannot be switched off (D-144).\n\nImplements: D-143, D-144.",
@@ -270600,6 +271970,410 @@
           }
         ],
         "summary": "Change my notification channel choices",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
+    "/v1/store/me/privacy-requests": {
+      "get": {
+        "description": "Export and deletion requests, newest first, with the answer of the Data Protection Officer and — for a completed export — the file to download while it is available (D-222).\n\nImplements: D-222.",
+        "operationId": "store.me.listPrivacyRequests",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "answer": "ส่งไฟล์ข้อมูลของคุณแล้ว",
+                    "decidedAt": "2026-10-01T11:00:00+07:00",
+                    "dueAt": "2026-10-31T10:00:00+07:00",
+                    "export": {
+                      "expiresAt": "2026-10-08T11:00:00+07:00",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f101"
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f100",
+                    "kind": "export",
+                    "note": null,
+                    "requestedAt": "2026-10-01T10:00:00+07:00",
+                    "status": "completed"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PrivacyRequestDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "My requests",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my PDPA requests",
+        "tags": [
+          "store.me"
+        ]
+      },
+      "post": {
+        "description": "Answered within `privacy.response_days` (30) by the Data Protection Officer (D-222). A deletion anonymises the account; it cannot be done while orders, claims or payments are still open, and tax and accounting documents are kept as the law requires. One open request per kind (409 `privacy.request_open`).\n\nImplements: D-222.",
+        "operationId": "store.me.createPrivacyRequest",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "kind": "export"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreatePrivacyRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "answer": null,
+                  "decidedAt": null,
+                  "dueAt": "2026-10-31T10:00:00+07:00",
+                  "export": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f100",
+                  "kind": "export",
+                  "note": null,
+                  "requestedAt": "2026-10-01T10:00:00+07:00",
+                  "status": "submitted"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyRequestDto"
+                }
+              }
+            },
+            "description": "Request received",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "privacy.request_open": {
+                    "$ref": "#/components/examples/problem.privacy.request_open"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `privacy.request_open`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Ask for an export or the deletion of my data",
         "tags": [
           "store.me"
         ]
@@ -289771,6 +291545,10 @@
     {
       "description": "Staff-only suggested buy prices with their basis and impact simulations — never shown to factories (D-040, D-044).",
       "name": "admin.priceSuggestions"
+    },
+    {
+      "description": "The Data Protection Officer answers PDPA export and deletion requests (D-222).",
+      "name": "admin.privacyRequests"
     },
     {
       "description": "Production jobs: automatic release (D-073), manual exceptions, acceptance SLA and escalations (D-074), reassignment within the margin floor (D-012, D-101).",

@@ -152,6 +152,10 @@ export interface SettingValues {
   };
   /** D-221 first-response target of a contact-form / hand-off conversation, in business days. */
   'support.first_response_business_days': number;
+  /** D-222 calendar days to answer a PDPA request. */
+  'privacy.response_days': number;
+  /** D-222 days a PDPA data export stays downloadable. */
+  'privacy.export_link_days': number;
 }
 
 export type SettingKey = keyof SettingValues;

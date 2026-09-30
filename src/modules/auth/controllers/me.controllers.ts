@@ -4,12 +4,15 @@ import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
+import { type LoginMethod } from '@generated/prisma/client';
 import { menuFor } from '@modules/iam/menu.catalog';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ScopeDirectory } from '@modules/iam/scope-directory';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Delete, Get, HttpCode, Param, Post } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { AuditService } from '@platform/audit/audit.service';
+import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';
 
 import { DevicePinDto } from '../auth.dto';
@@ -17,6 +20,7 @@ import { PasswordLoginService } from '../login/password-login.service';
 import {
   ADMIN_ME_EXAMPLE,
   AdminMeDto,
+  IDENTITY_PROVIDERS,
   PARTNER_ME_EXAMPLE,
   PartnerMeDto,
   STORE_ME_EXAMPLE,
@@ -45,13 +49,72 @@ async function baseOf(prisma: PrismaService, resolver: PermissionResolver, actor
   };
 }
 
+/** The sessions each sign-in identity opens (an unlinked identity's sessions are revoked). */
+const LOGIN_METHODS: Record<string, LoginMethod[]> = {
+  firebase_google: ['firebase_google'],
+  firebase_apple: ['firebase_apple'],
+  line: ['line', 'line_liff'],
+};
+
 @ApiSurface('store', 'me')
 @Controller('me')
 export class StoreMeController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly resolver: PermissionResolver,
+    private readonly audit: AuditService,
+    private readonly events: DomainEvents,
   ) {}
+
+  @Delete('identities/:provider')
+  @ApiParam({ name: 'provider', enum: IDENTITY_PROVIDERS, enumName: 'IdentityProvider' })
+  @ApiEndpoint({
+    id: 'store.me.unlinkIdentity',
+    summary: 'Remove one of my sign-in methods',
+    description:
+      'Google, Apple or LINE. The account phone cannot be removed (409 `auth.identity_not_unlinkable`: it is the ' +
+      'account’s key for OTP sign-in), nor the last method (409 `auth.identity_last_method`). Sessions opened with ' +
+      'that method are signed out; audited (D-143).',
+    implements: ['ADR-0004', 'D-143'],
+  })
+  @ApiSuccess(200, { description: 'The customer', type: StoreMeDto, example: STORE_ME_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'auth.identity_last_method', 'auth.identity_not_unlinkable')
+  async unlinkIdentity(@CurrentActor() actor: Actor, @Param('provider') provider: string): Promise<StoreMeDto> {
+    const me = userActor(actor);
+    if (!(IDENTITY_PROVIDERS as readonly string[]).includes(provider)) throw new DomainException('http.not_found');
+    if (provider === 'phone_otp') throw new DomainException('auth.identity_not_unlinkable');
+    await this.prisma.withTx(async (tx) => {
+      const live = await tx.userIdentity.findMany({ where: { userId: me.userId, unlinkedAt: null } });
+      const target = live.find((i) => i.provider === provider);
+      if (!target) throw new DomainException('http.not_found');
+      if (live.length === 1) throw new DomainException('auth.identity_last_method');
+      const now = new Date();
+      await tx.userIdentity.update({ where: { id: target.id }, data: { unlinkedAt: now } });
+      await tx.authSession.updateMany({
+        where: { userId: me.userId, revokedAt: null, loginMethod: { in: LOGIN_METHODS[provider] ?? [] } },
+        data: { revokedAt: now, revokeReason: 'logout' },
+      });
+      await this.audit.record(tx, {
+        category: 'security',
+        action: 'customer.identity_unlinked',
+        resourceType: 'user',
+        resourcePublicId: me.publicId,
+        data: { provider },
+        actor: me,
+      });
+      await this.events.record(
+        tx,
+        {
+          type: 'customer.identity_unlinked',
+          aggregateType: 'user',
+          aggregateId: me.publicId,
+          payload: { userId: me.publicId, provider },
+        },
+        me,
+      );
+    });
+    return this.get(actor);
+  }
 
   @Get()
   @ApiEndpoint({

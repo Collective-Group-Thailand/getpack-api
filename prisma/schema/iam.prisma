@@ -627,6 +627,9 @@ model User {
   reportRunsRequested    ReportRun[]      @relation("ReportRunRequestedBy")
   // --- end Reports B6.2
 
+  privacyRequests        PrivacyRequest[] @relation("PrivacyRequestUser")
+  privacyRequestsDecided PrivacyRequest[] @relation("PrivacyRequestDecidedBy")
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")
@@ -1015,4 +1018,50 @@ model ConsentRecord {
   @@index([purposeVersionId], map: "ix_consent_records__purpose_version_id")
   @@index([purposeId], map: "ix_consent_records__purpose_id")
   @@map("consent_records")
+}
+
+/// PDPA data-subject requests (D-222, schema-design A-55).
+enum PrivacyRequestKind {
+  export
+  deletion
+
+  @@map("privacy_request_kind")
+}
+
+enum PrivacyRequestStatus {
+  submitted
+  completed
+  rejected
+
+  @@map("privacy_request_status")
+}
+
+/// A customer's PDPA request (D-222): answered by the Data Protection Officer within `privacy.response_days`. An export
+/// is a JSON file of the customer's data, downloadable for `privacy.export_link_days`; a deletion anonymises the customer.
+model PrivacyRequest {
+  id              BigInt               @id(map: "pk_privacy_requests") @default(autoincrement())
+  publicId        String               @unique(map: "ux_privacy_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId          BigInt               @map("user_id")
+  kind            PrivacyRequestKind
+  status          PrivacyRequestStatus @default(submitted)
+  note            String?
+  answer          String?
+  dueAt           DateTime             @map("due_at") @db.Timestamptz(6)
+  exportFileId    BigInt?              @map("export_file_id")
+  exportExpiresAt DateTime?            @map("export_expires_at") @db.Timestamptz(6)
+  decidedById     BigInt?              @map("decided_by")
+  decidedAt       DateTime?            @map("decided_at") @db.Timestamptz(6)
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int                  @default(1) @map("row_version")
+
+  user       User        @relation("PrivacyRequestUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_privacy_requests__user_id")
+  exportFile FileObject? @relation("PrivacyRequestExportFile", fields: [exportFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_privacy_requests__export_file_id")
+  decidedBy  User?       @relation("PrivacyRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_privacy_requests__decided_by")
+
+  @@unique([userId, kind], map: "ux_privacy_requests__one_open", where: raw("(status = 'submitted'::privacy_request_status)"))
+  @@index([userId, createdAt(sort: Desc)], map: "ix_privacy_requests__user_id__created_at")
+  @@index([status, dueAt], map: "ix_privacy_requests__status__due_at")
+  @@index([exportFileId], map: "ix_privacy_requests__export_file_id")
+  @@map("privacy_requests")
 }

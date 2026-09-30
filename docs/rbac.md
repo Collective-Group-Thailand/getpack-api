@@ -9,150 +9,151 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 
 ## Packio staff (platform scope)
 
-| Permission | `superadmin` | `c_level` | `vp` | `director` | `admin` | `cs` | `cs_lead` | `prepress` | `finance` | `finance_manager` | `logistics` | `marketing` | `partner_manager` | `auditor` |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| `settings.read` — Read platform settings and their history | ● | ● | ● | ● | ● |  |  |  | ● | ● |  |  | ● | ● |
-| `settings.read_sensitive` — Read settings flagged sensitive | ◆ | ◆ |  |  |  |  |  |  |  | ◆ |  |  |  |  |
-| `settings.change` — Create a new effective-dated setting version (D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `feature_flags.read` — Read feature flags | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `feature_flags.manage` — Change feature flags | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `entities.manage` — Manage legal entities (D-092) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `calendars.read` — Read business calendars | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
-| `calendars.manage` — Key in public holidays and factory closures (D-161) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `consent_purposes.manage` — Manage consent purposes and their texts | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `approvals.read` — Read approval requests | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
-| `approvals.act` — Approve or reject requests routed to the role | ● | ● | ● | ● |  |  |  |  | ● | ● |  | ● | ● |  |
-| `approvals.delegate` — Delegate own approvals for a period | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
-| `approval_policies.manage` — Create approval policy versions (D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `users.read` — Read staff, partner and customer accounts | ● |  |  |  | ● |  |  |  |  |  |  |  |  | ● |
-| `users.manage` — Create, deactivate and edit accounts | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `roles.assign` — Grant and revoke roles (D-140) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `roles.manage` — Edit roles and their permissions (D-140) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `sod_rules.manage` — Edit segregation-of-duties rules | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `audit_logs.read` — Read the audit log | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
-| `audit_logs.export` — Export the audit log (itself audited) | ● |  |  |  |  |  |  |  |  | ● |  |  |  | ● |
-| `files.upload` — Upload files | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |
-| `files.read` — Download files of records the user can see | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
-| `notification_templates.manage` — Edit and publish notification templates | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `notification_routes.manage` — Edit the notification routing matrix (D-143) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `outbox.manage` — List dead-lettered domain events and replay them | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `catalog.read` — Read the platform catalogue in the admin zone | ● |  |  |  | ● | ● | ● | ● |  |  |  | ● | ● |  |
-| `catalog.manage` — Create and edit catalogue rows (product types, patterns, materials, stock products …) (D-005, D-100) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `catalog.import` — Import and export catalogue tables with Excel (preview → confirm) (D-005) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `cms.manage` — Edit banners, home sections, articles, FAQs and videos | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
-| `seo.manage` — Edit SEO meta per page | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
-| `geography.manage` — Maintain provinces, districts, subdistricts and postcodes (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `partners.read` — Read partner factories and their onboarding | ● | ● | ● |  | ● |  |  |  | ● | ● |  |  | ● | ● |
-| `partners.manage` — Create factories, run onboarding, capability, tiers, capacity and status changes (D-011, D-041, D-171) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
-| `partners.site_visits.record` — Record site visits of partner factories (D-041) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
-| `price_proposals.review` — Review price proposals, draft platform rate cards and decide lines (D-040, D-042) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
-| `price_suggestions.read` — See staff-only price suggestions, benchmarks and impact simulations (D-040, D-044) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  | ◆ |  |
-| `index_series.manage` — Maintain material and cost-driver index series (D-040) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
-| `agreements.manage` — Publish partner agreement texts (D-011) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
-| `zones.manage` — Maintain zone schemes, zones and postcodes (D-013) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |
-| `vendor_bank_accounts.verify` — Record the verification call of a vendor bank-account change (D-033) | ● |  |  |  |  |  |  |  | ● |  |  |  |  |  |
-| `factory_cost.read` — See full factory buy prices and costs (D-141, D-044) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |
-| `margin.read` — See margins in amounts and percent (D-141) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |
-| `margin.read_pct_when_discounting` — See the resulting margin % while applying a discount (D-141, D-052) | ◆ |  |  |  |  | ◆ | ◆ |  |  |  |  |  |  |  |
-| `quotes.calculate` — Price a configuration for a customer in the admin zone (CS calculator) (D-100, D-043) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● |  |
-| `quotes.read` — Read saved quotations (D-051) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
-| `quotes.manage` — Save quotations for a customer, share them and issue their PDF (D-051) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `rfqs.read` — Read requests for quote and their conversation (D-100) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● | ● |
-| `rfqs.manage` — Work requests for quote: assign, ask for information, consult factories, quote, decline (D-100, D-043, D-102) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `document_series.read` — Read document numbering series (D-092) | ● |  |  |  | ● |  |  |  | ● | ● |  |  |  | ● |
-| `document_series.manage` — Create document numbering series (D-092, D-169) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| `shipping_rates.read` — Read the customer shipping rate card and its versions (D-013) | ● | ● |  |  | ● | ● | ● |  | ● | ● | ● |  | ● | ● |
-| `shipping_rates.manage` — Draft customer shipping rate-card versions and submit them for C-Level approval (D-013) | ● |  |  |  | ● |  |  |  |  |  | ● |  |  |  |
-| `factory_shipping_rates.manage` — Draft factory shipping payout cards, send them to the factory and answer counters (D-013, D-042, D-141) | ◆ |  |  |  |  |  |  |  |  |  |  |  | ◆ |  |
-| `carriers.read` — Read fallback carriers and Packio’s carrier accounts | ● | ● |  |  | ● |  |  |  |  |  | ● |  | ● | ● |
-| `carriers.manage` — Enable or disable fallback carriers and register Packio’s carrier accounts (D-114, D-005) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `sell_margins.manage` — Maintain Packio's sell margins, fix costs and design fees (effective-dated) (D-063) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |
-| `customers.read` — Find customers and read their profile, addresses and tax profiles (D-092) | ● |  |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
-| `customers.manage` — Create customer accounts and keep their addresses and tax profiles (CS) (D-092) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `carts.manage_on_behalf` — Build a cart for a customer and check it out on their behalf (CS) (D-051) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `orders.read` — Read order groups, orders and their queues (D-060) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  | ● |
-| `orders.cancel` — Cancel order groups or orders before production, with a reason (D-060) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `orders.manage` — CS operations on orders: change customer, remarks, cc e-mails, PO number, notes (D-125) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `orders.reprice` — Edit & re-price an order before production (D-051) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
-| `payment_schedules.override` — Choose or replace the payment schedule of an order group, with a reason (D-020) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |
-| `payment_schedule_templates.manage` — Add effective-dated versions of payment schedule templates (D-020, D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| `payments.read` — Read payments, slips and unidentified receipts (D-061) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
-| `payments.verify_slip` — Approve or reject slips that failed automatic verification (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `payments.allocate` — Attach unidentified receipts to order groups (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `refunds.request` — Request refunds (approved by the Finance Manager, maker-checker) (D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |
-| `refunds.complete` — Record that an approved refund was paid out (bank transfer) (D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `promotions.read` — Read campaigns, promotions, coupon codes and the redemption report (D-053, D-154) | ● | ● |  |  | ● |  | ● |  |  | ● |  | ● |  | ● |
-| `promotions.manage` — Create, edit, activate and end promotions; generate, disable and export coupon codes (D-053) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
-| `campaigns.manage` — Create campaigns, set their THB budget, activate, pause and end them (D-154) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
-| `loyalty.read` — Read customers’ points, tiers and points history (D-130, D-134) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  | ● |  | ● |
-| `loyalty.adjust` — Add or remove a customer’s points with a reason (audited) (D-131, D-132) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |
-| `reviews.moderate` — Hide or re-publish order reviews (D-135) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |
-| `companies.read` — Read B2B companies, their members, branches and KYC documents (D-120, D-125) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |
-| `companies.manage` — Suspend, reactivate or close B2B companies (D-120) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
-| `companies.kyc_review` — Verify company KYC documents and approve or reject applications (D-120) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |
-| `company_credit.manage` — Request B2B credit limits and terms (approved by Finance / C-Level) (D-121) | ● |  |  |  | ● |  | ● |  | ● | ● |  |  |  |  |
-| `discount_memos.request` — Give CS discounts within the limit and raise discount memos above it (D-052, D-124) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |
-| `discount_memos.read` — Read discount memos and where they were used (D-052) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |  |  |  | ● |
-| `artwork.read` — Read artwork submissions, preflight reports, proofs and design services of orders (D-070, D-071) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  | ● |
-| `artwork.submit_on_behalf` — Upload artwork for a customer’s order (D-070) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  |  |
-| `prepress.review` — Accept or reject submissions, send proofs and templates, answer proof annotations (D-070) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |
-| `proofs.decide_on_behalf` — Approve a proof or request changes for the customer, with a reason (audited) (D-070, D-073) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |
-| `design_services.manage` — Assign designers, deliver design rounds and re-quote structure or concept changes (D-071) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |
-| `mockups.manage` — Add a paid mockup / physical proof to an order at a CS-quoted price (audited) (D-072) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
-| `drawings.generate` — Generate dieline drawings and send templates to customers (D-070) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  |  |
-| `production.read` — Read production jobs, milestones, QC, inspections and factory scorecards (D-073, D-155) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |
-| `production.start_manual` — Start production as an exception, with a reason (audited) (D-073) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `production.manage` — Reassign jobs to another factory, hold and resume jobs, resolve escalations (D-012, D-074, D-101) | ● |  |  |  | ● |  | ● |  |  |  |  |  | ● |  |
-| `milestone_routes.manage` — Edit milestone routes per product type as new versions (D-075) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |
-| `inspections.perform` — Carry out Packio inspections and record their results (D-076) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |
-| `shipments.read` — Read shipments, carrier events, proofs of delivery and delivery reconciliations (D-013, D-080) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |
-| `conversations.read` — Read the CS inbox: LINE and web conversations (D-151) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `conversations.reply` — Reply to customers, assign and close conversations (D-151) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |
-| `line.manage` — Register the LINE official account rich menus (D-151) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |
-| `claims.read` — Read claims, their evidence and resolutions (D-082) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |
-| `claims.manage` — Open, review, ask for information, send to the factory, decide and close claims (D-082, D-083) | ● |  |  |  | ● | ● | ● |  |  |  |  |  | ● |  |
-| `claims.override_liability` — Override the liability rule of a claim with a reason (D-083) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
-| `claims.resolve` — Resolve approved claims: re-production, refund request, credit, deductions (D-083, D-022) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |
-| `shipments.manage` — Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments (D-013, D-114) | ● |  |  |  | ● |  | ● |  |  |  | ● |  |  |  |
-| `ledger.read` — Read the chart of accounts, periods, journals with their lines, posting rules and tax rates (D-031) | ● | ● | ● |  |  |  |  |  | ● | ● |  |  |  | ● |
-| `ledger.journals.manage` — Draft and submit manual, recurring and reversing journals (approved by another person, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `ledger.periods.manage` — Soft-close, reopen, close and lock fiscal periods (§1.4, §7) (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| `ledger.post_soft_closed` — Post into a soft-closed period (§1.4) (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| `ledger.config.propose` — Propose chart-of-accounts changes, posting-rule and tax-rate versions and cost centres (maker-checker, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `receivables.read` — Read customer documents, receivables and aging, 50 ทวิ certificates, credit balances and statements (D-010, D-033) | ● | ● |  |  |  | ● | ● |  | ● | ● |  |  |  | ● |
-| `receivables.manage` — Void invoices / debit notes, record or waive 50 ทวิ, update the allowance for doubtful accounts (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `credit_notes.request` — Request credit notes (issued after a Finance Manager approves, §8) (D-033, D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |
-| `receivables.write_off.request` — Request bad-debt write-offs (approved by a Finance Manager, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `receivables.debit_notes.issue` — Issue debit notes (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| `payables.read` — Read POs, goods receipts, billing statements, vendor invoices, payables, vendors and payout runs (D-022, D-090) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
-| `payables.manage` — Capture and validate factory tax invoices (input VAT only with a valid document, §2) (D-090) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `payables.vendors.manage` — Create non-factory vendors and propose their bank accounts (dual approval, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `payables.bills.record` — Record vendor bills (the recorder cannot change that vendor’s bank account, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `payouts.manage` — Create, propose and cancel payout runs (approved by a C-Level other than the proposer, D-166) (D-022, D-166) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `payouts.execute` — Generate the bank file of an approved run and record the bank’s confirmation (D-093) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `banking.read` — Read company bank accounts, statement lines, unidentified receipts and the cash position (D-061, D-093) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
-| `banking.manage` — Import statements and settlements, match, ignore and identify statement lines (D-061, D-093) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `banking.accounts.propose` — Propose company bank accounts (approved by Finance then Finance Manager, §8) (D-093, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `tax.read` — Read tax reports, working papers, WHT registers and the tax calendar (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
-| `tax.manage` — Generate and finalise tax reports (GL difference must be 0) and record filings (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `tax.pay` — Record VAT and withholding-tax payments to the Revenue Department (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| `fixed_assets.read` — Read asset categories, the fixed-asset register, depreciation and roll-forward (D-150) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
-| `fixed_assets.manage` — Manage asset categories, register assets and run the monthly depreciation (D-150) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `fixed_assets.dispose` — Dispose of or write off fixed assets (D-150) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| `close.read` — Read close checklists, their checks and evidence (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
-| `close.manage` — Open close checklists, run checks, complete tasks, attach evidence and submit for review (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
-| `close.approve` — Waive close tasks, approve and close a month (not the submitter), return it, lock it (D-033, D-169) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
-| `audit_support.read` — Read the §8 exception reports and audit samples (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |
-| `audit_support.sample` — Draw audit samples (D-033) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |
-| `audit_support.export` — Generate and download the prepared-by-client pack of a month (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  | ● |
-| `close.audit_sign_off` — Sign off a closed month as the auditor (required to lock the fiscal year end) (D-033) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |
-| `analytics.read` — Read the demand & growth dashboards: traffic, funnel, demand, sales, sensitivity, unmet demand, campaigns (D-102) | ● | ● | ● | ● | ● |  |  |  |  |  |  | ● | ● |  |
-| `analytics.read_factories` — Read factory utilisation and on-time performance by named factory (staff-only) (D-102, D-044) | ● | ● | ● | ● |  |  |  |  |  |  |  |  | ● |  |
-| `analytics.manage` — Queue analytics rollup backfills and read their runs (D-102) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
-| `analytics.prospectus` — Generate and download the aggregated, anonymised partner prospectus (D-102, D-044, D-160) | ● | ● | ● |  |  |  |  |  |  |  |  |  | ● |  |
-| `reports.export` — Export operational reports as XLSX / CSV and download report files (each report also needs its data permission) (D-111) | ● | ● | ● | ● | ● |  | ● |  | ● | ● | ● | ● | ● | ● |
-| `reports.schedule` — Schedule operational reports for staff recipients and see every run of the reports the user may read (D-111) | ● | ● | ● | ● | ● |  | ● |  | ● | ● |  | ● | ● |  |
-| `ops.read` — Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches) (D-113) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |
+| Permission | `superadmin` | `c_level` | `vp` | `director` | `admin` | `cs` | `cs_lead` | `prepress` | `finance` | `finance_manager` | `logistics` | `marketing` | `partner_manager` | `auditor` | `dpo` |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| `settings.read` — Read platform settings and their history | ● | ● | ● | ● | ● |  |  |  | ● | ● |  |  | ● | ● |  |
+| `settings.read_sensitive` — Read settings flagged sensitive | ◆ | ◆ |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |
+| `settings.change` — Create a new effective-dated setting version (D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `feature_flags.read` — Read feature flags | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `feature_flags.manage` — Change feature flags | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `entities.manage` — Manage legal entities (D-092) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `calendars.read` — Read business calendars | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |
+| `calendars.manage` — Key in public holidays and factory closures (D-161) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `consent_purposes.manage` — Manage consent purposes and their texts | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `approvals.read` — Read approval requests | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
+| `approvals.act` — Approve or reject requests routed to the role | ● | ● | ● | ● |  |  |  |  | ● | ● |  | ● | ● |  |  |
+| `approvals.delegate` — Delegate own approvals for a period | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |
+| `approval_policies.manage` — Create approval policy versions (D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `users.read` — Read staff, partner and customer accounts | ● |  |  |  | ● |  |  |  |  |  |  |  |  | ● |  |
+| `users.manage` — Create, deactivate and edit accounts | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `roles.assign` — Grant and revoke roles (D-140) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `roles.manage` — Edit roles and their permissions (D-140) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `sod_rules.manage` — Edit segregation-of-duties rules | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `audit_logs.read` — Read the audit log | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |  |
+| `audit_logs.export` — Export the audit log (itself audited) | ● |  |  |  |  |  |  |  |  | ● |  |  |  | ● |  |
+| `files.upload` — Upload files | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |
+| `files.read` — Download files of records the user can see | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
+| `notification_templates.manage` — Edit and publish notification templates | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `notification_routes.manage` — Edit the notification routing matrix (D-143) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `outbox.manage` — List dead-lettered domain events and replay them | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `catalog.read` — Read the platform catalogue in the admin zone | ● |  |  |  | ● | ● | ● | ● |  |  |  | ● | ● |  |  |
+| `catalog.manage` — Create and edit catalogue rows (product types, patterns, materials, stock products …) (D-005, D-100) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `catalog.import` — Import and export catalogue tables with Excel (preview → confirm) (D-005) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `cms.manage` — Edit banners, home sections, articles, FAQs and videos | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `seo.manage` — Edit SEO meta per page | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `geography.manage` — Maintain provinces, districts, subdistricts and postcodes (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `partners.read` — Read partner factories and their onboarding | ● | ● | ● |  | ● |  |  |  | ● | ● |  |  | ● | ● |  |
+| `partners.manage` — Create factories, run onboarding, capability, tiers, capacity and status changes (D-011, D-041, D-171) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `partners.site_visits.record` — Record site visits of partner factories (D-041) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `price_proposals.review` — Review price proposals, draft platform rate cards and decide lines (D-040, D-042) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `price_suggestions.read` — See staff-only price suggestions, benchmarks and impact simulations (D-040, D-044) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  | ◆ |  |  |
+| `index_series.manage` — Maintain material and cost-driver index series (D-040) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `agreements.manage` — Publish partner agreement texts (D-011) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `zones.manage` — Maintain zone schemes, zones and postcodes (D-013) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `vendor_bank_accounts.verify` — Record the verification call of a vendor bank-account change (D-033) | ● |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |
+| `factory_cost.read` — See full factory buy prices and costs (D-141, D-044) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |  |
+| `margin.read` — See margins in amounts and percent (D-141) | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ | ◆ |  |  | ◆ |  |  |
+| `margin.read_pct_when_discounting` — See the resulting margin % while applying a discount (D-141, D-052) | ◆ |  |  |  |  | ◆ | ◆ |  |  |  |  |  |  |  |  |
+| `quotes.calculate` — Price a configuration for a customer in the admin zone (CS calculator) (D-100, D-043) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● |  |  |
+| `quotes.read` — Read saved quotations (D-051) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |  |
+| `quotes.manage` — Save quotations for a customer, share them and issue their PDF (D-051) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `rfqs.read` — Read requests for quote and their conversation (D-100) | ● | ● |  |  | ● | ● | ● |  |  |  |  |  | ● | ● |  |
+| `rfqs.manage` — Work requests for quote: assign, ask for information, consult factories, quote, decline (D-100, D-043, D-102) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `document_series.read` — Read document numbering series (D-092) | ● |  |  |  | ● |  |  |  | ● | ● |  |  |  | ● |  |
+| `document_series.manage` — Create document numbering series (D-092, D-169) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |
+| `shipping_rates.read` — Read the customer shipping rate card and its versions (D-013) | ● | ● |  |  | ● | ● | ● |  | ● | ● | ● |  | ● | ● |  |
+| `shipping_rates.manage` — Draft customer shipping rate-card versions and submit them for C-Level approval (D-013) | ● |  |  |  | ● |  |  |  |  |  | ● |  |  |  |  |
+| `factory_shipping_rates.manage` — Draft factory shipping payout cards, send them to the factory and answer counters (D-013, D-042, D-141) | ◆ |  |  |  |  |  |  |  |  |  |  |  | ◆ |  |  |
+| `carriers.read` — Read fallback carriers and Packio’s carrier accounts | ● | ● |  |  | ● |  |  |  |  |  | ● |  | ● | ● |  |
+| `carriers.manage` — Enable or disable fallback carriers and register Packio’s carrier accounts (D-114, D-005) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `sell_margins.manage` — Maintain Packio's sell margins, fix costs and design fees (effective-dated) (D-063) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `customers.read` — Find customers and read their profile, addresses and tax profiles (D-092) | ● |  |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● | ● |
+| `privacy_requests.manage` — Answer customers' PDPA requests: export their data or anonymise them (D-222) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  | ● |
+| `customers.manage` — Create customer accounts and keep their addresses and tax profiles (CS) (D-092) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `carts.manage_on_behalf` — Build a cart for a customer and check it out on their behalf (CS) (D-051) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `orders.read` — Read order groups, orders and their queues (D-060) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  |  | ● |  |
+| `orders.cancel` — Cancel order groups or orders before production, with a reason (D-060) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `orders.manage` — CS operations on orders: change customer, remarks, cc e-mails, PO number, notes (D-125) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `orders.reprice` — Edit & re-price an order before production (D-051) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
+| `payment_schedules.override` — Choose or replace the payment schedule of an order group, with a reason (D-020) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |  |
+| `payment_schedule_templates.manage` — Add effective-dated versions of payment schedule templates (D-020, D-063) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| `payments.read` — Read payments, slips and unidentified receipts (D-061) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |  |
+| `payments.verify_slip` — Approve or reject slips that failed automatic verification (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `payments.allocate` — Attach unidentified receipts to order groups (D-061) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `refunds.request` — Request refunds (approved by the Finance Manager, maker-checker) (D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |  |
+| `refunds.complete` — Record that an approved refund was paid out (bank transfer) (D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `promotions.read` — Read campaigns, promotions, coupon codes and the redemption report (D-053, D-154) | ● | ● |  |  | ● |  | ● |  |  | ● |  | ● |  | ● |  |
+| `promotions.manage` — Create, edit, activate and end promotions; generate, disable and export coupon codes (D-053) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `campaigns.manage` — Create campaigns, set their THB budget, activate, pause and end them (D-154) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `loyalty.read` — Read customers’ points, tiers and points history (D-130, D-134) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  | ● |  | ● |  |
+| `loyalty.adjust` — Add or remove a customer’s points with a reason (audited) (D-131, D-132) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |  |
+| `reviews.moderate` — Hide or re-publish order reviews (D-135) | ● |  |  |  | ● |  | ● |  |  |  |  | ● |  |  |  |
+| `companies.read` — Read B2B companies, their members, branches and KYC documents (D-120, D-125) | ● | ● |  |  | ● | ● | ● |  | ● | ● |  |  |  | ● |  |
+| `companies.manage` — Suspend, reactivate or close B2B companies (D-120) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
+| `companies.kyc_review` — Verify company KYC documents and approve or reject applications (D-120) | ● |  |  |  | ● |  | ● |  |  | ● |  |  |  |  |  |
+| `company_credit.manage` — Request B2B credit limits and terms (approved by Finance / C-Level) (D-121) | ● |  |  |  | ● |  | ● |  | ● | ● |  |  |  |  |  |
+| `discount_memos.request` — Give CS discounts within the limit and raise discount memos above it (D-052, D-124) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |  |
+| `discount_memos.read` — Read discount memos and where they were used (D-052) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |  |  |  | ● |  |
+| `artwork.read` — Read artwork submissions, preflight reports, proofs and design services of orders (D-070, D-071) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  | ● |  |
+| `artwork.submit_on_behalf` — Upload artwork for a customer’s order (D-070) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  |  |  |
+| `prepress.review` — Accept or reject submissions, send proofs and templates, answer proof annotations (D-070) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |  |
+| `proofs.decide_on_behalf` — Approve a proof or request changes for the customer, with a reason (audited) (D-070, D-073) | ● |  |  |  |  | ● | ● |  |  |  |  |  |  |  |  |
+| `design_services.manage` — Assign designers, deliver design rounds and re-quote structure or concept changes (D-071) | ● |  |  |  | ● |  |  | ● |  |  |  |  |  |  |  |
+| `mockups.manage` — Add a paid mockup / physical proof to an order at a CS-quoted price (audited) (D-072) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
+| `drawings.generate` — Generate dieline drawings and send templates to customers (D-070) | ● |  |  |  | ● | ● | ● | ● |  |  |  |  |  |  |  |
+| `production.read` — Read production jobs, milestones, QC, inspections and factory scorecards (D-073, D-155) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● | ● |  |
+| `production.start_manual` — Start production as an exception, with a reason (audited) (D-073) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `production.manage` — Reassign jobs to another factory, hold and resume jobs, resolve escalations (D-012, D-074, D-101) | ● |  |  |  | ● |  | ● |  |  |  |  |  | ● |  |  |
+| `milestone_routes.manage` — Edit milestone routes per product type as new versions (D-075) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |  |
+| `inspections.perform` — Carry out Packio inspections and record their results (D-076) | ● |  |  |  | ● |  |  |  |  |  |  |  | ● |  |  |
+| `shipments.read` — Read shipments, carrier events, proofs of delivery and delivery reconciliations (D-013, D-080) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |  |
+| `conversations.read` — Read the CS inbox: LINE and web conversations (D-151) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `conversations.reply` — Reply to customers, assign and close conversations (D-151) | ● |  |  |  | ● | ● | ● |  |  |  |  |  |  |  |  |
+| `line.manage` — Register the LINE official account rich menus (D-151) | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `claims.read` — Read claims, their evidence and resolutions (D-082) | ● | ● | ● | ● | ● | ● | ● |  | ● | ● | ● |  | ● | ● |  |
+| `claims.manage` — Open, review, ask for information, send to the factory, decide and close claims (D-082, D-083) | ● |  |  |  | ● | ● | ● |  |  |  |  |  | ● |  |  |
+| `claims.override_liability` — Override the liability rule of a claim with a reason (D-083) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
+| `claims.resolve` — Resolve approved claims: re-production, refund request, credit, deductions (D-083, D-022) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |
+| `shipments.manage` — Book fallback carriers, correct shipment statuses, record proofs of delivery and cancel shipments (D-013, D-114) | ● |  |  |  | ● |  | ● |  |  |  | ● |  |  |  |  |
+| `ledger.read` — Read the chart of accounts, periods, journals with their lines, posting rules and tax rates (D-031) | ● | ● | ● |  |  |  |  |  | ● | ● |  |  |  | ● |  |
+| `ledger.journals.manage` — Draft and submit manual, recurring and reversing journals (approved by another person, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `ledger.periods.manage` — Soft-close, reopen, close and lock fiscal periods (§1.4, §7) (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |
+| `ledger.post_soft_closed` — Post into a soft-closed period (§1.4) (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |
+| `ledger.config.propose` — Propose chart-of-accounts changes, posting-rule and tax-rate versions and cost centres (maker-checker, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `receivables.read` — Read customer documents, receivables and aging, 50 ทวิ certificates, credit balances and statements (D-010, D-033) | ● | ● |  |  |  | ● | ● |  | ● | ● |  |  |  | ● |  |
+| `receivables.manage` — Void invoices / debit notes, record or waive 50 ทวิ, update the allowance for doubtful accounts (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `credit_notes.request` — Request credit notes (issued after a Finance Manager approves, §8) (D-033, D-169) | ● |  |  |  |  |  | ● |  | ● | ● |  |  |  |  |  |
+| `receivables.write_off.request` — Request bad-debt write-offs (approved by a Finance Manager, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `receivables.debit_notes.issue` — Issue debit notes (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |
+| `payables.read` — Read POs, goods receipts, billing statements, vendor invoices, payables, vendors and payout runs (D-022, D-090) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |  |
+| `payables.manage` — Capture and validate factory tax invoices (input VAT only with a valid document, §2) (D-090) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `payables.vendors.manage` — Create non-factory vendors and propose their bank accounts (dual approval, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `payables.bills.record` — Record vendor bills (the recorder cannot change that vendor’s bank account, §8) (D-033, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `payouts.manage` — Create, propose and cancel payout runs (approved by a C-Level other than the proposer, D-166) (D-022, D-166) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `payouts.execute` — Generate the bank file of an approved run and record the bank’s confirmation (D-093) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `banking.read` — Read company bank accounts, statement lines, unidentified receipts and the cash position (D-061, D-093) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |  |
+| `banking.manage` — Import statements and settlements, match, ignore and identify statement lines (D-061, D-093) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `banking.accounts.propose` — Propose company bank accounts (approved by Finance then Finance Manager, §8) (D-093, D-169) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `tax.read` — Read tax reports, working papers, WHT registers and the tax calendar (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |  |
+| `tax.manage` — Generate and finalise tax reports (GL difference must be 0) and record filings (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `tax.pay` — Record VAT and withholding-tax payments to the Revenue Department (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |
+| `fixed_assets.read` — Read asset categories, the fixed-asset register, depreciation and roll-forward (D-150) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |  |
+| `fixed_assets.manage` — Manage asset categories, register assets and run the monthly depreciation (D-150) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `fixed_assets.dispose` — Dispose of or write off fixed assets (D-150) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |
+| `close.read` — Read close checklists, their checks and evidence (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |  |
+| `close.manage` — Open close checklists, run checks, complete tasks, attach evidence and submit for review (D-033) | ● |  |  |  |  |  |  |  | ● | ● |  |  |  |  |  |
+| `close.approve` — Waive close tasks, approve and close a month (not the submitter), return it, lock it (D-033, D-169) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |
+| `audit_support.read` — Read the §8 exception reports and audit samples (D-033) | ● | ● |  |  |  |  |  |  | ● | ● |  |  |  | ● |  |
+| `audit_support.sample` — Draw audit samples (D-033) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `audit_support.export` — Generate and download the prepared-by-client pack of a month (D-033) | ● |  |  |  |  |  |  |  |  | ● |  |  |  | ● |  |
+| `close.audit_sign_off` — Sign off a closed month as the auditor (required to lock the fiscal year end) (D-033) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `analytics.read` — Read the demand & growth dashboards: traffic, funnel, demand, sales, sensitivity, unmet demand, campaigns (D-102) | ● | ● | ● | ● | ● |  |  |  |  |  |  | ● | ● |  |  |
+| `analytics.read_factories` — Read factory utilisation and on-time performance by named factory (staff-only) (D-102, D-044) | ● | ● | ● | ● |  |  |  |  |  |  |  |  | ● |  |  |
+| `analytics.manage` — Queue analytics rollup backfills and read their runs (D-102) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
+| `analytics.prospectus` — Generate and download the aggregated, anonymised partner prospectus (D-102, D-044, D-160) | ● | ● | ● |  |  |  |  |  |  |  |  |  | ● |  |  |
+| `reports.export` — Export operational reports as XLSX / CSV and download report files (each report also needs its data permission) (D-111) | ● | ● | ● | ● | ● |  | ● |  | ● | ● | ● | ● | ● | ● |  |
+| `reports.schedule` — Schedule operational reports for staff recipients and see every run of the reports the user may read (D-111) | ● | ● | ● | ● | ● |  | ● |  | ● | ● |  | ● | ● |  |  |
+| `ops.read` — Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches) (D-113) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|
@@ -170,6 +171,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `marketing` | ฝ่ายการตลาด | Marketing |
 | `partner_manager` | ผู้จัดการพันธมิตร | Partner Manager |
 | `auditor` | ผู้ตรวจสอบบัญชี | Auditor (read-only) |
+| `dpo` | เจ้าหน้าที่คุ้มครองข้อมูลส่วนบุคคล | Data Protection Officer |
 
 ## Partner factory (factory scope)
 

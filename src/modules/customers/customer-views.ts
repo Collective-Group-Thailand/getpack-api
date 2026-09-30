@@ -65,6 +65,9 @@ export function customerProfileDto(row: CustomerRow): CustomerProfileDto {
     email: row.email,
     phone: row.phone,
     createdVia: row.customerProfile?.createdVia ?? 'self',
+    profileCompletedAt: row.customerProfile?.profileCompletedAt
+      ? toBangkokIso(row.customerProfile.profileCompletedAt)
+      : null,
     createdAt: toBangkokIso(row.createdAt),
   };
 }

@@ -32,6 +32,8 @@ export const ERROR_CODES = {
   'auth.otp_rate_limited': HttpStatus.TOO_MANY_REQUESTS,
   'auth.identity_token_invalid': HttpStatus.UNAUTHORIZED,
   'auth.identity_linked_elsewhere': HttpStatus.CONFLICT,
+  'auth.identity_last_method': HttpStatus.CONFLICT,
+  'auth.identity_not_unlinkable': HttpStatus.CONFLICT,
   'auth.invalid_client': HttpStatus.UNAUTHORIZED,
   'auth.pin_invalid': HttpStatus.UNAUTHORIZED,
   'provider.unavailable': HttpStatus.SERVICE_UNAVAILABLE,
@@ -279,6 +281,9 @@ export const ERROR_CODES = {
   'close.auditor_sign_off_required': HttpStatus.CONFLICT,
   'reports.recipient_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
   'reports.schedule_state': HttpStatus.CONFLICT,
+  'privacy.request_open': HttpStatus.CONFLICT,
+  'privacy.request_closed': HttpStatus.CONFLICT,
+  'privacy.deletion_blocked': HttpStatus.CONFLICT,
 } as const satisfies Record<string, HttpStatus>;
 
 export type ErrorCode = keyof typeof ERROR_CODES;

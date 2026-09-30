@@ -50,6 +50,7 @@ export const API_TAGS: Record<string, string> = {
   'admin.discountMemos':
     'Discounts above the CS limit, routed to the matching tier only; company discounts (D-052, D-124, D-162).',
   'admin.customers': 'CS finds or creates customers and keeps their addresses and tax profiles (D-092).',
+  'admin.privacyRequests': 'The Data Protection Officer answers PDPA export and deletion requests (D-222).',
   'store.quotes':
     'Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).',
   'store.savedQuotes':

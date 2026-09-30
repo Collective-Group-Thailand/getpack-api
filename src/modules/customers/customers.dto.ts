@@ -442,6 +442,15 @@ export class CustomerProfileDto {
   @ApiProperty({ enum: CREATION_CHANNELS, enumName: 'CreationChannel', example: 'self' })
   createdVia!: string;
 
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+    description: 'When I first saved my profile; null → the storefront asks for it (the customer type defaults to individual)',
+  })
+  profileCompletedAt!: string | null;
+
   @TimestampField()
   createdAt!: string;
 }
@@ -456,6 +465,7 @@ export const CUSTOMER_PROFILE_EXAMPLE: CustomerProfileDto = {
   email: 'somchai@example.com',
   phone: '+66810001234',
   createdVia: 'self',
+  profileCompletedAt: '2026-10-01T10:05:00+07:00',
   createdAt: '2026-10-01T10:00:00+07:00',
 };
 

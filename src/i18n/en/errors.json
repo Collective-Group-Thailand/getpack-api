@@ -109,6 +109,14 @@
     "pin_invalid": {
       "title": "Invalid PIN",
       "detail": "The device PIN is incorrect."
+    },
+    "identity_last_method": {
+      "title": "Last sign-in method",
+      "detail": "This is your only way to sign in; link another one before removing it."
+    },
+    "identity_not_unlinkable": {
+      "title": "Sign-in method cannot be removed",
+      "detail": "The phone number of the account cannot be unlinked."
     }
   },
   "validation": {
@@ -1201,6 +1209,20 @@
     "schedule_state": {
       "title": "Schedule already {status}",
       "detail": "The report schedule is already {status}."
+    }
+  },
+  "privacy": {
+    "request_open": {
+      "title": "Request already open",
+      "detail": "You already have an open request of this kind."
+    },
+    "request_closed": {
+      "title": "Request already answered",
+      "detail": "This request has already been answered."
+    },
+    "deletion_blocked": {
+      "title": "Data cannot be deleted yet",
+      "detail": "The account still has {open}; they must be finished first."
     }
   }
 }

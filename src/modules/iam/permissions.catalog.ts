@@ -286,6 +286,12 @@ export const PERMISSIONS = [
     decisionRefs: ['D-092'],
   },
   {
+    key: 'privacy_requests.manage',
+    audience: 'staff',
+    description: "Answer customers' PDPA requests: export their data or anonymise them",
+    decisionRefs: ['D-222'],
+  },
+  {
     key: 'customers.manage',
     audience: 'staff',
     description: 'Create customer accounts and keep their addresses and tax profiles (CS)',

@@ -568,6 +568,14 @@ export const ROLES: readonly RoleDefinition[] = [
       'shipments.read',
     ],
   },
+  {
+    key: 'dpo',
+    audience: 'staff',
+    scopeType: 'platform',
+    nameTh: 'เจ้าหน้าที่คุ้มครองข้อมูลส่วนบุคคล',
+    nameEn: 'Data Protection Officer',
+    permissions: [...EVERY_STAFF_MEMBER, 'privacy_requests.manage', 'customers.read'],
+  },
 
   // --- Partner factory (factory scope)
   {
