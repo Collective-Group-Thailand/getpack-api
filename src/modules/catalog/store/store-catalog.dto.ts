@@ -106,6 +106,23 @@ export class StoreOptionDto {
   @ApiProperty({ example: true })
   isDefault!: boolean;
 
+  @ApiProperty({ type: String, nullable: true, example: 'ผิวเรียบ พิมพ์สีสด', description: 'Admin-maintained; null until set' })
+  descriptionTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'Smooth surface, vivid print' })
+  descriptionEn!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: IMAGE_URL_EXAMPLE })
+  imageUrl!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Ink colours only: swatch hex (`#RRGGBB`); null until set',
+  })
+  swatchHex!: string | null;
+
   @ApiProperty({
     type: 'object',
     additionalProperties: true,

@@ -1,6 +1,8 @@
+import { DESIGN_OPTIONS } from '@modules/carts/carts.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { CALCULATOR_KEYS } from '../product-structure/product-structure.dto';
+import { PRODUCT_UNITS } from '../stock/stock.dto';
 import { StoreOptionGroupDto } from './store-catalog.dto';
 
 /** The configurator read of a calculator-backed product (U-B6; triage `store.configurator`). */
@@ -77,6 +79,15 @@ export class StoreConfiguratorPatternDto {
 
   @ApiProperty({ type: StoreSizeRulesDto })
   rules!: StoreSizeRulesDto;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Admin-maintained; null until set' })
+  descriptionTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  descriptionEn!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  imageUrl!: string | null;
 }
 
 export class StoreConfiguratorSizeDto {
@@ -97,6 +108,44 @@ export class StoreConfiguratorSizeDto {
 
   @ApiProperty({ example: 250, description: 'Unit: mm.' })
   heightMm!: number;
+}
+
+/**
+ * Quantity entry of the configurator: limits and presets are catalogue data kept by admins (null / empty until
+ * set, never invented); `maxTiers` is how many quantities one calculation prices.
+ */
+export class StoreConfiguratorQuantityDto {
+  @ApiProperty({ type: 'integer', nullable: true, example: 100 })
+  min!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 50000 })
+  max!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 1000 })
+  default!: number | null;
+
+  @ApiProperty({ type: [Number], example: [500, 1000, 3000], description: 'Suggested quantities, ascending' })
+  presets!: number[];
+
+  @ApiProperty({ type: 'integer', example: 10, description: 'Quantities one calculation prices' })
+  maxTiers!: number;
+}
+
+/**
+ * How the customer provides the artwork (chosen on the cart item). `hired_design` is priced by quoting with
+ * `design.graphic` (D-071); `free_design` only comes from a real promotion (D-181), so it is never offered here.
+ */
+export class StoreConfiguratorDesignDto {
+  @ApiProperty({
+    enum: DESIGN_OPTIONS,
+    enumName: 'DesignOption',
+    isArray: true,
+    example: ['own_file', 'online_designer', 'hired_design'],
+  })
+  options!: (typeof DESIGN_OPTIONS)[number][];
+
+  @ApiProperty({ enum: DESIGN_OPTIONS, enumName: 'DesignOption', example: 'own_file' })
+  default!: (typeof DESIGN_OPTIONS)[number];
 }
 
 export class StoreConfiguratorDto {
@@ -155,6 +204,15 @@ export class StoreConfiguratorDto {
 
   @ApiProperty({ example: 15, description: 'Days a saved price holds (D-051)' })
   quoteValidityDays!: number;
+
+  @ApiProperty({ enum: PRODUCT_UNITS, enumName: 'ProductUnit', example: 'piece', description: 'Sales unit of a quantity' })
+  unit!: (typeof PRODUCT_UNITS)[number];
+
+  @ApiProperty({ type: StoreConfiguratorQuantityDto })
+  quantity!: StoreConfiguratorQuantityDto;
+
+  @ApiProperty({ type: StoreConfiguratorDesignDto })
+  design!: StoreConfiguratorDesignDto;
 }
 
 export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
@@ -183,6 +241,9 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
         lengthMustExceedHeight: false,
         widthMustExceedHeight: true,
       },
+      descriptionTh: 'กล่องลูกฟูกทรงมาตรฐาน ฝาบนล่างชนกัน',
+      descriptionEn: 'Regular slotted carton, flaps meet in the middle',
+      imageUrl: null,
     },
   ],
   standardSizes: [
@@ -198,6 +259,10 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
           nameTh: 'กระดาษลัง KA125 ลอน B',
           nameEn: 'Kraft board KA125 B-flute',
           isDefault: true,
+          descriptionTh: null,
+          descriptionEn: null,
+          imageUrl: null,
+          swatchHex: null,
           attributes: { kind: 'corrugated_board', gsm: 450, flute: 'B', coatable: false },
         },
       ],
@@ -205,4 +270,7 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
   ],
   printAreas: ['top', 'side', 'top_side', 'all_round'],
   quoteValidityDays: 15,
+  unit: 'piece',
+  quantity: { min: 100, max: 50000, default: 1000, presets: [500, 1000, 3000], maxTiers: 10 },
+  design: { options: ['own_file', 'online_designer', 'hired_design'], default: 'own_file' },
 };

@@ -1,6 +1,7 @@
 import { toBangkokIso } from '@common/time/bangkok';
 import { type QuoteStepView } from '@modules/pricing/quotes/quote-engine.service';
 
+import { lineSummary } from './line-summary';
 import { type AdminSavedQuoteDto, type SavedQuoteDto, type SavedQuoteOptionDto } from './quotes.dto';
 import { type QuoteRow } from './saved-quotes.service';
 
@@ -18,6 +19,7 @@ function option(o: QuoteRow['options'][number]): SavedQuoteOptionDto {
     productAmount: r.productAmount ?? o.netAmount.toFixed(2),
     designFeeAmount: r.designFeeAmount ?? '0.00',
     structureDesignFeeAmount: r.structureDesignFeeAmount ?? '0.00',
+    toolingAmount: r.toolingAmount ?? null,
     shippingAmount: o.shippingAmount?.toFixed(2) ?? null,
     vatAmount: o.vatAmount.toFixed(2),
     netAmount: o.netAmount.toFixed(2),
@@ -41,6 +43,7 @@ export function quoteDto(q: QuoteRow, now = new Date()): SavedQuoteDto {
     status: q.status,
     source: q.source,
     productTypeCode: q.productType.code,
+    summary: lineSummary(q, q.options[0]?.unit ?? 'piece'),
     configuration: (q.source === 'instant'
       ? (input.configuration ?? null)
       : null) as SavedQuoteDto['configuration'],

@@ -6,6 +6,7 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma, type RfqStatus, type SalesChannel } from '@generated/prisma/client';
 import { canonical } from '@modules/catalog/imports/import-engine';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
+import { rfqSpecLines } from '@modules/quotes/line-summary';
 import { SavedQuotesService } from '@modules/quotes/saved-quotes.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
@@ -292,6 +293,15 @@ export class RfqsService implements OnModuleInit {
         };
       });
       const snapshotSha256 = sha256(JSON.stringify(canonical({ input, configRefs, options })));
+      const type = await tx.productType.findUniqueOrThrow({
+        where: { id: rfq.productTypeId },
+        select: { rfqSpecSchema: true },
+      });
+      const specSummary = rfqSpecLines(type.rfqSpecSchema, (rfq.spec ?? {}) as Record<string, unknown>, {
+        lengthMm: rfq.lengthMm === null ? null : Number(rfq.lengthMm),
+        widthMm: rfq.widthMm === null ? null : Number(rfq.widthMm),
+        heightMm: rfq.heightMm === null ? null : Number(rfq.heightMm),
+      });
       const saved = await tx.quote.create({
         data: {
           entityId: rfq.entityId,
@@ -302,6 +312,7 @@ export class RfqsService implements OnModuleInit {
           productTypeId: rfq.productTypeId,
           input: input,
           inputSchemaVersion: 1,
+          specSummary: specSummary as unknown as Prisma.InputJsonValue,
           calculatorVersion: 'manual',
           configRefs,
           status: 'saved',

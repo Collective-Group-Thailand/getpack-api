@@ -1,5 +1,6 @@
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
+import { lineSummary, SUMMARY_INCLUDE } from '@modules/quotes/line-summary';
 
 import { type AddressSnapshotDto } from '../carts/carts.dto';
 import {
@@ -12,6 +13,7 @@ import {
 
 export const ORDER_INCLUDE = {
   productType: true,
+  catalogProduct: SUMMARY_INCLUDE.catalogProduct,
   quote: true,
   selectedFactory: true,
   lines: { orderBy: { lineNo: 'asc' } },
@@ -80,6 +82,10 @@ export function orderDto(row: OrderRow): OrderDto {
     status: row.status,
     artworkStatus: row.artworkStatus,
     productTypeCode: row.productType.code,
+    summary: lineSummary(
+      { specSummary: row.quote.specSummary, productType: row.productType, catalogProduct: row.catalogProduct },
+      row.unit,
+    ),
     quoteId: row.quote.publicId,
     quantityOrdered: row.quantityOrdered,
     designOption: row.designOption,

@@ -532,6 +532,8 @@ model Quote {
   stockProductId     BigInt?      @map("stock_product_id")
   input              Json
   inputSchemaVersion Int          @map("input_schema_version") @db.SmallInt
+  /// Human-readable spec lines resolved when the quote was made (U-B0.1, schema-design A-51): catalogue names frozen like the price.
+  specSummary        Json?        @map("spec_summary")
   calculatorVersion  String       @map("calculator_version")
   configRefs         Json         @map("config_refs")
   status             QuoteStatus

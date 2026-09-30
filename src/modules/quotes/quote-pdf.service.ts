@@ -11,6 +11,7 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { FilesService } from '@platform/files/files.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
+import { type SpecLineDto } from './line-summary.dto';
 import { type QuoteDocument, renderQuoteDocument } from './quote-document';
 
 const PDF = 'application/pdf';
@@ -75,12 +76,15 @@ export class QuotePdfService {
       validUntil: bangkokDate(quote.validUntil),
       customerName: quote.customer?.displayName ?? null,
       productTypeName: `${quote.productType.nameTh} / ${quote.productType.nameEn}`,
-      specification: [
-        cfg.w && cfg.l ? `ขนาด ${cfg.w} × ${cfg.l}${cfg.d ? ` × ${cfg.d}` : ''} มม.` : null,
-        material ? `วัสดุ ${material.nameTh}` : null,
-      ]
-        .filter(Boolean)
-        .join(' · '),
+      // The spec lines the customer saw (U-B0.1); quotes made before them keep the size and material line.
+      specification: Array.isArray(quote.specSummary)
+        ? (quote.specSummary as unknown as SpecLineDto[]).map((l) => `${l.labelTh} ${l.valueTh}`).join(' · ')
+        : [
+            cfg.w && cfg.l ? `ขนาด ${cfg.w} × ${cfg.l}${cfg.d ? ` × ${cfg.d}` : ''} มม.` : null,
+            material ? `วัสดุ ${material.nameTh}` : null,
+          ]
+            .filter(Boolean)
+            .join(' · '),
       deliveryPostcode: quote.deliveryPostcode,
       lines: quote.options.map((o) => {
         const r = o.result as unknown as StepResult;

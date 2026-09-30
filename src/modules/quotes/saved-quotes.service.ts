@@ -5,9 +5,13 @@ import { sha256 } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
 import { MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { Prisma, type QuoteStatus, type SalesChannel } from '@generated/prisma/client';
+import { Prisma, type ProductUnit, type QuoteStatus, type SalesChannel } from '@generated/prisma/client';
 import { canonical } from '@modules/catalog/imports/import-engine';
-import { assertStoreRules, validateConfiguration } from '@modules/pricing/quotes/configurations';
+import {
+  assertStoreRules,
+  CALCULATOR_SALES_UNIT,
+  validateConfiguration,
+} from '@modules/pricing/quotes/configurations';
 import {
   QuoteEngineService,
   type QuoteStepView,
@@ -21,9 +25,14 @@ import { EntitiesService } from '@platform/entities/entities.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { type BoxConfiguration, boxSpecLines, SUMMARY_INCLUDE } from './line-summary';
+
+const BOX_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate']);
+
 export const QUOTE_INCLUDE = {
   options: { orderBy: { quantity: 'asc' } },
-  productType: { select: { code: true } },
+  productType: SUMMARY_INCLUDE.productType,
+  catalogProduct: SUMMARY_INCLUDE.catalogProduct,
   customer: { select: { publicId: true, displayName: true } },
   createdBy: { select: { publicId: true, displayName: true } },
   pdfFile: { select: { publicId: true } },
@@ -116,13 +125,18 @@ export class SavedQuotesService {
         'quotes.validity_days': String(validity.versionId),
       },
     };
-    const options = steps.map((s) => this.optionRow(s, factories, versions));
+    const unit = CALCULATOR_SALES_UNIT[type.calculatorKey] ?? 'piece';
+    const options = steps.map((s) => this.optionRow(s, factories, versions, unit));
     const snapshotSha256 = sha256(
       JSON.stringify(
         canonical({ input: snapshotInput, configRefs, calculatorVersion: view.calculatorVersion, options }),
       ),
     );
     const customerUserId = owner.kind === 'customer' ? owner.userId : (extra.customerUserId ?? null);
+    // Box calculators (folding, corrugate) share one configuration shape; others get their lines when ported.
+    const specSummary = BOX_CALCULATORS.has(type.calculatorKey)
+      ? await boxSpecLines(this.prisma, configuration as unknown as BoxConfiguration)
+      : null;
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {
@@ -136,6 +150,7 @@ export class SavedQuotesService {
           catalogProductId: await this.catalogProductId(configuration),
           input: snapshotInput as unknown as Prisma.InputJsonValue,
           inputSchemaVersion: 1,
+          specSummary: specSummary ? (specSummary as unknown as Prisma.InputJsonValue) : Prisma.DbNull,
           calculatorVersion: view.calculatorVersion,
           configRefs: configRefs,
           status: 'saved',
@@ -347,6 +362,7 @@ export class SavedQuotesService {
     s: QuoteStepView,
     factories: Map<string, bigint>,
     versions: Map<string, bigint>,
+    unit: ProductUnit,
   ): Omit<Prisma.QuoteOptionCreateManyQuoteInput, 'quoteId'> {
     const { internal, ...customer } = s;
     const gross = new MoneyDecimal(s.grossAmount!);
@@ -356,7 +372,7 @@ export class SavedQuotesService {
       : new MoneyDecimal(0);
     return {
       quantity: s.quantity,
-      unit: 'piece',
+      unit,
       result: customer,
       netAmount: gross.sub(vat).toFixed(2),
       discountAmount: '0.00',

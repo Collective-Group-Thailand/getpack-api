@@ -5036,6 +5036,14 @@
             "format": "date-time",
             "type": "string"
           },
+          "summary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LineSummaryDto"
+              }
+            ],
+            "description": "Product, product type, sales unit and spec lines to display (from the quote it was made from)"
+          },
           "toleranceOveragePct": {
             "example": "5.0000",
             "type": [
@@ -5061,6 +5069,7 @@
           "status",
           "artworkStatus",
           "productTypeCode",
+          "summary",
           "quoteId",
           "quantityOrdered",
           "designOption",
@@ -5985,6 +5994,14 @@
             ],
             "example": "saved"
           },
+          "summary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LineSummaryDto"
+              }
+            ],
+            "description": "Product, product type, sales unit and spec lines to display (frozen when the quote was made)"
+          },
           "validUntil": {
             "description": "Price lock ends (D-051)",
             "example": "2026-10-16T09:00:00+07:00",
@@ -5998,6 +6015,7 @@
           "status",
           "source",
           "productTypeCode",
+          "summary",
           "configuration",
           "deliveryPostcode",
           "validUntil",
@@ -6120,6 +6138,14 @@
               "null"
             ]
           },
+          "toolingAmount": {
+            "description": "Plates and die blocks included in `productAmount` (one-off charges, incl. VAT); null when the calculator does not split them out or for RFQ quotes",
+            "example": "1200.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping",
             "example": "13.38",
@@ -6138,6 +6164,7 @@
           "productAmount",
           "designFeeAmount",
           "structureDesignFeeAmount",
+          "toolingAmount",
           "shippingAmount",
           "vatAmount",
           "netAmount",
@@ -7901,6 +7928,22 @@
             "example": "side-glue",
             "type": "string"
           },
+          "descriptionEn": {
+            "description": "Storefront description (English)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "description": "Storefront description (Thai), shown in the configurator",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
             "format": "uuid",
@@ -7913,6 +7956,15 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
             "format": "uuid",
             "type": "string"
+          },
+          "imageFileId": {
+            "description": "Storefront image (an image file; served once scanned clean)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "isDoubleItem": {
             "description": "Indicative (calculator port)",
@@ -7971,7 +8023,10 @@
           "skipWaste",
           "autoAdd",
           "status",
-          "updatedAt"
+          "updatedAt",
+          "descriptionTh",
+          "descriptionEn",
+          "imageFileId"
         ],
         "type": "object"
       },
@@ -10358,6 +10413,14 @@
             ],
             "example": "instant"
           },
+          "summary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LineSummaryDto"
+              }
+            ],
+            "description": "Product, product type, sales unit and spec lines to display (from its quote)"
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping",
             "example": "13.38",
@@ -10371,6 +10434,7 @@
           "quoteCode",
           "source",
           "productTypeCode",
+          "summary",
           "quantity",
           "unitPrice",
           "productGrossAmount",
@@ -10781,6 +10845,42 @@
             "format": "uuid",
             "type": "string"
           },
+          "quantityDefault": {
+            "description": "Quantity preselected in the configurator",
+            "example": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityMax": {
+            "description": "Configurator maximum quantity; null = not set",
+            "example": 50000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityMin": {
+            "description": "Configurator minimum quantity; null = not set",
+            "example": 100,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityPresets": {
+            "description": "Suggested quantities (≤ 10, within min–max), ascending",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
           "seoPageId": {
             "example": null,
             "format": "uuid",
@@ -10839,6 +10939,10 @@
           "videoUrl",
           "seoPageId",
           "defaultDifficultyLevelId",
+          "quantityMin",
+          "quantityMax",
+          "quantityDefault",
+          "quantityPresets",
           "sort",
           "status",
           "patterns",
@@ -13077,7 +13181,6 @@
               "minimum": 1,
               "type": "number"
             },
-            "maxItems": 10,
             "minItems": 1,
             "type": "array"
           },
@@ -13879,8 +13982,30 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "format": "uuid",
             "type": [
               "string",
@@ -14271,6 +14396,48 @@
             "format": "uuid",
             "type": "string"
           },
+          "quantityDefault": {
+            "example": 1000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityMax": {
+            "example": 50000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityMin": {
+            "example": 100,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityPresets": {
+            "description": "Suggested quantities: up to 10 different values within min–max",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
           "seoPageId": {
             "example": null,
             "format": "uuid",
@@ -14547,8 +14714,30 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "format": "uuid",
             "type": [
               "string",
@@ -15020,6 +15209,20 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "finishKind": {
             "allOf": [
               {
@@ -15030,6 +15233,14 @@
           },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "format": "uuid",
             "type": [
               "string",
@@ -15499,8 +15710,30 @@
             ],
             "example": "process"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "format": "uuid",
             "type": [
               "string",
@@ -15519,6 +15752,15 @@
             ],
             "description": "`archived` replaces deletion (schema-design §1.6)",
             "example": "active"
+          },
+          "swatchHex": {
+            "description": "Swatch shown in the configurator (upper-case hex)",
+            "example": "#00A0E9",
+            "pattern": "^#[0-9A-F]{6}$",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -15632,6 +15874,20 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "familyId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
             "format": "uuid",
@@ -15654,6 +15910,14 @@
             "minimum": 0,
             "type": [
               "number",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "format": "uuid",
+            "type": [
+              "string",
               "null"
             ]
           },
@@ -15886,6 +16150,20 @@
             ],
             "example": null
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "dielineKey": {
             "example": "rte",
             "type": [
@@ -15903,6 +16181,14 @@
               }
             ],
             "example": "tuck_top"
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
@@ -17846,7 +18132,6 @@
               "minimum": 1,
               "type": "number"
             },
-            "maxItems": 10,
             "minItems": 1,
             "type": "array"
           },
@@ -19924,6 +20209,22 @@
             "example": "standard-diecut",
             "type": "string"
           },
+          "descriptionEn": {
+            "description": "Storefront description (English)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "description": "Storefront description (Thai), shown in the configurator",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
             "format": "uuid",
@@ -19936,6 +20237,15 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d008",
             "format": "uuid",
             "type": "string"
+          },
+          "imageFileId": {
+            "description": "Storefront image (an image file; served once scanned clean)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "nameEn": {
             "example": "Standard die-cut",
@@ -19966,7 +20276,10 @@
           "nameTh",
           "nameEn",
           "status",
-          "updatedAt"
+          "updatedAt",
+          "descriptionTh",
+          "descriptionEn",
+          "imageFileId"
         ],
         "type": "object"
       },
@@ -22456,6 +22769,22 @@
             "example": "matt-lamination",
             "type": "string"
           },
+          "descriptionEn": {
+            "description": "Storefront description (English)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "description": "Storefront description (Thai), shown in the configurator",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "finishKind": {
             "allOf": [
               {
@@ -22476,6 +22805,15 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d005",
             "format": "uuid",
             "type": "string"
+          },
+          "imageFileId": {
+            "description": "Storefront image (an image file; served once scanned clean)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "isSpecial": {
             "description": "Foil / emboss / window → +20 pp inspection (D-076)",
@@ -22528,7 +22866,10 @@
           "requiresWidth",
           "requiresLength",
           "status",
-          "updatedAt"
+          "updatedAt",
+          "descriptionTh",
+          "descriptionEn",
+          "imageFileId"
         ],
         "type": "object"
       },
@@ -23027,7 +23368,6 @@
               "minimum": 1,
               "type": "number"
             },
-            "maxItems": 10,
             "minItems": 1,
             "type": "array"
           },
@@ -24819,6 +25159,22 @@
             ],
             "example": "process"
           },
+          "descriptionEn": {
+            "description": "Storefront description (English)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "description": "Storefront description (Thai), shown in the configurator",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
             "format": "uuid",
@@ -24832,6 +25188,15 @@
             "format": "uuid",
             "type": "string"
           },
+          "imageFileId": {
+            "description": "Storefront image (an image file; served once scanned clean)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
             "example": "Cyan",
             "type": "string"
@@ -24843,6 +25208,14 @@
               }
             ],
             "example": "active"
+          },
+          "swatchHex": {
+            "description": "Swatch shown in the configurator (upper-case hex)",
+            "example": "#00A0E9",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "updatedAt": {
             "example": "2026-09-25T10:00:00+07:00",
@@ -24857,7 +25230,11 @@
           "name",
           "colourKind",
           "status",
-          "updatedAt"
+          "updatedAt",
+          "descriptionTh",
+          "descriptionEn",
+          "imageFileId",
+          "swatchHex"
         ],
         "type": "object"
       },
@@ -26377,6 +26754,88 @@
         },
         "type": "object"
       },
+      "LineProductDto": {
+        "properties": {
+          "imageUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameEn": {
+            "example": "Tuck-end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          },
+          "slug": {
+            "example": "tuck-end-box",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "nameTh",
+          "nameEn",
+          "imageUrl"
+        ],
+        "type": "object"
+      },
+      "LineSummaryDto": {
+        "properties": {
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LineProductDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for an RFQ quote or a type-level quote"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "productTypeNameEn": {
+            "example": "Folding carton",
+            "type": "string"
+          },
+          "productTypeNameTh": {
+            "example": "กล่องกระดาษแข็ง",
+            "type": "string"
+          },
+          "specs": {
+            "description": "Empty for quotes made before spec lines were recorded",
+            "items": {
+              "$ref": "#/components/schemas/SpecLineDto"
+            },
+            "type": "array"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductUnit"
+              }
+            ],
+            "description": "Sales unit",
+            "example": "piece"
+          }
+        },
+        "required": [
+          "product",
+          "productTypeCode",
+          "productTypeNameTh",
+          "productTypeNameEn",
+          "unit",
+          "specs"
+        ],
+        "type": "object"
+      },
       "LineWebhookAckDto": {
         "properties": {
           "ok": {
@@ -26665,6 +27124,22 @@
             "example": "art-card-350",
             "type": "string"
           },
+          "descriptionEn": {
+            "description": "Storefront description (English)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "description": "Storefront description (Thai), shown in the configurator",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "familyId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
             "format": "uuid",
@@ -26693,6 +27168,15 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d003",
             "format": "uuid",
             "type": "string"
+          },
+          "imageFileId": {
+            "description": "Storefront image (an image file; served once scanned clean)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "insideColour": {
             "example": "ขาว",
@@ -26781,7 +27265,10 @@
           "isFoodGrade",
           "coatable",
           "status",
-          "updatedAt"
+          "updatedAt",
+          "descriptionTh",
+          "descriptionEn",
+          "imageFileId"
         ],
         "type": "object"
       },
@@ -27968,6 +28455,14 @@
             "format": "date-time",
             "type": "string"
           },
+          "summary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LineSummaryDto"
+              }
+            ],
+            "description": "Product, product type, sales unit and spec lines to display (from the quote it was made from)"
+          },
           "toleranceOveragePct": {
             "example": "5.0000",
             "type": [
@@ -27993,6 +28488,7 @@
           "status",
           "artworkStatus",
           "productTypeCode",
+          "summary",
           "quoteId",
           "quantityOrdered",
           "designOption",
@@ -29604,6 +30100,22 @@
             "description": "Blank formula of the corrugate calculator; never together with `geometryFormula` (U-B6, A-49)",
             "example": null
           },
+          "descriptionEn": {
+            "description": "Storefront description (English)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "description": "Storefront description (Thai), shown in the configurator",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "dielineKey": {
             "example": "rte",
             "type": [
@@ -29638,6 +30150,15 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
             "format": "uuid",
             "type": "string"
+          },
+          "imageFileId": {
+            "description": "Storefront image (an image file; served once scanned clean)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
@@ -29690,7 +30211,10 @@
           "corrugateFormula",
           "fluteTypeIds",
           "status",
-          "updatedAt"
+          "updatedAt",
+          "descriptionTh",
+          "descriptionEn",
+          "imageFileId"
         ],
         "type": "object"
       },
@@ -33197,6 +33721,7 @@
         "type": "object"
       },
       "ProductUnit": {
+        "description": "Sales unit of a quantity",
         "enum": [
           "piece",
           "box",
@@ -39591,6 +40116,14 @@
             ],
             "example": "saved"
           },
+          "summary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LineSummaryDto"
+              }
+            ],
+            "description": "Product, product type, sales unit and spec lines to display (frozen when the quote was made)"
+          },
           "validUntil": {
             "description": "Price lock ends (D-051)",
             "example": "2026-10-16T09:00:00+07:00",
@@ -39604,6 +40137,7 @@
           "status",
           "source",
           "productTypeCode",
+          "summary",
           "configuration",
           "deliveryPostcode",
           "validUntil",
@@ -39712,6 +40246,14 @@
               "null"
             ]
           },
+          "toolingAmount": {
+            "description": "Plates and die blocks included in `productAmount` (one-off charges, incl. VAT); null when the calculator does not split them out or for RFQ quotes",
+            "example": "1200.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping",
             "example": "13.38",
@@ -39730,6 +40272,7 @@
           "productAmount",
           "designFeeAmount",
           "structureDesignFeeAmount",
+          "toolingAmount",
           "shippingAmount",
           "vatAmount",
           "netAmount",
@@ -42274,6 +42817,39 @@
         ],
         "type": "string"
       },
+      "SpecLineDto": {
+        "properties": {
+          "key": {
+            "description": "Stable key of the line (`style`, `size`, `material`, `print_front`, `print_back`, `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)",
+            "example": "material",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "Material",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "วัสดุ",
+            "type": "string"
+          },
+          "valueEn": {
+            "example": "Art card 350 gsm",
+            "type": "string"
+          },
+          "valueTh": {
+            "example": "อาร์ตการ์ด 350 แกรม",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "labelTh",
+          "labelEn",
+          "valueTh",
+          "valueEn"
+        ],
+        "type": "object"
+      },
       "SpecTitleDto": {
         "properties": {
           "code": {
@@ -44044,6 +44620,34 @@
         ],
         "type": "object"
       },
+      "StoreConfiguratorDesignDto": {
+        "properties": {
+          "default": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignOption"
+              }
+            ],
+            "example": "own_file"
+          },
+          "options": {
+            "example": [
+              "own_file",
+              "online_designer",
+              "hired_design"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/DesignOption"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "options",
+          "default"
+        ],
+        "type": "object"
+      },
       "StoreConfiguratorDto": {
         "properties": {
           "calculator": {
@@ -44059,6 +44663,9 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
             "format": "uuid",
             "type": "string"
+          },
+          "design": {
+            "$ref": "#/components/schemas/StoreConfiguratorDesignDto"
           },
           "difficultyLevelId": {
             "description": "The configuration’s `difficultyLevelId` (the product’s, not the customer’s choice)",
@@ -44104,6 +44711,9 @@
             "example": "corrugated",
             "type": "string"
           },
+          "quantity": {
+            "$ref": "#/components/schemas/StoreConfiguratorQuantityDto"
+          },
           "quoteValidityDays": {
             "description": "Days a saved price holds (D-051)",
             "example": 15,
@@ -44119,6 +44729,15 @@
               "$ref": "#/components/schemas/StoreConfiguratorSizeDto"
             },
             "type": "array"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductUnit"
+              }
+            ],
+            "description": "Sales unit of a quantity",
+            "example": "piece"
           }
         },
         "required": [
@@ -44132,7 +44751,10 @@
           "standardSizes",
           "optionGroups",
           "printAreas",
-          "quoteValidityDays"
+          "quoteValidityDays",
+          "unit",
+          "quantity",
+          "design"
         ],
         "type": "object"
       },
@@ -44165,6 +44787,21 @@
             "example": "RSC-01",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "description": "Admin-maintained; null until set",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "dielineKey": {
             "description": "Key for `@packio/dieline`",
             "example": "rsc",
@@ -44189,6 +44826,13 @@
             "format": "uuid",
             "type": "string"
           },
+          "imageUrl": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
             "example": "กล่องฝาชน",
             "type": "string"
@@ -44211,7 +44855,60 @@
           "dielineKey",
           "parts",
           "fluteTypeIds",
-          "rules"
+          "rules",
+          "descriptionTh",
+          "descriptionEn",
+          "imageUrl"
+        ],
+        "type": "object"
+      },
+      "StoreConfiguratorQuantityDto": {
+        "properties": {
+          "default": {
+            "example": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "max": {
+            "example": 50000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "maxTiers": {
+            "description": "Quantities one calculation prices",
+            "example": 10,
+            "type": "integer"
+          },
+          "min": {
+            "example": 100,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "presets": {
+            "description": "Suggested quantities, ascending",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "min",
+          "max",
+          "default",
+          "presets",
+          "maxTiers"
         ],
         "type": "object"
       },
@@ -44650,11 +45347,33 @@
             "example": "art-card-350",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "description": "Admin-maintained; null until set",
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "description": "Public id of the offered row: the id the quote configuration takes",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
             "format": "uuid",
             "type": "string"
+          },
+          "imageUrl": {
+            "example": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "isDefault": {
             "example": true,
@@ -44667,6 +45386,14 @@
           "nameTh": {
             "example": "อาร์ตการ์ด 350 แกรม",
             "type": "string"
+          },
+          "swatchHex": {
+            "description": "Ink colours only: swatch hex (`#RRGGBB`); null until set",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -44675,6 +45402,10 @@
           "nameTh",
           "nameEn",
           "isDefault",
+          "descriptionTh",
+          "descriptionEn",
+          "imageUrl",
+          "swatchHex",
           "attributes"
         ],
         "type": "object"
@@ -48126,8 +48857,30 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "format": "uuid",
             "type": [
               "string",
@@ -48484,6 +49237,48 @@
             "format": "uuid",
             "type": "string"
           },
+          "quantityDefault": {
+            "example": 1000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityMax": {
+            "example": 50000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityMin": {
+            "example": 100,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quantityPresets": {
+            "description": "Suggested quantities: up to 10 different values within min–max",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
           "seoPageId": {
             "example": null,
             "format": "uuid",
@@ -48641,8 +49436,30 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "format": "uuid",
             "type": [
               "string",
@@ -48978,6 +49795,20 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "finishKind": {
             "allOf": [
               {
@@ -48988,6 +49819,14 @@
           },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "format": "uuid",
             "type": [
               "string",
@@ -49348,8 +50187,30 @@
             ],
             "example": "process"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
             "format": "uuid",
             "type": [
               "string",
@@ -49368,6 +50229,15 @@
             ],
             "description": "`archived` replaces deletion (schema-design §1.6)",
             "example": "active"
+          },
+          "swatchHex": {
+            "description": "Swatch shown in the configurator (upper-case hex)",
+            "example": "#00A0E9",
+            "pattern": "^#[0-9A-F]{6}$",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "type": "object"
@@ -49434,6 +50304,20 @@
             "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
             "type": "string"
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "familyId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
             "format": "uuid",
@@ -49456,6 +50340,14 @@
             "minimum": 0,
             "type": [
               "number",
+              "null"
+            ]
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "format": "uuid",
+            "type": [
+              "string",
               "null"
             ]
           },
@@ -49781,6 +50673,20 @@
             ],
             "example": null
           },
+          "descriptionEn": {
+            "example": "Smooth surface, vivid print",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descriptionTh": {
+            "example": "ผิวเรียบ พิมพ์สีสด",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "dielineKey": {
             "example": "rte",
             "type": [
@@ -49798,6 +50704,14 @@
               }
             ],
             "example": "tuck_top"
+          },
+          "imageFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "name": {
             "example": "ฝาเสียบกลับด้าน",
@@ -64453,8 +65367,11 @@
                     {
                       "autoAdd": false,
                       "code": "side-glue",
+                      "descriptionEn": null,
+                      "descriptionTh": null,
                       "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
+                      "imageFileId": null,
                       "isDoubleItem": false,
                       "nameEn": "Side gluing",
                       "nameTh": "ปะกาวข้าง",
@@ -64659,8 +65576,11 @@
                 "example": {
                   "autoAdd": false,
                   "code": "side-glue",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
+                  "imageFileId": null,
                   "isDoubleItem": false,
                   "nameEn": "Side gluing",
                   "nameTh": "ปะกาวข้าง",
@@ -64885,8 +65805,11 @@
                 "example": {
                   "autoAdd": false,
                   "code": "side-glue",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
+                  "imageFileId": null,
                   "isDoubleItem": false,
                   "nameEn": "Side gluing",
                   "nameTh": "ปะกาวข้าง",
@@ -65103,8 +66026,11 @@
                 "example": {
                   "autoAdd": false,
                   "code": "side-glue",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d009",
+                  "imageFileId": null,
                   "isDoubleItem": false,
                   "nameEn": "Side gluing",
                   "nameTh": "ปะกาวข้าง",
@@ -66439,6 +67365,10 @@
                         }
                       ],
                       "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                      "quantityDefault": null,
+                      "quantityMax": null,
+                      "quantityMin": null,
+                      "quantityPresets": [],
                       "seoPageId": null,
                       "slug": "tuck-end-box",
                       "sort": 10,
@@ -66677,6 +67607,10 @@
                     }
                   ],
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -66933,6 +67867,10 @@
                     }
                   ],
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -67181,6 +68119,10 @@
                     }
                   ],
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -67515,6 +68457,10 @@
                     }
                   ],
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -67817,6 +68763,10 @@
                     }
                   ],
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -68111,6 +69061,10 @@
                     }
                   ],
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -68429,6 +69383,10 @@
                     }
                   ],
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -70661,8 +71619,11 @@
                   "data": [
                     {
                       "code": "standard-diecut",
+                      "descriptionEn": null,
+                      "descriptionTh": null,
                       "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d008",
+                      "imageFileId": null,
                       "nameEn": "Standard die-cut",
                       "nameTh": "ไดคัทมาตรฐาน",
                       "status": "active",
@@ -70861,8 +71822,11 @@
               "application/json": {
                 "example": {
                   "code": "standard-diecut",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d008",
+                  "imageFileId": null,
                   "nameEn": "Standard die-cut",
                   "nameTh": "ไดคัทมาตรฐาน",
                   "status": "active",
@@ -71081,8 +72045,11 @@
               "application/json": {
                 "example": {
                   "code": "standard-diecut",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d008",
+                  "imageFileId": null,
                   "nameEn": "Standard die-cut",
                   "nameTh": "ไดคัทมาตรฐาน",
                   "status": "active",
@@ -71293,8 +72260,11 @@
               "application/json": {
                 "example": {
                   "code": "standard-diecut",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d008",
+                  "imageFileId": null,
                   "nameEn": "Standard die-cut",
                   "nameTh": "ไดคัทมาตรฐาน",
                   "status": "active",
@@ -74717,9 +75687,12 @@
                   "data": [
                     {
                       "code": "matt-lamination",
+                      "descriptionEn": null,
+                      "descriptionTh": null,
                       "finishKind": "lamination",
                       "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d005",
+                      "imageFileId": null,
                       "isSpecial": false,
                       "nameEn": "Matt lamination",
                       "nameTh": "เคลือบด้าน",
@@ -74923,9 +75896,12 @@
               "application/json": {
                 "example": {
                   "code": "matt-lamination",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "finishKind": "lamination",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d005",
+                  "imageFileId": null,
                   "isSpecial": false,
                   "nameEn": "Matt lamination",
                   "nameTh": "เคลือบด้าน",
@@ -75148,9 +76124,12 @@
               "application/json": {
                 "example": {
                   "code": "matt-lamination",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "finishKind": "lamination",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d005",
+                  "imageFileId": null,
                   "isSpecial": false,
                   "nameEn": "Matt lamination",
                   "nameTh": "เคลือบด้าน",
@@ -75365,9 +76344,12 @@
               "application/json": {
                 "example": {
                   "code": "matt-lamination",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "finishKind": "lamination",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d005",
+                  "imageFileId": null,
                   "isSpecial": false,
                   "nameEn": "Matt lamination",
                   "nameTh": "เคลือบด้าน",
@@ -81656,10 +82638,14 @@
                     {
                       "code": "cmyk-c",
                       "colourKind": "process",
+                      "descriptionEn": null,
+                      "descriptionTh": null,
                       "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d007",
+                      "imageFileId": null,
                       "name": "Cyan",
                       "status": "active",
+                      "swatchHex": "#00A0E9",
                       "updatedAt": "2026-09-25T10:00:00+07:00"
                     }
                   ],
@@ -81856,10 +82842,14 @@
                 "example": {
                   "code": "cmyk-c",
                   "colourKind": "process",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d007",
+                  "imageFileId": null,
                   "name": "Cyan",
                   "status": "active",
+                  "swatchHex": "#00A0E9",
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
                 "schema": {
@@ -82076,10 +83066,14 @@
                 "example": {
                   "code": "cmyk-c",
                   "colourKind": "process",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d007",
+                  "imageFileId": null,
                   "name": "Cyan",
                   "status": "active",
+                  "swatchHex": "#00A0E9",
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
                 "schema": {
@@ -82288,10 +83282,14 @@
                 "example": {
                   "code": "cmyk-c",
                   "colourKind": "process",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-00000000d004",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d007",
+                  "imageFileId": null,
                   "name": "Cyan",
                   "status": "active",
+                  "swatchHex": "#00A0E9",
                   "updatedAt": "2026-09-25T10:00:00+07:00"
                 },
                 "schema": {
@@ -83593,10 +84591,13 @@
                     {
                       "coatable": false,
                       "code": "art-card-350",
+                      "descriptionEn": null,
+                      "descriptionTh": null,
                       "familyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
                       "fluteTypeId": null,
                       "gsm": 350,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d003",
+                      "imageFileId": null,
                       "insideColour": "ขาว",
                       "isFoodGrade": false,
                       "kind": "paper",
@@ -83806,10 +84807,13 @@
                 "example": {
                   "coatable": false,
                   "code": "art-card-350",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "familyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
                   "fluteTypeId": null,
                   "gsm": 350,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d003",
+                  "imageFileId": null,
                   "insideColour": "ขาว",
                   "isFoodGrade": false,
                   "kind": "paper",
@@ -84036,10 +85040,13 @@
                 "example": {
                   "coatable": false,
                   "code": "art-card-350",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "familyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
                   "fluteTypeId": null,
                   "gsm": 350,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d003",
+                  "imageFileId": null,
                   "insideColour": "ขาว",
                   "isFoodGrade": false,
                   "kind": "paper",
@@ -84258,10 +85265,13 @@
                 "example": {
                   "coatable": false,
                   "code": "art-card-350",
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "familyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d001",
                   "fluteTypeId": null,
                   "gsm": 350,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d003",
+                  "imageFileId": null,
                   "insideColour": "ขาว",
                   "isFoodGrade": false,
                   "kind": "paper",
@@ -85564,12 +86574,15 @@
                         "minW": 30
                       },
                       "corrugateFormula": null,
+                      "descriptionEn": null,
+                      "descriptionTh": null,
                       "dielineKey": "rte",
                       "fluteTypeIds": [
                         "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                       ],
                       "geometryFormula": "tuck_top",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                      "imageFileId": null,
                       "name": "ฝาเสียบกลับด้าน",
                       "patternKind": null,
                       "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
@@ -85779,12 +86792,15 @@
                     "minW": 30
                   },
                   "corrugateFormula": null,
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "dielineKey": "rte",
                   "fluteTypeIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                   ],
                   "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                  "imageFileId": null,
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
@@ -86010,12 +87026,15 @@
                     "minW": 30
                   },
                   "corrugateFormula": null,
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "dielineKey": "rte",
                   "fluteTypeIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                   ],
                   "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                  "imageFileId": null,
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
@@ -86233,12 +87252,15 @@
                     "minW": 30
                   },
                   "corrugateFormula": null,
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "dielineKey": "rte",
                   "fluteTypeIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                   ],
                   "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                  "imageFileId": null,
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
@@ -86541,12 +87563,15 @@
                     "minW": 30
                   },
                   "corrugateFormula": null,
+                  "descriptionEn": null,
+                  "descriptionTh": null,
                   "dielineKey": "rte",
                   "fluteTypeIds": [
                     "0192f3a0-7c1e-7d2a-9b1f-00000000c011"
                   ],
                   "geometryFormula": "tuck_top",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                  "imageFileId": null,
                   "name": "ฝาเสียบกลับด้าน",
                   "patternKind": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
@@ -127051,6 +128076,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -127322,6 +128382,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -127645,6 +128740,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -127955,6 +129085,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -128547,6 +129712,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -128870,6 +130070,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -129181,6 +130416,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -129490,6 +130760,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -129834,6 +131139,41 @@
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -167893,6 +169233,41 @@
                           "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                           "status": "waiting_payment",
                           "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                          "summary": {
+                            "product": {
+                              "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                              "nameEn": "Tuck-end box",
+                              "nameTh": "กล่องฝาเสียบ",
+                              "slug": "tuck-end-box"
+                            },
+                            "productTypeCode": "folding_carton",
+                            "productTypeNameEn": "Folding carton",
+                            "productTypeNameTh": "กล่องกระดาษแข็ง",
+                            "specs": [
+                              {
+                                "key": "style",
+                                "labelEn": "Style",
+                                "labelTh": "แบบกล่อง",
+                                "valueEn": "ฝาเสียบ",
+                                "valueTh": "ฝาเสียบ"
+                              },
+                              {
+                                "key": "size",
+                                "labelEn": "Size",
+                                "labelTh": "ขนาด",
+                                "valueEn": "60 × 60 × 150 mm",
+                                "valueTh": "60 × 60 × 150 มม."
+                              },
+                              {
+                                "key": "material",
+                                "labelEn": "Material",
+                                "labelTh": "วัสดุ",
+                                "valueEn": "Art card 350 gsm",
+                                "valueTh": "อาร์ตการ์ด 350 แกรม"
+                              }
+                            ],
+                            "unit": "piece"
+                          },
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
                           "totals": {
@@ -168174,6 +169549,41 @@
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -168474,6 +169884,41 @@
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -168839,6 +170284,41 @@
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -169224,6 +170704,41 @@
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -170747,6 +172262,41 @@
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -171019,6 +172569,41 @@
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                   "status": "cancelled",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -171336,6 +172921,41 @@
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -190924,6 +192544,7 @@
                           "structureDesignFeeAmount": "0.00",
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
+                          "toolingAmount": "0.00",
                           "unitPrice": "13.38",
                           "vatAmount": "883.73"
                         }
@@ -190935,6 +192556,41 @@
                       "sharedAt": null,
                       "source": "instant",
                       "status": "saved",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "validUntil": "2026-10-16T09:00:00+07:00"
                     }
                   ],
@@ -191266,6 +192922,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -191277,6 +192934,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -191589,6 +193281,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -191600,6 +193293,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -191883,6 +193611,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -191894,6 +193623,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -192206,6 +193970,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -192217,6 +193982,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -192482,6 +194282,7 @@
                         "structureDesignFeeAmount": "0.00",
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
+                        "toolingAmount": "0.00",
                         "unitPrice": "13.38",
                         "vatAmount": "883.73"
                       }
@@ -192493,6 +194294,41 @@
                     "sharedAt": null,
                     "source": "instant",
                     "status": "shared",
+                    "summary": {
+                      "product": {
+                        "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                        "nameEn": "Tuck-end box",
+                        "nameTh": "กล่องฝาเสียบ",
+                        "slug": "tuck-end-box"
+                      },
+                      "productTypeCode": "folding_carton",
+                      "productTypeNameEn": "Folding carton",
+                      "productTypeNameTh": "กล่องกระดาษแข็ง",
+                      "specs": [
+                        {
+                          "key": "style",
+                          "labelEn": "Style",
+                          "labelTh": "แบบกล่อง",
+                          "valueEn": "ฝาเสียบ",
+                          "valueTh": "ฝาเสียบ"
+                        },
+                        {
+                          "key": "size",
+                          "labelEn": "Size",
+                          "labelTh": "ขนาด",
+                          "valueEn": "60 × 60 × 150 mm",
+                          "valueTh": "60 × 60 × 150 มม."
+                        },
+                        {
+                          "key": "material",
+                          "labelEn": "Material",
+                          "labelTh": "วัสดุ",
+                          "valueEn": "Art card 350 gsm",
+                          "valueTh": "อาร์ตการ์ด 350 แกรม"
+                        }
+                      ],
+                      "unit": "piece"
+                    },
                     "validUntil": "2026-10-16T09:00:00+07:00"
                   },
                   "sharePath": "/v1/store/quotes/shared/bX2k…",
@@ -246281,6 +248117,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -246541,6 +248412,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -246853,6 +248759,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -247152,6 +249093,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -247722,6 +249698,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -248034,6 +250045,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -248334,6 +250380,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -248632,6 +250713,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -250997,10 +253113,14 @@
                             "kind": "paper"
                           },
                           "code": "art-card-350",
+                          "descriptionEn": "Smooth surface, vivid print",
+                          "descriptionTh": "ผิวเรียบ พิมพ์สีสด",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
                           "isDefault": true,
                           "nameEn": "Art card 350 gsm",
-                          "nameTh": "อาร์ตการ์ด 350 แกรม"
+                          "nameTh": "อาร์ตการ์ด 350 แกรม",
+                          "swatchHex": null
                         }
                       ]
                     }
@@ -251183,6 +253303,14 @@
                 "example": {
                   "calculator": "corrugate",
                   "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "design": {
+                    "default": "own_file",
+                    "options": [
+                      "own_file",
+                      "online_designer",
+                      "hired_design"
+                    ]
+                  },
                   "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000e006",
                   "instant": true,
                   "optionGroups": [
@@ -251197,10 +253325,14 @@
                             "kind": "corrugated_board"
                           },
                           "code": "ka125-b",
+                          "descriptionEn": null,
+                          "descriptionTh": null,
                           "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e007",
+                          "imageUrl": null,
                           "isDefault": true,
                           "nameEn": "Kraft board KA125 B-flute",
-                          "nameTh": "กระดาษลัง KA125 ลอน B"
+                          "nameTh": "กระดาษลัง KA125 ลอน B",
+                          "swatchHex": null
                         }
                       ]
                     }
@@ -251208,11 +253340,14 @@
                   "patterns": [
                     {
                       "code": "RSC-01",
+                      "descriptionEn": "Regular slotted carton, flaps meet in the middle",
+                      "descriptionTh": "กล่องลูกฟูกทรงมาตรฐาน ฝาบนล่างชนกัน",
                       "dielineKey": "rsc",
                       "fluteTypeIds": [
                         "0192f3a0-7c1e-7d2a-9b1f-00000000e004"
                       ],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                      "imageUrl": null,
                       "name": "กล่องฝาชน",
                       "parts": [],
                       "rules": {
@@ -251235,6 +253370,17 @@
                     "all_round"
                   ],
                   "productTypeCode": "corrugated",
+                  "quantity": {
+                    "default": 1000,
+                    "max": 50000,
+                    "maxTiers": 10,
+                    "min": 100,
+                    "presets": [
+                      500,
+                      1000,
+                      3000
+                    ]
+                  },
                   "quoteValidityDays": 15,
                   "slug": "rsc-carton",
                   "standardSizes": [
@@ -251246,7 +253392,8 @@
                       "name": "30×40×25 ซม.",
                       "widthMm": 300
                     }
-                  ]
+                  ],
+                  "unit": "piece"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/StoreConfiguratorDto"
@@ -252933,6 +255080,41 @@
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -266042,6 +268224,41 @@
                           "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                           "status": "waiting_payment",
                           "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                          "summary": {
+                            "product": {
+                              "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                              "nameEn": "Tuck-end box",
+                              "nameTh": "กล่องฝาเสียบ",
+                              "slug": "tuck-end-box"
+                            },
+                            "productTypeCode": "folding_carton",
+                            "productTypeNameEn": "Folding carton",
+                            "productTypeNameTh": "กล่องกระดาษแข็ง",
+                            "specs": [
+                              {
+                                "key": "style",
+                                "labelEn": "Style",
+                                "labelTh": "แบบกล่อง",
+                                "valueEn": "ฝาเสียบ",
+                                "valueTh": "ฝาเสียบ"
+                              },
+                              {
+                                "key": "size",
+                                "labelEn": "Size",
+                                "labelTh": "ขนาด",
+                                "valueEn": "60 × 60 × 150 mm",
+                                "valueTh": "60 × 60 × 150 มม."
+                              },
+                              {
+                                "key": "material",
+                                "labelEn": "Material",
+                                "labelTh": "วัสดุ",
+                                "valueEn": "Art card 350 gsm",
+                                "valueTh": "อาร์ตการ์ด 350 แกรม"
+                              }
+                            ],
+                            "unit": "piece"
+                          },
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
                           "totals": {
@@ -266310,6 +268527,41 @@
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -266600,6 +268852,41 @@
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -267739,6 +270026,41 @@
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -267961,6 +270283,41 @@
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -268206,6 +270563,41 @@
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                   "status": "completed",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -268523,6 +270915,41 @@
                       "reorderOf": null,
                       "reusesApprovedArtwork": false,
                       "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
@@ -274588,6 +277015,7 @@
                           "structureDesignFeeAmount": "0.00",
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
+                          "toolingAmount": "0.00",
                           "unitPrice": "13.38",
                           "vatAmount": "883.73"
                         }
@@ -274599,6 +277027,41 @@
                       "sharedAt": null,
                       "source": "instant",
                       "status": "saved",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
                       "validUntil": "2026-10-16T09:00:00+07:00"
                     }
                   ],
@@ -274888,6 +277351,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -274899,6 +277363,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -275430,6 +277929,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -275441,6 +277941,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "shared",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -275668,6 +278203,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -275679,6 +278215,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -275933,6 +278504,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -275944,6 +278516,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -276218,6 +278825,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -276229,6 +278837,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -276495,6 +279138,7 @@
                       "structureDesignFeeAmount": "0.00",
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
                       "unitPrice": "13.38",
                       "vatAmount": "883.73"
                     }
@@ -276506,6 +279150,41 @@
                   "sharedAt": null,
                   "source": "instant",
                   "status": "saved",
+                  "summary": {
+                    "product": {
+                      "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "nameEn": "Tuck-end box",
+                      "nameTh": "กล่องฝาเสียบ",
+                      "slug": "tuck-end-box"
+                    },
+                    "productTypeCode": "folding_carton",
+                    "productTypeNameEn": "Folding carton",
+                    "productTypeNameTh": "กล่องกระดาษแข็ง",
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "ฝาเสียบ",
+                        "valueTh": "ฝาเสียบ"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size",
+                        "labelTh": "ขนาด",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Art card 350 gsm",
+                        "valueTh": "อาร์ตการ์ด 350 แกรม"
+                      }
+                    ],
+                    "unit": "piece"
+                  },
                   "validUntil": "2026-10-16T09:00:00+07:00"
                 },
                 "schema": {
@@ -276778,6 +279457,7 @@
                         "structureDesignFeeAmount": "0.00",
                         "toleranceOveragePct": "5.0000",
                         "toleranceShortagePct": "5.0000",
+                        "toolingAmount": "0.00",
                         "unitPrice": "13.38",
                         "vatAmount": "883.73"
                       }
@@ -276789,6 +279469,41 @@
                     "sharedAt": null,
                     "source": "instant",
                     "status": "shared",
+                    "summary": {
+                      "product": {
+                        "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                        "nameEn": "Tuck-end box",
+                        "nameTh": "กล่องฝาเสียบ",
+                        "slug": "tuck-end-box"
+                      },
+                      "productTypeCode": "folding_carton",
+                      "productTypeNameEn": "Folding carton",
+                      "productTypeNameTh": "กล่องกระดาษแข็ง",
+                      "specs": [
+                        {
+                          "key": "style",
+                          "labelEn": "Style",
+                          "labelTh": "แบบกล่อง",
+                          "valueEn": "ฝาเสียบ",
+                          "valueTh": "ฝาเสียบ"
+                        },
+                        {
+                          "key": "size",
+                          "labelEn": "Size",
+                          "labelTh": "ขนาด",
+                          "valueEn": "60 × 60 × 150 mm",
+                          "valueTh": "60 × 60 × 150 มม."
+                        },
+                        {
+                          "key": "material",
+                          "labelEn": "Material",
+                          "labelTh": "วัสดุ",
+                          "valueEn": "Art card 350 gsm",
+                          "valueTh": "อาร์ตการ์ด 350 แกรม"
+                        }
+                      ],
+                      "unit": "piece"
+                    },
                     "validUntil": "2026-10-16T09:00:00+07:00"
                   },
                   "sharePath": "/v1/store/quotes/shared/bX2k…",

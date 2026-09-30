@@ -11,6 +11,7 @@ import { canonical } from '@modules/catalog/imports/import-engine';
 import { CheckoutService, type PricingItem } from '@modules/checkout/checkout.service';
 import { addTotals, type Totals } from '@modules/checkout/order-pricing';
 import { CustomersService, type TaxProfileSnapshot } from '@modules/customers/customers.service';
+import { SUMMARY_INCLUDE } from '@modules/quotes/line-summary';
 import { QuoteConversionService } from '@modules/quotes/quote-conversion.service';
 import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
@@ -84,7 +85,7 @@ export class OrderOperationsService {
         customerUserId: order.customerUserId,
         productTypeId: order.productTypeId,
       },
-      include: { productType: true },
+      include: { productType: true, catalogProduct: SUMMARY_INCLUDE.catalogProduct },
     });
     const option = quote
       ? await this.prisma.quoteOption.findFirst({

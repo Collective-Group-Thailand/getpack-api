@@ -13,7 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { DesignOptionsDto, IDS } from './quote.dto';
+import { DesignOptionsDto, IDS, MAX_QUANTITY_TIERS } from './quote.dto';
 
 /** Corrugate configuration DTOs (U-B6): catalogue public ids, millimetres. */
 
@@ -161,7 +161,7 @@ export class CorrugateConfigurationDto {
   @ApiProperty({ type: [Number], example: [500, 1000, 3000], description: 'Quantities to price, 1 to 10' })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(10)
+  @ArrayMaxSize(MAX_QUANTITY_TIERS)
   @Type(() => Number)
   @IsInt({ each: true })
   @Min(1, { each: true })

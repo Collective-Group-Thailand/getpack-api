@@ -57,6 +57,12 @@ export class StoreMediaService {
         OR EXISTS (SELECT 1 FROM articles a WHERE a.cover_file_id = fo.id
                     AND a.status = 'published' AND a.deleted_at IS NULL)
         OR EXISTS (SELECT 1 FROM seo_pages s WHERE s.og_image_file_id = fo.id)
+        OR EXISTS (SELECT 1 FROM materials o WHERE o.image_file_id = fo.id AND o.status = 'active')
+        OR EXISTS (SELECT 1 FROM finishes o WHERE o.image_file_id = fo.id AND o.status = 'active')
+        OR EXISTS (SELECT 1 FROM ink_colours o WHERE o.image_file_id = fo.id AND o.status = 'active')
+        OR EXISTS (SELECT 1 FROM diecut_types o WHERE o.image_file_id = fo.id AND o.status = 'active')
+        OR EXISTS (SELECT 1 FROM assemblies o WHERE o.image_file_id = fo.id AND o.status = 'active')
+        OR EXISTS (SELECT 1 FROM patterns o WHERE o.image_file_id = fo.id AND o.status = 'active')
          )`;
     if (!visible) throw new DomainException('http.not_found');
     const file = await this.prisma.fileObject.findUniqueOrThrow({ where: { id: visible.id } });

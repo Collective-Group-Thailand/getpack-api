@@ -5,6 +5,7 @@ import { type Prisma } from '@generated/prisma/client';
 import { type CrudDelegate, defineResource } from '../crud/catalog-resource';
 import { compact } from '../crud/compact';
 import { num } from '../crud/dto-fields';
+import { CONTENT_INCLUDE, contentImage, contentView, type WithContent } from '../crud/option-content';
 import { type RefModel, type RefResolver } from '../crud/ref-resolver';
 import {
   AssemblyDto,
@@ -299,8 +300,9 @@ export const fluteTypes = defineResource({
 const MATERIAL_INCLUDE = {
   family: { select: { publicId: true } },
   fluteType: { select: { publicId: true } },
+  ...CONTENT_INCLUDE,
 } as const;
-interface MaterialRow extends Named {
+interface MaterialRow extends Named, WithContent {
   kind: MaterialDto['kind'];
   gsm: Prisma.Decimal | null;
   micron: Prisma.Decimal | null;
@@ -316,6 +318,7 @@ interface MaterialRow extends Named {
 
 export const materialDto = (row: MaterialRow): MaterialDto => ({
   id: row.publicId,
+  ...contentView(row),
   code: row.code,
   kind: row.kind,
   familyId: row.family?.publicId ?? null,
@@ -353,6 +356,9 @@ export const materials = defineResource({
   queryDto: MaterialListQuery,
   example: {
     id: MATERIAL_IDS.material,
+    descriptionTh: null,
+    descriptionEn: null,
+    imageFileId: null,
     code: 'art-card-350',
     kind: 'paper',
     familyId: MATERIAL_IDS.family,
@@ -382,12 +388,14 @@ export const materials = defineResource({
   toDto: materialDto,
   createData: async (input: CreateMaterialDto, refs) => ({
     ...input,
+    ...(await contentImage(refs, input)),
     familyId: await refs.optional('materialFamily', input.familyId, 'familyId'),
     fluteTypeId: await refs.optional('fluteType', input.fluteTypeId, 'fluteTypeId'),
   }),
   updateData: async (input: UpdateMaterialDto, refs) =>
     compact({
       ...input,
+      ...(await contentImage(refs, input)),
       familyId: await refs.optional('materialFamily', input.familyId, 'familyId'),
       fluteTypeId: await refs.optional('fluteType', input.fluteTypeId, 'fluteTypeId'),
     }),
@@ -400,7 +408,7 @@ export const materials = defineResource({
 
 // ------------------------------------------------------------------------------------------------
 
-interface FinishRow extends Named, WithGroup {
+interface FinishRow extends Named, WithGroup, WithContent {
   finishKind: FinishDto['finishKind'];
   isSpecial: boolean;
   requiresAmount: boolean;
@@ -420,13 +428,16 @@ export const finishes = defineResource({
   read: 'catalog.read',
   manage: 'catalog.manage',
   delegate: (tx) => tx.finish,
-  include: GROUP_INCLUDE,
+  include: { ...GROUP_INCLUDE, ...CONTENT_INCLUDE },
   dto: FinishDto,
   createDto: CreateFinishDto,
   updateDto: UpdateFinishDto,
   queryDto: FinishListQuery,
   example: {
     id: MATERIAL_IDS.finish,
+    descriptionTh: null,
+    descriptionEn: null,
+    imageFileId: null,
     groupId: MATERIAL_IDS.group,
     code: 'matt-lamination',
     nameTh: 'เคลือบด้าน',
@@ -448,6 +459,7 @@ export const finishes = defineResource({
   updateExample: { isSpecial: false },
   toDto: (row: FinishRow): FinishDto => ({
     id: row.publicId,
+    ...contentView(row),
     groupId: row.group?.publicId ?? null,
     code: row.code,
     nameTh: row.nameTh,
@@ -462,10 +474,15 @@ export const finishes = defineResource({
   }),
   createData: async (input: CreateFinishDto, refs) => ({
     ...input,
+    ...(await contentImage(refs, input)),
     groupId: await groupId(refs, 'finishGroup', input.groupId),
   }),
   updateData: async (input: UpdateFinishDto, refs) =>
-    compact({ ...input, groupId: await groupId(refs, 'finishGroup', input.groupId) }),
+    compact({
+      ...input,
+      ...(await contentImage(refs, input)),
+      groupId: await groupId(refs, 'finishGroup', input.groupId),
+    }),
   where: (q: FinishListQuery) => compact({ ...grouped(q), finishKind: q.finishKind }),
   search: ['code', 'nameTh', 'nameEn'],
   sort: { code: 'code', updatedAt: 'updatedAt' },
@@ -515,9 +532,10 @@ export const foilTypes = defineResource({
 
 // ------------------------------------------------------------------------------------------------
 
-interface InkRow extends Timestamped, WithGroup {
+interface InkRow extends Timestamped, WithGroup, WithContent {
   code: string;
   name: string;
+  swatchHex: string | null;
   colourKind: InkColourDto['colourKind'];
   status: CatalogStatusValue;
 }
@@ -534,13 +552,17 @@ export const inkColours = defineResource({
   read: 'catalog.read',
   manage: 'catalog.manage',
   delegate: (tx) => tx.inkColour,
-  include: GROUP_INCLUDE,
+  include: { ...GROUP_INCLUDE, ...CONTENT_INCLUDE },
   dto: InkColourDto,
   createDto: CreateInkColourDto,
   updateDto: UpdateInkColourDto,
   queryDto: GroupedListQuery,
   example: {
     id: MATERIAL_IDS.ink,
+    descriptionTh: null,
+    descriptionEn: null,
+    imageFileId: null,
+    swatchHex: '#00A0E9',
     groupId: MATERIAL_IDS.group,
     code: 'cmyk-c',
     name: 'Cyan',
@@ -552,6 +574,8 @@ export const inkColours = defineResource({
   updateExample: { name: 'Process cyan' },
   toDto: (row: InkRow): InkColourDto => ({
     id: row.publicId,
+    ...contentView(row),
+    swatchHex: row.swatchHex,
     groupId: row.group?.publicId ?? null,
     code: row.code,
     name: row.name,
@@ -561,10 +585,15 @@ export const inkColours = defineResource({
   }),
   createData: async (input: CreateInkColourDto, refs) => ({
     ...input,
+    ...(await contentImage(refs, input)),
     groupId: await groupId(refs, 'inkColourGroup', input.groupId),
   }),
   updateData: async (input: UpdateInkColourDto, refs) =>
-    compact({ ...input, groupId: await groupId(refs, 'inkColourGroup', input.groupId) }),
+    compact({
+      ...input,
+      ...(await contentImage(refs, input)),
+      groupId: await groupId(refs, 'inkColourGroup', input.groupId),
+    }),
   where: grouped,
   search: ['code', 'name'],
   sort: { code: 'code', updatedAt: 'updatedAt' },
@@ -573,7 +602,7 @@ export const inkColours = defineResource({
 
 // ------------------------------------------------------------------------------------------------
 
-interface DiecutRow extends Named, WithGroup {}
+interface DiecutRow extends Named, WithGroup, WithContent {}
 
 export const diecutTypes = defineResource({
   key: 'diecut_type',
@@ -587,13 +616,16 @@ export const diecutTypes = defineResource({
   read: 'catalog.read',
   manage: 'catalog.manage',
   delegate: (tx) => tx.diecutType,
-  include: GROUP_INCLUDE,
+  include: { ...GROUP_INCLUDE, ...CONTENT_INCLUDE },
   dto: DiecutTypeDto,
   createDto: CreateDiecutTypeDto,
   updateDto: UpdateDiecutTypeDto,
   queryDto: GroupedListQuery,
   example: {
     id: MATERIAL_IDS.diecut,
+    descriptionTh: null,
+    descriptionEn: null,
+    imageFileId: null,
     groupId: MATERIAL_IDS.group,
     code: 'standard-diecut',
     nameTh: 'ไดคัทมาตรฐาน',
@@ -605,6 +637,7 @@ export const diecutTypes = defineResource({
   updateExample: { nameEn: 'Standard die cut' },
   toDto: (row: DiecutRow): DiecutTypeDto => ({
     id: row.publicId,
+    ...contentView(row),
     groupId: row.group?.publicId ?? null,
     code: row.code,
     nameTh: row.nameTh,
@@ -614,10 +647,15 @@ export const diecutTypes = defineResource({
   }),
   createData: async (input: CreateDiecutTypeDto, refs) => ({
     ...input,
+    ...(await contentImage(refs, input)),
     groupId: await groupId(refs, 'diecutGroup', input.groupId),
   }),
   updateData: async (input: UpdateDiecutTypeDto, refs) =>
-    compact({ ...input, groupId: await groupId(refs, 'diecutGroup', input.groupId) }),
+    compact({
+      ...input,
+      ...(await contentImage(refs, input)),
+      groupId: await groupId(refs, 'diecutGroup', input.groupId),
+    }),
   where: grouped,
   search: ['code', 'nameTh', 'nameEn'],
   sort: { code: 'code', updatedAt: 'updatedAt' },
@@ -626,7 +664,7 @@ export const diecutTypes = defineResource({
 
 // ------------------------------------------------------------------------------------------------
 
-interface AssemblyRow extends Named, WithGroup {
+interface AssemblyRow extends Named, WithGroup, WithContent {
   requiresAmount: boolean;
   requiresWidth: boolean;
   requiresLength: boolean;
@@ -647,13 +685,16 @@ export const assemblies = defineResource({
   read: 'catalog.read',
   manage: 'catalog.manage',
   delegate: (tx) => tx.assembly,
-  include: GROUP_INCLUDE,
+  include: { ...GROUP_INCLUDE, ...CONTENT_INCLUDE },
   dto: AssemblyDto,
   createDto: CreateAssemblyDto,
   updateDto: UpdateAssemblyDto,
   queryDto: GroupedListQuery,
   example: {
     id: MATERIAL_IDS.assembly,
+    descriptionTh: null,
+    descriptionEn: null,
+    imageFileId: null,
     groupId: MATERIAL_IDS.group,
     code: 'side-glue',
     nameTh: 'ปะกาวข้าง',
@@ -671,6 +712,7 @@ export const assemblies = defineResource({
   updateExample: { requiresAmount: true },
   toDto: (row: AssemblyRow): AssemblyDto => ({
     id: row.publicId,
+    ...contentView(row),
     groupId: row.group?.publicId ?? null,
     code: row.code,
     nameTh: row.nameTh,
@@ -686,10 +728,15 @@ export const assemblies = defineResource({
   }),
   createData: async (input: CreateAssemblyDto, refs) => ({
     ...input,
+    ...(await contentImage(refs, input)),
     groupId: await groupId(refs, 'assemblyGroup', input.groupId),
   }),
   updateData: async (input: UpdateAssemblyDto, refs) =>
-    compact({ ...input, groupId: await groupId(refs, 'assemblyGroup', input.groupId) }),
+    compact({
+      ...input,
+      ...(await contentImage(refs, input)),
+      groupId: await groupId(refs, 'assemblyGroup', input.groupId),
+    }),
   where: grouped,
   search: ['code', 'nameTh', 'nameEn'],
   sort: { code: 'code', updatedAt: 'updatedAt' },

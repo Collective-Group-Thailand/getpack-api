@@ -1,5 +1,6 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
+import { LINE_SUMMARY_EXAMPLE, LineSummaryDto } from '@modules/quotes/line-summary.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
@@ -174,6 +175,12 @@ export class OrderDto {
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;
 
+  @ApiProperty({
+    type: LineSummaryDto,
+    description: 'Product, product type, sales unit and spec lines to display (from the quote it was made from)',
+  })
+  summary!: LineSummaryDto;
+
   @ApiProperty({ format: 'uuid', example: ORDER_IDS.quote })
   quoteId!: string;
 
@@ -330,6 +337,7 @@ export const ORDER_EXAMPLE: OrderDto = {
   status: 'waiting_payment',
   artworkStatus: 'awaiting_template',
   productTypeCode: 'folding_carton',
+  summary: LINE_SUMMARY_EXAMPLE,
   quoteId: ORDER_IDS.quote,
   quantityOrdered: 1000,
   designOption: 'own_file',

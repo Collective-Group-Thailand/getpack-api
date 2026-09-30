@@ -1,5 +1,6 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { IsOptional, Matches } from 'class-validator';
 
 import {
   BoolField,
@@ -313,6 +314,26 @@ export class MaterialDto {
 
   @TimestampField(TS)
   updatedAt!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (Thai), shown in the configurator',
+  })
+  descriptionTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  descriptionEn!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Storefront image (an image file; served once scanned clean)',
+  })
+  imageFileId!: string | null;
 }
 
 export class CreateMaterialDto {
@@ -360,6 +381,15 @@ export class CreateMaterialDto {
 
   @StatusField()
   status?: Status;
+
+  @TextField({ example: 'ผิวเรียบ พิมพ์สีสด', nullable: true, max: 1000 })
+  descriptionTh?: string | null;
+
+  @TextField({ example: 'Smooth surface, vivid print', nullable: true, max: 1000 })
+  descriptionEn?: string | null;
+
+  @RefField({ example: '0192f3a0-7c1e-7d2a-9b1f-00000000c009', nullable: true })
+  imageFileId?: string | null;
 }
 
 export class UpdateMaterialDto extends PartialType(CreateMaterialDto) {}
@@ -412,6 +442,26 @@ export class FinishDto {
 
   @TimestampField(TS)
   updatedAt!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (Thai), shown in the configurator',
+  })
+  descriptionTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  descriptionEn!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Storefront image (an image file; served once scanned clean)',
+  })
+  imageFileId!: string | null;
 }
 
 export class CreateFinishDto {
@@ -444,6 +494,15 @@ export class CreateFinishDto {
 
   @StatusField()
   status?: Status;
+
+  @TextField({ example: 'ผิวเรียบ พิมพ์สีสด', nullable: true, max: 1000 })
+  descriptionTh?: string | null;
+
+  @TextField({ example: 'Smooth surface, vivid print', nullable: true, max: 1000 })
+  descriptionEn?: string | null;
+
+  @RefField({ example: '0192f3a0-7c1e-7d2a-9b1f-00000000c009', nullable: true })
+  imageFileId?: string | null;
 }
 
 export class UpdateFinishDto extends PartialType(CreateFinishDto) {}
@@ -504,6 +563,34 @@ export class InkColourDto {
 
   @TimestampField(TS)
   updatedAt!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (Thai), shown in the configurator',
+  })
+  descriptionTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  descriptionEn!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Storefront image (an image file; served once scanned clean)',
+  })
+  imageFileId!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '#00A0E9',
+    description: 'Swatch shown in the configurator (upper-case hex)',
+  })
+  swatchHex!: string | null;
 }
 
 export class CreateInkColourDto {
@@ -521,6 +608,26 @@ export class CreateInkColourDto {
 
   @StatusField()
   status?: Status;
+
+  @TextField({ example: 'ผิวเรียบ พิมพ์สีสด', nullable: true, max: 1000 })
+  descriptionTh?: string | null;
+
+  @TextField({ example: 'Smooth surface, vivid print', nullable: true, max: 1000 })
+  descriptionEn?: string | null;
+
+  @RefField({ example: '0192f3a0-7c1e-7d2a-9b1f-00000000c009', nullable: true })
+  imageFileId?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '#00A0E9',
+    pattern: '^#[0-9A-F]{6}$',
+    description: 'Swatch shown in the configurator (upper-case hex)',
+  })
+  @IsOptional()
+  @Matches(/^#[0-9A-F]{6}$/)
+  swatchHex?: string | null;
 }
 
 export class UpdateInkColourDto extends PartialType(CreateInkColourDto) {}
@@ -550,6 +657,26 @@ export class DiecutTypeDto {
 
   @TimestampField(TS)
   updatedAt!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (Thai), shown in the configurator',
+  })
+  descriptionTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  descriptionEn!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Storefront image (an image file; served once scanned clean)',
+  })
+  imageFileId!: string | null;
 }
 
 export class CreateDiecutTypeDto {
@@ -567,6 +694,15 @@ export class CreateDiecutTypeDto {
 
   @StatusField()
   status?: Status;
+
+  @TextField({ example: 'ผิวเรียบ พิมพ์สีสด', nullable: true, max: 1000 })
+  descriptionTh?: string | null;
+
+  @TextField({ example: 'Smooth surface, vivid print', nullable: true, max: 1000 })
+  descriptionEn?: string | null;
+
+  @RefField({ example: '0192f3a0-7c1e-7d2a-9b1f-00000000c009', nullable: true })
+  imageFileId?: string | null;
 }
 
 export class UpdateDiecutTypeDto extends PartialType(CreateDiecutTypeDto) {}
@@ -613,6 +749,26 @@ export class AssemblyDto {
 
   @TimestampField(TS)
   updatedAt!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (Thai), shown in the configurator',
+  })
+  descriptionTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  descriptionEn!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Storefront image (an image file; served once scanned clean)',
+  })
+  imageFileId!: string | null;
 }
 
 export class CreateAssemblyDto {
@@ -648,6 +804,15 @@ export class CreateAssemblyDto {
 
   @StatusField()
   status?: Status;
+
+  @TextField({ example: 'ผิวเรียบ พิมพ์สีสด', nullable: true, max: 1000 })
+  descriptionTh?: string | null;
+
+  @TextField({ example: 'Smooth surface, vivid print', nullable: true, max: 1000 })
+  descriptionEn?: string | null;
+
+  @RefField({ example: '0192f3a0-7c1e-7d2a-9b1f-00000000c009', nullable: true })
+  imageFileId?: string | null;
 }
 
 export class UpdateAssemblyDto extends PartialType(CreateAssemblyDto) {}

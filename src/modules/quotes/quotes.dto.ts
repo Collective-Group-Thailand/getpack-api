@@ -13,6 +13,8 @@ import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { IsIn, IsOptional, IsUUID } from 'class-validator';
 
+import { LINE_SUMMARY_EXAMPLE, LineSummaryDto } from './line-summary.dto';
+
 /** Saved quotations (D-051, schema-design §3.5). */
 
 export const QUOTE_STATUSES = [
@@ -85,6 +87,15 @@ export class SavedQuoteOptionDto {
 
   @ApiProperty({ example: '0.00' })
   structureDesignFeeAmount!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1200.00',
+    description:
+      'Plates and die blocks included in `productAmount` (one-off charges, incl. VAT); null when the calculator does not split them out or for RFQ quotes',
+  })
+  toolingAmount!: string | null;
 
   @ApiProperty({
     type: String,
@@ -186,6 +197,12 @@ export class SavedQuoteDto {
   productTypeCode!: string;
 
   @ApiProperty({
+    type: LineSummaryDto,
+    description: 'Product, product type, sales unit and spec lines to display (frozen when the quote was made)',
+  })
+  summary!: LineSummaryDto;
+
+  @ApiProperty({
     anyOf: [
       { $ref: getSchemaPath(FoldingConfigurationDto) },
       { $ref: getSchemaPath('CorrugateConfigurationDto') },
@@ -271,6 +288,7 @@ export const OPTION_EXAMPLE: SavedQuoteOptionDto = {
   productAmount: step.productAmount!,
   designFeeAmount: step.designFeeAmount!,
   structureDesignFeeAmount: step.structureDesignFeeAmount!,
+  toolingAmount: step.toolingAmount,
   shippingAmount: step.shippingAmount,
   vatAmount: step.vatAmount!,
   netAmount: '12624.67',
@@ -290,6 +308,7 @@ export const QUOTE_EXAMPLE: SavedQuoteDto = {
   status: 'saved',
   source: 'instant',
   productTypeCode: 'folding_carton',
+  summary: LINE_SUMMARY_EXAMPLE,
   configuration: CONFIGURATION_EXAMPLE,
   deliveryPostcode: '10110',
   validUntil: '2026-10-16T09:00:00+07:00',

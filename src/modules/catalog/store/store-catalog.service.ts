@@ -7,6 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { num } from '../crud/dto-fields';
+import { CONTENT_INCLUDE, type WithContent } from '../crud/option-content';
 import {
   type StoreArticleCardDto,
   type StoreArticleCategoryDto,
@@ -69,6 +70,15 @@ const seoDto = (row: SeoRow, locale: 'th' | 'en' = 'th'): StoreSeoDto | null =>
         noindex: row.noindex,
       }
     : null;
+
+/** Storefront content of an option (U-B0.1); a swatch only for ink colours. */
+const NO_CONTENT = { descriptionTh: null, descriptionEn: null, imageUrl: null, swatchHex: null };
+const content = (row: WithContent) => ({
+  ...NO_CONTENT,
+  descriptionTh: row.descriptionTh,
+  descriptionEn: row.descriptionEn,
+  imageUrl: imageUrl(row.imageFile?.publicId),
+});
 
 const SEO_INCLUDE = { include: { ogImageFile: { select: { publicId: true } } } } as const;
 
@@ -272,9 +282,10 @@ export class StoreCatalogService {
 
     for (const m of await this.prisma.material.findMany({
       where: { id: { in: ids('material') }, status: ACTIVE },
-      include: { fluteType: { select: { code: true } } },
+      include: { fluteType: { select: { code: true } }, ...CONTENT_INCLUDE },
     })) {
       put('material', m.id, {
+        ...content(m),
         id: m.publicId,
         code: m.code,
         nameTh: m.nameTh,
@@ -292,8 +303,10 @@ export class StoreCatalogService {
     for (const kind of ['finish', 'coating'] as const) {
       for (const f of await this.prisma.finish.findMany({
         where: { id: { in: ids(kind) }, status: ACTIVE },
+        include: CONTENT_INCLUDE,
       })) {
         put(kind, f.id, {
+          ...content(f),
           id: f.publicId,
           code: f.code,
           nameTh: f.nameTh,
@@ -309,8 +322,11 @@ export class StoreCatalogService {
     }
     for (const c of await this.prisma.inkColour.findMany({
       where: { id: { in: ids('ink_colour') }, status: ACTIVE },
+      include: CONTENT_INCLUDE,
     })) {
       put('ink_colour', c.id, {
+        ...content(c),
+        swatchHex: c.swatchHex,
         id: c.publicId,
         code: c.code,
         nameTh: c.name,
@@ -320,8 +336,10 @@ export class StoreCatalogService {
     }
     for (const d of await this.prisma.diecutType.findMany({
       where: { id: { in: ids('diecut') }, status: ACTIVE },
+      include: CONTENT_INCLUDE,
     })) {
       put('diecut', d.id, {
+        ...content(d),
         id: d.publicId,
         code: d.code,
         nameTh: d.nameTh,
@@ -331,8 +349,10 @@ export class StoreCatalogService {
     }
     for (const a of await this.prisma.assembly.findMany({
       where: { id: { in: ids('assembly') }, status: ACTIVE },
+      include: CONTENT_INCLUDE,
     })) {
       put('assembly', a.id, {
+        ...content(a),
         id: a.publicId,
         code: a.code,
         nameTh: a.nameTh,
@@ -348,6 +368,7 @@ export class StoreCatalogService {
       where: { id: { in: ids('print_type') }, status: ACTIVE },
     })) {
       put('print_type', t.id, {
+        ...NO_CONTENT,
         id: t.publicId,
         code: t.code,
         nameTh: t.nameTh,
@@ -357,8 +378,10 @@ export class StoreCatalogService {
     }
     for (const t of await this.prisma.pattern.findMany({
       where: { id: { in: ids('pattern') }, status: ACTIVE },
+      include: CONTENT_INCLUDE,
     })) {
       put('pattern', t.id, {
+        ...content(t),
         id: t.publicId,
         code: t.code,
         nameTh: t.name,

@@ -3,7 +3,7 @@ import { CORRUGATE_FORMULAS } from '@modules/pricing/calculators/corrugate/formu
 import { GEOMETRY_FORMULAS } from '@modules/pricing/calculators/folding/geometry/types';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsObject, IsOptional, IsUUID, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsInt, IsObject, IsOptional, IsUUID, Max, Min, ValidateNested } from 'class-validator';
 
 import {
   BoolField,
@@ -408,6 +408,22 @@ export class CatalogProductDto {
   })
   defaultDifficultyLevelId!: string | null;
 
+  @ApiProperty({ type: 'integer', nullable: true, example: 100, description: 'Configurator minimum quantity; null = not set' })
+  quantityMin!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 50000, description: 'Configurator maximum quantity; null = not set' })
+  quantityMax!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 1000, description: 'Quantity preselected in the configurator' })
+  quantityDefault!: number | null;
+
+  @ApiProperty({
+    type: [Number],
+    example: [500, 1000, 3000],
+    description: 'Suggested quantities (≤ 10, within min–max), ascending',
+  })
+  quantityPresets!: number[];
+
   @ApiProperty({ type: 'integer', example: 10 })
   sort!: number;
 
@@ -460,6 +476,29 @@ export class CreateCatalogProductDto {
 
   @RefField({ example: null, nullable: true, description: 'Difficulty level for online prices' })
   defaultDifficultyLevelId?: string | null;
+
+  @IntField({ example: 100, nullable: true, min: 1, max: 10_000_000 })
+  quantityMin?: number | null;
+
+  @IntField({ example: 50000, nullable: true, min: 1, max: 10_000_000 })
+  quantityMax?: number | null;
+
+  @IntField({ example: 1000, nullable: true, min: 1, max: 10_000_000 })
+  quantityDefault?: number | null;
+
+  @ApiPropertyOptional({
+    type: [Number],
+    example: [500, 1000, 3000],
+    description: 'Suggested quantities: up to 10 different values within min–max',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @Type(() => Number)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(10_000_000, { each: true })
+  quantityPresets?: number[];
 
   @SortField()
   sort?: number;
@@ -724,6 +763,26 @@ export class PatternDto {
 
   @TimestampField(TS)
   updatedAt!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (Thai), shown in the configurator',
+  })
+  descriptionTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  descriptionEn!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Storefront image (an image file; served once scanned clean)',
+  })
+  imageFileId!: string | null;
 }
 
 export class CreatePatternDto {
@@ -758,6 +817,15 @@ export class CreatePatternDto {
 
   @StatusField()
   status?: (typeof CATALOG_STATUSES)[number];
+
+  @TextField({ example: 'ผิวเรียบ พิมพ์สีสด', nullable: true, max: 1000 })
+  descriptionTh?: string | null;
+
+  @TextField({ example: 'Smooth surface, vivid print', nullable: true, max: 1000 })
+  descriptionEn?: string | null;
+
+  @RefField({ example: '0192f3a0-7c1e-7d2a-9b1f-00000000c009', nullable: true })
+  imageFileId?: string | null;
 }
 
 export class UpdatePatternDto extends PartialType(CreatePatternDto) {}

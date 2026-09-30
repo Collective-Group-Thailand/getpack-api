@@ -6,6 +6,7 @@ import {
   TextField,
   TimestampField,
 } from '@modules/catalog/crud/dto-fields';
+import { LINE_SUMMARY_EXAMPLE, LineSummaryDto } from '@modules/quotes/line-summary.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsOptional, IsUUID, ValidateNested } from 'class-validator';
@@ -216,6 +217,12 @@ export class CartItemDto {
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;
 
+  @ApiProperty({
+    type: LineSummaryDto,
+    description: 'Product, product type, sales unit and spec lines to display (from its quote)',
+  })
+  summary!: LineSummaryDto;
+
   @ApiProperty({ type: 'integer', example: 1000 })
   quantity!: number;
 
@@ -354,6 +361,7 @@ export const CART_ITEM_EXAMPLE: CartItemDto = {
   quoteCode: null,
   source: 'instant',
   productTypeCode: 'folding_carton',
+  summary: LINE_SUMMARY_EXAMPLE,
   quantity: 1000,
   unitPrice: '13.38',
   productGrossAmount: '13380.00',

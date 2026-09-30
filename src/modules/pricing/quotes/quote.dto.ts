@@ -36,6 +36,9 @@ export const IDS = {
 
 const MM = { unit: 'mm', scale: 2 };
 
+/** Quantity tiers one calculate / save request may price (every box calculator). */
+export const MAX_QUANTITY_TIERS = 10;
+
 export class PrintColourDto {
   @RefField({ example: IDS.ink })
   inkColourId!: string;
@@ -207,7 +210,7 @@ export class FoldingConfigurationDto {
   @ApiProperty({ type: [Number], example: [500, 1000, 3000], description: 'Quantities to price, 1 to 10' })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(10)
+  @ArrayMaxSize(MAX_QUANTITY_TIERS)
   @Type(() => Number)
   @IsInt({ each: true })
   @Min(1, { each: true })

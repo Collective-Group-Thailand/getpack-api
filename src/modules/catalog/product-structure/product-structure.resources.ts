@@ -5,6 +5,7 @@ import { type Prisma } from '@generated/prisma/client';
 import { defineResource } from '../crud/catalog-resource';
 import { compact, jsonField } from '../crud/compact';
 import { num } from '../crud/dto-fields';
+import { CONTENT_INCLUDE, contentImage, contentView } from '../crud/option-content';
 import { optionKey, type OptionPublicIds, optionPublicIds } from './option-refs';
 import {
   CatalogProductDto,
@@ -310,6 +311,10 @@ export function catalogProductDto(row: CatalogProductRow, optionIds: OptionPubli
     videoUrl: row.videoUrl,
     seoPageId: row.seoPage?.publicId ?? null,
     defaultDifficultyLevelId: row.defaultDifficultyLevel?.publicId ?? null,
+    quantityMin: row.quantityMin,
+    quantityMax: row.quantityMax,
+    quantityDefault: row.quantityDefault,
+    quantityPresets: [...(row.quantityPresets ?? [])].sort((a, b) => a - b),
     sort: row.sort,
     status: row.status,
     patterns: row.patterns.map((p) => ({
@@ -351,6 +356,10 @@ export const CATALOG_PRODUCT_EXAMPLE: CatalogProductDto = {
   videoUrl: null,
   seoPageId: null,
   defaultDifficultyLevelId: null,
+  quantityMin: null,
+  quantityMax: null,
+  quantityDefault: null,
+  quantityPresets: [],
   sort: 10,
   status: 'active',
   patterns: [
@@ -362,6 +371,40 @@ export const CATALOG_PRODUCT_EXAMPLE: CatalogProductDto = {
   ],
   updatedAt: TS,
 };
+
+interface QuantityInput {
+  quantityMin?: number | null;
+  quantityMax?: number | null;
+  quantityDefault?: number | null;
+  quantityPresets?: number[];
+}
+
+/**
+ * The configurator's quantity limits (U-B0.1): min ≤ default ≤ max and presets within them, each once
+ * (DB check `ck_catalog_products__quantity_limits` → 422 here, not 500). Returns the columns to write.
+ */
+function quantityRules(input: QuantityInput, current?: QuantityInput) {
+  const pick = <K extends keyof QuantityInput>(k: K) => (input[k] !== undefined ? input[k] : current?.[k]);
+  const min = pick('quantityMin') ?? null;
+  const max = pick('quantityMax') ?? null;
+  const preset = pick('quantityDefault') ?? null;
+  const presets = pick('quantityPresets') ?? [];
+  const fail = (path: string, message: string): never => {
+    throw new DomainException('validation.failed', { errors: [{ path, code: 'invalid', message }] });
+  };
+  if (min !== null && max !== null && max < min) fail('quantityMax', 'quantityMax must not be below quantityMin');
+  const inRange = (n: number) => (min === null || n >= min) && (max === null || n <= max);
+  if (preset !== null && !inRange(preset)) fail('quantityDefault', 'quantityDefault must be within min and max');
+  if (new Set(presets).size !== presets.length) fail('quantityPresets', 'quantityPresets lists a value twice');
+  const outside = presets.findIndex((n) => !inRange(n));
+  if (outside >= 0) fail(`quantityPresets[${outside}]`, 'every preset must be within min and max');
+  return {
+    quantityMin: input.quantityMin,
+    quantityMax: input.quantityMax,
+    quantityDefault: input.quantityDefault,
+    quantityPresets: input.quantityPresets ? [...input.quantityPresets].sort((a, b) => a - b) : undefined,
+  };
+}
 
 export const catalogProducts = defineResource({
   key: 'catalog_product',
@@ -396,6 +439,7 @@ export const catalogProducts = defineResource({
     ),
   toDto: catalogProductDto,
   createData: async (input: CreateCatalogProductDto, refs) => ({
+    ...quantityRules(input),
     productTypeId: await refs.id('productType', input.productTypeId, 'productTypeId'),
     slug: input.slug,
     nameTh: input.nameTh,
@@ -414,8 +458,9 @@ export const catalogProducts = defineResource({
     sort: input.sort,
     status: input.status,
   }),
-  updateData: async (input: UpdateCatalogProductDto, refs) =>
+  updateData: async (input: UpdateCatalogProductDto, refs, current: CatalogProductRow) =>
     compact({
+      ...quantityRules(input, current),
       productTypeId:
         input.productTypeId === undefined
           ? undefined
@@ -565,6 +610,7 @@ function oneFormula(
 }
 
 const PATTERN_INCLUDE = {
+  ...CONTENT_INCLUDE,
   productType: { select: { publicId: true } },
   fluteTypes: { include: { fluteType: { select: { publicId: true } } } },
 } satisfies Prisma.PatternInclude;
@@ -589,6 +635,9 @@ export const patterns = defineResource({
   queryDto: PatternListQuery,
   example: {
     id: EXAMPLE_IDS.pattern,
+    descriptionTh: null,
+    descriptionEn: null,
+    imageFileId: null,
     productTypeId: EXAMPLE_IDS.productType,
     code: 'RTE-01',
     name: 'ฝาเสียบกลับด้าน',
@@ -611,6 +660,7 @@ export const patterns = defineResource({
   updateExample: { dielineKey: 'rte' },
   toDto: (row: PatternRow): PatternDto => ({
     id: row.publicId,
+    ...contentView(row),
     productTypeId: row.productType.publicId,
     code: row.code,
     name: row.name,
@@ -636,6 +686,9 @@ export const patterns = defineResource({
       dielineKey: input.dielineKey ?? null,
       geometryFormula: input.geometryFormula ?? null,
       corrugateFormula: input.corrugateFormula ?? null,
+      descriptionTh: input.descriptionTh ?? null,
+      descriptionEn: input.descriptionEn ?? null,
+      ...(await contentImage(refs, input)),
       status: input.status,
     };
   },
@@ -654,6 +707,9 @@ export const patterns = defineResource({
       dielineKey: input.dielineKey,
       geometryFormula: input.geometryFormula,
       corrugateFormula: input.corrugateFormula,
+      descriptionTh: input.descriptionTh,
+      descriptionEn: input.descriptionEn,
+      ...(await contentImage(refs, input)),
       status: input.status,
     });
   },

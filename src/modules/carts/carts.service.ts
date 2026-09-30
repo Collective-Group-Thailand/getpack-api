@@ -5,6 +5,7 @@ import { MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma, type SalesChannel } from '@generated/prisma/client';
 import { type AddressSnapshot, CustomersService } from '@modules/customers/customers.service';
+import { SUMMARY_INCLUDE } from '@modules/quotes/line-summary';
 import { QuoteConversionService } from '@modules/quotes/quote-conversion.service';
 import { type QuoteOwner, SavedQuotesService } from '@modules/quotes/saved-quotes.service';
 import { Injectable } from '@nestjs/common';
@@ -17,7 +18,7 @@ export const CART_INCLUDE = {
   items: {
     orderBy: [{ sort: 'asc' }, { id: 'asc' }],
     include: {
-      quote: { include: { productType: true } },
+      quote: { include: { productType: true, catalogProduct: SUMMARY_INCLUDE.catalogProduct } },
       quoteOption: true,
       pendingQuote: true,
       pendingQuoteOption: true,

@@ -1,5 +1,6 @@
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
+import { lineSummary } from '@modules/quotes/line-summary';
 
 import { type AddressSnapshotDto, type CartDto, type CartItemDto } from './carts.dto';
 import { type CartItemRow, type CartRow, productGross, type RepriceDiff } from './carts.service';
@@ -15,6 +16,7 @@ export function cartItemDto(item: CartItemRow, now = new Date()): CartItemDto {
     quoteCode: item.quote.quoteCode,
     source: item.quote.source,
     productTypeCode: item.quote.productType.code,
+    summary: lineSummary(item.quote, item.quoteOption.unit),
     quantity: item.quantity,
     unitPrice: new MoneyDecimal(item.unitPrice.toString()).toFixed(2),
     productGrossAmount: formatMoney(productGross(item)),

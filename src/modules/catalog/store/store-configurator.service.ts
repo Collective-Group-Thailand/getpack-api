@@ -1,11 +1,14 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
 import { CalculatorRegistry } from '@modules/pricing/calculators/calculator';
+import { CALCULATOR_SALES_UNIT } from '@modules/pricing/quotes/configurations';
+import { MAX_QUANTITY_TIERS } from '@modules/pricing/quotes/quote.dto';
 import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { CONTENT_INCLUDE } from '../crud/option-content';
 import { sizeRulesOf } from './size-rules';
-import { StoreCatalogService } from './store-catalog.service';
+import { imageUrl, StoreCatalogService } from './store-catalog.service';
 import { type StoreConfiguratorDto } from './store-configurator.dto';
 
 const ACTIVE = 'active' as const;
@@ -36,6 +39,7 @@ export class StoreConfiguratorService {
           include: {
             pattern: {
               include: {
+                ...CONTENT_INCLUDE,
                 subPatterns: { orderBy: { seq: 'asc' } },
                 fluteTypes: { include: { fluteType: { select: { publicId: true } } } },
               },
@@ -66,6 +70,9 @@ export class StoreConfiguratorService {
         parts: pattern.subPatterns.map((s) => ({ subPatternId: s.publicId, seq: s.seq, name: s.name })),
         fluteTypeIds: pattern.fluteTypes.map((f) => f.fluteType.publicId),
         rules: sizeRulesOf(pattern.constraints),
+        descriptionTh: pattern.descriptionTh,
+        descriptionEn: pattern.descriptionEn,
+        imageUrl: imageUrl(pattern.imageFile?.publicId),
       })),
       standardSizes: p.standardSizes.map((s) => ({
         id: s.publicId,
@@ -78,6 +85,17 @@ export class StoreConfiguratorService {
       optionGroups: await this.catalog.optionGroups(p.options),
       printAreas: calculator === 'corrugate' ? ['top', 'side', 'top_side', 'all_round'] : [],
       quoteValidityDays: Number(validity.value),
+      unit: CALCULATOR_SALES_UNIT[calculator] ?? 'piece',
+      quantity: {
+        min: p.quantityMin,
+        max: p.quantityMax,
+        default: p.quantityDefault,
+        presets: [...(p.quantityPresets ?? [])].sort((a, b) => a - b),
+        maxTiers: MAX_QUANTITY_TIERS,
+      },
+      // Uploading a file is always possible, the online designer works from the pattern's dieline (B4.1) and a
+      // hired design is priced by quoting with `design.graphic` (D-071); `free_design` needs a promotion (D-181).
+      design: { options: ['own_file', 'online_designer', 'hired_design'], default: 'own_file' },
     };
   }
 }

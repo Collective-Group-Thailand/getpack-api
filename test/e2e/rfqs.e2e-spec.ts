@@ -242,6 +242,16 @@ describe('requests for quote (e2e, B2.5)', () => {
       configuration: null,
     });
     expect(quote.body.options[0]).toMatchObject({ quantity: 1000, netAmount: '12500.00' });
+    // The RFQ's spec and dimensions become the quote's spec lines (U-B0.1).
+    expect(quote.body.summary).toMatchObject({
+      product: null,
+      productTypeCode: 'paper_bag',
+      unit: 'piece',
+      specs: [
+        expect.objectContaining({ key: 'size', valueEn: '120 × 250 × 320 mm' }),
+        expect.objectContaining({ key: 'material', valueTh: 'kraft 150 gsm (fake)' }),
+      ],
+    });
     await as('customer').post(`/v1/store/rfqs/${rfq.id}/messages`, { body: 'late (fake)' }).expect(409);
   });
 

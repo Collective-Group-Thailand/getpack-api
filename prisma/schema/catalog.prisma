@@ -354,6 +354,11 @@ model CatalogProduct {
   seoPageId                BigInt?              @map("seo_page_id")
   /// The difficulty level online prices use (legacy SME hard-coded group 5, U-B6 quirk C9); null = not priced online.
   defaultDifficultyLevelId BigInt?              @map("default_difficulty_level_id")
+  /// Quantity limits and presets of the configurator (U-B0.1, schema-design A-51); null / empty until an admin sets them.
+  quantityMin              Int?                 @map("quantity_min")
+  quantityMax              Int?                 @map("quantity_max")
+  quantityDefault          Int?                 @map("quantity_default")
+  quantityPresets          Int[]                @default([]) @map("quantity_presets")
   sort                     Int                  @default(0)
   status                   CatalogStatus        @default(draft)
   createdAt                DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -511,6 +516,9 @@ model Pattern {
   /// Blank formula of the corrugate calculator (U-B6, schema-design A-49); never together with `geometry_formula`.
   corrugateFormula CorrugateFormula? @map("corrugate_formula")
   status           CatalogStatus     @default(draft)
+  descriptionTh    String?           @map("description_th")
+  descriptionEn    String?           @map("description_en")
+  imageFileId      BigInt?           @map("image_file_id")
   createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById      BigInt?           @map("created_by")
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -525,6 +533,7 @@ model Pattern {
   standardBlanks      PatternStandardBlank[]
   createdBy           User?                      @relation("PatternCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__created_by")
   updatedBy           User?                      @relation("PatternUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__updated_by")
+  imageFile           FileObject?                @relation("PatternImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_patterns__image_file_id")
   // --- Folding price components (B2.3)
   plPatternConditions PlPatternCondition[]       @relation("PlPatternConditionPattern")
   // --- end Folding price components
@@ -539,6 +548,7 @@ model Pattern {
   // --- end Corrugate price components
 
   @@index([productTypeId], map: "ix_patterns__product_type_id")
+  @@index([imageFileId], map: "ix_patterns__image_file_id")
   @@map("patterns")
 }
 
@@ -686,6 +696,9 @@ model Material {
   /// The board takes a coating (legacy `paper_grade.can_finish`, corrugate port).
   coatable      Boolean       @default(false)
   status        CatalogStatus @default(draft)
+  descriptionTh String?       @map("description_th")
+  descriptionEn String?       @map("description_en")
+  imageFileId   BigInt?       @map("image_file_id")
   createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById   BigInt?       @map("created_by")
   updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -696,6 +709,7 @@ model Material {
   fluteType                   FluteType?           @relation(fields: [fluteTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__flute_type_id")
   createdBy                   User?                @relation("MaterialCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__created_by")
   updatedBy                   User?                @relation("MaterialUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__updated_by")
+  imageFile                   FileObject?          @relation("MaterialImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_materials__image_file_id")
   // --- Folding price components (B2.3)
   plMaterialPrices            PlMaterialPrice[]    @relation("PlMaterialPriceMaterial")
   plPaperSizes                PlPaperSize[]        @relation("PlPaperSizeMaterial")
@@ -715,6 +729,7 @@ model Material {
   @@index([fluteTypeId], map: "ix_materials__flute_type_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_materials__name_th_trgm")
   @@index([nameEn(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_materials__name_en_trgm")
+  @@index([imageFileId], map: "ix_materials__image_file_id")
   @@map("materials")
 }
 
@@ -753,6 +768,9 @@ model Finish {
   requiresWidth  Boolean       @default(false) @map("requires_width")
   requiresLength Boolean       @default(false) @map("requires_length")
   status         CatalogStatus @default(draft)
+  descriptionTh  String?       @map("description_th")
+  descriptionEn  String?       @map("description_en")
+  imageFileId    BigInt?       @map("image_file_id")
   createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById    BigInt?       @map("created_by")
   updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -762,6 +780,7 @@ model Finish {
   group                     FinishGroup?         @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__group_id")
   createdBy                 User?                @relation("FinishCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__created_by")
   updatedBy                 User?                @relation("FinishUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__updated_by")
+  imageFile                 FileObject?          @relation("FinishImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_finishes__image_file_id")
   // --- Folding price components (B2.3)
   plProcessExclusionsFinish PlProcessExclusion[] @relation("PlProcessExclusionFinish")
   plFinishWastesFinish      PlFinishWaste[]      @relation("PlFinishWasteFinish")
@@ -770,6 +789,7 @@ model Finish {
   // --- end Folding price components
 
   @@index([groupId], map: "ix_finishes__group_id")
+  @@index([imageFileId], map: "ix_finishes__image_file_id")
   @@map("finishes")
 }
 
@@ -813,22 +833,27 @@ model InkColourGroup {
 }
 
 model InkColour {
-  id          BigInt        @id(map: "pk_ink_colours") @default(autoincrement())
-  publicId    String        @unique(map: "ux_ink_colours__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  groupId     BigInt?       @map("group_id")
-  code        String        @unique(map: "ux_ink_colours__code")
-  name        String
-  colourKind  InkColourKind @map("colour_kind")
-  status      CatalogStatus @default(draft)
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById BigInt?       @map("created_by")
-  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById BigInt?       @map("updated_by")
-  rowVersion  Int           @default(1) @map("row_version")
+  id            BigInt        @id(map: "pk_ink_colours") @default(autoincrement())
+  publicId      String        @unique(map: "ux_ink_colours__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupId       BigInt?       @map("group_id")
+  code          String        @unique(map: "ux_ink_colours__code")
+  name          String
+  colourKind    InkColourKind @map("colour_kind")
+  status        CatalogStatus @default(draft)
+  descriptionTh String?       @map("description_th")
+  descriptionEn String?       @map("description_en")
+  imageFileId   BigInt?       @map("image_file_id")
+  swatchHex     String?       @map("swatch_hex") @db.VarChar(7)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?       @map("created_by")
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?       @map("updated_by")
+  rowVersion    Int           @default(1) @map("row_version")
 
   group                  InkColourGroup?         @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__group_id")
   createdBy              User?                   @relation("InkColourCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__created_by")
   updatedBy              User?                   @relation("InkColourUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__updated_by")
+  imageFile              FileObject?             @relation("InkColourImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_ink_colours__image_file_id")
   // --- Folding price components (B2.3)
   plInkColoursInkColour  PlInkColour[]           @relation("PlInkColourInkColour")
   plPrintPricesInkColour PlPrintPrice[]          @relation("PlPrintPriceInkColour")
@@ -838,6 +863,7 @@ model InkColour {
   // --- end Corrugate price components
 
   @@index([groupId], map: "ix_ink_colours__group_id")
+  @@index([imageFileId], map: "ix_ink_colours__image_file_id")
   @@map("ink_colours")
 }
 
@@ -863,27 +889,32 @@ model DiecutGroup {
 }
 
 model DiecutType {
-  id          BigInt        @id(map: "pk_diecut_types") @default(autoincrement())
-  publicId    String        @unique(map: "ux_diecut_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  groupId     BigInt?       @map("group_id")
-  code        String        @unique(map: "ux_diecut_types__code")
-  nameTh      String        @map("name_th")
-  nameEn      String        @map("name_en")
-  status      CatalogStatus @default(draft)
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById BigInt?       @map("created_by")
-  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById BigInt?       @map("updated_by")
-  rowVersion  Int           @default(1) @map("row_version")
+  id            BigInt        @id(map: "pk_diecut_types") @default(autoincrement())
+  publicId      String        @unique(map: "ux_diecut_types__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  groupId       BigInt?       @map("group_id")
+  code          String        @unique(map: "ux_diecut_types__code")
+  nameTh        String        @map("name_th")
+  nameEn        String        @map("name_en")
+  status        CatalogStatus @default(draft)
+  descriptionTh String?       @map("description_th")
+  descriptionEn String?       @map("description_en")
+  imageFileId   BigInt?       @map("image_file_id")
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById   BigInt?       @map("created_by")
+  updatedAt     DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById   BigInt?       @map("updated_by")
+  rowVersion    Int           @default(1) @map("row_version")
 
   group                    DiecutGroup?    @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__group_id")
   createdBy                User?           @relation("DiecutTypeCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__created_by")
   updatedBy                User?           @relation("DiecutTypeUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__updated_by")
+  imageFile                FileObject?     @relation("DiecutTypeImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_diecut_types__image_file_id")
   // --- Folding price components (B2.3)
   plDiecutWastesDiecutType PlDiecutWaste[] @relation("PlDiecutWasteDiecutType")
   // --- end Folding price components
 
   @@index([groupId], map: "ix_diecut_types__group_id")
+  @@index([imageFileId], map: "ix_diecut_types__image_file_id")
   @@map("diecut_types")
 }
 
@@ -924,6 +955,9 @@ model Assembly {
   /// Added to every corrugate part (legacy packing group 22, port map quirk C8).
   autoAdd        Boolean       @default(false) @map("auto_add")
   status         CatalogStatus @default(draft)
+  descriptionTh  String?       @map("description_th")
+  descriptionEn  String?       @map("description_en")
+  imageFileId    BigInt?       @map("image_file_id")
   createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById    BigInt?       @map("created_by")
   updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -933,6 +967,7 @@ model Assembly {
   group                       AssemblyGroup?             @relation(fields: [groupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__group_id")
   createdBy                   User?                      @relation("AssemblyCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__created_by")
   updatedBy                   User?                      @relation("AssemblyUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__updated_by")
+  imageFile                   FileObject?                @relation("AssemblyImageFile", fields: [imageFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_assemblies__image_file_id")
   // --- Folding price components (B2.3)
   plProcessExclusionsAssembly PlProcessExclusion[]       @relation("PlProcessExclusionAssembly")
   plAssemblyWastesAssembly    PlAssemblyWaste[]          @relation("PlAssemblyWasteAssembly")
@@ -944,6 +979,7 @@ model Assembly {
   // --- end Corrugate price components
 
   @@index([groupId], map: "ix_assemblies__group_id")
+  @@index([imageFileId], map: "ix_assemblies__image_file_id")
   @@map("assemblies")
 }
 
