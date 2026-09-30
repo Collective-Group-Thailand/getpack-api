@@ -3,6 +3,7 @@ import { EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/
 import { MONEY, POSTCODE, RATE } from '@modules/shipping/rates/customer-rates.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
+import { AttachedFileDto } from '@platform/files/files.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -23,6 +24,8 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+
+import { MAX_RFQ_FILES, MAX_RFQ_TIERS, RFQ_FIELD_TYPES } from './rfq-form';
 
 /** Requests for quote (D-100, D-043, D-102, schema-design §3.5). */
 
@@ -55,6 +58,12 @@ const SPEC_EXAMPLE = {
 };
 
 // --- requests ------------------------------------------------------------------------------------
+
+export class RfqRoutedFromDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001', description: '`calculationId` of `store.quotes.calculate`' })
+  @IsUUID()
+  calculationId!: string;
+}
 
 export class SubmitRfqDto {
   @ApiProperty({ example: 'paper_bag', pattern: '^[a-z][a-z0-9_]*$' })
@@ -95,7 +104,7 @@ export class SubmitRfqDto {
   @ApiProperty({ type: [Number], example: [500, 1000, 3000], description: '1–10 quantity tiers' })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(10)
+  @ArrayMaxSize(MAX_RFQ_TIERS)
   @IsInt({ each: true })
   @Min(1, { each: true })
   @Max(100_000_000, { each: true })
@@ -123,9 +132,27 @@ export class SubmitRfqDto {
   })
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(20)
+  @ArrayMaxSize(MAX_RFQ_FILES)
   @IsUUID('all', { each: true })
   fileIds?: string[];
+
+  @IntField({
+    example: 1,
+    optional: true,
+    min: 1,
+    max: 32767,
+    description: 'The form version it was filled in (`store.rfqs.getForm`); refused (422) when the form changed since',
+  })
+  specSchemaVersion?: number;
+
+  @ApiPropertyOptional({
+    type: () => RfqRoutedFromDto,
+    description: 'The calculation that routed this configuration to RFQ (D-102 unmet demand)',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => RfqRoutedFromDto)
+  routedFrom?: RfqRoutedFromDto;
 }
 
 export class StaffSubmitRfqDto extends SubmitRfqDto {
@@ -136,6 +163,15 @@ export class StaffSubmitRfqDto extends SubmitRfqDto {
 export class RfqMessageInputDto {
   @TextField({ example: 'Can the handles be flat? (fake)', max: 4000 })
   body!: string;
+}
+
+export class StoreRfqMessageInputDto extends RfqMessageInputDto {
+  @ApiPropertyOptional({ type: [String], example: [IDS.file], description: 'My uploaded files (purpose `artwork`), ≤ 10' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  fileIds?: string[];
 }
 
 export class StaffRfqMessageInputDto extends RfqMessageInputDto {
@@ -341,6 +377,9 @@ export class RfqMessageDto {
   @ApiProperty({ example: 'Can the handles be flat? (fake)' })
   body!: string;
 
+  @ApiProperty({ type: [AttachedFileDto], description: 'Files attached to the message' })
+  files!: AttachedFileDto[];
+
   @ApiProperty({ format: 'date-time', example: '2026-10-01T10:00:00+07:00' })
   createdAt!: string;
 }
@@ -510,6 +549,9 @@ export class RfqDto {
   })
   slaDueAt!: string | null;
 
+  @ApiProperty({ type: [AttachedFileDto], description: 'Files sent with the request (purpose `artwork`)' })
+  files!: AttachedFileDto[];
+
   @ApiProperty({ type: [RfqMessageDto] })
   messages!: RfqMessageDto[];
 
@@ -618,3 +660,149 @@ export class FactoryConsultationDto {
 
 export const UNMET_EXAMPLE = SPEC_EXAMPLE;
 export const RFQ_IDS = IDS;
+
+// --- store: RFQ form (U-B0.1) -------------------------------------------------------------------------------
+
+export class RfqFieldOptionDto {
+  @ApiProperty({ example: 'kraft' })
+  value!: string;
+
+  @ApiProperty({ example: 'คราฟท์' })
+  labelTh!: string;
+
+  @ApiProperty({ example: 'Kraft' })
+  labelEn!: string;
+}
+
+export class RfqFormFieldDto {
+  @ApiProperty({ example: 'material', description: 'Key to send in `spec`' })
+  key!: string;
+
+  @ApiProperty({ enum: RFQ_FIELD_TYPES, enumName: 'RfqFieldType', example: 'select' })
+  type!: (typeof RFQ_FIELD_TYPES)[number];
+
+  @ApiProperty({ example: 'วัสดุ' })
+  labelTh!: string;
+
+  @ApiProperty({ example: 'Material' })
+  labelEn!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  helpTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  helpEn!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Unit shown next to a number' })
+  unit!: string | null;
+
+  @ApiProperty({ example: true })
+  required!: boolean;
+
+  @ApiProperty({ type: Number, nullable: true, example: null })
+  min!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: null })
+  max!: number | null;
+
+  @ApiProperty({ type: [RfqFieldOptionDto], description: '`select` / `multiselect` only' })
+  options!: RfqFieldOptionDto[];
+}
+
+export class RfqFormDimensionsDto {
+  @ApiProperty({ example: true, description: 'Ask for length × width (× height)' })
+  asked!: boolean;
+
+  @ApiProperty({ example: false })
+  required!: boolean;
+
+  @ApiProperty({ example: true, description: 'Ask for a height as well' })
+  height!: boolean;
+}
+
+export class RfqFormQuantityDto {
+  @ApiProperty({ type: 'integer', example: 1 })
+  min!: number;
+
+  @ApiProperty({ type: 'integer', example: 10, description: 'Quantities one request may ask prices for' })
+  maxTiers!: number;
+}
+
+export class RfqFormFilesDto {
+  @ApiProperty({ example: 'artwork', description: 'File purpose to presign the uploads with' })
+  purpose!: string;
+
+  @ApiProperty({ type: [String], example: ['application/pdf', 'image/png'] })
+  accept!: string[];
+
+  @ApiProperty({ type: 'integer', example: 2147483648 })
+  maxBytes!: number;
+
+  @ApiProperty({ type: 'integer', example: 20 })
+  maxFiles!: number;
+}
+
+/** The form a customer fills in for a request for quote of one product type (D-100, D-043). */
+export class StoreRfqFormDto {
+  @ApiProperty({ example: 'paper_bag' })
+  productTypeCode!: string;
+
+  @ApiProperty({ example: 'ถุงกระดาษ' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Paper bags' })
+  nameEn!: string;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 1,
+    description: 'Send it back as `specSchemaVersion`; a submit filled in an older form is refused',
+  })
+  specSchemaVersion!: number;
+
+  @ApiProperty({ type: [RfqFormFieldDto] })
+  fields!: RfqFormFieldDto[];
+
+  @ApiProperty({ type: RfqFormDimensionsDto })
+  dimensions!: RfqFormDimensionsDto;
+
+  @ApiProperty({ type: RfqFormQuantityDto })
+  quantity!: RfqFormQuantityDto;
+
+  @ApiProperty({ type: RfqFormFilesDto })
+  files!: RfqFormFilesDto;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: null,
+    description: 'First-response target in business hours (`rfq.sla_business_hours`); null while not set',
+  })
+  slaTargetHours!: number | null;
+}
+
+export const RFQ_FORM_EXAMPLE: StoreRfqFormDto = {
+  productTypeCode: 'paper_bag',
+  nameTh: 'ถุงกระดาษ',
+  nameEn: 'Paper bags',
+  specSchemaVersion: 1,
+  fields: [
+    {
+      key: 'material',
+      type: 'select',
+      labelTh: 'วัสดุ',
+      labelEn: 'Material',
+      helpTh: null,
+      helpEn: null,
+      unit: null,
+      required: true,
+      min: null,
+      max: null,
+      options: [{ value: 'kraft', labelTh: 'คราฟท์', labelEn: 'Kraft' }],
+    },
+  ],
+  dimensions: { asked: true, required: false, height: true },
+  quantity: { min: 1, maxTiers: 10 },
+  files: { purpose: 'artwork', accept: ['application/pdf', 'image/png'], maxBytes: 2147483648, maxFiles: 20 },
+  slaTargetHours: null,
+};

@@ -219,6 +219,8 @@ model ProductType {
   calculatorKey        CalculatorKey? @map("calculator_key")
   isFoodContactDefault Boolean        @default(false) @map("is_food_contact_default")
   rfqSpecSchema        Json?          @map("rfq_spec_schema")
+  /// Bumped when `rfq_spec_schema` changes; the RFQ form carries it and a submit may name the version it was filled in (U-B0.1).
+  rfqSpecSchemaVersion Int            @default(1) @map("rfq_spec_schema_version") @db.SmallInt
   sort                 Int            @default(0)
   status               CatalogStatus  @default(draft)
   createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)

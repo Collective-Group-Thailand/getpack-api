@@ -1,6 +1,7 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
+import { canonical } from '@modules/catalog/imports/import-engine';
 
 import { defineResource } from '../crud/catalog-resource';
 import { compact, jsonField } from '../crud/compact';
@@ -185,8 +186,14 @@ export const productTypes = defineResource({
     sort: input.sort,
     status: input.status,
   }),
-  updateData: async (input: UpdateProductTypeDto, refs) =>
+  updateData: async (input: UpdateProductTypeDto, refs, current: { rfqSpecSchema: unknown }) =>
     compact({
+      // A new RFQ schema is a new form version (U-B0.1): a submit filled in the old form is refused.
+      rfqSpecSchemaVersion:
+        input.rfqSpecSchema !== undefined &&
+        JSON.stringify(canonical(input.rfqSpecSchema ?? null)) !== JSON.stringify(canonical(current.rfqSpecSchema ?? null))
+          ? { increment: 1 }
+          : undefined,
       categoryId:
         input.categoryId === undefined
           ? undefined

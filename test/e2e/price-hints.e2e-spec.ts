@@ -72,6 +72,7 @@ describe('price hints (e2e, U-B0.1)', () => {
       .send({ productTypeCode: 'folding_carton', configuration: foldingConfiguration(fixture, [1000]) })
       .expect(200);
     const unitPrice = calc.body.steps[0].unitPrice as string;
+    expect(calc.body.calculationId).toMatch(/^[0-9a-f-]{36}$/); // for routedFrom (U-B0.1)
     const [hint, stock] = await hints();
     expect(Number(hint!.startingFromPerPiece)).toBeGreaterThanOrEqual(Number(unitPrice));
     expect(Number(hint!.startingFromPerPiece) - Number(unitPrice)).toBeLessThan(0.01);

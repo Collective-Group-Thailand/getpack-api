@@ -13,11 +13,14 @@ import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { EntitiesService } from '@platform/entities/entities.service';
+import { FILE_PURPOSES } from '@platform/files/file-purposes';
 import { FilesService } from '@platform/files/files.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
+import { MAX_RFQ_FILES, MAX_RFQ_TIERS, rfqDimensions, rfqFormFields } from './rfq-form';
 import { specErrors } from './rfq-spec';
+import { type StoreRfqFormDto } from './rfqs.dto';
 
 export const RFQ_INCLUDE = {
   productType: { select: { code: true, nameTh: true, nameEn: true } },
@@ -44,6 +47,17 @@ export const RFQ_INCLUDE = {
 } satisfies Prisma.RfqInclude;
 export type RfqRow = Prisma.RfqGetPayload<{ include: typeof RFQ_INCLUDE }>;
 
+export interface AttachedFile {
+  id: string;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+export interface RfqFiles {
+  rfq: AttachedFile[];
+  messages: Map<bigint, AttachedFile[]>;
+}
+
 export interface SubmitRfqInput {
   productTypeCode: string;
   spec: Record<string, unknown>;
@@ -55,6 +69,8 @@ export interface SubmitRfqInput {
   deliveryPostcode: string;
   notes?: string;
   fileIds?: string[];
+  specSchemaVersion?: number;
+  routedFrom?: { calculationId: string };
 }
 
 export interface RfqQuoteLineInput {
@@ -129,6 +145,18 @@ export class RfqsService implements OnModuleInit {
         : []),
     ];
     if (errors.length > 0) throw new DomainException('validation.failed', { errors });
+    if (input.specSchemaVersion !== undefined && input.specSchemaVersion !== type.rfqSpecSchemaVersion) {
+      throw new DomainException('validation.failed', {
+        errors: [
+          {
+            path: 'specSchemaVersion',
+            code: 'outdated',
+            message: 'the form of this product type changed; load it again (store.rfqs.getForm)',
+          },
+        ],
+      });
+    }
+    const routedFrom = await this.routedFrom(customerUserId, type.id, input.routedFrom?.calculationId);
     const files = await this.ownFiles(customerUserId, createdBy, input.fileIds ?? []);
     const province = await this.prisma.geoSubdistrict.findFirst({
       where: { postcode: input.deliveryPostcode },
@@ -147,7 +175,8 @@ export class RfqsService implements OnModuleInit {
           createdById: createdBy?.userId ?? null,
           productTypeId: type.id,
           spec: input.spec as Prisma.InputJsonValue,
-          specSchemaVersion: 1,
+          specSchemaVersion: type.rfqSpecSchemaVersion,
+          routedFromCalculateLogId: routedFrom,
           lengthMm: input.lengthMm ?? null,
           widthMm: input.widthMm ?? null,
           heightMm: input.heightMm ?? null,
@@ -203,13 +232,31 @@ export class RfqsService implements OnModuleInit {
   }
 
   /** The customer answers; a request waiting for information goes back to review. */
-  async customerMessage(customerUserId: bigint, publicId: string, body: string): Promise<RfqRow> {
+  async customerMessage(
+    customerUserId: bigint,
+    publicId: string,
+    body: string,
+    fileIds: string[] = [],
+  ): Promise<RfqRow> {
+    const files = await this.ownFiles(customerUserId, undefined, fileIds);
     return this.prisma.withTx(async (tx) => {
       const rfq = await this.forCustomer(customerUserId, publicId, tx);
       if (!OPEN.includes(rfq.status)) throw new DomainException('rfq.closed');
-      await tx.rfqMessage.create({
+      const message = await tx.rfqMessage.create({
         data: { rfqId: rfq.id, authorUserId: customerUserId, visibility: 'customer', body },
       });
+      for (const [index, fileId] of files.entries()) {
+        await tx.attachment.create({
+          data: {
+            fileObjectId: fileId,
+            subjectType: 'rfq_message',
+            subjectId: message.id,
+            role: 'rfq.message_file',
+            sort: index,
+            createdById: customerUserId,
+          },
+        });
+      }
       if (rfq.status === 'need_info') await this.transition(tx, rfq.id, rfq.status, 'in_review');
       await this.record(tx, rfq.publicId, 'rfq.customer_replied', {
         status: rfq.status === 'need_info' ? 'in_review' : rfq.status,
@@ -773,6 +820,63 @@ export class RfqsService implements OnModuleInit {
     return tx.rfq.findUniqueOrThrow({ where: { id }, include: RFQ_INCLUDE });
   }
 
+  /** The files of an RFQ and of its messages (attachments are polymorphic, so read apart from the row). */
+  async attachments(rfq: RfqRow): Promise<RfqFiles> {
+    const rows = await this.prisma.attachment.findMany({
+      where: {
+        OR: [
+          { subjectType: 'rfq', subjectId: rfq.id },
+          { subjectType: 'rfq_message', subjectId: { in: rfq.messages.map((m) => m.id) } },
+        ],
+      },
+      include: { fileObject: { select: { publicId: true, originalName: true, mimeType: true, sizeBytes: true } } },
+      orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+    });
+    const view = (a: (typeof rows)[number]) => ({
+      id: a.fileObject.publicId,
+      originalName: a.fileObject.originalName,
+      mimeType: a.fileObject.mimeType,
+      sizeBytes: Number(a.fileObject.sizeBytes),
+    });
+    const messages = new Map<bigint, ReturnType<typeof view>[]>();
+    for (const a of rows.filter((r) => r.subjectType === 'rfq_message'))
+      messages.set(a.subjectId, [...(messages.get(a.subjectId) ?? []), view(a)]);
+    return { rfq: rows.filter((r) => r.subjectType === 'rfq').map(view), messages };
+  }
+
+  /**
+   * The RFQ form of an active product type (U-B0.1): any active type, since an instant type still routes to RFQ
+   * outside its price paths (D-043). No price, factory or staff data.
+   */
+  async form(productTypeCode: string): Promise<StoreRfqFormDto> {
+    const type = await this.prisma.productType.findFirst({ where: { code: productTypeCode, status: 'active' } });
+    if (!type) throw new DomainException('http.not_found');
+    const files = FILE_PURPOSES.artwork;
+    return {
+      productTypeCode: type.code,
+      nameTh: type.nameTh,
+      nameEn: type.nameEn,
+      specSchemaVersion: type.rfqSpecSchemaVersion,
+      fields: rfqFormFields(type.rfqSpecSchema),
+      dimensions: rfqDimensions(type.rfqSpecSchema),
+      quantity: { min: 1, maxTiers: MAX_RFQ_TIERS },
+      files: { purpose: 'artwork', accept: [...files.mimeTypes], maxBytes: files.maxBytes, maxFiles: MAX_RFQ_FILES },
+      slaTargetHours: await this.slaHours(type.id, new Date()),
+    };
+  }
+
+  private async slaHours(productTypeId: bigint, at: Date): Promise<number | null> {
+    try {
+      return Number(
+        (await this.settings.at('rfq.sla_business_hours', { at, scope: { type: 'product_type', id: productTypeId } }))
+          .value,
+      );
+    } catch (error) {
+      if (error instanceof SettingNotFoundError) return null;
+      throw error;
+    }
+  }
+
   /** First-response due time: the category's SLA in business hours, or none while it is not set. */
   private async slaDueAt(productTypeId: bigint, now: Date): Promise<Date | null> {
     try {
@@ -799,6 +903,27 @@ export class RfqsService implements OnModuleInit {
     });
     if (!version) throw new DomainException('pricing.vat_rate_missing');
     return { versionId: version.id, ratePct: new MoneyDecimal(version.ratePct.toString()) };
+  }
+
+  /**
+   * The calculation an RFQ was routed from (D-102): one of this product type, made by this customer or without a
+   * signed-in customer (they may sign in to submit). Anything else is ignored rather than refused — it is analytics.
+   */
+  private async routedFrom(
+    customerUserId: bigint,
+    productTypeId: bigint,
+    calculationId: string | undefined,
+  ): Promise<bigint | null> {
+    if (!calculationId) return null;
+    const log = await this.prisma.calculateLog.findFirst({
+      where: {
+        publicId: calculationId,
+        productTypeId,
+        OR: [{ actorUserId: customerUserId }, { actorUserId: null }],
+      },
+      select: { id: true },
+    });
+    return log?.id ?? null;
   }
 
   /** Uploaded, clean files of the customer (or of the CS member entering the RFQ for them). */

@@ -112,7 +112,7 @@ export interface QuoteView {
     calculatorVersion: string;
   };
   /** The analytics row of this calculation (null when it could not be written); internal only. */
-  calculateLog?: { id: bigint; occurredAt: Date } | null;
+  calculateLog?: { id: bigint; occurredAt: Date; publicId: string } | null;
 }
 
 export interface FactoryQuoteView {
@@ -591,7 +591,7 @@ export class QuoteEngineService {
     ctx: QuoteContext,
     at: Date,
     durationMs: number,
-  ): Promise<{ id: bigint; occurredAt: Date } | null> {
+  ): Promise<{ id: bigint; occurredAt: Date; publicId: string } | null> {
     const instant = view.steps.some((s) => s.instant);
     try {
       const input = adapter.logInput(cfg);
@@ -623,7 +623,7 @@ export class QuoteEngineService {
           durationMs,
           ipPrefix: ipPrefix(ctx.ip),
         },
-        select: { id: true, occurredAt: true },
+        select: { id: true, occurredAt: true, publicId: true },
       });
       // Analytics and unmet demand (D-102) subscribe; banded, no PII.
       const type = await this.prisma.productType.findUniqueOrThrow({

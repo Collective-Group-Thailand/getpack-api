@@ -66,6 +66,7 @@ class ParseOptionalPostcodePipe implements PipeTransform<unknown, string | undef
 
 const storeView = (view: QuoteView): QuoteCalculationDto => ({
   calculatorVersion: view.calculatorVersion,
+  calculationId: view.calculateLog?.publicId ?? null,
   steps: view.steps.map(({ internal: _internal, ...step }) => step),
 });
 

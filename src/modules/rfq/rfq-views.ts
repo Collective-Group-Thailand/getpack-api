@@ -8,7 +8,7 @@ import {
   type RfqQuoteLineDto,
   type StaffRfqDto,
 } from './rfqs.dto';
-import { type RfqRow } from './rfqs.service';
+import { type RfqFiles, type RfqRow } from './rfqs.service';
 
 const num = (d: { toNumber(): number } | null) => (d === null ? null : d.toNumber());
 const date = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
@@ -41,7 +41,9 @@ function quotation(q: QuoteRow): RfqQuotationDto {
 }
 
 /** The customer view: customer-visible messages, sent quotations, no factory or buy price (D-050). */
-export function rfqDto(r: RfqRow): RfqDto {
+const NO_FILES: RfqFiles = { rfq: [], messages: new Map() };
+
+export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
   return {
     id: r.publicId,
     rfqCode: r.rfqCode,
@@ -57,12 +59,14 @@ export function rfqDto(r: RfqRow): RfqDto {
     deliveryPostcode: r.deliveryPostcode,
     notes: r.notes,
     slaDueAt: iso(r.slaDueAt),
+    files: files.rfq,
     messages: r.messages
       .filter((m) => m.visibility === 'customer')
       .map((m) => ({
         id: m.publicId,
         author: m.authorUserId === r.customerUserId ? 'customer' : 'packio',
         body: m.body,
+        files: files.messages.get(m.id) ?? [],
         createdAt: toBangkokIso(m.createdAt),
       })),
     quotations: r.quotes.filter((q) => q.status !== 'draft').map(quotation),
@@ -78,8 +82,9 @@ export function staffRfqDto(
   r: RfqRow,
   grants: { cost: boolean; margin: boolean },
   now = new Date(),
+  files: RfqFiles = NO_FILES,
 ): StaffRfqDto {
-  const base = rfqDto(r);
+  const base = rfqDto(r, files);
   const open = ['submitted', 'in_review', 'need_info'].includes(r.status);
   return {
     ...base,
@@ -92,6 +97,7 @@ export function staffRfqDto(
       id: m.publicId,
       author: m.authorUserId === r.customerUserId ? 'customer' : 'packio',
       body: m.body,
+      files: files.messages.get(m.id) ?? [],
       createdAt: toBangkokIso(m.createdAt),
       visibility: m.visibility,
       authorUser: { id: m.author.publicId, displayName: m.author.displayName },

@@ -8310,6 +8310,34 @@
         ],
         "type": "string"
       },
+      "AttachedFileDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "mimeType": {
+            "example": "application/pdf",
+            "type": "string"
+          },
+          "originalName": {
+            "example": "brief.pdf",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "example": 245760,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "originalName",
+          "mimeType",
+          "sizeBytes"
+        ],
+        "type": "object"
+      },
       "AttributeReferralDto": {
         "properties": {
           "code": {
@@ -35916,6 +35944,15 @@
       },
       "QuoteCalculationDto": {
         "properties": {
+          "calculationId": {
+            "description": "This calculation; send it as `routedFrom.calculationId` when a quantity routes to RFQ (D-102). Null when it was not recorded",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "calculatorVersion": {
             "description": "Semver of the calculator port",
             "example": "1.0.0",
@@ -35929,6 +35966,7 @@
           }
         },
         "required": [
+          "calculationId",
           "calculatorVersion",
           "steps"
         ],
@@ -39356,6 +39394,13 @@
             "example": "10110",
             "type": "string"
           },
+          "files": {
+            "description": "Files sent with the request (purpose `artwork`)",
+            "items": {
+              "$ref": "#/components/schemas/AttachedFileDto"
+            },
+            "type": "array"
+          },
           "heightMm": {
             "example": 320,
             "type": [
@@ -39477,12 +39522,208 @@
           "deliveryPostcode",
           "notes",
           "slaDueAt",
+          "files",
           "messages",
           "quotations",
           "acceptedQuoteId",
           "declineReasonCode",
           "submittedAt",
           "closedAt"
+        ],
+        "type": "object"
+      },
+      "RfqFieldOptionDto": {
+        "properties": {
+          "labelEn": {
+            "example": "Kraft",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "คราฟท์",
+            "type": "string"
+          },
+          "value": {
+            "example": "kraft",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "labelTh",
+          "labelEn"
+        ],
+        "type": "object"
+      },
+      "RfqFieldType": {
+        "enum": [
+          "text",
+          "textarea",
+          "number",
+          "select",
+          "multiselect",
+          "boolean"
+        ],
+        "type": "string"
+      },
+      "RfqFormDimensionsDto": {
+        "properties": {
+          "asked": {
+            "description": "Ask for length × width (× height)",
+            "example": true,
+            "type": "boolean"
+          },
+          "height": {
+            "description": "Ask for a height as well",
+            "example": true,
+            "type": "boolean"
+          },
+          "required": {
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "asked",
+          "required",
+          "height"
+        ],
+        "type": "object"
+      },
+      "RfqFormFieldDto": {
+        "properties": {
+          "helpEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "helpTh": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "key": {
+            "description": "Key to send in `spec`",
+            "example": "material",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "Material",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "วัสดุ",
+            "type": "string"
+          },
+          "max": {
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "min": {
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "options": {
+            "description": "`select` / `multiselect` only",
+            "items": {
+              "$ref": "#/components/schemas/RfqFieldOptionDto"
+            },
+            "type": "array"
+          },
+          "required": {
+            "example": true,
+            "type": "boolean"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RfqFieldType"
+              }
+            ],
+            "example": "select"
+          },
+          "unit": {
+            "description": "Unit shown next to a number",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "type",
+          "labelTh",
+          "labelEn",
+          "helpTh",
+          "helpEn",
+          "unit",
+          "required",
+          "min",
+          "max",
+          "options"
+        ],
+        "type": "object"
+      },
+      "RfqFormFilesDto": {
+        "properties": {
+          "accept": {
+            "example": [
+              "application/pdf",
+              "image/png"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "maxBytes": {
+            "example": 2147483648,
+            "type": "integer"
+          },
+          "maxFiles": {
+            "example": 20,
+            "type": "integer"
+          },
+          "purpose": {
+            "description": "File purpose to presign the uploads with",
+            "example": "artwork",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "accept",
+          "maxBytes",
+          "maxFiles"
+        ],
+        "type": "object"
+      },
+      "RfqFormQuantityDto": {
+        "properties": {
+          "maxTiers": {
+            "description": "Quantities one request may ask prices for",
+            "example": 10,
+            "type": "integer"
+          },
+          "min": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min",
+          "maxTiers"
         ],
         "type": "object"
       },
@@ -39512,6 +39753,13 @@
             "format": "date-time",
             "type": "string"
           },
+          "files": {
+            "description": "Files attached to the message",
+            "items": {
+              "$ref": "#/components/schemas/AttachedFileDto"
+            },
+            "type": "array"
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
             "format": "uuid",
@@ -39522,6 +39770,7 @@
           "id",
           "author",
           "body",
+          "files",
           "createdAt"
         ],
         "type": "object"
@@ -39701,6 +39950,20 @@
           "expired"
         ],
         "type": "string"
+      },
+      "RfqRoutedFromDto": {
+        "properties": {
+          "calculationId": {
+            "description": "`calculationId` of `store.quotes.calculate`",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "calculationId"
+        ],
+        "type": "object"
       },
       "RfqStatus": {
         "enum": [
@@ -43726,6 +43989,13 @@
             "example": "10110",
             "type": "string"
           },
+          "files": {
+            "description": "Files sent with the request (purpose `artwork`)",
+            "items": {
+              "$ref": "#/components/schemas/AttachedFileDto"
+            },
+            "type": "array"
+          },
           "firstResponseAt": {
             "example": "2026-10-01T11:00:00+07:00",
             "format": "date-time",
@@ -43862,6 +44132,7 @@
           "deliveryPostcode",
           "notes",
           "slaDueAt",
+          "files",
           "messages",
           "quotations",
           "acceptedQuoteId",
@@ -43899,6 +44170,13 @@
             "format": "date-time",
             "type": "string"
           },
+          "files": {
+            "description": "Files attached to the message",
+            "items": {
+              "$ref": "#/components/schemas/AttachedFileDto"
+            },
+            "type": "array"
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
             "format": "uuid",
@@ -43917,6 +44195,7 @@
           "id",
           "author",
           "body",
+          "files",
           "createdAt",
           "visibility",
           "authorUser"
@@ -44141,7 +44420,6 @@
               "format": "uuid",
               "type": "string"
             },
-            "maxItems": 20,
             "type": "array"
           },
           "heightMm": {
@@ -44186,9 +44464,16 @@
               "minimum": 1,
               "type": "number"
             },
-            "maxItems": 10,
             "minItems": 1,
             "type": "array"
+          },
+          "routedFrom": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RfqRoutedFromDto"
+              }
+            ],
+            "description": "The calculation that routed this configuration to RFQ (D-102 unmet demand)"
           },
           "spec": {
             "additionalProperties": true,
@@ -44199,6 +44484,13 @@
               "print": "1 colour one side"
             },
             "type": "object"
+          },
+          "specSchemaVersion": {
+            "description": "The form version it was filled in (`store.rfqs.getForm`); refused (422) when the form changed since",
+            "example": 1,
+            "maximum": 32767,
+            "minimum": 1,
+            "type": "integer"
           },
           "targetDate": {
             "example": "2026-11-15",
@@ -46536,6 +46828,86 @@
         ],
         "type": "object"
       },
+      "StoreRfqFormDto": {
+        "properties": {
+          "dimensions": {
+            "$ref": "#/components/schemas/RfqFormDimensionsDto"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/RfqFormFieldDto"
+            },
+            "type": "array"
+          },
+          "files": {
+            "$ref": "#/components/schemas/RfqFormFilesDto"
+          },
+          "nameEn": {
+            "example": "Paper bags",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ถุงกระดาษ",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "paper_bag",
+            "type": "string"
+          },
+          "quantity": {
+            "$ref": "#/components/schemas/RfqFormQuantityDto"
+          },
+          "slaTargetHours": {
+            "description": "First-response target in business hours (`rfq.sla_business_hours`); null while not set",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "specSchemaVersion": {
+            "description": "Send it back as `specSchemaVersion`; a submit filled in an older form is refused",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "nameTh",
+          "nameEn",
+          "specSchemaVersion",
+          "fields",
+          "dimensions",
+          "quantity",
+          "files",
+          "slaTargetHours"
+        ],
+        "type": "object"
+      },
+      "StoreRfqMessageInputDto": {
+        "properties": {
+          "body": {
+            "example": "Can the handles be flat? (fake)",
+            "type": "string"
+          },
+          "fileIds": {
+            "description": "My uploaded files (purpose `artwork`), ≤ 10",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000f003"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
       "StoreSearchHitDto": {
         "properties": {
           "imageUrl": {
@@ -47604,7 +47976,6 @@
               "format": "uuid",
               "type": "string"
             },
-            "maxItems": 20,
             "type": "array"
           },
           "heightMm": {
@@ -47649,9 +48020,16 @@
               "minimum": 1,
               "type": "number"
             },
-            "maxItems": 10,
             "minItems": 1,
             "type": "array"
+          },
+          "routedFrom": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RfqRoutedFromDto"
+              }
+            ],
+            "description": "The calculation that routed this configuration to RFQ (D-102 unmet demand)"
           },
           "spec": {
             "additionalProperties": true,
@@ -47662,6 +48040,13 @@
               "print": "1 colour one side"
             },
             "type": "object"
+          },
+          "specSchemaVersion": {
+            "description": "The form version it was filled in (`store.rfqs.getForm`); refused (422) when the form changed since",
+            "example": 1,
+            "maximum": 32767,
+            "minimum": 1,
+            "type": "integer"
           },
           "targetDate": {
             "example": "2026-11-15",
@@ -201747,6 +202132,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -201760,6 +202153,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -202044,6 +202438,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -202057,6 +202459,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -202418,6 +202821,14 @@
                       },
                       "declineReasonCode": null,
                       "deliveryPostcode": "10110",
+                      "files": [
+                        {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                          "mimeType": "application/pdf",
+                          "originalName": "brief.pdf",
+                          "sizeBytes": 245760
+                        }
+                      ],
                       "firstResponseAt": "2026-10-01T09:00:00+07:00",
                       "heightMm": 320,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -202431,6 +202842,7 @@
                           },
                           "body": "Quotation sent (fake)",
                           "createdAt": "2026-10-01T09:00:00+07:00",
+                          "files": [],
                           "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                           "visibility": "customer"
                         }
@@ -202723,6 +203135,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -202736,6 +203156,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -203058,6 +203479,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -203071,6 +203500,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -203352,6 +203782,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -203365,6 +203803,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -203693,6 +204132,14 @@
                   },
                   "declineReasonCode": "capability_missing",
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -203706,6 +204153,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -204030,6 +204478,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -204043,6 +204499,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -204372,6 +204829,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -204385,6 +204850,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -204713,6 +205179,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -204726,6 +205200,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -205059,6 +205534,14 @@
                   },
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "firstResponseAt": "2026-10-01T09:00:00+07:00",
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
@@ -205072,6 +205555,7 @@
                       },
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
                     }
@@ -279797,6 +280281,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "calculationId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "calculatorVersion": "1.0.0",
                   "steps": [
                     {
@@ -282670,6 +283155,186 @@
         ]
       }
     },
+    "/v1/store/rfq-forms/{productTypeCode}": {
+      "get": {
+        "description": "The category's spec fields rendered from its admin schema as typed fields (labels, help, units, limits, options), whether dimensions are asked, how many quantities, the file rules and the first-response SLA. Any active type has one: an instant type still routes to RFQ outside its price paths (D-043, D-100). Send `specSchemaVersion` back with the request.\n\nImplements: D-100, D-043, D-102.",
+        "operationId": "store.rfqs.getForm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productTypeCode",
+            "required": true,
+            "schema": {
+              "example": "paper_bag",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "dimensions": {
+                    "asked": true,
+                    "height": true,
+                    "required": false
+                  },
+                  "fields": [
+                    {
+                      "helpEn": null,
+                      "helpTh": null,
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "max": null,
+                      "min": null,
+                      "options": [
+                        {
+                          "labelEn": "Kraft",
+                          "labelTh": "คราฟท์",
+                          "value": "kraft"
+                        }
+                      ],
+                      "required": true,
+                      "type": "select",
+                      "unit": null
+                    }
+                  ],
+                  "files": {
+                    "accept": [
+                      "application/pdf",
+                      "image/png"
+                    ],
+                    "maxBytes": 2147483648,
+                    "maxFiles": 20,
+                    "purpose": "artwork"
+                  },
+                  "nameEn": "Paper bags",
+                  "nameTh": "ถุงกระดาษ",
+                  "productTypeCode": "paper_bag",
+                  "quantity": {
+                    "maxTiers": 10,
+                    "min": 1
+                  },
+                  "slaTargetHours": null,
+                  "specSchemaVersion": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreRfqFormDto"
+                }
+              }
+            },
+            "description": "The form",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the request-for-quote form of a product type",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
     "/v1/store/rfqs": {
       "get": {
         "description": "Newest first (D-100).\n\nImplements: D-100, D-043, D-102.",
@@ -282748,6 +283413,14 @@
                       "closedAt": null,
                       "declineReasonCode": null,
                       "deliveryPostcode": "10110",
+                      "files": [
+                        {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                          "mimeType": "application/pdf",
+                          "originalName": "brief.pdf",
+                          "sizeBytes": 245760
+                        }
+                      ],
                       "heightMm": 320,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                       "lengthMm": 250,
@@ -282756,6 +283429,7 @@
                           "author": "packio",
                           "body": "Quotation sent (fake)",
                           "createdAt": "2026-10-01T09:00:00+07:00",
+                          "files": [],
                           "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
                         }
                       ],
@@ -283010,6 +283684,14 @@
                   "closedAt": null,
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
@@ -283276,6 +283958,14 @@
                   "closedAt": null,
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
@@ -283284,6 +283974,7 @@
                       "author": "packio",
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
                     }
                   ],
@@ -283534,6 +284225,14 @@
                   "closedAt": "2026-10-02T09:00:00+07:00",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
@@ -283542,6 +284241,7 @@
                       "author": "packio",
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
                     }
                   ],
@@ -283864,6 +284564,14 @@
                   "closedAt": null,
                   "declineReasonCode": "customer_declined",
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
@@ -283872,6 +284580,7 @@
                       "author": "packio",
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
                     }
                   ],
@@ -284144,7 +284853,7 @@
                 }
               },
               "schema": {
-                "$ref": "#/components/schemas/RfqMessageInputDto"
+                "$ref": "#/components/schemas/StoreRfqMessageInputDto"
               }
             }
           },
@@ -284159,6 +284868,14 @@
                   "closedAt": null,
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
+                  "files": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                      "mimeType": "application/pdf",
+                      "originalName": "brief.pdf",
+                      "sizeBytes": 245760
+                    }
+                  ],
                   "heightMm": 320,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
@@ -284167,6 +284884,7 @@
                       "author": "packio",
                       "body": "Quotation sent (fake)",
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
                     }
                   ],

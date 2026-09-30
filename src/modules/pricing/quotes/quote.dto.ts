@@ -386,6 +386,16 @@ export class QuoteStepDto {
 }
 
 export class QuoteCalculationDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001',
+    description:
+      'This calculation; send it as `routedFrom.calculationId` when a quantity routes to RFQ (D-102). Null when it was not recorded',
+  })
+  calculationId!: string | null;
+
   @ApiProperty({ example: '1.0.0', description: 'Semver of the calculator port' })
   calculatorVersion!: string;
 
@@ -539,6 +549,7 @@ export class AdminQuoteCalculationDto {
 
 export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
   calculatorVersion: '1.0.0',
+  calculationId: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001',
   steps: [
     {
       quantity: 1000,

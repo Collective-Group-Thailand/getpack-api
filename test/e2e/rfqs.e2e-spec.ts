@@ -135,6 +135,93 @@ describe('requests for quote (e2e, B2.5)', () => {
     expect(rfq).toMatchObject({ status: 'submitted', quantities: [500, 1000, 3000], slaDueAt: null });
   });
 
+  it('serves the typed form, refuses an outdated one, keeps files and links the routing calculation (U-B0.1)', async () => {
+    const type = await prisma.productType.update({
+      where: { code: 'paper_bag' },
+      data: {
+        rfqSpecSchema: {
+          type: 'object',
+          required: ['material'],
+          properties: { material: { type: 'string', title: 'วัสดุ', 'x-title-en': 'Material' } },
+          'x-dimensions': { required: true },
+        },
+        rfqSpecSchemaVersion: { increment: 1 },
+      },
+    });
+    const form = (await request(server).get('/v1/store/rfq-forms/paper_bag').expect(200)).body as {
+      specSchemaVersion: number;
+    };
+    expect(form).toMatchObject({
+      productTypeCode: 'paper_bag',
+      specSchemaVersion: type.rfqSpecSchemaVersion,
+      fields: [{ key: 'material', type: 'text', labelTh: 'วัสดุ', labelEn: 'Material', required: true }],
+      dimensions: { asked: true, required: true, height: true },
+      quantity: { min: 1, maxTiers: 10 },
+      files: { purpose: 'artwork', maxFiles: 20 },
+      slaTargetHours: null,
+    });
+    await request(server).get('/v1/store/rfq-forms/no_such_type').expect(404);
+    const stale = await as('customer')
+      .post('/v1/store/rfqs', submission({ specSchemaVersion: form.specSchemaVersion - 1 }))
+      .expect(422);
+    expect(stale.body.errors[0]).toMatchObject({ path: 'specSchemaVersion', code: 'outdated' });
+
+    const me = (await as('customer').get('/v1/store/me').expect(200)).body as { id: string };
+    const owner = await prisma.user.findUniqueOrThrow({ where: { publicId: me.id } });
+    const upload = (name: string) =>
+      prisma.fileObject.create({
+        data: {
+          bucket: 'test',
+          storageKey: `customer/e2e/${run}/${name}`,
+          originalName: name,
+          mimeType: 'application/pdf',
+          sizeBytes: 1024n,
+          uploadStatus: 'uploaded',
+          scanStatus: 'clean',
+          ownerUserId: owner.id,
+        },
+      });
+    const brief = await upload('brief.pdf');
+    const log = await prisma.calculateLog.create({
+      data: {
+        occurredAt: new Date(),
+        channel: 'web',
+        productTypeId: type.id,
+        quantities: [1000],
+        input: {},
+        inputSchemaVersion: 1,
+        resultSummary: {},
+        instantPath: false,
+        routedToRfq: true,
+        durationMs: 1,
+      },
+    });
+    const rfq = (
+      await as('customer')
+        .post(
+          '/v1/store/rfqs',
+          submission({
+            specSchemaVersion: form.specSchemaVersion,
+            fileIds: [brief.publicId],
+            routedFrom: { calculationId: log.publicId },
+          }),
+        )
+        .expect(201)
+    ).body as Rfq & { files: { id: string; originalName: string }[] };
+    expect(rfq.files).toEqual([expect.objectContaining({ id: brief.publicId, originalName: 'brief.pdf' })]);
+    const stored = await prisma.rfq.findUniqueOrThrow({ where: { publicId: rfq.id } });
+    expect(stored).toMatchObject({ routedFromCalculateLogId: log.id, specSchemaVersion: form.specSchemaVersion });
+
+    const photo = await upload('photo.pdf');
+    const replied = await as('customer')
+      .post(`/v1/store/rfqs/${rfq.id}/messages`, { body: 'Reference (fake)', fileIds: [photo.publicId] })
+      .expect(201);
+    const message = (replied.body.messages as { body: string; files: { id: string }[] }[]).find(
+      (m) => m.body === 'Reference (fake)',
+    );
+    expect(message?.files.map((f) => f.id)).toEqual([photo.publicId]);
+  });
+
   it('runs the request through CS, a factory consultation, a quotation and the customer’s acceptance (D-100)', async () => {
     const rfq = (await as('customer').post('/v1/store/rfqs', submission()).expect(201)).body as Rfq;
     const admin = `/v1/admin/rfqs/${rfq.id}`;

@@ -179,6 +179,8 @@ model SellMarginLine {
 /// `occurred_at` (schema-design §1.7); IPs are truncated (§2.11). `quote_id` gets its FK in B2.5.
 model CalculateLog {
   id                 BigInt       @default(autoincrement())
+  /// Opaque reference returned to the client (`calculationId`), e.g. to link an RFQ routed from this calculation (U-B0.1).
+  publicId           String       @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
   occurredAt         DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(6)
   channel            SalesChannel
   productTypeId      BigInt       @map("product_type_id")
@@ -209,6 +211,7 @@ model CalculateLog {
   quote          Quote?          @relation("CalculateLogQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_calculate_logs__quote_id")
 
   @@id([id, occurredAt], map: "pk_calculate_logs")
+  @@index([publicId], map: "ix_calculate_logs__public_id")
   @@index([productTypeId, occurredAt], map: "ix_calculate_logs__product_type_id__occurred_at")
   @@index([catalogProductId], map: "ix_calculate_logs__catalog_product_id")
   @@index([stockProductId], map: "ix_calculate_logs__stock_product_id")

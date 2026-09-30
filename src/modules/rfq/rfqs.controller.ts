@@ -1,4 +1,4 @@
-import { CurrentActor } from '@common/auth/auth.decorators';
+import { CurrentActor, Public } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
@@ -8,8 +8,8 @@ import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
-import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { Body, Controller, Get, Header, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { factoryConsultationDto, rfqDto, staffRfqDto } from './rfq-views';
 import {
@@ -23,6 +23,7 @@ import {
   FactoryConsultationDto,
   RequestConsultationDto,
   RespondConsultationDto,
+  RFQ_FORM_EXAMPLE,
   RFQ_IDS,
   RfqDto,
   RfqListQuery,
@@ -31,10 +32,12 @@ import {
   StaffRfqDto,
   StaffRfqMessageInputDto,
   StaffSubmitRfqDto,
+  StoreRfqFormDto,
+  StoreRfqMessageInputDto,
   SubmitRfqDto,
   UNMET_EXAMPLE,
 } from './rfqs.dto';
-import { RfqsService } from './rfqs.service';
+import { type RfqRow, RfqsService } from './rfqs.service';
 
 const DECISIONS = ['D-100', 'D-043', 'D-102'];
 const rfqParam = ApiParam({ name: 'rfqId', format: 'uuid' });
@@ -73,11 +76,20 @@ const RFQ_EXAMPLE: RfqDto = {
   deliveryPostcode: '10110',
   notes: 'Logo on both sides (fake)',
   slaDueAt: null,
+  files: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000f001',
+      originalName: 'brief.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 245760,
+    },
+  ],
   messages: [
     {
       id: RFQ_IDS.message,
       author: 'packio',
       body: 'Quotation sent (fake)',
+      files: [],
       createdAt: '2026-10-01T09:00:00+07:00',
     },
   ],
@@ -163,10 +175,41 @@ function customerOf(actor: Actor): bigint {
   return actor.userId;
 }
 
+/** `/v1/store/rfq-forms/{productTypeCode}`: the public RFQ form of a product type (U-B0.1). */
+@ApiTags('store.rfqs')
+@Controller('rfq-forms')
+export class StoreRfqFormsController {
+  constructor(private readonly rfqs: RfqsService) {}
+
+  @Get(':productTypeCode')
+  @Public()
+  @Header('Cache-Control', 'public, max-age=60')
+  @ApiParam({ name: 'productTypeCode', example: 'paper_bag' })
+  @ApiEndpoint({
+    id: 'store.rfqs.getForm',
+    summary: 'Get the request-for-quote form of a product type',
+    description:
+      "The category's spec fields rendered from its admin schema as typed fields (labels, help, units, limits, " +
+      'options), whether dimensions are asked, how many quantities, the file rules and the first-response SLA. ' +
+      'Any active type has one: an instant type still routes to RFQ outside its price paths (D-043, D-100). Send ' +
+      '`specSchemaVersion` back with the request.',
+    implements: DECISIONS,
+  })
+  @ApiSuccess(200, { description: 'The form', type: StoreRfqFormDto, example: RFQ_FORM_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  form(@Param('productTypeCode') productTypeCode: string): Promise<StoreRfqFormDto> {
+    return this.rfqs.form(productTypeCode);
+  }
+}
+
 @ApiSurface('store', 'rfqs')
 @Controller('rfqs')
 export class StoreRfqsController {
   constructor(private readonly rfqs: RfqsService) {}
+
+  private async view(row: RfqRow) {
+    return rfqDto(row, await this.rfqs.attachments(row));
+  }
 
   @Post()
   @Idempotent()
@@ -187,7 +230,7 @@ export class StoreRfqsController {
   })
   @ApiStandardErrors(...WRITE, 'numbering.series_missing')
   async submit(@CurrentActor() actor: Actor, @Body() body: SubmitRfqDto): Promise<RfqDto> {
-    return rfqDto(await this.rfqs.submit(customerOf(actor), 'web', body));
+    return this.view(await this.rfqs.submit(customerOf(actor), 'web', body));
   }
 
   @Get()
@@ -205,7 +248,10 @@ export class StoreRfqsController {
       query.page,
       query.perPage,
     );
-    return { data: rows.map(rfqDto), meta: { page: query.page, perPage: query.perPage, total } };
+    return {
+      data: await Promise.all(rows.map((r) => this.view(r))),
+      meta: { page: query.page, perPage: query.perPage, total },
+    };
   }
 
   @Get(':rfqId')
@@ -220,7 +266,7 @@ export class StoreRfqsController {
   @ApiSuccess(200, { description: 'Request', type: RfqDto, example: RFQ_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@CurrentActor() actor: Actor, @Param('rfqId', ParseUUIDPipe) rfqId: string): Promise<RfqDto> {
-    return rfqDto(await this.rfqs.forCustomer(customerOf(actor), rfqId));
+    return this.view(await this.rfqs.forCustomer(customerOf(actor), rfqId));
   }
 
   @Post(':rfqId/messages')
@@ -232,7 +278,7 @@ export class StoreRfqsController {
     implements: DECISIONS,
   })
   @ApiBody({
-    type: RfqMessageInputDto,
+    type: StoreRfqMessageInputDto,
     examples: { default: { value: { body: 'Flat handles are fine (fake)' } } },
   })
   @ApiSuccess(201, { description: 'Request', type: RfqDto, example: RFQ_EXAMPLE })
@@ -240,9 +286,9 @@ export class StoreRfqsController {
   async message(
     @CurrentActor() actor: Actor,
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
-    @Body() body: RfqMessageInputDto,
+    @Body() body: StoreRfqMessageInputDto,
   ): Promise<RfqDto> {
-    return rfqDto(await this.rfqs.customerMessage(customerOf(actor), rfqId, body.body));
+    return this.view(await this.rfqs.customerMessage(customerOf(actor), rfqId, body.body, body.fileIds));
   }
 
   @Post(':rfqId/actions/accept')
@@ -277,7 +323,7 @@ export class StoreRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: AcceptRfqQuoteDto,
   ): Promise<RfqDto> {
-    return rfqDto(await this.rfqs.accept(customerOf(actor), rfqId, body.rfqQuoteId, body.quantities));
+    return this.view(await this.rfqs.accept(customerOf(actor), rfqId, body.rfqQuoteId, body.quantities));
   }
 
   @Post(':rfqId/actions/decline')
@@ -304,7 +350,7 @@ export class StoreRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: DeclineRfqDto,
   ): Promise<RfqDto> {
-    return rfqDto(await this.rfqs.customerDecline(customerOf(actor), rfqId, body.note));
+    return this.view(await this.rfqs.customerDecline(customerOf(actor), rfqId, body.note));
   }
 }
 
@@ -363,7 +409,8 @@ export class AdminRfqsController {
     @CurrentActor() actor: Actor,
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
   ): Promise<StaffRfqDto> {
-    return staffRfqDto(await this.rfqs.get(rfqId), await this.grants(actor));
+    const row = await this.rfqs.get(rfqId);
+    return staffRfqDto(row, await this.grants(actor), new Date(), await this.rfqs.attachments(row));
   }
 
   @Post('rfqs')

@@ -219,3 +219,18 @@ export const FILE_EXAMPLE: FileDto = {
   thumbnailId: null,
   createdAt: '2026-09-23T14:05:00+07:00',
 };
+
+/** A file attached to something the reader may see (download it with `…/files/{id}/download`). */
+export class AttachedFileDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000f001' })
+  id!: string;
+
+  @ApiProperty({ example: 'brief.pdf' })
+  originalName!: string;
+
+  @ApiProperty({ example: 'application/pdf' })
+  mimeType!: string;
+
+  @ApiProperty({ type: 'integer', example: 245760 })
+  sizeBytes!: number;
+}
