@@ -5,6 +5,7 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import {
   type CreationChannel,
   type CustomerProfile,
+  type CustomerType,
   type Prisma,
   type TaxProfile,
   type User,
@@ -458,11 +459,22 @@ export class CustomersService {
 
   // --- CS -------------------------------------------------------------------------------------------
 
-  async search(q: string | undefined, page: number, perPage: number) {
+  async search(
+    q: string | undefined,
+    page: number,
+    perPage: number,
+    filters: { customerType?: CustomerType; createdVia?: CreationChannel } = {},
+  ) {
     const phone = q ? toE164(q) : null;
     const where: Prisma.UserWhereInput = {
       kind: 'customer',
       anonymisedAt: null,
+      ...((filters.customerType || filters.createdVia) && {
+        customerProfile: {
+          ...(filters.customerType && { customerType: filters.customerType }),
+          ...(filters.createdVia && { createdVia: filters.createdVia }),
+        },
+      }),
       ...(q && {
         OR: [
           ...(phone ? [{ phone }] : []),
@@ -483,6 +495,36 @@ export class CustomersService {
       this.prisma.user.count({ where }),
     ]);
     return { rows, total };
+  }
+
+  /** For the staff views: order groups placed (not cancelled), the last one, an active company membership. */
+  async staffStats(userIds: bigint[]) {
+    const [groups, members] = await Promise.all([
+      this.prisma.orderGroup.groupBy({
+        by: ['customerUserId'],
+        where: { customerUserId: { in: userIds }, status: { not: 'cancelled' } },
+        _count: { _all: true },
+        _max: { placedAt: true },
+      }),
+      this.prisma.companyMember.findMany({
+        where: { userId: { in: userIds }, status: 'active', company: { status: { not: 'closed' } } },
+        include: { company: { select: { legalName: true } } },
+        orderBy: { id: 'asc' },
+      }),
+    ]);
+    return new Map(
+      userIds.map((id) => {
+        const g = groups.find((x) => x.customerUserId === id);
+        return [
+          id,
+          {
+            ordersCount: g?._count._all ?? 0,
+            lastOrderAt: g?._max.placedAt ?? null,
+            companyName: members.find((m) => m.userId === id)?.company.legalName ?? null,
+          },
+        ];
+      }),
+    );
   }
 
   /**

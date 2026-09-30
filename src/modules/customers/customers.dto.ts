@@ -491,6 +491,18 @@ export class AdminCustomerDto extends CustomerProfileDto {
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-02T09:00:00+07:00' })
   lastLoginAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'A company the customer is an active member of' })
+  companyName!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 3, description: 'Order groups placed (not cancelled)' })
+  ordersCount!: number;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-01T10:00:00+07:00' })
+  lastOrderAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'PKO-7F3K', description: 'The customer’s referral code (D-136)' })
+  referralCode!: string | null;
 }
 
 export const ADMIN_CUSTOMER_EXAMPLE: AdminCustomerDto = {
@@ -498,10 +510,20 @@ export const ADMIN_CUSTOMER_EXAMPLE: AdminCustomerDto = {
   createdVia: 'cs',
   status: 'active',
   lastLoginAt: null,
+  companyName: null,
+  ordersCount: 3,
+  lastOrderAt: '2026-10-01T10:00:00+07:00',
+  referralCode: null,
 };
 
 /** `q` searches phone (Thai or E.164), e-mail, name or customer code. */
-export class CustomerListQuery extends PageQuery {}
+export class CustomerListQuery extends PageQuery {
+  @EnumField(CUSTOMER_TYPES, 'CustomerType', { example: 'juristic', optional: true })
+  customerType?: (typeof CUSTOMER_TYPES)[number];
+
+  @EnumField(CREATION_CHANNELS, 'CreationChannel', { example: 'cs', optional: true })
+  createdVia?: (typeof CREATION_CHANNELS)[number];
+}
 
 export class FindOrCreateCustomerDto {
   @PhoneField({ optional: true, description: 'Phone (Thai or E.164); phone or e-mail is required' })

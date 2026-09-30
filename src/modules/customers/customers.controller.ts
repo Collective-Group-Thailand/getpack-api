@@ -368,14 +368,21 @@ export class AdminCustomersController {
   @ApiEndpoint({
     id: 'admin.customers.list',
     summary: 'Find customers',
-    description: 'Search by phone (Thai or E.164), e-mail, name or customer code; newest first.',
+    description:
+      'Search by phone (Thai or E.164), e-mail, name or customer code, filter by customer type and how the ' +
+      'account was created; newest first. Rows carry the company, orders placed and the last order.',
     implements: ['D-092'],
   })
   @ApiPaginated(AdminCustomerDto, { example: ADMIN_CUSTOMER_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@Query() q: CustomerListQuery) {
-    const { rows, total } = await this.customers.search(q.q, q.page, q.perPage);
-    return page(rows.map(adminCustomerDto), total, q);
+    const { rows, total } = await this.customers.search(q.q, q.page, q.perPage, q);
+    const stats = await this.customers.staffStats(rows.map((r) => r.id));
+    return page(
+      rows.map((r) => adminCustomerDto(r, stats.get(r.id))),
+      total,
+      q,
+    );
   }
 
   @Post()
@@ -432,7 +439,7 @@ export class AdminCustomersController {
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@Param('customerId', ParseUUIDPipe) customerId: string) {
     const id = await this.customers.customerIdOf(customerId);
-    return adminCustomerDto(await this.customers.profile(id));
+    return adminCustomerDto(await this.customers.profile(id), (await this.customers.staffStats([id])).get(id));
   }
 
   @Get(':customerId/addresses')

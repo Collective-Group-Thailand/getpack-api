@@ -1,11 +1,14 @@
 import { randomUUID } from 'node:crypto';
 
+import request from 'supertest';
+
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {
   as,
   bootCommerceApp,
   type CommerceApp,
   customerToken,
+  devGeo,
   foldingBackToRfq,
   foldingReady,
   placeOrder,
@@ -121,5 +124,42 @@ describe('admin orders (e2e, U-B0.2)', () => {
         expect.objectContaining({ reason: 'http.not_found' }),
       ]),
     );
+  });
+
+  it('shows staff the customer’s orders and company, filters customers, and looks postcodes up with ids', async () => {
+    const { token } = await customerToken(ctx, 6);
+    const placed = await placeOrder(ctx, token, fixture, postcode);
+    const group = await as(ctx, cs).get(`/v1/admin/order-groups/${placed.id}`).expect(200);
+    const customerId = group.body.customerId as string;
+    const one = (await as(ctx, cs).get(`/v1/admin/customers/${customerId}`).expect(200)).body;
+    expect(one).toMatchObject({ ordersCount: 1, lastOrderAt: expect.any(String), companyName: null });
+    const self = (await as(ctx, cs).get('/v1/admin/customers?createdVia=self&perPage=100').expect(200)).body.data as {
+      id: string;
+      createdVia: string;
+    }[];
+    expect(self.every((c) => c.createdVia === 'self')).toBe(true);
+    expect((await as(ctx, cs).get('/v1/admin/customers?createdVia=cs&perPage=100').expect(200)).body.data).not.toContainEqual(
+      expect.objectContaining({ id: customerId }),
+    );
+    await as(ctx, cs).get('/v1/admin/customers?customerType=nope').expect(422);
+
+    const geo = await devGeo(ctx.prisma);
+    const areas = (await request(ctx.server).get(`/v1/store/catalog/geo/postcodes/${geo.postcode}`).expect(200)).body as {
+      province: { id: string };
+      subdistrict: { id: string };
+    }[];
+    expect(areas[0]).toMatchObject({ province: { id: geo.provinceId }, subdistrict: { id: geo.subdistrictId } });
+    await as(ctx, cs)
+      .post(`/v1/admin/customers/${customerId}/addresses`, {
+        kind: 'delivery',
+        label: 'ปลายทาง',
+        recipientName: 'ผู้รับ ทดสอบ',
+        phone: '0810001234',
+        line1: '1 ถนนทดสอบ',
+        postcode: geo.postcode,
+        provinceId: areas[0]!.province.id,
+        subdistrictId: areas[0]!.subdistrict.id,
+      })
+      .expect(201);
   });
 });

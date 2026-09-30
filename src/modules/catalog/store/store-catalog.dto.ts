@@ -1,3 +1,4 @@
+import { CodeNameRefDto } from '@common/dto/code-name-ref.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
@@ -569,16 +570,9 @@ export class StoreSeoQuery {
 // Geography & search
 // ------------------------------------------------------------------------------------------------
 
-export class StoreGeoAreaDto {
-  @ApiProperty({ example: '10' })
-  code!: string;
-
-  @ApiProperty({ example: 'กรุงเทพมหานคร' })
-  nameTh!: string;
-
-  @ApiProperty({ example: 'Bangkok' })
-  nameEn!: string;
-}
+/** A province, district or subdistrict (D-161): the shared coded reference. */
+export const StoreGeoAreaDto = CodeNameRefDto;
+export type StoreGeoAreaDto = CodeNameRefDto;
 
 export class StoreGeoSubdistrictDto extends StoreGeoAreaDto {
   @ApiProperty({ example: '10200' })

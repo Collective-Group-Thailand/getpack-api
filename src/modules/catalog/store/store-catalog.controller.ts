@@ -100,7 +100,12 @@ const ARTICLE: StoreArticleCardDto = {
   publishedAt: '2026-09-25T09:00:00+07:00',
   categorySlugs: ['packaging-tips'],
 };
-const AREA: StoreGeoAreaDto = { code: '10', nameTh: 'กรุงเทพมหานคร', nameEn: 'Bangkok' };
+const AREA: StoreGeoAreaDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0004',
+  code: '10',
+  nameTh: 'กรุงเทพมหานคร',
+  nameEn: 'Bangkok',
+};
 
 @ApiTags('store.catalog')
 @Controller('catalog')
@@ -616,7 +621,7 @@ export class StoreCatalogController {
   @ApiSuccess(200, {
     description: 'Districts',
     type: [StoreGeoAreaDto],
-    example: [{ code: '1001', nameTh: 'พระนคร', nameEn: 'Phra Nakhon' }],
+    example: [{ id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0005', code: '1001', nameTh: 'พระนคร', nameEn: 'Phra Nakhon' }],
   })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   districts(@Param('code') code: string): Promise<StoreGeoAreaDto[]> {
@@ -637,7 +642,13 @@ export class StoreCatalogController {
     description: 'Subdistricts',
     type: [StoreGeoSubdistrictDto],
     example: [
-      { code: '100101', nameTh: 'พระบรมมหาราชวัง', nameEn: 'Phra Borom Maha Ratchawang', postcode: '10200' },
+      {
+        id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0006',
+        code: '100101',
+        nameTh: 'พระบรมมหาราชวัง',
+        nameEn: 'Phra Borom Maha Ratchawang',
+        postcode: '10200',
+      },
     ],
   })
   @ApiStandardErrors('http.not_found', 'validation.failed')
@@ -653,7 +664,8 @@ export class StoreCatalogController {
     id: 'store.catalog.lookupPostcode',
     summary: 'Look up the areas of a postcode',
     description:
-      'Every subdistrict with this postcode and its district and province (D-161); empty when unknown.',
+      'Every subdistrict with this postcode and its district and province, with the ids an address takes ' +
+      '(D-161); empty when unknown.',
     implements: ['D-161'],
   })
   @ApiSuccess(200, {
@@ -662,12 +674,13 @@ export class StoreCatalogController {
     example: [
       {
         subdistrict: {
+          id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0006',
           code: '100101',
           nameTh: 'พระบรมมหาราชวัง',
           nameEn: 'Phra Borom Maha Ratchawang',
           postcode: '10200',
         },
-        district: { code: '1001', nameTh: 'พระนคร', nameEn: 'Phra Nakhon' },
+        district: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0005', code: '1001', nameTh: 'พระนคร', nameEn: 'Phra Nakhon' },
         province: AREA,
       },
     ],

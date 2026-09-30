@@ -1,3 +1,4 @@
+import { CodeNameRefDto } from '@common/dto/code-name-ref.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { CORRUGATE_FORMULAS } from '../calculators/corrugate/formulas';
@@ -94,21 +95,7 @@ class InputFinishDto {
   requiresLength!: boolean;
 }
 
-class InputNamedDto {
-  @ApiProperty({ format: 'uuid', example: IDS.diecut })
-  id!: string;
-
-  @ApiProperty({ example: 'standard' })
-  code!: string;
-
-  @ApiProperty({ example: 'ไดคัททั่วไป' })
-  nameTh!: string;
-
-  @ApiProperty({ example: 'Standard die-cut' })
-  nameEn!: string;
-}
-
-class InputAssemblyDto extends InputNamedDto {
+class InputAssemblyDto extends CodeNameRefDto {
   @ApiProperty({ example: false })
   requiresAmount!: boolean;
 
@@ -132,14 +119,14 @@ export class FoldingInputDataDto {
   @ApiProperty({ type: [InputFinishDto] })
   finishes!: InputFinishDto[];
 
-  @ApiProperty({ type: [InputNamedDto] })
-  diecutTypes!: InputNamedDto[];
+  @ApiProperty({ type: [CodeNameRefDto] })
+  diecutTypes!: CodeNameRefDto[];
 
   @ApiProperty({ type: [InputAssemblyDto] })
   assemblies!: InputAssemblyDto[];
 
-  @ApiProperty({ type: [InputNamedDto] })
-  difficultyLevels!: InputNamedDto[];
+  @ApiProperty({ type: [CodeNameRefDto] })
+  difficultyLevels!: CodeNameRefDto[];
 }
 
 // --- corrugate CS input data (U-B6, legacy `CorrugateController@getCSData:104-189`) ------------------
@@ -232,7 +219,7 @@ class CorrugateInputBoardDto {
   strength!: string | null;
 }
 
-class CorrugateInputCoatingDto extends InputNamedDto {
+class CorrugateInputCoatingDto extends CodeNameRefDto {
   @ApiProperty({ example: 'coating' })
   finishKind!: string;
 }
@@ -256,8 +243,8 @@ export class CorrugateInputDataDto {
   })
   assemblies!: InputAssemblyDto[];
 
-  @ApiProperty({ type: [InputNamedDto] })
-  difficultyLevels!: InputNamedDto[];
+  @ApiProperty({ type: [CodeNameRefDto] })
+  difficultyLevels!: CodeNameRefDto[];
 
   @ApiProperty({
     enum: PRINT_AREAS,

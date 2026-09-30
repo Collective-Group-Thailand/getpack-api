@@ -72,10 +72,20 @@ export function customerProfileDto(row: CustomerRow): CustomerProfileDto {
   };
 }
 
-export function adminCustomerDto(row: CustomerRow): AdminCustomerDto {
+export interface CustomerStats {
+  ordersCount: number;
+  lastOrderAt: Date | null;
+  companyName: string | null;
+}
+
+export function adminCustomerDto(row: CustomerRow, stats?: CustomerStats): AdminCustomerDto {
   return {
     ...customerProfileDto(row),
     status: row.status,
     lastLoginAt: row.lastLoginAt ? toBangkokIso(row.lastLoginAt) : null,
+    companyName: stats?.companyName ?? null,
+    ordersCount: stats?.ordersCount ?? 0,
+    lastOrderAt: stats?.lastOrderAt ? toBangkokIso(stats.lastOrderAt) : null,
+    referralCode: row.customerProfile?.referralCode ?? null,
   };
 }

@@ -4709,6 +4709,14 @@
       },
       "AdminCustomerDto": {
         "properties": {
+          "companyName": {
+            "description": "A company the customer is an active member of",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "createdAt": {
             "example": "2026-09-25T10:00:00+07:00",
             "format": "date-time",
@@ -4776,6 +4784,19 @@
               "null"
             ]
           },
+          "lastOrderAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ordersCount": {
+            "description": "Order groups placed (not cancelled)",
+            "example": 3,
+            "type": "integer"
+          },
           "phone": {
             "example": "+66810001234",
             "type": [
@@ -4787,6 +4808,14 @@
             "description": "When I first saved my profile; null → the storefront asks for it (the customer type defaults to individual)",
             "example": null,
             "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "referralCode": {
+            "description": "The customer’s referral code (D-136)",
+            "example": "PKO-7F3K",
             "type": [
               "string",
               "null"
@@ -4811,7 +4840,11 @@
           "profileCompletedAt",
           "createdAt",
           "status",
-          "lastLoginAt"
+          "lastLoginAt",
+          "companyName",
+          "ordersCount",
+          "lastOrderAt",
+          "referralCode"
         ],
         "type": "object"
       },
@@ -13463,6 +13496,34 @@
         ],
         "type": "object"
       },
+      "CodeNameRefDto": {
+        "properties": {
+          "code": {
+            "example": "10",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Bangkok",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กรุงเทพมหานคร",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn"
+        ],
+        "type": "object"
+      },
       "CompanyAction": {
         "enum": [
           "suspend",
@@ -15505,7 +15566,7 @@
       "CorrugateInputCoatingDto": {
         "properties": {
           "code": {
-            "example": "standard",
+            "example": "10",
             "type": "string"
           },
           "finishKind": {
@@ -15513,16 +15574,16 @@
             "type": "string"
           },
           "id": {
-            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
             "format": "uuid",
             "type": "string"
           },
           "nameEn": {
-            "example": "Standard die-cut",
+            "example": "Bangkok",
             "type": "string"
           },
           "nameTh": {
-            "example": "ไดคัททั่วไป",
+            "example": "กรุงเทพมหานคร",
             "type": "string"
           }
         },
@@ -15559,7 +15620,7 @@
           },
           "difficultyLevels": {
             "items": {
-              "$ref": "#/components/schemas/InputNamedDto"
+              "$ref": "#/components/schemas/CodeNameRefDto"
             },
             "type": "array"
           },
@@ -26448,13 +26509,13 @@
           },
           "diecutTypes": {
             "items": {
-              "$ref": "#/components/schemas/InputNamedDto"
+              "$ref": "#/components/schemas/CodeNameRefDto"
             },
             "type": "array"
           },
           "difficultyLevels": {
             "items": {
-              "$ref": "#/components/schemas/InputNamedDto"
+              "$ref": "#/components/schemas/CodeNameRefDto"
             },
             "type": "array"
           },
@@ -28432,20 +28493,20 @@
       "InputAssemblyDto": {
         "properties": {
           "code": {
-            "example": "standard",
+            "example": "10",
             "type": "string"
           },
           "id": {
-            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
             "format": "uuid",
             "type": "string"
           },
           "nameEn": {
-            "example": "Standard die-cut",
+            "example": "Bangkok",
             "type": "string"
           },
           "nameTh": {
-            "example": "ไดคัททั่วไป",
+            "example": "กรุงเทพมหานคร",
             "type": "string"
           },
           "requiresAmount": {
@@ -28590,34 +28651,6 @@
           "nameTh",
           "nameEn",
           "gsm"
-        ],
-        "type": "object"
-      },
-      "InputNamedDto": {
-        "properties": {
-          "code": {
-            "example": "standard",
-            "type": "string"
-          },
-          "id": {
-            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
-            "format": "uuid",
-            "type": "string"
-          },
-          "nameEn": {
-            "example": "Standard die-cut",
-            "type": "string"
-          },
-          "nameTh": {
-            "example": "ไดคัททั่วไป",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "code",
-          "nameTh",
-          "nameEn"
         ],
         "type": "object"
       },
@@ -50273,32 +50306,15 @@
         ],
         "type": "object"
       },
-      "StoreGeoAreaDto": {
-        "properties": {
-          "code": {
-            "example": "10",
-            "type": "string"
-          },
-          "nameEn": {
-            "example": "Bangkok",
-            "type": "string"
-          },
-          "nameTh": {
-            "example": "กรุงเทพมหานคร",
-            "type": "string"
-          }
-        },
-        "required": [
-          "code",
-          "nameTh",
-          "nameEn"
-        ],
-        "type": "object"
-      },
       "StoreGeoSubdistrictDto": {
         "properties": {
           "code": {
             "example": "10",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+            "format": "uuid",
             "type": "string"
           },
           "nameEn": {
@@ -50315,6 +50331,7 @@
           }
         },
         "required": [
+          "id",
           "code",
           "nameTh",
           "nameEn",
@@ -50785,10 +50802,10 @@
       "StorePostcodeAreaDto": {
         "properties": {
           "district": {
-            "$ref": "#/components/schemas/StoreGeoAreaDto"
+            "$ref": "#/components/schemas/CodeNameRefDto"
           },
           "province": {
-            "$ref": "#/components/schemas/StoreGeoAreaDto"
+            "$ref": "#/components/schemas/CodeNameRefDto"
           },
           "subdistrict": {
             "$ref": "#/components/schemas/StoreGeoSubdistrictDto"
@@ -132811,7 +132828,7 @@
     },
     "/v1/admin/customers": {
       "get": {
-        "description": "Search by phone (Thai or E.164), e-mail, name or customer code; newest first.\n\nImplements: D-092.",
+        "description": "Search by phone (Thai or E.164), e-mail, name or customer code, filter by customer type and how the account was created; newest first. Rows carry the company, orders placed and the last order.\n\nImplements: D-092.",
         "operationId": "admin.customers.list",
         "parameters": [
           {
@@ -132865,6 +132882,22 @@
             }
           },
           {
+            "in": "query",
+            "name": "customerType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CustomerType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "createdVia",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CreationChannel"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -132875,6 +132908,7 @@
                 "example": {
                   "data": [
                     {
+                      "companyName": null,
                       "createdAt": "2026-10-01T10:00:00+07:00",
                       "createdVia": "cs",
                       "customerCode": "CU-000042",
@@ -132885,8 +132919,11 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                       "lastLoginAt": null,
                       "lastName": "ทดสอบ",
+                      "lastOrderAt": "2026-10-01T10:00:00+07:00",
+                      "ordersCount": 3,
                       "phone": "+66810001234",
                       "profileCompletedAt": "2026-10-01T10:05:00+07:00",
+                      "referralCode": null,
                       "status": "active"
                     }
                   ],
@@ -133082,6 +133119,7 @@
                 "example": {
                   "created": false,
                   "customer": {
+                    "companyName": null,
                     "createdAt": "2026-10-01T10:00:00+07:00",
                     "createdVia": "cs",
                     "customerCode": "CU-000042",
@@ -133092,8 +133130,11 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                     "lastLoginAt": null,
                     "lastName": "ทดสอบ",
+                    "lastOrderAt": "2026-10-01T10:00:00+07:00",
+                    "ordersCount": 3,
                     "phone": "+66810001234",
                     "profileCompletedAt": "2026-10-01T10:05:00+07:00",
+                    "referralCode": null,
                     "status": "active"
                   }
                 },
@@ -133124,6 +133165,7 @@
                 "example": {
                   "created": true,
                   "customer": {
+                    "companyName": null,
                     "createdAt": "2026-10-01T10:00:00+07:00",
                     "createdVia": "cs",
                     "customerCode": "CU-000042",
@@ -133134,8 +133176,11 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                     "lastLoginAt": null,
                     "lastName": "ทดสอบ",
+                    "lastOrderAt": "2026-10-01T10:00:00+07:00",
+                    "ordersCount": 3,
                     "phone": "+66810001234",
                     "profileCompletedAt": "2026-10-01T10:05:00+07:00",
+                    "referralCode": null,
                     "status": "active"
                   }
                 },
@@ -133344,6 +133389,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "companyName": null,
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "createdVia": "cs",
                   "customerCode": "CU-000042",
@@ -133354,8 +133400,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "lastLoginAt": null,
                   "lastName": "ทดสอบ",
+                  "lastOrderAt": "2026-10-01T10:00:00+07:00",
+                  "ordersCount": 3,
                   "phone": "+66810001234",
                   "profileCompletedAt": "2026-10-01T10:05:00+07:00",
+                  "referralCode": null,
                   "status": "active"
                 },
                 "schema": {
@@ -260370,6 +260419,7 @@
                 "example": [
                   {
                     "code": "100101",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0006",
                     "nameEn": "Phra Borom Maha Ratchawang",
                     "nameTh": "พระบรมมหาราชวัง",
                     "postcode": "10200"
@@ -260492,7 +260542,7 @@
     },
     "/v1/store/catalog/geo/postcodes/{postcode}": {
       "get": {
-        "description": "Every subdistrict with this postcode and its district and province (D-161); empty when unknown.\n\nImplements: D-161.",
+        "description": "Every subdistrict with this postcode and its district and province, with the ids an address takes (D-161); empty when unknown.\n\nImplements: D-161.",
         "operationId": "store.catalog.lookupPostcode",
         "parameters": [
           {
@@ -260517,16 +260567,19 @@
                   {
                     "district": {
                       "code": "1001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
                       "nameEn": "Phra Nakhon",
                       "nameTh": "พระนคร"
                     },
                     "province": {
                       "code": "10",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
                     },
                     "subdistrict": {
                       "code": "100101",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0006",
                       "nameEn": "Phra Borom Maha Ratchawang",
                       "nameTh": "พระบรมมหาราชวัง",
                       "postcode": "10200"
@@ -260644,13 +260697,14 @@
                 "example": [
                   {
                     "code": "10",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
                     "nameEn": "Bangkok",
                     "nameTh": "กรุงเทพมหานคร"
                   }
                 ],
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/StoreGeoAreaDto"
+                    "$ref": "#/components/schemas/CodeNameRefDto"
                   },
                   "type": "array"
                 }
@@ -260768,13 +260822,14 @@
                 "example": [
                   {
                     "code": "1001",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c0005",
                     "nameEn": "Phra Nakhon",
                     "nameTh": "พระนคร"
                   }
                 ],
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/StoreGeoAreaDto"
+                    "$ref": "#/components/schemas/CodeNameRefDto"
                   },
                   "type": "array"
                 }

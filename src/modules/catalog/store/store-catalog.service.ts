@@ -781,7 +781,7 @@ export class StoreCatalogService {
 
   async provinces(): Promise<StoreGeoAreaDto[]> {
     const rows = await this.prisma.geoProvince.findMany({ orderBy: { code: 'asc' } });
-    return rows.map((r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn }));
+    return rows.map((r) => ({ id: r.publicId, code: r.code, nameTh: r.nameTh, nameEn: r.nameEn }));
   }
 
   async districts(provinceCode: string): Promise<StoreGeoAreaDto[]> {
@@ -791,7 +791,7 @@ export class StoreCatalogService {
       where: { provinceId: province.id },
       orderBy: { code: 'asc' },
     });
-    return rows.map((r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn }));
+    return rows.map((r) => ({ id: r.publicId, code: r.code, nameTh: r.nameTh, nameEn: r.nameEn }));
   }
 
   async subdistricts(districtCode: string): Promise<StoreGeoSubdistrictDto[]> {
@@ -801,7 +801,13 @@ export class StoreCatalogService {
       where: { districtId: district.id },
       orderBy: { code: 'asc' },
     });
-    return rows.map((r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn, postcode: r.postcode }));
+    return rows.map((r) => ({
+      id: r.publicId,
+      code: r.code,
+      nameTh: r.nameTh,
+      nameEn: r.nameEn,
+      postcode: r.postcode,
+    }));
   }
 
   /** Every subdistrict with this postcode, with its district and province (address forms). */
@@ -812,9 +818,15 @@ export class StoreCatalogService {
       orderBy: { code: 'asc' },
     });
     return rows.map((s) => ({
-      subdistrict: { code: s.code, nameTh: s.nameTh, nameEn: s.nameEn, postcode: s.postcode },
-      district: { code: s.district.code, nameTh: s.district.nameTh, nameEn: s.district.nameEn },
+      subdistrict: { id: s.publicId, code: s.code, nameTh: s.nameTh, nameEn: s.nameEn, postcode: s.postcode },
+      district: {
+        id: s.district.publicId,
+        code: s.district.code,
+        nameTh: s.district.nameTh,
+        nameEn: s.district.nameEn,
+      },
       province: {
+        id: s.district.province.publicId,
         code: s.district.province.code,
         nameTh: s.district.province.nameTh,
         nameEn: s.district.province.nameEn,
