@@ -2,6 +2,34 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U-B0.2 — `admin.*` commerce & operations contract requests (2026-10-01, planning)
+
+Source: `docs/contract-requests-triage.md` §U-B0.2 (34 ids, 18 `implement here` operations, 140 additive gaps; evidence per row in *Details*). Status is against `v0.4.0`. **Out of U-B0.2 by the triage:** menu entries and `/me` permissions (U-B0.3 rows `admin.menu-entries`, `admin.permissions`), `nextActions` / `allowedActions` on every entity (U-B0.3 cross-cutting), the five other CS calculators (U-B6), claim SLA `slaDueAt` (U2.5, D-199), claim message thread (D-225), tooling waiver (U2.F). Business values come from existing settings or decisions; none is invented.
+
+| # | Requirement (triage id) | Status | Evidence | Slice |
+|---|---|---|---|---|
+| 1.1 | `admin.orders`: filterable all-orders list, group customer / placer refs, row fields (quantity, customer, factory, hasSlipToReview, nextInstalment), detail (customer ref, tax profile snapshot, cancel reason, confirmed production date), payments by order / group, timeline `promisedAt` | missing | `admin.orderOperations.queue` is queue-shaped; `admin.payments.list` has no order filter | S1 |
+| 1.2 | `admin.order-notes`: mentions on the note DTO | missing | `OrderNoteDto` without mentions | S1 |
+| 1.3 | `admin.order-actions`: cancel-reason lookup, Idempotency-Key on cancel, instalment reminder (one + bulk) | missing | `order_cancel_reasons` seeded, no read; no manual reminder | S1 |
+| 2.1 | `admin.customers`: filters (type, createdVia), row / detail fields | missing | triage | S2 |
+| 2.2 | `admin.geo`: postcode lookup with ids | missing | `store.catalog.lookupPostcode` returns codes | S2 |
+| 3.1 | `admin.cs-calculators`: `discountPolicy.directLimitPct` (setting `discounts.cs_limit_pct`), pattern constraints, standard sizes, quantity presets in input data | missing | `admin.csFolding.inputData` | S3 |
+| 3.2 | `admin.quotations`: channel filter, rfq ref, customer code, specs, note, `toolingAmount` | partial | `toolingAmount` + `summary` shipped on the store in U-B0.1 | S3 |
+| 3.3 | `admin.discount-memos`: evidence refs, requestedBy filter (memo code: none issued — no series decided) | missing | triage | S3 |
+| 4.1 | `admin.rfqs` / messages / actions: filters, SLA + urgency (D-175), files, contact, validUntil, spec lines, requestedBy, message files, unassign, start-review | missing | triage | S4 |
+| 4.2 | `admin.unmet-demand-reasons` lookup; `admin.rfq-consultations` candidates + re-notify; `admin.rfq-quotes` replace draft + record acceptance, suggested unit price | missing | triage | S4 |
+| 5.1 | `admin.prepress*`: queue refs / filters, prepress assignee (+ assign action), drawing jobs per order, resolvedBy, reply inheritance, template output file | missing | triage | S5 |
+| 5.2 | `admin.design-documents`: `editable`, owner, copy to a staff-owned design | missing | triage | S5 |
+| 6.1 | `admin.production-board`, `admin.inspections`, `admin.scorecards`: board grouping, filters, risk reason, refs, typed AQL objects, inspector, cross-factory month | missing | triage | S6 |
+| 7.1 | `admin.campaigns`, `admin.promotions`, `admin.coupons`, `admin.referrals`, `admin.customer-loyalty`: owner / spentPct / counts, usage, campaign ref, priority reorder, batches, coupon filters, referral filters / fields, ledger filter | missing | triage | S7 |
+| 7.2 | `admin.customer-consents`: latest decision per purpose for one customer | missing | triage | S7 |
+| 8.1 | `admin.companies`, `admin.company-credit`: filters, receivables per row, counts, eligibility + limit history, discount, KYC file refs, member contacts (staff), Idempotency-Key + approval ref on requestLimit, statements list | missing | reuse U-B0.1 S11 reads | S8 |
+| 9.1 | `admin.shipments`: filters, exception / POD review, province, ETag, blockedByPayment, cartons, resolve, split, carrier quotes, POD review | missing | triage | S9 |
+| 10.1 | `admin.claims`: type / origin filters, customer ref, liability rule explanation, approved proof ref, decidedBy / overriddenBy | missing | triage | S10 |
+| 11 | Triage rows published, PROGRESS, tag | — | — | S11 |
+
+Plan: one slice per row group (S1–S11), each with e2e tests, contract build + lint, a PROGRESS row; the group ends with `v0.5.0`. The user asked (2026-10-01) to run U-B0.2 straight after U-B0.1; decisions needed are proposed and recorded as before.
+
 ## U-B0.1 — `auth.*` / `store.*` contract requests (2026-09-30, planning)
 Scope: the 49 U-B0.1 ids of `docs/contract-requests-triage.md` (refreshed against `v0.3.0` and `packio-web@f225d30`; 38 operations `implement here`, 93 additive gaps), plus the U-B0.1 known defect (`AssemblyDto`), triage open question 6 and the cross-cutting idempotency / concurrency findings on `store.*` operations. Code at `main` = `cb2ebe4`; `src`, `prisma` and `contract` are identical to `v0.3.0` (`git diff --quiet v0.3.0 HEAD`). Per-field evidence is in the triage *Details*; the rows below cite the code checked for this plan. **Slice** = the planned commit (see the outcome below the table).
 

@@ -38,9 +38,65 @@ No verdict became `reject`. Items moved out of U-B0 scope: `admin.analytics-jour
 | U-B0.3 | 51 | 0 | 18 | 28 | 0 | 5 | 0 / 46 / 42 / 0 | 56 |
 | **Total** | **134** | **0** | **63** | **52** | **0** | **19** | **1 / 214 / 98 / 0** | **289** |
 
+**U-B0.1 shipped in `v0.4.0` (2026-10-01):** its 49 ids are published (47, most with the mapping in *Details*) or deferred by decision (2: guided help, sample kits — D-223); see *U-B0.1 shipped*. The table above keeps the counts of the triage.
+
 Plus the three known contract defects and the two B6.3 launch gaps below (not frontend requests; counted separately).
 
 The *Ops* and *Additive gaps* columns count per frontend operation, including field-level entries (for example `… (OtpChallengeDto.codeLength)`) and the scope bullets of the first triage. `pnpm gen:triage` counts only the `- **METHOD path**` lines and their `gap` bullets, so the generated `triage.ts` holds **134 requests and 305 operations** (1 published · 210 published differently · 94 implement here; gaps 93 / 140 / 53 by group). The 2026-09-30 deltas above are the same on both bases.
+
+## U-B0.1 shipped (`v0.4.0`, 2026-10-01)
+
+Every U-B0.1 row below is now **published** (`v0.4.0`), except the two deferred by decision. "Published differently" keeps its mapping in *Details*; the table says what the group added. Nothing was removed or made required on the wire (the only structural change against `v0.3.0` is the S1 fix of `FoldingPartDto.assemblies[]`, which the old document showed with the catalogue `AssemblyDto` shape — the server always required `assemblyId`).
+
+| Id | Now | Added in U-B0.1 (operationIds / fields) | Published differently / left out |
+|---|---|---|---|
+| `otp.code-length` | published | `OtpChallengeDto.codeLength`, `maxAttempts` | — |
+| `otp.attempts-remaining` | published | `auth.otp_invalid` problem member `attemptsRemaining` | — |
+| `store.sitemap` | published differently | `store.catalog.getSitemap` | Entries are `{kind, key, updatedAt}`; the web builds the paths |
+| `store.price-hints` | published | `store.catalog.listPriceHints` (D-220) | — |
+| `store.product-faqs` | published | `store.catalog.listProductFaqs`, `admin.cmsFaqs.replaceCatalogProducts` | — |
+| `store.product-categories` | published | `store.catalog.listProductCategories` | — |
+| `store.catalog-category-filter` | published | `category` on `store.catalog.listProducts` / `listStockProducts` (sub-categories included, D-228) | — |
+| `store.search-faq-hits` | published | FAQ hits on `store.catalog.search` | — |
+| `store.profile` | published | `CustomerProfileDto.profileCompletedAt` | E-mail not editable on the profile (D-224) |
+| `store.configurator` | published differently | `unit`, `quantity {min, max, default, presets, maxTiers}`, `design {options, default}`, option content (description, image, swatch) | Shape stays calculator-first (patterns / optionGroups) |
+| `store.quote-configurations` | published (2 calculators) | folding, corrugate | The five other calculators → U-B6 |
+| `store.quotes` | published differently | `summary` spec lines, `options[].toolingAmount` | Share-link expiry → U2.1 (D-185) |
+| `store.promo-check` | published | `store.promotions.checkCode` (public, Retry-After), `store.promotions.listMine` | — |
+| `store.support-channels` | published | `store.support.getChannels` (D-221) | — |
+| `store.rfq-forms` | published | `store.rfqs.getForm` | — |
+| `store.rfqs` | published differently | `files`, message `files`, `routedFrom.calculationId`; `calculationId` on calculate | — |
+| `store.cart` | published differently | `items[].summary` | Blockers / `readyForCheckout` → the checkout preview |
+| `store.checkout` | published differently | preview `paymentMethods`, `points`, `company` blocks | Store credit at checkout → U2.F (D-196) |
+| `store.payments` | published differently | `receiverAccounts`, `failureCode` | No client-supplied return URL (assumption A7) |
+| `store.instalments` | published | `store.paymentSchedules.listInstalments` | — |
+| `store.orders` | published differently | `summary`, `receipt`, `toleranceOutcome`, `cancelReason*`, `createdAt`, `estimatedDeliveryDate`; `store.documents.list?orderId` | `nextActions` → U-B0.3 |
+| `store.loyalty` | published differently | `nextTier`, `nextTierMinSpend12m`, `nextTierProgressPct`, ledger `orderId`; referral `rules`, `rewardedThisMonth`, `recent` | — |
+| `store.wallet` | published differently | — | Store credit at checkout → U2.F (D-196) |
+| `store.privacy` | published | `store.me.listPrivacyRequests` / `createPrivacyRequest`, `admin.privacyRequests.*` (D-222) | — |
+| `store.identities` | published | `store.me.unlinkIdentity` | The account phone cannot be unlinked |
+| `store.artwork` | published differently | `store.artwork.getRules` (file rules, D-070 checks, checklist, dieline) | No aggregate (A8); `nextActions` → U-B0.3 |
+| `store.proofs` | published differently | approval `{checklist, note}`, `decidedByName`, `decisionChecklist`, reply inheritance | Page rasterisation deferred (A9) |
+| `store.design-service` | published differently | `referenceFileIds` on paid rounds | — |
+| `store.designs` | published differently | product, `thumbnailUrl`, `orders`, `share`, `createdAt`, `?linked=`; save `kind` / `label` / style / material / size; versions `kind` / `label` / thumbnail, `limit` + `before`, `?kind=`; `store.designs.restoreVersion`, `duplicate`, `import` | Versions page on the published array (no envelope); no stored `source`; `nextActions` → U-B0.3 |
+| `store.design-assets` | published differently | file purpose `design_asset`; asset `url`, `mimeType`, `sizeBytes`, `widthPx`, `heightPx`, `createdAt` | `addAsset` still answers the design |
+| `store.designer-catalog` | published | `store.designer.getCatalog`, `getTemplate`, `getFont` | Templates carry no dieline key (they have no box style) |
+| `store.design-share` | published | `store.designs.share`, `unshare`, `getShared` (view-only, 15 days, D-226) | 404 `http.not_found`, not `design.share_not_found` |
+| `store.tracking` | published differently | steps `promisedAt`, `estimatedDeliveryDate` | No order code, product or location on the public page (D-224) |
+| `store.receipt` | published differently | `OrderDto.receipt` | — |
+| `store.claims` | published differently | `store.claims.getForm`; liability actions hidden from the store view | `respondBy` → U2.5 (D-199); no message thread (D-225) |
+| `store.reorder` | published differently | `store.claims.previewReorder`, `previewToken` on `store.claims.reorder` | Tooling waiver → U2.F (D-205) |
+| `store.support` | published | `store.support.contact`, `store.support.handoff` (D-221) | — |
+| `store.guided-help` | **deferred** | — | D-223 → U2.2 |
+| `store.sample-kits` | **deferred** | — | D-223 → U2.4 |
+| `store.companies` | published differently | `signatory`, `contactPhone`, `discountPct`, `myRoles`, `can{}`; credit `eligibility`; `store.companyCredit.receivables` (receivables, D-122 notices); `Idempotency-Key` on apply | — |
+| `store.company-members` | published differently | `store.companies.changeMemberRoles` (PUT …/roles, 409 `companies.last_admin`) | Member e-mail / phone hidden (D-224) |
+| `store.company-branches` | published differently | province / district / subdistrict names | — |
+| `store.company-assets` | published | `store.companyAssets.list`, `add`, `remove` (D-227) | Per `companyId`, not `/me/company` |
+| `store.company-approvals` | published differently | `?status=pending\|decided\|all&limit&offset`; `threshold`, `ordersCount`, `branchName`, `expiresAt`, `decidedBy`, `decidedAt`, `decisionComment`; `Idempotency-Key` on decide | Array, no envelope |
+| `store.company-credit` | published differently | `store.companyCredit.apply`, `listStatements`, `receivables` (aging) | Statement PDF by month (`store.documents.companyStatementPdf`) |
+| `store.company-spend` | published | `store.companies.spend` | — |
+| `store.company-reorder` | published | `store.claims.previewBulkReorder`, `store.claims.bulkReorder` | Tooling waiver per row → U2.F (D-205) |
 
 ## U-B0.1 — `auth.*` / `store.*`: catalogue, quotes, RFQ, cart, checkout, payments, orders
 

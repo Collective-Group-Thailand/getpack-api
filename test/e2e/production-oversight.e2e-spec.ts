@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { bangkokDate } from '@common/time/bangkok';
 import { ProductionOversightService } from '@modules/production/production-oversight.service';
 
 import { SETTINGS } from '../../prisma/seed/data/settings';
@@ -172,7 +173,8 @@ describe('production oversight (e2e, B4.2)', () => {
     });
     expect(digest?.payload).toMatchObject({ overdueSteps: expect.any(Number) });
 
-    const month = new Date().toISOString().slice(0, 8) + '01';
+    // Scorecards are per Bangkok month (the UTC date lags by 7 hours on the 1st).
+    const month = bangkokDate(new Date()).slice(0, 8) + '01';
     const recomputed = await as(ctx, lead)
       .post(`/v1/admin/factories/${fixture.factoryPublicId}/scorecards/actions/recompute`, { month })
       .expect(200);
