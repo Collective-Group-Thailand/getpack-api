@@ -101,6 +101,12 @@ describe('company orders (e2e, B3.5)', () => {
     expect(preview.body.notices).toEqual(
       expect.arrayContaining([{ code: 'company.approval_required', params: { threshold: '100.00' } }]),
     );
+    expect(preview.body.company).toMatchObject({
+      companyId,
+      approvalThreshold: '100.00',
+      approvalRequired: true,
+      onCredit: false,
+    });
     await place(buyer.token, { companyId })
       .expect(422)
       .expect((r) => expect(r.body.code).toBe('companies.po_required'));

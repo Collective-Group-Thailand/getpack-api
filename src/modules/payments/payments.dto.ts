@@ -132,6 +132,20 @@ export class SlipDto {
   createdAt!: string;
 }
 
+export const PAYMENT_FAILURE_CODES = ['provider_error', 'declined'] as const;
+
+/** A Packio account a bank-transfer slip pays into (setting `payments.slip_receiver_accounts`, D-061). */
+export class SlipReceiverAccountDto {
+  @ApiProperty({ example: 'scb_savings', description: 'Account type code of the slip-verification provider' })
+  accountType!: string;
+
+  @ApiProperty({ example: '0000000000', description: 'Account number (fake in examples)' })
+  accountNumber!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'บจก. ทดสอบ' })
+  accountName!: string | null;
+}
+
 export class PaymentDto {
   @IdField(IDS.payment)
   id!: string;
@@ -191,6 +205,21 @@ export class PaymentDto {
   @ApiProperty({ type: [SlipDto] })
   slips!: SlipDto[];
 
+  @ApiProperty({
+    type: [SlipReceiverAccountDto],
+    description: '`bank_transfer_slip` only: the accounts to transfer to (empty until Finance sets them, D-061)',
+  })
+  receiverAccounts!: SlipReceiverAccountDto[];
+
+  @ApiProperty({
+    enum: PAYMENT_FAILURE_CODES,
+    enumName: 'PaymentFailureCode',
+    nullable: true,
+    example: null,
+    description: 'Why a `failed` payment failed: `declined` by the card / bank, or `provider_error`; start a new payment',
+  })
+  failureCode!: (typeof PAYMENT_FAILURE_CODES)[number] | null;
+
   @TimestampField()
   createdAt!: string;
 }
@@ -238,6 +267,8 @@ export const PAYMENT_EXAMPLE: PaymentDto = {
   paidAt: null,
   slips: [],
   createdAt: '2026-10-01T10:00:00+07:00',
+  receiverAccounts: [],
+  failureCode: null,
 };
 
 export const ADMIN_PAYMENT_EXAMPLE: AdminPaymentDto = {

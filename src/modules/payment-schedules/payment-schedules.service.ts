@@ -407,6 +407,32 @@ export class PaymentSchedulesService implements OnModuleInit {
 
   // --- reads & override -------------------------------------------------------------------------------
 
+  /** My instalments across my order groups, newest group first (U-B0.1 `store.instalments`). */
+  async forCustomer(customerUserId: bigint, q: { status?: InstalmentStatus; page: number; perPage: number }) {
+    const where: Prisma.InstalmentWhereInput = {
+      schedule: { orderGroup: { customerUserId } },
+      ...(q.status ? { status: q.status } : { status: { not: 'cancelled' } }),
+    };
+    const [rows, total] = await Promise.all([
+      this.prisma.instalment.findMany({
+        where,
+        include: {
+          allocations: { include: { order: { select: { publicId: true, orderCode: true } } } },
+          schedule: { select: { orderGroup: { select: { publicId: true, groupCode: true, status: true } } } },
+          payments: {
+            where: { payment: { status: { in: ['initiated', 'pending'] } } },
+            select: { payment: { select: { publicId: true, createdAt: true } } },
+          },
+        },
+        orderBy: [{ schedule: { orderGroup: { placedAt: 'desc' } } }, { seq: 'asc' }],
+        skip: (q.page - 1) * q.perPage,
+        take: q.perPage,
+      }),
+      this.prisma.instalment.count({ where }),
+    ]);
+    return { rows, total };
+  }
+
   async forGroup(groupId: bigint, db: Tx = this.prisma): Promise<ScheduleRow> {
     const row = await db.paymentSchedule.findUnique({
       where: { orderGroupId: groupId },

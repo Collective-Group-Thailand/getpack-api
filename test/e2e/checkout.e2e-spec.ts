@@ -83,6 +83,13 @@ describe('checkout (e2e, B3.1)', () => {
     expect(orders[1]!.totals.shippingNetAmount).toBe('240.00');
     const total = preview.body.totals as Totals;
     expect(total.whtAmount).toBe('0.00');
+    // U-B0.1: how it can be paid (no surcharge), no company block for a personal order.
+    expect(preview.body.paymentMethods).toEqual(
+      expect.arrayContaining([{ method: 'bank_transfer_slip', available: true }]),
+    );
+    expect(preview.body.company).toBeNull();
+    expect(preview.body.points).toMatchObject({ pointValue: '2.50', minimumPoints: 4, redeemedPoints: 0 });
+    expect(preview.body.points.toEarn).toBeGreaterThan(0);
     // Product side = the locked quotation (without its own, unpriced shipping) + shipping with VAT.
     const productSide = quote.options.reduce((a, o) => a.add(o.grossAmount), new MoneyDecimal(0));
     expect(new MoneyDecimal(total.grossAmount).toFixed(2)).toBe(productSide.add('385.20').toFixed(2));

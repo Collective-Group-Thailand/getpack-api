@@ -20,6 +20,7 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { CompaniesService, type CompanyRow } from './companies.service';
+import { CreditService } from './credit.service';
 
 const POLICY = 'company_order_approval';
 const DAY_MS = 86_400_000;
@@ -72,6 +73,7 @@ export class CompanyCheckout implements CheckoutExtension, OnModuleInit {
     private readonly settings: SettingsService,
     private readonly events: DomainEvents,
     private readonly activity: ActivityLogService,
+    private readonly credit: CreditService,
   ) {}
 
   onModuleInit(): void {
@@ -125,10 +127,25 @@ export class CompanyCheckout implements CheckoutExtension, OnModuleInit {
     if (company.poNumberPolicy === 'required' && !draft.input.poNumber?.trim())
       throw new DomainException('companies.po_required');
     const threshold = company.orderApprovalThreshold?.toFixed(2) ?? null;
-    if (threshold !== null && new MoneyDecimal(draft.totals.grossAmount).gt(threshold)) {
+    const approvalRequired = threshold !== null && new MoneyDecimal(draft.totals.grossAmount).gt(threshold);
+    if (approvalRequired) {
       draft.initialStatus = 'pending_company_approval';
       draft.notices.push({ code: 'company.approval_required', params: { threshold } });
     }
+    // The preview's company block (U-B0.1); the credit decision itself is the credit extension's (order 850).
+    const credit = company.creditStatus === 'credit' ? await this.credit.view(company.id, db) : null;
+    draft.preview.company = {
+      companyId: company.publicId,
+      legalName: company.legalName,
+      branchId: branch.publicId,
+      poNumberPolicy: company.poNumberPolicy,
+      approvalThreshold: threshold,
+      approvalRequired,
+      creditStatus: company.creditStatus,
+      creditAvailableAmount: credit?.limit ? credit.available.toFixed(2) : null,
+      creditTermDays: credit?.limit?.termDays ?? null,
+      onCredit: draft.state['creditApproved'] === true,
+    };
     draft.state[this.key] = {
       companyId: company.id,
       companyPublicId: company.publicId,

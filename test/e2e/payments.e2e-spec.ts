@@ -143,6 +143,23 @@ describe('payments (e2e, B3.2)', () => {
     expect(readGroup.body.status).toBe('in_progress');
   });
 
+  it('tells the customer why a payment failed without the provider text, and where to transfer (U-B0.1)', async () => {
+    await setFlag(ctx, 'payments.twoc2p', true);
+    const { token } = await customerToken(ctx, 9);
+    const group = await placeOrder(ctx, token, fixture, postcode);
+    const started = (await initiate(token, group.id, 'card_2c2p').expect(201)).body as PaymentBody;
+    await webhook('2c2p/payment', await twoc2p.notification(started.referenceCode, '4200')).expect(204);
+    const failed = await as(ctx, token).get(`/v1/store/payments/${started.id}`).expect(200);
+    expect(failed.body).toMatchObject({ status: 'failed', failureCode: 'declined', receiverAccounts: [] });
+    expect(failed.body).not.toHaveProperty('failureReason');
+
+    // The suite's collection account (beforeAll) is what a slip payment shows.
+    const slip = (await initiate(token, group.id, 'bank_transfer_slip').expect(201)).body as PaymentBody;
+    expect((slip as unknown as { receiverAccounts: unknown[] }).receiverAccounts).toEqual([
+      { accountType: '01014', accountNumber: '1234567890', accountName: null },
+    ]);
+  });
+
   it('verifies slips: a pass is accepted, the same transfer is refused, a mismatch goes to Finance (D-061)', async () => {
     await setFlag(ctx, 'payments.slip_verify', true);
     const { token } = await customerToken(ctx, 4);

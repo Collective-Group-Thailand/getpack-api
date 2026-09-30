@@ -161,6 +161,9 @@ export function previewDto(draft: CheckoutDraft): CheckoutPreviewDto {
     withholding: draft.orders.some((o) => o.lines.some((l) => l.whtAmount !== '0.00')),
     notices: draft.notices,
     paymentSchedule: scheduleOf(draft),
+    paymentMethods: draft.preview.paymentMethods ?? [],
+    points: draft.preview.points ?? null,
+    company: draft.preview.company ?? null,
   };
 }
 

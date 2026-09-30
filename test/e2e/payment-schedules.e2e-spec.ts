@@ -27,6 +27,7 @@ interface ScheduleBody {
   productionGateOpen: boolean;
   shippingGateOpen: boolean;
   instalments: {
+    id: string;
     seq: number;
     status: string;
     cashAmount: string;
@@ -115,10 +116,27 @@ describe('payment schedules (e2e, B3.2)', () => {
         requiredBefore: 'production',
       }),
     ]);
+    // U-B0.1: the same instalment in my cross-group list, payable until paid.
+    const mine = (await as(ctx, token).get('/v1/store/instalments').expect(200)).body as {
+      data: { id: string; groupId: string; groupCode: string; payable: boolean; orders: { orderCode: string }[] }[];
+    };
+    expect(mine.data).toEqual([
+      expect.objectContaining({
+        id: schedule.instalments[0]!.id,
+        groupId: group.id,
+        groupCode: group.groupCode,
+        payable: true,
+        orders: [expect.objectContaining({ orderCode: group.orders[0]!.orderCode })],
+      }),
+    ]);
     await pay(group.id, group.totals.cashAmount);
     schedule = (await as(ctx, token).get(`/v1/store/order-groups/${group.id}/payment-schedule`).expect(200))
       .body;
     expect(schedule.productionGateOpen).toBe(true);
+    const after = (await as(ctx, token).get('/v1/store/instalments?status=paid').expect(200)).body as {
+      data: { payable: boolean }[];
+    };
+    expect(after.data).toEqual([expect.objectContaining({ payable: false })]);
     const read = await as(ctx, token).get(`/v1/store/order-groups/${group.id}`).expect(200);
     expect(read.body).toMatchObject({ status: 'in_progress', orders: [{ status: 'paid_for_production' }] });
   });

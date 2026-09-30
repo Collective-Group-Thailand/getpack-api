@@ -190,7 +190,8 @@ export class CartRepriceDto {
   validUntil!: string;
 }
 
-export class ReorderRefDto {
+/** A reference to one of the customer's orders (id + code). */
+export class OrderRefDto {
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000f1002' })
   orderId!: string;
 
@@ -266,12 +267,12 @@ export class CartItemDto {
   mockupOption!: string;
 
   @ApiProperty({
-    type: ReorderRefDto,
+    type: OrderRefDto,
     nullable: true,
     example: null,
     description: 'The past order this item reorders (D-153)',
   })
-  reorderOf!: ReorderRefDto | null;
+  reorderOf!: OrderRefDto | null;
 
   @ApiProperty({
     example: false,

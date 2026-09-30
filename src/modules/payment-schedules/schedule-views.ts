@@ -5,13 +5,24 @@ import {
   type AdminPaymentScheduleDto,
   type InstalmentDto,
   type PaymentScheduleDto,
+  type StoreInstalmentDto,
   type TemplateDto,
 } from './payment-schedules.dto';
 import { type PaymentSchedulesService, type ScheduleRow } from './payment-schedules.service';
 
 type TemplateRow = Awaited<ReturnType<PaymentSchedulesService['templates']>>[number];
 
-function instalmentDto(i: ScheduleRow['instalments'][number], staff: boolean): InstalmentDto {
+type InstalmentRow = ScheduleRow['instalments'][number];
+/** An instalment row; its allocations carry what the staff view reads (the customer view reads none). */
+type InstalmentBase = Omit<InstalmentRow, 'allocations'> & {
+  allocations: {
+    grossAmount: InstalmentRow['allocations'][number]['grossAmount'];
+    cashAmount: InstalmentRow['allocations'][number]['cashAmount'];
+    order: { publicId: string; orderCode: string };
+  }[];
+};
+
+function instalmentDto(i: InstalmentBase, staff: boolean): InstalmentDto {
   return {
     id: i.publicId,
     seq: i.seq,
@@ -36,6 +47,25 @@ function instalmentDto(i: ScheduleRow['instalments'][number], staff: boolean): I
         cashAmount: a.cashAmount.toFixed(2),
       })),
     }),
+  };
+}
+
+type CustomerInstalmentRow = Awaited<ReturnType<PaymentSchedulesService['forCustomer']>>['rows'][number];
+
+const SETTLED = new Set(['paid', 'refunded', 'cancelled']);
+const TAKES_PAYMENT = new Set(['waiting_payment', 'in_progress']);
+
+export function storeInstalmentDto(i: CustomerInstalmentRow): StoreInstalmentDto {
+  const base = instalmentDto(i, false);
+  const group = i.schedule.orderGroup;
+  const active = [...i.payments].sort((a, b) => b.payment.createdAt.getTime() - a.payment.createdAt.getTime())[0];
+  return {
+    ...base,
+    groupId: group.publicId,
+    groupCode: group.groupCode,
+    orders: i.allocations.map((a) => ({ orderId: a.order.publicId, orderCode: a.order.orderCode })),
+    activePaymentId: active?.payment.publicId ?? null,
+    payable: !SETTLED.has(i.status) && TAKES_PAYMENT.has(group.status) && new MoneyDecimal(base.openAmount).gt(0),
   };
 }
 

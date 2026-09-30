@@ -1,3 +1,5 @@
+import { PageQuery } from '@common/pagination/pagination.dto';
+import { OrderRefDto } from '@modules/carts/carts.dto';
 import { IdField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -110,6 +112,40 @@ export class InstalmentDto {
     description: 'Staff only: share of each order (ADR-0008)',
   })
   allocations?: InstalmentAllocationDto[];
+}
+
+/** One of my instalments across my order groups (U-B0.1 `store.instalments`). */
+export class StoreInstalmentDto extends InstalmentDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001' })
+  groupId!: string;
+
+  @ApiProperty({ example: 'OG-2610-00042' })
+  groupCode!: string;
+
+  @ApiProperty({ type: [OrderRefDto], description: 'The orders this instalment pays for' })
+  orders!: OrderRefDto[];
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'A started payment still open on this instalment (continue it instead of starting another)',
+  })
+  activePaymentId!: string | null;
+
+  @ApiProperty({
+    example: true,
+    description: 'Something is left to pay and the group takes payments (pay it with `store.payments.initiate`)',
+  })
+  payable!: boolean;
+}
+
+export class StoreInstalmentQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: INSTALMENT_STATUSES, enumName: 'InstalmentStatus', example: 'due' })
+  @IsOptional()
+  @IsIn(INSTALMENT_STATUSES)
+  status?: (typeof INSTALMENT_STATUSES)[number];
 }
 
 export class PaymentScheduleDto {
@@ -360,4 +396,13 @@ export const TEMPLATE_EXAMPLE: TemplateDto = {
       requiredBefore: 'shipping',
     },
   ],
+};
+
+export const STORE_INSTALMENT_EXAMPLE: StoreInstalmentDto = {
+  ...INSTALMENT_EXAMPLE,
+  groupId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001',
+  groupCode: 'OG-2610-00042',
+  orders: [{ orderId: IDS.order, orderCode: 'OR-2610-00042' }],
+  activePaymentId: null,
+  payable: true,
 };

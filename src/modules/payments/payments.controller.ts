@@ -98,7 +98,9 @@ export class StorePaymentsController {
       'Starts a payment of the instalments due now (or those chosen): SCB QR returns the QR payload to render, ' +
       '2C2P a redirect URL, a bank transfer waits for its slip. Methods are enabled by feature flag once ' +
       'Packio’s merchant accounts exist (D-176). The amount is the cash after the expected withholding. ' +
-      'Requires `Idempotency-Key`.',
+      '`bank_transfer_slip` returns the accounts to pay into (`receiverAccounts`). After a 2C2P page the provider ' +
+      'sends the customer back to the fixed storefront route `/payments/{paymentId}/return` (no client-supplied ' +
+      'return URL); poll `store.payments.get` there. Requires `Idempotency-Key`.',
     implements: DECISIONS,
   })
   @ApiBody({ type: InitiatePaymentDto, examples: { default: { value: { method: 'scb_qr' } } } })
@@ -110,7 +112,10 @@ export class StorePaymentsController {
     @Body() body: InitiatePaymentDto,
   ): Promise<PaymentDto> {
     const user = customer(actor);
-    return paymentDto(await this.payments.initiate(user, groupId, body, user.userId));
+    return paymentDto(
+      await this.payments.initiate(user, groupId, body, user.userId),
+      await this.payments.slipReceiverAccounts(),
+    );
   }
 
   @Get('order-groups/:groupId/payments')
@@ -130,7 +135,8 @@ export class StorePaymentsController {
   ) {
     const group = await this.orders.group(groupId, customer(actor).userId);
     const { rows, total } = await this.payments.list({ orderGroupId: group.id }, q.page, q.perPage);
-    return { data: rows.map(paymentDto), meta: { page: q.page, perPage: q.perPage, total } };
+    const receivers = await this.payments.slipReceiverAccounts();
+    return { data: rows.map((p) => paymentDto(p, receivers)), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get('payments/:paymentId')
@@ -144,7 +150,10 @@ export class StorePaymentsController {
   @ApiSuccess(200, { description: 'Payment', type: PaymentDto, example: PAYMENT_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@CurrentActor() actor: Actor, @Param('paymentId', ParseUUIDPipe) paymentId: string) {
-    return paymentDto(await this.payments.payment(paymentId, customer(actor).userId));
+    return paymentDto(
+      await this.payments.payment(paymentId, customer(actor).userId),
+      await this.payments.slipReceiverAccounts(),
+    );
   }
 
   @Post('payments/:paymentId/slips')
@@ -168,7 +177,10 @@ export class StorePaymentsController {
     @Body() body: UploadSlipDto,
   ): Promise<PaymentDto> {
     const user = customer(actor);
-    return paymentDto(await this.payments.uploadSlip(user, paymentId, body, 'web', user.userId));
+    return paymentDto(
+      await this.payments.uploadSlip(user, paymentId, body, 'web', user.userId),
+      await this.payments.slipReceiverAccounts(),
+    );
   }
 }
 

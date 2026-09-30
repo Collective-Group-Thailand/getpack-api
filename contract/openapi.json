@@ -5334,6 +5334,18 @@
               "null"
             ]
           },
+          "failureCode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentFailureCode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why a `failed` payment failed: `declined` by the card / bank, or `provider_error`; start a new payment",
+            "example": null
+          },
           "failureReason": {
             "example": null,
             "type": [
@@ -5394,6 +5406,13 @@
               "null"
             ]
           },
+          "receiverAccounts": {
+            "description": "`bank_transfer_slip` only: the accounts to transfer to (empty until Finance sets them, D-061)",
+            "items": {
+              "$ref": "#/components/schemas/SlipReceiverAccountDto"
+            },
+            "type": "array"
+          },
           "redirectUrl": {
             "description": "Redirect the customer here (2C2P)",
             "example": null,
@@ -5445,6 +5464,8 @@
           "expiresAt",
           "paidAt",
           "slips",
+          "receiverAccounts",
+          "failureCode",
           "createdAt",
           "provider",
           "providerRef",
@@ -10455,7 +10476,7 @@
           "reorderOf": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/ReorderRefDto"
+                "$ref": "#/components/schemas/OrderRefDto"
               },
               {
                 "type": "null"
@@ -11413,6 +11434,17 @@
       },
       "CheckoutPreviewDto": {
         "properties": {
+          "company": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompanyPreviewDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When ordering for a company (B2B)"
+          },
           "notices": {
             "items": {
               "$ref": "#/components/schemas/CheckoutNoticeDto"
@@ -11422,6 +11454,13 @@
           "orders": {
             "items": {
               "$ref": "#/components/schemas/PreviewOrderDto"
+            },
+            "type": "array"
+          },
+          "paymentMethods": {
+            "description": "How the instalments can be paid (chosen when paying, `store.payments.initiate`); no surcharge",
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethodOptionDto"
             },
             "type": "array"
           },
@@ -11435,6 +11474,17 @@
               }
             ],
             "description": "The payment schedule the order will get (D-020)"
+          },
+          "points": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PointsPreviewDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null only when points cannot be read"
           },
           "totals": {
             "$ref": "#/components/schemas/MoneyTotalsDto"
@@ -11450,7 +11500,10 @@
           "totals",
           "orders",
           "withholding",
-          "notices"
+          "notices",
+          "paymentMethods",
+          "points",
+          "company"
         ],
         "type": "object"
       },
@@ -12663,6 +12716,87 @@
           "status",
           "roles",
           "joinedAt"
+        ],
+        "type": "object"
+      },
+      "CompanyPreviewDto": {
+        "properties": {
+          "approvalRequired": {
+            "description": "The order waits for the company approver (D-123)",
+            "example": false,
+            "type": "boolean"
+          },
+          "approvalThreshold": {
+            "description": "The company's own approval threshold (D-123)",
+            "example": "50000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "branchId": {
+            "description": "Tax-invoice branch",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "companyId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "creditAvailableAmount": {
+            "description": "Credit left (D-121); null without a limit",
+            "example": "85000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "creditStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditStatus"
+              }
+            ],
+            "example": "credit"
+          },
+          "creditTermDays": {
+            "example": 30,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "legalName": {
+            "example": "บริษัท ทดสอบ จำกัด",
+            "type": "string"
+          },
+          "onCredit": {
+            "description": "This order goes on the credit term (otherwise it is prepaid)",
+            "example": true,
+            "type": "boolean"
+          },
+          "poNumberPolicy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PoNumberPolicy"
+              }
+            ],
+            "example": "optional"
+          }
+        },
+        "required": [
+          "companyId",
+          "legalName",
+          "branchId",
+          "poNumberPolicy",
+          "approvalThreshold",
+          "approvalRequired",
+          "creditStatus",
+          "creditAvailableAmount",
+          "creditTermDays",
+          "onCredit"
         ],
         "type": "object"
       },
@@ -18137,7 +18271,6 @@
         "type": "string"
       },
       "CreditStatus": {
-        "description": "D-121 / D-122",
         "enum": [
           "prepaid",
           "eligible",
@@ -29128,6 +29261,24 @@
         ],
         "type": "object"
       },
+      "OrderRefDto": {
+        "properties": {
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "orderCode"
+        ],
+        "type": "object"
+      },
       "OrderStatus": {
         "enum": [
           "waiting_payment",
@@ -30734,6 +30885,18 @@
               "null"
             ]
           },
+          "failureCode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentFailureCode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why a `failed` payment failed: `declined` by the card / bank, or `provider_error`; start a new payment",
+            "example": null
+          },
           "groupId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
             "format": "uuid",
@@ -30770,6 +30933,13 @@
               "string",
               "null"
             ]
+          },
+          "receiverAccounts": {
+            "description": "`bank_transfer_slip` only: the accounts to transfer to (empty until Finance sets them, D-061)",
+            "items": {
+              "$ref": "#/components/schemas/SlipReceiverAccountDto"
+            },
+            "type": "array"
           },
           "redirectUrl": {
             "description": "Redirect the customer here (2C2P)",
@@ -30818,9 +30988,19 @@
           "expiresAt",
           "paidAt",
           "slips",
+          "receiverAccounts",
+          "failureCode",
           "createdAt"
         ],
         "type": "object"
+      },
+      "PaymentFailureCode": {
+        "description": "Why a `failed` payment failed: `declined` by the card / bank, or `provider_error`; start a new payment",
+        "enum": [
+          "provider_error",
+          "declined"
+        ],
+        "type": "string"
       },
       "PaymentMethod": {
         "enum": [
@@ -30835,6 +31015,28 @@
           "scb_direct_debit"
         ],
         "type": "string"
+      },
+      "PaymentMethodOptionDto": {
+        "properties": {
+          "available": {
+            "description": "Offered now (provider accounts live, D-176)",
+            "example": true,
+            "type": "boolean"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              }
+            ],
+            "example": "scb_qr"
+          }
+        },
+        "required": [
+          "method",
+          "available"
+        ],
+        "type": "object"
       },
       "PaymentScheduleDto": {
         "properties": {
@@ -31678,6 +31880,49 @@
           "adjust"
         ],
         "type": "string"
+      },
+      "PointsPreviewDto": {
+        "properties": {
+          "balance": {
+            "description": "Points I can use now",
+            "example": 120,
+            "type": "integer"
+          },
+          "maximumPoints": {
+            "description": "Most points this order can take: the balance and 20 % of the order value (D-133); the margin floor may still cap it (`points.capped`)",
+            "example": 120,
+            "type": "integer"
+          },
+          "minimumPoints": {
+            "description": "Fewest points one redemption takes (THB 10, D-133)",
+            "example": 4,
+            "type": "integer"
+          },
+          "pointValue": {
+            "description": "Baht per point (D-131)",
+            "example": "2.50",
+            "type": "string"
+          },
+          "redeemedPoints": {
+            "description": "Points redeemed in this preview",
+            "example": 0,
+            "type": "integer"
+          },
+          "toEarn": {
+            "description": "Points the order earns once completed and past the claim window (D-130, D-132, tier multiplier)",
+            "example": 25,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "balance",
+          "pointValue",
+          "minimumPoints",
+          "maximumPoints",
+          "redeemedPoints",
+          "toEarn"
+        ],
+        "type": "object"
       },
       "PointsStatus": {
         "enum": [
@@ -37611,24 +37856,6 @@
         },
         "type": "object"
       },
-      "ReorderRefDto": {
-        "properties": {
-          "orderCode": {
-            "example": "PK-2610-0001-01",
-            "type": "string"
-          },
-          "orderId": {
-            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
-            "format": "uuid",
-            "type": "string"
-          }
-        },
-        "required": [
-          "orderId",
-          "orderCode"
-        ],
-        "type": "object"
-      },
       "ReplaceArticleCategoriesDto": {
         "properties": {
           "categoryIds": {
@@ -43158,6 +43385,33 @@
         ],
         "type": "object"
       },
+      "SlipReceiverAccountDto": {
+        "properties": {
+          "accountName": {
+            "example": "บจก. ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "accountNumber": {
+            "description": "Account number (fake in examples)",
+            "example": "0000000000",
+            "type": "string"
+          },
+          "accountType": {
+            "description": "Account type code of the slip-verification provider",
+            "example": "scb_savings",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accountType",
+          "accountNumber",
+          "accountName"
+        ],
+        "type": "object"
+      },
       "SlipReviewDto": {
         "properties": {
           "approve": {
@@ -45639,6 +45893,155 @@
         "required": [
           "url",
           "variant"
+        ],
+        "type": "object"
+      },
+      "StoreInstalmentDto": {
+        "properties": {
+          "activePaymentId": {
+            "description": "A started payment still open on this instalment (continue it instead of starting another)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "allocations": {
+            "description": "Staff only: share of each order (ADR-0008)",
+            "items": {
+              "$ref": "#/components/schemas/InstalmentAllocationDto"
+            },
+            "type": "array"
+          },
+          "cashAmount": {
+            "description": "What the customer transfers",
+            "example": "7091.40",
+            "type": "string"
+          },
+          "dueAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueTrigger": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DueTrigger"
+              }
+            ],
+            "example": "at_checkout"
+          },
+          "grossAmount": {
+            "description": "Incl. VAT",
+            "example": "7091.40",
+            "type": "string"
+          },
+          "groupCode": {
+            "example": "OG-2610-00042",
+            "type": "string"
+          },
+          "groupId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000b0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "50 % deposit",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "มัดจำ 50%",
+            "type": "string"
+          },
+          "openAmount": {
+            "description": "cash − paid",
+            "example": "7091.40",
+            "type": "string"
+          },
+          "orders": {
+            "description": "The orders this instalment pays for",
+            "items": {
+              "$ref": "#/components/schemas/OrderRefDto"
+            },
+            "type": "array"
+          },
+          "paidAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "paidAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "payable": {
+            "description": "Something is left to pay and the group takes payments (pay it with `store.payments.initiate`)",
+            "example": true,
+            "type": "boolean"
+          },
+          "pct": {
+            "example": "50.0000",
+            "type": "string"
+          },
+          "requiredBefore": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RequiredBefore"
+              }
+            ],
+            "example": "production"
+          },
+          "seq": {
+            "example": 1,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstalmentStatus"
+              }
+            ],
+            "example": "due"
+          },
+          "whtAmount": {
+            "description": "Expected customer withholding (D-174)",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "labelTh",
+          "labelEn",
+          "pct",
+          "dueTrigger",
+          "requiredBefore",
+          "dueAt",
+          "status",
+          "grossAmount",
+          "whtAmount",
+          "cashAmount",
+          "paidAmount",
+          "openAmount",
+          "paidAt",
+          "groupId",
+          "groupCode",
+          "orders",
+          "activePaymentId",
+          "payable"
         ],
         "type": "object"
       },
@@ -132563,6 +132966,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "company": null,
                   "notices": [],
                   "orders": [
                     {
@@ -132607,6 +133011,16 @@
                       }
                     }
                   ],
+                  "paymentMethods": [
+                    {
+                      "available": true,
+                      "method": "scb_qr"
+                    },
+                    {
+                      "available": true,
+                      "method": "bank_transfer_slip"
+                    }
+                  ],
                   "paymentSchedule": {
                     "instalments": [
                       {
@@ -132621,6 +133035,14 @@
                       }
                     ],
                     "templateKey": "full_upfront"
+                  },
+                  "points": {
+                    "balance": 120,
+                    "maximumPoints": 120,
+                    "minimumPoints": 4,
+                    "pointValue": "2.50",
+                    "redeemedPoints": 0,
+                    "toEarn": 25
                   },
                   "totals": {
                     "cashAmount": "14182.80",
@@ -172736,6 +173158,7 @@
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "currency": "THB",
                   "expiresAt": "2026-10-02T10:00:00+07:00",
+                  "failureCode": null,
                   "failureReason": null,
                   "feeAmount": "0.00",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
@@ -172745,6 +173168,7 @@
                   "provider": "scb",
                   "providerRef": null,
                   "qrPayload": "00020101021230…6304CE18",
+                  "receiverAccounts": [],
                   "redirectUrl": null,
                   "referenceCode": "PKAB23CD45EF67GH",
                   "refundedAmount": "0.00",
@@ -180233,6 +180657,7 @@
                       "createdAt": "2026-10-01T10:00:00+07:00",
                       "currency": "THB",
                       "expiresAt": "2026-10-02T10:00:00+07:00",
+                      "failureCode": null,
                       "failureReason": null,
                       "feeAmount": "0.00",
                       "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
@@ -180242,6 +180667,7 @@
                       "provider": "scb",
                       "providerRef": null,
                       "qrPayload": "00020101021230…6304CE18",
+                      "receiverAccounts": [],
                       "redirectUrl": null,
                       "referenceCode": "PKAB23CD45EF67GH",
                       "refundedAmount": "0.00",
@@ -180438,6 +180864,7 @@
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "currency": "THB",
                   "expiresAt": "2026-10-02T10:00:00+07:00",
+                  "failureCode": null,
                   "failureReason": null,
                   "feeAmount": "0.00",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
@@ -180447,6 +180874,7 @@
                   "provider": "scb",
                   "providerRef": null,
                   "qrPayload": "00020101021230…6304CE18",
+                  "receiverAccounts": [],
                   "redirectUrl": null,
                   "referenceCode": "PKAB23CD45EF67GH",
                   "refundedAmount": "0.00",
@@ -180661,6 +181089,7 @@
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "currency": "THB",
                   "expiresAt": "2026-10-02T10:00:00+07:00",
+                  "failureCode": null,
                   "failureReason": null,
                   "feeAmount": "0.00",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
@@ -180670,6 +181099,7 @@
                   "provider": "scb",
                   "providerRef": null,
                   "qrPayload": "00020101021230…6304CE18",
+                  "receiverAccounts": [],
                   "redirectUrl": null,
                   "referenceCode": "PKAB23CD45EF67GH",
                   "refundedAmount": "0.00",
@@ -181229,6 +181659,7 @@
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "currency": "THB",
                   "expiresAt": "2026-10-02T10:00:00+07:00",
+                  "failureCode": null,
                   "failureReason": null,
                   "feeAmount": "0.00",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
@@ -181238,6 +181669,7 @@
                   "provider": "scb",
                   "providerRef": null,
                   "qrPayload": "00020101021230…6304CE18",
+                  "receiverAccounts": [],
                   "redirectUrl": null,
                   "referenceCode": "PKAB23CD45EF67GH",
                   "refundedAmount": "0.00",
@@ -215437,6 +215869,7 @@
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "currency": "THB",
                   "expiresAt": "2026-10-02T10:00:00+07:00",
+                  "failureCode": null,
                   "failureReason": null,
                   "feeAmount": "0.00",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
@@ -215446,6 +215879,7 @@
                   "provider": "scb",
                   "providerRef": null,
                   "qrPayload": "00020101021230…6304CE18",
+                  "receiverAccounts": [],
                   "redirectUrl": null,
                   "referenceCode": "PKAB23CD45EF67GH",
                   "refundedAmount": "0.00",
@@ -256788,6 +257222,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "company": null,
                   "notices": [],
                   "orders": [
                     {
@@ -256832,6 +257267,16 @@
                       }
                     }
                   ],
+                  "paymentMethods": [
+                    {
+                      "available": true,
+                      "method": "scb_qr"
+                    },
+                    {
+                      "available": true,
+                      "method": "bank_transfer_slip"
+                    }
+                  ],
                   "paymentSchedule": {
                     "instalments": [
                       {
@@ -256846,6 +257291,14 @@
                       }
                     ],
                     "templateKey": "full_upfront"
+                  },
+                  "points": {
+                    "balance": 120,
+                    "maximumPoints": 120,
+                    "minimumPoints": 4,
+                    "pointValue": "2.50",
+                    "redeemedPoints": 0,
+                    "toEarn": 25
                   },
                   "totals": {
                     "cashAmount": "14182.80",
@@ -267717,6 +268170,264 @@
         ]
       }
     },
+    "/v1/store/instalments": {
+      "get": {
+        "description": "Newest group first; cancelled instalments are left out unless asked for with `status`. Each says which orders it pays for, whether it can be paid now and the payment already started on it (D-020, D-061).\n\nImplements: D-020, D-061.",
+        "operationId": "store.paymentSchedules.listInstalments",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InstalmentStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "activePaymentId": null,
+                      "cashAmount": "7091.40",
+                      "dueAt": "2026-10-01T10:00:00+07:00",
+                      "dueTrigger": "at_checkout",
+                      "grossAmount": "7091.40",
+                      "groupCode": "OG-2610-00042",
+                      "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0002",
+                      "labelEn": "50 % deposit",
+                      "labelTh": "มัดจำ 50%",
+                      "openAmount": "7091.40",
+                      "orders": [
+                        {
+                          "orderCode": "OR-2610-00042",
+                          "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002"
+                        }
+                      ],
+                      "paidAmount": "0.00",
+                      "paidAt": null,
+                      "payable": true,
+                      "pct": "50.0000",
+                      "requiredBefore": "production",
+                      "seq": 1,
+                      "status": "due",
+                      "whtAmount": "0.00"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/StoreInstalmentDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my instalments across my order groups",
+        "tags": [
+          "store.paymentSchedules"
+        ]
+      }
+    },
     "/v1/store/loyalty": {
       "get": {
         "description": "Available points (redeemable at checkout with `redeemPoints`, D-133), pending points from completed orders (credited after the claim window, D-132), points expiring within 30 days, the point value (D-131) and my tier from 12-month spend (D-134).\n\nImplements: D-130, D-131, D-132, D-133, D-134.",
@@ -270821,11 +271532,13 @@
                       "createdAt": "2026-10-01T10:00:00+07:00",
                       "currency": "THB",
                       "expiresAt": "2026-10-02T10:00:00+07:00",
+                      "failureCode": null,
                       "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                       "method": "scb_qr",
                       "paidAt": null,
                       "qrPayload": "00020101021230…6304CE18",
+                      "receiverAccounts": [],
                       "redirectUrl": null,
                       "referenceCode": "PKAB23CD45EF67GH",
                       "slips": [],
@@ -271010,7 +271723,7 @@
         ]
       },
       "post": {
-        "description": "Starts a payment of the instalments due now (or those chosen): SCB QR returns the QR payload to render, 2C2P a redirect URL, a bank transfer waits for its slip. Methods are enabled by feature flag once Packio’s merchant accounts exist (D-176). The amount is the cash after the expected withholding. Requires `Idempotency-Key`.\n\nImplements: D-061, D-020, D-176.",
+        "description": "Starts a payment of the instalments due now (or those chosen): SCB QR returns the QR payload to render, 2C2P a redirect URL, a bank transfer waits for its slip. Methods are enabled by feature flag once Packio’s merchant accounts exist (D-176). The amount is the cash after the expected withholding. `bank_transfer_slip` returns the accounts to pay into (`receiverAccounts`). After a 2C2P page the provider sends the customer back to the fixed storefront route `/payments/{paymentId}/return` (no client-supplied return URL); poll `store.payments.get` there. Requires `Idempotency-Key`.\n\nImplements: D-061, D-020, D-176.",
         "operationId": "store.payments.initiate",
         "parameters": [
           {
@@ -271056,11 +271769,13 @@
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "currency": "THB",
                   "expiresAt": "2026-10-02T10:00:00+07:00",
+                  "failureCode": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                   "method": "scb_qr",
                   "paidAt": null,
                   "qrPayload": "00020101021230…6304CE18",
+                  "receiverAccounts": [],
                   "redirectUrl": null,
                   "referenceCode": "PKAB23CD45EF67GH",
                   "slips": [],
@@ -276499,11 +277214,13 @@
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "currency": "THB",
                   "expiresAt": "2026-10-02T10:00:00+07:00",
+                  "failureCode": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                   "method": "scb_qr",
                   "paidAt": null,
                   "qrPayload": "00020101021230…6304CE18",
+                  "receiverAccounts": [],
                   "redirectUrl": null,
                   "referenceCode": "PKAB23CD45EF67GH",
                   "slips": [],
@@ -276716,11 +277433,13 @@
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "currency": "THB",
                   "expiresAt": "2026-10-02T10:00:00+07:00",
+                  "failureCode": null,
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0001",
                   "method": "scb_qr",
                   "paidAt": null,
                   "qrPayload": "00020101021230…6304CE18",
+                  "receiverAccounts": [],
                   "redirectUrl": null,
                   "referenceCode": "PKAB23CD45EF67GH",
                   "slips": [],

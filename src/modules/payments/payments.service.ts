@@ -225,6 +225,7 @@ export class PaymentsService implements OnModuleInit {
         where: { id: payment.id },
         data: {
           status: 'failed',
+          failureCode: 'provider_error',
           failureReason: (error as Error).message.slice(0, 500),
           rowVersion: { increment: 1 },
         },
@@ -360,6 +361,7 @@ export class PaymentsService implements OnModuleInit {
           where: { id: payment.id },
           data: {
             status: 'failed',
+            failureCode: 'declined',
             failureReason: `2C2P ${note.respCode ?? '-'}`,
             rowVersion: { increment: 1 },
           },
@@ -898,6 +900,20 @@ export class PaymentsService implements OnModuleInit {
       if (error instanceof SettingNotFoundError) return null;
       throw error;
     }
+  }
+
+  /** The methods a customer can start a payment with, and whether each is offered now (feature flags, D-176). */
+  async offeredMethods(actor: Actor): Promise<{ method: PaymentMethod; available: boolean }[]> {
+    const out: { method: PaymentMethod; available: boolean }[] = [];
+    for (const [method, rule] of Object.entries(METHODS) as [PaymentMethod, { flag: string | null }][]) {
+      out.push({ method, available: rule.flag === null || (await this.flags.isEnabled(rule.flag, actor)) });
+    }
+    return out;
+  }
+
+  /** Packio's collection accounts a bank-transfer slip must pay into (D-061); empty until Finance sets them. */
+  async slipReceiverAccounts(at = new Date()) {
+    return this.receivers(at);
   }
 
   private async receivers(at: Date) {

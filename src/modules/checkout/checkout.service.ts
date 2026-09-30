@@ -130,6 +130,7 @@ export class CheckoutService {
       totals: addTotals(orders.map((o) => o.totals)),
       notices: [],
       state: {},
+      preview: {},
       initialStatus: 'waiting_payment',
       settingVersionIds: {
         'tax.nature_by_product_type': String(nature.versionId),

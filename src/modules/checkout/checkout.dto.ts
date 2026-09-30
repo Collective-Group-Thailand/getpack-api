@@ -18,6 +18,7 @@ import {
 
 import { MONEY_EXAMPLE, MoneyTotalsDto, ORDER_IDS, OrderLineDto } from '../orders/orders.dto';
 import { ScheduleOverrideDto } from '../payment-schedules/payment-schedules.dto';
+import { PAYMENT_METHODS } from '../payments/payments.dto';
 
 /** Checkout (B3.1): preview and place the order group. */
 
@@ -317,6 +318,75 @@ export class PreviewScheduleDto {
   instalments!: PreviewInstalmentDto[];
 }
 
+export class PointsPreviewDto {
+  @ApiProperty({ type: 'integer', example: 120, description: 'Points I can use now' })
+  balance!: number;
+
+  @ApiProperty({ example: '2.50', description: 'Baht per point (D-131)' })
+  pointValue!: string;
+
+  @ApiProperty({ type: 'integer', example: 4, description: 'Fewest points one redemption takes (THB 10, D-133)' })
+  minimumPoints!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 120,
+    description:
+      'Most points this order can take: the balance and 20 % of the order value (D-133); the margin floor may still cap it (`points.capped`)',
+  })
+  maximumPoints!: number;
+
+  @ApiProperty({ type: 'integer', example: 0, description: 'Points redeemed in this preview' })
+  redeemedPoints!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 25,
+    description: 'Points the order earns once completed and past the claim window (D-130, D-132, tier multiplier)',
+  })
+  toEarn!: number;
+}
+
+export class CompanyPreviewDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000e0001' })
+  companyId!: string;
+
+  @ApiProperty({ example: 'บริษัท ทดสอบ จำกัด' })
+  legalName!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000e0002', description: 'Tax-invoice branch' })
+  branchId!: string;
+
+  @ApiProperty({ enum: ['required', 'optional', 'none'], enumName: 'PoNumberPolicy', example: 'optional' })
+  poNumberPolicy!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: '50000.00', description: "The company's own approval threshold (D-123)" })
+  approvalThreshold!: string | null;
+
+  @ApiProperty({ example: false, description: 'The order waits for the company approver (D-123)' })
+  approvalRequired!: boolean;
+
+  @ApiProperty({ enum: ['prepaid', 'eligible', 'credit', 'blocked_overdue'], enumName: 'CreditStatus', example: 'credit' })
+  creditStatus!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: '85000.00', description: 'Credit left (D-121); null without a limit' })
+  creditAvailableAmount!: string | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 30 })
+  creditTermDays!: number | null;
+
+  @ApiProperty({ example: true, description: 'This order goes on the credit term (otherwise it is prepaid)' })
+  onCredit!: boolean;
+}
+
+export class PaymentMethodOptionDto {
+  @ApiProperty({ enum: PAYMENT_METHODS, enumName: 'PaymentMethod', example: 'scb_qr' })
+  method!: string;
+
+  @ApiProperty({ example: true, description: 'Offered now (provider accounts live, D-176)' })
+  available!: boolean;
+}
+
 export class CheckoutPreviewDto {
   @ApiProperty({
     type: PreviewScheduleDto,
@@ -336,6 +406,18 @@ export class CheckoutPreviewDto {
 
   @ApiProperty({ type: [CheckoutNoticeDto] })
   notices!: CheckoutNoticeDto[];
+
+  @ApiProperty({
+    type: [PaymentMethodOptionDto],
+    description: 'How the instalments can be paid (chosen when paying, `store.payments.initiate`); no surcharge',
+  })
+  paymentMethods!: PaymentMethodOptionDto[];
+
+  @ApiProperty({ type: PointsPreviewDto, nullable: true, description: 'Null only when points cannot be read' })
+  points!: PointsPreviewDto | null;
+
+  @ApiProperty({ type: CompanyPreviewDto, nullable: true, description: 'When ordering for a company (B2B)' })
+  company!: CompanyPreviewDto | null;
 }
 
 export const CHECKOUT_EXAMPLE = {
@@ -391,4 +473,10 @@ export const PREVIEW_EXAMPLE: CheckoutPreviewDto = {
       },
     ],
   },
+  paymentMethods: [
+    { method: 'scb_qr', available: true },
+    { method: 'bank_transfer_slip', available: true },
+  ],
+  points: { balance: 120, pointValue: '2.50', minimumPoints: 4, maximumPoints: 120, redeemedPoints: 0, toEarn: 25 },
+  company: null,
 };

@@ -25,7 +25,9 @@ export function slipDto(s: SlipRow | QueueRow): SlipDto {
   };
 }
 
-export function paymentDto(p: PaymentRow): PaymentDto {
+type ReceiverAccount = { accountType: string; accountNumber: string; accountNameTH?: string };
+
+export function paymentDto(p: PaymentRow, receivers: readonly ReceiverAccount[] = []): PaymentDto {
   return {
     id: p.publicId,
     referenceCode: p.referenceCode,
@@ -41,6 +43,15 @@ export function paymentDto(p: PaymentRow): PaymentDto {
     expiresAt: p.expiresAt ? toBangkokIso(p.expiresAt) : null,
     paidAt: p.paidAt ? toBangkokIso(p.paidAt) : null,
     slips: p.slips.map(slipDto),
+    receiverAccounts:
+      p.method === 'bank_transfer_slip'
+        ? receivers.map((r) => ({
+            accountType: r.accountType,
+            accountNumber: r.accountNumber,
+            accountName: r.accountNameTH ?? null,
+          }))
+        : [],
+    failureCode: p.status === 'failed' ? p.failureCode : null,
     createdAt: toBangkokIso(p.createdAt),
   };
 }

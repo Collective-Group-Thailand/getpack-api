@@ -94,6 +94,37 @@ export interface CheckoutInput {
   extensions?: Record<string, unknown>;
 }
 
+/** Points the customer has and may use, and what the order earns (D-130, D-133). */
+export interface PointsPreview {
+  balance: number;
+  pointValue: string;
+  minimumPoints: number;
+  maximumPoints: number;
+  redeemedPoints: number;
+  toEarn: number;
+}
+
+/** The company the order is placed for and what applies to it (D-123, D-125, D-121, D-122). */
+export interface CompanyPreview {
+  companyId: string;
+  legalName: string;
+  branchId: string;
+  poNumberPolicy: string;
+  approvalThreshold: string | null;
+  approvalRequired: boolean;
+  creditStatus: string;
+  creditAvailableAmount: string | null;
+  creditTermDays: number | null;
+  onCredit: boolean;
+}
+
+/** Read-only summaries extensions add for the preview (U-B0.1); none of them changes a price. */
+export interface CheckoutPreviewBlocks {
+  points?: PointsPreview;
+  company?: CompanyPreview;
+  paymentMethods?: { method: string; available: boolean }[];
+}
+
 export interface CheckoutDraft {
   actor: Actor;
   customerUserId: bigint;
@@ -114,6 +145,7 @@ export interface CheckoutDraft {
   /** Initial group status; an extension may hold the group for approval (D-123). */
   initialStatus: 'waiting_payment' | 'pending_company_approval';
   settingVersionIds: Record<string, string>;
+  preview: CheckoutPreviewBlocks;
 }
 
 export interface PlacedGroup {

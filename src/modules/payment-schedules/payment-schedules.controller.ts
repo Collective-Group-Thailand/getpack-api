@@ -10,9 +10,11 @@ import {
   ApiStandardErrors,
   ApiSuccess,
 } from '@common/openapi/decorators';
+import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { paginated } from '@common/pagination/pagination';
 import { OrdersService } from '@modules/orders/orders.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { type Response } from 'express';
 
@@ -23,11 +25,14 @@ import {
   PaymentScheduleDto,
   SCHEDULE_EXAMPLE,
   ScheduleOverrideDto,
+  STORE_INSTALMENT_EXAMPLE,
+  StoreInstalmentDto,
+  StoreInstalmentQuery,
   TEMPLATE_EXAMPLE,
   TemplateDto,
 } from './payment-schedules.dto';
 import { PaymentSchedulesService, scheduleEtag } from './payment-schedules.service';
-import { adminScheduleDto, scheduleDto, templateDto } from './schedule-views';
+import { adminScheduleDto, scheduleDto, storeInstalmentDto, templateDto } from './schedule-views';
 
 const DECISIONS = ['D-020', 'D-073'];
 const groupParam = ApiParam({ name: 'groupId', format: 'uuid' });
@@ -61,6 +66,29 @@ export class StorePaymentSchedulesController {
     if (actor.type !== 'user' || actor.audience !== 'customer') throw new DomainException('auth.forbidden');
     const group = await this.orders.group(groupId, actor.userId);
     return scheduleDto(await this.schedules.forGroup(group.id));
+  }
+}
+
+@ApiSurface('store', 'paymentSchedules')
+@Controller('instalments')
+export class StoreInstalmentsController {
+  constructor(private readonly schedules: PaymentSchedulesService) {}
+
+  @Get()
+  @ApiEndpoint({
+    id: 'store.paymentSchedules.listInstalments',
+    summary: 'List my instalments across my order groups',
+    description:
+      'Newest group first; cancelled instalments are left out unless asked for with `status`. Each says which ' +
+      'orders it pays for, whether it can be paid now and the payment already started on it (D-020, D-061).',
+    implements: ['D-020', 'D-061'],
+  })
+  @ApiPaginated(StoreInstalmentDto, { example: STORE_INSTALMENT_EXAMPLE })
+  @ApiStandardErrors('validation.failed')
+  async list(@CurrentActor() actor: Actor, @Query() q: StoreInstalmentQuery) {
+    if (actor.type !== 'user' || actor.audience !== 'customer') throw new DomainException('auth.forbidden');
+    const { rows, total } = await this.schedules.forCustomer(actor.userId, q);
+    return paginated(rows.map(storeInstalmentDto), total, q);
   }
 }
 

@@ -881,6 +881,14 @@ enum RequiredBefore {
   @@map("required_before")
 }
 
+/// Why a payment failed, as the customer sees it (U-B0.1).
+enum PaymentFailureCode {
+  provider_error
+  declined
+
+  @@map("payment_failure_code")
+}
+
 enum InstalmentStatus {
   pending
   due
@@ -1145,33 +1153,35 @@ model InstalmentAllocation {
 /// `cash_amount` the money received. `reference_code` is what the provider echoes back (ref1 / invoiceNo).
 /// A receipt that matches no group stays with `order_group_id` null (unidentified receipts queue).
 model Payment {
-  id              BigInt          @id(map: "pk_payments") @default(autoincrement())
-  publicId        String          @unique(map: "ux_payments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  entityId        BigInt          @map("entity_id")
-  orderGroupId    BigInt?         @map("order_group_id")
+  id              BigInt              @id(map: "pk_payments") @default(autoincrement())
+  publicId        String              @unique(map: "ux_payments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId        BigInt              @map("entity_id")
+  orderGroupId    BigInt?             @map("order_group_id")
   method          PaymentMethod
   provider        PaymentProvider
   status          PaymentStatus
-  referenceCode   String          @unique(map: "ux_payments__reference_code") @map("reference_code")
-  amount          Decimal         @db.Decimal(14, 2)
-  whtAmount       Decimal         @default(0) @map("wht_amount") @db.Decimal(14, 2)
-  cashAmount      Decimal         @map("cash_amount") @db.Decimal(14, 2)
-  feeAmount       Decimal         @default(0) @map("fee_amount") @db.Decimal(14, 2)
-  refundedAmount  Decimal         @default(0) @map("refunded_amount") @db.Decimal(14, 2)
-  providerRef     String?         @map("provider_ref")
+  referenceCode   String              @unique(map: "ux_payments__reference_code") @map("reference_code")
+  amount          Decimal             @db.Decimal(14, 2)
+  whtAmount       Decimal             @default(0) @map("wht_amount") @db.Decimal(14, 2)
+  cashAmount      Decimal             @map("cash_amount") @db.Decimal(14, 2)
+  feeAmount       Decimal             @default(0) @map("fee_amount") @db.Decimal(14, 2)
+  refundedAmount  Decimal             @default(0) @map("refunded_amount") @db.Decimal(14, 2)
+  providerRef     String?             @map("provider_ref")
   /// Redacted provider data (no card or account numbers, PDPA).
-  providerPayload Json?           @map("provider_payload")
-  qrPayload       String?         @map("qr_payload")
-  redirectUrl     String?         @map("redirect_url")
-  expiresAt       DateTime?       @map("expires_at") @db.Timestamptz(6)
-  paidAt          DateTime?       @map("paid_at") @db.Timestamptz(6)
-  verifiedAt      DateTime?       @map("verified_at") @db.Timestamptz(6)
-  verifiedById    BigInt?         @map("verified_by")
-  initiatedById   BigInt?         @map("initiated_by")
-  failureReason   String?         @map("failure_reason")
-  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion      Int             @default(1) @map("row_version")
+  providerPayload Json?               @map("provider_payload")
+  qrPayload       String?             @map("qr_payload")
+  redirectUrl     String?             @map("redirect_url")
+  expiresAt       DateTime?           @map("expires_at") @db.Timestamptz(6)
+  paidAt          DateTime?           @map("paid_at") @db.Timestamptz(6)
+  verifiedAt      DateTime?           @map("verified_at") @db.Timestamptz(6)
+  verifiedById    BigInt?             @map("verified_by")
+  initiatedById   BigInt?             @map("initiated_by")
+  failureReason   String?             @map("failure_reason")
+  /// What the customer may be told about a failure (U-B0.1); `failureReason` stays internal.
+  failureCode     PaymentFailureCode? @map("failure_code")
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int                 @default(1) @map("row_version")
 
   entity      Entity              @relation("PaymentEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payments__entity_id")
   orderGroup  OrderGroup?         @relation(fields: [orderGroupId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payments__order_group_id")
