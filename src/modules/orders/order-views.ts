@@ -28,8 +28,10 @@ export const ORDER_INCLUDE = {
 } as const satisfies Prisma.OrderInclude;
 
 export const GROUP_INCLUDE = {
-  customer: true,
+  customer: { include: { customerProfile: { select: { customerCode: true } } } },
   placedBy: true,
+  company: { select: { legalName: true } },
+  payments: { select: { slips: { where: { verificationStatus: 'manual_review' }, select: { id: true } } } },
   orders: { orderBy: { id: 'asc' }, include: ORDER_INCLUDE },
 } as const satisfies Prisma.OrderGroupInclude;
 
@@ -224,6 +226,15 @@ export function adminOrderGroupDto(row: OrderGroupRow, grants: CostGrants): Admi
     ...orderGroupDto(row),
     csRemarks: row.csRemarks,
     placedById: row.placedBy.publicId,
+    customer: {
+      id: row.customer.publicId,
+      customerCode: row.customer.customerProfile?.customerCode ?? null,
+      displayName: row.customer.displayName,
+      companyName: row.company?.legalName ?? null,
+    },
+    placedBy: { id: row.placedBy.publicId, displayName: row.placedBy.displayName },
+    taxProfile: (row.taxProfileSnapshot as Record<string, unknown> | null) ?? null,
+    hasSlipToReview: row.payments.some((p) => p.slips.length > 0),
     utm: (row.utm as Record<string, string> | null) ?? null,
     orders: row.orders.map((o) => adminOrderDto(o, grants)),
   };

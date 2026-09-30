@@ -81,6 +81,15 @@ export class TimelineActorDto {
 /** Staff see everything: internal steps, the factory's, shipments and internal notes with @mentions. */
 export class StaffTimelineEntryDto extends TimelineEntryDto {
   @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-14T18:00:00+07:00',
+    description: 'For a production step: when it was due in the factory’s plan (promised vs actual, D-075)',
+  })
+  promisedAt!: string | null;
+
+  @ApiProperty({
     enum: ['order', 'order_group', 'production_job', 'shipment', 'note'],
     enumName: 'TimelineSource',
     example: 'production_job',
@@ -293,6 +302,7 @@ export const STAFF_TIMELINE_ENTRY_EXAMPLE = {
   actor: { type: 'user', displayName: 'ผู้ปฏิบัติงาน (fake)' },
   body: null,
   mentions: [],
+  promisedAt: '2026-10-14T18:00:00+07:00',
 };
 export const PROGRESS_EXAMPLE = {
   orderId: TIMELINE_IDS.order,

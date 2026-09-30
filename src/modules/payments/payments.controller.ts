@@ -194,7 +194,9 @@ export class AdminPaymentsController {
   @ApiEndpoint({
     id: 'admin.payments.list',
     summary: 'List payments',
-    description: 'Filter by status and method; `unidentified=true` lists receipts that match no order group.',
+    description:
+      'Filter by status and method, by order group (`groupId`) or by an order of it (`orderId`); ' +
+      '`unidentified=true` lists receipts that match no order group.',
     implements: DECISIONS,
   })
   @ApiPaginated(AdminPaymentDto, { example: ADMIN_PAYMENT_EXAMPLE })
@@ -204,6 +206,8 @@ export class AdminPaymentsController {
       ...(q.status ? { status: q.status } : {}),
       ...(q.method ? { method: q.method } : {}),
       ...(q.unidentified ? { orderGroupId: null, status: 'succeeded' as const } : {}),
+      ...(q.groupId && { orderGroup: { publicId: q.groupId } }),
+      ...(q.orderId && { orderGroup: { orders: { some: { publicId: q.orderId } } } }),
     };
     const { rows, total } = await this.payments.list(where, q.page, q.perPage);
     return { data: rows.map(adminPaymentDto), meta: { page: q.page, perPage: q.perPage, total } };

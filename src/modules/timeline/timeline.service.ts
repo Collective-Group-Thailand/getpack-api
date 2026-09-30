@@ -23,7 +23,7 @@ import {
 } from './timeline.dto';
 
 /** An entry with its precise position (the wire timestamps are to the second). */
-type Entry = StaffTimelineEntryDto & { _key: string };
+type Entry = Omit<StaffTimelineEntryDto, 'promisedAt'> & { _key: string; promisedAt?: string | null };
 
 const sortKey = (at: Date, kind: number, id: bigint) =>
   `${at.toISOString()}|${kind}|${id.toString().padStart(20, '0')}`;
@@ -176,7 +176,28 @@ export class TimelineService implements OnModuleInit {
       });
     }
     entries.push(...(await this.shipmentEntries(order.id, false)));
-    return this.page(entries, cursor, limit, ({ _key: _k, ...entry }): StaffTimelineEntryDto => entry);
+    const milestoneIds = rows
+      .map((r) => (r.messageParams as { milestoneId?: string } | null)?.milestoneId)
+      .filter((x): x is string => typeof x === 'string');
+    const due = new Map(
+      (
+        await this.prisma.jobMilestone.findMany({
+          where: { publicId: { in: milestoneIds } },
+          select: { publicId: true, dueAt: true },
+        })
+      ).map((m) => [m.publicId, m.dueAt]),
+    );
+    for (const [i, r] of rows.entries()) {
+      const id = (r.messageParams as { milestoneId?: string } | null)?.milestoneId;
+      const at = id ? due.get(id) : null;
+      entries[i]!.promisedAt = at ? toBangkokIso(at) : null;
+    }
+    return this.page(
+      entries,
+      cursor,
+      limit,
+      ({ _key: _k, ...entry }): StaffTimelineEntryDto => ({ ...entry, promisedAt: entry.promisedAt ?? null }),
+    );
   }
 
   // --- progress (promised vs actual) ------------------------------------------------------------------------

@@ -3,6 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
+import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import {
   ApiConcurrency,
   ApiEndpoint,
@@ -271,6 +272,7 @@ export class AdminOrdersController {
   @Post('order-groups/:groupId/actions/cancel')
   @HttpCode(200)
   @Can('orders.cancel')
+  @Idempotent({ optional: true })
   @groupParam
   @ApiEndpoint({
     id: 'admin.orders.cancelGroup',
@@ -310,6 +312,7 @@ export class AdminOrdersController {
   @Post('orders/:orderId/actions/cancel')
   @HttpCode(200)
   @Can('orders.cancel')
+  @Idempotent({ optional: true })
   @orderParam
   @ApiEndpoint({
     id: 'admin.orders.cancel',

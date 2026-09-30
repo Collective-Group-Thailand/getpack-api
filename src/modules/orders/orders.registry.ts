@@ -1,5 +1,6 @@
 import { type Type } from '@nestjs/common';
 
+import { AdminOrderListController } from './admin-orders.controller';
 import { AdminOrderOperationsController } from './order-operations.controller';
 import { AdminOrdersController, StoreOrdersController } from './orders.controller';
 
@@ -10,4 +11,5 @@ export const ORDERS_STORE_CONTROLLERS: Type<unknown>[] = [StoreOrdersController]
 export const ORDERS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminOrdersController,
   AdminOrderOperationsController,
+  AdminOrderListController,
 ];

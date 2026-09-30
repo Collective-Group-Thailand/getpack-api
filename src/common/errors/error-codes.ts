@@ -232,6 +232,8 @@ export const ERROR_CODES = {
   'claims.liability_undetermined': HttpStatus.CONFLICT,
   'claims.action_not_allowed': HttpStatus.UNPROCESSABLE_ENTITY,
   'orders.reorder_unavailable': HttpStatus.CONFLICT,
+  'payments.nothing_due': HttpStatus.CONFLICT,
+  'payments.reminder_recent': HttpStatus.CONFLICT,
   'orders.reorder_repriced': HttpStatus.CONFLICT,
   'support.contact_required': HttpStatus.UNPROCESSABLE_ENTITY,
   'orders.reorder_preview_expired': HttpStatus.CONFLICT,

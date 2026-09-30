@@ -411,8 +411,8 @@ export class OrderOperationsService {
     });
   }
 
-  notes(orderId: bigint, page: number, perPage: number) {
-    return Promise.all([
+  async notes(orderId: bigint, page: number, perPage: number) {
+    const [rows, total] = await Promise.all([
       this.prisma.orderNote.findMany({
         where: { orderId },
         include: { author: true },
@@ -422,6 +422,19 @@ export class OrderOperationsService {
       }),
       this.prisma.orderNote.count({ where: { orderId } }),
     ]);
+    const people = await this.mentioned(rows.flatMap((r) => r.mentions));
+    return [rows.map((r) => ({ ...r, mentioned: r.mentions.map((id) => people.get(id)!).filter(Boolean) })), total] as const;
+  }
+
+  /** Staff users mentioned in notes, by internal id. */
+  async mentioned(ids: bigint[]) {
+    const users = ids.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: [...new Set(ids)] } },
+          select: { id: true, publicId: true, displayName: true },
+        })
+      : [];
+    return new Map(users.map((u) => [u.id, { id: u.publicId, displayName: u.displayName }]));
   }
 
   // --- work queues --------------------------------------------------------------------------------------

@@ -105,6 +105,16 @@ const ROWS: Row[] = [
     'Customer: an instalment is overdue (D-020)',
   ),
   C(
+    'instalment.reminder',
+    ['email', 'line'],
+    { th: 'แจ้งเตือนชำระงวดที่ {{payload.seq}}', en: 'Reminder: instalment {{payload.seq}}' },
+    {
+      th: 'คำสั่งซื้อ {{payload.groupCode}} งวดที่ {{payload.seq}} จำนวน {{payload.cashAmount}} บาท รอการชำระ ชำระได้ที่ Packio',
+      en: 'Order {{payload.groupCode}}: instalment {{payload.seq}} of THB {{payload.cashAmount}} is waiting; pay on Packio',
+    },
+    'Customer: CS reminds of an instalment due (U-B0.2, D-143)',
+  ),
+  C(
     'instalment.paid',
     ['email', 'in_app'],
     { th: 'ได้รับชำระเงินแล้ว', en: 'Payment received' },

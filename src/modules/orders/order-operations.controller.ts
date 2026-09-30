@@ -50,6 +50,7 @@ const NOTE_EXAMPLE: OrderNoteDto = {
   id: '0192f3a0-7c1e-7d2a-9b1f-0000000d0005',
   body: 'โทรยืนยันกับลูกค้าแล้ว',
   author: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000e0001', displayName: 'Dev CS' },
+  mentions: [{ id: '0192f3a0-7c1e-7d2a-9b1f-0000000e0002', displayName: 'Dev Prepress' }],
   createdAt: '2026-10-01T10:00:00+07:00',
 };
 
@@ -210,6 +211,7 @@ export class AdminOrderOperationsController {
         id: n.publicId,
         body: n.body,
         author: { id: n.author.publicId, displayName: n.author.displayName },
+        mentions: n.mentioned,
         createdAt: toBangkokIso(n.createdAt),
       })),
       meta: { page: q.page, perPage: q.perPage, total },
@@ -235,10 +237,12 @@ export class AdminOrderOperationsController {
     @Body() body: AddOrderNoteDto,
   ): Promise<OrderNoteDto> {
     const note = await this.ops.addNote(staff(actor), orderId, body.body, body.mentions ?? []);
+    const people = await this.ops.mentioned(note.mentions);
     return {
       id: note.publicId,
       body: note.body,
       author: { id: note.author.publicId, displayName: note.author.displayName },
+      mentions: note.mentions.map((id) => people.get(id)!).filter(Boolean),
       createdAt: toBangkokIso(note.createdAt),
     };
   }

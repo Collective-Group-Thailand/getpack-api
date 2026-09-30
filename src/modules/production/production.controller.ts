@@ -2,6 +2,7 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -111,6 +112,7 @@ export class AdminProductionController {
   @Post('orders/:orderId/actions/start-production')
   @HttpCode(200)
   @Can('production.start_manual')
+  @Idempotent({ optional: true })
   @ApiParam({ name: 'orderId', format: 'uuid' })
   @ApiEndpoint({
     id: 'admin.production.startManually',

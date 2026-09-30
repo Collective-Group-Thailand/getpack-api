@@ -637,6 +637,14 @@
     "not_unidentified": {
       "title": "Not an unidentified receipt",
       "detail": "This payment already belongs to an order group."
+    },
+    "nothing_due": {
+      "title": "Nothing due",
+      "detail": "No instalment of this order is due"
+    },
+    "reminder_recent": {
+      "title": "Reminder sent recently",
+      "detail": "A payment reminder for this order went out within the last hour"
     }
   },
   "refunds": {

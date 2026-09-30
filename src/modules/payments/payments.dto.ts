@@ -296,6 +296,16 @@ export class AdminPaymentQuery extends PageQuery {
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   unidentified?: boolean;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Payments of this order group' })
+  @IsOptional()
+  @IsUUID()
+  groupId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Payments of the group of this order' })
+  @IsOptional()
+  @IsUUID()
+  orderId?: string;
 }
 
 export class SlipReviewDto {

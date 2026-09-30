@@ -405,6 +405,20 @@ export class AdminOrderDto extends OrderDto {
   internal!: AdminOrderInternalDto;
 }
 
+export class OrderCustomerRefDto {
+  @ApiProperty({ format: 'uuid', example: ORDER_IDS.customer })
+  id!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'CU-000042' })
+  customerCode!: string | null;
+
+  @ApiProperty({ example: 'สมชาย ทดสอบ' })
+  displayName!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'บริษัท ตัวอย่าง จำกัด', description: 'The ordering company' })
+  companyName!: string | null;
+}
+
 export class AdminOrderGroupDto extends OrderGroupDto {
   @ApiProperty({ type: String, nullable: true, example: 'ลูกค้าขอส่งด่วน' })
   csRemarks!: string | null;
@@ -414,6 +428,24 @@ export class AdminOrderGroupDto extends OrderGroupDto {
 
   @ApiPropertyOptional({ type: Object, nullable: true, example: { source: 'google', medium: 'cpc' } })
   utm!: Record<string, string> | null;
+
+  @ApiProperty({ type: OrderCustomerRefDto })
+  customer!: OrderCustomerRefDto;
+
+  @ApiProperty({ type: UserRefDto, description: 'Who placed it (the customer or CS)' })
+  placedBy!: UserRefDto;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: { taxType: 'juristic', taxId: '0000000000019', branchCode: '00000', withholdsTax: true },
+    description: 'The tax profile the documents are issued to, as placed (snapshot)',
+  })
+  taxProfile!: Record<string, unknown> | null;
+
+  @ApiProperty({ example: false, description: 'A slip waits for Finance review (D-061)' })
+  hasSlipToReview!: boolean;
 
   @ApiProperty({ type: [AdminOrderDto] })
   declare orders: AdminOrderDto[];
@@ -521,6 +553,10 @@ export const ADMIN_ORDER_GROUP_EXAMPLE: AdminOrderGroupDto = {
   csRemarks: null,
   placedById: ORDER_IDS.customer,
   utm: null,
+  customer: { id: ORDER_IDS.customer, customerCode: 'CU-000042', displayName: 'สมชาย ทดสอบ', companyName: null },
+  placedBy: { id: ORDER_IDS.customer, displayName: 'สมชาย ทดสอบ' },
+  taxProfile: null,
+  hasSlipToReview: false,
   orders: [
     {
       ...ORDER_EXAMPLE,
@@ -649,6 +685,9 @@ export class OrderNoteDto {
 
   @ApiProperty({ type: UserRefDto })
   author!: UserRefDto;
+
+  @ApiProperty({ type: [UserRefDto], description: 'Staff mentioned in the note (D-143)' })
+  mentions!: UserRefDto[];
 
   @TimestampField()
   createdAt!: string;
