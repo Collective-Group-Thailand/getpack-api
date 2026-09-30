@@ -339,7 +339,8 @@ ASM_CASES = [
   ('stitch by blank length', dict(assemblyId='stitch', requiresAmount=False, autoAdd=False), dict(qty=800, formula='rsc', rsc=True, blankDl=1500, digital=False, trimFinishPlateMm=3, packing=NO_PACKING)),
   ('insert with material', dict(assemblyId='insert', requiresAmount=True, autoAdd=False, amount=2, w=120.5, l=80), dict(qty=1000, formula='rsc', rsc=True, blankDl=900, digital=False, trimFinishPlateMm=3, packing=NO_PACKING)),
 ]
-out = dict(fixtures=dict(tables=tables(), highBands=HIGH_BANDS, assemblyPrices=ASM_PRICES),
-           flexo=[dict(name=n, part=p, override=o, expect=price(p, tables(**o))) for n, p, o in CASES],
-           assemblies=[dict(name=n, request=r, context=c, expect=assembly(r, ASM_PRICES, c)) for n, r, c in ASM_CASES])
-print(json.dumps(out, indent=1))
+if __name__ == '__main__':
+    out = dict(fixtures=dict(tables=tables(), highBands=HIGH_BANDS, assemblyPrices=ASM_PRICES),
+               flexo=[dict(name=n, part=p, override=o, expect=price(p, tables(**o))) for n, p, o in CASES],
+               assemblies=[dict(name=n, request=r, context=c, expect=assembly(r, ASM_PRICES, c)) for n, r, c in ASM_CASES])
+    print(json.dumps(out, indent=1))

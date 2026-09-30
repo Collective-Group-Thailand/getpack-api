@@ -150,4 +150,5 @@ CASES = [
  ('no sheet fits', part(dw=1500, dl=1300), tables()),
  ('colour without a price', part(front=['gold']), tables()),
 ]
-print(json.dumps([dict(name=n, part=p, tables=t, expect=price(p, t)) for n, p, t in CASES], indent=1))
+if __name__ == '__main__':
+    print(json.dumps([dict(name=n, part=p, tables=t, expect=price(p, t)) for n, p, t in CASES], indent=1))

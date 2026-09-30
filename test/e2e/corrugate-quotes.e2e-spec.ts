@@ -28,7 +28,7 @@ describe('corrugate quotes (e2e, U-B6)', () => {
     await seedDev(prisma, E2E_DEV_PASSWORD);
     await prisma.$transaction((tx) => seedDevFolding(tx), { timeout: 60_000 });
     fixture = (await prisma.$transaction((tx) => seedDevCorrugate(tx), { timeout: 60_000 })).fixture;
-    for (const role of ['partner-manager', 'cs', 'prepress']) {
+    for (const role of ['partner-manager', 'cs', 'prepress', 'admin']) {
       const res = await request(server)
         .post('/v1/auth/staff/login')
         .send({ email: `${role}@example.invalid`, password: E2E_DEV_PASSWORD })
@@ -238,6 +238,36 @@ describe('corrugate quotes (e2e, U-B6)', () => {
       expect(configurator.body.instant).toBe(true);
     } finally {
       await prisma.productType.update({ where: { code: 'corrugated' }, data: { quoteMode: 'rfq' } });
+    }
+  });
+
+  it('lets the admin switch corrugate to instant now that its calculator has shipped, and back (D-100)', async () => {
+    const type = await prisma.productType.findUniqueOrThrow({ where: { code: 'corrugated' } });
+    const url = `/v1/admin/catalog/product-types/${type.publicId}`;
+    const read = await as('admin').get(url).expect(200);
+    expect(read.body.quoteMode).toBe('rfq'); // seeded RFQ until sign-off (A-16)
+    const instant = await as('admin')
+      .post(`${url}/actions/change-quote-mode`, { quoteMode: 'instant', reason: 'Pricing sign-off received' })
+      .set('If-Match', read.headers['etag'] as string)
+      .expect(200);
+    expect(instant.body.quoteMode).toBe('instant');
+    try {
+      const configurator = await request(server)
+        .get('/v1/store/catalog/products/dev-rsc-carton/configurator')
+        .expect(200);
+      expect(configurator.body.instant).toBe(true);
+      await request(server)
+        .post('/v1/store/quotes/actions/calculate')
+        .send({ productTypeCode: 'corrugated', configuration: configuration() })
+        .expect(200);
+    } finally {
+      await as('admin')
+        .post(`${url}/actions/change-quote-mode`, {
+          quoteMode: 'rfq',
+          reason: 'Back to RFQ for the other suites',
+        })
+        .set('If-Match', instant.headers['etag'] as string)
+        .expect(200);
     }
   });
 

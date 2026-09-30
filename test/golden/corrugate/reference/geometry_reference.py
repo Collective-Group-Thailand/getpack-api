@@ -176,14 +176,15 @@ cases=[
  ('tray',38,None,200,300,60,BC,None),
  ('full_overlap',39,None,300,400,250,B,None),
 ]
-out=[]
-for name,pt,sub,W,L,D,ft,plus in cases:
-    r=calc(pt,sub,W,L,D,ft,bands,plus)
-    pct={}
-    for area,key in ((36,'top'),(37,'side'),(38,'top_side'),(39,'all_round')):
-        for t in (1,2):
-            for f4 in (False,True):
-                pct[f'{key}:{t}:{int(f4)}']=percent(r,ft,pt,sub,area,t,f4)
-    out.append(dict(formula=name,w=W,l=L,d=D,flute='B' if ft is B else 'BC',plus=plus,
-      expect=dict(w=r['W'],l=r['L'],d=r['D'],dw=r['dW'],dl=r['dL'],flap=r['Flap'],slh=r['SLH'],odl=r['ODL'],odw=r['ODW'],odh=r['ODH'],areaRaw=r['area_raw']),pct=pct))
-print(json.dumps(out, indent=1))
+if __name__ == '__main__':
+    out=[]
+    for name,pt,sub,W,L,D,ft,plus in cases:
+        r=calc(pt,sub,W,L,D,ft,bands,plus)
+        pct={}
+        for area,key in ((36,'top'),(37,'side'),(38,'top_side'),(39,'all_round')):
+            for t in (1,2):
+                for f4 in (False,True):
+                    pct[f'{key}:{t}:{int(f4)}']=percent(r,ft,pt,sub,area,t,f4)
+        out.append(dict(formula=name,w=W,l=L,d=D,flute='B' if ft is B else 'BC',plus=plus,
+          expect=dict(w=r['W'],l=r['L'],d=r['D'],dw=r['dW'],dl=r['dL'],flap=r['Flap'],slh=r['SLH'],odl=r['ODL'],odw=r['ODW'],odh=r['ODH'],areaRaw=r['area_raw']),pct=pct))
+    print(json.dumps(out, indent=1))
