@@ -136,7 +136,10 @@ export class StorePaymentsController {
     const group = await this.orders.group(groupId, customer(actor).userId);
     const { rows, total } = await this.payments.list({ orderGroupId: group.id }, q.page, q.perPage);
     const receivers = await this.payments.slipReceiverAccounts();
-    return { data: rows.map((p) => paymentDto(p, receivers)), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: rows.map((p) => paymentDto(p, receivers)),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get('payments/:paymentId')

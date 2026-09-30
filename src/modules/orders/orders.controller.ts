@@ -81,7 +81,10 @@ export class StoreOrdersController {
       q.perPage,
     );
     const ctx = await this.ctx();
-    return { data: rows.map((g) => orderGroupDto(g, ctx)), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: rows.map((g) => orderGroupDto(g, ctx)),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get('order-groups/:groupId')

@@ -75,7 +75,9 @@ export function couponDto(
     usageLimit: c.usageLimit,
     usedCount: c.usedCount,
     assignedCustomerId: c.assignedUser?.publicId ?? null,
-    assignedCustomer: c.assignedUser ? { id: c.assignedUser.publicId, displayName: c.assignedUser.displayName } : null,
+    assignedCustomer: c.assignedUser
+      ? { id: c.assignedUser.publicId, displayName: c.assignedUser.displayName }
+      : null,
     batchId: c.batch?.publicId ?? null,
   };
 }

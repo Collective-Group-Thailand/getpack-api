@@ -17,4 +17,7 @@ export const CUSTOMERS_STORE_CONTROLLERS: Type<unknown>[] = [
 ];
 
 /** `/v1/admin/*` controllers of the customers context. */
-export const CUSTOMERS_ADMIN_CONTROLLERS: Type<unknown>[] = [AdminCustomersController, AdminPrivacyController];
+export const CUSTOMERS_ADMIN_CONTROLLERS: Type<unknown>[] = [
+  AdminCustomersController,
+  AdminPrivacyController,
+];

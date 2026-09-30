@@ -15,7 +15,9 @@ describe('estimatedDeliveryDate (U-B0.1)', () => {
 
   it('is null without a promise or without a delivery estimate', () => {
     expect(estimatedDeliveryDate(null, option)).toBeNull();
-    expect(estimatedDeliveryDate(day('2026-10-10'), { ...option, result: { earliestDeliveryDate: null } })).toBeNull();
+    expect(
+      estimatedDeliveryDate(day('2026-10-10'), { ...option, result: { earliestDeliveryDate: null } }),
+    ).toBeNull();
     expect(estimatedDeliveryDate(day('2026-10-10'), null)).toBeNull();
   });
 });

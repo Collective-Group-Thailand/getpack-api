@@ -27,12 +27,16 @@ export class StoreCompanyAssetsController {
   @ApiEndpoint({
     id: 'store.companyAssets.list',
     summary: 'List my company’s brand assets',
-    description: 'Every member: the logos, guidelines, fonts and approved artwork of the company, with signed URLs (D-227).',
+    description:
+      'Every member: the logos, guidelines, fonts and approved artwork of the company, with signed URLs (D-227).',
     implements: ['D-227'],
   })
   @ApiSuccess(200, { description: 'Brand assets', type: [CompanyAssetDto], example: [COMPANY_ASSET_EXAMPLE] })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  list(@CurrentActor() actor: Actor, @Param('companyId', ParseUUIDPipe) id: string): Promise<CompanyAssetDto[]> {
+  list(
+    @CurrentActor() actor: Actor,
+    @Param('companyId', ParseUUIDPipe) id: string,
+  ): Promise<CompanyAssetDto[]> {
     return this.assets.list(customer(actor), id);
   }
 
@@ -49,7 +53,9 @@ export class StoreCompanyAssetsController {
   })
   @ApiBody({
     type: AddCompanyAssetDto,
-    examples: { default: { value: { fileId: COMPANY_ASSET_EXAMPLE.fileId, kind: 'logo', name: 'โลโก้หลัก' } } },
+    examples: {
+      default: { value: { fileId: COMPANY_ASSET_EXAMPLE.fileId, kind: 'logo', name: 'โลโก้หลัก' } },
+    },
   })
   @ApiSuccess(201, { description: 'Added', type: CompanyAssetDto, example: COMPANY_ASSET_EXAMPLE })
   @ApiStandardErrors(

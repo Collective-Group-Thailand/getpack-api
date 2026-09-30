@@ -646,7 +646,10 @@ export class StoreShipmentsController {
   async confirmReceipt(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string) {
     const customer = customerId(actor);
     await this.delivery.confirmReceipt(actor, orderId, customer);
-    return orderDto(await this.orders.order({ publicId: orderId }, customer), await orderViewContext(this.settings));
+    return orderDto(
+      await this.orders.order({ publicId: orderId }, customer),
+      await orderViewContext(this.settings),
+    );
   }
 }
 

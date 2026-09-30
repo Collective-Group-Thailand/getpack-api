@@ -139,8 +139,8 @@ export class CatalogProductRelationsController {
     id: 'admin.catalogProducts.setReferenceConfiguration',
     summary: 'Set the reference configuration of the "starting from" price',
     description:
-      'D-220: the calculator configuration (one quantity) a product card\'s starting price is quoted at, validated ' +
-      'as a store request of the product type\'s calculator. The price hint is recomputed at once and shown by ' +
+      "D-220: the calculator configuration (one quantity) a product card's starting price is quoted at, validated " +
+      "as a store request of the product type's calculator. The price hint is recomputed at once and shown by " +
       '`store.catalog.listPriceHints`; no hint while nothing can price it. Guarded by the product ETag; audited.',
     implements: ['D-220', 'D-181'],
   })
@@ -164,7 +164,11 @@ export class CatalogProductRelationsController {
       },
     },
   })
-  @ApiSuccess(200, { description: 'The catalogue product', type: CatalogProductDto, example: CATALOG_PRODUCT_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'The catalogue product',
+    type: CatalogProductDto,
+    example: CATALOG_PRODUCT_EXAMPLE,
+  })
   @ApiStandardErrors(...COLLECTION_ERRORS)
   async setReferenceConfiguration(
     @CurrentActor() actor: Actor,
@@ -173,7 +177,12 @@ export class CatalogProductRelationsController {
     @Body() body: ReferenceConfigurationDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<object> {
-    const row = await this.service.setReferenceConfiguration(staffActor(actor), id, ifMatch, body.configuration);
+    const row = await this.service.setReferenceConfiguration(
+      staffActor(actor),
+      id,
+      ifMatch,
+      body.configuration,
+    );
     await this.hints.refresh((row as unknown as { id: bigint }).id);
     return this.respond(row, res);
   }
@@ -183,11 +192,16 @@ export class CatalogProductRelationsController {
   @ApiEndpoint({
     id: 'admin.catalogProducts.clearReferenceConfiguration',
     summary: 'Remove the reference configuration',
-    description: 'The product then has no "starting from" price (D-220). Guarded by the product ETag; audited.',
+    description:
+      'The product then has no "starting from" price (D-220). Guarded by the product ETag; audited.',
     implements: ['D-220'],
   })
   @ApiConcurrency()
-  @ApiSuccess(200, { description: 'The catalogue product', type: CatalogProductDto, example: CATALOG_PRODUCT_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'The catalogue product',
+    type: CatalogProductDto,
+    example: CATALOG_PRODUCT_EXAMPLE,
+  })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async clearReferenceConfiguration(
     @CurrentActor() actor: Actor,

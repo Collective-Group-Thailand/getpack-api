@@ -59,7 +59,11 @@ export class AdminOrderListQuery extends PageQuery {
   @IsISO8601({ strict: true })
   placedFrom?: string;
 
-  @ApiPropertyOptional({ format: 'date', example: '2026-10-31', description: 'Placed on or before (Bangkok)' })
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-31',
+    description: 'Placed on or before (Bangkok)',
+  })
   @IsOptional()
   @IsISO8601({ strict: true })
   placedTo?: string;
@@ -133,11 +137,16 @@ export class AdminOrderListItemDto {
     format: 'date-time',
     nullable: true,
     example: null,
-    description: 'Review due time of that slip (`payments.slip_review_sla_business_hours`, business hours D-175)',
+    description:
+      'Review due time of that slip (`payments.slip_review_sla_business_hours`, business hours D-175)',
   })
   slipReviewDueAt!: string | null;
 
-  @ApiProperty({ type: NextInstalmentDto, nullable: true, description: 'The next unpaid instalment of the group' })
+  @ApiProperty({
+    type: NextInstalmentDto,
+    nullable: true,
+    description: 'The next unpaid instalment of the group',
+  })
   nextInstalment!: NextInstalmentDto | null;
 }
 
@@ -210,7 +219,8 @@ export class ReminderSkipDto {
 
   @ApiProperty({
     example: 'payments.nothing_due',
-    description: 'Why no reminder went: an error code (`payments.nothing_due`, `payments.reminder_recent`, `http.not_found`)',
+    description:
+      'Why no reminder went: an error code (`payments.nothing_due`, `payments.reminder_recent`, `http.not_found`)',
   })
   reason!: string;
 }

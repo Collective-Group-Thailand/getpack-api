@@ -428,7 +428,8 @@ export class ApproveProofDto {
   @ApiPropertyOptional({
     type: [String],
     example: ['spelling_checked', 'colours_checked'],
-    description: 'Keys of `artwork.approval_checklist`; every item must be confirmed once the checklist is set',
+    description:
+      'Keys of `artwork.approval_checklist`; every item must be confirmed once the checklist is set',
   })
   @IsOptional()
   @IsArray()

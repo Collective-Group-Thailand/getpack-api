@@ -27,8 +27,11 @@ describe('price hints (e2e, U-B0.1)', () => {
   let productId: string;
   const slug = 'dev-tuck-end-box';
   const hints = async () =>
-    (await request(ctx.server).get(`/v1/store/catalog/price-hints?slugs=${slug}&skus=NO-SUCH-SKU`).expect(200))
-      .body as Hint[];
+    (
+      await request(ctx.server)
+        .get(`/v1/store/catalog/price-hints?slugs=${slug}&skus=NO-SUCH-SKU`)
+        .expect(200)
+    ).body as Hint[];
 
   beforeAll(async () => {
     ctx = await bootCommerceApp();
@@ -64,7 +67,10 @@ describe('price hints (e2e, U-B0.1)', () => {
   it('prices the reference with the real calculator, rounded up, with its basis (D-220)', async () => {
     const logsBefore = await ctx.prisma.calculateLog.count();
     const saved = await put(foldingConfiguration(fixture, [1000]), 200);
-    expect(saved.body.referenceConfiguration).toMatchObject({ quantities: [1000], catalogProductId: productId });
+    expect(saved.body.referenceConfiguration).toMatchObject({
+      quantities: [1000],
+      catalogProductId: productId,
+    });
     expect(await ctx.prisma.calculateLog.count()).toBe(logsBefore); // not a customer calculation (D-102)
 
     const calc = await request(ctx.server)
@@ -89,7 +95,10 @@ describe('price hints (e2e, U-B0.1)', () => {
     await ctx.prisma.productType.update({ where: { code: 'folding_carton' }, data: { quoteMode: 'rfq' } });
     await ctx.app.get(PriceHintsService).refresh();
     expect((await hints())[0]).toMatchObject({ startingFromPerPiece: null });
-    await ctx.prisma.productType.update({ where: { code: 'folding_carton' }, data: { quoteMode: 'instant' } });
+    await ctx.prisma.productType.update({
+      where: { code: 'folding_carton' },
+      data: { quoteMode: 'instant' },
+    });
     await ctx.app.get(PriceHintsService).refresh();
     expect((await hints())[0]!.startingFromPerPiece).not.toBeNull();
 

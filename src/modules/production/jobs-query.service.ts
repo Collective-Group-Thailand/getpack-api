@@ -103,7 +103,10 @@ export class JobsQueryService implements OnModuleInit {
         status: true,
         atRiskSince: true,
         routeSnapshot: true,
-        milestones: { orderBy: { seq: 'asc' }, select: { seq: true, stepKey: true, status: true, dueAt: true } },
+        milestones: {
+          orderBy: { seq: 'asc' },
+          select: { seq: true, stepKey: true, status: true, dueAt: true },
+        },
       },
       take: 5000,
     });

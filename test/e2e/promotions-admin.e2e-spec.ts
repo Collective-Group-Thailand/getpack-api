@@ -70,7 +70,9 @@ describe('promotions admin (e2e, B3.3)', () => {
       .expect(200)
       .expect((r) => expect(r.body.status).toBe('paused'));
     // U-B0.2: the reason goes with the event; the view carries owner, spent % and counts.
-    const paused = await ctx.prisma.domainEvent.findFirstOrThrow({ where: { type: 'campaign.paused', aggregateId: id } });
+    const paused = await ctx.prisma.domainEvent.findFirstOrThrow({
+      where: { type: 'campaign.paused', aggregateId: id },
+    });
     expect(paused.payload).toMatchObject({ reason: 'รอปรับงบ (fake)' });
     const view = (await as(ctx, marketing).get(`/v1/admin/campaigns/${id}`).expect(200)).body;
     expect(view).toMatchObject({
@@ -178,13 +180,23 @@ describe('promotions admin (e2e, B3.3)', () => {
     expect(rows.find((c) => c.assignedCustomerId === customer.body.id)).toBeDefined();
 
     // U-B0.2: batches, filters and the refs on the rows.
-    expect(bulk.body).toMatchObject({ kind: 'bulk_unique', prefix: 'PK', usageLimit: 1, generatedBy: expect.any(Object) });
-    const batches = (await as(ctx, marketing).get(`/v1/admin/promotions/${id}/coupon-batches`).expect(200)).body as {
+    expect(bulk.body).toMatchObject({
+      kind: 'bulk_unique',
+      prefix: 'PK',
+      usageLimit: 1,
+      generatedBy: expect.any(Object),
+    });
+    const batches = (await as(ctx, marketing).get(`/v1/admin/promotions/${id}/coupon-batches`).expect(200))
+      .body as {
       id: string;
       kind: string;
     }[];
-    expect(batches.map((b) => b.kind)).toEqual(expect.arrayContaining(['single', 'bulk_unique', 'per_customer']));
-    const ofBulk = await as(ctx, marketing).get(`/v1/admin/promotions/${id}/coupons?batchId=${bulk.body.batchId as string}&perPage=100`).expect(200);
+    expect(batches.map((b) => b.kind)).toEqual(
+      expect.arrayContaining(['single', 'bulk_unique', 'per_customer']),
+    );
+    const ofBulk = await as(ctx, marketing)
+      .get(`/v1/admin/promotions/${id}/coupons?batchId=${bulk.body.batchId as string}&perPage=100`)
+      .expect(200);
     expect(ofBulk.body.meta.total).toBe(20);
     expect(ofBulk.body.data[0]).toMatchObject({ batchId: bulk.body.batchId });
     expect(rows.find((c) => c.assignedCustomerId === customer.body.id)).toMatchObject({
@@ -296,7 +308,8 @@ describe('promotions admin (e2e, B3.3)', () => {
   });
 
   it('rewrites the evaluation order in one call (D-053)', async () => {
-    const listed = (await as(ctx, marketing).get('/v1/admin/promotions?perPage=100').expect(200)).body.data as {
+    const listed = (await as(ctx, marketing).get('/v1/admin/promotions?perPage=100').expect(200)).body
+      .data as {
       id: string;
       kind: string;
       priority: number;
@@ -304,9 +317,18 @@ describe('promotions admin (e2e, B3.3)', () => {
     const mine = listed.filter((p) => p.kind !== 'referral').slice(0, 2);
     expect(mine).toHaveLength(2);
     const order = [mine[1]!.id, mine[0]!.id];
-    const done = await as(ctx, marketing).put('/v1/admin/promotions/priority', { promotionIds: order }).expect(200);
+    const done = await as(ctx, marketing)
+      .put('/v1/admin/promotions/priority', { promotionIds: order })
+      .expect(200);
     expect(done.body.updated).toBeGreaterThanOrEqual(1);
-    const after = await Promise.all(order.map(async (id) => (await as(ctx, marketing).get(`/v1/admin/promotions/${id}`).expect(200)).body as { priority: number }));
+    const after = await Promise.all(
+      order.map(
+        async (id) =>
+          (await as(ctx, marketing).get(`/v1/admin/promotions/${id}`).expect(200)).body as {
+            priority: number;
+          },
+      ),
+    );
     expect(after.map((p) => p.priority)).toEqual([10, 20]);
     await as(ctx, cs).put('/v1/admin/promotions/priority', { promotionIds: order }).expect(403);
   });

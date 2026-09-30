@@ -333,7 +333,12 @@ export class ReorderOrderDto {
 }
 
 export class ReorderPreviewQuery {
-  @ApiPropertyOptional({ type: 'integer', minimum: 1, example: 2000, description: 'Default: the past quantity' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    example: 2000,
+    description: 'Default: the past quantity',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -563,10 +568,19 @@ export class ClaimFormShipmentDto {
   @ApiProperty({ type: 'integer', example: 1000, description: 'Quantity of this order in the delivery' })
   quantity!: number;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 1000, description: 'As counted at delivery, when recorded' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 1000,
+    description: 'As counted at delivery, when recorded',
+  })
   deliveredQuantity!: number | null;
 
-  @ApiProperty({ format: 'date-time', example: '2026-10-27T14:00:00+07:00', description: 'Last moment to claim it' })
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-10-27T14:00:00+07:00',
+    description: 'Last moment to claim it',
+  })
   windowEndsAt!: string;
 
   @ApiProperty({ example: true })
@@ -589,7 +603,11 @@ export class ClaimEvidenceRulesDto {
   @ApiProperty({ type: 'integer', example: MAX_CLAIM_PHOTOS })
   productPhotosMax!: number;
 
-  @ApiProperty({ type: 'integer', example: 1, description: 'Photos of the shipping cartons required (D-082)' })
+  @ApiProperty({
+    type: 'integer',
+    example: 1,
+    description: 'Photos of the shipping cartons required (D-082)',
+  })
   cartonPhotosMin!: number;
 
   @ApiProperty({ type: 'integer', example: MAX_CLAIM_PHOTOS })
@@ -641,7 +659,10 @@ export class ClaimFormDto {
   })
   resolutions!: string[];
 
-  @ApiProperty({ type: [ClaimFormShipmentDto], description: 'Delivered shipments of the order (no addresses)' })
+  @ApiProperty({
+    type: [ClaimFormShipmentDto],
+    description: 'Delivered shipments of the order (no addresses)',
+  })
   shipments!: ClaimFormShipmentDto[];
 
   @ApiProperty({ type: ClaimEvidenceRulesDto })
@@ -716,10 +737,20 @@ export class ReorderPreviewDto {
   @ApiProperty({ example: '0.00' })
   designFeeAmount!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Plates and die blocks, incl. VAT' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Plates and die blocks, incl. VAT',
+  })
   toolingAmount!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '535.00', description: 'Null while shipping is not priced' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '535.00',
+    description: 'Null while shipping is not priced',
+  })
   shippingAmount!: string | null;
 
   @ApiProperty({ example: '630.00' })
@@ -793,7 +824,12 @@ export class BulkReorderRowDto {
   @MaxLength(40)
   orderCode!: string;
 
-  @ApiPropertyOptional({ type: 'integer', minimum: 1, example: 2000, description: 'Default: the past quantity' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    example: 2000,
+    description: 'Default: the past quantity',
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -831,7 +867,8 @@ export class BulkReorderPreviewRowDto {
     type: String,
     nullable: true,
     example: null,
-    description: 'Why the row cannot be reordered: an error code (e.g. `orders.not_found`, `orders.reorder_unavailable`)',
+    description:
+      'Why the row cannot be reordered: an error code (e.g. `orders.not_found`, `orders.reorder_unavailable`)',
   })
   reason!: string | null;
 
@@ -861,7 +898,12 @@ export class BulkReorderPreviewDto {
   @ApiProperty({ example: 'THB' })
   currency!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: 'Hq3v…', description: 'Null when no row can be reordered' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'Hq3v…',
+    description: 'Null when no row can be reordered',
+  })
   previewToken!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-30T10:30:00+07:00' })

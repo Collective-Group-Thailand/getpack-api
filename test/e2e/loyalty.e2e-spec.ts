@@ -392,11 +392,19 @@ describe('loyalty points (e2e, B3.4)', () => {
       .expect(200);
     expect(ledger.body.data[0]).toMatchObject({ entryType: 'adjust', points: 40 });
     // U-B0.2: filter the ledger by entry type; read the customer's consents.
-    const adjustments = await as(ctx, marketing).get(`/v1/admin/customers/${user.publicId}/loyalty/ledger?entryType=adjust`).expect(200);
-    expect((adjustments.body.data as { entryType: string }[]).every((e) => e.entryType === 'adjust')).toBe(true);
+    const adjustments = await as(ctx, marketing)
+      .get(`/v1/admin/customers/${user.publicId}/loyalty/ledger?entryType=adjust`)
+      .expect(200);
+    expect((adjustments.body.data as { entryType: string }[]).every((e) => e.entryType === 'adjust')).toBe(
+      true,
+    );
     const cs = await staffToken(ctx, 'cs');
     const consents = await as(ctx, cs).get(`/v1/admin/customers/${user.publicId}/consents`).expect(200);
-    expect(consents.body).toEqual(expect.arrayContaining([expect.objectContaining({ purpose: expect.any(String), outdated: expect.any(Boolean) })]));
+    expect(consents.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ purpose: expect.any(String), outdated: expect.any(Boolean) }),
+      ]),
+    );
     const summary = await as(ctx, marketing).get(`/v1/admin/customers/${user.publicId}/loyalty`).expect(200);
     expect(summary.body.availablePoints).toBeGreaterThanOrEqual(44);
   });

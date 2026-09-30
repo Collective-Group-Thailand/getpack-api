@@ -341,10 +341,20 @@ export class AdminConsentDto {
   @ApiProperty({ type: 'integer', nullable: true, example: 2, description: 'Text version in force' })
   versionNo!: number | null;
 
-  @ApiProperty({ type: Boolean, nullable: true, example: true, description: 'Latest decision; null = never asked' })
+  @ApiProperty({
+    type: Boolean,
+    nullable: true,
+    example: true,
+    description: 'Latest decision; null = never asked',
+  })
   granted!: boolean | null;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 1, description: 'Text version the decision was for' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 1,
+    description: 'Text version the decision was for',
+  })
   decidedVersionNo!: number | null;
 
   @ApiProperty({ example: true, description: 'The latest decision was for an older text version' })

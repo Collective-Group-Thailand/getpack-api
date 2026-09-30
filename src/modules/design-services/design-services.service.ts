@@ -444,7 +444,10 @@ export class DesignServicesService implements OnModuleInit {
       const files = await tx.fileObject.findMany({ where: { publicId: { in: fileIds } } });
       if (
         files.length !== fileIds.length ||
-        files.some((f) => f.ownerUserId !== actor.userId || f.uploadStatus !== 'uploaded' || f.scanStatus === 'infected')
+        files.some(
+          (f) =>
+            f.ownerUserId !== actor.userId || f.uploadStatus !== 'uploaded' || f.scanStatus === 'infected',
+        )
       )
         throw new DomainException('artwork.file_not_usable', { params: { fileId: fileIds.join(', ') } });
       const last = request.rounds.at(-1);

@@ -39,7 +39,9 @@ const LIST_INCLUDE = {
       customer: { select: CUSTOMER_REF_SELECT },
       company: { select: { legalName: true } },
       paymentSchedule: { include: { instalments: { orderBy: { seq: 'asc' } } } },
-      payments: { select: { slips: { where: { verificationStatus: 'manual_review' }, select: { slaDueAt: true } } } },
+      payments: {
+        select: { slips: { where: { verificationStatus: 'manual_review' }, select: { slaDueAt: true } } },
+      },
     },
   },
 } satisfies Prisma.OrderInclude;
@@ -144,7 +146,9 @@ export class AdminOrdersService {
         ? {
             seq: next.seq,
             dueAt: next.dueAt ? toBangkokIso(next.dueAt) : null,
-            openAmount: formatMoney(new MoneyDecimal(next.cashAmount.toString()).sub(next.paidAmount.toString())),
+            openAmount: formatMoney(
+              new MoneyDecimal(next.cashAmount.toString()).sub(next.paidAmount.toString()),
+            ),
           }
         : null,
     };

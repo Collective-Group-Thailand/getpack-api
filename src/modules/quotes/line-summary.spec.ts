@@ -15,7 +15,13 @@ describe('line summary', () => {
       { lengthMm: 300, widthMm: 200, heightMm: null },
     );
     expect(lines).toEqual([
-      { key: 'size', labelTh: 'ขนาด (กว้าง × ยาว × ลึก)', labelEn: 'Size (W × L × D)', valueTh: '200 × 300 × — มม.', valueEn: '200 × 300 × — mm' },
+      {
+        key: 'size',
+        labelTh: 'ขนาด (กว้าง × ยาว × ลึก)',
+        labelEn: 'Size (W × L × D)',
+        valueTh: '200 × 300 × — มม.',
+        valueEn: '200 × 300 × — mm',
+      },
       { key: 'style', labelTh: 'รูปทรง', labelEn: 'Shape', valueTh: 'ถุงกระดาษ', valueEn: 'ถุงกระดาษ' },
       { key: 'handles', labelTh: 'หูหิ้ว', labelEn: 'หูหิ้ว', valueTh: '✓', valueEn: '✓' },
       { key: 'extra', labelTh: 'extra', labelEn: 'extra', valueTh: 'a, b', valueEn: 'a, b' },

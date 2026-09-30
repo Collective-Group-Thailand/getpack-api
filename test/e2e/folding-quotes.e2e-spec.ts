@@ -75,7 +75,9 @@ describe('folding quotes (e2e, B2.3)', () => {
       catalogProducts: { slug: string; quantity: { maxTiers: number } }[];
       discountPolicy: { directLimitPct: string };
     };
-    expect(extras.patterns[0]!.rules).toEqual(expect.objectContaining({ lengthMustExceedWidth: expect.any(Boolean) }));
+    expect(extras.patterns[0]!.rules).toEqual(
+      expect.objectContaining({ lengthMustExceedWidth: expect.any(Boolean) }),
+    );
     expect(extras.catalogProducts).toContainEqual(expect.objectContaining({ slug: 'dev-tuck-end-box' }));
     expect(extras.discountPolicy.directLimitPct).toMatch(/^\d+(\.\d+)?$/);
     expect(body.finishes.find((f) => f.id === fixture.finishPublicId)).toMatchObject({

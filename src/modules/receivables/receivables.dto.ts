@@ -353,7 +353,10 @@ export class StoreDocumentListQuery extends PageQuery {
   @IsUUID()
   companyId?: string;
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'Only the documents of this order (all its instalments and notes)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Only the documents of this order (all its instalments and notes)',
+  })
   @IsOptional()
   @IsUUID()
   orderId?: string;

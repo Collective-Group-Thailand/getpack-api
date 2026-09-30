@@ -192,12 +192,10 @@ export class TimelineService implements OnModuleInit {
       const at = id ? due.get(id) : null;
       entries[i]!.promisedAt = at ? toBangkokIso(at) : null;
     }
-    return this.page(
-      entries,
-      cursor,
-      limit,
-      ({ _key: _k, ...entry }): StaffTimelineEntryDto => ({ ...entry, promisedAt: entry.promisedAt ?? null }),
-    );
+    return this.page(entries, cursor, limit, ({ _key: _k, ...entry }): StaffTimelineEntryDto => ({
+      ...entry,
+      promisedAt: entry.promisedAt ?? null,
+    }));
   }
 
   // --- progress (promised vs actual) ------------------------------------------------------------------------

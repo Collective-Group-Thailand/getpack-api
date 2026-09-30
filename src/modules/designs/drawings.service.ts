@@ -111,7 +111,10 @@ export class DrawingsService {
 
   /** The drawings requested for an order, newest first (staff). */
   async forOrder(orderPublicId: string): Promise<DrawingJobRow[]> {
-    const order = await this.prisma.order.findUnique({ where: { publicId: orderPublicId }, select: { id: true } });
+    const order = await this.prisma.order.findUnique({
+      where: { publicId: orderPublicId },
+      select: { id: true },
+    });
     if (!order) throw new DomainException('http.not_found');
     return this.prisma.drawingJob.findMany({
       where: { orderId: order.id },

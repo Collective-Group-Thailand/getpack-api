@@ -107,7 +107,12 @@ export class StoreOptionDto {
   @ApiProperty({ example: true })
   isDefault!: boolean;
 
-  @ApiProperty({ type: String, nullable: true, example: 'ผิวเรียบ พิมพ์สีสด', description: 'Admin-maintained; null until set' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'ผิวเรียบ พิมพ์สีสด',
+    description: 'Admin-maintained; null until set',
+  })
   descriptionTh!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'Smooth surface, vivid print' })
@@ -660,7 +665,12 @@ export class StoreSitemapEntryDto {
 
 /** Packio's own support contacts (D-005), from the setting `storefront.support_channels` (D-221). */
 export class StoreSupportChannelsDto {
-  @ApiProperty({ type: String, nullable: true, example: '@packio-test', description: 'LINE Official Account id' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '@packio-test',
+    description: 'LINE Official Account id',
+  })
   lineOaId!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: '0800000000' })

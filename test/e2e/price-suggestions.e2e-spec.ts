@@ -318,7 +318,10 @@ describe('price suggestions (e2e, B2.2)', () => {
     });
     // No identities of other factories anywhere in the basis (D-044).
     // Ids and line hashes are random hex, which can spell "e2e": look at the words only.
-    const words = JSON.stringify(res.body).replace(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9a-f]{64}/gi, '');
+    const words = JSON.stringify(res.body).replace(
+      /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}|[0-9a-f]{64}/gi,
+      '',
+    );
     expect(words).not.toMatch(/factory|E2E|โรงงาน/i);
     // The band is unset (D-172): deviations are shown, never flagged.
     expect(print.flags).not.toContain('above_band');

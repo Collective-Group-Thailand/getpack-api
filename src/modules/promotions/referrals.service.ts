@@ -24,7 +24,13 @@ export const REFERRAL_INCLUDE = {
   referrer: { select: { publicId: true, displayName: true } },
   referee: { select: { publicId: true, displayName: true } },
   firstOrderGroup: {
-    select: { publicId: true, groupCode: true, status: true, grossAmount: true, orders: { select: { deliveredAt: true } } },
+    select: {
+      publicId: true,
+      groupCode: true,
+      status: true,
+      grossAmount: true,
+      orders: { select: { deliveredAt: true } },
+    },
   },
   pointsEntries: { select: { userId: true, points: true } },
   approvalRequest: { select: { publicId: true, status: true } },

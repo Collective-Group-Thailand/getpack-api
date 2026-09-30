@@ -469,7 +469,14 @@ export class PromotionUsageDto {
 }
 
 export class PromotionPriorityDto {
-  @ApiProperty({ type: [String], format: 'uuid', minItems: 1, maxItems: 500, example: [IDS.promotion], description: 'In evaluation order' })
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    minItems: 1,
+    maxItems: 500,
+    example: [IDS.promotion],
+    description: 'In evaluation order',
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(500)
@@ -676,13 +683,22 @@ export class CouponBatchResultDto {
   @ApiProperty({ type: 'integer', example: 500 })
   count!: number;
 
-  @ApiProperty({ enum: ['single', 'bulk_unique', 'per_customer'], enumName: 'CouponKind', example: 'bulk_unique' })
+  @ApiProperty({
+    enum: ['single', 'bulk_unique', 'per_customer'],
+    enumName: 'CouponKind',
+    example: 'bulk_unique',
+  })
   kind!: string;
 
   @ApiProperty({ type: String, nullable: true, example: 'PK' })
   prefix!: string | null;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 1, description: 'Uses per code; null = unlimited' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 1,
+    description: 'Uses per code; null = unlimited',
+  })
   usageLimit!: number | null;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-20T10:00:00+07:00' })
@@ -697,7 +713,11 @@ export class CouponBatchDto {
   @ApiProperty({ format: 'uuid', example: IDS.batch })
   id!: string;
 
-  @ApiProperty({ enum: ['single', 'bulk_unique', 'per_customer'], enumName: 'CouponKind', example: 'bulk_unique' })
+  @ApiProperty({
+    enum: ['single', 'bulk_unique', 'per_customer'],
+    enumName: 'CouponKind',
+    example: 'bulk_unique',
+  })
   kind!: string;
 
   @ApiProperty({ type: 'integer', example: 500 })
@@ -735,7 +755,11 @@ export class CouponCodeDto {
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
   assignedCustomerId!: string | null;
 
-  @ApiProperty({ type: UserRefDto, nullable: true, description: 'The customer a per-customer code belongs to' })
+  @ApiProperty({
+    type: UserRefDto,
+    nullable: true,
+    description: 'The customer a per-customer code belongs to',
+  })
   assignedCustomer!: UserRefDto | null;
 
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.batch })

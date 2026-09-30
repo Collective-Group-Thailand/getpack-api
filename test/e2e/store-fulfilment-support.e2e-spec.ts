@@ -87,7 +87,13 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
     });
     await ctx.prisma.productionJob.update({
       where: { id: o.job.id },
-      data: { status: 'completed', actualFinishAt: at, quantityGood: 1000, quantityScrap: 0, inspectionRequired: false },
+      data: {
+        status: 'completed',
+        actualFinishAt: at,
+        quantityGood: 1000,
+        quantityScrap: 0,
+        inspectionRequired: false,
+      },
     });
     const detail = await as(ctx, owner).get(`/v1/partner/production-jobs/${o.job.publicId}`).expect(200);
     const destinationId = (detail.body.destinations as { id: string }[])[0]!.id;
@@ -120,8 +126,11 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
       where: { publicId: o.orderId },
       include: { quoteOption: true },
     });
-    const delivery = (order.quoteOption.result as { earliestDeliveryDate?: string | null }).earliestDeliveryDate;
-    const shift = order.promisedShipDate!.getTime() - (order.quoteOption.earliestShipDate ?? order.promisedShipDate!).getTime();
+    const delivery = (order.quoteOption.result as { earliestDeliveryDate?: string | null })
+      .earliestDeliveryDate;
+    const shift =
+      order.promisedShipDate!.getTime() -
+      (order.quoteOption.earliestShipDate ?? order.promisedShipDate!).getTime();
     const expected = delivery
       ? new Date(Date.parse(`${delivery}T00:00:00Z`) + shift).toISOString().slice(0, 10)
       : null;
@@ -131,16 +140,25 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
     expect(progress.steps).toContainEqual(
       expect.objectContaining({ key: milestone.stepKey, promisedAt: '2026-12-01T18:00:00+07:00' }),
     );
-    expect((await as(ctx, o.token).get(`/v1/store/orders/${o.orderId}`).expect(200)).body.estimatedDeliveryDate).toBe(
-      expected,
-    );
+    expect(
+      (await as(ctx, o.token).get(`/v1/store/orders/${o.orderId}`).expect(200)).body.estimatedDeliveryDate,
+    ).toBe(expected);
     const link = await post(o.token, `/v1/store/orders/${o.orderId}/tracking-links`).expect(201);
-    const tracked = (await request(ctx.server).get(`/v1/store/track/${link.body.token as string}`).expect(200)).body;
+    const tracked = (
+      await request(ctx.server)
+        .get(`/v1/store/track/${link.body.token as string}`)
+        .expect(200)
+    ).body;
     expect(tracked).toMatchObject({ estimatedDeliveryDate: expected });
     expect(tracked).not.toHaveProperty('orderCode');
 
     const before = (await as(ctx, o.token).get(`/v1/store/orders/${o.orderId}/claim-form`).expect(200)).body;
-    expect(before).toMatchObject({ open: false, closedReason: 'not_delivered', shipments: [], windowEndsAt: null });
+    expect(before).toMatchObject({
+      open: false,
+      closedReason: 'not_delivered',
+      shipments: [],
+      windowEndsAt: null,
+    });
     const { token: stranger } = await customerToken(ctx, 2);
     await as(ctx, stranger).get(`/v1/store/orders/${o.orderId}/claim-form`).expect(404);
 
@@ -181,7 +199,11 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
       grossAmount: expect.stringMatching(/^\d+\.\d{2}$/),
       previewToken: expect.any(String),
     });
-    const bigger = (await as(ctx, o.token).get(`/v1/store/orders/${o.orderId}/reorder?quantity=2000&reuseArtwork=false`).expect(200)).body;
+    const bigger = (
+      await as(ctx, o.token)
+        .get(`/v1/store/orders/${o.orderId}/reorder?quantity=2000&reuseArtwork=false`)
+        .expect(200)
+    ).body;
     expect(bigger).toMatchObject({ quantity: 2000, proofSkipped: false });
 
     // A token for another quantity or artwork choice does not fit.
@@ -199,7 +221,8 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
     const keys = await redis.keys('reorder:preview:*');
     for (const key of keys) {
       const bound = JSON.parse((await redis.get(key))!) as { grossAmount: string; quantity: number };
-      if (bound.quantity === 1000) await redis.set(key, JSON.stringify({ ...bound, grossAmount: '1.00' }), 'EX', 600);
+      if (bound.quantity === 1000)
+        await redis.set(key, JSON.stringify({ ...bound, grossAmount: '1.00' }), 'EX', 600);
     }
     const repriced = await post(o.token, `/v1/store/orders/${o.orderId}/actions/reorder`, {
       previewToken: preview.previewToken,
@@ -218,7 +241,9 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
   it('reorders several company orders from a sheet with a preview (D-153)', async () => {
     const admin = await customerToken(ctx, 5);
     const accountant = await customerToken(ctx, 6);
-    const companyId = await activeCompany(ctx, admin.token, 5, [{ ...accountant, roles: ['company_accountant'] }]);
+    const companyId = await activeCompany(ctx, admin.token, 5, [
+      { ...accountant, roles: ['company_accountant'] },
+    ]);
     const o = await paidOrder(5, admin, { companyId });
     await deliver(o);
     const order = await ctx.prisma.order.findUniqueOrThrow({ where: { publicId: o.orderId } });
@@ -226,21 +251,49 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
       { line: 2, orderCode: order.orderCode, quantity: 2000 },
       { line: 3, orderCode: 'PK-NOPE-0001-01' },
     ];
-    await post(accountant.token, `/v1/store/companies/${companyId}/bulk-reorders/actions/preview`, { rows }).expect(403);
-    const preview = (await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders/actions/preview`, { rows }).expect(200)).body;
+    await post(accountant.token, `/v1/store/companies/${companyId}/bulk-reorders/actions/preview`, {
+      rows,
+    }).expect(403);
+    const preview = (
+      await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders/actions/preview`, {
+        rows,
+      }).expect(200)
+    ).body;
     expect(preview).toMatchObject({ okCount: 1, refusedCount: 1, previewToken: expect.any(String) });
     expect(preview.rows).toEqual([
-      expect.objectContaining({ line: 2, status: 'ok', orderId: o.orderId, quantity: 2000, proofSkipped: true }),
+      expect.objectContaining({
+        line: 2,
+        status: 'ok',
+        orderId: o.orderId,
+        quantity: 2000,
+        proofSkipped: true,
+      }),
       expect.objectContaining({ line: 3, status: 'refused', reason: 'orders.not_found' }),
     ]);
     expect(preview.grossAmount).toBe(preview.rows[0].grossAmount);
     expect(
-      (await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders`, { previewToken: 'nope' }).expect(409)).body.code,
+      (
+        await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders`, {
+          previewToken: 'nope',
+        }).expect(409)
+      ).body.code,
     ).toBe('orders.reorder_preview_expired');
-    const added = (await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders`, { previewToken: preview.previewToken }).expect(201)).body;
-    expect(added).toMatchObject({ added: [expect.objectContaining({ line: 2, cartItemId: expect.any(String) })], failed: [] });
+    const added = (
+      await post(admin.token, `/v1/store/companies/${companyId}/bulk-reorders`, {
+        previewToken: preview.previewToken,
+      }).expect(201)
+    ).body;
+    expect(added).toMatchObject({
+      added: [expect.objectContaining({ line: 2, cartItemId: expect.any(String) })],
+      failed: [],
+    });
     const cart = (await as(ctx, admin.token).get('/v1/store/cart').expect(200)).body;
-    expect(cart.items).toContainEqual(expect.objectContaining({ id: added.added[0].cartItemId, reorderOf: expect.objectContaining({ orderId: o.orderId }) }));
+    expect(cart.items).toContainEqual(
+      expect.objectContaining({
+        id: added.added[0].cartItemId,
+        reorderOf: expect.objectContaining({ orderId: o.orderId }),
+      }),
+    );
   });
 
   it('opens CS tickets from the contact form and the hand-off, for guests and customers (D-221)', async () => {
@@ -274,13 +327,19 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
       where: { ticketNo: guest.body.ticketNo as string },
       include: { conversation: true },
     });
-    expect(ticket).toMatchObject({ customerUserId: null, contactPhone: '0000000000', orderRef: 'PK-FAKE-0001' });
+    expect(ticket).toMatchObject({
+      customerUserId: null,
+      contactPhone: '0000000000',
+      orderRef: 'PK-FAKE-0001',
+    });
     const event = await ctx.prisma.domainEvent.findFirstOrThrow({
       where: { type: 'support.ticket_opened', aggregateId: ticket.conversation.publicId },
     });
     expect(JSON.stringify(event.payload)).not.toContain('0000000000');
 
-    const inbox = (await as(ctx, cs).get(`/v1/admin/conversations/${ticket.conversation.publicId}`).expect(200)).body;
+    const inbox = (
+      await as(ctx, cs).get(`/v1/admin/conversations/${ticket.conversation.publicId}`).expect(200)
+    ).body;
     expect(inbox.ticket).toMatchObject({
       ticketNo: guest.body.ticketNo,
       contactName: 'ลูกค้า ทดสอบ',
@@ -289,8 +348,12 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
       firstRespondedAt: null,
     });
     expect(inbox.lastMessage).toBe('สอบถามกำหนดส่งค่ะ');
-    await post(cs, `/v1/admin/conversations/${ticket.conversation.publicId}/messages`, { body: 'โทรกลับแล้วค่ะ' }).expect(201);
-    expect((await ctx.prisma.supportTicket.findUniqueOrThrow({ where: { id: ticket.id } })).firstRespondedAt).not.toBeNull();
+    await post(cs, `/v1/admin/conversations/${ticket.conversation.publicId}/messages`, {
+      body: 'โทรกลับแล้วค่ะ',
+    }).expect(201);
+    expect(
+      (await ctx.prisma.supportTicket.findUniqueOrThrow({ where: { id: ticket.id } })).firstRespondedAt,
+    ).not.toBeNull();
 
     // A signed-in customer's ticket opens on their own chat; the hand-off carries the guided-help context.
     const { token } = await customerToken(ctx, 4);
@@ -303,7 +366,9 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
     expect(mine.body).toMatchObject({ source: 'handoff', conversationId: expect.any(String) });
     const chat = await as(ctx, token).get('/v1/store/conversation').expect(200);
     expect(chat.body.id).toBe(mine.body.conversationId);
-    const handoff = await ctx.prisma.supportTicket.findUniqueOrThrow({ where: { ticketNo: mine.body.ticketNo as string } });
+    const handoff = await ctx.prisma.supportTicket.findUniqueOrThrow({
+      where: { ticketNo: mine.body.ticketNo as string },
+    });
     expect(handoff).toMatchObject({
       topic: 'guided_help',
       callbackRequested: true,

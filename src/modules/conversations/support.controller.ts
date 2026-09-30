@@ -62,7 +62,10 @@ export class StoreSupportController {
   })
   @ApiSuccess(201, { description: 'Ticket opened', type: SupportTicketDto, example: SUPPORT_TICKET_EXAMPLE })
   @ApiStandardErrors(...ERRORS)
-  contact(@OptionalActor() actor: Actor | undefined, @Body() body: SupportContactDto): Promise<SupportTicketDto> {
+  contact(
+    @OptionalActor() actor: Actor | undefined,
+    @Body() body: SupportContactDto,
+  ): Promise<SupportTicketDto> {
     return this.support.contact(actor, body);
   }
 
@@ -99,7 +102,10 @@ export class StoreSupportController {
     example: { ...SUPPORT_TICKET_EXAMPLE, source: 'handoff' },
   })
   @ApiStandardErrors(...ERRORS)
-  handoff(@OptionalActor() actor: Actor | undefined, @Body() body: SupportHandoffDto): Promise<SupportTicketDto> {
+  handoff(
+    @OptionalActor() actor: Actor | undefined,
+    @Body() body: SupportHandoffDto,
+  ): Promise<SupportTicketDto> {
     return this.support.handoff(actor, body);
   }
 }

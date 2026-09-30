@@ -150,17 +150,47 @@ describe('company orders (e2e, B3.5)', () => {
     expect(rejected.orders[0]!.cancelReason!.code).toBe('company_approval_rejected');
 
     // U-B0.1: the decided history with who decided, the threshold and the invoice branch.
-    const history = (await as(ctx, approver.token).get(`/v1/store/companies/${companyId}/approvals?status=decided`).expect(200))
-      .body as { groupId: string; status: string; threshold: string | null; decidedBy: { id: string } | null; decidedAt: string | null; branchName: string | null; ordersCount: number }[];
+    const history = (
+      await as(ctx, approver.token)
+        .get(`/v1/store/companies/${companyId}/approvals?status=decided`)
+        .expect(200)
+    ).body as {
+      groupId: string;
+      status: string;
+      threshold: string | null;
+      decidedBy: { id: string } | null;
+      decidedAt: string | null;
+      branchName: string | null;
+      ordersCount: number;
+    }[];
     expect(history.map((h) => h.status)).toEqual(['rejected', 'approved']);
-    expect(history[0]).toMatchObject({ threshold: '100.00', ordersCount: 1, branchName: expect.any(String), decidedAt: expect.any(String), decidedBy: expect.objectContaining({ id: expect.any(String) }) });
-    expect((await as(ctx, approver.token).get(`/v1/store/companies/${companyId}/approvals`).expect(200)).body).toEqual([]);
-    expect((await as(ctx, approver.token).get(`/v1/store/companies/${companyId}/approvals?status=all&limit=1`).expect(200)).body).toHaveLength(1);
-    const spend = (await as(ctx, admin.token).get(`/v1/store/companies/${companyId}/spend?months=2`).expect(200)).body;
+    expect(history[0]).toMatchObject({
+      threshold: '100.00',
+      ordersCount: 1,
+      branchName: expect.any(String),
+      decidedAt: expect.any(String),
+      decidedBy: expect.objectContaining({ id: expect.any(String) }),
+    });
+    expect(
+      (await as(ctx, approver.token).get(`/v1/store/companies/${companyId}/approvals`).expect(200)).body,
+    ).toEqual([]);
+    expect(
+      (
+        await as(ctx, approver.token)
+          .get(`/v1/store/companies/${companyId}/approvals?status=all&limit=1`)
+          .expect(200)
+      ).body,
+    ).toHaveLength(1);
+    const spend = (
+      await as(ctx, admin.token).get(`/v1/store/companies/${companyId}/spend?months=2`).expect(200)
+    ).body;
     expect(spend.byMonth).toHaveLength(2);
     expect(spend.total.orders).toBe(1);
     expect(spend.byMember[0].user.displayName).toEqual(expect.any(String));
-    expect(Number(spend.total.netAmount) + Number(spend.total.vatAmount)).toBeCloseTo(Number(spend.total.grossAmount), 2);
+    expect(Number(spend.total.netAmount) + Number(spend.total.vatAmount)).toBeCloseTo(
+      Number(spend.total.grossAmount),
+      2,
+    );
   });
 
   it('places orders below the threshold directly', async () => {

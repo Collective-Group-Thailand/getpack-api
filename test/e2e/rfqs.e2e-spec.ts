@@ -212,7 +212,10 @@ describe('requests for quote (e2e, B2.5)', () => {
     ).body as Rfq & { files: { id: string; originalName: string }[] };
     expect(rfq.files).toEqual([expect.objectContaining({ id: brief.publicId, originalName: 'brief.pdf' })]);
     const stored = await prisma.rfq.findUniqueOrThrow({ where: { publicId: rfq.id } });
-    expect(stored).toMatchObject({ routedFromCalculateLogId: log.id, specSchemaVersion: form.specSchemaVersion });
+    expect(stored).toMatchObject({
+      routedFromCalculateLogId: log.id,
+      specSchemaVersion: form.specSchemaVersion,
+    });
 
     const photo = await upload('photo.pdf');
     const replied = await as('customer')
@@ -259,24 +262,35 @@ describe('requests for quote (e2e, B2.5)', () => {
       })
       .expect(409);
     // U-B0.2: the desk's filters and the staff view's extras.
-    const awaiting = (await as('cs').get('/v1/admin/rfqs?awaitingFactory=true&perPage=100').expect(200)).body.data as {
+    const awaiting = (await as('cs').get('/v1/admin/rfqs?awaitingFactory=true&perPage=100').expect(200)).body
+      .data as {
       id: string;
     }[];
     expect(awaiting.map((r) => r.id)).toContain(rfq.id);
     expect(
-      ((await as('cs').get('/v1/admin/rfqs?channel=cs&perPage=100').expect(200)).body.data as { id: string }[]).map((r) => r.id),
+      (
+        (await as('cs').get('/v1/admin/rfqs?channel=cs&perPage=100').expect(200)).body.data as {
+          id: string;
+        }[]
+      ).map((r) => r.id),
     ).not.toContain(rfq.id);
     const staffView = (await as('cs').get(admin).expect(200)).body;
     expect(staffView).toMatchObject({
       contact: { phone: expect.any(String) },
       routedFromCalculator: false,
       quoteDefaults: { validUntil: expect.any(String) },
-      consultations: [expect.objectContaining({ requestedBy: { id: cs.publicId, displayName: expect.any(String) } })],
+      consultations: [
+        expect.objectContaining({ requestedBy: { id: cs.publicId, displayName: expect.any(String) } }),
+      ],
     });
     expect(staffView.specLines.length).toBeGreaterThan(0);
-    const reasons = (await as('cs').get('/v1/admin/unmet-demand-reasons').expect(200)).body as { code: string }[];
+    const reasons = (await as('cs').get('/v1/admin/unmet-demand-reasons').expect(200)).body as {
+      code: string;
+    }[];
     expect(reasons.length).toBeGreaterThan(0);
-    expect((await as('cs').post(`${admin}/actions/assign`, { userId: null }).expect(200)).body.assignedTo).toBeNull();
+    expect(
+      (await as('cs').post(`${admin}/actions/assign`, { userId: null }).expect(200)).body.assignedTo,
+    ).toBeNull();
 
     const partner = `/v1/partner/factories/${fixture.factoryPublicId}/rfq-consultations`;
     const open = (await as('owner').get(`${partner}?status=requested`).expect(200)).body as {
@@ -368,7 +382,9 @@ describe('requests for quote (e2e, B2.5)', () => {
     const rfq = (await as('customer').post('/v1/store/rfqs', submission()).expect(201)).body as Rfq;
     const admin = `/v1/admin/rfqs/${rfq.id}`;
     expect((await as('cs').post(`${admin}/actions/start-review`).expect(200)).body.status).toBe('in_review');
-    expect((await as('cs').post(`${admin}/actions/start-review`).expect(409)).body.code).toBe('rfq.invalid_transition');
+    expect((await as('cs').post(`${admin}/actions/start-review`).expect(409)).body.code).toBe(
+      'rfq.invalid_transition',
+    );
 
     const candidates = (await as('cs').get(`${admin}/candidate-factories`).expect(200)).body as {
       factoryId: string;
@@ -376,42 +392,69 @@ describe('requests for quote (e2e, B2.5)', () => {
     }[];
     expect(JSON.stringify(candidates)).not.toMatch(/price/i);
     const consulted = await as('cs')
-      .post(`${admin}/consultations`, { factoryId: fixture.factoryPublicId, dueAt: new Date(Date.now() + 86_400_000).toISOString() })
+      .post(`${admin}/consultations`, {
+        factoryId: fixture.factoryPublicId,
+        dueAt: new Date(Date.now() + 86_400_000).toISOString(),
+      })
       .expect(201);
     const consultationId = (consulted.body as Rfq).consultations![0]!.id;
     await as('cs').post(`/v1/admin/rfq-consultations/${consultationId}/actions/remind`).expect(204);
-    expect((await as('cs').post(`/v1/admin/rfq-consultations/${consultationId}/actions/remind`).expect(409)).body.code).toBe(
-      'rfq.reminder_recent',
-    );
+    expect(
+      (await as('cs').post(`/v1/admin/rfq-consultations/${consultationId}/actions/remind`).expect(409)).body
+        .code,
+    ).toBe('rfq.reminder_recent');
     expect(
       await prisma.domainEvent.count({ where: { type: 'rfq.consultation_reminded', aggregateId: rfq.id } }),
     ).toBe(1);
     const after = (await as('cs').get(`${admin}/candidate-factories`).expect(200)).body as typeof candidates;
     expect(after.find((c) => c.factoryId === fixture.factoryPublicId)?.alreadyConsulted ?? true).toBe(true);
 
-    const line = (quantity: number, unitPrice: string) => ({ quantity, unitPrice, shippingNetAmount: '300.00', leadTimeDays: 14 });
-    const drafted = (await as('cs').post(`${admin}/quotations`, { lines: [line(1000, '12.5')] }).expect(201)).body as Rfq;
+    const line = (quantity: number, unitPrice: string) => ({
+      quantity,
+      unitPrice,
+      shippingNetAmount: '300.00',
+      leadTimeDays: 14,
+    });
+    const drafted = (
+      await as('cs')
+        .post(`${admin}/quotations`, { lines: [line(1000, '12.5')] })
+        .expect(201)
+    ).body as Rfq;
     const draft = drafted.quotations.find((q) => q.status === 'draft')!;
     const got = await as('cs').get(admin).expect(200);
     const etag = got.headers['etag'] as string;
-    await as('cs').put(`/v1/admin/rfq-quotations/${draft.id}`, { lines: [line(1000, '12')] }).expect(428);
+    await as('cs')
+      .put(`/v1/admin/rfq-quotations/${draft.id}`, { lines: [line(1000, '12')] })
+      .expect(428);
     const revised = await as('cs')
       .put(`/v1/admin/rfq-quotations/${draft.id}`, { lines: [line(1000, '12'), line(3000, '11')] })
       .set('If-Match', etag)
       .expect(200);
-    expect((revised.body as Rfq).quotations.find((q) => q.id === draft.id)!.lines.map((l) => l.quantity)).toEqual([1000, 3000]);
-    await as('cs').put(`/v1/admin/rfq-quotations/${draft.id}`, { lines: [line(1000, '11')] }).set('If-Match', etag).expect(412);
+    expect(
+      (revised.body as Rfq).quotations.find((q) => q.id === draft.id)!.lines.map((l) => l.quantity),
+    ).toEqual([1000, 3000]);
+    await as('cs')
+      .put(`/v1/admin/rfq-quotations/${draft.id}`, { lines: [line(1000, '11')] })
+      .set('If-Match', etag)
+      .expect(412);
     await as('cs').post(`/v1/admin/rfq-quotations/${draft.id}/actions/send`).expect(200);
 
     const accepted = await as('cs')
-      .post(`/v1/admin/rfq-quotations/${draft.id}/actions/record-acceptance`, { quantities: [3000], via: 'phone' })
+      .post(`/v1/admin/rfq-quotations/${draft.id}/actions/record-acceptance`, {
+        quantities: [3000],
+        via: 'phone',
+      })
       .expect(200);
     expect(accepted.body).toMatchObject({ status: 'accepted', acceptedQuoteId: expect.any(String) });
     expect(
       await prisma.auditLog.count({ where: { action: 'rfq.acceptance_recorded', resourcePublicId: rfq.id } }),
     ).toBe(1);
-    const quote = await as('customer').get(`/v1/store/quotes/${accepted.body.acceptedQuoteId as string}`).expect(200);
-    expect((quote.body as { options: { quantity: number }[] }).options.map((o) => o.quantity)).toEqual([3000]);
+    const quote = await as('customer')
+      .get(`/v1/store/quotes/${accepted.body.acceptedQuoteId as string}`)
+      .expect(200);
+    expect((quote.body as { options: { quantity: number }[] }).options.map((o) => o.quantity)).toEqual([
+      3000,
+    ]);
   });
 
   it('records declined and expired requests as unmet demand (D-102)', async () => {

@@ -25,7 +25,13 @@ const TEMPLATE_INCLUDE = {
     include: {
       colours: { orderBy: { sort: 'asc' } },
       catalogProduct: {
-        select: { publicId: true, slug: true, nameTh: true, nameEn: true, productType: { select: { code: true } } },
+        select: {
+          publicId: true,
+          slug: true,
+          nameTh: true,
+          nameEn: true,
+          productType: { select: { code: true } },
+        },
       },
     },
   },
@@ -124,7 +130,11 @@ export class DesignerCatalogService {
             : null,
       })),
       templates: templates.map((t) => this.templateDto(t)),
-      fonts: fonts.map((f) => ({ id: f.publicId, name: f.name, url: `/v1/store/designer/fonts/${f.publicId}` })),
+      fonts: fonts.map((f) => ({
+        id: f.publicId,
+        name: f.name,
+        url: `/v1/store/designer/fonts/${f.publicId}`,
+      })),
       rules,
     };
   }

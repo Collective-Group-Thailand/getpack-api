@@ -1,6 +1,10 @@
 import { MoneyDecimal } from '@common/money/money';
 import { type Tx } from '@database/prisma.service';
-import { type CheckoutDraft, type CheckoutExtension, CheckoutExtensions } from '@modules/checkout/checkout.extensions';
+import {
+  type CheckoutDraft,
+  type CheckoutExtension,
+  CheckoutExtensions,
+} from '@modules/checkout/checkout.extensions';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 

@@ -191,7 +191,8 @@ export const productTypes = defineResource({
       // A new RFQ schema is a new form version (U-B0.1): a submit filled in the old form is refused.
       rfqSpecSchemaVersion:
         input.rfqSpecSchema !== undefined &&
-        JSON.stringify(canonical(input.rfqSpecSchema ?? null)) !== JSON.stringify(canonical(current.rfqSpecSchema ?? null))
+        JSON.stringify(canonical(input.rfqSpecSchema ?? null)) !==
+          JSON.stringify(canonical(current.rfqSpecSchema ?? null))
           ? { increment: 1 }
           : undefined,
       categoryId:
@@ -401,10 +402,13 @@ function quantityRules(input: QuantityInput, current?: QuantityInput) {
   const fail = (path: string, message: string): never => {
     throw new DomainException('validation.failed', { errors: [{ path, code: 'invalid', message }] });
   };
-  if (min !== null && max !== null && max < min) fail('quantityMax', 'quantityMax must not be below quantityMin');
+  if (min !== null && max !== null && max < min)
+    fail('quantityMax', 'quantityMax must not be below quantityMin');
   const inRange = (n: number) => (min === null || n >= min) && (max === null || n <= max);
-  if (preset !== null && !inRange(preset)) fail('quantityDefault', 'quantityDefault must be within min and max');
-  if (new Set(presets).size !== presets.length) fail('quantityPresets', 'quantityPresets lists a value twice');
+  if (preset !== null && !inRange(preset))
+    fail('quantityDefault', 'quantityDefault must be within min and max');
+  if (new Set(presets).size !== presets.length)
+    fail('quantityPresets', 'quantityPresets lists a value twice');
   const outside = presets.findIndex((n) => !inRange(n));
   if (outside >= 0) fail(`quantityPresets[${outside}]`, 'every preset must be within min and max');
   return {

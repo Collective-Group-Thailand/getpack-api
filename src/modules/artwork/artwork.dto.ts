@@ -144,7 +144,13 @@ export class PrepressQueueQuery extends PageQuery {
 }
 
 export class AssignPrepressDto {
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: ARTWORK_IDS.order, description: 'null unassigns' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: ARTWORK_IDS.order,
+    description: 'null unassigns',
+  })
   @ValidateIf((o: { assigneeId: unknown }) => o.assigneeId !== null)
   @IsUUID()
   assigneeId!: string | null;
@@ -463,7 +469,12 @@ export class ArtworkDielineDto {
   @ApiProperty({ example: 'RTE-01' })
   patternCode!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: 'rte', description: 'Dieline drawing key (designer / drawing service)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'rte',
+    description: 'Dieline drawing key (designer / drawing service)',
+  })
   dielineKey!: string | null;
 
   @ApiProperty({ example: 60 })
@@ -505,7 +516,10 @@ export class ArtworkRulesDto {
   @ApiProperty({ example: 'cmyk', description: 'RGB artwork is warned about (D-070)' })
   colourMode!: string;
 
-  @ApiProperty({ type: [ArtworkCheckRuleDto], description: 'What each preflight check does: block, warn or inform' })
+  @ApiProperty({
+    type: [ArtworkCheckRuleDto],
+    description: 'What each preflight check does: block, warn or inform',
+  })
   checks!: ArtworkCheckRuleDto[];
 
   @ApiProperty({
@@ -514,7 +528,11 @@ export class ArtworkRulesDto {
   })
   approvalChecklist!: ArtworkChecklistItemDto[];
 
-  @ApiProperty({ type: ArtworkDielineDto, nullable: true, description: 'Null for RFQ orders (no calculator configuration)' })
+  @ApiProperty({
+    type: ArtworkDielineDto,
+    nullable: true,
+    description: 'Null for RFQ orders (no calculator configuration)',
+  })
   dieline!: ArtworkDielineDto | null;
 }
 

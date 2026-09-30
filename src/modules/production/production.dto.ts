@@ -137,7 +137,10 @@ export class ProductionBoardQuery {
 }
 
 export class BoardColumnDto {
-  @ApiProperty({ example: 'printing', description: 'The step open jobs are at; `awaiting_acceptance` before acceptance' })
+  @ApiProperty({
+    example: 'printing',
+    description: 'The step open jobs are at; `awaiting_acceptance` before acceptance',
+  })
   key!: string;
 
   @ApiProperty({ example: 'กำลังพิมพ์' })
@@ -366,7 +369,12 @@ export class AdminJobDto extends PartnerJobDto {
   @ApiProperty({ example: 'folding_box' })
   productTypeCode!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: 'printing', description: 'The first step not done yet' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'printing',
+    description: 'The first step not done yet',
+  })
   currentMilestoneKey!: string | null;
 
   @ApiProperty({
@@ -374,7 +382,8 @@ export class AdminJobDto extends PartnerJobDto {
     enumName: 'JobRiskReason',
     nullable: true,
     example: null,
-    description: '`step_overdue`: the current step is past due; `late_plan`: the plan already ends after the promise',
+    description:
+      '`step_overdue`: the current step is past due; `late_plan`: the plan already ends after the promise',
   })
   riskReason!: string | null;
 

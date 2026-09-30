@@ -35,7 +35,14 @@ describe('store companies (e2e, U-B0.1)', () => {
     const mine = (await company(admin.token, id)).body;
     expect(mine).toMatchObject({
       myRoles: ['company_admin'],
-      can: { manageMembers: true, manageSettings: true, manageAssets: true, approveOrders: false, viewFinance: true, order: true },
+      can: {
+        manageMembers: true,
+        manageSettings: true,
+        manageAssets: true,
+        approveOrders: false,
+        viewFinance: true,
+        order: true,
+      },
       signatory: { name: 'ผู้มีอำนาจ ทดสอบ', position: 'กรรมการ' },
       contactPhone: null,
       discountPct: null,
@@ -48,9 +55,18 @@ describe('store companies (e2e, U-B0.1)', () => {
     const theirs = (await company(buyer.token, id)).body;
     expect(theirs).toMatchObject({
       myRoles: ['company_buyer'],
-      can: { manageMembers: false, manageSettings: false, manageAssets: false, viewFinance: false, order: true },
+      can: {
+        manageMembers: false,
+        manageSettings: false,
+        manageAssets: false,
+        viewFinance: false,
+        order: true,
+      },
     });
-    const listed = (await as(ctx, buyer.token).get('/v1/store/companies').expect(200)).body as { id: string; myRoles: string[] }[];
+    const listed = (await as(ctx, buyer.token).get('/v1/store/companies').expect(200)).body as {
+      id: string;
+      myRoles: string[];
+    }[];
     expect(listed.find((c) => c.id === id)?.myRoles).toEqual(['company_buyer']);
 
     const updated = await as(ctx, admin.token)
@@ -74,11 +90,18 @@ describe('store companies (e2e, U-B0.1)', () => {
         legalName: 'บริษัท ไม่มีผู้ลงนาม จำกัด',
         taxId: fakeTaxId(ctx, 3),
         isVatRegistered: false,
-        headOffice: { name: 'สำนักงานใหญ่', line1: '1 ถนนทดสอบ', postcode: '99999', provinceId: province.publicId },
+        headOffice: {
+          name: 'สำนักงานใหญ่',
+          line1: '1 ถนนทดสอบ',
+          postcode: '99999',
+          provinceId: province.publicId,
+        },
       })
       .expect(201);
     expect(applied.body.signatory).toBeNull();
-    const refused = await as(ctx, token).post(`/v1/store/companies/${applied.body.id as string}/actions/submit-kyc`).expect(409);
+    const refused = await as(ctx, token)
+      .post(`/v1/store/companies/${applied.body.id as string}/actions/submit-kyc`)
+      .expect(409);
     expect(refused.body.code).toBe('companies.kyc_incomplete');
     expect(refused.body.detail).toContain('signatory details');
   });
@@ -91,14 +114,18 @@ describe('store companies (e2e, U-B0.1)', () => {
     const me = members.find((m) => m.roles.includes('company_admin'))!;
     const them = members.find((m) => m.roles.includes('company_buyer'))!;
 
-    await as(ctx, member.token).put(`/v1/store/companies/${id}/members/${me.id}/roles`, { roles: ['company_buyer'] }).expect(403);
+    await as(ctx, member.token)
+      .put(`/v1/store/companies/${id}/members/${me.id}/roles`, { roles: ['company_buyer'] })
+      .expect(403);
     const last = await as(ctx, admin.token)
       .put(`/v1/store/companies/${id}/members/${me.id}/roles`, { roles: ['company_buyer'] })
       .expect(409);
     expect(last.body.code).toBe('companies.last_admin');
 
     await as(ctx, admin.token)
-      .put(`/v1/store/companies/${id}/members/${them.id}/roles`, { roles: ['company_approver', 'company_accountant'] })
+      .put(`/v1/store/companies/${id}/members/${them.id}/roles`, {
+        roles: ['company_approver', 'company_accountant'],
+      })
       .expect(200);
     const after = (await company(member.token, id)).body;
     expect(after).toMatchObject({
@@ -116,7 +143,9 @@ describe('store companies (e2e, U-B0.1)', () => {
       .expect(200);
     expect((stepped.body as { myRoles: string[] }).myRoles).toEqual(['company_buyer']);
     expect(
-      await ctx.prisma.auditLog.count({ where: { action: 'iam.role_revoked', data: { path: ['reason'], equals: 'Company roles changed' } } }),
+      await ctx.prisma.auditLog.count({
+        where: { action: 'iam.role_revoked', data: { path: ['reason'], equals: 'Company roles changed' } },
+      }),
     ).toBeGreaterThanOrEqual(2);
   });
 
@@ -125,19 +154,40 @@ describe('store companies (e2e, U-B0.1)', () => {
     const buyer = await customerToken(ctx, 7);
     const id = await activeCompany(ctx, admin.token, 6, [{ ...buyer, roles: ['company_buyer'] }]);
     const fileId = await uploadFile(ctx, admin.token, 'fake-logo', 'design_asset');
-    await as(ctx, buyer.token).post(`/v1/store/companies/${id}/brand-assets`, { fileId, kind: 'logo', name: 'โลโก้' }).expect(403);
+    await as(ctx, buyer.token)
+      .post(`/v1/store/companies/${id}/brand-assets`, { fileId, kind: 'logo', name: 'โลโก้' })
+      .expect(403);
     const added = await as(ctx, admin.token)
       .post(`/v1/store/companies/${id}/brand-assets`, { fileId, kind: 'logo', name: 'โลโก้' })
       .expect(201);
-    expect(added.body).toMatchObject({ kind: 'logo', name: 'โลโก้', fileId, mimeType: 'image/png', url: expect.any(String) });
-    expect((await as(ctx, admin.token).post(`/v1/store/companies/${id}/brand-assets`, { fileId, kind: 'logo', name: 'x' }).expect(409)).body.code).toBe('companies.asset_exists');
-    const listed = (await as(ctx, buyer.token).get(`/v1/store/companies/${id}/brand-assets`).expect(200)).body as { id: string }[];
+    expect(added.body).toMatchObject({
+      kind: 'logo',
+      name: 'โลโก้',
+      fileId,
+      mimeType: 'image/png',
+      url: expect.any(String),
+    });
+    expect(
+      (
+        await as(ctx, admin.token)
+          .post(`/v1/store/companies/${id}/brand-assets`, { fileId, kind: 'logo', name: 'x' })
+          .expect(409)
+      ).body.code,
+    ).toBe('companies.asset_exists');
+    const listed = (await as(ctx, buyer.token).get(`/v1/store/companies/${id}/brand-assets`).expect(200))
+      .body as { id: string }[];
     expect(listed.map((a) => a.id)).toEqual([added.body.id]);
     // The buyer reads the file through the files API too.
     await as(ctx, buyer.token).get(`/v1/store/files/${fileId}/download`).expect(200);
-    await as(ctx, buyer.token).delete(`/v1/store/companies/${id}/brand-assets/${added.body.id as string}`).expect(403);
-    await as(ctx, admin.token).delete(`/v1/store/companies/${id}/brand-assets/${added.body.id as string}`).expect(204);
-    expect((await as(ctx, buyer.token).get(`/v1/store/companies/${id}/brand-assets`).expect(200)).body).toEqual([]);
+    await as(ctx, buyer.token)
+      .delete(`/v1/store/companies/${id}/brand-assets/${added.body.id as string}`)
+      .expect(403);
+    await as(ctx, admin.token)
+      .delete(`/v1/store/companies/${id}/brand-assets/${added.body.id as string}`)
+      .expect(204);
+    expect(
+      (await as(ctx, buyer.token).get(`/v1/store/companies/${id}/brand-assets`).expect(200)).body,
+    ).toEqual([]);
   });
 
   it('shows credit eligibility, lets the Company Admin apply and summarises what is owed (D-121, D-122)', async () => {
@@ -154,23 +204,43 @@ describe('store companies (e2e, U-B0.1)', () => {
       defaultTermDays: 30,
     });
     const apply = (body: object, token = admin.token) =>
-      as(ctx, token).post(`/v1/store/companies/${id}/credit-applications`, body).set('Idempotency-Key', randomUUID());
+      as(ctx, token)
+        .post(`/v1/store/companies/${id}/credit-applications`, body)
+        .set('Idempotency-Key', randomUUID());
     const body = { limitAmount: '50000.00', termDays: 30, basis: 'paid_orders', note: 'สั่งซื้อทุกเดือน' };
     await apply(body, buyer.token).expect(403);
     expect((await apply(body).expect(409)).body.code).toBe('companies.credit_not_eligible');
     await apply({ ...body, termDays: 20 }).expect(422);
-    await ctx.prisma.company.update({ where: { publicId: id }, data: { creditStatus: 'eligible', paidOrdersCount: 3 } });
+    await ctx.prisma.company.update({
+      where: { publicId: id },
+      data: { creditStatus: 'eligible', paidOrdersCount: 3 },
+    });
     const applied = await apply(body).expect(201);
-    expect(applied.body).toMatchObject({ pendingRequest: { limitAmount: '50000.00', termDays: 30 }, eligibility: { eligible: true } });
+    expect(applied.body).toMatchObject({
+      pendingRequest: { limitAmount: '50000.00', termDays: 30 },
+      eligibility: { eligible: true },
+    });
     expect((await apply(body).expect(409)).body.code).toBe('approval.already_pending');
 
     const owed = (await as(ctx, admin.token).get(`/v1/store/companies/${id}/receivables`).expect(200)).body;
-    expect(owed).toMatchObject({ openAmount: '0.00', overdueAmount: '0.00', creditOrdersBlocked: false, notices: [], oldestOverdueDays: null });
+    expect(owed).toMatchObject({
+      openAmount: '0.00',
+      overdueAmount: '0.00',
+      creditOrdersBlocked: false,
+      notices: [],
+      oldestOverdueDays: null,
+    });
     await as(ctx, buyer.token).get(`/v1/store/companies/${id}/receivables`).expect(403);
     await ctx.prisma.company.update({ where: { publicId: id }, data: { creditStatus: 'blocked_overdue' } });
-    const blocked = (await as(ctx, admin.token).get(`/v1/store/companies/${id}/receivables`).expect(200)).body;
-    expect(blocked).toMatchObject({ creditOrdersBlocked: true, notices: [expect.objectContaining({ code: 'credit_blocked' })] });
-    expect((await as(ctx, admin.token).get(`/v1/store/companies/${id}/issued-statements`).expect(200)).body).toEqual([]);
+    const blocked = (await as(ctx, admin.token).get(`/v1/store/companies/${id}/receivables`).expect(200))
+      .body;
+    expect(blocked).toMatchObject({
+      creditOrdersBlocked: true,
+      notices: [expect.objectContaining({ code: 'credit_blocked' })],
+    });
+    expect(
+      (await as(ctx, admin.token).get(`/v1/store/companies/${id}/issued-statements`).expect(200)).body,
+    ).toEqual([]);
     const spend = (await as(ctx, admin.token).get(`/v1/store/companies/${id}/spend`).expect(200)).body;
     expect(spend).toMatchObject({ total: { orders: 0, grossAmount: '0.00' }, byMember: [] });
     expect(spend.byMonth).toHaveLength(12);

@@ -218,7 +218,9 @@ describe('design services and mockups (e2e, B4.1)', () => {
       .set('Idempotency-Key', randomUUID())
       .expect(200);
     // U-B0.1: reference files travel with the paid revision.
-    expect((confirmed.body.rounds as { referenceFileIds: string[] }[]).at(-1)!.referenceFileIds).toEqual([reference]);
+    expect((confirmed.body.rounds as { referenceFileIds: string[] }[]).at(-1)!.referenceFileIds).toEqual([
+      reference,
+    ]);
     const extra = (
       confirmed.body.rounds as {
         roundNo: number;

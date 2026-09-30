@@ -213,10 +213,19 @@ export class FaqActionsController extends ChildrenController {
       ifMatch,
       ['catalogProductIds'],
       async (tx, faq) => {
-        const ids = await resolveAll(new RefResolver(tx), 'catalogProduct', body.catalogProductIds, 'catalogProductIds');
+        const ids = await resolveAll(
+          new RefResolver(tx),
+          'catalogProduct',
+          body.catalogProductIds,
+          'catalogProductIds',
+        );
         await tx.faqCatalogProductLink.deleteMany({ where: { faqId: faq.id } });
         await tx.faqCatalogProductLink.createMany({
-          data: ids.map((catalogProductId) => ({ faqId: faq.id, catalogProductId, createdById: user.userId })),
+          data: ids.map((catalogProductId) => ({
+            faqId: faq.id,
+            catalogProductId,
+            createdById: user.userId,
+          })),
         });
       },
     );

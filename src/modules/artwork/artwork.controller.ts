@@ -67,7 +67,10 @@ export class StoreArtworkController {
   })
   @ApiSuccess(200, { description: 'Rules', type: ArtworkRulesDto, example: ARTWORK_RULES_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  rules(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string): Promise<ArtworkRulesDto> {
+  rules(
+    @CurrentActor() actor: Actor,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ): Promise<ArtworkRulesDto> {
     if (actor.type !== 'user' || actor.audience !== 'customer') throw new DomainException('auth.forbidden');
     return this.artwork.rules(orderId, actor.userId);
   }
@@ -245,7 +248,11 @@ export class AdminArtworkController {
       'kept on the internal timeline.',
     implements: DECISIONS,
   })
-  @ApiBody({ type: AcceptSubmissionDto, required: false, examples: { default: { value: { note: 'ไฟล์ครบ' } } } })
+  @ApiBody({
+    type: AcceptSubmissionDto,
+    required: false,
+    examples: { default: { value: { note: 'ไฟล์ครบ' } } },
+  })
   @ApiSuccess(200, {
     description: 'Accepted',
     type: ArtworkSubmissionDto,

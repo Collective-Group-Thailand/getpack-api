@@ -18,7 +18,9 @@ export async function csInputExtras(
   const [products, limit] = await Promise.all([
     prisma.catalogProduct.findMany({
       where: { status: 'active', productType: { calculatorKey: calculator, status: 'active' } },
-      include: { standardSizes: { where: { status: 'active' }, orderBy: [{ sort: 'asc' }, { code: 'asc' }] } },
+      include: {
+        standardSizes: { where: { status: 'active' }, orderBy: [{ sort: 'asc' }, { code: 'asc' }] },
+      },
       orderBy: { slug: 'asc' },
     }),
     settings.at('discounts.cs_limit_pct'),

@@ -439,7 +439,10 @@ export class AdminCustomersController {
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@Param('customerId', ParseUUIDPipe) customerId: string) {
     const id = await this.customers.customerIdOf(customerId);
-    return adminCustomerDto(await this.customers.profile(id), (await this.customers.staffStats([id])).get(id));
+    return adminCustomerDto(
+      await this.customers.profile(id),
+      (await this.customers.staffStats([id])).get(id),
+    );
   }
 
   @Get(':customerId/addresses')

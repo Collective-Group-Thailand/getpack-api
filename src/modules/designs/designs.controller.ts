@@ -194,7 +194,8 @@ export class StoreDesignsController {
   @ApiEndpoint({
     id: 'store.designs.save',
     summary: 'Save my design as a new version',
-    description: 'Versions are immutable; `If-Match` is required — a stale ETag is refused with 412. `kind` tells the ' +
+    description:
+      'Versions are immutable; `If-Match` is required — a stale ETag is refused with 412. `kind` tells the ' +
       'editor’s autosaves from the customer’s saves (the history can hide autosaves) and `label` names the version; ' +
       'the box style, material and size can change with the save.',
     implements: DECISIONS,
@@ -322,7 +323,10 @@ export class StoreDesignsController {
       'order and not shared.',
     implements: DECISIONS,
   })
-  @ApiBody({ type: DuplicateDesignDto, examples: { default: { value: { title: 'กล่องกาแฟของฉัน (สำเนา)' } } } })
+  @ApiBody({
+    type: DuplicateDesignDto,
+    examples: { default: { value: { title: 'กล่องกาแฟของฉัน (สำเนา)' } } },
+  })
   @ApiEtag()
   @ApiSuccess(201, {
     description: 'The copy',
@@ -363,7 +367,10 @@ export class StoreDesignsController {
     },
   })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
-  async importGuest(@CurrentActor() actor: Actor, @Body() body: ImportDesignsDto): Promise<ImportDesignsResultDto> {
+  async importGuest(
+    @CurrentActor() actor: Actor,
+    @Body() body: ImportDesignsDto,
+  ): Promise<ImportDesignsResultDto> {
     return this.designs.importGuest(customer(actor), body.designs);
   }
 
@@ -429,7 +436,11 @@ export class StoreDesignsController {
       'Revoked, expired or deleted answers 404 (D-226). Rate-limited per client.',
     implements: ['D-226'],
   })
-  @ApiSuccess(200, { description: 'The shared design', type: SharedDesignDto, example: SHARED_DESIGN_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'The shared design',
+    type: SharedDesignDto,
+    example: SHARED_DESIGN_EXAMPLE,
+  })
   @ApiStandardErrors('http.not_found', 'http.too_many_requests')
   async shared(@Param('token') token: string): Promise<SharedDesignDto> {
     return this.designs.sharedView(await this.designs.shared(token));
@@ -594,7 +605,12 @@ export class StoreDesignsController {
       ...DRAWING_EXAMPLE,
       status: 'succeeded',
       outputFileId: DESIGN_IDS.file,
-      outputFile: { id: DESIGN_IDS.file, originalName: 'dieline.pdf', mimeType: 'application/pdf', sizeBytes: 48213 },
+      outputFile: {
+        id: DESIGN_IDS.file,
+        originalName: 'dieline.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 48213,
+      },
       completedAt: '2026-09-27T10:00:05+07:00',
     },
   })
@@ -646,12 +662,19 @@ export class AdminDesignsController {
       'is never changed and the copy records where it came from (event `design.copied_by_staff`).',
     implements: DECISIONS,
   })
-  @ApiBody({ type: DuplicateDesignDto, examples: { default: { value: { title: 'สำเนาเพื่อแก้ไข — กล่องกาแฟ' } } } })
+  @ApiBody({
+    type: DuplicateDesignDto,
+    examples: { default: { value: { title: 'สำเนาเพื่อแก้ไข — กล่องกาแฟ' } } },
+  })
   @ApiEtag()
   @ApiSuccess(201, {
     description: 'The copy',
     type: AdminDesignDocumentDto,
-    example: { ...ADMIN_DESIGN_EXAMPLE, editable: true, owner: { ...ADMIN_DESIGN_EXAMPLE.owner, kind: 'staff' } },
+    example: {
+      ...ADMIN_DESIGN_EXAMPLE,
+      editable: true,
+      owner: { ...ADMIN_DESIGN_EXAMPLE.owner, kind: 'staff' },
+    },
   })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
   async copy(
@@ -725,7 +748,8 @@ export class AdminDesignsController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const me = staff(actor);
-    if ((await this.designs.get(id)).ownerUserId !== me.userId) throw new DomainException('designs.read_only');
+    if ((await this.designs.get(id)).ownerUserId !== me.userId)
+      throw new DomainException('designs.read_only');
     const row = await this.designs.save(me, id, ifMatch, body, me.userId);
     res.setHeader('ETag', designEtag(row));
     return this.adminView(actor, row);

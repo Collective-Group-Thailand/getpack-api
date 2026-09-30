@@ -57,7 +57,11 @@ export class SupportContactDto {
   @Matches(TOPIC)
   topic!: string;
 
-  @ApiPropertyOptional({ example: 'PK-2610-0001-01', maxLength: 40, description: 'An order code, if it is about one' })
+  @ApiPropertyOptional({
+    example: 'PK-2610-0001-01',
+    maxLength: 40,
+    description: 'An order code, if it is about one',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(40)
@@ -106,7 +110,11 @@ export class SupportHandoffDto {
   @MaxLength(5000)
   note?: string;
 
-  @ApiPropertyOptional({ example: false, default: false, description: 'CS calls back instead of answering in chat' })
+  @ApiPropertyOptional({
+    example: false,
+    default: false,
+    description: 'CS calls back instead of answering in chat',
+  })
   @IsOptional()
   @IsBoolean()
   callback?: boolean;
@@ -130,7 +138,8 @@ export class SupportTicketDto {
     type: String,
     nullable: true,
     example: 'https://line.me/R/oaMessage/%40packio-fake/?CS-2610-00001',
-    description: 'Opens a LINE chat with the official account carrying only the ticket number; null until set',
+    description:
+      'Opens a LINE chat with the official account carrying only the ticket number; null until set',
   })
   lineUrl!: string | null;
 
@@ -167,7 +176,12 @@ export class ConversationTicketDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   contactEmail!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: 'PK-2610-0001-01', description: 'As typed; not verified' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'PK-2610-0001-01',
+    description: 'As typed; not verified',
+  })
   orderRef!: string | null;
 
   @ApiProperty({ example: false })

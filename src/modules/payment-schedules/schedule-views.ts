@@ -58,14 +58,17 @@ const TAKES_PAYMENT = new Set(['waiting_payment', 'in_progress']);
 export function storeInstalmentDto(i: CustomerInstalmentRow): StoreInstalmentDto {
   const base = instalmentDto(i, false);
   const group = i.schedule.orderGroup;
-  const active = [...i.payments].sort((a, b) => b.payment.createdAt.getTime() - a.payment.createdAt.getTime())[0];
+  const active = [...i.payments].sort(
+    (a, b) => b.payment.createdAt.getTime() - a.payment.createdAt.getTime(),
+  )[0];
   return {
     ...base,
     groupId: group.publicId,
     groupCode: group.groupCode,
     orders: i.allocations.map((a) => ({ orderId: a.order.publicId, orderCode: a.order.orderCode })),
     activePaymentId: active?.payment.publicId ?? null,
-    payable: !SETTLED.has(i.status) && TAKES_PAYMENT.has(group.status) && new MoneyDecimal(base.openAmount).gt(0),
+    payable:
+      !SETTLED.has(i.status) && TAKES_PAYMENT.has(group.status) && new MoneyDecimal(base.openAmount).gt(0),
   };
 }
 

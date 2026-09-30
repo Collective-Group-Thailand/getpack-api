@@ -30,13 +30,21 @@ export class StorePromotionsController {
       '(`promotions.code_attempt_limits`, 429 with `Retry-After`). The amount is worked out on the cart.',
     implements: DECISIONS,
   })
-  @ApiBody({ type: CheckCodeDto, examples: { default: { value: { code: 'WELCOME10', productTypeCode: 'folding_carton' } } } })
+  @ApiBody({
+    type: CheckCodeDto,
+    examples: { default: { value: { code: 'WELCOME10', productTypeCode: 'folding_carton' } } },
+  })
   @ApiSuccess(200, {
     description: 'Check result',
     type: CodeCheckDto,
     example: { code: 'WELCOME10', valid: true, reason: null, offer: OFFER_EXAMPLE },
   })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'promotions.too_many_attempts')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'promotions.too_many_attempts',
+  )
   check(
     @OptionalActor() actor: Actor | undefined,
     @Body() body: CheckCodeDto,
@@ -44,7 +52,10 @@ export class StorePromotionsController {
     @Headers('x-device-id') deviceId: string | undefined,
   ): Promise<CodeCheckDto> {
     const customer = actor?.type === 'user' && actor.audience === 'customer' ? actor.userId : null;
-    return this.codes.check(customer, body, { ip, deviceId: deviceId?.slice(0, 128) }) as Promise<CodeCheckDto>;
+    return this.codes.check(customer, body, {
+      ip,
+      deviceId: deviceId?.slice(0, 128),
+    }) as Promise<CodeCheckDto>;
   }
 
   @Get('mine')

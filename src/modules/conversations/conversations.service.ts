@@ -106,7 +106,9 @@ export class ConversationsService {
    */
   async openForTicket(tx: Tx, customerUserId: bigint | null, body: string | null): Promise<Conversation> {
     let conversation = customerUserId
-      ? await tx.conversation.findFirst({ where: { channel: 'web', customerUserId, status: { not: 'closed' } } })
+      ? await tx.conversation.findFirst({
+          where: { channel: 'web', customerUserId, status: { not: 'closed' } },
+        })
       : null;
     if (!conversation) {
       const channel = customerUserId ? 'web' : 'contact';

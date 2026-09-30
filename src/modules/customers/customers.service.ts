@@ -179,7 +179,11 @@ export class CustomersService {
         });
       }
       // The first save by the customer themselves ends the storefront's profile prompt (U-B0.1); CS edits do not.
-      if (actor.type === 'user' && actor.audience === 'customer' && !current.customerProfile?.profileCompletedAt) {
+      if (
+        actor.type === 'user' &&
+        actor.audience === 'customer' &&
+        !current.customerProfile?.profileCompletedAt
+      ) {
         await tx.customerProfile.update({ where: { userId }, data: { profileCompletedAt: new Date() } });
       }
       await this.record(

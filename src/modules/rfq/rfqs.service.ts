@@ -448,7 +448,10 @@ export class RfqsService implements OnModuleInit {
     if (userPublicId === null)
       return this.prisma.withTx(async (tx) => {
         const rfq = await this.openRfq(tx, publicId);
-        await tx.rfq.update({ where: { id: rfq.id }, data: { assignedToUserId: null, rowVersion: { increment: 1 } } });
+        await tx.rfq.update({
+          where: { id: rfq.id },
+          data: { assignedToUserId: null, rowVersion: { increment: 1 } },
+        });
         await this.record(tx, rfq.publicId, 'rfq.unassigned', {}, ['internal']);
         return this.load(tx, rfq.id);
       });
@@ -631,9 +634,13 @@ export class RfqsService implements OnModuleInit {
       await tx.rfqQuoteLine.deleteMany({ where: { rfqQuoteId: quote.id } });
       await tx.rfqQuoteLine.createMany({ data: rows.map((r) => ({ ...r, rfqQuoteId: quote.id })) });
       await tx.rfqQuote.update({ where: { id: quote.id }, data: { note: input.note ?? '' } });
-      await this.record(tx, rfq.publicId, 'rfq.quote_revised', { versionNo: quote.versionNo, by: actor.publicId }, [
-        'internal',
-      ]);
+      await this.record(
+        tx,
+        rfq.publicId,
+        'rfq.quote_revised',
+        { versionNo: quote.versionNo, by: actor.publicId },
+        ['internal'],
+      );
       return this.load(tx, rfq.id);
     });
   }
@@ -671,7 +678,9 @@ export class RfqsService implements OnModuleInit {
         const net = unit.mul(l.quantity).add(shipping).toDecimalPlaces(2);
         const vatAmount = net.mul(vat.ratePct).div(100).toDecimalPlaces(2);
         const margin =
-          l.buyUnitPrice && !unit.isZero() ? unit.sub(l.buyUnitPrice).div(unit).mul(100).toDecimalPlaces(4) : null;
+          l.buyUnitPrice && !unit.isZero()
+            ? unit.sub(l.buyUnitPrice).div(unit).mul(100).toDecimalPlaces(4)
+            : null;
         return {
           quantity: l.quantity,
           unitPrice: unit.toFixed(6),
@@ -709,7 +718,11 @@ export class RfqsService implements OnModuleInit {
     const rfq = await this.get(publicId);
     const now = new Date();
     const capabilities = await this.prisma.factoryCapability.findMany({
-      where: { productTypeId: rfq.productTypeId, status: 'active', factory: { status: { in: ['active', 'trial'] } } },
+      where: {
+        productTypeId: rfq.productTypeId,
+        status: 'active',
+        factory: { status: { in: ['active', 'trial'] } },
+      },
       include: {
         factory: {
           select: {
@@ -742,9 +755,11 @@ export class RfqsService implements OnModuleInit {
     const quantities = rfq.tiers.map((t) => t.quantity);
     return [...byFactory.values()].map((caps) => {
       const f = caps[0]!.factory;
-      const fits = caps.some(
-        (c) =>
-          quantities.every((q) => (c.minOrderQty === null || q >= c.minOrderQty) && (c.maxOrderQty === null || q <= c.maxOrderQty)),
+      const fits = caps.some((c) =>
+        quantities.every(
+          (q) =>
+            (c.minOrderQty === null || q >= c.minOrderQty) && (c.maxOrderQty === null || q <= c.maxOrderQty),
+        ),
       );
       const below = caps.every((c) => c.minOrderQty !== null && quantities.some((q) => q < c.minOrderQty!));
       const card = scorecards.find((sc) => sc.factoryId === f.id);
@@ -767,7 +782,10 @@ export class RfqsService implements OnModuleInit {
     await this.prisma.withTx(async (tx) => {
       const c = await tx.rfqFactoryConsultation.findUnique({
         where: { publicId: consultationPublicId },
-        include: { factory: { select: { publicId: true } }, rfq: { select: { publicId: true, rfqCode: true } } },
+        include: {
+          factory: { select: { publicId: true } },
+          rfq: { select: { publicId: true, rfqCode: true } },
+        },
       });
       if (!c) throw new DomainException('http.not_found');
       if (c.status !== 'requested') throw new DomainException('rfq.consultation_not_open');
@@ -1051,7 +1069,9 @@ export class RfqsService implements OnModuleInit {
           { subjectType: 'rfq_message', subjectId: { in: rfq.messages.map((m) => m.id) } },
         ],
       },
-      include: { fileObject: { select: { publicId: true, originalName: true, mimeType: true, sizeBytes: true } } },
+      include: {
+        fileObject: { select: { publicId: true, originalName: true, mimeType: true, sizeBytes: true } },
+      },
       orderBy: [{ sort: 'asc' }, { id: 'asc' }],
     });
     const view = (a: (typeof rows)[number]) => ({
@@ -1071,7 +1091,9 @@ export class RfqsService implements OnModuleInit {
    * outside its price paths (D-043). No price, factory or staff data.
    */
   async form(productTypeCode: string): Promise<StoreRfqFormDto> {
-    const type = await this.prisma.productType.findFirst({ where: { code: productTypeCode, status: 'active' } });
+    const type = await this.prisma.productType.findFirst({
+      where: { code: productTypeCode, status: 'active' },
+    });
     if (!type) throw new DomainException('http.not_found');
     const files = FILE_PURPOSES.artwork;
     return {
@@ -1082,7 +1104,12 @@ export class RfqsService implements OnModuleInit {
       fields: rfqFormFields(type.rfqSpecSchema),
       dimensions: rfqDimensions(type.rfqSpecSchema),
       quantity: { min: 1, maxTiers: MAX_RFQ_TIERS },
-      files: { purpose: 'artwork', accept: [...files.mimeTypes], maxBytes: files.maxBytes, maxFiles: MAX_RFQ_FILES },
+      files: {
+        purpose: 'artwork',
+        accept: [...files.mimeTypes],
+        maxBytes: files.maxBytes,
+        maxFiles: MAX_RFQ_FILES,
+      },
       slaTargetHours: await this.slaHours(type.id, new Date()),
     };
   }
@@ -1095,7 +1122,10 @@ export class RfqsService implements OnModuleInit {
     const validity = Number((await this.settings.at('quotes.validity_days', { at: now })).value);
     const schemas = new Map(
       (
-        await this.prisma.productType.findMany({ where: { id: { in: types } }, select: { id: true, rfqSpecSchema: true } })
+        await this.prisma.productType.findMany({
+          where: { id: { in: types } },
+          select: { id: true, rfqSpecSchema: true },
+        })
       ).map((t) => [t.id, t.rfqSpecSchema]),
     );
     return { hours, validUntil: new Date(now.getTime() + validity * DAY_MS), schemas };
@@ -1109,8 +1139,12 @@ export class RfqsService implements OnModuleInit {
   async slaHours(productTypeId: bigint, at: Date): Promise<number | null> {
     try {
       return Number(
-        (await this.settings.at('rfq.sla_business_hours', { at, scope: { type: 'product_type', id: productTypeId } }))
-          .value,
+        (
+          await this.settings.at('rfq.sla_business_hours', {
+            at,
+            scope: { type: 'product_type', id: productTypeId },
+          })
+        ).value,
       );
     } catch (error) {
       if (error instanceof SettingNotFoundError) return null;

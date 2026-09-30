@@ -80,7 +80,12 @@ export class StoreConfiguratorPatternDto {
   @ApiProperty({ type: StoreSizeRulesDto })
   rules!: StoreSizeRulesDto;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Admin-maintained; null until set' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Admin-maintained; null until set',
+  })
   descriptionTh!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -205,7 +210,12 @@ export class StoreConfiguratorDto {
   @ApiProperty({ example: 15, description: 'Days a saved price holds (D-051)' })
   quoteValidityDays!: number;
 
-  @ApiProperty({ enum: PRODUCT_UNITS, enumName: 'ProductUnit', example: 'piece', description: 'Sales unit of a quantity' })
+  @ApiProperty({
+    enum: PRODUCT_UNITS,
+    enumName: 'ProductUnit',
+    example: 'piece',
+    description: 'Sales unit of a quantity',
+  })
   unit!: (typeof PRODUCT_UNITS)[number];
 
   @ApiProperty({ type: StoreConfiguratorQuantityDto })

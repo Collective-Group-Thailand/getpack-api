@@ -207,7 +207,8 @@ export class PaymentDto {
 
   @ApiProperty({
     type: [SlipReceiverAccountDto],
-    description: '`bank_transfer_slip` only: the accounts to transfer to (empty until Finance sets them, D-061)',
+    description:
+      '`bank_transfer_slip` only: the accounts to transfer to (empty until Finance sets them, D-061)',
   })
   receiverAccounts!: SlipReceiverAccountDto[];
 
@@ -216,7 +217,8 @@ export class PaymentDto {
     enumName: 'PaymentFailureCode',
     nullable: true,
     example: null,
-    description: 'Why a `failed` payment failed: `declined` by the card / bank, or `provider_error`; start a new payment',
+    description:
+      'Why a `failed` payment failed: `declined` by the card / bank, or `provider_error`; start a new payment',
   })
   failureCode!: (typeof PAYMENT_FAILURE_CODES)[number] | null;
 

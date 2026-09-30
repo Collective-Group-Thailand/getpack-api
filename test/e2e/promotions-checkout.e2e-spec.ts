@@ -303,21 +303,37 @@ describe('promotions at checkout (e2e, B3.3)', () => {
   it('checks a code before the cart without saving anything, and lists the codes I hold (U-B0.1)', async () => {
     const promo = await coupon({ productTypeCodes: ['folding_carton'], minQuantity: 500 });
     const check = (body: object, token?: string) => {
-      const r = request(ctx.server).post('/v1/store/promotions/actions/check').set('x-device-id', `dev-${ctx.run}`);
+      const r = request(ctx.server)
+        .post('/v1/store/promotions/actions/check')
+        .set('x-device-id', `dev-${ctx.run}`);
       return (token ? r.auth(token, { type: 'bearer' }) : r).send(body);
     };
     try {
-      const ok = await check({ code: promo.code, productTypeCode: 'folding_carton', quantity: 1000 }).expect(200);
+      const ok = await check({ code: promo.code, productTypeCode: 'folding_carton', quantity: 1000 }).expect(
+        200,
+      );
       expect(ok.body).toMatchObject({
         valid: true,
         reason: null,
-        offer: { code: promo.code, title: 'ลด 5%', benefit: { type: 'percent', pct: '5', maxAmount: '100.00' } },
+        offer: {
+          code: promo.code,
+          title: 'ลด 5%',
+          benefit: { type: 'percent', pct: '5', maxAmount: '100.00' },
+        },
       });
-      expect(ok.body.offer.conditions).toMatchObject({ productTypeCodes: ['folding_carton'], minQuantity: 500 });
+      expect(ok.body.offer.conditions).toMatchObject({
+        productTypeCodes: ['folding_carton'],
+        minQuantity: 500,
+      });
       const other = await check({ code: promo.code, productTypeCode: 'corrugated' }).expect(200);
       expect(other.body).toMatchObject({ valid: false, reason: 'not_applicable' });
       expect(other.body.offer).not.toBeNull();
-      await check({ code: 'NO-SUCH-CODE' }).expect(200, { code: 'NO-SUCH-CODE', valid: false, reason: 'not_found', offer: null });
+      await check({ code: 'NO-SUCH-CODE' }).expect(200, {
+        code: 'NO-SUCH-CODE',
+        valid: false,
+        reason: 'not_found',
+        offer: null,
+      });
 
       // A code assigned to someone else: said so, nothing shown.
       const { token: mineToken, phone } = await customerToken(ctx, 7);
@@ -326,7 +342,12 @@ describe('promotions at checkout (e2e, B3.3)', () => {
         where: { code: promo.code },
         data: { assignedUserId: owner.id },
       });
-      await check({ code: assigned.code }).expect(200, { code: assigned.code, valid: false, reason: 'not_yours', offer: null });
+      await check({ code: assigned.code }).expect(200, {
+        code: assigned.code,
+        valid: false,
+        reason: 'not_yours',
+        offer: null,
+      });
       expect((await check({ code: assigned.code }, mineToken).expect(200)).body.valid).toBe(true);
       const mine = await as(ctx, mineToken).get('/v1/store/promotions/mine').expect(200);
       expect(mine.body).toEqual([expect.objectContaining({ code: assigned.code, status: 'usable' })]);

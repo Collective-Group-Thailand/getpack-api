@@ -325,7 +325,11 @@ export class PointsPreviewDto {
   @ApiProperty({ example: '2.50', description: 'Baht per point (D-131)' })
   pointValue!: string;
 
-  @ApiProperty({ type: 'integer', example: 4, description: 'Fewest points one redemption takes (THB 10, D-133)' })
+  @ApiProperty({
+    type: 'integer',
+    example: 4,
+    description: 'Fewest points one redemption takes (THB 10, D-133)',
+  })
   minimumPoints!: number;
 
   @ApiProperty({
@@ -342,7 +346,8 @@ export class PointsPreviewDto {
   @ApiProperty({
     type: 'integer',
     example: 25,
-    description: 'Points the order earns once completed and past the claim window (D-130, D-132, tier multiplier)',
+    description:
+      'Points the order earns once completed and past the claim window (D-130, D-132, tier multiplier)',
   })
   toEarn!: number;
 }
@@ -354,22 +359,40 @@ export class CompanyPreviewDto {
   @ApiProperty({ example: 'บริษัท ทดสอบ จำกัด' })
   legalName!: string;
 
-  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000e0002', description: 'Tax-invoice branch' })
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000e0002',
+    description: 'Tax-invoice branch',
+  })
   branchId!: string;
 
   @ApiProperty({ enum: ['required', 'optional', 'none'], enumName: 'PoNumberPolicy', example: 'optional' })
   poNumberPolicy!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '50000.00', description: "The company's own approval threshold (D-123)" })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '50000.00',
+    description: "The company's own approval threshold (D-123)",
+  })
   approvalThreshold!: string | null;
 
   @ApiProperty({ example: false, description: 'The order waits for the company approver (D-123)' })
   approvalRequired!: boolean;
 
-  @ApiProperty({ enum: ['prepaid', 'eligible', 'credit', 'blocked_overdue'], enumName: 'CreditStatus', example: 'credit' })
+  @ApiProperty({
+    enum: ['prepaid', 'eligible', 'credit', 'blocked_overdue'],
+    enumName: 'CreditStatus',
+    example: 'credit',
+  })
   creditStatus!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: '85000.00', description: 'Credit left (D-121); null without a limit' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '85000.00',
+    description: 'Credit left (D-121); null without a limit',
+  })
   creditAvailableAmount!: string | null;
 
   @ApiProperty({ type: 'integer', nullable: true, example: 30 })
@@ -409,11 +432,16 @@ export class CheckoutPreviewDto {
 
   @ApiProperty({
     type: [PaymentMethodOptionDto],
-    description: 'How the instalments can be paid (chosen when paying, `store.payments.initiate`); no surcharge',
+    description:
+      'How the instalments can be paid (chosen when paying, `store.payments.initiate`); no surcharge',
   })
   paymentMethods!: PaymentMethodOptionDto[];
 
-  @ApiProperty({ type: PointsPreviewDto, nullable: true, description: 'Null only when points cannot be read' })
+  @ApiProperty({
+    type: PointsPreviewDto,
+    nullable: true,
+    description: 'Null only when points cannot be read',
+  })
   points!: PointsPreviewDto | null;
 
   @ApiProperty({ type: CompanyPreviewDto, nullable: true, description: 'When ordering for a company (B2B)' })
@@ -477,6 +505,13 @@ export const PREVIEW_EXAMPLE: CheckoutPreviewDto = {
     { method: 'scb_qr', available: true },
     { method: 'bank_transfer_slip', available: true },
   ],
-  points: { balance: 120, pointValue: '2.50', minimumPoints: 4, maximumPoints: 120, redeemedPoints: 0, toEarn: 25 },
+  points: {
+    balance: 120,
+    pointValue: '2.50',
+    minimumPoints: 4,
+    maximumPoints: 120,
+    redeemedPoints: 0,
+    toEarn: 25,
+  },
   company: null,
 };

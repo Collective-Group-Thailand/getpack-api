@@ -63,7 +63,8 @@ export class PriceHintsService {
         });
         priced += 1;
       } else {
-        cleared += (await this.prisma.catalogPriceHint.deleteMany({ where: { catalogProductId: p.id } })).count;
+        cleared += (await this.prisma.catalogPriceHint.deleteMany({ where: { catalogProductId: p.id } }))
+          .count;
       }
     }
     return { priced, cleared };
@@ -158,18 +159,16 @@ export class PriceHintsService {
         };
       }),
       // The standard-product calculator is not ported yet (U-B6): no stock price is published before it.
-      ...stock.map(
-        (s): PriceHintDto => ({
-          key: s.sku,
-          kind: 'stock_product',
-          productTypeCode: s.productType.code,
-          startingFromPerPiece: null,
-          currency: 'THB',
-          basis: null,
-          leadTimeBusinessDays: null,
-          computedAt: null,
-        }),
-      ),
+      ...stock.map((s): PriceHintDto => ({
+        key: s.sku,
+        kind: 'stock_product',
+        productTypeCode: s.productType.code,
+        startingFromPerPiece: null,
+        currency: 'THB',
+        basis: null,
+        leadTimeBusinessDays: null,
+        computedAt: null,
+      })),
     ];
   }
 

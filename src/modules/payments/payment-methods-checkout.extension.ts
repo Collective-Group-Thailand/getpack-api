@@ -1,4 +1,8 @@
-import { type CheckoutDraft, type CheckoutExtension, CheckoutExtensions } from '@modules/checkout/checkout.extensions';
+import {
+  type CheckoutDraft,
+  type CheckoutExtension,
+  CheckoutExtensions,
+} from '@modules/checkout/checkout.extensions';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 
 import { PaymentsService } from './payments.service';

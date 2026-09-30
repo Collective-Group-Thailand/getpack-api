@@ -61,7 +61,12 @@ export class LoyaltySummaryDto {
   })
   nextTier!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: '50000.00', description: '12-month spend the next tier needs' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '50000.00',
+    description: '12-month spend the next tier needs',
+  })
   nextTierMinSpend12m!: string | null;
 
   @ApiProperty({ example: '42.50', description: 'My 12-month spend as % of the next tier (100 at the top)' })
@@ -134,7 +139,13 @@ export class PointsEntryDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   expiresAt!: string | null;
 
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null, description: 'Link to the order page' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'Link to the order page',
+  })
   orderId!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: 'OR-2610-0001' })

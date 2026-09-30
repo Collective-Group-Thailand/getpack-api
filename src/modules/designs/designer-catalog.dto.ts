@@ -26,10 +26,19 @@ export class DesignerPatternDto {
   @ApiProperty({ example: 'ฝาเสียบกลับด้าน' })
   name!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: 'rte', description: 'Key understood by the dieline engine' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'rte',
+    description: 'Key understood by the dieline engine',
+  })
   dielineKey!: string | null;
 
-  @ApiProperty({ type: [String], example: [], description: 'Corrugate: the flutes this box style is made in' })
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'Corrugate: the flutes this box style is made in',
+  })
   fluteTypeIds!: string[];
 
   @ApiProperty({ type: StoreSizeRulesDto })
@@ -141,7 +150,10 @@ export class DesignerFontDto {
   @ApiProperty({ example: 'Sarabun' })
   name!: string;
 
-  @ApiProperty({ example: `/v1/store/designer/fonts/${ID('004')}`, description: 'The font file (public, cacheable)' })
+  @ApiProperty({
+    example: `/v1/store/designer/fonts/${ID('004')}`,
+    description: 'The font file (public, cacheable)',
+  })
   url!: string;
 }
 
@@ -251,7 +263,16 @@ export const DESIGNER_CATALOG_EXAMPLE: DesignerCatalogDto = {
     minEffectivePpi: 300,
     colourMode: 'cmyk',
     assetPurpose: 'design_asset',
-    assetAccept: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'font/ttf', 'font/otf', 'font/woff', 'font/woff2'],
+    assetAccept: [
+      'image/png',
+      'image/jpeg',
+      'image/webp',
+      'image/svg+xml',
+      'font/ttf',
+      'font/otf',
+      'font/woff',
+      'font/woff2',
+    ],
     assetMaxBytes: 52428800,
   },
 };

@@ -75,10 +75,16 @@ describe('account & privacy (e2e, U-B0.1)', () => {
     });
     const me = await api.delete('/v1/store/me/identities/line').expect(200);
     expect((me.body.identities as { provider: string }[]).map((i) => i.provider)).toEqual(['phone_otp']);
-    expect((await ctx.prisma.userIdentity.findUniqueOrThrow({ where: { id: line.id } })).unlinkedAt).not.toBeNull();
-    expect((await ctx.prisma.authSession.findUniqueOrThrow({ where: { id: session.id } })).revokedAt).not.toBeNull();
     expect(
-      await ctx.prisma.auditLog.count({ where: { action: 'customer.identity_unlinked', resourcePublicId: user.publicId } }),
+      (await ctx.prisma.userIdentity.findUniqueOrThrow({ where: { id: line.id } })).unlinkedAt,
+    ).not.toBeNull();
+    expect(
+      (await ctx.prisma.authSession.findUniqueOrThrow({ where: { id: session.id } })).revokedAt,
+    ).not.toBeNull();
+    expect(
+      await ctx.prisma.auditLog.count({
+        where: { action: 'customer.identity_unlinked', resourcePublicId: user.publicId },
+      }),
     ).toBe(1);
 
     // Only a LINE sign-in left: it cannot go.
@@ -89,7 +95,9 @@ describe('account & privacy (e2e, U-B0.1)', () => {
       where: { userId: user.id, provider: 'phone_otp' },
       data: { unlinkedAt: new Date() },
     });
-    expect((await api.delete('/v1/store/me/identities/line').expect(409)).body.code).toBe('auth.identity_last_method');
+    expect((await api.delete('/v1/store/me/identities/line').expect(409)).body.code).toBe(
+      'auth.identity_last_method',
+    );
   });
 
   it('exports my data to a file I can download for a week, one open request per kind (D-222)', async () => {
@@ -100,7 +108,9 @@ describe('account & privacy (e2e, U-B0.1)', () => {
       .set('Idempotency-Key', randomUUID())
       .expect(201);
     expect(created.body).toMatchObject({ kind: 'export', status: 'submitted', export: null });
-    expect(Date.parse(created.body.dueAt) - Date.parse(created.body.requestedAt)).toBeGreaterThanOrEqual(30 * DAY_MS - 1000);
+    expect(Date.parse(created.body.dueAt) - Date.parse(created.body.requestedAt)).toBeGreaterThanOrEqual(
+      30 * DAY_MS - 1000,
+    );
     expect(
       (
         await api
@@ -111,7 +121,9 @@ describe('account & privacy (e2e, U-B0.1)', () => {
     ).toBe('privacy.request_open');
 
     await api.get('/v1/admin/privacy-requests').expect(403);
-    const queue = await as(ctx, dpo).get('/v1/admin/privacy-requests?status=submitted&perPage=100').expect(200);
+    const queue = await as(ctx, dpo)
+      .get('/v1/admin/privacy-requests?status=submitted&perPage=100')
+      .expect(200);
     expect(queue.body.data).toContainEqual(expect.objectContaining({ id: created.body.id, overdue: false }));
     const done = await as(ctx, dpo)
       .post(`/v1/admin/privacy-requests/${created.body.id}/actions/complete`, { answer: 'ส่งแล้ว' })
@@ -122,7 +134,9 @@ describe('account & privacy (e2e, U-B0.1)', () => {
     const mine = (await api.get('/v1/store/me/privacy-requests').expect(200)).body as {
       export: { fileId: string; expiresAt: string } | null;
     }[];
-    const file = await ctx.prisma.fileObject.findUniqueOrThrow({ where: { publicId: mine[0]!.export!.fileId } });
+    const file = await ctx.prisma.fileObject.findUniqueOrThrow({
+      where: { publicId: mine[0]!.export!.fileId },
+    });
     const owner = await userOf(phone);
     expect(file).toMatchObject({ ownerUserId: owner.id, mimeType: 'application/json' });
     expect(Date.parse(mine[0]!.export!.expiresAt) - Date.parse(done.body.decidedAt)).toBe(7 * DAY_MS);
@@ -144,7 +158,9 @@ describe('account & privacy (e2e, U-B0.1)', () => {
       .expect(409);
     expect(refused.body.code).toBe('privacy.deletion_blocked');
     await as(ctx, dpo)
-      .post(`/v1/admin/privacy-requests/${blocked.body.id}/actions/reject`, { answer: 'มีคำสั่งซื้อค้างอยู่ (fake)' })
+      .post(`/v1/admin/privacy-requests/${blocked.body.id}/actions/reject`, {
+        answer: 'มีคำสั่งซื้อค้างอยู่ (fake)',
+      })
       .expect(200);
 
     const quiet = await customerToken(ctx, 5);
@@ -158,7 +174,12 @@ describe('account & privacy (e2e, U-B0.1)', () => {
       .set('Idempotency-Key', randomUUID())
       .expect(200);
     const gone = await ctx.prisma.user.findUniqueOrThrow({ where: { id: user.id } });
-    expect(gone).toMatchObject({ phone: null, email: null, status: 'inactive', displayName: 'ลูกค้าที่ลบข้อมูลแล้ว' });
+    expect(gone).toMatchObject({
+      phone: null,
+      email: null,
+      status: 'inactive',
+      displayName: 'ลูกค้าที่ลบข้อมูลแล้ว',
+    });
     expect(gone.anonymisedAt).not.toBeNull();
     expect(await ctx.prisma.userIdentity.count({ where: { userId: user.id, unlinkedAt: null } })).toBe(0);
     expect(await ctx.prisma.authSession.count({ where: { userId: user.id, revokedAt: null } })).toBe(0);

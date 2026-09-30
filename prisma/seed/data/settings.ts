@@ -758,7 +758,8 @@ export const SETTINGS: readonly SettingSeed[] = [
     valueType: 'integer',
     value: 30,
     valueSchema: { minimum: 1, maximum: 90 },
-    description: 'D-222 calendar days to answer a PDPA data-subject request (export or deletion); ⚖ legal counsel may adjust',
+    description:
+      'D-222 calendar days to answer a PDPA data-subject request (export or deletion); ⚖ legal counsel may adjust',
     decisions: ['D-222'],
     ownerRole: 'superadmin',
   },
@@ -767,7 +768,8 @@ export const SETTINGS: readonly SettingSeed[] = [
     valueType: 'integer',
     value: 7,
     valueSchema: { minimum: 1, maximum: 30 },
-    description: 'D-222 days a PDPA data export stays downloadable after the Data Protection Officer completes it',
+    description:
+      'D-222 days a PDPA data export stays downloadable after the Data Protection Officer completes it',
     decisions: ['D-222'],
     ownerRole: 'superadmin',
   },
@@ -778,7 +780,8 @@ export const SETTINGS: readonly SettingSeed[] = [
     valueType: 'integer',
     value: 15,
     valueSchema: { minimum: 1, maximum: 365 },
-    description: 'D-185 days a share link stays valid (as the D-051 quotation validity); design share links use it (D-226)',
+    description:
+      'D-185 days a share link stays valid (as the D-051 quotation validity); design share links use it (D-226)',
     decisions: ['D-185', 'D-226'],
     ownerRole: 'superadmin',
   },

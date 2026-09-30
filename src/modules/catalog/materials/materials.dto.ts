@@ -323,7 +323,12 @@ export class MaterialDto {
   })
   descriptionTh!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (English)',
+  })
   descriptionEn!: string | null;
 
   @ApiProperty({
@@ -451,7 +456,12 @@ export class FinishDto {
   })
   descriptionTh!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (English)',
+  })
   descriptionEn!: string | null;
 
   @ApiProperty({
@@ -572,7 +582,12 @@ export class InkColourDto {
   })
   descriptionTh!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (English)',
+  })
   descriptionEn!: string | null;
 
   @ApiProperty({
@@ -666,7 +681,12 @@ export class DiecutTypeDto {
   })
   descriptionTh!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (English)',
+  })
   descriptionEn!: string | null;
 
   @ApiProperty({
@@ -758,7 +778,12 @@ export class AssemblyDto {
   })
   descriptionTh!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (English)',
+  })
   descriptionEn!: string | null;
 
   @ApiProperty({

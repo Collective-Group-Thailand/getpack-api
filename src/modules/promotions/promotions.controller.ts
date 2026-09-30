@@ -59,7 +59,12 @@ import {
   UpdateCampaignDto,
   UpdatePromotionDto,
 } from './promotions.dto';
-import { campaignEtag, promotionEtag, type PromotionRow, PromotionsAdminService } from './promotions-admin.service';
+import {
+  campaignEtag,
+  promotionEtag,
+  type PromotionRow,
+  PromotionsAdminService,
+} from './promotions-admin.service';
 
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
 const campaignParam = ApiParam({ name: 'campaignId', format: 'uuid' });
@@ -98,7 +103,10 @@ export class AdminCampaignsController {
       q.perPage,
     );
     const extras = await this.promotions.campaignExtras(rows.map((r) => r.id));
-    return { data: rows.map((r) => campaignDto(r, extras.get(r.id))), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: rows.map((r) => campaignDto(r, extras.get(r.id))),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Post()
@@ -199,11 +207,19 @@ export class AdminCampaignsController {
       '`reason` is recorded with the change.',
     implements: ['D-154'],
   })
-  @ApiBody({ type: OptionalReasonDto, required: false, examples: { default: { value: { reason: 'งบหมดก่อนกำหนด (fake)' } } } })
+  @ApiBody({
+    type: OptionalReasonDto,
+    required: false,
+    examples: { default: { value: { reason: 'งบหมดก่อนกำหนด (fake)' } } },
+  })
   @ApiSuccess(200, { description: 'Campaign', type: CampaignDto, example: CAMPAIGN_EXAMPLE })
   @ApiStandardErrors(
     'http.bad_request',
-    'http.malformed_json','http.not_found', 'validation.failed', 'promotions.invalid_transition')
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'promotions.invalid_transition',
+  )
   async action(
     @CurrentActor() actor: Actor,
     @Param('campaignId', ParseUUIDPipe) id: string,
@@ -245,7 +261,10 @@ export class AdminPromotionsController {
     };
     const [rows, total] = await this.promotions.listPromotions(where, q.page, q.perPage);
     const usage = await this.promotions.usage(rows.map((r) => r.id));
-    return { data: rows.map((r) => promotionDto(r, usage.get(r.id))), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: rows.map((r) => promotionDto(r, usage.get(r.id))),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Put('priority')
@@ -259,10 +278,22 @@ export class AdminPromotionsController {
       '(D-053). Referral promotions are system-managed (409 `promotions.system_managed`).',
     implements: ['D-053'],
   })
-  @ApiBody({ type: PromotionPriorityDto, examples: { default: { value: { promotionIds: [PROMOTION_EXAMPLE.id] } } } })
+  @ApiBody({
+    type: PromotionPriorityDto,
+    examples: { default: { value: { promotionIds: [PROMOTION_EXAMPLE.id] } } },
+  })
   @ApiSuccess(200, { description: 'Reordered', type: PromotionPriorityResultDto, example: { updated: 3 } })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed', 'promotions.system_managed')
-  async reorder(@CurrentActor() actor: Actor, @Body() body: PromotionPriorityDto): Promise<PromotionPriorityResultDto> {
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'promotions.system_managed',
+  )
+  async reorder(
+    @CurrentActor() actor: Actor,
+    @Body() body: PromotionPriorityDto,
+  ): Promise<PromotionPriorityResultDto> {
     return { updated: await this.promotions.reorder(staff(actor), body.promotionIds) };
   }
 
@@ -375,7 +406,11 @@ export class AdminPromotionsController {
     description: 'A coupon promotion needs at least one code before it is activated; `end` is final (D-053).',
     implements: ['D-053'],
   })
-  @ApiBody({ type: OptionalReasonDto, required: false, examples: { default: { value: { reason: 'งบหมดก่อนกำหนด (fake)' } } } })
+  @ApiBody({
+    type: OptionalReasonDto,
+    required: false,
+    examples: { default: { value: { reason: 'งบหมดก่อนกำหนด (fake)' } } },
+  })
   @ApiSuccess(200, { description: 'Promotion', type: PromotionDto, example: PROMOTION_EXAMPLE })
   @ApiStandardErrors(
     'http.bad_request',
@@ -445,7 +480,8 @@ export class AdminPromotionsController {
   @ApiEndpoint({
     id: 'admin.promotions.listCoupons',
     summary: 'List coupon codes of a promotion',
-    description: 'In generation order, with uses, batch and the assigned customer; filter by batch or status (D-053).',
+    description:
+      'In generation order, with uses, batch and the assigned customer; filter by batch or status (D-053).',
     implements: ['D-053'],
   })
   @ApiPaginated(CouponCodeDto, { example: COUPON_EXAMPLE })
@@ -505,7 +541,11 @@ export class AdminPromotionsController {
       'A disabled code is refused at the cart; re-enabling restores `active` or `used_up` (D-053).',
     implements: ['D-053'],
   })
-  @ApiBody({ type: OptionalReasonDto, required: false, examples: { default: { value: { reason: 'รหัสรั่วไหล (fake)' } } } })
+  @ApiBody({
+    type: OptionalReasonDto,
+    required: false,
+    examples: { default: { value: { reason: 'รหัสรั่วไหล (fake)' } } },
+  })
   @ApiSuccess(200, { description: 'Coupon code', type: CouponCodeDto, example: COUPON_EXAMPLE })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
   async setCouponStatus(

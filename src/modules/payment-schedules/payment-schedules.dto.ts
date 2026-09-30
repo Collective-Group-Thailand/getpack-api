@@ -136,7 +136,8 @@ export class StoreInstalmentDto extends InstalmentDto {
 
   @ApiProperty({
     example: true,
-    description: 'Something is left to pay and the group takes payments (pay it with `store.payments.initiate`)',
+    description:
+      'Something is left to pay and the group takes payments (pay it with `store.payments.initiate`)',
   })
   payable!: boolean;
 }

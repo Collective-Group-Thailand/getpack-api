@@ -3,7 +3,17 @@ import { CORRUGATE_FORMULAS } from '@modules/pricing/calculators/corrugate/formu
 import { GEOMETRY_FORMULAS } from '@modules/pricing/calculators/folding/geometry/types';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsInt, IsObject, IsOptional, IsUUID, Max, Min, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsUUID,
+  Max,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 import {
   BoolField,
@@ -408,13 +418,28 @@ export class CatalogProductDto {
   })
   defaultDifficultyLevelId!: string | null;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 100, description: 'Configurator minimum quantity; null = not set' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 100,
+    description: 'Configurator minimum quantity; null = not set',
+  })
   quantityMin!: number | null;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 50000, description: 'Configurator maximum quantity; null = not set' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 50000,
+    description: 'Configurator maximum quantity; null = not set',
+  })
   quantityMax!: number | null;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 1000, description: 'Quantity preselected in the configurator' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 1000,
+    description: 'Quantity preselected in the configurator',
+  })
   quantityDefault!: number | null;
 
   @ApiProperty({
@@ -782,7 +807,12 @@ export class PatternDto {
   })
   descriptionTh!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Storefront description (English)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Storefront description (English)',
+  })
   descriptionEn!: string | null;
 
   @ApiProperty({

@@ -99,8 +99,9 @@ export class ArtworkService implements OnModuleInit {
     } catch (error) {
       if (!(error instanceof SettingNotFoundError)) throw error;
     }
-    const cfg = (order.quote.input as { configuration?: { patternId?: string; w?: number; l?: number; d?: number } })
-      .configuration;
+    const cfg = (
+      order.quote.input as { configuration?: { patternId?: string; w?: number; l?: number; d?: number } }
+    ).configuration;
     const pattern = cfg?.patternId
       ? await this.prisma.pattern.findUnique({
           where: { publicId: cfg.patternId },
@@ -272,9 +273,15 @@ export class ArtworkService implements OnModuleInit {
   // --- prepress review -------------------------------------------------------------------------------
 
   /** The Prepress owner of an order's artwork (U-B0.2): an active staff member, or null to unassign (activity + event). */
-  async assignPrepress(actor: UserActor, orderPublicId: string, assigneePublicId: string | null): Promise<void> {
+  async assignPrepress(
+    actor: UserActor,
+    orderPublicId: string,
+    assigneePublicId: string | null,
+  ): Promise<void> {
     const assignee = assigneePublicId
-      ? await this.prisma.user.findFirst({ where: { publicId: assigneePublicId, kind: 'staff', status: 'active' } })
+      ? await this.prisma.user.findFirst({
+          where: { publicId: assigneePublicId, kind: 'staff', status: 'active' },
+        })
       : null;
     if (assigneePublicId && !assignee)
       throw new DomainException('validation.failed', {
@@ -332,9 +339,15 @@ export class ArtworkService implements OnModuleInit {
         await this.customerPublicId(tx, order.customerUserId),
       );
       if (note?.trim())
-        await this.record(tx, order.publicId, 'artwork.review_note', { submissionId: row.publicId, note: note.trim() }, actor, null, [
-          'internal',
-        ]);
+        await this.record(
+          tx,
+          order.publicId,
+          'artwork.review_note',
+          { submissionId: row.publicId, note: note.trim() },
+          actor,
+          null,
+          ['internal'],
+        );
       return tx.artworkSubmission.findUniqueOrThrow({ where: { id: row.id }, include: SUBMISSION_INCLUDE });
     });
   }
@@ -418,7 +431,8 @@ export class ArtworkService implements OnModuleInit {
     const liveOrder: Prisma.OrderWhereInput = {
       status: { not: 'cancelled' as const },
       ...(filters.assigneeId === 'none' && { prepressAssigneeId: null }),
-      ...(filters.assigneeId && filters.assigneeId !== 'none' && { prepressAssignee: { publicId: filters.assigneeId } }),
+      ...(filters.assigneeId &&
+        filters.assigneeId !== 'none' && { prepressAssignee: { publicId: filters.assigneeId } }),
       ...(filters.productTypeCode && { productType: { code: filters.productTypeCode } }),
       ...(filters.artworkStatus && { artworkStatus: filters.artworkStatus }),
     };

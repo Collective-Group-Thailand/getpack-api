@@ -176,7 +176,8 @@ export class ClaimsService implements OnModuleInit {
     const now = new Date();
     const windowEnd = async (receivedAt: Date) =>
       new Date(
-        receivedAt.getTime() + (await this.settings.at('claims.window_days', { at: receivedAt })).value * DAY_MS,
+        receivedAt.getTime() +
+          (await this.settings.at('claims.window_days', { at: receivedAt })).value * DAY_MS,
       );
     const items = await this.prisma.shipmentItem.findMany({
       where: { orderId: order.id, shipment: { status: 'delivered', deliveredAt: { not: null } } },

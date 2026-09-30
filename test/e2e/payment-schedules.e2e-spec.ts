@@ -118,7 +118,13 @@ describe('payment schedules (e2e, B3.2)', () => {
     ]);
     // U-B0.1: the same instalment in my cross-group list, payable until paid.
     const mine = (await as(ctx, token).get('/v1/store/instalments').expect(200)).body as {
-      data: { id: string; groupId: string; groupCode: string; payable: boolean; orders: { orderCode: string }[] }[];
+      data: {
+        id: string;
+        groupId: string;
+        groupCode: string;
+        payable: boolean;
+        orders: { orderCode: string }[];
+      }[];
     };
     expect(mine.data).toEqual([
       expect.objectContaining({

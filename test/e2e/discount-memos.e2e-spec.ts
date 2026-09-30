@@ -111,12 +111,19 @@ describe('discount memos (e2e, B3.5)', () => {
     const raised = await as(ctx, cs)
       .post('/v1/admin/discount-memos', { customerId, requestedPct: '8', reason: 'คู่แข่งเสนอราคาต่ำกว่า' })
       .expect(201);
-    expect(raised.body).toMatchObject({ scope: 'order', status: 'pending_approval', requestedPct: '8.0000', evidence: [] });
+    expect(raised.body).toMatchObject({
+      scope: 'order',
+      status: 'pending_approval',
+      requestedPct: '8.0000',
+      evidence: [],
+    });
     const mine = await as(ctx, cs)
       .get(`/v1/admin/discount-memos?requestedBy=${raised.body.requestedBy.id as string}&perPage=100`)
       .expect(200);
     expect((mine.body.data as { id: string }[]).map((m) => m.id)).toContain(raised.body.id);
-    expect((await as(ctx, cs).get(`/v1/admin/discount-memos?requestedBy=${randomUUID()}`).expect(200)).body.data).toEqual([]);
+    expect(
+      (await as(ctx, cs).get(`/v1/admin/discount-memos?requestedBy=${randomUUID()}`).expect(200)).body.data,
+    ).toEqual([]);
     const approval = await ctx.prisma.approvalRequest.findUniqueOrThrow({
       where: { publicId: raised.body.approvalId as string },
       include: { steps: { include: { approverRole: true } } },

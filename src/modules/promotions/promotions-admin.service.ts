@@ -472,7 +472,10 @@ export class PromotionsAdminService {
         prefix: batch.prefix,
         usageLimit: input.kind === 'single' ? (input.usageLimit ?? null) : (input.usageLimit ?? 1),
         generatedAt: toBangkokIso(batch.generatedAt),
-        generatedBy: { id: actor.publicId, displayName: (await tx.user.findUniqueOrThrow({ where: { id: actor.userId } })).displayName },
+        generatedBy: {
+          id: actor.publicId,
+          displayName: (await tx.user.findUniqueOrThrow({ where: { id: actor.userId } })).displayName,
+        },
       };
     });
   }
@@ -640,7 +643,14 @@ export class PromotionsAdminService {
           where: { id: row.id },
           data: { priority, updatedById: actor.userId, rowVersion: { increment: 1 } },
         });
-        await this.record(tx, 'promotion', row.publicId, 'promotion.priority_changed', { from: row.priority, to: priority }, actor);
+        await this.record(
+          tx,
+          'promotion',
+          row.publicId,
+          'promotion.priority_changed',
+          { from: row.priority, to: priority },
+          actor,
+        );
         updated += 1;
       }
       return updated;
@@ -659,7 +669,10 @@ export class PromotionsAdminService {
       distinct: ['batchId'],
       select: { batchId: true, usageLimit: true },
     });
-    return batches.map((b) => ({ ...b, usageLimit: limits.find((l) => l.batchId === b.id)?.usageLimit ?? null }));
+    return batches.map((b) => ({
+      ...b,
+      usageLimit: limits.find((l) => l.batchId === b.id)?.usageLimit ?? null,
+    }));
   }
 
   // --- report (D-053 "reports") ------------------------------------------------------------------------

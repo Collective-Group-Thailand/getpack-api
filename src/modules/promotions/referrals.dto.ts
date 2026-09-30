@@ -88,7 +88,11 @@ export class MyReferralDto {
   @ApiProperty({ type: ReferralRulesDto })
   rules!: ReferralRulesDto;
 
-  @ApiProperty({ type: 'integer', example: 1, description: 'Referrals qualified or rewarded this calendar month (the D-136 cap)' })
+  @ApiProperty({
+    type: 'integer',
+    example: 1,
+    description: 'Referrals qualified or rewarded this calendar month (the D-136 cap)',
+  })
   rewardedThisMonth!: number;
 
   @ApiProperty({ type: [MyReferralItemDto], description: 'The 50 most recent, newest first' })
@@ -183,7 +187,12 @@ export class AdminReferralDto extends ReferralDto {
   })
   fraudFlags!: string[];
 
-  @ApiProperty({ type: String, nullable: true, example: '14182.80', description: 'Gross amount of the first order group' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '14182.80',
+    description: 'Gross amount of the first order group',
+  })
   firstOrderGrossAmount!: string | null;
 
   @ApiProperty({
@@ -195,7 +204,11 @@ export class AdminReferralDto extends ReferralDto {
   })
   firstOrderClaimWindowEndsAt!: string | null;
 
-  @ApiProperty({ type: 'integer', example: 0, description: 'Points credited to the referrer for this referral' })
+  @ApiProperty({
+    type: 'integer',
+    example: 0,
+    description: 'Points credited to the referrer for this referral',
+  })
   rewardPoints!: number;
 
   @ApiProperty({

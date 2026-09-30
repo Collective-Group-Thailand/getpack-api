@@ -163,7 +163,13 @@ export class StoreCatalogController {
     type: [StoreProductCategoryDto],
     example: [
       { code: 'boxes', nameTh: 'กล่อง', nameEn: 'Boxes', parentCode: null, sort: 10 },
-      { code: 'folding_carton', nameTh: 'กล่องกระดาษแข็ง', nameEn: 'Folding cartons', parentCode: 'boxes', sort: 20 },
+      {
+        code: 'folding_carton',
+        nameTh: 'กล่องกระดาษแข็ง',
+        nameEn: 'Folding cartons',
+        parentCode: 'boxes',
+        sort: 20,
+      },
     ],
   })
   @ApiStandardErrors('validation.failed')
@@ -621,7 +627,9 @@ export class StoreCatalogController {
   @ApiSuccess(200, {
     description: 'Districts',
     type: [StoreGeoAreaDto],
-    example: [{ id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0005', code: '1001', nameTh: 'พระนคร', nameEn: 'Phra Nakhon' }],
+    example: [
+      { id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0005', code: '1001', nameTh: 'พระนคร', nameEn: 'Phra Nakhon' },
+    ],
   })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   districts(@Param('code') code: string): Promise<StoreGeoAreaDto[]> {
@@ -680,7 +688,12 @@ export class StoreCatalogController {
           nameEn: 'Phra Borom Maha Ratchawang',
           postcode: '10200',
         },
-        district: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0005', code: '1001', nameTh: 'พระนคร', nameEn: 'Phra Nakhon' },
+        district: {
+          id: '0192f3a0-7c1e-7d2a-9b1f-0000000c0005',
+          code: '1001',
+          nameTh: 'พระนคร',
+          nameEn: 'Phra Nakhon',
+        },
         province: AREA,
       },
     ],

@@ -70,7 +70,11 @@ export class StorePrivacyController {
       'completed export — the file to download while it is available (D-222).',
     implements: DECISIONS,
   })
-  @ApiSuccess(200, { description: 'My requests', type: [PrivacyRequestDto], example: [PRIVACY_REQUEST_EXAMPLE] })
+  @ApiSuccess(200, {
+    description: 'My requests',
+    type: [PrivacyRequestDto],
+    example: [PRIVACY_REQUEST_EXAMPLE],
+  })
   @ApiStandardErrors('validation.failed')
   async list(@CurrentActor() actor: Actor): Promise<PrivacyRequestDto[]> {
     const rows = await this.privacy.mine(customer(actor).userId);
@@ -95,7 +99,10 @@ export class StorePrivacyController {
     example: { ...PRIVACY_REQUEST_EXAMPLE, status: 'submitted', answer: null, decidedAt: null, export: null },
   })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'privacy.request_open')
-  async create(@CurrentActor() actor: Actor, @Body() body: CreatePrivacyRequestDto): Promise<PrivacyRequestDto> {
+  async create(
+    @CurrentActor() actor: Actor,
+    @Body() body: CreatePrivacyRequestDto,
+  ): Promise<PrivacyRequestDto> {
     return privacyRequestDto(await this.privacy.submit(customer(actor), body.kind, body.note ?? null));
   }
 }
@@ -142,8 +149,15 @@ export class AdminPrivacyController {
       'claims or receivables are open. Audited (D-222).',
     implements: DECISIONS,
   })
-  @ApiBody({ type: CompletePrivacyRequestDto, examples: { default: { value: { answer: 'ส่งไฟล์ข้อมูลของคุณแล้ว' } } } })
-  @ApiSuccess(200, { description: 'Completed', type: AdminPrivacyRequestDto, example: ADMIN_PRIVACY_REQUEST_EXAMPLE })
+  @ApiBody({
+    type: CompletePrivacyRequestDto,
+    examples: { default: { value: { answer: 'ส่งไฟล์ข้อมูลของคุณแล้ว' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Completed',
+    type: AdminPrivacyRequestDto,
+    example: ADMIN_PRIVACY_REQUEST_EXAMPLE,
+  })
   @ApiStandardErrors(
     'http.bad_request',
     'http.malformed_json',
@@ -167,16 +181,26 @@ export class AdminPrivacyController {
   @ApiEndpoint({
     id: 'admin.privacyRequests.reject',
     summary: 'Reject a PDPA request with the reason',
-    description: 'For example when the requester could not be verified; the answer is shown to the customer (D-222).',
+    description:
+      'For example when the requester could not be verified; the answer is shown to the customer (D-222).',
     implements: DECISIONS,
   })
-  @ApiBody({ type: RejectPrivacyRequestDto, examples: { default: { value: { answer: 'ไม่สามารถยืนยันตัวตนได้' } } } })
+  @ApiBody({
+    type: RejectPrivacyRequestDto,
+    examples: { default: { value: { answer: 'ไม่สามารถยืนยันตัวตนได้' } } },
+  })
   @ApiSuccess(200, {
     description: 'Rejected',
     type: AdminPrivacyRequestDto,
     example: { ...ADMIN_PRIVACY_REQUEST_EXAMPLE, status: 'rejected', export: null },
   })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed', 'privacy.request_closed')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'privacy.request_closed',
+  )
   async reject(
     @CurrentActor() actor: Actor,
     @Param('requestId', ParseUUIDPipe) requestId: string,

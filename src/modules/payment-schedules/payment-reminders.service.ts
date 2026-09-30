@@ -38,7 +38,9 @@ export class PaymentRemindersService {
       if (!order) throw new DomainException('http.not_found');
       const group = order.orderGroup;
       await tx.$queryRaw`SELECT id FROM order_groups WHERE id = ${group.id} FOR UPDATE`;
-      const due = group.paymentSchedule?.instalments.find((i) => (OPEN as readonly string[]).includes(i.status));
+      const due = group.paymentSchedule?.instalments.find((i) =>
+        (OPEN as readonly string[]).includes(i.status),
+      );
       if (!due || group.status === 'cancelled') throw new DomainException('payments.nothing_due');
       const recent = await tx.domainEvent.count({
         where: {

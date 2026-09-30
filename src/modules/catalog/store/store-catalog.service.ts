@@ -149,7 +149,12 @@ export class StoreCatalogService {
       seen.add(id);
       return [id, ...(children.get(id) ?? []).flatMap((child) => subtree(child, seen))];
     };
-    return { categories, byId, subtree, browsable: (id: bigint) => subtree(id).some((c) => withTypes.has(c)) };
+    return {
+      categories,
+      byId,
+      subtree,
+      browsable: (id: bigint) => subtree(id).some((c) => withTypes.has(c)),
+    };
   }
 
   /** D-228: a category filter includes its sub-categories; an unknown code matches nothing. */
@@ -700,7 +705,11 @@ export class StoreCatalogService {
     });
     if (!product) throw new DomainException('http.not_found');
     const rows = await this.prisma.faq.findMany({
-      where: { status: 'published', deletedAt: null, catalogProducts: { some: { catalogProductId: product.id } } },
+      where: {
+        status: 'published',
+        deletedAt: null,
+        catalogProducts: { some: { catalogProductId: product.id } },
+      },
       orderBy: [{ sort: 'asc' }, { id: 'asc' }],
     });
     return rows.map((f) => ({
@@ -721,7 +730,10 @@ export class StoreCatalogService {
     const indexable = { OR: [{ seoPageId: null }, { seoPage: { noindex: false } }] };
     const [tree, categories, products, stock, articles] = await Promise.all([
       this.categoryTree(),
-      this.prisma.productCategory.findMany({ where: { status: ACTIVE }, select: { id: true, updatedAt: true } }),
+      this.prisma.productCategory.findMany({
+        where: { status: ACTIVE },
+        select: { id: true, updatedAt: true },
+      }),
       this.prisma.catalogProduct.findMany({
         where: { ...this.productWhere(), ...indexable },
         select: { slug: true, updatedAt: true },
@@ -743,14 +755,26 @@ export class StoreCatalogService {
       ...tree.categories
         .filter((c) => tree.browsable(c.id))
         .sort((a, b) => a.code.localeCompare(b.code))
-        .map((c) => ({ kind: 'category' as const, key: c.code, lastModified: toBangkokIso(updated.get(c.id)!) })),
+        .map((c) => ({
+          kind: 'category' as const,
+          key: c.code,
+          lastModified: toBangkokIso(updated.get(c.id)!),
+        })),
       ...products.map((p) => ({
         kind: 'catalog_product' as const,
         key: p.slug,
         lastModified: toBangkokIso(p.updatedAt),
       })),
-      ...stock.map((s) => ({ kind: 'stock_product' as const, key: s.sku, lastModified: toBangkokIso(s.updatedAt) })),
-      ...articles.map((a) => ({ kind: 'article' as const, key: a.slug, lastModified: toBangkokIso(a.updatedAt) })),
+      ...stock.map((s) => ({
+        kind: 'stock_product' as const,
+        key: s.sku,
+        lastModified: toBangkokIso(s.updatedAt),
+      })),
+      ...articles.map((a) => ({
+        kind: 'article' as const,
+        key: a.slug,
+        lastModified: toBangkokIso(a.updatedAt),
+      })),
     ];
   }
 
@@ -766,7 +790,8 @@ export class StoreCatalogService {
         hours: text(value.hours),
       };
     } catch (error) {
-      if (error instanceof SettingNotFoundError) return { lineOaId: null, phone: null, email: null, hours: null };
+      if (error instanceof SettingNotFoundError)
+        return { lineOaId: null, phone: null, email: null, hours: null };
       throw error;
     }
   }

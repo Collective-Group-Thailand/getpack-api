@@ -178,7 +178,8 @@ export class OrderReceiptDto {
     format: 'date-time',
     nullable: true,
     example: '2026-10-27T15:00:00+07:00',
-    description: 'While delivered and not completed: when the order completes by itself (`orders.auto_complete_days`, D-081)',
+    description:
+      'While delivered and not completed: when the order completes by itself (`orders.auto_complete_days`, D-081)',
   })
   autoCompleteAt!: string | null;
 
@@ -248,7 +249,8 @@ export class OrderDto {
 
   @ApiProperty({
     type: LineSummaryDto,
-    description: 'Product, product type, sales unit and spec lines to display (from the quote it was made from)',
+    description:
+      'Product, product type, sales unit and spec lines to display (from the quote it was made from)',
   })
   summary!: LineSummaryDto;
 
@@ -305,7 +307,12 @@ export class OrderDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   cancelledAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Code of the cancellation reason' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Code of the cancellation reason',
+  })
   cancelReasonCode!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -317,7 +324,11 @@ export class OrderDto {
   @ApiProperty({ type: OrderReceiptDto })
   receipt!: OrderReceiptDto;
 
-  @ApiProperty({ type: OrderToleranceOutcomeDto, nullable: true, description: 'Null until the order is delivered' })
+  @ApiProperty({
+    type: OrderToleranceOutcomeDto,
+    nullable: true,
+    description: 'Null until the order is delivered',
+  })
   toleranceOutcome!: OrderToleranceOutcomeDto | null;
 
   @ApiProperty({ type: String, format: 'date-time', example: '2026-10-01T09:00:00+07:00' })
@@ -415,7 +426,12 @@ export class OrderCustomerRefDto {
   @ApiProperty({ example: 'สมชาย ทดสอบ' })
   displayName!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: 'บริษัท ตัวอย่าง จำกัด', description: 'The ordering company' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'บริษัท ตัวอย่าง จำกัด',
+    description: 'The ordering company',
+  })
   companyName!: string | null;
 }
 
@@ -553,7 +569,12 @@ export const ADMIN_ORDER_GROUP_EXAMPLE: AdminOrderGroupDto = {
   csRemarks: null,
   placedById: ORDER_IDS.customer,
   utm: null,
-  customer: { id: ORDER_IDS.customer, customerCode: 'CU-000042', displayName: 'สมชาย ทดสอบ', companyName: null },
+  customer: {
+    id: ORDER_IDS.customer,
+    customerCode: 'CU-000042',
+    displayName: 'สมชาย ทดสอบ',
+    companyName: null,
+  },
   placedBy: { id: ORDER_IDS.customer, displayName: 'สมชาย ทดสอบ' },
   taxProfile: null,
   hasSlipToReview: false,

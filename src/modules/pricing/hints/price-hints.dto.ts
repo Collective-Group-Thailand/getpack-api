@@ -19,7 +19,8 @@ export class PriceHintQuery {
   @ApiPropertyOptional({
     type: [String],
     example: ['tuck-end-box'],
-    description: 'Catalogue product slugs (comma-separated or repeated, ≤ 100); all products of the type when omitted',
+    description:
+      'Catalogue product slugs (comma-separated or repeated, ≤ 100); all products of the type when omitted',
   })
   @IsOptional()
   @Transform(list)
@@ -49,13 +50,21 @@ export class PriceHintBasisDto {
   @ApiProperty({ type: 'integer', example: 1000, description: 'Quantity the price per piece is for' })
   quantity!: number;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Standard size code, when the reference is one' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Standard size code, when the reference is one',
+  })
   sizeCode!: string | null;
 
   @ApiProperty({ example: true })
   includesVat!: boolean;
 
-  @ApiProperty({ example: false, description: 'Delivery is quoted for the delivery postcode, not in this figure' })
+  @ApiProperty({
+    example: false,
+    description: 'Delivery is quoted for the delivery postcode, not in this figure',
+  })
   includesDelivery!: boolean;
 
   @ApiProperty({ type: [SpecLineDto], description: 'The reference specification, as spec lines' })
@@ -118,7 +127,13 @@ export const PRICE_HINT_EXAMPLE: PriceHintDto = {
     includesVat: true,
     includesDelivery: false,
     specs: [
-      { key: 'size', labelTh: 'ขนาด (กว้าง × ยาว × ลึก)', labelEn: 'Size (W × L × D)', valueTh: '60 × 60 × 150 มม.', valueEn: '60 × 60 × 150 mm' },
+      {
+        key: 'size',
+        labelTh: 'ขนาด (กว้าง × ยาว × ลึก)',
+        labelEn: 'Size (W × L × D)',
+        valueTh: '60 × 60 × 150 มม.',
+        valueEn: '60 × 60 × 150 mm',
+      },
     ],
   },
   leadTimeBusinessDays: { min: 7, max: 7 },

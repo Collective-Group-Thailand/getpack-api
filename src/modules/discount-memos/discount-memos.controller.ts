@@ -63,7 +63,10 @@ export class AdminDiscountMemosController {
   /** The memo with its evidence files (D-052). */
   private async memoView(m: MemoRow, showMargin: boolean): Promise<DiscountMemoDto> {
     const files = m.evidenceFileIds.length
-      ? await this.prisma.fileObject.findMany({ where: { id: { in: m.evidenceFileIds } }, orderBy: { id: 'asc' } })
+      ? await this.prisma.fileObject.findMany({
+          where: { id: { in: m.evidenceFileIds } },
+          orderBy: { id: 'asc' },
+        })
       : [];
     return {
       ...memoDto(m, showMargin),

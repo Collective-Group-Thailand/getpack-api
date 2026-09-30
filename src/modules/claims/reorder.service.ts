@@ -77,7 +77,10 @@ export class ReorderService {
       orderCode: order.orderCode,
       quantity,
       previousQuantity: order.quantityOrdered,
-      quantityLimits: { min: order.catalogProduct?.quantityMin ?? null, max: order.catalogProduct?.quantityMax ?? null },
+      quantityLimits: {
+        min: order.catalogProduct?.quantityMin ?? null,
+        max: order.catalogProduct?.quantityMax ?? null,
+      },
       unitPrice: step.unitPrice!,
       productAmount: step.productAmount!,
       designFeeAmount: step.designFeeAmount ?? '0.00',
@@ -204,7 +207,12 @@ export class ReorderService {
     const binding: BulkBinding = {
       companyId: company.publicId,
       userId: String(actor.userId),
-      rows: ok.map((r) => ({ line: r.line, orderCode: r.orderCode, quantity: r.quantity!, grossAmount: r.grossAmount! })),
+      rows: ok.map((r) => ({
+        line: r.line,
+        orderCode: r.orderCode,
+        quantity: r.quantity!,
+        grossAmount: r.grossAmount!,
+      })),
     };
     if (ok.length) await this.redis.set(this.key(token), JSON.stringify(binding), 'EX', PREVIEW_TTL_SECONDS);
     return {
@@ -233,7 +241,10 @@ export class ReorderService {
       throw new DomainException('orders.reorder_preview_expired');
     const sources = [];
     for (const row of bound.rows) {
-      const source = await this.source(actor, '', undefined, { companyId: company.id, orderCode: row.orderCode });
+      const source = await this.source(actor, '', undefined, {
+        companyId: company.id,
+        orderCode: row.orderCode,
+      });
       const step = await this.price(actor, source.spec, row.quantity);
       if (step.grossAmount !== row.grossAmount)
         throw new DomainException('orders.reorder_repriced', { params: { grossAmount: step.grossAmount! } });

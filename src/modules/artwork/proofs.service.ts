@@ -206,11 +206,16 @@ export class ProofsService {
         parentId = parent.id;
         place = {
           page: input.page ?? parent.page,
-          kind: input.kind ?? (parent.kind),
+          kind: input.kind ?? parent.kind,
           geometry: input.geometry ?? (parent.geometry as Record<string, unknown>),
         };
       }
-      if (place.page === undefined || !place.kind || !place.geometry || !validGeometry(place.kind, place.geometry))
+      if (
+        place.page === undefined ||
+        !place.kind ||
+        !place.geometry ||
+        !validGeometry(place.kind, place.geometry)
+      )
         throw new DomainException('validation.failed', {
           errors: [
             {
@@ -533,7 +538,11 @@ export function proofDto(row: ProofRow, forCustomer: boolean): ProofDto {
     decidedAt: row.decidedAt ? toBangkokIso(row.decidedAt) : null,
     decisionChannel: row.decisionChannel,
     decisionComment: row.decisionComment,
-    decidedByName: row.decidedBy ? (row.decidedBy.kind === 'staff' ? 'Packio' : row.decidedBy.displayName) : null,
+    decidedByName: row.decidedBy
+      ? row.decidedBy.kind === 'staff'
+        ? 'Packio'
+        : row.decidedBy.displayName
+      : null,
     decisionChecklist: row.decisionChecklist,
     onBehalfReason: row.onBehalfReason,
     approvedFileId: row.approvedFile?.publicId ?? null,

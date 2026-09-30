@@ -83,8 +83,7 @@ export class SupportService {
   }
 
   private async open(actor: Actor | undefined, t: TicketInput): Promise<SupportTicketDto> {
-    const customerUserId =
-      actor?.type === 'user' && actor.audience === 'customer' ? actor.userId : null;
+    const customerUserId = actor?.type === 'user' && actor.audience === 'customer' ? actor.userId : null;
     if (customerUserId === null && (!t.contact || (!t.contact.phone && !t.contact.email)))
       throw new DomainException('support.contact_required');
     const now = new Date();
@@ -163,7 +162,9 @@ export class SupportService {
     try {
       const channels = (await this.settings.at('storefront.support_channels')).value;
       const oa = channels?.lineOaId;
-      return oa ? `https://line.me/R/oaMessage/${encodeURIComponent(oa)}/?${encodeURIComponent(ticketNo)}` : null;
+      return oa
+        ? `https://line.me/R/oaMessage/${encodeURIComponent(oa)}/?${encodeURIComponent(ticketNo)}`
+        : null;
     } catch (error) {
       if (error instanceof SettingNotFoundError) return null;
       throw error;

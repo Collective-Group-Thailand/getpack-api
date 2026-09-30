@@ -71,7 +71,12 @@ describe('store designs (e2e, U-B0.1)', () => {
       .set('If-Match', created.headers['etag'] as string)
       .expect(200);
     const manual = await api
-      .put(`/v1/store/designs/${id}`, { schemaVersion: 1, document: DOC2, label: 'ก่อนเปลี่ยนสี', heightMm: 55 })
+      .put(`/v1/store/designs/${id}`, {
+        schemaVersion: 1,
+        document: DOC2,
+        label: 'ก่อนเปลี่ยนสี',
+        heightMm: 55,
+      })
       .set('If-Match', auto.headers['etag'] as string)
       .expect(200);
     expect(manual.body).toMatchObject({ versionNo: 3, heightMm: 55 });
@@ -165,13 +170,20 @@ describe('store designs (e2e, U-B0.1)', () => {
       data: { designDocument: { connect: { publicId: used.body.id as string } } },
     });
 
-    const all = (await api.get('/v1/store/designs').expect(200)).body.data as { id: string; orders: object[] }[];
+    const all = (await api.get('/v1/store/designs').expect(200)).body.data as {
+      id: string;
+      orders: object[];
+    }[];
     expect(all.find((d) => d.id === used.body.id)?.orders).toEqual([
       { orderId: order.id, orderCode: order.orderCode },
     ]);
-    const linked = (await api.get('/v1/store/designs?linked=linked').expect(200)).body.data as { id: string }[];
+    const linked = (await api.get('/v1/store/designs?linked=linked').expect(200)).body.data as {
+      id: string;
+    }[];
     expect(linked.map((d) => d.id)).toEqual([used.body.id]);
-    const unlinked = (await api.get('/v1/store/designs?linked=unlinked').expect(200)).body.data as { id: string }[];
+    const unlinked = (await api.get('/v1/store/designs?linked=unlinked').expect(200)).body.data as {
+      id: string;
+    }[];
     expect(unlinked.map((d) => d.id)).toEqual([unused.body.id]);
     await api.get('/v1/store/designs?linked=maybe').expect(422);
   });
@@ -193,7 +205,10 @@ describe('store designs (e2e, U-B0.1)', () => {
       })
       .expect(200);
     expect(first.body.skipped).toEqual([{ localId: 'guest-b', reason: 'product_not_found' }]);
-    expect((first.body.imported as { localId: string }[]).map((r) => r.localId)).toEqual(['guest-a', 'guest-c']);
+    expect((first.body.imported as { localId: string }[]).map((r) => r.localId)).toEqual([
+      'guest-a',
+      'guest-c',
+    ]);
     const a = (first.body.imported as { localId: string; designId: string }[])[0]!.designId;
     const c = (first.body.imported as { localId: string; designId: string }[])[1]!.designId;
     const version = (await api.get(`/v1/store/designs/${a}/versions/1`).expect(200)).body;
@@ -225,7 +240,12 @@ describe('store designs (e2e, U-B0.1)', () => {
     expect(Date.parse(first.body.expiresAt) - Date.parse(first.body.sharedAt)).toBe(15 * DAY_MS);
     const open = (token_: string) => request(ctx.server).get(`/v1/store/shared-designs/${token_}`);
     const seen = await open(first.body.shareToken as string).expect(200);
-    expect(seen.body).toMatchObject({ title: 'แชร์', document: DOC, versionNo: 1, product: { id: productId } });
+    expect(seen.body).toMatchObject({
+      title: 'แชร์',
+      document: DOC,
+      versionNo: 1,
+      product: { id: productId },
+    });
     expect(seen.body).not.toHaveProperty('id');
     expect(JSON.stringify(seen.body)).not.toContain(id);
     const row = await ctx.prisma.designDocument.findUniqueOrThrow({ where: { publicId: id } });
@@ -252,7 +272,9 @@ describe('store designs (e2e, U-B0.1)', () => {
     await open(third.body.shareToken as string).expect(404);
     await open('not-a-token').expect(404);
     expect(
-      await ctx.prisma.domainEvent.count({ where: { aggregateId: id, type: { in: ['design.shared', 'design.share_revoked'] } } }),
+      await ctx.prisma.domainEvent.count({
+        where: { aggregateId: id, type: { in: ['design.shared', 'design.share_revoked'] } },
+      }),
     ).toBe(4);
   });
 
@@ -306,12 +328,22 @@ describe('store designs (e2e, U-B0.1)', () => {
     });
     expect((catalog.fonts as { id: string }[]).map((f) => f.id)).not.toContain(hidden.publicId);
     expect(catalog.templates).toContainEqual(
-      expect.objectContaining({ id: template.publicId, colours: ['#112233'], fontIds: [font.publicId], hasDesign: false }),
+      expect.objectContaining({
+        id: template.publicId,
+        colours: ['#112233'],
+        fontIds: [font.publicId],
+        hasDesign: false,
+      }),
     );
     expect(JSON.stringify(catalog)).not.toMatch(/price|factory|cost/i);
 
     const templateDesign = await as(ctx, admin)
-      .post('/v1/admin/designs', { catalogProductId: productId, title: 'เทมเพลต', schemaVersion: 1, document: DOC })
+      .post('/v1/admin/designs', {
+        catalogProductId: productId,
+        title: 'เทมเพลต',
+        schemaVersion: 1,
+        document: DOC,
+      })
       .expect(201);
     await as(ctx, admin)
       .post(`/v1/admin/catalog/semi-design-templates/${template.publicId}/actions/set-design`, {
@@ -319,7 +351,12 @@ describe('store designs (e2e, U-B0.1)', () => {
       })
       .expect(204);
     const detail = (await pub.get(`/v1/store/designer/templates/${template.publicId}`).expect(200)).body;
-    expect(detail).toMatchObject({ hasDesign: true, document: DOC, schemaVersion: 1, product: { id: productId } });
+    expect(detail).toMatchObject({
+      hasDesign: true,
+      document: DOC,
+      schemaVersion: 1,
+      product: { id: productId },
+    });
 
     const served = await pub.get(`/v1/store/designer/fonts/${font.publicId}`).expect(200);
     expect(served.headers['cache-control']).toBe('public, max-age=86400');
@@ -334,7 +371,9 @@ describe('store designs (e2e, U-B0.1)', () => {
     const design = await create(token, 'ของลูกค้า');
     const prepress = await staffToken(ctx, 'prepress');
     const admin = await staffToken(ctx, 'admin');
-    const seen = await as(ctx, admin).get(`/v1/admin/designs/${design.body.id as string}`).expect(200);
+    const seen = await as(ctx, admin)
+      .get(`/v1/admin/designs/${design.body.id as string}`)
+      .expect(200);
     expect(seen.body).toMatchObject({ editable: false, owner: { kind: 'customer' } });
     expect(
       (
@@ -347,14 +386,31 @@ describe('store designs (e2e, U-B0.1)', () => {
     const copy = await as(ctx, prepress)
       .post(`/v1/admin/designs/${design.body.id as string}/actions/copy`, { title: 'สำเนา (fake)' })
       .expect(201);
-    expect(copy.body).toMatchObject({ editable: true, owner: { kind: 'staff' }, document: DOC, title: 'สำเนา (fake)' });
+    expect(copy.body).toMatchObject({
+      editable: true,
+      owner: { kind: 'staff' },
+      document: DOC,
+      title: 'สำเนา (fake)',
+    });
     expect(copy.body.id).not.toBe(design.body.id);
     expect(
-      await ctx.prisma.domainEvent.count({ where: { type: 'design.copied_by_staff', aggregateId: copy.body.id } }),
+      await ctx.prisma.domainEvent.count({
+        where: { type: 'design.copied_by_staff', aggregateId: copy.body.id },
+      }),
     ).toBe(1);
     // The customer's design is untouched and not theirs to see as a copy.
-    expect((await as(ctx, token).get(`/v1/store/designs/${design.body.id as string}`).expect(200)).body.versionNo).toBe(1);
-    await as(ctx, token).get(`/v1/store/designs/${copy.body.id as string}`).expect(404);
-    await as(ctx, admin).get(`/v1/admin/orders/${design.body.id as string}/drawings`).expect(404);
+    expect(
+      (
+        await as(ctx, token)
+          .get(`/v1/store/designs/${design.body.id as string}`)
+          .expect(200)
+      ).body.versionNo,
+    ).toBe(1);
+    await as(ctx, token)
+      .get(`/v1/store/designs/${copy.body.id as string}`)
+      .expect(404);
+    await as(ctx, admin)
+      .get(`/v1/admin/orders/${design.body.id as string}/drawings`)
+      .expect(404);
   });
 });

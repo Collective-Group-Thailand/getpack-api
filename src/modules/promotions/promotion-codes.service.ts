@@ -35,7 +35,12 @@ export interface PromotionOffer {
 }
 
 function offerView(c: CouponRow, reason: string | null): PromotionOffer {
-  const b = (c.promotion.benefit ?? {}) as { type?: string; pct?: string; amount?: string; maxAmount?: string };
+  const b = (c.promotion.benefit ?? {}) as {
+    type?: string;
+    pct?: string;
+    amount?: string;
+    maxAmount?: string;
+  };
   const k = (c.promotion.conditions ?? {}) as {
     minOrderValue?: string;
     minQuantity?: number;
@@ -48,7 +53,12 @@ function offerView(c: CouponRow, reason: string | null): PromotionOffer {
     code: c.code,
     title: c.promotion.name,
     description: c.promotion.description,
-    benefit: { type: b.type ?? 'other', pct: b.pct ?? null, amount: b.amount ?? null, maxAmount: b.maxAmount ?? null },
+    benefit: {
+      type: b.type ?? 'other',
+      pct: b.pct ?? null,
+      amount: b.amount ?? null,
+      maxAmount: b.maxAmount ?? null,
+    },
     conditions: {
       minOrderValue: k.minOrderValue ?? null,
       minQuantity: k.minQuantity ?? null,
@@ -163,14 +173,32 @@ export class PromotionCodes {
     const coupon = await this.prisma.couponCode.findUnique({ where: { code }, include: COUPON_INCLUDE });
     if (!coupon) return { code, valid: false, reason: 'not_found', offer: null };
     let reason = couponReason(coupon, customerUserId ?? -1n, at);
-    const conditions = (coupon.promotion.conditions ?? {}) as { productTypeCodes?: string[]; minQuantity?: number };
-    if (!reason && input.productTypeCode && conditions.productTypeCodes && !conditions.productTypeCodes.includes(input.productTypeCode))
+    const conditions = (coupon.promotion.conditions ?? {}) as {
+      productTypeCodes?: string[];
+      minQuantity?: number;
+    };
+    if (
+      !reason &&
+      input.productTypeCode &&
+      conditions.productTypeCodes &&
+      !conditions.productTypeCodes.includes(input.productTypeCode)
+    )
       reason = 'not_applicable';
-    if (!reason && input.quantity !== undefined && conditions.minQuantity && input.quantity < conditions.minQuantity)
+    if (
+      !reason &&
+      input.quantity !== undefined &&
+      conditions.minQuantity &&
+      input.quantity < conditions.minQuantity
+    )
       reason = 'not_applicable';
     // Another customer's code: say so, show nothing of it.
     const show = reason === null || reason === 'not_applicable';
-    return { code: coupon.code, valid: reason === null, reason, offer: show ? offerView(coupon, reason) : null };
+    return {
+      code: coupon.code,
+      valid: reason === null,
+      reason,
+      offer: show ? offerView(coupon, reason) : null,
+    };
   }
 
   /** The codes assigned to me or that I saved (U-B0.1 wallet), with whether each can be used now. */
@@ -189,7 +217,11 @@ export class PromotionCodes {
     await this.countAttempts(who.customerUserId, who.csUserId !== null, source);
   }
 
-  private async countAttempts(customerUserId: bigint | null, byCs: boolean, source: AttemptSource): Promise<void> {
+  private async countAttempts(
+    customerUserId: bigint | null,
+    byCs: boolean,
+    source: AttemptSource,
+  ): Promise<void> {
     const limits = (await this.settings.at('promotions.code_attempt_limits')).value;
     const now = Date.now();
     const hour = Math.floor(now / 3_600_000);

@@ -155,7 +155,10 @@ export class DiscountMemoDto {
   @TimestampField()
   createdAt!: string;
 
-  @ApiProperty({ type: [AttachedFileDto], description: 'The evidence files the memo was raised with (D-052)' })
+  @ApiProperty({
+    type: [AttachedFileDto],
+    description: 'The evidence files the memo was raised with (D-052)',
+  })
   evidence!: AttachedFileDto[];
 }
 
@@ -178,7 +181,12 @@ export const MEMO_EXAMPLE: DiscountMemoDto = {
   appliedGroupCode: null,
   createdAt: '2026-10-01T10:00:00+07:00',
   evidence: [
-    { id: '0192f3a0-7c1e-7d2a-9b1f-00000000f001', originalName: 'quote-competitor.pdf', mimeType: 'application/pdf', sizeBytes: 245760 },
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000f001',
+      originalName: 'quote-competitor.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 245760,
+    },
   ],
 };
 

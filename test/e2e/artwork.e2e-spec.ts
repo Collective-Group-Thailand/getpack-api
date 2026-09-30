@@ -187,7 +187,9 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
     ).not.toBeNull();
     // U-B0.2: the Prepress owner and the queue's filters and refs.
     const me = await ctx.prisma.user.findFirstOrThrow({ where: { email: 'prepress@example.invalid' } });
-    await as(ctx, prepress).post(`/v1/admin/orders/${orderId}/actions/assign-prepress`, { assigneeId: me.publicId }).expect(204);
+    await as(ctx, prepress)
+      .post(`/v1/admin/orders/${orderId}/actions/assign-prepress`, { assigneeId: me.publicId })
+      .expect(204);
     const mine = await as(ctx, prepress)
       .get(`/v1/admin/prepress/queue?kind=submissions&perPage=100&assigneeId=${me.publicId}`)
       .expect(200);
@@ -199,16 +201,26 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
         customer: expect.objectContaining({ id: expect.any(String) }),
       }),
     );
-    const unowned = await as(ctx, prepress).get('/v1/admin/prepress/queue?kind=submissions&perPage=100&assigneeId=none').expect(200);
+    const unowned = await as(ctx, prepress)
+      .get('/v1/admin/prepress/queue?kind=submissions&perPage=100&assigneeId=none')
+      .expect(200);
     expect((unowned.body.data as { itemId: string }[]).map((i) => i.itemId)).not.toContain(v3.body.id);
     const accepted = await as(ctx, prepress)
-      .post(`/v1/admin/artwork-submissions/${v3.body.id as string}/actions/accept`, { note: 'ไฟล์ครบ (fake)' })
+      .post(`/v1/admin/artwork-submissions/${v3.body.id as string}/actions/accept`, {
+        note: 'ไฟล์ครบ (fake)',
+      })
       .expect(200);
     expect(accepted.body).toMatchObject({ status: 'accepted_for_proof', preflightStatus: 'passed' });
     expect(
-      await ctx.prisma.activityLog.count({ where: { aggregatePublicId: orderId, action: 'artwork.review_note', visibility: { has: 'customer' } } }),
+      await ctx.prisma.activityLog.count({
+        where: { aggregatePublicId: orderId, action: 'artwork.review_note', visibility: { has: 'customer' } },
+      }),
     ).toBe(0);
-    expect(await ctx.prisma.activityLog.count({ where: { aggregatePublicId: orderId, action: 'artwork.review_note' } })).toBe(1);
+    expect(
+      await ctx.prisma.activityLog.count({
+        where: { aggregatePublicId: orderId, action: 'artwork.review_note' },
+      }),
+    ).toBe(1);
     expect((await as(ctx, token).get(`/v1/store/orders/${orderId}`).expect(200)).body.artworkStatus).toBe(
       'in_review',
     );
@@ -389,7 +401,12 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
     });
     // U-B0.1: the upload page's rules, then an approval that must confirm the checklist once one is set.
     const rules = await as(ctx, token).get(`/v1/store/orders/${orderId}/artwork-rules`).expect(200);
-    expect(rules.body).toMatchObject({ purpose: 'artwork', bleedMm: '3', colourMode: 'cmyk', approvalChecklist: [] });
+    expect(rules.body).toMatchObject({
+      purpose: 'artwork',
+      bleedMm: '3',
+      colourMode: 'cmyk',
+      approvalChecklist: [],
+    });
     expect(rules.body.checks).toContainEqual({ check: 'missing_bleed', severity: 'block' });
     await setSetting(ctx, 'artwork.approval_checklist', [
       { key: 'spelling_checked', labelTh: 'ตรวจคำสะกดแล้ว', labelEn: 'Spelling checked' },

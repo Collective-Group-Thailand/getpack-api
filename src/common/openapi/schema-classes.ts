@@ -37,6 +37,9 @@ export function duplicateSchemaClasses(
   const schemas = document.components?.schemas ?? {};
   return [...registry.entries()]
     .filter(([name, classes]) => classes.size > 1 && name in schemas)
-    .map(([name, classes]) => `component "${name}" is published by ${classes.size} different classes: rename all but one`)
+    .map(
+      ([name, classes]) =>
+        `component "${name}" is published by ${classes.size} different classes: rename all but one`,
+    )
     .sort();
 }

@@ -46,7 +46,11 @@ export class LineProductDto {
  * sales unit and the spec lines resolved when the quote was made (catalogue names frozen like the price).
  */
 export class LineSummaryDto {
-  @ApiProperty({ type: LineProductDto, nullable: true, description: 'Null for an RFQ quote or a type-level quote' })
+  @ApiProperty({
+    type: LineProductDto,
+    nullable: true,
+    description: 'Null for an RFQ quote or a type-level quote',
+  })
   product!: LineProductDto | null;
 
   @ApiProperty({ example: 'folding_carton' })
@@ -81,7 +85,13 @@ export const LINE_SUMMARY_EXAMPLE: LineSummaryDto = {
   unit: 'piece',
   specs: [
     { key: 'style', labelTh: 'แบบกล่อง', labelEn: 'Style', valueTh: 'ฝาเสียบ', valueEn: 'ฝาเสียบ' },
-    { key: 'size', labelTh: 'ขนาด', labelEn: 'Size', valueTh: '60 × 60 × 150 มม.', valueEn: '60 × 60 × 150 mm' },
+    {
+      key: 'size',
+      labelTh: 'ขนาด',
+      labelEn: 'Size',
+      valueTh: '60 × 60 × 150 มม.',
+      valueEn: '60 × 60 × 150 mm',
+    },
     {
       key: 'material',
       labelTh: 'วัสดุ',

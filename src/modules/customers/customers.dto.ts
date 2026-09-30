@@ -447,7 +447,8 @@ export class CustomerProfileDto {
     format: 'date-time',
     nullable: true,
     example: null,
-    description: 'When I first saved my profile; null → the storefront asks for it (the customer type defaults to individual)',
+    description:
+      'When I first saved my profile; null → the storefront asks for it (the customer type defaults to individual)',
   })
   profileCompletedAt!: string | null;
 
@@ -492,7 +493,12 @@ export class AdminCustomerDto extends CustomerProfileDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-02T09:00:00+07:00' })
   lastLoginAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'A company the customer is an active member of' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'A company the customer is an active member of',
+  })
   companyName!: string | null;
 
   @ApiProperty({ type: 'integer', example: 3, description: 'Order groups placed (not cancelled)' })
@@ -501,7 +507,12 @@ export class AdminCustomerDto extends CustomerProfileDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-01T10:00:00+07:00' })
   lastOrderAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: 'PKO-7F3K', description: 'The customer’s referral code (D-136)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'PKO-7F3K',
+    description: 'The customer’s referral code (D-136)',
+  })
   referralCode!: string | null;
 }
 

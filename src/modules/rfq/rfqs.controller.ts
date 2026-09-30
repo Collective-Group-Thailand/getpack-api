@@ -4,13 +4,31 @@ import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
-import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import {
+  ApiConcurrency,
+  ApiEndpoint,
+  ApiEtag,
+  ApiStandardErrors,
+  ApiSuccess,
+} from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { addCalendarDays, startOfBangkokDay } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, Header, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  Res,
+} from '@nestjs/common';
 import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { type Response } from 'express';
 
@@ -149,7 +167,15 @@ const STAFF_EXAMPLE: StaffRfqDto = {
   contact: { email: 'someone@example.test', phone: '+66800000001' },
   slaTargetHours: 8,
   routedFromCalculator: false,
-  specLines: [{ key: 'material', labelTh: 'วัสดุ', labelEn: 'Material', valueTh: 'kraft 150 gsm (fake)', valueEn: 'kraft 150 gsm (fake)' }],
+  specLines: [
+    {
+      key: 'material',
+      labelTh: 'วัสดุ',
+      labelEn: 'Material',
+      valueTh: 'kraft 150 gsm (fake)',
+      valueEn: 'kraft 150 gsm (fake)',
+    },
+  ],
   quoteDefaults: { validUntil: '2026-10-16T10:00:00+07:00' },
 };
 const CONSULTATION_EXAMPLE: FactoryConsultationDto = {
@@ -440,7 +466,11 @@ export class AdminRfqsController {
   })
   @ApiStandardErrors('validation.failed')
   async unmetDemandReasons(): Promise<UnmetDemandReasonDto[]> {
-    return (await this.rfqs.unmetDemandReasons()).map((r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn }));
+    return (await this.rfqs.unmetDemandReasons()).map((r) => ({
+      code: r.code,
+      nameTh: r.nameTh,
+      nameEn: r.nameEn,
+    }));
   }
 
   @Get('rfqs/:rfqId')
@@ -539,7 +569,10 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: StaffRfqMessageInputDto,
   ) {
-    return this.view(actor, await this.rfqs.staffMessage(actor as UserActor, rfqId, body.body, body.visibility, body.fileIds));
+    return this.view(
+      actor,
+      await this.rfqs.staffMessage(actor as UserActor, rfqId, body.body, body.visibility, body.fileIds),
+    );
   }
 
   @Post('rfqs/:rfqId/actions/request-info')
@@ -611,7 +644,8 @@ export class AdminRfqsController {
   @ApiEndpoint({
     id: 'admin.rfqs.startReview',
     summary: 'Start reviewing a request',
-    description: 'Submitted → in review without assigning it (D-100); 409 `rfq.invalid_transition` otherwise.',
+    description:
+      'Submitted → in review without assigning it (D-100); 409 `rfq.invalid_transition` otherwise.',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Request', type: StaffRfqDto, example: STAFF_EXAMPLE })
@@ -668,8 +702,16 @@ export class AdminRfqsController {
     implements: ['D-143', 'D-100'],
   })
   @ApiSuccess(204, { description: 'Reminded' })
-  @ApiStandardErrors('http.not_found', 'validation.failed', 'rfq.consultation_not_open', 'rfq.reminder_recent')
-  async remind(@CurrentActor() actor: Actor, @Param('consultationId', ParseUUIDPipe) id: string): Promise<void> {
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    'rfq.consultation_not_open',
+    'rfq.reminder_recent',
+  )
+  async remind(
+    @CurrentActor() actor: Actor,
+    @Param('consultationId', ParseUUIDPipe) id: string,
+  ): Promise<void> {
     await this.rfqs.remindConsultation(actor as UserActor, id);
   }
 
@@ -687,7 +729,9 @@ export class AdminRfqsController {
   @ApiConcurrency()
   @ApiBody({
     type: DraftRfqQuoteDto,
-    examples: { default: { value: { lines: [{ quantity: 1000, unitPrice: '12.000000', leadTimeDays: 14 }] } } },
+    examples: {
+      default: { value: { lines: [{ quantity: 1000, unitPrice: '12.000000', leadTimeDays: 14 }] } },
+    },
   })
   @ApiSuccess(200, { description: 'Request', type: StaffRfqDto, example: STAFF_EXAMPLE, headers: ['ETag'] })
   @ApiStandardErrors(...WRITE, 'rfq.closed', 'rfq.quote_not_draft', 'pricing.vat_rate_missing')
@@ -716,8 +760,15 @@ export class AdminRfqsController {
       '(source `rfq`) CS then puts in their cart (D-100, D-051); audited with how it was given.',
     implements: [...DECISIONS, 'D-051'],
   })
-  @ApiBody({ type: RecordRfqAcceptanceDto, examples: { default: { value: { quantities: [1000], via: 'phone' } } } })
-  @ApiSuccess(200, { description: 'Request', type: StaffRfqDto, example: { ...STAFF_EXAMPLE, status: 'accepted' } })
+  @ApiBody({
+    type: RecordRfqAcceptanceDto,
+    examples: { default: { value: { quantities: [1000], via: 'phone' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Request',
+    type: StaffRfqDto,
+    example: { ...STAFF_EXAMPLE, status: 'accepted' },
+  })
   @ApiStandardErrors(...WRITE, 'rfq.quote_not_open')
   async recordAcceptance(
     @CurrentActor() actor: Actor,
@@ -840,7 +891,10 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: StaffDeclineRfqDto,
   ) {
-    return this.view(actor, await this.rfqs.staffDecline(actor as UserActor, rfqId, body.reasonCode, body.note));
+    return this.view(
+      actor,
+      await this.rfqs.staffDecline(actor as UserActor, rfqId, body.reasonCode, body.note),
+    );
   }
 
   private async view(actor: Actor, row: RfqRow, files?: RfqFiles): Promise<StaffRfqDto> {

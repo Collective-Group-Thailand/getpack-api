@@ -32,7 +32,13 @@ const SHARE_TOKEN = /^[A-Za-z0-9_-]{43}$/;
 
 export const DESIGN_INCLUDE = {
   catalogProduct: {
-    select: { publicId: true, slug: true, nameTh: true, nameEn: true, productType: { select: { code: true } } },
+    select: {
+      publicId: true,
+      slug: true,
+      nameTh: true,
+      nameEn: true,
+      productType: { select: { code: true } },
+    },
   },
   owner: { select: { publicId: true, displayName: true, kind: true } },
   pattern: { select: { publicId: true, dielineKey: true } },
@@ -113,7 +119,12 @@ export class DesignsService implements OnModuleInit {
 
   // --- reads ----------------------------------------------------------------------------------------
 
-  async list(ownerUserId: bigint, page: number, perPage: number, linked: 'any' | 'linked' | 'unlinked' = 'any') {
+  async list(
+    ownerUserId: bigint,
+    page: number,
+    perPage: number,
+    linked: 'any' | 'linked' | 'unlinked' = 'any',
+  ) {
     const used: Prisma.DesignDocumentWhereInput = {
       OR: [{ orders: { some: {} } }, { versions: { some: { submissions: { some: {} } } } }],
     };
@@ -344,7 +355,11 @@ export class DesignsService implements OnModuleInit {
         );
       if (source.assets.length)
         await tx.designAsset.createMany({
-          data: source.assets.map((a) => ({ documentId: doc.id, fileObjectId: a.fileObjectId, kind: a.kind })),
+          data: source.assets.map((a) => ({
+            documentId: doc.id,
+            fileObjectId: a.fileObjectId,
+            kind: a.kind,
+          })),
         });
       await this.record(
         tx,
@@ -415,7 +430,9 @@ export class DesignsService implements OnModuleInit {
         continue;
       }
       const product = row.catalogProductId
-        ? await this.prisma.catalogProduct.findFirst({ where: { publicId: row.catalogProductId, status: 'active' } })
+        ? await this.prisma.catalogProduct.findFirst({
+            where: { publicId: row.catalogProductId, status: 'active' },
+          })
         : null;
       if (!product) {
         result.skipped.push({ localId: row.localId, reason: 'product_not_found' });
@@ -603,7 +620,9 @@ export class DesignsService implements OnModuleInit {
   private async orderLinks(documentIds: bigint[]): Promise<Map<bigint, OrderRefDto[]>> {
     const map = new Map<bigint, OrderRefDto[]>();
     if (!documentIds.length) return map;
-    const rows = await this.prisma.$queryRaw<{ document_id: bigint; public_id: string; order_code: string }[]>`
+    const rows = await this.prisma.$queryRaw<
+      { document_id: bigint; public_id: string; order_code: string }[]
+    >`
       SELECT l.document_id, o.public_id::text AS public_id, o.order_code
         FROM (
           SELECT design_document_id AS document_id, id AS order_id FROM orders

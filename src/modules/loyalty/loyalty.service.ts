@@ -75,7 +75,9 @@ export class LoyaltyService {
       .sort((a, b) => D(a.minSpend12m).cmp(D(b.minSpend12m)))
       .find((t) => D(t.minSpend12m).gt(spend));
     const progressPct = next
-      ? MoneyDecimal.min(spend.div(next.minSpend12m).mul(100), D(100)).toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN).toFixed(2)
+      ? MoneyDecimal.min(spend.div(next.minSpend12m).mul(100), D(100))
+          .toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN)
+          .toFixed(2)
       : '100.00';
     const soon = new Date(now.getTime() + expiry.value.reminderDaysBefore * DAY_MS);
     return {

@@ -210,19 +210,26 @@ export class AdminOversightController {
   @ApiEndpoint({
     id: 'admin.inspections.monthScorecards',
     summary: 'Every factory’s scorecard of a month',
-    description: 'On-time acceptance and shipping, QC first pass, claim rate, on-time updates per factory (D-155).',
+    description:
+      'On-time acceptance and shipping, QC first pass, claim rate, on-time updates per factory (D-155).',
     implements: ['D-155', 'D-075'],
   })
   @ApiSuccess(200, {
     description: 'Scorecards',
     type: [FactoryScorecardDto],
-    example: [{ ...SCORECARD_EXAMPLE, factory: { id: JOB_IDS.factory, code: 'F9001', name: 'โรงพิมพ์ ทดสอบ' } }],
+    example: [
+      { ...SCORECARD_EXAMPLE, factory: { id: JOB_IDS.factory, code: 'F9001', name: 'โรงพิมพ์ ทดสอบ' } },
+    ],
   })
   @ApiStandardErrors('validation.failed')
   async monthScorecards(@Query() q: ScorecardMonthQuery): Promise<FactoryScorecardDto[]> {
     return (await this.oversight.monthScorecards(q.month)).map((s) => ({
       ...scorecardDto(s),
-      factory: { id: s.factory.publicId, code: s.factory.code, name: s.factory.tradeName ?? s.factory.legalName },
+      factory: {
+        id: s.factory.publicId,
+        code: s.factory.code,
+        name: s.factory.tradeName ?? s.factory.legalName,
+      },
     }));
   }
 

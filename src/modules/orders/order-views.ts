@@ -133,7 +133,9 @@ export function estimatedDeliveryDate(
 ): string | null {
   const delivery = (option?.result as { earliestDeliveryDate?: string | null } | null)?.earliestDeliveryDate;
   if (!promisedShipDate || !delivery) return null;
-  const shift = Math.round((promisedShipDate.getTime() - (option?.earliestShipDate ?? promisedShipDate).getTime()) / DAY_MS);
+  const shift = Math.round(
+    (promisedShipDate.getTime() - (option?.earliestShipDate ?? promisedShipDate).getTime()) / DAY_MS,
+  );
   return new Date(Date.parse(`${delivery}T00:00:00Z`) + shift * DAY_MS).toISOString().slice(0, 10);
 }
 
@@ -145,7 +147,11 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     artworkStatus: row.artworkStatus,
     productTypeCode: row.productType.code,
     summary: lineSummary(
-      { specSummary: row.quote.specSummary, productType: row.productType, catalogProduct: row.catalogProduct },
+      {
+        specSummary: row.quote.specSummary,
+        productType: row.productType,
+        catalogProduct: row.catalogProduct,
+      },
       row.unit,
     ),
     quoteId: row.quote.publicId,

@@ -216,7 +216,8 @@ export class SavedQuoteDto {
 
   @ApiProperty({
     type: LineSummaryDto,
-    description: 'Product, product type, sales unit and spec lines to display (frozen when the quote was made)',
+    description:
+      'Product, product type, sales unit and spec lines to display (frozen when the quote was made)',
   })
   summary!: LineSummaryDto;
 

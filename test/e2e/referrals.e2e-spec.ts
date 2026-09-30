@@ -178,9 +178,15 @@ describe('referrals (e2e, B3.3)', () => {
     expect(mineNow.recent[0]!.refereeName).toMatch(/^.•••$/u);
     // U-B0.2: staff see the reward, the first order's amount and filter by referrer.
     const referrerUser = await ctx.prisma.user.findFirstOrThrow({ where: { phone: referrer.phone } });
-    const staffList = await as(ctx, marketing).get(`/v1/admin/referrals?referrerId=${referrerUser.publicId}`).expect(200);
+    const staffList = await as(ctx, marketing)
+      .get(`/v1/admin/referrals?referrerId=${referrerUser.publicId}`)
+      .expect(200);
     expect(staffList.body.data).toEqual([
-      expect.objectContaining({ id: referral.publicId, rewardPoints: 200, firstOrderGrossAmount: expect.any(String) }),
+      expect.objectContaining({
+        id: referral.publicId,
+        rewardPoints: 200,
+        firstOrderGrossAmount: expect.any(String),
+      }),
     ]);
 
     // The referee discount is a system promotion: its values are the referral settings, not editable.

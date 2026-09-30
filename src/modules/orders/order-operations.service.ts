@@ -423,7 +423,10 @@ export class OrderOperationsService {
       this.prisma.orderNote.count({ where: { orderId } }),
     ]);
     const people = await this.mentioned(rows.flatMap((r) => r.mentions));
-    return [rows.map((r) => ({ ...r, mentioned: r.mentions.map((id) => people.get(id)!).filter(Boolean) })), total] as const;
+    return [
+      rows.map((r) => ({ ...r, mentioned: r.mentions.map((id) => people.get(id)!).filter(Boolean) })),
+      total,
+    ] as const;
   }
 
   /** Staff users mentioned in notes, by internal id. */

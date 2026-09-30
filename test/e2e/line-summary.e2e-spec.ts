@@ -37,7 +37,9 @@ describe('line summaries and configurator content (e2e, U-B0.1)', () => {
     postcode = postcodes(ctx, 1)[0]!;
     await seedShipping(ctx, fixture.factoryPublicId, [postcode]);
     admin = await staffToken(ctx, 'admin');
-    const product = await ctx.prisma.catalogProduct.findUniqueOrThrow({ where: { slug: 'dev-tuck-end-box' } });
+    const product = await ctx.prisma.catalogProduct.findUniqueOrThrow({
+      where: { slug: 'dev-tuck-end-box' },
+    });
     productId = product.publicId;
   });
 
@@ -50,7 +52,10 @@ describe('line summaries and configurator content (e2e, U-B0.1)', () => {
     const api = as(ctx, admin);
     const current = await api.get(`/v1/admin/catalog/catalog-products/${productId}`).expect(200);
     const bad = await api
-      .patch(`/v1/admin/catalog/catalog-products/${productId}`, { quantityMin: 500, quantityPresets: [100, 1000] })
+      .patch(`/v1/admin/catalog/catalog-products/${productId}`, {
+        quantityMin: 500,
+        quantityPresets: [100, 1000],
+      })
       .set('If-Match', current.headers['etag'] as string)
       .expect(422);
     expect(bad.body.errors[0].path).toBe('quantityPresets[0]');
@@ -81,7 +86,9 @@ describe('line summaries and configurator content (e2e, U-B0.1)', () => {
       .expect(200);
 
     const product = await ctx.prisma.catalogProduct.findUniqueOrThrow({ where: { publicId: productId } });
-    const inkRow = await ctx.prisma.inkColour.findUniqueOrThrow({ where: { publicId: fixture.inkColourPublicId } });
+    const inkRow = await ctx.prisma.inkColour.findUniqueOrThrow({
+      where: { publicId: fixture.inkColourPublicId },
+    });
     await ctx.prisma.catalogProductOption.upsert({
       where: {
         catalogProductId_optionKind_optionId: {
@@ -93,14 +100,17 @@ describe('line summaries and configurator content (e2e, U-B0.1)', () => {
       create: { catalogProductId: product.id, optionKind: 'ink_colour', optionId: inkRow.id },
       update: {},
     });
-    const res = await request(ctx.server).get('/v1/store/catalog/products/dev-tuck-end-box/configurator').expect(200);
+    const res = await request(ctx.server)
+      .get('/v1/store/catalog/products/dev-tuck-end-box/configurator')
+      .expect(200);
     expect(res.body).toMatchObject({
       unit: 'piece',
       quantity: { min: 500, max: 20000, default: 1000, presets: [500, 1000, 3000], maxTiers: 10 },
       design: { options: ['own_file', 'online_designer', 'hired_design'], default: 'own_file' },
     });
     const groups = res.body.optionGroups as { kind: string; options: { id: string }[] }[];
-    const option = (kind: string, id: string) => groups.find((g) => g.kind === kind)?.options.find((o) => o.id === id);
+    const option = (kind: string, id: string) =>
+      groups.find((g) => g.kind === kind)?.options.find((o) => o.id === id);
     expect(option('material', fixture.materialPublicId)).toMatchObject({ descriptionTh: 'ผิวเรียบ (ทดสอบ)' });
     expect(option('ink_colour', fixture.inkColourPublicId)).toMatchObject({ swatchHex: '#00A0E9' });
   });
@@ -117,13 +127,20 @@ describe('line summaries and configurator content (e2e, U-B0.1)', () => {
     const summary = saved.body.summary as Summary;
     expect(summary).toMatchObject({ product: { slug: 'dev-tuck-end-box' }, unit: 'piece' });
     const keys = summary.specs.map((s) => s.key);
-    expect(keys).toEqual(expect.arrayContaining(['style', 'size', 'material', 'print_front', 'coating_front', 'diecut']));
+    expect(keys).toEqual(
+      expect.arrayContaining(['style', 'size', 'material', 'print_front', 'coating_front', 'diecut']),
+    );
     expect(summary.specs.find((s) => s.key === 'size')).toMatchObject({ valueEn: '200 × 300 × 50 mm' });
     expect(saved.body.options[0]).toHaveProperty('toolingAmount');
 
     // Renaming the material later does not rewrite what the customer was quoted.
-    const material = await ctx.prisma.material.findUniqueOrThrow({ where: { publicId: fixture.materialPublicId } });
-    await ctx.prisma.material.update({ where: { id: material.id }, data: { nameEn: `${material.nameEn} (renamed)` } });
+    const material = await ctx.prisma.material.findUniqueOrThrow({
+      where: { publicId: fixture.materialPublicId },
+    });
+    await ctx.prisma.material.update({
+      where: { id: material.id },
+      data: { nameEn: `${material.nameEn} (renamed)` },
+    });
     try {
       const again = await customer.get(`/v1/store/quotes/${saved.body.id}`).expect(200);
       expect(again.body.summary).toEqual(summary);

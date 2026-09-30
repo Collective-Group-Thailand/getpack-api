@@ -19,7 +19,11 @@ export class CreatePrivacyRequestDto {
 }
 
 export class PrivacyExportDto {
-  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000f101', description: 'Download it with `store.files.download`' })
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000f101',
+    description: 'Download it with `store.files.download`',
+  })
   fileId!: string;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-08T10:00:00+07:00' })
@@ -40,13 +44,22 @@ export class PrivacyRequestDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   note!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: "The Data Protection Officer's answer" })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: "The Data Protection Officer's answer",
+  })
   answer!: string | null;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-01T10:00:00+07:00' })
   requestedAt!: string;
 
-  @ApiProperty({ format: 'date-time', example: '2026-10-31T10:00:00+07:00', description: '`privacy.response_days` after the request' })
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-10-31T10:00:00+07:00',
+    description: '`privacy.response_days` after the request',
+  })
   dueAt!: string;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-01T10:00:00+07:00' })

@@ -25,7 +25,11 @@ export class CheckCodeDto {
   @Matches(/^[a-z][a-z0-9_]*$/)
   productTypeCode?: string;
 
-  @ApiPropertyOptional({ type: 'integer', example: 1000, description: 'Check the minimum-quantity condition too' })
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 1000,
+    description: 'Check the minimum-quantity condition too',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -34,7 +38,10 @@ export class CheckCodeDto {
 }
 
 export class OfferBenefitDto {
-  @ApiProperty({ example: 'percent', description: '`percent`, `fixed`, `tiered`, … as the promotion engine applies it' })
+  @ApiProperty({
+    example: 'percent',
+    description: '`percent`, `fixed`, `tiered`, … as the promotion engine applies it',
+  })
   type!: string;
 
   @ApiProperty({ type: String, nullable: true, example: '10' })
@@ -101,7 +108,8 @@ export class CodeCheckDto {
   @ApiProperty({
     type: PromotionOfferDto,
     nullable: true,
-    description: 'Shown when the code is valid or only its conditions do not match; the amount is worked out on the cart',
+    description:
+      'Shown when the code is valid or only its conditions do not match; the amount is worked out on the cart',
   })
   offer!: PromotionOfferDto | null;
 }
@@ -111,7 +119,13 @@ export const OFFER_EXAMPLE: PromotionOfferDto = {
   title: 'ลด 10% ลูกค้าใหม่',
   description: null,
   benefit: { type: 'percent', pct: '10', amount: null, maxAmount: '500.00' },
-  conditions: { minOrderValue: '3000.00', minQuantity: null, productTypeCodes: [], firstOrderOnly: true, paymentMethods: [] },
+  conditions: {
+    minOrderValue: '3000.00',
+    minQuantity: null,
+    productTypeCodes: [],
+    firstOrderOnly: true,
+    paymentMethods: [],
+  },
   validUntil: '2026-12-31T23:59:59+07:00',
   status: 'usable',
 };

@@ -163,7 +163,11 @@ export class SaveDesignDto {
   @IsIn(DESIGN_SAVE_KINDS)
   kind?: (typeof DESIGN_SAVE_KINDS)[number];
 
-  @ApiPropertyOptional({ example: 'ก่อนเปลี่ยนสีพื้น', maxLength: 100, description: 'A name for this version' })
+  @ApiPropertyOptional({
+    example: 'ก่อนเปลี่ยนสีพื้น',
+    maxLength: 100,
+    description: 'A name for this version',
+  })
   @IsOptional()
   @IsString()
   @MinLength(1)
@@ -332,7 +336,10 @@ export class SkippedDesignDto {
 }
 
 export class ImportDesignsResultDto {
-  @ApiProperty({ type: [ImportedDesignDto], description: 'Imported now, or by an earlier call with the same local id' })
+  @ApiProperty({
+    type: [ImportedDesignDto],
+    description: 'Imported now, or by an earlier call with the same local id',
+  })
   imported!: ImportedDesignDto[];
 
   @ApiProperty({ type: [SkippedDesignDto] })
@@ -441,7 +448,12 @@ export class DesignAssetDto {
   @ApiProperty({ type: 'integer', example: 48213 })
   sizeBytes!: number;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: 1200, description: 'Read from the file once scanned' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 1200,
+    description: 'Read from the file once scanned',
+  })
   widthPx!: number | null;
 
   @ApiProperty({ type: 'integer', nullable: true, example: 800 })
@@ -579,10 +591,12 @@ export class AdminDesignDocumentDto extends DesignDocumentDto {
   @ApiProperty({ type: DesignOwnerDto })
   owner!: DesignOwnerDto;
 
-  @ApiProperty({ example: false, description: 'True only for my own designs (a customer’s design is copied first)' })
+  @ApiProperty({
+    example: false,
+    description: 'True only for my own designs (a customer’s design is copied first)',
+  })
   editable!: boolean;
 }
-
 
 export class DesignVersionDto {
   @ApiProperty({ type: 'integer', example: 2 })

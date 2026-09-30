@@ -122,7 +122,10 @@ export class StoreClaimsController extends ClaimViews {
   })
   @ApiSuccess(200, { description: 'The claim form', type: ClaimFormDto, example: CLAIM_FORM_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  form(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string): Promise<ClaimFormDto> {
+  form(
+    @CurrentActor() actor: Actor,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ): Promise<ClaimFormDto> {
     return this.claims.form(customer(actor).userId, orderId);
   }
 
@@ -230,7 +233,12 @@ export class StoreClaimsController extends ClaimViews {
     implements: ['D-153'],
   })
   @ApiSuccess(200, { description: 'The preview', type: ReorderPreviewDto, example: REORDER_PREVIEW_EXAMPLE })
-  @ApiStandardErrors('http.not_found', 'validation.failed', 'orders.reorder_unavailable', 'pricing.not_instant')
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    'orders.reorder_unavailable',
+    'pricing.not_instant',
+  )
   previewReorder(
     @CurrentActor() actor: Actor,
     @Param('orderId', ParseUUIDPipe) orderId: string,
@@ -316,7 +324,13 @@ export class StoreBulkReorderController {
     examples: { default: { value: { rows: [{ line: 2, orderCode: 'PK-2610-0001-01', quantity: 2000 }] } } },
   })
   @ApiSuccess(200, { description: 'The preview', type: BulkReorderPreviewDto, example: BULK_PREVIEW_EXAMPLE })
-  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed', 'companies.invalid_status')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'companies.invalid_status',
+  )
   async preview(
     @CurrentActor() actor: Actor,
     @Param('companyId', ParseUUIDPipe) id: string,
@@ -341,7 +355,10 @@ export class StoreBulkReorderController {
   @ApiSuccess(201, {
     description: 'Added to my cart',
     type: BulkReorderResultDto,
-    example: { added: [{ line: 2, orderCode: 'PK-2610-0001-01', cartItemId: '0192f3a0-7c1e-7d2a-9b1f-0000000f3010' }], failed: [] },
+    example: {
+      added: [{ line: 2, orderCode: 'PK-2610-0001-01', cartItemId: '0192f3a0-7c1e-7d2a-9b1f-0000000f3010' }],
+      failed: [],
+    },
   })
   @ApiStandardErrors(
     ...WRITE,

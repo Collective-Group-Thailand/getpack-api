@@ -53,7 +53,9 @@ function adminReferralDto(r: ReferralRow, claimWindowEndsAt: Date | null): Admin
     decidedAt: iso(r.decidedAt),
     firstOrderGrossAmount: r.firstOrderGroup?.grossAmount.toFixed(2) ?? null,
     firstOrderClaimWindowEndsAt: iso(claimWindowEndsAt),
-    rewardPoints: r.pointsEntries.filter((e) => e.userId === r.referrerUserId).reduce((a, e) => a + e.points, 0),
+    rewardPoints: r.pointsEntries
+      .filter((e) => e.userId === r.referrerUserId)
+      .reduce((a, e) => a + e.points, 0),
   };
 }
 
@@ -123,11 +125,16 @@ export class AdminReferralsController {
   @ApiStandardErrors('validation.failed')
   async list(@Query() q: ReferralListQuery) {
     const [rows, total] = await this.referrals.list(
-      { ...(q.status && { status: q.status }), ...(q.referrerId && { referrer: { publicId: q.referrerId } }) },
+      {
+        ...(q.status && { status: q.status }),
+        ...(q.referrerId && { referrer: { publicId: q.referrerId } }),
+      },
       q.page,
       q.perPage,
     );
-    const data = await Promise.all(rows.map(async (r) => adminReferralDto(r, await this.referrals.claimWindowEnd(r))));
+    const data = await Promise.all(
+      rows.map(async (r) => adminReferralDto(r, await this.referrals.claimWindowEnd(r))),
+    );
     return { data, meta: { page: q.page, perPage: q.perPage, total } };
   }
 

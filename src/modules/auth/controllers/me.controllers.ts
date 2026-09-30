@@ -78,10 +78,19 @@ export class StoreMeController {
     implements: ['ADR-0004', 'D-143'],
   })
   @ApiSuccess(200, { description: 'The customer', type: StoreMeDto, example: STORE_ME_EXAMPLE })
-  @ApiStandardErrors('http.not_found', 'validation.failed', 'auth.identity_last_method', 'auth.identity_not_unlinkable')
-  async unlinkIdentity(@CurrentActor() actor: Actor, @Param('provider') provider: string): Promise<StoreMeDto> {
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    'auth.identity_last_method',
+    'auth.identity_not_unlinkable',
+  )
+  async unlinkIdentity(
+    @CurrentActor() actor: Actor,
+    @Param('provider') provider: string,
+  ): Promise<StoreMeDto> {
     const me = userActor(actor);
-    if (!(IDENTITY_PROVIDERS as readonly string[]).includes(provider)) throw new DomainException('http.not_found');
+    if (!(IDENTITY_PROVIDERS as readonly string[]).includes(provider))
+      throw new DomainException('http.not_found');
     if (provider === 'phone_otp') throw new DomainException('auth.identity_not_unlinkable');
     await this.prisma.withTx(async (tx) => {
       const live = await tx.userIdentity.findMany({ where: { userId: me.userId, unlinkedAt: null } });

@@ -23,7 +23,14 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
       data: { code: codes.parent, nameTh: 'แม่', nameEn: 'Parent', status: 'active', sort: 1 },
     });
     const child = await prisma.productCategory.create({
-      data: { code: codes.child, nameTh: 'ลูก', nameEn: 'Child', status: 'active', parentId: parent.id, sort: 2 },
+      data: {
+        code: codes.child,
+        nameTh: 'ลูก',
+        nameEn: 'Child',
+        status: 'active',
+        parentId: parent.id,
+        sort: 2,
+      },
     });
     await prisma.productCategory.create({
       data: { code: codes.empty, nameTh: 'ว่าง', nameEn: 'Empty', status: 'active' },
@@ -32,11 +39,19 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
       data: { code: `ub01_type_${run}`, categoryId: child.id, nameTh: 'ท', nameEn: 'T', status: 'active' },
     });
     const product = await prisma.catalogProduct.create({
-      data: { productTypeId: type.id, slug: `ub01-box-${run}`, nameTh: 'กล่อง', nameEn: 'Box', status: 'active' },
+      data: {
+        productTypeId: type.id,
+        slug: `ub01-box-${run}`,
+        nameTh: 'กล่อง',
+        nameEn: 'Box',
+        status: 'active',
+      },
     });
     productSlug = product.slug;
     productId = product.publicId;
-    const hidden = await prisma.seoPage.create({ data: { pageKey: `ub01-noindex-${run}`, titleTh: 'ซ่อน', noindex: true } });
+    const hidden = await prisma.seoPage.create({
+      data: { pageKey: `ub01-noindex-${run}`, titleTh: 'ซ่อน', noindex: true },
+    });
     const other = await prisma.catalogProduct.create({
       data: {
         productTypeId: type.id,
@@ -50,7 +65,14 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
     otherSlug = other.slug;
     sku = `UB01-${run}`.toUpperCase();
     await prisma.stockProduct.create({
-      data: { productTypeId: type.id, sku, nameTh: 'สต็อก', nameEn: 'Stock', unit: 'piece', status: 'active' },
+      data: {
+        productTypeId: type.id,
+        sku,
+        nameTh: 'สต็อก',
+        nameEn: 'Stock',
+        unit: 'piece',
+        status: 'active',
+      },
     });
     const faq = await prisma.faq.create({
       data: { questionTh: question, answerTh: 'คำตอบ', status: 'published', sort: 5 },
@@ -83,7 +105,9 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
       .get(`/v1/store/catalog/stock-products?category=${codes.child}`)
       .expect(200);
     expect((stock.body.data as { sku: string }[]).map((s) => s.sku)).toEqual([sku]);
-    const none = await request(ctx.server).get(`/v1/store/catalog/products?category=${codes.empty}`).expect(200);
+    const none = await request(ctx.server)
+      .get(`/v1/store/catalog/products?category=${codes.empty}`)
+      .expect(200);
     expect(none.body.meta.total).toBe(0);
   });
 
@@ -96,11 +120,15 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
       .set('If-Match', current.headers['etag'] as string)
       .expect(200);
     expect(linked.body.catalogProductIds).toEqual([productId]);
-    const audit = await ctx.prisma.auditLog.count({ where: { resourceType: 'faq', resourcePublicId: faqId } });
+    const audit = await ctx.prisma.auditLog.count({
+      where: { resourceType: 'faq', resourcePublicId: faqId },
+    });
     expect(audit).toBeGreaterThan(0);
 
     const faqs = await request(ctx.server).get(`/v1/store/catalog/products/${productSlug}/faqs`).expect(200);
-    expect(faqs.body).toEqual([{ questionTh: question, questionEn: null, answerTh: 'คำตอบ', answerEn: null }]);
+    expect(faqs.body).toEqual([
+      { questionTh: question, questionEn: null, answerTh: 'คำตอบ', answerEn: null },
+    ]);
     await request(ctx.server).get(`/v1/store/catalog/products/no-such-${run}/faqs`).expect(404);
   });
 
@@ -108,7 +136,9 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
     const res = await request(ctx.server)
       .get(`/v1/store/catalog/search?q=${encodeURIComponent(question)}`)
       .expect(200);
-    expect(res.body.hits).toContainEqual(expect.objectContaining({ kind: 'faq', key: faqId, titleTh: question }));
+    expect(res.body.hits).toContainEqual(
+      expect.objectContaining({ kind: 'faq', key: faqId, titleTh: question }),
+    );
   });
 
   it('lists indexable pages for the sitemap, without noindex pages', async () => {
@@ -121,7 +151,9 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
   });
 
   it('serves the support channels from the CS Lead setting (D-221), null until set', async () => {
-    const owner = await ctx.prisma.setting.findFirstOrThrow({ where: { key: 'storefront.support_channels' } });
+    const owner = await ctx.prisma.setting.findFirstOrThrow({
+      where: { key: 'storefront.support_channels' },
+    });
     expect(owner.ownerRoleKey).toBe('cs_lead');
     await request(ctx.server)
       .get('/v1/store/support-channels')

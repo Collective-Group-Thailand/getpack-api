@@ -419,7 +419,11 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     expect(Date.parse(delivered.receipt['autoCompleteAt']!) - deliveredAt).toBe(7 * day);
     expect(Date.parse(delivered.receipt['claimWindowEndsAt']!) - deliveredAt).toBe(7 * day);
     expect(delivered.receipt).toMatchObject({ completedAt: null, confirmedAt: null, completionMode: null });
-    expect(delivered.toleranceOutcome).toMatchObject({ outcome: 'exact', orderedQuantity: 1000, deliveredQuantity: 1000 });
+    expect(delivered.toleranceOutcome).toMatchObject({
+      outcome: 'exact',
+      orderedQuantity: 1000,
+      deliveredQuantity: 1000,
+    });
     expect(delivered.toleranceOutcome).not.toHaveProperty('payableQuantity');
     const confirmed = await post(o.token, `/v1/store/orders/${o.orderId}/actions/confirm-receipt`).expect(
       200,

@@ -68,7 +68,13 @@ export class AdminOrderListController {
     description: 'Cancel reasons',
     type: [CancelReasonDto],
     example: [
-      { code: 'duplicate_order', nameTh: 'สั่งซ้ำ', nameEn: 'Duplicate order', appliesTo: 'staff', requiresCreditNote: false },
+      {
+        code: 'duplicate_order',
+        nameTh: 'สั่งซ้ำ',
+        nameEn: 'Duplicate order',
+        appliesTo: 'staff',
+        requiresCreditNote: false,
+      },
     ],
   })
   @ApiStandardErrors('validation.failed')
@@ -91,8 +97,16 @@ export class AdminOrderListController {
     implements: ['D-143', 'D-020'],
   })
   @ApiSuccess(204, { description: 'Reminder sent' })
-  @ApiStandardErrors('http.not_found', 'validation.failed', 'payments.nothing_due', 'payments.reminder_recent')
-  async remind(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string): Promise<void> {
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    'payments.nothing_due',
+    'payments.reminder_recent',
+  )
+  async remind(
+    @CurrentActor() actor: Actor,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ): Promise<void> {
     await this.reminders.remind(staff(actor), orderId);
   }
 
@@ -103,17 +117,24 @@ export class AdminOrderListController {
   @ApiEndpoint({
     id: 'admin.orders.sendPaymentReminders',
     summary: 'Remind several customers of their instalments due',
-    description: 'As `admin.orders.sendPaymentReminder` for up to 100 orders; the refused ones are listed with the reason.',
+    description:
+      'As `admin.orders.sendPaymentReminder` for up to 100 orders; the refused ones are listed with the reason.',
     implements: ['D-143', 'D-020'],
   })
-  @ApiBody({ type: BulkPaymentReminderDto, examples: { default: { value: { orderIds: [ORDER_IDS.order] } } } })
+  @ApiBody({
+    type: BulkPaymentReminderDto,
+    examples: { default: { value: { orderIds: [ORDER_IDS.order] } } },
+  })
   @ApiSuccess(200, {
     description: 'What was sent',
     type: PaymentReminderResultDto,
     example: { sent: 1, skipped: [{ orderId: ORDER_IDS.order, reason: 'payments.nothing_due' }] },
   })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
-  remindMany(@CurrentActor() actor: Actor, @Body() body: BulkPaymentReminderDto): Promise<PaymentReminderResultDto> {
+  remindMany(
+    @CurrentActor() actor: Actor,
+    @Body() body: BulkPaymentReminderDto,
+  ): Promise<PaymentReminderResultDto> {
     return this.reminders.remindMany(staff(actor), body.orderIds);
   }
 }

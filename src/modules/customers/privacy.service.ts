@@ -80,7 +80,13 @@ export class PrivacyService {
       const row = await this.open(tx, publicId);
       const done = await tx.privacyRequest.update({
         where: { id: row.id },
-        data: { status: 'rejected', answer, decidedById: actor.userId, decidedAt: new Date(), rowVersion: { increment: 1 } },
+        data: {
+          status: 'rejected',
+          answer,
+          decidedById: actor.userId,
+          decidedAt: new Date(),
+          rowVersion: { increment: 1 },
+        },
         include: INCLUDE,
       });
       await this.record(tx, done, 'privacy.request_rejected', actor);
@@ -94,7 +100,13 @@ export class PrivacyService {
     const now = new Date();
     if (request.kind === 'export') {
       const days = Number((await this.settings.at('privacy.export_link_days', { at: now })).value);
-      const owner: UserActor = { type: 'user', userId: request.userId, publicId: request.user.publicId, audience: 'customer', scopes: [] };
+      const owner: UserActor = {
+        type: 'user',
+        userId: request.userId,
+        publicId: request.user.publicId,
+        audience: 'customer',
+        scopes: [],
+      };
       const body = Buffer.from(JSON.stringify(await this.exportOf(request.userId, now), null, 2));
       const stored = await this.files.storeGenerated(owner, {
         body,
@@ -103,7 +115,10 @@ export class PrivacyService {
         retentionClass: 'standard',
       });
       return this.prisma.withTx(async (tx) => {
-        const file = await tx.fileObject.findUniqueOrThrow({ where: { publicId: stored.fileId }, select: { id: true } });
+        const file = await tx.fileObject.findUniqueOrThrow({
+          where: { publicId: stored.fileId },
+          select: { id: true },
+        });
         const done = await tx.privacyRequest.update({
           where: { id: request.id, status: 'submitted' },
           data: {
@@ -126,13 +141,24 @@ export class PrivacyService {
       await this.anonymise(tx, request.userId, now);
       const done = await tx.privacyRequest.update({
         where: { id: request.id, status: 'submitted' },
-        data: { status: 'completed', answer, decidedById: actor.userId, decidedAt: now, rowVersion: { increment: 1 } },
+        data: {
+          status: 'completed',
+          answer,
+          decidedById: actor.userId,
+          decidedAt: now,
+          rowVersion: { increment: 1 },
+        },
         include: INCLUDE,
       });
       await this.record(tx, done, 'privacy.request_completed', actor);
       await this.events.record(
         tx,
-        { type: 'customer.anonymised', aggregateType: 'user', aggregateId: done.user.publicId, payload: { userId: done.user.publicId } },
+        {
+          type: 'customer.anonymised',
+          aggregateType: 'user',
+          aggregateId: done.user.publicId,
+          payload: { userId: done.user.publicId },
+        },
         actor,
       );
       return done;
@@ -144,8 +170,12 @@ export class PrivacyService {
   private async assertDeletable(tx: Tx, userId: bigint): Promise<void> {
     const [orders, claims, receivables] = await Promise.all([
       tx.order.count({ where: { customerUserId: userId, status: { notIn: ['completed', 'cancelled'] } } }),
-      tx.claim.count({ where: { customerUserId: userId, status: { notIn: ['rejected', 'resolved', 'closed'] } } }),
-      tx.receivableItem.count({ where: { customerUserId: userId, status: { in: ['open', 'partially_paid'] } } }),
+      tx.claim.count({
+        where: { customerUserId: userId, status: { notIn: ['rejected', 'resolved', 'closed'] } },
+      }),
+      tx.receivableItem.count({
+        where: { customerUserId: userId, status: { in: ['open', 'partially_paid'] } },
+      }),
     ]);
     const open = [
       orders ? `${orders} open order(s)` : null,
@@ -174,7 +204,11 @@ export class PrivacyService {
     for (const identity of await tx.userIdentity.findMany({ where: { userId } })) {
       await tx.userIdentity.update({
         where: { id: identity.id },
-        data: { providerSubject: `anonymised:${identity.id}`, profile: undefined, unlinkedAt: identity.unlinkedAt ?? at },
+        data: {
+          providerSubject: `anonymised:${identity.id}`,
+          profile: undefined,
+          unlinkedAt: identity.unlinkedAt ?? at,
+        },
       });
     }
     await tx.customerAddress.updateMany({
@@ -191,58 +225,103 @@ export class PrivacyService {
     });
     await tx.taxProfile.updateMany({
       where: { userId },
-      data: { name: SCRUBBED.text, taxId: SCRUBBED.taxId, line1: SCRUBBED.text, line2: null, documentEmail: null, deletedAt: at },
+      data: {
+        name: SCRUBBED.text,
+        taxId: SCRUBBED.taxId,
+        line1: SCRUBBED.text,
+        line2: null,
+        documentEmail: null,
+        deletedAt: at,
+      },
     });
-    await tx.authSession.updateMany({ where: { userId, revokedAt: null }, data: { revokedAt: at, revokeReason: 'admin' } });
+    await tx.authSession.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: at, revokeReason: 'admin' },
+    });
   }
 
   // --- export -----------------------------------------------------------------------------------------
 
   /** The customer's own data (profile, sign-ins, addresses, tax profiles, consents, orders, quotes, RFQs). */
   private async exportOf(userId: bigint, at: Date) {
-    const [user, profile, identities, addresses, taxProfiles, consents, orders, quotes, rfqs] = await Promise.all([
-      this.prisma.user.findUniqueOrThrow({
-        where: { id: userId },
-        select: { displayName: true, firstName: true, lastName: true, email: true, phone: true, locale: true, createdAt: true },
-      }),
-      this.prisma.customerProfile.findUnique({
-        where: { userId },
-        select: { customerCode: true, customerType: true, createdVia: true, referralCode: true },
-      }),
-      this.prisma.userIdentity.findMany({
-        where: { userId, unlinkedAt: null },
-        select: { provider: true, providerSubject: true, linkedAt: true },
-      }),
-      this.prisma.customerAddress.findMany({
-        where: { userId, deletedAt: null },
-        select: { label: true, recipientName: true, phone: true, line1: true, line2: true, postcode: true, isDefault: true },
-      }),
-      this.prisma.taxProfile.findMany({
-        where: { userId, deletedAt: null },
-        select: { taxType: true, name: true, taxId: true, branchCode: true, line1: true, line2: true, postcode: true },
-      }),
-      this.prisma.consentRecord.findMany({
-        where: { userId },
-        select: { granted: true, recordedAt: true, purposeVersion: { select: { purpose: { select: { key: true } } } } },
-        orderBy: { recordedAt: 'asc' },
-      }),
-      // Customer-facing figures only: never buy prices, margins or the factory (D-050, D-141).
-      this.prisma.order.findMany({
-        where: { customerUserId: userId },
-        select: { orderCode: true, status: true, quantityOrdered: true, grossAmount: true, createdAt: true },
-        orderBy: { createdAt: 'asc' },
-      }),
-      this.prisma.quote.findMany({
-        where: { customerUserId: userId },
-        select: { quoteCode: true, status: true, createdAt: true },
-        orderBy: { createdAt: 'asc' },
-      }),
-      this.prisma.rfq.findMany({
-        where: { customerUserId: userId },
-        select: { rfqCode: true, status: true, spec: true, submittedAt: true },
-        orderBy: { submittedAt: 'asc' },
-      }),
-    ]);
+    const [user, profile, identities, addresses, taxProfiles, consents, orders, quotes, rfqs] =
+      await Promise.all([
+        this.prisma.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: {
+            displayName: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            locale: true,
+            createdAt: true,
+          },
+        }),
+        this.prisma.customerProfile.findUnique({
+          where: { userId },
+          select: { customerCode: true, customerType: true, createdVia: true, referralCode: true },
+        }),
+        this.prisma.userIdentity.findMany({
+          where: { userId, unlinkedAt: null },
+          select: { provider: true, providerSubject: true, linkedAt: true },
+        }),
+        this.prisma.customerAddress.findMany({
+          where: { userId, deletedAt: null },
+          select: {
+            label: true,
+            recipientName: true,
+            phone: true,
+            line1: true,
+            line2: true,
+            postcode: true,
+            isDefault: true,
+          },
+        }),
+        this.prisma.taxProfile.findMany({
+          where: { userId, deletedAt: null },
+          select: {
+            taxType: true,
+            name: true,
+            taxId: true,
+            branchCode: true,
+            line1: true,
+            line2: true,
+            postcode: true,
+          },
+        }),
+        this.prisma.consentRecord.findMany({
+          where: { userId },
+          select: {
+            granted: true,
+            recordedAt: true,
+            purposeVersion: { select: { purpose: { select: { key: true } } } },
+          },
+          orderBy: { recordedAt: 'asc' },
+        }),
+        // Customer-facing figures only: never buy prices, margins or the factory (D-050, D-141).
+        this.prisma.order.findMany({
+          where: { customerUserId: userId },
+          select: {
+            orderCode: true,
+            status: true,
+            quantityOrdered: true,
+            grossAmount: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        }),
+        this.prisma.quote.findMany({
+          where: { customerUserId: userId },
+          select: { quoteCode: true, status: true, createdAt: true },
+          orderBy: { createdAt: 'asc' },
+        }),
+        this.prisma.rfq.findMany({
+          where: { customerUserId: userId },
+          select: { rfqCode: true, status: true, spec: true, submittedAt: true },
+          orderBy: { submittedAt: 'asc' },
+        }),
+      ]);
     return {
       exportedAt: toBangkokIso(at),
       seller: 'Collective Group (Thailand) — Packio',
@@ -256,7 +335,11 @@ export class PrivacyService {
         granted: c.granted,
         recordedAt: toBangkokIso(c.recordedAt),
       })),
-      orders: orders.map((o) => ({ ...o, grossAmount: o.grossAmount.toFixed(2), createdAt: toBangkokIso(o.createdAt) })),
+      orders: orders.map((o) => ({
+        ...o,
+        grossAmount: o.grossAmount.toFixed(2),
+        createdAt: toBangkokIso(o.createdAt),
+      })),
       quotes: quotes.map((q) => ({ ...q, createdAt: toBangkokIso(q.createdAt) })),
       requestsForQuote: rfqs.map((r) => ({ ...r, submittedAt: toBangkokIso(r.submittedAt) })),
     };

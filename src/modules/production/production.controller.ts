@@ -81,7 +81,13 @@ export class AdminProductionController {
     type: ProductionBoardDto,
     example: {
       columns: [
-        { key: 'awaiting_acceptance', labelTh: 'รอโรงงานรับงาน', labelEn: 'Awaiting acceptance', total: 2, atRisk: 0 },
+        {
+          key: 'awaiting_acceptance',
+          labelTh: 'รอโรงงานรับงาน',
+          labelEn: 'Awaiting acceptance',
+          total: 2,
+          atRisk: 0,
+        },
         { key: 'printing', labelTh: 'กำลังพิมพ์', labelEn: 'Printing', total: 4, atRisk: 1 },
       ],
       total: 6,
@@ -111,7 +117,9 @@ export class AdminProductionController {
       ...(q.status && { status: q.status }),
       ...(q.orderId && { order: { publicId: q.orderId } }),
       ...(q.factoryId && { factory: { publicId: q.factoryId } }),
-      ...(q.productTypeCode && { order: { ...(q.orderId && { publicId: q.orderId }), productType: { code: q.productTypeCode } } }),
+      ...(q.productTypeCode && {
+        order: { ...(q.orderId && { publicId: q.orderId }), productType: { code: q.productTypeCode } },
+      }),
       ...(q.queue === 'awaiting_acceptance' && { status: 'released' }),
       ...(q.queue === 'escalated' && {
         escalatedAt: { not: null },

@@ -33,7 +33,9 @@ export const QUOTE_INCLUDE = {
   options: { orderBy: { quantity: 'asc' } },
   productType: SUMMARY_INCLUDE.productType,
   catalogProduct: SUMMARY_INCLUDE.catalogProduct,
-  customer: { select: { publicId: true, displayName: true, customerProfile: { select: { customerCode: true } } } },
+  customer: {
+    select: { publicId: true, displayName: true, customerProfile: { select: { customerCode: true } } },
+  },
   createdBy: { select: { publicId: true, displayName: true } },
   pdfFile: { select: { publicId: true } },
   rfqQuote: { select: { rfq: { select: { publicId: true, rfqCode: true } } } },
@@ -85,7 +87,9 @@ export class SavedQuotesService {
     extra: { customerUserId?: bigint; supersedes?: bigint; ip?: string; staffNote?: string } = {},
   ): Promise<QuoteRow> {
     const now = new Date();
-    const { type, calculatorKey, configuration, view } = await this.priced(owner, channel, input, now, { ip: extra.ip });
+    const { type, calculatorKey, configuration, view } = await this.priced(owner, channel, input, now, {
+      ip: extra.ip,
+    });
     const steps = view.steps.filter((s) => s.instant && s.internal);
     if (steps.length === 0) throw new DomainException('quotes.nothing_to_save');
     const validity = await this.settings.at('quotes.validity_days', { at: now });
@@ -124,7 +128,7 @@ export class SavedQuotesService {
           source: 'instant',
           customerUserId,
           createdById: owner.kind === 'staff' ? owner.actor.userId : null,
-          staffNote: owner.kind === 'staff' ? (extra.staffNote?.trim() || null) : null,
+          staffNote: owner.kind === 'staff' ? extra.staffNote?.trim() || null : null,
           anonymousId: owner.kind === 'anonymous' ? owner.anonymousId : null,
           productTypeId: type.id,
           catalogProductId: await this.catalogProductId(configuration),

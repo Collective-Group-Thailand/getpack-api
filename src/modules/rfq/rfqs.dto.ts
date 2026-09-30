@@ -64,7 +64,11 @@ const SPEC_EXAMPLE = {
 // --- requests ------------------------------------------------------------------------------------
 
 export class RfqRoutedFromDto {
-  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001', description: '`calculationId` of `store.quotes.calculate`' })
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001',
+    description: '`calculationId` of `store.quotes.calculate`',
+  })
   @IsUUID()
   calculationId!: string;
 }
@@ -145,7 +149,8 @@ export class SubmitRfqDto {
     optional: true,
     min: 1,
     max: 32767,
-    description: 'The form version it was filled in (`store.rfqs.getForm`); refused (422) when the form changed since',
+    description:
+      'The form version it was filled in (`store.rfqs.getForm`); refused (422) when the form changed since',
   })
   specSchemaVersion?: number;
 
@@ -170,7 +175,11 @@ export class RfqMessageInputDto {
 }
 
 export class StoreRfqMessageInputDto extends RfqMessageInputDto {
-  @ApiPropertyOptional({ type: [String], example: [IDS.file], description: 'My uploaded files (purpose `artwork`), ≤ 10' })
+  @ApiPropertyOptional({
+    type: [String],
+    example: [IDS.file],
+    description: 'My uploaded files (purpose `artwork`), ≤ 10',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(10)
@@ -179,7 +188,11 @@ export class StoreRfqMessageInputDto extends RfqMessageInputDto {
 }
 
 export class StaffRfqMessageInputDto extends RfqMessageInputDto {
-  @ApiPropertyOptional({ type: [String], example: [IDS.file], description: 'Files I uploaded (purpose `artwork`), ≤ 10' })
+  @ApiPropertyOptional({
+    type: [String],
+    example: [IDS.file],
+    description: 'Files I uploaded (purpose `artwork`), ≤ 10',
+  })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(10)
@@ -224,7 +237,13 @@ export class StaffDeclineRfqDto extends DeclineRfqDto {
 }
 
 export class AssignRfqDto {
-  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.user, description: 'Staff member; null unassigns' })
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: IDS.user,
+    description: 'Staff member; null unassigns',
+  })
   @ValidateIf((o: { userId: unknown }) => o.userId !== null)
   @IsUUID()
   userId!: string | null;
@@ -376,12 +395,20 @@ export class AdminRfqListQuery extends RfqListQuery {
   @IsIn(['web', 'cs', 'line', 'b2b'])
   channel?: 'web' | 'cs' | 'line' | 'b2b';
 
-  @ApiPropertyOptional({ format: 'date', example: '2026-10-01', description: 'Submitted on or after (Bangkok)' })
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-01',
+    description: 'Submitted on or after (Bangkok)',
+  })
   @IsOptional()
   @IsISO8601({ strict: true })
   submittedFrom?: string;
 
-  @ApiPropertyOptional({ format: 'date', example: '2026-10-31', description: 'Submitted on or before (Bangkok)' })
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-31',
+    description: 'Submitted on or before (Bangkok)',
+  })
   @IsOptional()
   @IsISO8601({ strict: true })
   submittedTo?: string;
@@ -678,7 +705,8 @@ export class StaffRfqDto extends RfqDto {
     type: 'integer',
     nullable: true,
     example: 8,
-    description: 'First-response target of the category in business hours (`rfq.sla_business_hours`); null while not set',
+    description:
+      'First-response target of the category in business hours (`rfq.sla_business_hours`); null while not set',
   })
   slaTargetHours!: number | null;
 
@@ -912,7 +940,10 @@ export class RecordRfqAcceptanceDto {
   @IsInt({ each: true })
   quantities?: number[];
 
-  @EnumField(ACCEPTANCE_CHANNELS, 'RfqAcceptanceChannel', { example: 'phone', description: 'How the customer accepted' })
+  @EnumField(ACCEPTANCE_CHANNELS, 'RfqAcceptanceChannel', {
+    example: 'phone',
+    description: 'How the customer accepted',
+  })
   via!: (typeof ACCEPTANCE_CHANNELS)[number];
 
   @ApiPropertyOptional({ example: 'ลูกค้ายืนยันทางโทรศัพท์ (fake)', maxLength: 1000 })

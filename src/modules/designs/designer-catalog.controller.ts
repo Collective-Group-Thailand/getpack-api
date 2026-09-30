@@ -34,7 +34,11 @@ export class StoreDesignerCatalogController {
       'asset upload accepts. Catalogue data only: no prices or factories (D-050). Cacheable for 5 minutes.',
     implements: ['D-070', 'D-152', 'D-050'],
   })
-  @ApiSuccess(200, { description: 'The catalogue', type: DesignerCatalogDto, example: DESIGNER_CATALOG_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'The catalogue',
+    type: DesignerCatalogDto,
+    example: DESIGNER_CATALOG_EXAMPLE,
+  })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   catalog(@Query() q: DesignerCatalogQuery): Promise<DesignerCatalogDto> {
     return this.designer.catalog(q.product);

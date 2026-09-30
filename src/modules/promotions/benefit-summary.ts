@@ -4,7 +4,7 @@
  */
 export function benefitSummary(benefit: unknown): { th: string; en: string } {
   const b = (benefit ?? {}) as Record<string, unknown>;
-  const cap = typeof b['maxAmount'] === 'string' ? (b['maxAmount']) : null;
+  const cap = typeof b['maxAmount'] === 'string' ? b['maxAmount'] : null;
   const capTh = cap ? ` สูงสุด ${cap} บาท` : '';
   const capEn = cap ? `, up to THB ${cap}` : '';
   switch (b['type']) {
@@ -16,17 +16,29 @@ export function benefitSummary(benefit: unknown): { th: string; en: string } {
       const tiers = (b['tiers'] as { min: string; pct?: string; amount?: string }[] | undefined) ?? [];
       const byQty = b['basis'] === 'quantity';
       const th = tiers
-        .map((t) => `${byQty ? `${t.min} ชิ้นขึ้นไป` : `${t.min} บาทขึ้นไป`} ลด ${t.pct ? `${t.pct}%` : `${t.amount} บาท`}`)
+        .map(
+          (t) =>
+            `${byQty ? `${t.min} ชิ้นขึ้นไป` : `${t.min} บาทขึ้นไป`} ลด ${t.pct ? `${t.pct}%` : `${t.amount} บาท`}`,
+        )
         .join(', ');
       const en = tiers
-        .map((t) => `${byQty ? `${t.min}+ pieces` : `THB ${t.min}+`}: ${t.pct ? `${t.pct}% off` : `THB ${t.amount} off`}`)
+        .map(
+          (t) =>
+            `${byQty ? `${t.min}+ pieces` : `THB ${t.min}+`}: ${t.pct ? `${t.pct}% off` : `THB ${t.amount} off`}`,
+        )
         .join('; ');
       return { th: th + capTh, en: en + capEn };
     }
     case 'unit_price_override':
-      return { th: `ราคาพิเศษ ${String(b['unitPrice'])} บาท/ชิ้น`, en: `Special price THB ${String(b['unitPrice'])} per piece` };
+      return {
+        th: `ราคาพิเศษ ${String(b['unitPrice'])} บาท/ชิ้น`,
+        en: `Special price THB ${String(b['unitPrice'])} per piece`,
+      };
     case 'free_revision_rounds':
-      return { th: `แก้แบบฟรี ${String(b['rounds'])} รอบ`, en: `${String(b['rounds'])} free revision rounds` };
+      return {
+        th: `แก้แบบฟรี ${String(b['rounds'])} รอบ`,
+        en: `${String(b['rounds'])} free revision rounds`,
+      };
     case 'points_multiplier':
       return { th: `คะแนน x${String(b['multiplier'])}`, en: `${String(b['multiplier'])}× points` };
     case 'bonus_points':

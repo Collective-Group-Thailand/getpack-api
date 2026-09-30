@@ -59,7 +59,10 @@ export class CsCatalogProductDto {
   @ApiProperty({ type: [StoreConfiguratorSizeDto] })
   standardSizes!: StoreConfiguratorSizeDto[];
 
-  @ApiProperty({ type: StoreConfiguratorQuantityDto, description: 'Quantity limits and presets of the product' })
+  @ApiProperty({
+    type: StoreConfiguratorQuantityDto,
+    description: 'Quantity limits and presets of the product',
+  })
   quantity!: StoreConfiguratorQuantityDto;
 }
 
@@ -379,7 +382,14 @@ export const INPUT_DATA_EXAMPLE: FoldingInputDataDto = {
       nameTh: 'กล่องฝาเสียบ',
       nameEn: 'Tuck-end box',
       standardSizes: [
-        { id: '0192f3a0-7c1e-7d2a-9b1f-00000000a109', code: 'S', name: 'ขนาดเล็ก', lengthMm: 100, widthMm: 100, heightMm: 50 },
+        {
+          id: '0192f3a0-7c1e-7d2a-9b1f-00000000a109',
+          code: 'S',
+          name: 'ขนาดเล็ก',
+          lengthMm: 100,
+          widthMm: 100,
+          heightMm: 50,
+        },
       ],
       quantity: { min: 500, max: 100000, default: 1000, presets: [500, 1000, 3000], maxTiers: 10 },
     },
@@ -470,7 +480,14 @@ export const CORRUGATE_INPUT_DATA_EXAMPLE: CorrugateInputDataDto = {
       nameTh: 'กล่องลูกฟูก',
       nameEn: 'RSC carton',
       standardSizes: [
-        { id: '0192f3a0-7c1e-7d2a-9b1f-00000000a109', code: 'S', name: 'ขนาดเล็ก', lengthMm: 100, widthMm: 100, heightMm: 50 },
+        {
+          id: '0192f3a0-7c1e-7d2a-9b1f-00000000a109',
+          code: 'S',
+          name: 'ขนาดเล็ก',
+          lengthMm: 100,
+          widthMm: 100,
+          heightMm: 50,
+        },
       ],
       quantity: { min: 500, max: 100000, default: 1000, presets: [500, 1000, 3000], maxTiers: 10 },
     },
