@@ -30,6 +30,7 @@ export const DOCUMENT_TYPES = [
   'claim',
   'shipment',
   'rfq',
+  'support_ticket',
 ] as const;
 export const SEQUENCE_RESETS = ['never', 'yearly', 'monthly'] as const;
 

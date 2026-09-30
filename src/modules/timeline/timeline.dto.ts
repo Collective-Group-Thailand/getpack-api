@@ -122,6 +122,15 @@ export class ProgressStepDto {
   })
   status!: string;
 
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-14T18:00:00+07:00',
+    description: 'When the step is due in the factory’s plan (D-075); null when the plan sets no date',
+  })
+  promisedAt!: string | null;
+
   @ApiProperty({ format: 'date-time', nullable: true, example: '2026-10-14T16:00:00+07:00' })
   completedAt!: string | null;
 }
@@ -136,6 +145,15 @@ export class OrderProgressDto {
 
   @ApiProperty({ format: 'date', nullable: true, example: '2026-10-20' })
   promisedShipDate!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-10-22',
+    description: 'Expected arrival: the quotation’s delivery estimate moved with the promised ship date',
+  })
+  estimatedDeliveryDate!: string | null;
 
   @ApiProperty({ format: 'date-time', nullable: true, example: '2026-10-10T09:00:00+07:00' })
   paidForProductionAt!: string | null;
@@ -218,6 +236,15 @@ export class PublicTrackingDto {
   @ApiProperty({ format: 'date', nullable: true, example: '2026-10-20' })
   promisedShipDate!: string | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-10-22',
+    description: 'Expected arrival: the quotation’s delivery estimate moved with the promised ship date',
+  })
+  estimatedDeliveryDate!: string | null;
+
   @ApiProperty({ format: 'date-time', nullable: true, example: '2026-10-19T08:00:00+07:00' })
   shippedAt!: string | null;
 
@@ -247,6 +274,7 @@ const STEP = {
   labelTh: 'กำลังพิมพ์',
   labelEn: 'Printing',
   status: 'completed',
+  promisedAt: '2026-10-14T18:00:00+07:00',
   completedAt: '2026-10-14T16:00:00+07:00',
 };
 export const TIMELINE_ENTRY_EXAMPLE = {
@@ -270,6 +298,7 @@ export const PROGRESS_EXAMPLE = {
   orderId: TIMELINE_IDS.order,
   status: 'shipping',
   promisedShipDate: '2026-10-20',
+  estimatedDeliveryDate: '2026-10-22',
   paidForProductionAt: '2026-10-10T09:00:00+07:00',
   artworkApprovedAt: '2026-10-11T10:00:00+07:00',
   productionStartedAt: '2026-10-11T10:05:00+07:00',
@@ -282,6 +311,7 @@ export const PROGRESS_EXAMPLE = {
 export const TRACKING_EXAMPLE = {
   status: 'shipping',
   promisedShipDate: '2026-10-20',
+  estimatedDeliveryDate: '2026-10-22',
   shippedAt: '2026-10-19T08:00:00+07:00',
   deliveredAt: null,
   steps: [STEP],

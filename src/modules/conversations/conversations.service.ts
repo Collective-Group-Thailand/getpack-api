@@ -23,6 +23,7 @@ export const CONVERSATION_INCLUDE = {
   lineAccount: { select: { publicId: true, displayName: true, friendStatus: true } },
   assignedUser: { select: { publicId: true, displayName: true } },
   messages: { orderBy: [{ sentAt: 'desc' }, { id: 'desc' }], take: 1 },
+  tickets: { orderBy: { id: 'desc' }, take: 1 },
 } satisfies Prisma.ConversationInclude;
 export type ConversationRow = Prisma.ConversationGetPayload<{ include: typeof CONVERSATION_INCLUDE }>;
 
@@ -96,6 +97,31 @@ export class ConversationsService {
         senderUserId: actor.userId,
       });
     });
+  }
+
+  /**
+   * The conversation a support ticket opens on (D-221): a signed-in customer's live web conversation (or a new one),
+   * a new `contact` conversation for a guest (answered by phone or e-mail); the requester's message (if any) arrives
+   * on it.
+   */
+  async openForTicket(tx: Tx, customerUserId: bigint | null, body: string | null): Promise<Conversation> {
+    let conversation = customerUserId
+      ? await tx.conversation.findFirst({ where: { channel: 'web', customerUserId, status: { not: 'closed' } } })
+      : null;
+    if (!conversation) {
+      const channel = customerUserId ? 'web' : 'contact';
+      conversation = await tx.conversation.create({ data: { channel, customerUserId } });
+      await this.record(tx, conversation, 'conversation.opened', { channel });
+    }
+    if (body !== null)
+      await this.inbound(tx, conversation, {
+        kind: 'text',
+        body,
+        providerMessageId: null,
+        sentAt: new Date(),
+        senderUserId: customerUserId,
+      });
+    return conversation;
   }
 
   private async inbound(
@@ -192,6 +218,11 @@ export class ConversationsService {
           assignedUserId: conversation.assignedUserId ?? actor.userId,
           rowVersion: { increment: 1 },
         },
+      });
+      // The first answer on the conversation answers its open support tickets (D-221 first-response target).
+      await tx.supportTicket.updateMany({
+        where: { conversationId: conversation.id, firstRespondedAt: null },
+        data: { firstRespondedAt: message.sentAt },
       });
       // Inbound messages count as read once someone answered.
       await tx.conversationMessage.updateMany({

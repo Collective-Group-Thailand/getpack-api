@@ -111,6 +111,14 @@ const DEV_SERIES = [
     description: '[DEV] fake claim series',
   },
   {
+    docType: 'support_ticket',
+    prefix: 'DEVCS',
+    format: '{prefix}-{yy}{mm}-{seq:5}',
+    resetPeriod: 'monthly',
+    isGapless: false,
+    description: '[DEV] fake support ticket series',
+  },
+  {
     docType: 'iv',
     prefix: 'DEVIV',
     format: '{prefix}-{yy}-{seq:5}',

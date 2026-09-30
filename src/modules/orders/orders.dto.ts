@@ -280,6 +280,16 @@ export class OrderDto {
   @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-10-12' })
   promisedShipDate!: string | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-10-14',
+    description:
+      'Expected arrival: the quotation’s delivery estimate moved with the promised ship date; null without one',
+  })
+  estimatedDeliveryDate!: string | null;
+
   @ApiProperty({ type: MoneyTotalsDto })
   totals!: MoneyTotalsDto;
 
@@ -435,6 +445,7 @@ export const ORDER_EXAMPLE: OrderDto = {
   toleranceOveragePct: '5.0000',
   leadTimeDays: 7,
   promisedShipDate: '2026-10-12',
+  estimatedDeliveryDate: '2026-10-14',
   totals: MONEY_EXAMPLE,
   lines: [
     {

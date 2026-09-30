@@ -18,7 +18,9 @@ import { adminClaimDto, partnerClaimDto, storeClaimDto } from './claim-views';
 import {
   ADMIN_CLAIM_EXAMPLE,
   AdminClaimDto,
+  CLAIM_FORM_EXAMPLE,
   CLAIM_IDS,
+  ClaimFormDto,
   ClaimInfoDto,
   ClaimListQuery,
   ClaimNoteDto,
@@ -27,7 +29,10 @@ import {
   OverrideLiabilityDto,
   PARTNER_CLAIM_EXAMPLE,
   PartnerClaimDto,
+  REORDER_PREVIEW_EXAMPLE,
   ReorderOrderDto,
+  ReorderPreviewDto,
+  ReorderPreviewQuery,
   ResolveClaimDto,
   RESOLVED_EXAMPLE,
   StaffClaimDto,
@@ -95,6 +100,23 @@ export class StoreClaimsController extends ClaimViews {
     private readonly reorders: ReorderService,
   ) {
     super(claims);
+  }
+
+  @Get('orders/:orderId/claim-form')
+  @orderParam
+  @ApiEndpoint({
+    id: 'store.claims.getForm',
+    summary: 'Get the claim form of my order',
+    description:
+      'Whether a claim can be submitted now and until when (receipt + `claims.window_days`, D-082), the delivered ' +
+      'shipments with their own windows (no addresses), the claim types and resolutions, and the photo rules: at ' +
+      'least one photo of the product and one of the cartons, uploaded with purpose `evidence`.',
+    implements: ['D-082'],
+  })
+  @ApiSuccess(200, { description: 'The claim form', type: ClaimFormDto, example: CLAIM_FORM_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  form(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string): Promise<ClaimFormDto> {
+    return this.claims.form(customer(actor).userId, orderId);
   }
 
   @Post('orders/:orderId/claims')
@@ -188,6 +210,28 @@ export class StoreClaimsController extends ClaimViews {
     return this.one(actor, claimId, storeClaimDto);
   }
 
+  @Get('orders/:orderId/reorder')
+  @orderParam
+  @ApiEndpoint({
+    id: 'store.claims.previewReorder',
+    summary: 'Preview a reorder of my order',
+    description:
+      'The same specification priced at today’s cost for `quantity` (default: the past quantity) — nothing is ' +
+      'saved; whether the approved artwork carries over (no new proof, D-153); the catalogue quantity limits, lead ' +
+      'time and earliest dates. The `previewToken` (30 minutes) makes the reorder refuse a changed price. Plate / ' +
+      'die-block reuse is shown once the tooling register exists (D-205).',
+    implements: ['D-153'],
+  })
+  @ApiSuccess(200, { description: 'The preview', type: ReorderPreviewDto, example: REORDER_PREVIEW_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'orders.reorder_unavailable', 'pricing.not_instant')
+  previewReorder(
+    @CurrentActor() actor: Actor,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Query() q: ReorderPreviewQuery,
+  ): Promise<ReorderPreviewDto> {
+    return this.reorders.preview(customer(actor), orderId, q);
+  }
+
   @Post('orders/:orderId/actions/reorder')
   @Idempotent()
   @orderParam
@@ -196,12 +240,14 @@ export class StoreClaimsController extends ClaimViews {
     summary: 'Reorder a past order',
     description:
       'Same specification priced again at today’s cost (a new quote), quantity editable, added to my cart. With ' +
-      'the artwork unchanged the approved proof carries over and no new proof is needed (D-153).',
+      'the artwork unchanged the approved proof carries over and no new proof is needed (D-153). With the ' +
+      '`previewToken` of a preview: 409 `orders.reorder_repriced` when today’s price differs from it, 409 ' +
+      '`orders.reorder_preview_expired` when it expired or was for another quantity or artwork choice.',
     implements: ['D-153'],
   })
   @ApiBody({
     type: ReorderOrderDto,
-    examples: { default: { value: { quantity: 2000, reuseArtwork: true } } },
+    examples: { default: { value: { quantity: 2000, reuseArtwork: true, previewToken: 'Hq3v…' } } },
   })
   @ApiSuccess(201, {
     description: 'Cart with the reorder',
@@ -209,7 +255,14 @@ export class StoreClaimsController extends ClaimViews {
     example: CART_EXAMPLE,
     headers: ['ETag'],
   })
-  @ApiStandardErrors(...WRITE, 'orders.reorder_unavailable', 'pricing.not_instant', 'cart.item_exists')
+  @ApiStandardErrors(
+    ...WRITE,
+    'orders.reorder_unavailable',
+    'orders.reorder_repriced',
+    'orders.reorder_preview_expired',
+    'pricing.not_instant',
+    'cart.item_exists',
+  )
   async reorder(
     @CurrentActor() actor: Actor,
     @Param('orderId', ParseUUIDPipe) orderId: string,

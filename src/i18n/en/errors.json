@@ -983,6 +983,14 @@
     "reorder_unavailable": {
       "title": "Reorder unavailable",
       "detail": "This order cannot be reordered ({reason})"
+    },
+    "reorder_repriced": {
+      "title": "Price changed",
+      "detail": "The reorder price changed since the preview (new total THB {grossAmount}); preview it again"
+    },
+    "reorder_preview_expired": {
+      "title": "Preview expired",
+      "detail": "The reorder preview expired or does not match this request; preview it again"
     }
   },
   "line": {
@@ -1223,6 +1231,12 @@
     "deletion_blocked": {
       "title": "Data cannot be deleted yet",
       "detail": "The account still has {open}; they must be finished first."
+    }
+  },
+  "support": {
+    "contact_required": {
+      "title": "Contact details required",
+      "detail": "Give your name and a phone number or e-mail so CS can reach you"
     }
   }
 }

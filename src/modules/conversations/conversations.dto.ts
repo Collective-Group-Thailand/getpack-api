@@ -12,6 +12,8 @@ import {
   MinLength,
 } from 'class-validator';
 
+import { ConversationTicketDto } from './support.dto';
+
 /** Chat with CS and the LINE official account (D-143, D-151; B4.6). */
 
 export const CONVERSATION_STATUSES = ['open', 'pending', 'closed'] as const;
@@ -133,7 +135,12 @@ export class StoreConversationDto {
 }
 
 export class ConversationDto extends StoreConversationDto {
-  @ApiProperty({ enum: ['line', 'web'], enumName: 'ConversationChannel', example: 'line' })
+  @ApiProperty({
+    enum: ['line', 'web', 'contact'],
+    enumName: 'ConversationChannel',
+    example: 'line',
+    description: '`contact`: a guest’s support ticket, answered by phone or e-mail (D-221)',
+  })
   channel!: string;
 
   @ApiProperty({
@@ -159,6 +166,13 @@ export class ConversationDto extends StoreConversationDto {
 
   @ApiProperty({ nullable: true, example: 'สอบถามสถานะคำสั่งซื้อค่ะ' })
   lastMessage!: string | null;
+
+  @ApiProperty({
+    type: ConversationTicketDto,
+    nullable: true,
+    description: 'The latest support ticket opened on it (contact form / hand-off, D-221)',
+  })
+  ticket!: ConversationTicketDto | null;
 }
 
 export const MESSAGE_EXAMPLE = {
@@ -183,6 +197,7 @@ export const CONVERSATION_EXAMPLE = {
   lineFriendStatus: 'followed',
   assignee: null,
   lastMessage: 'สอบถามสถานะคำสั่งซื้อค่ะ',
+  ticket: null,
 };
 export const RICH_MENU_EXAMPLE = {
   key: 'member_2026',

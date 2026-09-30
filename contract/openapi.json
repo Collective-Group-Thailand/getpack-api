@@ -1596,6 +1596,28 @@
           "type": "https://errors.packio/order.reprice_has_discounts"
         }
       },
+      "problem.orders.reorder_preview_expired": {
+        "summary": "orders.reorder_preview_expired",
+        "value": {
+          "code": "orders.reorder_preview_expired",
+          "detail": "ตัวอย่างการสั่งซ้ำหมดอายุหรือไม่ตรงกับคำสั่งนี้ กรุณาดูตัวอย่างอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตัวอย่างหมดอายุ",
+          "type": "https://errors.packio/orders.reorder_preview_expired"
+        }
+      },
+      "problem.orders.reorder_repriced": {
+        "summary": "orders.reorder_repriced",
+        "value": {
+          "code": "orders.reorder_repriced",
+          "detail": "ราคาสั่งซ้ำเปลี่ยนจากที่แสดงไว้ (ยอดใหม่ {grossAmount} บาท) กรุณาดูตัวอย่างอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ราคาเปลี่ยนแล้ว",
+          "type": "https://errors.packio/orders.reorder_repriced"
+        }
+      },
       "problem.orders.reorder_unavailable": {
         "summary": "orders.reorder_unavailable",
         "value": {
@@ -2914,6 +2936,17 @@
           "status": 409,
           "title": "มีฉบับที่เปิดอยู่แล้ว",
           "type": "https://errors.packio/shipping.version_open"
+        }
+      },
+      "problem.support.contact_required": {
+        "summary": "support.contact_required",
+        "value": {
+          "code": "support.contact_required",
+          "detail": "กรุณาระบุชื่อ และเบอร์โทรหรืออีเมล เพื่อให้ทีมงานติดต่อกลับ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ต้องมีช่องทางติดต่อ",
+          "type": "https://errors.packio/support.contact_required"
         }
       },
       "problem.tax.gl_difference": {
@@ -5061,6 +5094,15 @@
             },
             "type": "array"
           },
+          "estimatedDeliveryDate": {
+            "description": "Expected arrival: the quotation’s delivery estimate moved with the promised ship date; null without one",
+            "example": "2026-10-14",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
             "format": "uuid",
@@ -5184,6 +5226,7 @@
           "toleranceOveragePct",
           "leadTimeDays",
           "promisedShipDate",
+          "estimatedDeliveryDate",
           "totals",
           "lines",
           "destinations",
@@ -11940,6 +11983,216 @@
         ],
         "type": "string"
       },
+      "ClaimEvidenceRulesDto": {
+        "properties": {
+          "accept": {
+            "example": [
+              "image/png",
+              "image/jpeg",
+              "image/webp"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "cartonPhotosMax": {
+            "example": 10,
+            "type": "integer"
+          },
+          "cartonPhotosMin": {
+            "description": "Photos of the shipping cartons required (D-082)",
+            "example": 1,
+            "type": "integer"
+          },
+          "maxBytes": {
+            "example": 104857600,
+            "type": "integer"
+          },
+          "productPhotosMax": {
+            "example": 10,
+            "type": "integer"
+          },
+          "productPhotosMin": {
+            "description": "Photos of the product required (D-082)",
+            "example": 1,
+            "type": "integer"
+          },
+          "purpose": {
+            "description": "File purpose to presign photo uploads with",
+            "example": "evidence",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "accept",
+          "maxBytes",
+          "productPhotosMin",
+          "productPhotosMax",
+          "cartonPhotosMin",
+          "cartonPhotosMax"
+        ],
+        "type": "object"
+      },
+      "ClaimFormClosedReason": {
+        "enum": [
+          "not_delivered",
+          "window_closed"
+        ],
+        "type": "string"
+      },
+      "ClaimFormDto": {
+        "properties": {
+          "closedReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClaimFormClosedReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "deliveredAt": {
+            "example": "2026-10-20T14:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/ClaimEvidenceRulesDto"
+          },
+          "open": {
+            "description": "A claim can be submitted now",
+            "example": true,
+            "type": "boolean"
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantityOrdered": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "resolutions": {
+            "example": [
+              "reprint",
+              "partial_refund",
+              "full_refund",
+              "credit"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ClaimResolutionKind"
+            },
+            "type": "array"
+          },
+          "shipments": {
+            "description": "Delivered shipments of the order (no addresses)",
+            "items": {
+              "$ref": "#/components/schemas/ClaimFormShipmentDto"
+            },
+            "type": "array"
+          },
+          "types": {
+            "example": [
+              "damaged",
+              "wrong_spec",
+              "print_defect",
+              "quantity_short",
+              "late",
+              "other"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ClaimType"
+            },
+            "type": "array"
+          },
+          "windowEndsAt": {
+            "description": "Receipt + `claims.window_days` (D-082); the latest window of the deliveries",
+            "example": "2026-10-27T14:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "orderId",
+          "orderCode",
+          "quantityOrdered",
+          "deliveredAt",
+          "windowEndsAt",
+          "open",
+          "closedReason",
+          "types",
+          "resolutions",
+          "shipments",
+          "evidence"
+        ],
+        "type": "object"
+      },
+      "ClaimFormShipmentDto": {
+        "properties": {
+          "deliveredAt": {
+            "example": "2026-10-20T14:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "deliveredQuantity": {
+            "description": "As counted at delivery, when recorded",
+            "example": 1000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "open": {
+            "example": true,
+            "type": "boolean"
+          },
+          "quantity": {
+            "description": "Quantity of this order in the delivery",
+            "example": 1000,
+            "type": "integer"
+          },
+          "shipmentNo": {
+            "example": "SH-2610-0001",
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "description": "Last moment to claim it",
+            "example": "2026-10-27T14:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "shipmentNo",
+          "deliveredAt",
+          "quantity",
+          "deliveredQuantity",
+          "windowEndsAt",
+          "open"
+        ],
+        "type": "object"
+      },
       "ClaimInfoDto": {
         "properties": {
           "photoFileIds": {
@@ -13679,9 +13932,11 @@
         "type": "string"
       },
       "ConversationChannel": {
+        "description": "`contact`: a guest’s support ticket, answered by phone or e-mail (D-221)",
         "enum": [
           "line",
-          "web"
+          "web",
+          "contact"
         ],
         "type": "string"
       },
@@ -13703,6 +13958,7 @@
                 "$ref": "#/components/schemas/ConversationChannel"
               }
             ],
+            "description": "`contact`: a guest’s support ticket, answered by phone or e-mail (D-221)",
             "example": "line"
           },
           "customer": {
@@ -13759,6 +14015,17 @@
               }
             ],
             "example": "open"
+          },
+          "ticket": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConversationTicketDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The latest support ticket opened on it (contact form / hand-off, D-221)"
           }
         },
         "required": [
@@ -13770,7 +14037,8 @@
           "lineDisplayName",
           "lineFriendStatus",
           "assignee",
-          "lastMessage"
+          "lastMessage",
+          "ticket"
         ],
         "type": "object"
       },
@@ -13781,6 +14049,100 @@
           "closed"
         ],
         "type": "string"
+      },
+      "ConversationTicketDto": {
+        "properties": {
+          "callbackRequested": {
+            "example": false,
+            "type": "boolean"
+          },
+          "contactEmail": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contactName": {
+            "example": "สมชาย ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contactPhone": {
+            "example": "0000000000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "context": {
+            "additionalProperties": true,
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "firstRespondedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderRef": {
+            "description": "As typed; not verified",
+            "example": "PK-2610-0001-01",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "overdue": {
+            "description": "Not answered and past `respondBy`",
+            "example": false,
+            "type": "boolean"
+          },
+          "respondBy": {
+            "example": "2026-10-21T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportTicketSource"
+              }
+            ],
+            "example": "contact_form"
+          },
+          "ticketNo": {
+            "example": "CS-2610-00001",
+            "type": "string"
+          },
+          "topic": {
+            "example": "order_status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketNo",
+          "source",
+          "topic",
+          "contactName",
+          "contactPhone",
+          "contactEmail",
+          "orderRef",
+          "callbackRequested",
+          "context",
+          "respondBy",
+          "firstRespondedAt",
+          "overdue"
+        ],
+        "type": "object"
       },
       "CorrugateAssemblyDto": {
         "properties": {
@@ -22183,7 +22545,8 @@
           "job",
           "claim",
           "shipment",
-          "rfq"
+          "rfq",
+          "support_ticket"
         ],
         "type": "string"
       },
@@ -30161,6 +30524,15 @@
             },
             "type": "array"
           },
+          "estimatedDeliveryDate": {
+            "description": "Expected arrival: the quotation’s delivery estimate moved with the promised ship date; null without one",
+            "example": "2026-10-14",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
             "format": "uuid",
@@ -30281,6 +30653,7 @@
           "toleranceOveragePct",
           "leadTimeDays",
           "promisedShipDate",
+          "estimatedDeliveryDate",
           "totals",
           "lines",
           "destinations",
@@ -30557,6 +30930,15 @@
               "null"
             ]
           },
+          "estimatedDeliveryDate": {
+            "description": "Expected arrival: the quotation’s delivery estimate moved with the promised ship date",
+            "example": "2026-10-22",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "orderId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
             "format": "uuid",
@@ -30617,6 +30999,7 @@
           "orderId",
           "status",
           "promisedShipDate",
+          "estimatedDeliveryDate",
           "paidForProductionAt",
           "artworkApprovedAt",
           "productionStartedAt",
@@ -36085,6 +36468,15 @@
             "example": "กำลังพิมพ์",
             "type": "string"
           },
+          "promisedAt": {
+            "description": "When the step is due in the factory’s plan (D-075); null when the plan sets no date",
+            "example": "2026-10-14T18:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "status": {
             "allOf": [
               {
@@ -36099,6 +36491,7 @@
           "labelTh",
           "labelEn",
           "status",
+          "promisedAt",
           "completedAt"
         ],
         "type": "object"
@@ -37283,6 +37676,15 @@
               "null"
             ]
           },
+          "estimatedDeliveryDate": {
+            "description": "Expected arrival: the quotation’s delivery estimate moved with the promised ship date",
+            "example": "2026-10-22",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "promisedShipDate": {
             "example": "2026-10-20",
             "format": "date",
@@ -37319,6 +37721,7 @@
         "required": [
           "status",
           "promisedShipDate",
+          "estimatedDeliveryDate",
           "shippedAt",
           "deliveredAt",
           "steps",
@@ -39656,6 +40059,12 @@
       },
       "ReorderOrderDto": {
         "properties": {
+          "previewToken": {
+            "description": "From `store.claims.previewReorder` with the same quantity and artwork choice: refused with 409 `orders.reorder_repriced` when today’s price differs from the preview",
+            "example": "Hq3v…",
+            "maxLength": 100,
+            "type": "string"
+          },
           "quantity": {
             "description": "Default: the past quantity",
             "example": 2000,
@@ -39669,6 +40078,159 @@
             "type": "boolean"
           }
         },
+        "type": "object"
+      },
+      "ReorderPreviewDto": {
+        "properties": {
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "designFeeAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "earliestDeliveryDate": {
+            "example": "2026-11-12",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "earliestShipDate": {
+            "example": "2026-11-10",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossAmount": {
+            "example": "9630.00",
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "example": 7,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "orderCode": {
+            "example": "PK-2610-0001-01",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "previewExpiresAt": {
+            "example": "2026-10-30T10:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "previewToken": {
+            "description": "Send with the reorder to be warned if the price changes",
+            "example": "Hq3v…",
+            "type": "string"
+          },
+          "previousQuantity": {
+            "description": "The quantity of the past order",
+            "example": 1000,
+            "type": "integer"
+          },
+          "productAmount": {
+            "example": "8500.00",
+            "type": "string"
+          },
+          "proofSkipped": {
+            "description": "The approved artwork carries over and no new proof is needed (D-153)",
+            "example": true,
+            "type": "boolean"
+          },
+          "quantity": {
+            "example": 2000,
+            "type": "integer"
+          },
+          "quantityLimits": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReorderQuantityLimitsDto"
+              }
+            ],
+            "description": "Of the catalogue product (null: no limit)"
+          },
+          "shippingAmount": {
+            "description": "Null while shipping is not priced",
+            "example": "535.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toolingAmount": {
+            "description": "Plates and die blocks, incl. VAT",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPrice": {
+            "example": "4.250000",
+            "type": "string"
+          },
+          "vatAmount": {
+            "example": "630.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "orderCode",
+          "quantity",
+          "previousQuantity",
+          "quantityLimits",
+          "unitPrice",
+          "productAmount",
+          "designFeeAmount",
+          "toolingAmount",
+          "shippingAmount",
+          "vatAmount",
+          "grossAmount",
+          "currency",
+          "leadTimeDays",
+          "earliestShipDate",
+          "earliestDeliveryDate",
+          "proofSkipped",
+          "previewToken",
+          "previewExpiresAt"
+        ],
+        "type": "object"
+      },
+      "ReorderQuantityLimitsDto": {
+        "properties": {
+          "max": {
+            "example": 100000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "min": {
+            "example": 500,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "min",
+          "max"
+        ],
         "type": "object"
       },
       "ReplaceArticleCategoriesDto": {
@@ -50102,6 +50664,183 @@
           "waste_actuals",
           "shipping_margin",
           "none"
+        ],
+        "type": "string"
+      },
+      "SupportContactDto": {
+        "properties": {
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportContactPersonDto"
+              }
+            ],
+            "description": "Required for a guest; a signed-in customer is reached through the account"
+          },
+          "message": {
+            "example": "สอบถามกำหนดส่งค่ะ",
+            "maxLength": 5000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "orderCode": {
+            "description": "An order code, if it is about one",
+            "example": "PK-2610-0001-01",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "topic": {
+            "description": "The storefront’s topic key (e.g. order_status, quotation, artwork, other)",
+            "example": "order_status",
+            "pattern": "^[a-z][a-z0-9_]{0,39}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic",
+          "message"
+        ],
+        "type": "object"
+      },
+      "SupportContactPersonDto": {
+        "properties": {
+          "email": {
+            "example": "someone@example.test",
+            "format": "email",
+            "maxLength": 254,
+            "type": "string"
+          },
+          "name": {
+            "example": "สมชาย ทดสอบ",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "phone": {
+            "description": "Phone or e-mail is required",
+            "example": "0000000000",
+            "maxLength": 40,
+            "pattern": "^\\+?[0-9 -]{6,40}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "SupportHandoffDto": {
+        "properties": {
+          "answers": {
+            "additionalProperties": true,
+            "description": "The guided-help answers (≤ 16 KB)",
+            "example": {
+              "size": "small",
+              "use": "food"
+            },
+            "type": "object"
+          },
+          "callback": {
+            "default": false,
+            "description": "CS calls back instead of answering in chat",
+            "example": false,
+            "type": "boolean"
+          },
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportContactPersonDto"
+              }
+            ],
+            "description": "Required for a guest"
+          },
+          "note": {
+            "example": "อยากได้กล่องใส่คุกกี้",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "page": {
+            "description": "The page the hand-off started from",
+            "example": "/guided-help",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          },
+          "recommended": {
+            "description": "What was recommended",
+            "example": [
+              "tuck-end-box"
+            ],
+            "items": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          }
+        },
+        "required": [
+          "page"
+        ],
+        "type": "object"
+      },
+      "SupportTicketDto": {
+        "properties": {
+          "conversationId": {
+            "description": "My CS conversation (signed in); null for a guest",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f4001",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lineUrl": {
+            "description": "Opens a LINE chat with the official account carrying only the ticket number; null until set",
+            "example": "https://line.me/R/oaMessage/%40packio-fake/?CS-2610-00001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "respondBy": {
+            "description": "First-response target: `support.first_response_business_days` business days (D-221, D-175)",
+            "example": "2026-10-21T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportTicketSource"
+              }
+            ],
+            "example": "contact_form"
+          },
+          "ticketNo": {
+            "example": "CS-2610-00001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketNo",
+          "source",
+          "respondBy",
+          "lineUrl",
+          "conversationId",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "SupportTicketSource": {
+        "enum": [
+          "contact_form",
+          "handoff"
         ],
         "type": "string"
       },
@@ -125765,7 +126504,8 @@
                       "lastMessageAt": "2026-10-20T10:00:00+07:00",
                       "lineDisplayName": "ลูกค้า",
                       "lineFriendStatus": "followed",
-                      "status": "open"
+                      "status": "open",
+                      "ticket": null
                     }
                   ],
                   "meta": {
@@ -125962,7 +126702,8 @@
                   "lastMessageAt": "2026-10-20T10:00:00+07:00",
                   "lineDisplayName": "ลูกค้า",
                   "lineFriendStatus": "followed",
-                  "status": "open"
+                  "status": "open",
+                  "ticket": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/ConversationDto"
@@ -126172,7 +126913,8 @@
                   "lastMessageAt": "2026-10-20T10:00:00+07:00",
                   "lineDisplayName": "ลูกค้า",
                   "lineFriendStatus": "followed",
-                  "status": "open"
+                  "status": "open",
+                  "ticket": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/ConversationDto"
@@ -126390,7 +127132,8 @@
                   "lastMessageAt": "2026-10-20T10:00:00+07:00",
                   "lineDisplayName": "ลูกค้า",
                   "lineFriendStatus": "followed",
-                  "status": "closed"
+                  "status": "closed",
+                  "ticket": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/ConversationDto"
@@ -134893,6 +135636,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "estimatedDeliveryDate": "2026-10-14",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "internal": {
                         "belowMarginFloor": false,
@@ -173101,6 +173845,7 @@
                               "shippingNetAmount": "120.00"
                             }
                           ],
+                          "estimatedDeliveryDate": "2026-10-14",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                           "internal": {
                             "belowMarginFloor": false,
@@ -173430,6 +174175,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "estimatedDeliveryDate": "2026-10-14",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "internal": {
                         "belowMarginFloor": false,
@@ -173778,6 +174524,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "estimatedDeliveryDate": "2026-10-14",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "internal": {
                         "belowMarginFloor": false,
@@ -174191,6 +174938,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "estimatedDeliveryDate": "2026-10-14",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "internal": {
                         "belowMarginFloor": false,
@@ -174624,6 +175372,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "estimatedDeliveryDate": "2026-10-14",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "internal": {
                         "belowMarginFloor": false,
@@ -176197,6 +176946,7 @@
                       "shippingNetAmount": "120.00"
                     }
                   ],
+                  "estimatedDeliveryDate": "2026-10-14",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                   "internal": {
                     "belowMarginFloor": false,
@@ -176517,6 +177267,7 @@
                       "shippingNetAmount": "120.00"
                     }
                   ],
+                  "estimatedDeliveryDate": "2026-10-14",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                   "internal": {
                     "belowMarginFloor": false,
@@ -176882,6 +177633,7 @@
                       "shippingNetAmount": "120.00"
                     }
                   ],
+                  "estimatedDeliveryDate": "2026-10-14",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                   "internal": {
                     "belowMarginFloor": false,
@@ -180238,6 +180990,7 @@
                   "artworkApprovedAt": "2026-10-11T10:00:00+07:00",
                   "completedAt": null,
                   "deliveredAt": null,
+                  "estimatedDeliveryDate": "2026-10-22",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "paidForProductionAt": "2026-10-10T09:00:00+07:00",
                   "productionStartedAt": "2026-10-11T10:05:00+07:00",
@@ -180251,6 +181004,7 @@
                       "key": "printing",
                       "labelEn": "Printing",
                       "labelTh": "กำลังพิมพ์",
+                      "promisedAt": "2026-10-14T18:00:00+07:00",
                       "status": "completed"
                     }
                   ]
@@ -260167,6 +260921,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "estimatedDeliveryDate": "2026-10-14",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "leadTimeDays": 7,
                       "lines": [
@@ -276305,6 +277060,7 @@
                               "shippingNetAmount": "120.00"
                             }
                           ],
+                          "estimatedDeliveryDate": "2026-10-14",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                           "leadTimeDays": 7,
                           "lines": [
@@ -276621,6 +277377,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "estimatedDeliveryDate": "2026-10-14",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "leadTimeDays": 7,
                       "lines": [
@@ -276959,6 +277716,7 @@
                           "shippingNetAmount": "120.00"
                         }
                       ],
+                      "estimatedDeliveryDate": "2026-10-14",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "leadTimeDays": 7,
                       "lines": [
@@ -278150,6 +278908,7 @@
                       "shippingNetAmount": "120.00"
                     }
                   ],
+                  "estimatedDeliveryDate": "2026-10-14",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                   "leadTimeDays": 7,
                   "lines": [
@@ -278420,6 +279179,7 @@
                       "shippingNetAmount": "120.00"
                     }
                   ],
+                  "estimatedDeliveryDate": "2026-10-14",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                   "leadTimeDays": 7,
                   "lines": [
@@ -278713,6 +279473,7 @@
                       "shippingNetAmount": "120.00"
                     }
                   ],
+                  "estimatedDeliveryDate": "2026-10-14",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                   "leadTimeDays": 7,
                   "lines": [
@@ -279008,7 +279769,7 @@
     },
     "/v1/store/orders/{orderId}/actions/reorder": {
       "post": {
-        "description": "Same specification priced again at today’s cost (a new quote), quantity editable, added to my cart. With the artwork unchanged the approved proof carries over and no new proof is needed (D-153).\n\nImplements: D-153.",
+        "description": "Same specification priced again at today’s cost (a new quote), quantity editable, added to my cart. With the artwork unchanged the approved proof carries over and no new proof is needed (D-153). With the `previewToken` of a preview: 409 `orders.reorder_repriced` when today’s price differs from it, 409 `orders.reorder_preview_expired` when it expired or was for another quantity or artwork choice.\n\nImplements: D-153.",
         "operationId": "store.claims.reorder",
         "parameters": [
           {
@@ -279033,6 +279794,7 @@
               "examples": {
                 "default": {
                   "value": {
+                    "previewToken": "Hq3v…",
                     "quantity": 2000,
                     "reuseArtwork": true
                   }
@@ -279269,6 +280031,12 @@
                   "idempotency.in_progress": {
                     "$ref": "#/components/examples/problem.idempotency.in_progress"
                   },
+                  "orders.reorder_preview_expired": {
+                    "$ref": "#/components/examples/problem.orders.reorder_preview_expired"
+                  },
+                  "orders.reorder_repriced": {
+                    "$ref": "#/components/examples/problem.orders.reorder_repriced"
+                  },
                   "orders.reorder_unavailable": {
                     "$ref": "#/components/examples/problem.orders.reorder_unavailable"
                   }
@@ -279278,7 +280046,7 @@
                 }
               }
             },
-            "description": "Problem: `cart.item_exists`, `idempotency.in_progress`, `orders.reorder_unavailable`",
+            "description": "Problem: `cart.item_exists`, `idempotency.in_progress`, `orders.reorder_preview_expired`, `orders.reorder_repriced`, `orders.reorder_unavailable`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -280607,6 +281375,234 @@
         ]
       }
     },
+    "/v1/store/orders/{orderId}/claim-form": {
+      "get": {
+        "description": "Whether a claim can be submitted now and until when (receipt + `claims.window_days`, D-082), the delivered shipments with their own windows (no addresses), the claim types and resolutions, and the photo rules: at least one photo of the product and one of the cartons, uploaded with purpose `evidence`.\n\nImplements: D-082.",
+        "operationId": "store.claims.getForm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "closedReason": null,
+                  "deliveredAt": "2026-10-20T14:00:00+07:00",
+                  "evidence": {
+                    "accept": [
+                      "application/pdf",
+                      "image/png",
+                      "image/jpeg",
+                      "image/webp",
+                      "video/mp4",
+                      "video/quicktime"
+                    ],
+                    "cartonPhotosMax": 10,
+                    "cartonPhotosMin": 1,
+                    "maxBytes": 104857600,
+                    "productPhotosMax": 10,
+                    "productPhotosMin": 1,
+                    "purpose": "evidence"
+                  },
+                  "open": true,
+                  "orderCode": "PK-2610-0001-01",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "quantityOrdered": 1000,
+                  "resolutions": [
+                    "reprint",
+                    "partial_refund",
+                    "full_refund",
+                    "credit"
+                  ],
+                  "shipments": [
+                    {
+                      "deliveredAt": "2026-10-20T14:00:00+07:00",
+                      "deliveredQuantity": 1000,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                      "open": true,
+                      "quantity": 1000,
+                      "shipmentNo": "SH-2610-0001",
+                      "windowEndsAt": "2026-10-27T14:00:00+07:00"
+                    }
+                  ],
+                  "types": [
+                    "damaged",
+                    "wrong_spec",
+                    "print_defect",
+                    "quantity_short",
+                    "late",
+                    "other"
+                  ],
+                  "windowEndsAt": "2026-10-27T14:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimFormDto"
+                }
+              }
+            },
+            "description": "The claim form",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get the claim form of my order",
+        "tags": [
+          "store.claims"
+        ]
+      }
+    },
     "/v1/store/orders/{orderId}/claims": {
       "post": {
         "description": "Within 7 days of receipt (D-082; `claims.window_closed` after), with photos of the product **and** of the shipping cartons (evidence uploads). Liability follows the rules (D-083); the claim holds the automatic completion of the order until it is settled.\n\nImplements: D-082, D-083.",
@@ -281745,6 +282741,7 @@
                   "artworkApprovedAt": "2026-10-11T10:00:00+07:00",
                   "completedAt": null,
                   "deliveredAt": null,
+                  "estimatedDeliveryDate": "2026-10-22",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "paidForProductionAt": "2026-10-10T09:00:00+07:00",
                   "productionStartedAt": "2026-10-11T10:05:00+07:00",
@@ -281758,6 +282755,7 @@
                       "key": "printing",
                       "labelEn": "Printing",
                       "labelTh": "กำลังพิมพ์",
+                      "promisedAt": "2026-10-14T18:00:00+07:00",
                       "status": "completed"
                     }
                   ]
@@ -282150,6 +283148,252 @@
         "summary": "List the proofs of my order",
         "tags": [
           "store.artwork"
+        ]
+      }
+    },
+    "/v1/store/orders/{orderId}/reorder": {
+      "get": {
+        "description": "The same specification priced at today’s cost for `quantity` (default: the past quantity) — nothing is saved; whether the approved artwork carries over (no new proof, D-153); the catalogue quantity limits, lead time and earliest dates. The `previewToken` (30 minutes) makes the reorder refuse a changed price. Plate / die-block reuse is shown once the tooling register exists (D-205).\n\nImplements: D-153.",
+        "operationId": "store.claims.previewReorder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Default: the past quantity",
+            "in": "query",
+            "name": "quantity",
+            "required": false,
+            "schema": {
+              "example": 2000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "reuseArtwork",
+            "required": false,
+            "schema": {
+              "default": true,
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "designFeeAmount": "0.00",
+                  "earliestDeliveryDate": "2026-11-12",
+                  "earliestShipDate": "2026-11-10",
+                  "grossAmount": "9630.00",
+                  "leadTimeDays": 7,
+                  "orderCode": "PK-2610-0001-01",
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
+                  "previewExpiresAt": "2026-10-30T10:30:00+07:00",
+                  "previewToken": "Hq3v…",
+                  "previousQuantity": 1000,
+                  "productAmount": "8500.00",
+                  "proofSkipped": true,
+                  "quantity": 2000,
+                  "quantityLimits": {
+                    "max": 100000,
+                    "min": 500
+                  },
+                  "shippingAmount": "535.00",
+                  "toolingAmount": null,
+                  "unitPrice": "4.250000",
+                  "vatAmount": "630.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReorderPreviewDto"
+                }
+              }
+            },
+            "description": "The preview",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "orders.reorder_unavailable": {
+                    "$ref": "#/components/examples/problem.orders.reorder_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `orders.reorder_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Preview a reorder of my order",
+        "tags": [
+          "store.claims"
         ]
       }
     },
@@ -291956,6 +293200,487 @@
         ]
       }
     },
+    "/v1/store/support/actions/contact": {
+      "post": {
+        "description": "The contact form, for guests and customers: opens a CS ticket on a CS conversation (D-221) — a signed-in customer’s own chat, a new one for a guest, who leaves a name and a phone or e-mail. Answers the ticket number, the first-response target (`support.first_response_business_days` business days, D-175) and a LINE link carrying only the ticket number. Rate-limited per client (429 with `Retry-After`).\n\nImplements: D-221, D-175.",
+        "operationId": "store.support.contact",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "contact": {
+                      "name": "สมชาย ทดสอบ",
+                      "phone": "0000000000"
+                    },
+                    "message": "สอบถามกำหนดส่งค่ะ",
+                    "orderCode": "PK-2610-0001-01",
+                    "topic": "order_status"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SupportContactDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "conversationId": null,
+                  "createdAt": "2026-10-20T10:00:00+07:00",
+                  "lineUrl": "https://line.me/R/oaMessage/%40packio-fake/?CS-2610-00001",
+                  "respondBy": "2026-10-21T10:00:00+07:00",
+                  "source": "contact_form",
+                  "ticketNo": "CS-2610-00001"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketDto"
+                }
+              }
+            },
+            "description": "Ticket opened",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "support.contact_required": {
+                    "$ref": "#/components/examples/problem.support.contact_required"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `support.contact_required`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Contact Packio CS",
+        "tags": [
+          "store.support"
+        ]
+      }
+    },
+    "/v1/store/support/actions/handoff": {
+      "post": {
+        "description": "Passes the page, the guided-help answers and what was recommended to CS as a ticket (topic `guided_help`), answered in chat or by a call back (`callback`). Same rules and answer as `store.support.contact` (D-221).\n\nImplements: D-221, D-175.",
+        "operationId": "store.support.handoff",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "answers": {
+                      "size": "small",
+                      "use": "food"
+                    },
+                    "callback": true,
+                    "contact": {
+                      "name": "สมชาย ทดสอบ",
+                      "phone": "0000000000"
+                    },
+                    "note": "อยากได้กล่องใส่คุกกี้",
+                    "page": "/guided-help",
+                    "recommended": [
+                      "tuck-end-box"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SupportHandoffDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "conversationId": null,
+                  "createdAt": "2026-10-20T10:00:00+07:00",
+                  "lineUrl": "https://line.me/R/oaMessage/%40packio-fake/?CS-2610-00001",
+                  "respondBy": "2026-10-21T10:00:00+07:00",
+                  "source": "handoff",
+                  "ticketNo": "CS-2610-00001"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketDto"
+                }
+              }
+            },
+            "description": "Ticket opened",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "support.contact_required": {
+                    "$ref": "#/components/examples/problem.support.contact_required"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `support.contact_required`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Hand the guided help over to CS",
+        "tags": [
+          "store.support"
+        ]
+      }
+    },
     "/v1/store/tax-profiles": {
       "get": {
         "description": "Buyer data for full-form tax invoices issued by the entity (D-092): tax id, head office / branch and whether the customer withholds tax (D-174).\n\nImplements: D-142, D-174, D-092.",
@@ -293153,6 +294878,7 @@
               "application/json": {
                 "example": {
                   "deliveredAt": null,
+                  "estimatedDeliveryDate": "2026-10-22",
                   "promisedShipDate": "2026-10-20",
                   "shipments": [
                     {
@@ -293182,6 +294908,7 @@
                       "key": "printing",
                       "labelEn": "Printing",
                       "labelTh": "กำลังพิมพ์",
+                      "promisedAt": "2026-10-14T18:00:00+07:00",
                       "status": "completed"
                     }
                   ]

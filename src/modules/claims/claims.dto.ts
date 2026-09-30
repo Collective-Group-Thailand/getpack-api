@@ -1,6 +1,6 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -61,6 +61,9 @@ export const CLAIM_IDS = {
   payment: '0192f3a0-7c1e-7d2a-9b1f-0000000f3004',
 };
 
+/** Photos of each kind one claim takes (technical bound, as `SubmitClaimDto`). */
+export const MAX_CLAIM_PHOTOS = 10;
+
 // --- requests ------------------------------------------------------------------------------------------
 
 export class SubmitClaimDto {
@@ -104,7 +107,7 @@ export class SubmitClaimDto {
   })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(10)
+  @ArrayMaxSize(MAX_CLAIM_PHOTOS)
   @IsUUID('all', { each: true })
   productPhotoFileIds!: string[];
 
@@ -118,7 +121,7 @@ export class SubmitClaimDto {
   })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(10)
+  @ArrayMaxSize(MAX_CLAIM_PHOTOS)
   @IsUUID('all', { each: true })
   cartonPhotoFileIds!: string[];
 }
@@ -313,6 +316,33 @@ export class ReorderOrderDto {
     default: true,
   })
   @IsOptional()
+  @IsBoolean()
+  reuseArtwork?: boolean;
+
+  @ApiPropertyOptional({
+    example: 'Hq3v…',
+    maxLength: 100,
+    description:
+      'From `store.claims.previewReorder` with the same quantity and artwork choice: refused with 409 ' +
+      '`orders.reorder_repriced` when today’s price differs from the preview',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  previewToken?: string;
+}
+
+export class ReorderPreviewQuery {
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, example: 2000, description: 'Default: the past quantity' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantity?: number;
+
+  @ApiPropertyOptional({ type: Boolean, default: true, example: true })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   reuseArtwork?: boolean;
 }
@@ -516,4 +546,231 @@ export const RESOLVED_EXAMPLE = {
       executedAt: '2026-10-25T11:00:00+07:00',
     },
   ],
+};
+
+// --- claim form (U-B0.1) ---------------------------------------------------------------------------------
+
+export class ClaimFormShipmentDto {
+  @ApiProperty({ format: 'uuid', example: CLAIM_IDS.shipment })
+  id!: string;
+
+  @ApiProperty({ example: 'SH-2610-0001' })
+  shipmentNo!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-20T14:00:00+07:00' })
+  deliveredAt!: string;
+
+  @ApiProperty({ type: 'integer', example: 1000, description: 'Quantity of this order in the delivery' })
+  quantity!: number;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 1000, description: 'As counted at delivery, when recorded' })
+  deliveredQuantity!: number | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-27T14:00:00+07:00', description: 'Last moment to claim it' })
+  windowEndsAt!: string;
+
+  @ApiProperty({ example: true })
+  open!: boolean;
+}
+
+export class ClaimEvidenceRulesDto {
+  @ApiProperty({ example: 'evidence', description: 'File purpose to presign photo uploads with' })
+  purpose!: string;
+
+  @ApiProperty({ type: [String], example: ['image/png', 'image/jpeg', 'image/webp'] })
+  accept!: string[];
+
+  @ApiProperty({ type: 'integer', example: 104857600 })
+  maxBytes!: number;
+
+  @ApiProperty({ type: 'integer', example: 1, description: 'Photos of the product required (D-082)' })
+  productPhotosMin!: number;
+
+  @ApiProperty({ type: 'integer', example: MAX_CLAIM_PHOTOS })
+  productPhotosMax!: number;
+
+  @ApiProperty({ type: 'integer', example: 1, description: 'Photos of the shipping cartons required (D-082)' })
+  cartonPhotosMin!: number;
+
+  @ApiProperty({ type: 'integer', example: MAX_CLAIM_PHOTOS })
+  cartonPhotosMax!: number;
+}
+
+/** What the claim form of one of my orders needs (D-082): the window, the deliveries and the evidence rules. */
+export class ClaimFormDto {
+  @ApiProperty({ format: 'uuid', example: CLAIM_IDS.order })
+  orderId!: string;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+
+  @ApiProperty({ type: 'integer', example: 1000 })
+  quantityOrdered!: number;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-20T14:00:00+07:00' })
+  deliveredAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-27T14:00:00+07:00',
+    description: 'Receipt + `claims.window_days` (D-082); the latest window of the deliveries',
+  })
+  windowEndsAt!: string | null;
+
+  @ApiProperty({ example: true, description: 'A claim can be submitted now' })
+  open!: boolean;
+
+  @ApiProperty({
+    enum: ['not_delivered', 'window_closed'],
+    enumName: 'ClaimFormClosedReason',
+    nullable: true,
+    example: null,
+  })
+  closedReason!: 'not_delivered' | 'window_closed' | null;
+
+  @ApiProperty({ enum: CLAIM_TYPES, enumName: 'ClaimType', isArray: true, example: [...CLAIM_TYPES] })
+  types!: string[];
+
+  @ApiProperty({
+    enum: RESOLUTION_KINDS,
+    enumName: 'ClaimResolutionKind',
+    isArray: true,
+    example: [...RESOLUTION_KINDS],
+  })
+  resolutions!: string[];
+
+  @ApiProperty({ type: [ClaimFormShipmentDto], description: 'Delivered shipments of the order (no addresses)' })
+  shipments!: ClaimFormShipmentDto[];
+
+  @ApiProperty({ type: ClaimEvidenceRulesDto })
+  evidence!: ClaimEvidenceRulesDto;
+}
+
+export const CLAIM_FORM_EXAMPLE: ClaimFormDto = {
+  orderId: CLAIM_IDS.order,
+  orderCode: 'PK-2610-0001-01',
+  quantityOrdered: 1000,
+  deliveredAt: '2026-10-20T14:00:00+07:00',
+  windowEndsAt: '2026-10-27T14:00:00+07:00',
+  open: true,
+  closedReason: null,
+  types: [...CLAIM_TYPES],
+  resolutions: [...RESOLUTION_KINDS],
+  shipments: [
+    {
+      id: CLAIM_IDS.shipment,
+      shipmentNo: 'SH-2610-0001',
+      deliveredAt: '2026-10-20T14:00:00+07:00',
+      quantity: 1000,
+      deliveredQuantity: 1000,
+      windowEndsAt: '2026-10-27T14:00:00+07:00',
+      open: true,
+    },
+  ],
+  evidence: {
+    purpose: 'evidence',
+    accept: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp', 'video/mp4', 'video/quicktime'],
+    maxBytes: 104857600,
+    productPhotosMin: 1,
+    productPhotosMax: MAX_CLAIM_PHOTOS,
+    cartonPhotosMin: 1,
+    cartonPhotosMax: MAX_CLAIM_PHOTOS,
+  },
+};
+
+// --- reorder preview (U-B0.1, D-153) -------------------------------------------------------------------
+
+export class ReorderQuantityLimitsDto {
+  @ApiProperty({ type: 'integer', nullable: true, example: 500 })
+  min!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 100000 })
+  max!: number | null;
+}
+
+/** Today's price of reordering one of my orders (D-153): nothing is saved until the reorder is added. */
+export class ReorderPreviewDto {
+  @ApiProperty({ format: 'uuid', example: CLAIM_IDS.order })
+  orderId!: string;
+
+  @ApiProperty({ example: 'PK-2610-0001-01' })
+  orderCode!: string;
+
+  @ApiProperty({ type: 'integer', example: 2000 })
+  quantity!: number;
+
+  @ApiProperty({ type: 'integer', example: 1000, description: 'The quantity of the past order' })
+  previousQuantity!: number;
+
+  @ApiProperty({ type: ReorderQuantityLimitsDto, description: 'Of the catalogue product (null: no limit)' })
+  quantityLimits!: ReorderQuantityLimitsDto;
+
+  @ApiProperty({ example: '4.250000' })
+  unitPrice!: string;
+
+  @ApiProperty({ example: '8500.00' })
+  productAmount!: string;
+
+  @ApiProperty({ example: '0.00' })
+  designFeeAmount!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Plates and die blocks, incl. VAT' })
+  toolingAmount!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '535.00', description: 'Null while shipping is not priced' })
+  shippingAmount!: string | null;
+
+  @ApiProperty({ example: '630.00' })
+  vatAmount!: string;
+
+  @ApiProperty({ example: '9630.00' })
+  grossAmount!: string;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 7 })
+  leadTimeDays!: number | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-11-10' })
+  earliestShipDate!: string | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-11-12' })
+  earliestDeliveryDate!: string | null;
+
+  @ApiProperty({
+    example: true,
+    description: 'The approved artwork carries over and no new proof is needed (D-153)',
+  })
+  proofSkipped!: boolean;
+
+  @ApiProperty({ example: 'Hq3v…', description: 'Send with the reorder to be warned if the price changes' })
+  previewToken!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-30T10:30:00+07:00' })
+  previewExpiresAt!: string;
+}
+
+export const REORDER_PREVIEW_EXAMPLE: ReorderPreviewDto = {
+  orderId: CLAIM_IDS.order,
+  orderCode: 'PK-2610-0001-01',
+  quantity: 2000,
+  previousQuantity: 1000,
+  quantityLimits: { min: 500, max: 100000 },
+  unitPrice: '4.250000',
+  productAmount: '8500.00',
+  designFeeAmount: '0.00',
+  toolingAmount: null,
+  shippingAmount: '535.00',
+  vatAmount: '630.00',
+  grossAmount: '9630.00',
+  currency: 'THB',
+  leadTimeDays: 7,
+  earliestShipDate: '2026-11-10',
+  earliestDeliveryDate: '2026-11-12',
+  proofSkipped: true,
+  previewToken: 'Hq3v…',
+  previewExpiresAt: '2026-10-30T10:30:00+07:00',
 };

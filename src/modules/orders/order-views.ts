@@ -18,6 +18,7 @@ export const ORDER_INCLUDE = {
   deliveryReconciliation: true,
   catalogProduct: SUMMARY_INCLUDE.catalogProduct,
   quote: true,
+  quoteOption: { select: { earliestShipDate: true, result: true } },
   selectedFactory: true,
   lines: { orderBy: { lineNo: 'asc' } },
   destinations: {
@@ -119,6 +120,21 @@ function toleranceOutcome(row: OrderRow) {
     : null;
 }
 
+/**
+ * When the order should arrive: the quotation's earliest delivery date, moved by as many days as the promised ship
+ * date moved from the quotation's earliest ship date (checkout re-plans a stale ship date). Null without a promise
+ * or when the quotation had no delivery estimate (no zone lead time).
+ */
+export function estimatedDeliveryDate(
+  promisedShipDate: Date | null,
+  option: { earliestShipDate: Date | null; result: Prisma.JsonValue } | null,
+): string | null {
+  const delivery = (option?.result as { earliestDeliveryDate?: string | null } | null)?.earliestDeliveryDate;
+  if (!promisedShipDate || !delivery) return null;
+  const shift = Math.round((promisedShipDate.getTime() - (option?.earliestShipDate ?? promisedShipDate).getTime()) / DAY_MS);
+  return new Date(Date.parse(`${delivery}T00:00:00Z`) + shift * DAY_MS).toISOString().slice(0, 10);
+}
+
 export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDays: null }): OrderDto {
   return {
     id: row.publicId,
@@ -138,6 +154,7 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     toleranceOveragePct: row.toleranceOveragePct?.toFixed(4) ?? null,
     leadTimeDays: row.leadTimeDays,
     promisedShipDate: row.promisedShipDate ? bangkokDate(row.promisedShipDate) : null,
+    estimatedDeliveryDate: estimatedDeliveryDate(row.promisedShipDate, row.quoteOption),
     totals: totals(row),
     lines: row.lines.map((l) => ({
       id: l.publicId,

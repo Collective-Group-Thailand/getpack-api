@@ -44,6 +44,7 @@ import {
 import { type ConversationRow, ConversationsService, type MessageRow } from './conversations.service';
 import { LineWebhookService } from './line-webhook.service';
 import { RichMenusService } from './rich-menus.service';
+import { ticketDto } from './support.service';
 
 const conversationParam = ApiParam({ name: 'conversationId', format: 'uuid' });
 
@@ -75,6 +76,7 @@ function conversationDto(c: ConversationRow): ConversationDto {
       ? { id: c.assignedUser.publicId, displayName: c.assignedUser.displayName }
       : null,
     lastMessage: c.messages[0]?.body ?? null,
+    ticket: c.tickets[0] ? ticketDto(c.tickets[0]) : null,
   };
 }
 

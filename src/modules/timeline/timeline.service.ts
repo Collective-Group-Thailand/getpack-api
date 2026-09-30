@@ -8,6 +8,7 @@ import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type Attachment, type Order, type Prisma } from '@generated/prisma/client';
 import { hashToken, ShipmentsService } from '@modules/logistics/shipments.service';
+import { estimatedDeliveryDate } from '@modules/orders/order-views';
 import { type RouteSnapshot } from '@modules/production/production.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
@@ -186,6 +187,7 @@ export class TimelineService implements OnModuleInit {
       orderId: order.publicId,
       status: order.status,
       promisedShipDate: promised,
+      estimatedDeliveryDate: await this.estimatedDelivery(order),
       paidForProductionAt: iso(order.paidForProductionAt),
       artworkApprovedAt: iso(order.artworkApprovedAt),
       productionStartedAt: iso(order.productionStartedAt),
@@ -233,6 +235,7 @@ export class TimelineService implements OnModuleInit {
     return {
       status: order.status,
       promisedShipDate: order.promisedShipDate?.toISOString().slice(0, 10) ?? null,
+      estimatedDeliveryDate: await this.estimatedDelivery(order),
       shippedAt: iso(order.shippedAt),
       deliveredAt: iso(order.deliveredAt),
       steps: await this.customerSteps(order.id),
@@ -380,9 +383,18 @@ export class TimelineService implements OnModuleInit {
         labelTh: step?.customerLabelTh ?? step?.nameTh ?? m.stepKey,
         labelEn: step?.customerLabelEn ?? step?.nameEn ?? m.stepKey,
         status: m.status,
+        promisedAt: iso(m.dueAt),
         completedAt: iso(m.completedAt),
       };
     });
+  }
+
+  private async estimatedDelivery(order: Order): Promise<string | null> {
+    const option = await this.prisma.quoteOption.findUnique({
+      where: { id: order.quoteOptionId },
+      select: { earliestShipDate: true, result: true },
+    });
+    return estimatedDeliveryDate(order.promisedShipDate, option);
   }
 
   /** Chronological page after the cursor (entries are few per order; merged in memory). */

@@ -83,30 +83,8 @@ export class SavedQuotesService {
     input: SaveQuoteInput,
     extra: { customerUserId?: bigint; supersedes?: bigint; ip?: string } = {},
   ): Promise<QuoteRow> {
-    const type = await this.prisma.productType.findFirst({
-      where: { code: input.productTypeCode, status: 'active' },
-    });
-    if (
-      !type?.calculatorKey ||
-      !this.engine.hasCalculator(type.calculatorKey) ||
-      (owner.kind !== 'staff' && type.quoteMode !== 'instant')
-    ) {
-      throw new DomainException('pricing.not_instant');
-    }
-    const configuration = await validateConfiguration(type.calculatorKey, input.configuration, {
-      staff: owner.kind === 'staff',
-    });
-    if (owner.kind !== 'staff') await assertStoreRules(this.prisma, type.calculatorKey, configuration);
     const now = new Date();
-    const view = await this.engine.price(type.calculatorKey, configuration, {
-      channel,
-      at: now,
-      actorUserId:
-        owner.kind === 'customer' ? owner.userId : owner.kind === 'staff' ? owner.actor.userId : undefined,
-      anonymousId: owner.kind === 'anonymous' ? owner.anonymousId : undefined,
-      deliveryPostcode: input.deliveryPostcode,
-      ip: extra.ip,
-    });
+    const { type, calculatorKey, configuration, view } = await this.priced(owner, channel, input, now, { ip: extra.ip });
     const steps = view.steps.filter((s) => s.instant && s.internal);
     if (steps.length === 0) throw new DomainException('quotes.nothing_to_save');
     const validity = await this.settings.at('quotes.validity_days', { at: now });
@@ -125,7 +103,7 @@ export class SavedQuotesService {
         'quotes.validity_days': String(validity.versionId),
       },
     };
-    const unit = CALCULATOR_SALES_UNIT[type.calculatorKey] ?? 'piece';
+    const unit = CALCULATOR_SALES_UNIT[calculatorKey] ?? 'piece';
     const options = steps.map((s) => this.optionRow(s, factories, versions, unit));
     const snapshotSha256 = sha256(
       JSON.stringify(
@@ -134,7 +112,7 @@ export class SavedQuotesService {
     );
     const customerUserId = owner.kind === 'customer' ? owner.userId : (extra.customerUserId ?? null);
     // Box calculators (folding, corrugate) share one configuration shape; others get their lines when ported.
-    const specSummary = BOX_CALCULATORS.has(type.calculatorKey)
+    const specSummary = BOX_CALCULATORS.has(calculatorKey)
       ? await boxSpecLines(this.prisma, configuration as unknown as BoxConfiguration)
       : null;
     return this.prisma.withTx(async (tx) => {
@@ -224,6 +202,48 @@ export class SavedQuotesService {
       }
       return tx.quote.findUniqueOrThrow({ where: { id: quote.id }, include: QUOTE_INCLUDE });
     });
+  }
+
+  /**
+   * Prices a specification exactly as saving it would, without saving or logging a calculation (a preview, e.g. of a
+   * reorder, D-153).
+   */
+  async preview(owner: QuoteOwner, channel: SalesChannel, input: SaveQuoteInput): Promise<QuoteView> {
+    return (await this.priced(owner, channel, input, new Date(), { log: false })).view;
+  }
+
+  private async priced(
+    owner: QuoteOwner,
+    channel: SalesChannel,
+    input: SaveQuoteInput,
+    now: Date,
+    extra: { ip?: string; log?: boolean },
+  ) {
+    const type = await this.prisma.productType.findFirst({
+      where: { code: input.productTypeCode, status: 'active' },
+    });
+    if (
+      !type?.calculatorKey ||
+      !this.engine.hasCalculator(type.calculatorKey) ||
+      (owner.kind !== 'staff' && type.quoteMode !== 'instant')
+    ) {
+      throw new DomainException('pricing.not_instant');
+    }
+    const configuration = await validateConfiguration(type.calculatorKey, input.configuration, {
+      staff: owner.kind === 'staff',
+    });
+    if (owner.kind !== 'staff') await assertStoreRules(this.prisma, type.calculatorKey, configuration);
+    const view = await this.engine.price(type.calculatorKey, configuration, {
+      channel,
+      at: now,
+      actorUserId:
+        owner.kind === 'customer' ? owner.userId : owner.kind === 'staff' ? owner.actor.userId : undefined,
+      anonymousId: owner.kind === 'anonymous' ? owner.anonymousId : undefined,
+      deliveryPostcode: input.deliveryPostcode,
+      ip: extra.ip,
+      ...(extra.log === false && { log: false }),
+    });
+    return { type, calculatorKey: type.calculatorKey, configuration, view };
   }
 
   /**

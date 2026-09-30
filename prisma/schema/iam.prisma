@@ -551,6 +551,7 @@ model User {
   lineRichMenusUpdated     LineRichMenu[]        @relation("LineRichMenuUpdatedBy")
   conversations            Conversation[]        @relation("ConversationCustomer")
   conversationsAssigned    Conversation[]        @relation("ConversationAssignedUser")
+  supportTickets           SupportTicket[]       @relation("SupportTicketCustomer")
   conversationMessagesSent ConversationMessage[] @relation("ConversationMessageSender")
   // --- end Fulfilment B4.6
 

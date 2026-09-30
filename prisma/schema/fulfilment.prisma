@@ -1534,6 +1534,8 @@ enum RichMenuAudience {
 enum ConversationChannel {
   line
   web
+  /// A guest's contact-form or hand-off ticket (D-221): no account, CS answers by phone or e-mail.
+  contact
 
   @@map("conversation_channel")
 }
@@ -1625,6 +1627,7 @@ model Conversation {
   lineAccount  LineAccount?          @relation(fields: [lineAccountId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conversations__line_account_id")
   assignedUser User?                 @relation("ConversationAssignedUser", fields: [assignedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_conversations__assigned_user_id")
   messages     ConversationMessage[]
+  tickets      SupportTicket[]
 
   @@unique([lineAccountId], map: "ux_conversations__one_live_line", where: raw("((line_account_id IS NOT NULL) AND (status <> 'closed'::conversation_status))"))
   @@unique([customerUserId], map: "ux_conversations__one_live_web", where: raw("((channel = 'web'::conversation_channel) AND (status <> 'closed'::conversation_status))"))
@@ -1633,6 +1636,45 @@ model Conversation {
   @@index([customerUserId], map: "ix_conversations__customer_user_id")
   @@index([lineAccountId], map: "ix_conversations__line_account_id")
   @@map("conversations")
+}
+
+enum SupportTicketSource {
+  contact_form
+  handoff
+
+  @@map("support_ticket_source")
+}
+
+/// A request to CS from the storefront's contact form or guided-help hand-off (D-221), opened on a CS conversation
+/// (a signed-in customer's live web conversation, or a new one for a guest). The contact details of a guest are PII:
+/// shown to CS only, never logged. `respond_by` = submission + `support.first_response_business_days` business days.
+model SupportTicket {
+  id                BigInt              @id(map: "pk_support_tickets") @default(autoincrement())
+  publicId          String              @unique(map: "ux_support_tickets__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  ticketNo          String              @unique(map: "ux_support_tickets__ticket_no") @map("ticket_no")
+  conversationId    BigInt              @map("conversation_id")
+  customerUserId    BigInt?             @map("customer_user_id")
+  source            SupportTicketSource
+  topic             String
+  contactName       String?             @map("contact_name")
+  contactPhone      String?             @map("contact_phone")
+  contactEmail      String?             @map("contact_email")
+  /// The order code the requester typed (not resolved: a guest cannot prove the order is theirs).
+  orderRef          String?             @map("order_ref")
+  callbackRequested Boolean             @default(false) @map("callback_requested")
+  /// Hand-off: the page and the guided-help answers / recommendation (bounded JSON).
+  context           Json?
+  respondBy         DateTime            @map("respond_by") @db.Timestamptz(6)
+  firstRespondedAt  DateTime?           @map("first_responded_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_support_tickets__conversation_id")
+  customer     User?        @relation("SupportTicketCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_support_tickets__customer_user_id")
+
+  @@index([conversationId], map: "ix_support_tickets__conversation_id")
+  @@index([customerUserId], map: "ix_support_tickets__customer_user_id")
+  @@index([respondBy], map: "ix_support_tickets__unanswered__respond_by", where: raw("(first_responded_at IS NULL)"))
+  @@map("support_tickets")
 }
 
 model ConversationMessage {

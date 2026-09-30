@@ -1361,6 +1361,7 @@ enum DocumentType {
   order
   customer
   company
+  support_ticket
 
   @@map("document_type")
 }

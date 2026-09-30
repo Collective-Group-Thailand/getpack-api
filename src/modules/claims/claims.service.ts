@@ -1,6 +1,7 @@
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney } from '@common/money/money';
+import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import {
   type Claim,
@@ -21,10 +22,18 @@ import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
+import { FILE_PURPOSES } from '@platform/files/file-purposes';
 import { FilesService } from '@platform/files/files.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import {
+  CLAIM_TYPES,
+  type ClaimFormDto,
+  type ClaimFormShipmentDto,
+  MAX_CLAIM_PHOTOS,
+  RESOLUTION_KINDS,
+} from './claims.dto';
 import { CLAIM_TRANSITIONS, FINAL_CLAIM_STATUSES, liabilityByRule } from './liability';
 
 const DAY_MS = 86_400_000;
@@ -156,6 +165,64 @@ export class ClaimsService implements OnModuleInit {
       });
     }
     return map;
+  }
+
+  // --- claim form -------------------------------------------------------------------------------------------
+
+  /** The claim form of my order (D-082): delivered shipments with their windows and the evidence rules. */
+  async form(customerUserId: bigint, orderPublicId: string): Promise<ClaimFormDto> {
+    const order = await this.prisma.order.findFirst({ where: { publicId: orderPublicId, customerUserId } });
+    if (!order) throw new DomainException('http.not_found');
+    const now = new Date();
+    const windowEnd = async (receivedAt: Date) =>
+      new Date(
+        receivedAt.getTime() + (await this.settings.at('claims.window_days', { at: receivedAt })).value * DAY_MS,
+      );
+    const items = await this.prisma.shipmentItem.findMany({
+      where: { orderId: order.id, shipment: { status: 'delivered', deliveredAt: { not: null } } },
+      include: { shipment: { select: { publicId: true, shipmentNo: true, deliveredAt: true } } },
+      orderBy: { id: 'asc' },
+    });
+    const shipments: ClaimFormShipmentDto[] = [];
+    for (const item of items) {
+      const ends = await windowEnd(item.shipment.deliveredAt!);
+      shipments.push({
+        id: item.shipment.publicId,
+        shipmentNo: item.shipment.shipmentNo,
+        deliveredAt: toBangkokIso(item.shipment.deliveredAt!),
+        quantity: item.quantity,
+        deliveredQuantity: item.deliveredQuantity,
+        windowEndsAt: toBangkokIso(ends),
+        open: now <= ends,
+      });
+    }
+    const orderEnds = order.deliveredAt ? await windowEnd(order.deliveredAt) : null;
+    const latest = [orderEnds, ...shipments.map((s) => new Date(s.windowEndsAt))]
+      .filter((d): d is Date => d !== null)
+      .reduce<Date | null>((a, b) => (a === null || b > a ? b : a), null);
+    const open = order.deliveredAt !== null && latest !== null && now <= latest;
+    const evidence = FILE_PURPOSES.evidence;
+    return {
+      orderId: order.publicId,
+      orderCode: order.orderCode,
+      quantityOrdered: order.quantityOrdered,
+      deliveredAt: order.deliveredAt ? toBangkokIso(order.deliveredAt) : null,
+      windowEndsAt: latest ? toBangkokIso(latest) : null,
+      open,
+      closedReason: open ? null : order.deliveredAt ? 'window_closed' : 'not_delivered',
+      types: [...CLAIM_TYPES],
+      resolutions: [...RESOLUTION_KINDS],
+      shipments,
+      evidence: {
+        purpose: 'evidence',
+        accept: [...evidence.mimeTypes],
+        maxBytes: evidence.maxBytes,
+        productPhotosMin: 1,
+        productPhotosMax: MAX_CLAIM_PHOTOS,
+        cartonPhotosMin: 1,
+        cartonPhotosMax: MAX_CLAIM_PHOTOS,
+      },
+    };
   }
 
   // --- open -------------------------------------------------------------------------------------------------
