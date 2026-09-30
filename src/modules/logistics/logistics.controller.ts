@@ -8,12 +8,13 @@ import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
-import { orderDto } from '@modules/orders/order-views';
+import { orderDto, orderViewContext } from '@modules/orders/order-views';
 import { ORDER_EXAMPLE, OrderDto } from '@modules/orders/orders.dto';
 import { OrdersService } from '@modules/orders/orders.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { SettingsService } from '@platform/settings/settings.service';
 
 import { DeliveryService } from './delivery.service';
 import {
@@ -598,6 +599,7 @@ export class StoreShipmentsController {
     private readonly orders: OrdersService,
     private readonly query: ShipmentsQueryService,
     private readonly prisma: PrismaService,
+    private readonly settings: SettingsService,
   ) {}
 
   @Get('orders/:orderId/shipments')
@@ -644,7 +646,7 @@ export class StoreShipmentsController {
   async confirmReceipt(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string) {
     const customer = customerId(actor);
     await this.delivery.confirmReceipt(actor, orderId, customer);
-    return orderDto(await this.orders.order({ publicId: orderId }, customer));
+    return orderDto(await this.orders.order({ publicId: orderId }, customer), await orderViewContext(this.settings));
   }
 }
 

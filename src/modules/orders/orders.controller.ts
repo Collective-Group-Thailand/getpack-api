@@ -16,10 +16,18 @@ import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { SettingsService } from '@platform/settings/settings.service';
 import { type Response } from 'express';
 
 import { orderEtag } from './order-operations.service';
-import { adminOrderDto, adminOrderGroupDto, type CostGrants, orderDto, orderGroupDto } from './order-views';
+import {
+  adminOrderDto,
+  adminOrderGroupDto,
+  type CostGrants,
+  orderDto,
+  orderGroupDto,
+  orderViewContext,
+} from './order-views';
 import {
   ADMIN_ORDER_GROUP_EXAMPLE,
   AdminOrderDto,
@@ -46,7 +54,14 @@ function customerId(actor: Actor): bigint {
 @ApiSurface('store', 'orders')
 @Controller()
 export class StoreOrdersController {
-  constructor(private readonly orders: OrdersService) {}
+  constructor(
+    private readonly orders: OrdersService,
+    private readonly settings: SettingsService,
+  ) {}
+
+  private ctx() {
+    return orderViewContext(this.settings);
+  }
 
   @Get('order-groups')
   @ApiEndpoint({
@@ -64,7 +79,8 @@ export class StoreOrdersController {
       q.page,
       q.perPage,
     );
-    return { data: rows.map(orderGroupDto), meta: { page: q.page, perPage: q.perPage, total } };
+    const ctx = await this.ctx();
+    return { data: rows.map((g) => orderGroupDto(g, ctx)), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get('order-groups/:groupId')
@@ -85,7 +101,7 @@ export class StoreOrdersController {
   ) {
     const group = await this.orders.group(groupId, customerId(actor));
     res.setHeader('ETag', groupEtag(group));
-    return orderGroupDto(group);
+    return orderGroupDto(group, await this.ctx());
   }
 
   @Post('order-groups/:groupId/actions/cancel')
@@ -122,6 +138,7 @@ export class StoreOrdersController {
   ) {
     return orderGroupDto(
       await this.orders.cancelGroup(actor, groupId, body, { customerUserId: customerId(actor), ifMatch }),
+      await this.ctx(),
     );
   }
 
@@ -136,7 +153,7 @@ export class StoreOrdersController {
   @ApiSuccess(200, { description: 'Order', type: OrderDto, example: ORDER_EXAMPLE })
   @ApiStandardErrors('http.not_found')
   async byCode(@CurrentActor() actor: Actor, @Param('orderCode') orderCode: string) {
-    return orderDto(await this.orders.order({ orderCode }, customerId(actor)));
+    return orderDto(await this.orders.order({ orderCode }, customerId(actor)), await this.ctx());
   }
 
   @Get('orders/:orderId')
@@ -151,7 +168,7 @@ export class StoreOrdersController {
   @ApiSuccess(200, { description: 'Order', type: OrderDto, example: ORDER_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async getOrder(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string) {
-    return orderDto(await this.orders.order({ publicId: orderId }, customerId(actor)));
+    return orderDto(await this.orders.order({ publicId: orderId }, customerId(actor)), await this.ctx());
   }
 }
 

@@ -4947,6 +4947,28 @@
             ],
             "example": "awaiting_template"
           },
+          "cancelReasonCode": {
+            "description": "Code of the cancellation reason",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelReasonNameEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelReasonNameTh": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "cancelledAt": {
             "example": null,
             "format": "date-time",
@@ -4954,6 +4976,11 @@
               "string",
               "null"
             ]
+          },
+          "createdAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
           },
           "designOption": {
             "allOf": [
@@ -5023,6 +5050,9 @@
             "format": "uuid",
             "type": "string"
           },
+          "receipt": {
+            "$ref": "#/components/schemas/OrderReceiptDto"
+          },
           "status": {
             "allOf": [
               {
@@ -5043,6 +5073,17 @@
               }
             ],
             "description": "Product, product type, sales unit and spec lines to display (from the quote it was made from)"
+          },
+          "toleranceOutcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderToleranceOutcomeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null until the order is delivered"
           },
           "toleranceOveragePct": {
             "example": "5.0000",
@@ -5083,6 +5124,12 @@
           "destinations",
           "statusChangedAt",
           "cancelledAt",
+          "cancelReasonCode",
+          "cancelReasonNameTh",
+          "cancelReasonNameEn",
+          "receipt",
+          "toleranceOutcome",
+          "createdAt",
           "internal"
         ],
         "type": "object"
@@ -12737,6 +12784,13 @@
           "etag"
         ],
         "type": "object"
+      },
+      "CompletionMode": {
+        "enum": [
+          "auto_after_days",
+          "customer_confirmed"
+        ],
+        "type": "string"
       },
       "ConfigVersionStatus": {
         "enum": [
@@ -28395,6 +28449,28 @@
             ],
             "example": "awaiting_template"
           },
+          "cancelReasonCode": {
+            "description": "Code of the cancellation reason",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelReasonNameEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cancelReasonNameTh": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "cancelledAt": {
             "example": null,
             "format": "date-time",
@@ -28402,6 +28478,11 @@
               "string",
               "null"
             ]
+          },
+          "createdAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
           },
           "designOption": {
             "allOf": [
@@ -28468,6 +28549,9 @@
             "format": "uuid",
             "type": "string"
           },
+          "receipt": {
+            "$ref": "#/components/schemas/OrderReceiptDto"
+          },
           "status": {
             "allOf": [
               {
@@ -28488,6 +28572,17 @@
               }
             ],
             "description": "Product, product type, sales unit and spec lines to display (from the quote it was made from)"
+          },
+          "toleranceOutcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderToleranceOutcomeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null until the order is delivered"
           },
           "toleranceOveragePct": {
             "example": "5.0000",
@@ -28527,7 +28622,13 @@
           "lines",
           "destinations",
           "statusChangedAt",
-          "cancelledAt"
+          "cancelledAt",
+          "cancelReasonCode",
+          "cancelReasonNameTh",
+          "cancelReasonNameEn",
+          "receipt",
+          "toleranceOutcome",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -28960,6 +29061,73 @@
         ],
         "type": "object"
       },
+      "OrderReceiptDto": {
+        "properties": {
+          "autoCompleteAt": {
+            "description": "While delivered and not completed: when the order completes by itself (`orders.auto_complete_days`, D-081)",
+            "example": "2026-10-27T15:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "claimWindowEndsAt": {
+            "description": "Last moment to open a claim (`claims.window_days` from delivery, D-082)",
+            "example": "2026-10-27T15:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completionMode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompletionMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "confirmedAt": {
+            "description": "When I confirmed receipt myself (`completionMode = customer_confirmed`)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveredAt": {
+            "example": "2026-10-20T15:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "deliveredAt",
+          "autoCompleteAt",
+          "claimWindowEndsAt",
+          "completedAt",
+          "completionMode",
+          "confirmedAt"
+        ],
+        "type": "object"
+      },
       "OrderStatus": {
         "enum": [
           "waiting_payment",
@@ -28971,6 +29139,47 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "OrderToleranceOutcomeDto": {
+        "properties": {
+          "creditAmount": {
+            "description": "Pro-rata credit for a shortage within tolerance, incl. VAT (D-080); null otherwise",
+            "example": "267.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "deliveredQuantity": {
+            "example": 980,
+            "type": "integer"
+          },
+          "evaluatedAt": {
+            "example": "2026-10-20T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "orderedQuantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ToleranceOutcome"
+              }
+            ],
+            "example": "shortage_within"
+          }
+        },
+        "required": [
+          "outcome",
+          "orderedQuantity",
+          "deliveredQuantity",
+          "creditAmount",
+          "evaluatedAt"
+        ],
+        "type": "object"
       },
       "OtherVendorKind": {
         "enum": [
@@ -131872,7 +132081,11 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
                       "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -131926,6 +132139,14 @@
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
                       "summary": {
@@ -131963,6 +132184,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -169966,7 +170188,11 @@
                       "orders": [
                         {
                           "artworkStatus": "awaiting_template",
+                          "cancelReasonCode": null,
+                          "cancelReasonNameEn": null,
+                          "cancelReasonNameTh": null,
                           "cancelledAt": null,
+                          "createdAt": "2026-10-01T09:00:00+07:00",
                           "designOption": "own_file",
                           "destinations": [
                             {
@@ -170020,6 +170246,14 @@
                           "promisedShipDate": "2026-10-12",
                           "quantityOrdered": 1000,
                           "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                          "receipt": {
+                            "autoCompleteAt": null,
+                            "claimWindowEndsAt": null,
+                            "completedAt": null,
+                            "completionMode": null,
+                            "confirmedAt": null,
+                            "deliveredAt": null
+                          },
                           "status": "waiting_payment",
                           "statusChangedAt": "2026-10-01T10:00:00+07:00",
                           "summary": {
@@ -170057,6 +170291,7 @@
                             ],
                             "unit": "piece"
                           },
+                          "toleranceOutcome": null,
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
                           "totals": {
@@ -170282,7 +170517,11 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
                       "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -170336,6 +170575,14 @@
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
                       "summary": {
@@ -170373,6 +170620,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -170617,7 +170865,11 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
                       "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -170671,6 +170923,14 @@
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
                       "summary": {
@@ -170708,6 +170968,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -171017,7 +171278,11 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
                       "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -171071,6 +171336,14 @@
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
                       "summary": {
@@ -171108,6 +171381,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -171437,7 +171711,11 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
                       "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -171491,6 +171769,14 @@
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
                       "summary": {
@@ -171528,6 +171814,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -172995,7 +173282,11 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "cancelReasonCode": null,
+                  "cancelReasonNameEn": null,
+                  "cancelReasonNameTh": null,
                   "cancelledAt": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -173049,6 +173340,14 @@
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                  "receipt": {
+                    "autoCompleteAt": null,
+                    "claimWindowEndsAt": null,
+                    "completedAt": null,
+                    "completionMode": null,
+                    "confirmedAt": null,
+                    "deliveredAt": null
+                  },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
                   "summary": {
@@ -173086,6 +173385,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -173302,7 +173602,11 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "cancelReasonCode": null,
+                  "cancelReasonNameEn": null,
+                  "cancelReasonNameTh": null,
                   "cancelledAt": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -173356,6 +173660,14 @@
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                  "receipt": {
+                    "autoCompleteAt": null,
+                    "claimWindowEndsAt": null,
+                    "completedAt": null,
+                    "completionMode": null,
+                    "confirmedAt": null,
+                    "deliveredAt": null
+                  },
                   "status": "cancelled",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
                   "summary": {
@@ -173393,6 +173705,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -173654,7 +173967,11 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "cancelReasonCode": null,
+                  "cancelReasonNameEn": null,
+                  "cancelReasonNameTh": null,
                   "cancelledAt": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -173708,6 +174025,14 @@
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                  "receipt": {
+                    "autoCompleteAt": null,
+                    "claimWindowEndsAt": null,
+                    "completedAt": null,
+                    "completionMode": null,
+                    "confirmedAt": null,
+                    "deliveredAt": null
+                  },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
                   "summary": {
@@ -173745,6 +174070,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -256000,7 +256326,11 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
                       "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -256047,6 +256377,14 @@
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
                       "summary": {
@@ -256084,6 +256422,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -265099,7 +265438,7 @@
     },
     "/v1/store/documents": {
       "get": {
-        "description": "Documents issued to me by the entity under the Packio brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125).\n\nImplements: D-010, D-125.",
+        "description": "Documents issued to me by the entity under the Packio brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125); `orderId` narrows them to one order.\n\nImplements: D-010, D-125.",
         "operationId": "store.documents.list",
         "parameters": [
           {
@@ -265156,6 +265495,16 @@
             "description": "A company the customer may read documents of (company_documents.read)",
             "in": "query",
             "name": "companyId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the documents of this order (all its instalments and notes)",
+            "in": "query",
+            "name": "orderId",
             "required": false,
             "schema": {
               "format": "uuid",
@@ -269144,7 +269493,11 @@
                       "orders": [
                         {
                           "artworkStatus": "awaiting_template",
+                          "cancelReasonCode": null,
+                          "cancelReasonNameEn": null,
+                          "cancelReasonNameTh": null,
                           "cancelledAt": null,
+                          "createdAt": "2026-10-01T09:00:00+07:00",
                           "designOption": "own_file",
                           "destinations": [
                             {
@@ -269191,6 +269544,14 @@
                           "promisedShipDate": "2026-10-12",
                           "quantityOrdered": 1000,
                           "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                          "receipt": {
+                            "autoCompleteAt": null,
+                            "claimWindowEndsAt": null,
+                            "completedAt": null,
+                            "completionMode": null,
+                            "confirmedAt": null,
+                            "deliveredAt": null
+                          },
                           "status": "waiting_payment",
                           "statusChangedAt": "2026-10-01T10:00:00+07:00",
                           "summary": {
@@ -269228,6 +269589,7 @@
                             ],
                             "unit": "piece"
                           },
+                          "toleranceOutcome": null,
                           "toleranceOveragePct": "5.0000",
                           "toleranceShortagePct": "5.0000",
                           "totals": {
@@ -269447,7 +269809,11 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
                       "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -269494,6 +269860,14 @@
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
                       "summary": {
@@ -269531,6 +269905,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -269772,7 +270147,11 @@
                   "orders": [
                     {
                       "artworkStatus": "awaiting_template",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
                       "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -269819,6 +270198,14 @@
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
                       "status": "waiting_payment",
                       "statusChangedAt": "2026-10-01T10:00:00+07:00",
                       "summary": {
@@ -269856,6 +270243,7 @@
                         ],
                         "unit": "piece"
                       },
+                      "toleranceOutcome": null,
                       "toleranceOveragePct": "5.0000",
                       "toleranceShortagePct": "5.0000",
                       "totals": {
@@ -270946,7 +271334,11 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "cancelReasonCode": null,
+                  "cancelReasonNameEn": null,
+                  "cancelReasonNameTh": null,
                   "cancelledAt": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -270993,6 +271385,14 @@
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                  "receipt": {
+                    "autoCompleteAt": null,
+                    "claimWindowEndsAt": null,
+                    "completedAt": null,
+                    "completionMode": null,
+                    "confirmedAt": null,
+                    "deliveredAt": null
+                  },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
                   "summary": {
@@ -271030,6 +271430,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -271203,7 +271604,11 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "cancelReasonCode": null,
+                  "cancelReasonNameEn": null,
+                  "cancelReasonNameTh": null,
                   "cancelledAt": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -271250,6 +271655,14 @@
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                  "receipt": {
+                    "autoCompleteAt": null,
+                    "claimWindowEndsAt": null,
+                    "completedAt": null,
+                    "completionMode": null,
+                    "confirmedAt": null,
+                    "deliveredAt": null
+                  },
                   "status": "waiting_payment",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
                   "summary": {
@@ -271287,6 +271700,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {
@@ -271483,7 +271897,11 @@
               "application/json": {
                 "example": {
                   "artworkStatus": "awaiting_template",
+                  "cancelReasonCode": null,
+                  "cancelReasonNameEn": null,
+                  "cancelReasonNameTh": null,
                   "cancelledAt": null,
+                  "createdAt": "2026-10-01T09:00:00+07:00",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -271530,6 +271948,14 @@
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
                   "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                  "receipt": {
+                    "autoCompleteAt": null,
+                    "claimWindowEndsAt": null,
+                    "completedAt": null,
+                    "completionMode": null,
+                    "confirmedAt": null,
+                    "deliveredAt": null
+                  },
                   "status": "completed",
                   "statusChangedAt": "2026-10-01T10:00:00+07:00",
                   "summary": {
@@ -271567,6 +271993,7 @@
                     ],
                     "unit": "piece"
                   },
+                  "toleranceOutcome": null,
                   "toleranceOveragePct": "5.0000",
                   "toleranceShortagePct": "5.0000",
                   "totals": {

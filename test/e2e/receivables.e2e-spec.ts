@@ -495,6 +495,17 @@ describe('receivables & customer documents (e2e, B5.2)', () => {
     const docs = mine.body.data as Doc[];
     expect(docs.map((d) => d.docType).sort()).toEqual(expect.arrayContaining(['tr', 'cn']));
     expect(docs.every((d) => d.pdfReady)).toBe(true);
+    // U-B0.1: `orderId` narrows the list to one order; another order id gives nothing.
+    const orderIds = [...new Set(docs.map((d) => (d as unknown as { orderId: string | null }).orderId))].filter(
+      (id): id is string => !!id,
+    );
+    const forOrder = await as(ctx, paidOrder.token).get(`/v1/store/documents?orderId=${orderIds[0]}`).expect(200);
+    expect((forOrder.body.data as { orderId: string }[]).every((d) => d.orderId === orderIds[0])).toBe(true);
+    expect(forOrder.body.meta.total).toBeGreaterThan(0);
+    const none = await as(ctx, paidOrder.token)
+      .get('/v1/store/documents?orderId=0192f3a0-7c1e-7d2a-9b1f-000000000000')
+      .expect(200);
+    expect(none.body.meta.total).toBe(0);
     const pdf = await as(ctx, paidOrder.token).get(`/v1/store/documents/${docs[0]!.id}/pdf`).expect(200);
     expect(pdf.body.url).toBeTruthy();
     const stored = await ctx.prisma.customerDocument.findUniqueOrThrow({ where: { publicId: docs[0]!.id } });

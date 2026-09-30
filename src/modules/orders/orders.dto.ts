@@ -159,6 +159,77 @@ export class OrderDestinationDto {
   shippingNetAmount!: string;
 }
 
+export const COMPLETION_MODES = ['auto_after_days', 'customer_confirmed'] as const;
+export const TOLERANCE_OUTCOMES = [
+  'exact',
+  'shortage_within',
+  'overage_within',
+  'shortage_outside',
+  'overage_outside',
+] as const;
+
+/** Delivery and receipt dates (D-081, D-082): computed by the API, never by the storefront. */
+export class OrderReceiptDto {
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-20T15:00:00+07:00' })
+  deliveredAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-27T15:00:00+07:00',
+    description: 'While delivered and not completed: when the order completes by itself (`orders.auto_complete_days`, D-081)',
+  })
+  autoCompleteAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-27T15:00:00+07:00',
+    description: 'Last moment to open a claim (`claims.window_days` from delivery, D-082)',
+  })
+  claimWindowEndsAt!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  completedAt!: string | null;
+
+  @ApiProperty({ enum: COMPLETION_MODES, enumName: 'CompletionMode', nullable: true, example: null })
+  completionMode!: (typeof COMPLETION_MODES)[number] | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+    description: 'When I confirmed receipt myself (`completionMode = customer_confirmed`)',
+  })
+  confirmedAt!: string | null;
+}
+
+/** How the delivered quantity compared with the order and its frozen tolerance (D-021, D-080). */
+export class OrderToleranceOutcomeDto {
+  @ApiProperty({ enum: TOLERANCE_OUTCOMES, enumName: 'ToleranceOutcome', example: 'shortage_within' })
+  outcome!: (typeof TOLERANCE_OUTCOMES)[number];
+
+  @ApiProperty({ type: 'integer', example: 1000 })
+  orderedQuantity!: number;
+
+  @ApiProperty({ type: 'integer', example: 980 })
+  deliveredQuantity!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '267.50',
+    description: 'Pro-rata credit for a shortage within tolerance, incl. VAT (D-080); null otherwise',
+  })
+  creditAmount!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', example: '2026-10-20T15:00:00+07:00' })
+  evaluatedAt!: string;
+}
+
 export class OrderDto {
   @IdField(ORDER_IDS.order)
   id!: string;
@@ -223,6 +294,24 @@ export class OrderDto {
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   cancelledAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Code of the cancellation reason' })
+  cancelReasonCode!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  cancelReasonNameTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  cancelReasonNameEn!: string | null;
+
+  @ApiProperty({ type: OrderReceiptDto })
+  receipt!: OrderReceiptDto;
+
+  @ApiProperty({ type: OrderToleranceOutcomeDto, nullable: true, description: 'Null until the order is delivered' })
+  toleranceOutcome!: OrderToleranceOutcomeDto | null;
+
+  @ApiProperty({ type: String, format: 'date-time', example: '2026-10-01T09:00:00+07:00' })
+  createdAt!: string;
 }
 
 export class OrderGroupDto {
@@ -386,6 +475,19 @@ export const ORDER_EXAMPLE: OrderDto = {
   ],
   statusChangedAt: '2026-10-01T10:00:00+07:00',
   cancelledAt: null,
+  cancelReasonCode: null,
+  cancelReasonNameTh: null,
+  cancelReasonNameEn: null,
+  receipt: {
+    deliveredAt: null,
+    autoCompleteAt: null,
+    claimWindowEndsAt: null,
+    completedAt: null,
+    completionMode: null,
+    confirmedAt: null,
+  },
+  toleranceOutcome: null,
+  createdAt: '2026-10-01T09:00:00+07:00',
 };
 
 export const ORDER_GROUP_EXAMPLE: OrderGroupDto = {

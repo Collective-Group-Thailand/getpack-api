@@ -1,6 +1,7 @@
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 import { lineSummary, SUMMARY_INCLUDE } from '@modules/quotes/line-summary';
+import { type SettingsService } from '@platform/settings/settings.service';
 
 import { type AddressSnapshotDto } from '../carts/carts.dto';
 import {
@@ -13,6 +14,8 @@ import {
 
 export const ORDER_INCLUDE = {
   productType: true,
+  cancelReason: { select: { code: true, nameTh: true, nameEn: true } },
+  deliveryReconciliation: true,
   catalogProduct: SUMMARY_INCLUDE.catalogProduct,
   quote: true,
   selectedFactory: true,
@@ -75,7 +78,48 @@ export function destinationSnapshot(d: OrderRow['destinations'][number]): Addres
   };
 }
 
-export function orderDto(row: OrderRow): OrderDto {
+/** What the order views read besides the row: the current `orders.auto_complete_days` (as the job uses it). */
+export interface OrderViewContext {
+  autoCompleteDays: number | null;
+}
+
+export async function orderViewContext(settings: SettingsService): Promise<OrderViewContext> {
+  return { autoCompleteDays: Number((await settings.at('orders.auto_complete_days')).value) };
+}
+
+const DAY_MS = 86_400_000;
+
+function receipt(row: OrderRow, ctx: OrderViewContext) {
+  const pending = row.deliveredAt && !row.completedAt && !row.cancelledAt;
+  return {
+    deliveredAt: row.deliveredAt ? toBangkokIso(row.deliveredAt) : null,
+    autoCompleteAt:
+      pending && ctx.autoCompleteDays !== null
+        ? toBangkokIso(new Date(row.deliveredAt!.getTime() + ctx.autoCompleteDays * DAY_MS))
+        : null,
+    claimWindowEndsAt: row.claimWindowEndsAt ? toBangkokIso(row.claimWindowEndsAt) : null,
+    completedAt: row.completedAt ? toBangkokIso(row.completedAt) : null,
+    completionMode: row.completionMode,
+    confirmedAt:
+      row.completionMode === 'customer_confirmed' && row.completedAt ? toBangkokIso(row.completedAt) : null,
+  };
+}
+
+/** The customer's view of the latest tolerance reconciliation; the factory's payable quantity stays internal. */
+function toleranceOutcome(row: OrderRow) {
+  const r = row.deliveryReconciliation;
+  return r
+    ? {
+        outcome: r.outcome,
+        orderedQuantity: r.orderedQuantity,
+        deliveredQuantity: r.deliveredQuantity,
+        creditAmount: r.creditAmount?.toFixed(2) ?? null,
+        evaluatedAt: toBangkokIso(r.evaluatedAt),
+      }
+    : null;
+}
+
+export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDays: null }): OrderDto {
   return {
     id: row.publicId,
     orderCode: row.orderCode,
@@ -119,6 +163,12 @@ export function orderDto(row: OrderRow): OrderDto {
     })),
     statusChangedAt: toBangkokIso(row.statusChangedAt),
     cancelledAt: row.cancelledAt ? toBangkokIso(row.cancelledAt) : null,
+    cancelReasonCode: row.cancelReason?.code ?? null,
+    cancelReasonNameTh: row.cancelReason?.nameTh ?? null,
+    cancelReasonNameEn: row.cancelReason?.nameEn ?? null,
+    receipt: receipt(row, ctx),
+    toleranceOutcome: toleranceOutcome(row),
+    createdAt: toBangkokIso(row.createdAt),
   };
 }
 
@@ -135,7 +185,7 @@ export function adminOrderDto(row: OrderRow, grants: CostGrants): AdminOrderDto 
   };
 }
 
-export function orderGroupDto(row: OrderGroupRow): OrderGroupDto {
+export function orderGroupDto(row: OrderGroupRow, ctx?: OrderViewContext): OrderGroupDto {
   return {
     id: row.publicId,
     groupCode: row.groupCode,
@@ -148,7 +198,7 @@ export function orderGroupDto(row: OrderGroupRow): OrderGroupDto {
     placedAt: toBangkokIso(row.placedAt),
     cancelledAt: row.cancelledAt ? toBangkokIso(row.cancelledAt) : null,
     ccEmails: row.ccEmails,
-    orders: row.orders.map(orderDto),
+    orders: row.orders.map((o) => orderDto(o, ctx)),
   };
 }
 

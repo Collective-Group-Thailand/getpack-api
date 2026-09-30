@@ -404,10 +404,32 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     expect(
       await ctx.prisma.deliveryReconciliation.findFirstOrThrow({ where: { order: { publicId: o.orderId } } }),
     ).toMatchObject({ outcome: 'exact', creditAmount: null });
+    // U-B0.1: the order view carries the receipt dates and the tolerance outcome (D-081, D-082, D-080).
+    const delivered = (
+      await request(ctx.server)
+        .get(`/v1/store/orders/${o.orderId}`)
+        .auth(o.token, { type: 'bearer' })
+        .expect(200)
+    ).body as {
+      receipt: Record<string, string | null>;
+      toleranceOutcome: { outcome: string; orderedQuantity: number; deliveredQuantity: number } | null;
+    };
+    const day = 86_400_000;
+    const deliveredAt = Date.parse(delivered.receipt['deliveredAt']!);
+    expect(Date.parse(delivered.receipt['autoCompleteAt']!) - deliveredAt).toBe(7 * day);
+    expect(Date.parse(delivered.receipt['claimWindowEndsAt']!) - deliveredAt).toBe(7 * day);
+    expect(delivered.receipt).toMatchObject({ completedAt: null, confirmedAt: null, completionMode: null });
+    expect(delivered.toleranceOutcome).toMatchObject({ outcome: 'exact', orderedQuantity: 1000, deliveredQuantity: 1000 });
+    expect(delivered.toleranceOutcome).not.toHaveProperty('payableQuantity');
     const confirmed = await post(o.token, `/v1/store/orders/${o.orderId}/actions/confirm-receipt`).expect(
       200,
     );
     expect(confirmed.body.status).toBe('completed');
+    expect(confirmed.body.receipt).toMatchObject({
+      completionMode: 'customer_confirmed',
+      autoCompleteAt: null,
+      confirmedAt: confirmed.body.receipt.completedAt,
+    });
     expect(
       (await ctx.prisma.order.findUniqueOrThrow({ where: { publicId: o.orderId } })).completionMode,
     ).toBe('customer_confirmed');

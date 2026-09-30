@@ -520,7 +520,7 @@ export class StoreDocumentsController {
     id: 'store.documents.list',
     summary: 'My tax invoices, receipts and notes',
     description:
-      'Documents issued to me by the entity under the Packio brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125).',
+      'Documents issued to me by the entity under the Packio brand (D-010), or with `companyId` those of a company I may read documents of (`company_documents.read`, D-125); `orderId` narrows them to one order.',
     implements: ['D-010', 'D-125'],
   })
   @ApiPaginated(CustomerDocumentDto, { example: DOCUMENT_EXAMPLE })
@@ -531,7 +531,10 @@ export class StoreDocumentsController {
       ? await this.companies.forMember(me, q.companyId, 'company_documents.read')
       : null;
     const { rows, total } = await this.documents.list(
-      company ? { companyId: company.id } : { customerUserId: me.userId },
+      {
+        ...(company ? { companyId: company.id } : { customerUserId: me.userId }),
+        ...(q.orderId && { order: { publicId: q.orderId } }),
+      },
       q.page,
       q.perPage,
     );
