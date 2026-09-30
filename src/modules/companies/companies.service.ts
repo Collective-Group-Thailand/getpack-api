@@ -24,7 +24,21 @@ export const COMPANY_ROLES = [
 export type CompanyRole = (typeof COMPANY_ROLES)[number];
 
 export const COMPANY_INCLUDE = {
-  branches: { where: { deletedAt: null }, orderBy: [{ isDefault: 'desc' }, { branchCode: 'asc' }] },
+  branches: {
+    where: { deletedAt: null },
+    orderBy: [{ isDefault: 'desc' }, { branchCode: 'asc' }],
+    include: {
+      province: { select: { publicId: true, nameTh: true, nameEn: true } },
+      subdistrict: {
+        select: { nameTh: true, nameEn: true, district: { select: { nameTh: true, nameEn: true } } },
+      },
+    },
+  },
+  discount: {
+    include: {
+      versions: { where: { status: 'approved' }, orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }] },
+    },
+  },
   members: {
     where: { status: { not: 'removed' } },
     include: { user: { select: { publicId: true, displayName: true, phone: true, email: true } } },
@@ -56,6 +70,14 @@ export interface ApplyInput {
   withholdsTax?: boolean;
   documentEmail?: string | null;
   headOffice: Omit<BranchInput, 'branchType' | 'branchCode'>;
+  signatory?: { name: string; position: string };
+  contactPhone?: string;
+}
+
+/** My roles in a company and what they allow (the store's `myRoles` / `can`). */
+export interface CompanyMembership {
+  roles: string[];
+  permissions: Set<string>;
 }
 
 export interface SettingsInput {
@@ -64,6 +86,8 @@ export interface SettingsInput {
   withholdsTax?: boolean;
   poNumberPolicy?: 'required' | 'optional' | 'none';
   orderApprovalThreshold?: string | null;
+  signatory?: { name: string; position: string };
+  contactPhone?: string | null;
 }
 
 /** KYC documents a company must provide before review (D-120). */
@@ -130,6 +154,23 @@ export class CompaniesService {
     return company;
   }
 
+  /** My company roles (active membership) and the permissions they grant in the company's scope. */
+  async membership(userId: bigint, company: CompanyRow): Promise<CompanyMembership> {
+    const member = company.members.find((m) => m.userId === userId && m.status === 'active');
+    if (!member) return { roles: [], permissions: new Set() };
+    const access = await this.permissions.forUser(userId);
+    const keys = access.roles
+      .filter((r) => r.scopeType === 'company' && r.scopeId === company.id)
+      .map((r) => r.key);
+    const rows = keys.length
+      ? await this.prisma.rolePermission.findMany({
+          where: { role: { key: { in: keys } } },
+          select: { permission: { select: { key: true } } },
+        })
+      : [];
+    return { roles: member.roleKeys, permissions: new Set(rows.map((r) => r.permission.key)) };
+  }
+
   async hasCompanyPermission(userId: bigint, companyId: bigint, permission: string): Promise<boolean> {
     const access = await this.permissions.forUser(userId);
     const keys = access.roles
@@ -185,6 +226,9 @@ export class CompaniesService {
           isVatRegistered: input.isVatRegistered,
           withholdsTax: input.withholdsTax ?? false,
           documentEmail: input.documentEmail?.toLowerCase() ?? null,
+          signatoryName: input.signatory?.name.trim() ?? null,
+          signatoryPosition: input.signatory?.position.trim() ?? null,
+          contactPhone: input.contactPhone ?? null,
           appliedById: actor.userId,
         },
       });
@@ -241,6 +285,11 @@ export class CompaniesService {
           ...(input.orderApprovalThreshold !== undefined && {
             orderApprovalThreshold: input.orderApprovalThreshold,
           }),
+          ...(input.signatory !== undefined && {
+            signatoryName: input.signatory.name.trim(),
+            signatoryPosition: input.signatory.position.trim(),
+          }),
+          ...(input.contactPhone !== undefined && { contactPhone: input.contactPhone }),
           updatedById: actor.userId,
           rowVersion: { increment: 1 },
         },
@@ -374,7 +423,9 @@ export class CompaniesService {
       if (company.status !== 'applied')
         throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       const have = new Set(company.kycDocuments.filter((d) => d.status !== 'rejected').map((d) => d.docType));
-      const missing = requiredKyc(company.isVatRegistered).filter((t) => !have.has(t));
+      const missing: string[] = requiredKyc(company.isVatRegistered).filter((t) => !have.has(t));
+      // D-120: the authorised signatory's name and position come with the application.
+      if (!company.signatoryName) missing.push('signatory details');
       if (missing.length)
         throw new DomainException('companies.kyc_incomplete', { params: { missing: missing.join(', ') } });
       const row = await tx.company.update({
@@ -617,6 +668,84 @@ export class CompaniesService {
       return this.get(publicId, tx);
     });
     if (removedUser) await this.permissions.invalidate(removedUser);
+    return row;
+  }
+
+  /**
+   * Company Admin changes a member's company roles (D-123, D-140): granted and revoked in the company's scope for
+   * an active member (an invited one gets them on accepting); the last active Company Admin cannot lose the role.
+   */
+  async changeRoles(
+    actor: UserActor,
+    publicId: string,
+    memberPublicId: string,
+    roles: CompanyRole[],
+  ): Promise<CompanyRow> {
+    let changedUser: bigint | null = null;
+    const row = await this.prisma.withTx(async (tx) => {
+      const company = await this.forMember(actor, publicId, 'company_members.manage', tx);
+      await tx.$queryRaw`SELECT id FROM companies WHERE id = ${company.id} FOR UPDATE`;
+      const member = company.members.find((m) => m.publicId === memberPublicId);
+      if (!member) throw new DomainException('http.not_found');
+      const next = [...new Set(roles)];
+      const before = member.roleKeys as CompanyRole[];
+      const admins = company.members.filter((m) => m.status === 'active' && m.roleKeys.includes('company_admin'));
+      if (
+        member.status === 'active' &&
+        before.includes('company_admin') &&
+        !next.includes('company_admin') &&
+        admins.length === 1
+      )
+        throw new DomainException('companies.last_admin');
+      await tx.companyMember.update({
+        where: { id: member.id },
+        data: { roleKeys: next, rowVersion: { increment: 1 } },
+      });
+      if (member.status === 'active') {
+        const removed = before.filter((r) => !next.includes(r));
+        if (removed.length) {
+          const roleRows = await tx.role.findMany({ where: { key: { in: removed }, scopeType: 'company' } });
+          await tx.userRole.updateMany({
+            where: {
+              userId: member.userId,
+              scopeType: 'company',
+              scopeId: company.id,
+              roleId: { in: roleRows.map((r) => r.id) },
+              revokedAt: null,
+            },
+            data: { revokedAt: new Date(), revokedById: actor.userId },
+          });
+          for (const role of roleRows)
+            await this.audit.record(tx, {
+              category: 'iam',
+              action: 'iam.role_revoked',
+              actor,
+              resourceType: 'user',
+              resourcePublicId: member.user.publicId,
+              data: { role: role.key, scope: { type: 'company', id: company.publicId }, reason: 'Company roles changed' },
+            });
+        }
+        await this.grantRoles(
+          tx,
+          member.userId,
+          company.id,
+          next.filter((r) => !before.includes(r)),
+          actor.userId,
+          'Company roles changed',
+        );
+        changedUser = member.userId;
+      }
+      await this.touch(tx, company.id);
+      await this.record(
+        tx,
+        company,
+        'company.member_roles_changed',
+        { userId: member.user.publicId, from: before, to: next },
+        actor,
+      );
+      return this.get(publicId, tx);
+    });
+    if (changedUser) await this.permissions.invalidate(changedUser);
     return row;
   }
 

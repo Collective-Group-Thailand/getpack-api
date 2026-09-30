@@ -401,6 +401,7 @@ export async function activeCompany(
         postcode: '99999',
         provinceId: province.publicId,
       },
+      signatory: { name: 'ผู้มีอำนาจ ทดสอบ', position: 'กรรมการ' },
     })
     .expect(201);
   const id = applied.body.id as string;

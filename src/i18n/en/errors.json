@@ -777,6 +777,10 @@
     "credit_not_eligible": {
       "title": "Not eligible for credit",
       "detail": "The company needs the required paid orders or a verified financial statement"
+    },
+    "last_admin": {
+      "title": "Last Company Admin",
+      "detail": "The company needs at least one active Company Admin"
     }
   },
   "discounts": {

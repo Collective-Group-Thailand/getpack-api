@@ -707,6 +707,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'company_documents.read',
       'company_profile.manage',
       'company_orders.place',
+      'company_assets.manage',
     ],
   },
   {

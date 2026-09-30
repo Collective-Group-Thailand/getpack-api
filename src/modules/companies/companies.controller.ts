@@ -26,6 +26,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   Res,
 } from '@nestjs/common';
@@ -38,6 +39,7 @@ import {
   AdminCompanyDto,
   APPLY_EXAMPLE,
   ApplyCompanyDto,
+  ChangeMemberRolesDto,
   COMPANY_APPROVAL_EXAMPLE,
   COMPANY_EXAMPLE,
   CompanyApprovalDecisionDto,
@@ -68,9 +70,14 @@ function staff(actor: Actor): UserActor {
   return actor;
 }
 
-function respond(row: CompanyRow, res: Response): CompanyDto {
+async function respond(
+  companies: CompaniesService,
+  row: CompanyRow,
+  res: Response,
+  actor: UserActor,
+): Promise<CompanyDto> {
   res.setHeader('ETag', companyEtag(row));
-  return companyDto(row);
+  return companyDto(row, await companies.membership(actor.userId, row));
 }
 
 @ApiSurface('store', 'companies')
@@ -100,7 +107,8 @@ export class StoreCompaniesController {
     @Body() body: ApplyCompanyDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.apply(customer(actor), body), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.apply(me, body), res, me);
   }
 
   @Get('companies')
@@ -113,7 +121,9 @@ export class StoreCompaniesController {
   @ApiSuccess(200, { description: 'Companies', type: [CompanyDto], example: [COMPANY_EXAMPLE] })
   @ApiStandardErrors('validation.failed')
   async mine(@CurrentActor() actor: Actor): Promise<CompanyDto[]> {
-    return (await this.companies.mine(customer(actor).userId)).map(companyDto);
+    const me = customer(actor);
+    const rows = await this.companies.mine(me.userId);
+    return Promise.all(rows.map(async (r) => companyDto(r, await this.companies.membership(me.userId, r))));
   }
 
   @Get('companies/:companyId')
@@ -132,7 +142,8 @@ export class StoreCompaniesController {
     @Param('companyId', ParseUUIDPipe) id: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.forMember(customer(actor), id), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.forMember(me, id), res, me);
   }
 
   @Patch('companies/:companyId')
@@ -159,7 +170,8 @@ export class StoreCompaniesController {
     @Body() body: UpdateCompanySettingsDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.updateSettings(customer(actor), id, ifMatch, body), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.updateSettings(me, id, ifMatch, body), res, me);
   }
 
   @Post('companies/:companyId/branches')
@@ -196,13 +208,12 @@ export class StoreCompaniesController {
       throw new DomainException('validation.failed', {
         errors: [{ path: 'branchCode', code: 'required', message: 'required' }],
       });
+    const me = customer(actor);
     return respond(
-      await this.companies.addBranch(customer(actor), id, {
-        ...body,
-        branchType: 'branch',
-        branchCode: body.branchCode,
-      }),
+      this.companies,
+      await this.companies.addBranch(me, id, { ...body, branchType: 'branch', branchCode: body.branchCode }),
       res,
+      me,
     );
   }
 
@@ -223,7 +234,8 @@ export class StoreCompaniesController {
     @Param('branchId', ParseUUIDPipe) branchId: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.removeBranch(customer(actor), id, branchId), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.removeBranch(me, id, branchId), res, me);
   }
 
   @Post('companies/:companyId/kyc-documents')
@@ -255,7 +267,8 @@ export class StoreCompaniesController {
     @Body() body: AddCompanyKycDocumentDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.addKycDocument(customer(actor), id, body), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.addKycDocument(me, id, body), res, me);
   }
 
   @Post('companies/:companyId/actions/submit-kyc')
@@ -283,7 +296,8 @@ export class StoreCompaniesController {
     @Param('companyId', ParseUUIDPipe) id: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.submitKyc(customer(actor), id), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.submitKyc(me, id), res, me);
   }
 
   @Post('companies/:companyId/members')
@@ -307,7 +321,8 @@ export class StoreCompaniesController {
     @Body() body: InviteMemberDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.invite(customer(actor), id, body), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.invite(me, id, body), res, me);
   }
 
   @Post('companies/:companyId/members/:memberId/actions/remove')
@@ -328,7 +343,37 @@ export class StoreCompaniesController {
     @Param('memberId', ParseUUIDPipe) memberId: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.removeMember(customer(actor), id, memberId), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.removeMember(me, id, memberId), res, me);
+  }
+
+  @Put('companies/:companyId/members/:memberId/roles')
+  @companyParam
+  @ApiParam({ name: 'memberId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.companies.changeMemberRoles',
+    summary: 'Change a member’s company roles',
+    description:
+      'Company Admin: the roles replace the member’s current ones and take effect at once for an active member ' +
+      '(an invited member gets them on accepting). The last active Company Admin keeps the role (409 ' +
+      '`companies.last_admin`). Audited (D-123, D-140).',
+    implements: ['D-123', 'D-140', 'D-125'],
+  })
+  @ApiBody({
+    type: ChangeMemberRolesDto,
+    examples: { default: { value: { roles: ['company_buyer', 'company_approver'] } } },
+  })
+  @ApiSuccess(200, { description: 'Company', type: CompanyDto, example: COMPANY_EXAMPLE })
+  @ApiStandardErrors(...WRITE, 'companies.last_admin')
+  async changeRoles(
+    @CurrentActor() actor: Actor,
+    @Param('companyId', ParseUUIDPipe) id: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+    @Body() body: ChangeMemberRolesDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.changeRoles(me, id, memberId, body.roles), res, me);
   }
 
   @Get('company-invitations')
@@ -364,7 +409,8 @@ export class StoreCompaniesController {
     @Param('memberId', ParseUUIDPipe) memberId: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return respond(await this.companies.accept(customer(actor), memberId), res);
+    const me = customer(actor);
+    return respond(this.companies, await this.companies.accept(me, memberId), res, me);
   }
 }
 

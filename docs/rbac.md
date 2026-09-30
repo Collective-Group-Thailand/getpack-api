@@ -222,6 +222,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `company_profile.manage` — Edit the own company: settings, approval threshold, branches, KYC documents (D-120, D-123, D-125) | ● |  |  |  |
 | `company_orders.approve` — Approve company orders above the company threshold (D-123) |  |  | ● |  |
 | `company_documents.read` — Read company invoices and statements | ● |  |  | ● |
+| `company_assets.manage` — Add and remove the company’s brand assets (every member can use them) (D-227) | ● |  |  |  |
 
 | Role | Name (th) | Name (en) |
 |---|---|---|

@@ -752,6 +752,12 @@ export const PERMISSIONS = [
     audience: 'customer',
     description: 'Read company invoices and statements',
   },
+  {
+    key: 'company_assets.manage',
+    audience: 'customer',
+    description: 'Add and remove the company’s brand assets (every member can use them)',
+    decisionRefs: ['D-227'],
+  },
 
   // --- Finance: ledger (B5.1, accounting-design §1, §8)
   {

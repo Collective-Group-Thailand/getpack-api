@@ -182,6 +182,7 @@ export const ERROR_CODES = {
   'companies.account_not_found': HttpStatus.UNPROCESSABLE_ENTITY,
   'companies.already_member': HttpStatus.CONFLICT,
   'companies.cannot_remove_self': HttpStatus.CONFLICT,
+  'companies.last_admin': HttpStatus.CONFLICT,
   'companies.po_required': HttpStatus.UNPROCESSABLE_ENTITY,
   'companies.credit_not_eligible': HttpStatus.CONFLICT,
   'discounts.cs_limit_exceeded': HttpStatus.UNPROCESSABLE_ENTITY,

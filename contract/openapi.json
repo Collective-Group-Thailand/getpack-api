@@ -903,6 +903,17 @@
           "type": "https://errors.packio/companies.kyc_incomplete"
         }
       },
+      "problem.companies.last_admin": {
+        "summary": "companies.last_admin",
+        "value": {
+          "code": "companies.last_admin",
+          "detail": "ต้องมีผู้ดูแลบัญชีบริษัทอย่างน้อยหนึ่งคน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ต้องมีผู้ดูแลบัญชีบริษัท",
+          "type": "https://errors.packio/companies.last_admin"
+        }
+      },
       "problem.companies.po_required": {
         "summary": "companies.po_required",
         "value": {
@@ -4438,9 +4449,24 @@
             },
             "type": "array"
           },
+          "can": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyCapabilitiesDto"
+              }
+            ],
+            "description": "What my roles allow (all false in staff views)"
+          },
           "companyCode": {
             "description": "Assigned at activation",
             "example": "CO-00001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contactPhone": {
+            "example": "020000000",
             "type": [
               "string",
               "null"
@@ -4459,6 +4485,14 @@
             ],
             "description": "D-121 / D-122",
             "example": "prepaid"
+          },
+          "discountPct": {
+            "description": "The company discount % in force (D-124, approved through a discount memo); null without one",
+            "example": "3.0000",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "documentEmail": {
             "example": "account@example.com",
@@ -4508,6 +4542,16 @@
             },
             "type": "array"
           },
+          "myRoles": {
+            "description": "My company roles (empty in staff views)",
+            "example": [
+              "company_admin"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CompanyRole"
+            },
+            "type": "array"
+          },
           "orderApprovalThreshold": {
             "example": "50000.00",
             "type": [
@@ -4527,6 +4571,17 @@
               }
             ],
             "example": "optional"
+          },
+          "signatory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompanySignatoryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The authorised signatory (D-120)"
           },
           "status": {
             "allOf": [
@@ -4574,6 +4629,11 @@
           "creditStatus",
           "poNumberPolicy",
           "orderApprovalThreshold",
+          "signatory",
+          "contactPhone",
+          "discountPct",
+          "myRoles",
+          "can",
           "branches",
           "members",
           "kycDocuments",
@@ -7430,6 +7490,12 @@
       },
       "ApplyCompanyDto": {
         "properties": {
+          "contactPhone": {
+            "description": "The company’s phone",
+            "example": "020000000",
+            "maxLength": 40,
+            "type": "string"
+          },
           "documentEmail": {
             "example": "account@example.com",
             "format": "email",
@@ -7456,6 +7522,14 @@
             "maxLength": 200,
             "minLength": 2,
             "type": "string"
+          },
+          "signatory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanySignatoryDto"
+              }
+            ],
+            "description": "The authorised signatory (D-120); required before the application is submitted for review"
           },
           "taxId": {
             "example": "0000000000019",
@@ -11618,6 +11692,26 @@
         ],
         "type": "object"
       },
+      "ChangeMemberRolesDto": {
+        "properties": {
+          "roles": {
+            "example": [
+              "company_buyer",
+              "company_approver"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CompanyRole"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "roles"
+        ],
+        "type": "object"
+      },
       "ChangeQuoteModeDto": {
         "properties": {
           "quoteMode": {
@@ -12957,6 +13051,20 @@
             ],
             "example": "head_office"
           },
+          "districtNameEn": {
+            "example": "Bang Na",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "districtNameTh": {
+            "example": "บางนา",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
             "format": "uuid",
@@ -12984,6 +13092,33 @@
           "postcode": {
             "example": "10260",
             "type": "string"
+          },
+          "provinceId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+            "format": "uuid",
+            "type": "string"
+          },
+          "provinceNameEn": {
+            "example": "Bangkok",
+            "type": "string"
+          },
+          "provinceNameTh": {
+            "example": "กรุงเทพมหานคร",
+            "type": "string"
+          },
+          "subdistrictNameEn": {
+            "example": "Bang Na Nuea",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subdistrictNameTh": {
+            "example": "บางนาเหนือ",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -12994,6 +13129,13 @@
           "line1",
           "line2",
           "postcode",
+          "provinceId",
+          "provinceNameTh",
+          "provinceNameEn",
+          "subdistrictNameTh",
+          "subdistrictNameEn",
+          "districtNameTh",
+          "districtNameEn",
           "isDefault"
         ],
         "type": "object"
@@ -13063,6 +13205,49 @@
           "line1",
           "postcode",
           "provinceId"
+        ],
+        "type": "object"
+      },
+      "CompanyCapabilitiesDto": {
+        "properties": {
+          "approveOrders": {
+            "description": "Approve orders above the threshold (D-123)",
+            "example": false,
+            "type": "boolean"
+          },
+          "manageAssets": {
+            "description": "Add and remove brand assets (D-227)",
+            "example": true,
+            "type": "boolean"
+          },
+          "manageMembers": {
+            "description": "Invite, remove and change members",
+            "example": true,
+            "type": "boolean"
+          },
+          "manageSettings": {
+            "description": "Settings, branches, KYC, credit application",
+            "example": true,
+            "type": "boolean"
+          },
+          "order": {
+            "description": "Place orders for the company",
+            "example": true,
+            "type": "boolean"
+          },
+          "viewFinance": {
+            "description": "Invoices, statements, credit and spend",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "manageMembers",
+          "manageSettings",
+          "manageAssets",
+          "approveOrders",
+          "viewFinance",
+          "order"
         ],
         "type": "object"
       },
@@ -13136,9 +13321,24 @@
             },
             "type": "array"
           },
+          "can": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyCapabilitiesDto"
+              }
+            ],
+            "description": "What my roles allow (all false in staff views)"
+          },
           "companyCode": {
             "description": "Assigned at activation",
             "example": "CO-00001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contactPhone": {
+            "example": "020000000",
             "type": [
               "string",
               "null"
@@ -13157,6 +13357,14 @@
             ],
             "description": "D-121 / D-122",
             "example": "prepaid"
+          },
+          "discountPct": {
+            "description": "The company discount % in force (D-124, approved through a discount memo); null without one",
+            "example": "3.0000",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "documentEmail": {
             "example": "account@example.com",
@@ -13198,6 +13406,16 @@
             },
             "type": "array"
           },
+          "myRoles": {
+            "description": "My company roles (empty in staff views)",
+            "example": [
+              "company_admin"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/CompanyRole"
+            },
+            "type": "array"
+          },
           "orderApprovalThreshold": {
             "example": "50000.00",
             "type": [
@@ -13212,6 +13430,17 @@
               }
             ],
             "example": "optional"
+          },
+          "signatory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompanySignatoryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The authorised signatory (D-120)"
           },
           "status": {
             "allOf": [
@@ -13259,6 +13488,11 @@
           "creditStatus",
           "poNumberPolicy",
           "orderApprovalThreshold",
+          "signatory",
+          "contactPhone",
+          "discountPct",
+          "myRoles",
+          "can",
           "branches",
           "members",
           "kycDocuments",
@@ -13510,6 +13744,7 @@
         "type": "object"
       },
       "CompanyRole": {
+        "description": "My company roles (empty in staff views)",
         "enum": [
           "company_admin",
           "company_buyer",
@@ -13517,6 +13752,27 @@
           "company_accountant"
         ],
         "type": "string"
+      },
+      "CompanySignatoryDto": {
+        "properties": {
+          "name": {
+            "example": "สมชาย ทดสอบ",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "position": {
+            "example": "กรรมการผู้จัดการ",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "position"
+        ],
+        "type": "object"
       },
       "CompanyStatementDto": {
         "properties": {
@@ -53239,6 +53495,13 @@
       },
       "UpdateCompanySettingsDto": {
         "properties": {
+          "contactPhone": {
+            "example": "020000000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "documentEmail": {
             "example": "account@example.com",
             "format": "email",
@@ -53263,6 +53526,14 @@
             ],
             "description": "D-125",
             "example": "required"
+          },
+          "signatory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanySignatoryDto"
+              }
+            ],
+            "description": "The authorised signatory (D-120)"
           },
           "tradeName": {
             "example": "Example Foods",
@@ -122860,17 +123131,34 @@
                         {
                           "branchCode": "00000",
                           "branchType": "head_office",
+                          "districtNameEn": "Bang Na",
+                          "districtNameTh": "บางนา",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                           "isDefault": true,
                           "line1": "99/9 ถนนบางนา-ตราด",
                           "line2": null,
                           "name": "สำนักงานใหญ่",
-                          "postcode": "10260"
+                          "postcode": "10260",
+                          "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                          "provinceNameEn": "Bangkok",
+                          "provinceNameTh": "กรุงเทพมหานคร",
+                          "subdistrictNameEn": "Bang Na Nuea",
+                          "subdistrictNameTh": "บางนาเหนือ"
                         }
                       ],
+                      "can": {
+                        "approveOrders": false,
+                        "manageAssets": true,
+                        "manageMembers": true,
+                        "manageSettings": true,
+                        "order": true,
+                        "viewFinance": true
+                      },
                       "companyCode": "CO-00001",
+                      "contactPhone": "020000000",
                       "createdAt": "2026-10-01T10:00:00+07:00",
                       "creditStatus": "prepaid",
+                      "discountPct": null,
                       "documentEmail": "account@example.com",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                       "isVatRegistered": true,
@@ -122901,9 +123189,16 @@
                         }
                       ],
                       "missingKyc": [],
+                      "myRoles": [
+                        "company_admin"
+                      ],
                       "orderApprovalThreshold": "50000.00",
                       "paidOrdersCount": 2,
                       "poNumberPolicy": "optional",
+                      "signatory": {
+                        "name": "สมชาย ทดสอบ",
+                        "position": "กรรมการผู้จัดการ"
+                      },
                       "status": "active",
                       "statusReason": null,
                       "taxId": "0000000000019",
@@ -123098,17 +123393,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -123139,9 +123451,16 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "paidOrdersCount": 2,
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -123334,17 +123653,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -123375,9 +123711,16 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "paidOrdersCount": 2,
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -123610,17 +123953,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -123651,9 +124011,16 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "paidOrdersCount": 2,
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "applied",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -123914,17 +124281,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -123955,9 +124339,16 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "paidOrdersCount": 2,
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -124939,17 +125330,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -124980,9 +125388,16 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "paidOrdersCount": 2,
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -262487,17 +262902,34 @@
                       {
                         "branchCode": "00000",
                         "branchType": "head_office",
+                        "districtNameEn": "Bang Na",
+                        "districtNameTh": "บางนา",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                         "isDefault": true,
                         "line1": "99/9 ถนนบางนา-ตราด",
                         "line2": null,
                         "name": "สำนักงานใหญ่",
-                        "postcode": "10260"
+                        "postcode": "10260",
+                        "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                        "provinceNameEn": "Bangkok",
+                        "provinceNameTh": "กรุงเทพมหานคร",
+                        "subdistrictNameEn": "Bang Na Nuea",
+                        "subdistrictNameTh": "บางนาเหนือ"
                       }
                     ],
+                    "can": {
+                      "approveOrders": false,
+                      "manageAssets": true,
+                      "manageMembers": true,
+                      "manageSettings": true,
+                      "order": true,
+                      "viewFinance": true
+                    },
                     "companyCode": "CO-00001",
+                    "contactPhone": "020000000",
                     "createdAt": "2026-10-01T10:00:00+07:00",
                     "creditStatus": "prepaid",
+                    "discountPct": null,
                     "documentEmail": "account@example.com",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                     "isVatRegistered": true,
@@ -262527,8 +262959,15 @@
                       }
                     ],
                     "missingKyc": [],
+                    "myRoles": [
+                      "company_admin"
+                    ],
                     "orderApprovalThreshold": "50000.00",
                     "poNumberPolicy": "optional",
+                    "signatory": {
+                      "name": "สมชาย ทดสอบ",
+                      "position": "กรรมการผู้จัดการ"
+                    },
                     "status": "active",
                     "statusReason": null,
                     "taxId": "0000000000019",
@@ -262691,6 +263130,7 @@
               "examples": {
                 "default": {
                   "value": {
+                    "contactPhone": "020000000",
                     "documentEmail": "account@example.com",
                     "headOffice": {
                       "line1": "99/9 ถนนบางนา-ตราด",
@@ -262700,6 +263140,10 @@
                     },
                     "isVatRegistered": true,
                     "legalName": "บริษัท ตัวอย่าง จำกัด",
+                    "signatory": {
+                      "name": "สมชาย ทดสอบ",
+                      "position": "กรรมการผู้จัดการ"
+                    },
                     "taxId": "0000000000019",
                     "withholdsTax": true
                   }
@@ -262721,17 +263165,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": null,
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -262761,8 +263222,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "applied",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -262987,17 +263455,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -263027,8 +263512,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -263240,17 +263732,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -263280,8 +263789,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -263537,17 +264053,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": null,
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -263577,8 +264110,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "kyc_review",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -264296,17 +264836,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -264336,8 +264893,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -264579,17 +265143,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -264619,8 +265200,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -265036,17 +265624,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -265076,8 +265681,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -265330,17 +265942,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -265370,8 +265999,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -265616,17 +266252,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -265656,8 +266309,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",
@@ -265835,6 +266495,333 @@
           }
         ],
         "summary": "Remove a member",
+        "tags": [
+          "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/members/{memberId}/roles": {
+      "put": {
+        "description": "Company Admin: the roles replace the member’s current ones and take effect at once for an active member (an invited member gets them on accepting). The last active Company Admin keeps the role (409 `companies.last_admin`). Audited (D-123, D-140).\n\nImplements: D-123, D-140, D-125.",
+        "operationId": "store.companies.changeMemberRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "roles": [
+                      "company_buyer",
+                      "company_approver"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRolesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "branches": [
+                    {
+                      "branchCode": "00000",
+                      "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "isDefault": true,
+                      "line1": "99/9 ถนนบางนา-ตราด",
+                      "line2": null,
+                      "name": "สำนักงานใหญ่",
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
+                    }
+                  ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
+                  "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
+                  "createdAt": "2026-10-01T10:00:00+07:00",
+                  "creditStatus": "prepaid",
+                  "discountPct": null,
+                  "documentEmail": "account@example.com",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                  "isVatRegistered": true,
+                  "kycDocuments": [
+                    {
+                      "docType": "company_certificate",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1005",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1004",
+                      "issuedOn": "2026-09-01",
+                      "note": null,
+                      "status": "verified"
+                    }
+                  ],
+                  "legalName": "บริษัท ตัวอย่าง จำกัด",
+                  "members": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1003",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "roles": [
+                        "company_admin"
+                      ],
+                      "status": "active",
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      }
+                    }
+                  ],
+                  "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
+                  "orderApprovalThreshold": "50000.00",
+                  "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
+                  "status": "active",
+                  "statusReason": null,
+                  "taxId": "0000000000019",
+                  "tradeName": "Example Foods",
+                  "withholdsTax": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": "Company",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.last_admin": {
+                    "$ref": "#/components/examples/problem.companies.last_admin"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.last_admin`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Change a member’s company roles",
         "tags": [
           "store.companies"
         ]
@@ -266653,17 +267640,34 @@
                     {
                       "branchCode": "00000",
                       "branchType": "head_office",
+                      "districtNameEn": "Bang Na",
+                      "districtNameTh": "บางนา",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
                       "isDefault": true,
                       "line1": "99/9 ถนนบางนา-ตราด",
                       "line2": null,
                       "name": "สำนักงานใหญ่",
-                      "postcode": "10260"
+                      "postcode": "10260",
+                      "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1006",
+                      "provinceNameEn": "Bangkok",
+                      "provinceNameTh": "กรุงเทพมหานคร",
+                      "subdistrictNameEn": "Bang Na Nuea",
+                      "subdistrictNameTh": "บางนาเหนือ"
                     }
                   ],
+                  "can": {
+                    "approveOrders": false,
+                    "manageAssets": true,
+                    "manageMembers": true,
+                    "manageSettings": true,
+                    "order": true,
+                    "viewFinance": true
+                  },
                   "companyCode": "CO-00001",
+                  "contactPhone": "020000000",
                   "createdAt": "2026-10-01T10:00:00+07:00",
                   "creditStatus": "prepaid",
+                  "discountPct": null,
                   "documentEmail": "account@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
                   "isVatRegistered": true,
@@ -266693,8 +267697,15 @@
                     }
                   ],
                   "missingKyc": [],
+                  "myRoles": [
+                    "company_admin"
+                  ],
                   "orderApprovalThreshold": "50000.00",
                   "poNumberPolicy": "optional",
+                  "signatory": {
+                    "name": "สมชาย ทดสอบ",
+                    "position": "กรรมการผู้จัดการ"
+                  },
                   "status": "active",
                   "statusReason": null,
                   "taxId": "0000000000019",

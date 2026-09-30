@@ -41,6 +41,7 @@ describe('companies (e2e, B3.5)', () => {
         isVatRegistered: true,
         withholdsTax: true,
         headOffice: { name: 'สำนักงานใหญ่', line1: '1 ถนนทดสอบ', postcode: '99999', provinceId },
+        signatory: { name: 'ผู้มีอำนาจ ทดสอบ', position: 'กรรมการ' },
       })
       .expect(201);
     expect(applied.body).toMatchObject({

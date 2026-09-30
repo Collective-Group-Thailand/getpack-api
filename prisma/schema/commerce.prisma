@@ -1898,6 +1898,10 @@ model Company {
   /// The company withholds tax on payments to Packio (accounting-design §2, P03).
   withholdsTax           Boolean        @default(false) @map("withholds_tax")
   documentEmail          String?        @map("document_email") @db.Citext
+  /// The authorised signatory (D-120): needed before the KYC review.
+  signatoryName          String?        @map("signatory_name")
+  signatoryPosition      String?        @map("signatory_position")
+  contactPhone           String?        @map("contact_phone")
   status                 CompanyStatus  @default(applied)
   creditStatus           CreditStatus   @default(prepaid) @map("credit_status")
   poNumberPolicy         PoNumberPolicy @default(optional) @map("po_number_policy")

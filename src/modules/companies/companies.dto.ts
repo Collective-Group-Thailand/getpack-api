@@ -98,6 +98,22 @@ export class CompanyBranchInputDto {
   isDefault?: boolean;
 }
 
+export class CompanySignatoryDto {
+  @ApiProperty({ example: 'สมชาย ทดสอบ', maxLength: 200 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200)
+  name!: string;
+
+  @ApiProperty({ example: 'กรรมการผู้จัดการ', maxLength: 100 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  position!: string;
+}
+
+const PHONE = /^\+?[0-9 -]{6,40}$/;
+
 export class ApplyCompanyDto {
   @ApiProperty({ example: 'บริษัท ตัวอย่าง จำกัด' })
   @IsString()
@@ -136,6 +152,20 @@ export class ApplyCompanyDto {
   @ValidateNested()
   @Type(() => CompanyBranchInputDto)
   headOffice!: CompanyBranchInputDto;
+
+  @ApiPropertyOptional({
+    type: CompanySignatoryDto,
+    description: 'The authorised signatory (D-120); required before the application is submitted for review',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompanySignatoryDto)
+  signatory?: CompanySignatoryDto;
+
+  @ApiPropertyOptional({ example: '020000000', maxLength: 40, description: 'The company’s phone' })
+  @IsOptional()
+  @Matches(PHONE)
+  contactPhone?: string;
 }
 
 export class UpdateCompanySettingsDto {
@@ -175,6 +205,26 @@ export class UpdateCompanySettingsDto {
   @IsString()
   @Matches(MONEY)
   orderApprovalThreshold?: string | null;
+
+  @ApiPropertyOptional({ type: CompanySignatoryDto, description: 'The authorised signatory (D-120)' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompanySignatoryDto)
+  signatory?: CompanySignatoryDto;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: '020000000' })
+  @IsOptional()
+  @Matches(PHONE)
+  contactPhone?: string | null;
+}
+
+export class ChangeMemberRolesDto {
+  @ApiProperty({ enum: COMPANY_ROLES, enumName: 'CompanyRole', isArray: true, example: ['company_buyer', 'company_approver'] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(4)
+  @IsIn(COMPANY_ROLES, { each: true })
+  roles!: (typeof COMPANY_ROLES)[number][];
 }
 
 export class AddCompanyKycDocumentDto {
@@ -254,6 +304,27 @@ export class CompanyBranchDto {
   @ApiProperty({ example: '10260' })
   postcode!: string;
 
+  @ApiProperty({ format: 'uuid', example: IDS.province })
+  provinceId!: string;
+
+  @ApiProperty({ example: 'กรุงเทพมหานคร' })
+  provinceNameTh!: string;
+
+  @ApiProperty({ example: 'Bangkok' })
+  provinceNameEn!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'บางนาเหนือ' })
+  subdistrictNameTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'Bang Na Nuea' })
+  subdistrictNameEn!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'บางนา' })
+  districtNameTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'Bang Na' })
+  districtNameEn!: string | null;
+
   @ApiProperty({ example: true })
   isDefault!: boolean;
 }
@@ -297,6 +368,27 @@ export class CompanyKycDocumentDto {
 
   @ApiProperty({ type: String, nullable: true, example: null })
   note!: string | null;
+}
+
+/** What I may do in the company, from my company roles (D-123, D-125, D-227). */
+export class CompanyCapabilitiesDto {
+  @ApiProperty({ example: true, description: 'Invite, remove and change members' })
+  manageMembers!: boolean;
+
+  @ApiProperty({ example: true, description: 'Settings, branches, KYC, credit application' })
+  manageSettings!: boolean;
+
+  @ApiProperty({ example: true, description: 'Add and remove brand assets (D-227)' })
+  manageAssets!: boolean;
+
+  @ApiProperty({ example: false, description: 'Approve orders above the threshold (D-123)' })
+  approveOrders!: boolean;
+
+  @ApiProperty({ example: true, description: 'Invoices, statements, credit and spend' })
+  viewFinance!: boolean;
+
+  @ApiProperty({ example: true, description: 'Place orders for the company' })
+  order!: boolean;
 }
 
 export class CompanyDto {
@@ -349,6 +441,32 @@ export class CompanyDto {
   @ApiProperty({ type: String, nullable: true, example: '50000.00' })
   orderApprovalThreshold!: string | null;
 
+  @ApiProperty({ type: CompanySignatoryDto, nullable: true, description: 'The authorised signatory (D-120)' })
+  signatory!: CompanySignatoryDto | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '020000000' })
+  contactPhone!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.0000',
+    description: 'The company discount % in force (D-124, approved through a discount memo); null without one',
+  })
+  discountPct!: string | null;
+
+  @ApiProperty({
+    enum: COMPANY_ROLES,
+    enumName: 'CompanyRole',
+    isArray: true,
+    example: ['company_admin'],
+    description: 'My company roles (empty in staff views)',
+  })
+  myRoles!: string[];
+
+  @ApiProperty({ type: CompanyCapabilitiesDto, description: 'What my roles allow (all false in staff views)' })
+  can!: CompanyCapabilitiesDto;
+
   @ApiProperty({ type: [CompanyBranchDto] })
   branches!: CompanyBranchDto[];
 
@@ -393,6 +511,18 @@ export const COMPANY_EXAMPLE: CompanyDto = {
   creditStatus: 'prepaid',
   poNumberPolicy: 'optional',
   orderApprovalThreshold: '50000.00',
+  signatory: { name: 'สมชาย ทดสอบ', position: 'กรรมการผู้จัดการ' },
+  contactPhone: '020000000',
+  discountPct: null,
+  myRoles: ['company_admin'],
+  can: {
+    manageMembers: true,
+    manageSettings: true,
+    manageAssets: true,
+    approveOrders: false,
+    viewFinance: true,
+    order: true,
+  },
   branches: [
     {
       id: IDS.branch,
@@ -402,6 +532,13 @@ export const COMPANY_EXAMPLE: CompanyDto = {
       line1: '99/9 ถนนบางนา-ตราด',
       line2: null,
       postcode: '10260',
+      provinceId: IDS.province,
+      provinceNameTh: 'กรุงเทพมหานคร',
+      provinceNameEn: 'Bangkok',
+      subdistrictNameTh: 'บางนาเหนือ',
+      subdistrictNameEn: 'Bang Na Nuea',
+      districtNameTh: 'บางนา',
+      districtNameEn: 'Bang Na',
       isDefault: true,
     },
   ],
@@ -446,6 +583,8 @@ export const APPLY_EXAMPLE = {
     postcode: '10260',
     provinceId: IDS.province,
   },
+  signatory: { name: 'สมชาย ทดสอบ', position: 'กรรมการผู้จัดการ' },
+  contactPhone: '020000000',
 };
 
 export class CompanyInvitationDto {

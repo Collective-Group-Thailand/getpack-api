@@ -1,10 +1,22 @@
 import { toBangkokIso } from '@common/time/bangkok';
 
 import { type AdminCompanyDto, type CompanyDto, type CompanyInvitationDto } from './companies.dto';
-import { type CompaniesService, type CompanyRow, requiredKyc } from './companies.service';
+import {
+  type CompaniesService,
+  type CompanyMembership,
+  type CompanyRow,
+  requiredKyc,
+} from './companies.service';
 
-export function companyDto(c: CompanyRow): CompanyDto {
+/** The company discount version in force now (D-124). */
+function discountPct(c: CompanyRow, now = new Date()): string | null {
+  const v = c.discount?.versions.find((x) => x.effectiveFrom <= now && (x.validTo === null || x.validTo > now));
+  return v ? v.discountPct.toFixed(4) : null;
+}
+
+export function companyDto(c: CompanyRow, me?: CompanyMembership): CompanyDto {
   const have = new Set(c.kycDocuments.filter((d) => d.status !== 'rejected').map((d) => d.docType));
+  const may = (p: string) => me?.permissions.has(p) ?? false;
   return {
     id: c.publicId,
     companyCode: c.companyCode,
@@ -19,6 +31,19 @@ export function companyDto(c: CompanyRow): CompanyDto {
     creditStatus: c.creditStatus,
     poNumberPolicy: c.poNumberPolicy,
     orderApprovalThreshold: c.orderApprovalThreshold?.toFixed(2) ?? null,
+    signatory:
+      c.signatoryName && c.signatoryPosition ? { name: c.signatoryName, position: c.signatoryPosition } : null,
+    contactPhone: c.contactPhone,
+    discountPct: discountPct(c),
+    myRoles: me?.roles ?? [],
+    can: {
+      manageMembers: may('company_members.manage'),
+      manageSettings: may('company_profile.manage'),
+      manageAssets: may('company_assets.manage'),
+      approveOrders: may('company_orders.approve'),
+      viewFinance: may('company_documents.read'),
+      order: may('company_orders.place'),
+    },
     branches: c.branches.map((b) => ({
       id: b.publicId,
       branchType: b.branchType,
@@ -27,6 +52,13 @@ export function companyDto(c: CompanyRow): CompanyDto {
       line1: b.line1,
       line2: b.line2,
       postcode: b.postcode,
+      provinceId: b.province.publicId,
+      provinceNameTh: b.province.nameTh,
+      provinceNameEn: b.province.nameEn,
+      subdistrictNameTh: b.subdistrict?.nameTh ?? null,
+      subdistrictNameEn: b.subdistrict?.nameEn ?? null,
+      districtNameTh: b.subdistrict?.district.nameTh ?? null,
+      districtNameEn: b.subdistrict?.district.nameEn ?? null,
       isDefault: b.isDefault,
     })),
     members: c.members.map((m) => ({
