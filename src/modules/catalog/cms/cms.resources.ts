@@ -387,7 +387,14 @@ export const faqCategories = defineResource({
   conflict: 'catalog.code_taken',
 });
 
-type FaqRow = Prisma.FaqGetPayload<{ include: { category: { select: { publicId: true } } } }>;
+const FAQ_INCLUDE = {
+  category: { select: { publicId: true } },
+  catalogProducts: {
+    select: { catalogProduct: { select: { publicId: true } } },
+    orderBy: { catalogProductId: 'asc' },
+  },
+} as const satisfies Prisma.FaqInclude;
+type FaqRow = Prisma.FaqGetPayload<{ include: typeof FAQ_INCLUDE }>;
 
 export const faqs = defineResource({
   key: 'faq',
@@ -399,8 +406,9 @@ export const faqs = defineResource({
   implements: CMS,
   read: 'cms.manage',
   manage: 'cms.manage',
+  note: 'Linked catalogue products are set through `PUT …/catalog-products`.',
   delegate: (tx) => tx.faq,
-  include: { category: { select: { publicId: true } } },
+  include: FAQ_INCLUDE,
   baseWhere: NOT_DELETED,
   softDelete: true,
   dto: FaqDto,
@@ -416,6 +424,7 @@ export const faqs = defineResource({
     answerEn: 'It depends on the product type; see each product page.',
     sort: 10,
     status: 'published',
+    catalogProductIds: [CMS_IDS.catalogProduct],
     updatedAt: TS,
   },
   createExample: {
@@ -433,6 +442,7 @@ export const faqs = defineResource({
     answerEn: row.answerEn,
     sort: row.sort,
     status: row.status,
+    catalogProductIds: row.catalogProducts.map((l) => l.catalogProduct.publicId),
     updatedAt: toBangkokIso(row.updatedAt),
   }),
   createData: async (input: CreateFaqDto, refs) => ({

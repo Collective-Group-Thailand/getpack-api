@@ -1,7 +1,7 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsObject, IsOptional, IsUUID } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsDate, IsObject, IsOptional, IsUUID } from 'class-validator';
 
 import {
   BoolField,
@@ -464,8 +464,24 @@ export class FaqDto {
   @ApiProperty({ enum: CONTENT_STATUSES, enumName: 'ContentStatus', example: 'published' })
   status!: Content;
 
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    example: [CMS_IDS.catalogProduct],
+    description: 'Catalogue products whose page shows this FAQ (set through `PUT …/catalog-products`)',
+  })
+  catalogProductIds!: string[];
+
   @TimestampField(TS)
   updatedAt!: string;
+}
+
+export class ReplaceFaqCatalogProductsDto {
+  @ApiProperty({ type: [String], format: 'uuid', example: [CMS_IDS.catalogProduct] })
+  @IsArray()
+  @ArrayMaxSize(200)
+  @IsUUID('all', { each: true })
+  catalogProductIds!: string[];
 }
 
 export class CreateFaqDto {

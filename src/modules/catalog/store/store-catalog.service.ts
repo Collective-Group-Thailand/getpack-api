@@ -4,6 +4,7 @@ import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type CatalogOptionKind, Prisma } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { num } from '../crud/dto-fields';
 import {
@@ -12,6 +13,7 @@ import {
   type StoreArticleDto,
   type StoreArticleListQuery,
   type StoreBannerDto,
+  type StoreFaqDto,
   type StoreFaqGroupDto,
   type StoreGeoAreaDto,
   type StoreGeoSubdistrictDto,
@@ -20,6 +22,7 @@ import {
   type StoreOptionGroupDto,
   type StorePostcodeAreaDto,
   type StoreProductCardDto,
+  type StoreProductCategoryDto,
   type StoreProductDetailDto,
   type StoreProductListQuery,
   type StoreProductTypeDto,
@@ -28,8 +31,10 @@ import {
   type StoreSeoDto,
   type StoreShowcaseListQuery,
   type StoreShowcaseProductDto,
+  type StoreSitemapEntryDto,
   type StoreStockProductDto,
   type StoreStockProductListQuery,
+  type StoreSupportChannelsDto,
 } from './store-catalog.dto';
 
 /** Public URL of a catalogue image; the file is served only while visible content references it. */
@@ -74,7 +79,10 @@ const SEO_INCLUDE = { include: { ogImageFile: { select: { publicId: true } } } }
  */
 @Injectable()
 export class StoreCatalogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settings: SettingsService,
+  ) {}
 
   // --- product types & catalogue products ---------------------------------------------------
 
@@ -93,14 +101,73 @@ export class StoreCatalogService {
     }));
   }
 
-  private productWhere(productType?: string): Prisma.CatalogProductWhereInput {
-    return { status: ACTIVE, productType: { status: ACTIVE, ...(productType ? { code: productType } : {}) } };
+  private productWhere(productType?: string, categoryIds?: bigint[]): Prisma.CatalogProductWhereInput {
+    return { status: ACTIVE, productType: this.productTypeWhere(productType, categoryIds) };
+  }
+
+  private productTypeWhere(productType?: string, categoryIds?: bigint[]): Prisma.ProductTypeWhereInput {
+    return {
+      status: ACTIVE,
+      ...(productType ? { code: productType } : {}),
+      ...(categoryIds ? { categoryId: { in: categoryIds } } : {}),
+    };
+  }
+
+  /**
+   * The active product categories, each with the active product types in it or in any of its
+   * sub-categories. A category without any is not browsable and is left out.
+   */
+  private async categoryTree() {
+    const [categories, types] = await Promise.all([
+      this.prisma.productCategory.findMany({
+        where: { status: ACTIVE },
+        select: { id: true, code: true, nameTh: true, nameEn: true, parentId: true, sort: true },
+      }),
+      this.prisma.productType.findMany({ where: { status: ACTIVE }, select: { categoryId: true } }),
+    ]);
+    const byId = new Map(categories.map((c) => [c.id, c]));
+    const children = new Map<bigint, bigint[]>();
+    for (const c of categories) {
+      if (c.parentId !== null && byId.has(c.parentId)) {
+        children.set(c.parentId, [...(children.get(c.parentId) ?? []), c.id]);
+      }
+    }
+    const withTypes = new Set(types.map((t) => t.categoryId));
+    /** The category and its active descendants (an inactive category hides its branch). */
+    const subtree = (id: bigint, seen = new Set<bigint>()): bigint[] => {
+      if (seen.has(id)) return [];
+      seen.add(id);
+      return [id, ...(children.get(id) ?? []).flatMap((child) => subtree(child, seen))];
+    };
+    return { categories, byId, subtree, browsable: (id: bigint) => subtree(id).some((c) => withTypes.has(c)) };
+  }
+
+  /** D-228: a category filter includes its sub-categories; an unknown code matches nothing. */
+  private async categoryFilter(code: string | undefined): Promise<bigint[] | undefined> {
+    if (!code) return undefined;
+    const tree = await this.categoryTree();
+    const category = tree.categories.find((c) => c.code === code);
+    return category ? tree.subtree(category.id) : [];
+  }
+
+  async productCategories(): Promise<StoreProductCategoryDto[]> {
+    const tree = await this.categoryTree();
+    return tree.categories
+      .filter((c) => tree.browsable(c.id))
+      .sort((a, b) => a.sort - b.sort || a.code.localeCompare(b.code))
+      .map((c) => ({
+        code: c.code,
+        nameTh: c.nameTh,
+        nameEn: c.nameEn,
+        parentCode: c.parentId !== null ? (tree.byId.get(c.parentId)?.code ?? null) : null,
+        sort: c.sort,
+      }));
   }
 
   async products(query: StoreProductListQuery): Promise<{ rows: StoreProductCardDto[]; total: number }> {
     const q = query.q?.trim();
     const where: Prisma.CatalogProductWhereInput = {
-      ...this.productWhere(query.productType),
+      ...this.productWhere(query.productType, await this.categoryFilter(query.category)),
       ...(q
         ? {
             OR: [
@@ -376,7 +443,7 @@ export class StoreCatalogService {
       .map((pair) => pair.split(':') as [string, string]);
     const where: Prisma.StockProductWhereInput = {
       status: ACTIVE,
-      productType: { status: ACTIVE, ...(query.productType ? { code: query.productType } : {}) },
+      productType: this.productTypeWhere(query.productType, await this.categoryFilter(query.category)),
       AND: filters.map(([attribute, code]) => ({
         attributes: { some: { attribute: attribute as never, value: { code, status: ACTIVE } } },
       })),
@@ -602,6 +669,85 @@ export class StoreCatalogService {
     return [...groups.values()].sort((a, b) => a.sort - b.sort).map(({ sort: _sort, ...group }) => group);
   }
 
+  /** Published FAQs linked to an active catalogue product, in admin sort order (404 for unknown slugs). */
+  async productFaqs(slug: string): Promise<StoreFaqDto[]> {
+    const product = await this.prisma.catalogProduct.findFirst({
+      where: { slug, ...this.productWhere() },
+      select: { id: true },
+    });
+    if (!product) throw new DomainException('http.not_found');
+    const rows = await this.prisma.faq.findMany({
+      where: { status: 'published', deletedAt: null, catalogProducts: { some: { catalogProductId: product.id } } },
+      orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map((f) => ({
+      questionTh: f.questionTh,
+      questionEn: f.questionEn,
+      answerTh: f.answerTh,
+      answerEn: f.answerEn,
+    }));
+  }
+
+  // --- sitemap & support ----------------------------------------------------------------------
+
+  /**
+   * Indexable storefront pages (D-005: none from the legacy site): browsable categories, active
+   * catalogue and stock products and published articles, except pages whose SEO meta says `noindex`.
+   */
+  async sitemap(): Promise<StoreSitemapEntryDto[]> {
+    const indexable = { OR: [{ seoPageId: null }, { seoPage: { noindex: false } }] };
+    const [tree, categories, products, stock, articles] = await Promise.all([
+      this.categoryTree(),
+      this.prisma.productCategory.findMany({ where: { status: ACTIVE }, select: { id: true, updatedAt: true } }),
+      this.prisma.catalogProduct.findMany({
+        where: { ...this.productWhere(), ...indexable },
+        select: { slug: true, updatedAt: true },
+        orderBy: { slug: 'asc' },
+      }),
+      this.prisma.stockProduct.findMany({
+        where: { status: ACTIVE, productType: { status: ACTIVE }, ...indexable },
+        select: { sku: true, updatedAt: true },
+        orderBy: { sku: 'asc' },
+      }),
+      this.prisma.article.findMany({
+        where: { ...this.articleWhere(), ...indexable },
+        select: { slug: true, updatedAt: true },
+        orderBy: { slug: 'asc' },
+      }),
+    ]);
+    const updated = new Map(categories.map((c) => [c.id, c.updatedAt]));
+    return [
+      ...tree.categories
+        .filter((c) => tree.browsable(c.id))
+        .sort((a, b) => a.code.localeCompare(b.code))
+        .map((c) => ({ kind: 'category' as const, key: c.code, lastModified: toBangkokIso(updated.get(c.id)!) })),
+      ...products.map((p) => ({
+        kind: 'catalog_product' as const,
+        key: p.slug,
+        lastModified: toBangkokIso(p.updatedAt),
+      })),
+      ...stock.map((s) => ({ kind: 'stock_product' as const, key: s.sku, lastModified: toBangkokIso(s.updatedAt) })),
+      ...articles.map((a) => ({ kind: 'article' as const, key: a.slug, lastModified: toBangkokIso(a.updatedAt) })),
+    ];
+  }
+
+  /** D-221: every field is null until the CS Lead sets `storefront.support_channels`. */
+  async supportChannels(): Promise<StoreSupportChannelsDto> {
+    const text = (v: string | null | undefined) => (typeof v === 'string' && v.trim() !== '' ? v : null);
+    try {
+      const { value } = await this.settings.at('storefront.support_channels');
+      return {
+        lineOaId: text(value.lineOaId),
+        phone: text(value.phone),
+        email: text(value.email),
+        hours: text(value.hours),
+      };
+    } catch (error) {
+      if (error instanceof SettingNotFoundError) return { lineOaId: null, phone: null, email: null, hours: null };
+      throw error;
+    }
+  }
+
   async seo(pageKey: string): Promise<StoreSeoDto> {
     const row = await this.prisma.seoPage.findUnique({ where: { pageKey }, ...SEO_INCLUDE });
     if (!row) throw new DomainException('http.not_found');
@@ -712,6 +858,12 @@ export class StoreCatalogService {
           FROM showcase_products sc JOIN catalog_products cp ON cp.id = sc.catalog_product_id
          WHERE sc.status = 'active' AND cp.status = 'active'
            AND (sc.name_th % ${q} OR sc.name_en % ${q} OR sc.name_th ILIKE ${like} OR sc.name_en ILIKE ${like})
+        UNION ALL
+        SELECT 'faq', f.public_id::text, f.question_th, f.question_en, NULL,
+               GREATEST(similarity(f.question_th, ${q}), similarity(coalesce(f.question_en, ''), ${q}))::float8
+          FROM faqs f LEFT JOIN faq_categories fc ON fc.id = f.category_id
+         WHERE f.status = 'published' AND f.deleted_at IS NULL AND (fc.id IS NULL OR fc.status = 'published')
+           AND (f.question_th % ${q} OR f.question_en % ${q} OR f.question_th ILIKE ${like} OR f.question_en ILIKE ${like})
         UNION ALL
         SELECT 'article', a.slug, a.title_th, a.title_en,
                (SELECT fo.public_id::text FROM file_objects fo WHERE fo.id = a.cover_file_id),

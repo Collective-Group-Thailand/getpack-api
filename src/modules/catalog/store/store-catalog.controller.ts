@@ -16,12 +16,14 @@ import {
   StoreArticleListQuery,
   StoreBannerDto,
   StoreBannerQuery,
+  StoreFaqDto,
   StoreFaqGroupDto,
   StoreGeoAreaDto,
   StoreGeoSubdistrictDto,
   StoreHomeSectionDto,
   StorePostcodeAreaDto,
   StoreProductCardDto,
+  StoreProductCategoryDto,
   StoreProductDetailDto,
   StoreProductListQuery,
   StoreProductTypeDto,
@@ -139,6 +141,31 @@ export class StoreCatalogController {
     return this.catalog.productTypes();
   }
 
+  @Get('product-categories')
+  @Public()
+  @Header('Cache-Control', CACHE)
+  @ApiEndpoint({
+    id: 'store.catalog.listProductCategories',
+    summary: 'List the product categories to browse',
+    description:
+      'Active categories that hold at least one active product type, directly or through a sub-category, in ' +
+      'admin sort order; `parentCode` builds the menu tree. Filter products by `category` (includes ' +
+      'sub-categories, D-228).',
+    implements: ['D-100', 'D-228'],
+  })
+  @ApiSuccess(200, {
+    description: 'Categories',
+    type: [StoreProductCategoryDto],
+    example: [
+      { code: 'boxes', nameTh: 'กล่อง', nameEn: 'Boxes', parentCode: null, sort: 10 },
+      { code: 'folding_carton', nameTh: 'กล่องกระดาษแข็ง', nameEn: 'Folding cartons', parentCode: 'boxes', sort: 20 },
+    ],
+  })
+  @ApiStandardErrors('validation.failed')
+  productCategories(): Promise<StoreProductCategoryDto[]> {
+    return this.catalog.productCategories();
+  }
+
   @Get('products')
   @Public()
   @Header('Cache-Control', CACHE)
@@ -146,7 +173,8 @@ export class StoreCatalogController {
     id: 'store.catalog.listProducts',
     summary: 'List catalogue products',
     description:
-      'Active products of active types; filter by type code, `q` searches the names. No prices here.',
+      'Active products of active types; filter by type code or product category (with its sub-categories, ' +
+      'D-228), `q` searches the names. No prices here.',
     implements: CATALOG,
   })
   @ApiPaginated(StoreProductCardDto, { example: CARD })
@@ -266,9 +294,10 @@ export class StoreCatalogController {
     id: 'store.catalog.listStockProducts',
     summary: 'List ready-made stock products',
     description:
-      'Active stock products with attribute filters (`attributes=colour:clear,shape:round`) and `q`. ' +
-      '`inStock` aggregates the supplying factories without naming them (D-050); prices come from quotes.',
-    implements: ['D-100', 'D-050'],
+      'Active stock products with attribute filters (`attributes=colour:clear,shape:round`), the product ' +
+      'category (with its sub-categories, D-228) and `q`. `inStock` aggregates the supplying factories without ' +
+      'naming them (D-050); prices come from quotes.',
+    implements: ['D-100', 'D-050', 'D-228'],
   })
   @ApiPaginated(StoreStockProductDto, { example: STOCK })
   @ApiStandardErrors('validation.failed')
@@ -331,9 +360,9 @@ export class StoreCatalogController {
   @Header('Cache-Control', CACHE)
   @ApiEndpoint({
     id: 'store.catalog.search',
-    summary: 'Search products and articles',
+    summary: 'Search products, articles and FAQs',
     description:
-      'Trigram search (`pg_trgm`) over catalogue products, stock products, showcase products and articles, ranked by similarity (top 20).',
+      'Trigram search (`pg_trgm`) over catalogue products, stock products, showcase products, articles and published FAQ questions (`faq`, key = FAQ id), ranked by similarity (top 20).',
     implements: ['D-100', 'D-102'],
   })
   @ApiSuccess(200, {
@@ -507,6 +536,35 @@ export class StoreCatalogController {
   @ApiStandardErrors('validation.failed')
   faqs(): Promise<StoreFaqGroupDto[]> {
     return this.catalog.faqs();
+  }
+
+  @Get('products/:slug/faqs')
+  @Public()
+  @Header('Cache-Control', CACHE)
+  @ApiEndpoint({
+    id: 'store.catalog.listProductFaqs',
+    summary: 'List the FAQs of a catalogue product',
+    description:
+      'Published FAQs that the CMS links to this product (`PUT /v1/admin/cms/faqs/{id}/catalog-products`), in ' +
+      'admin sort order; empty when none is linked.',
+    implements: CMS,
+  })
+  @ApiParam({ name: 'slug', example: 'tuck-end-box' })
+  @ApiSuccess(200, {
+    description: 'FAQs',
+    type: [StoreFaqDto],
+    example: [
+      {
+        questionTh: 'สั่งขั้นต่ำกี่ชิ้น',
+        questionEn: 'What is the minimum order?',
+        answerTh: 'ขึ้นอยู่กับประเภทสินค้า',
+        answerEn: 'It depends on the product type.',
+      },
+    ],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  productFaqs(@Param('slug') slug: string): Promise<StoreFaqDto[]> {
+    return this.catalog.productFaqs(slug);
   }
 
   @Get('seo')

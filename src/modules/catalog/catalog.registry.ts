@@ -2,6 +2,7 @@ import { type Type } from '@nestjs/common';
 
 import {
   ArticleActionsController,
+  FaqActionsController,
   HomeSectionActionsController,
   SemiDesignActionsController,
   SemiDesignTemplateActionsController,
@@ -128,6 +129,7 @@ export const CATALOG_ADMIN_CONTROLLERS: Type<unknown>[] = [
   StockProductRelationsController,
   HomeSectionActionsController,
   ArticleActionsController,
+  FaqActionsController,
   SemiDesignActionsController,
   SemiDesignTemplateActionsController,
   ...CATALOG_RESOURCES.map(catalogCrudController),

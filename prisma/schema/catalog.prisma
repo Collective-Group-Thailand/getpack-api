@@ -371,6 +371,7 @@ model CatalogProduct {
   standardSizes          StandardSize[]
   showcaseProducts       ShowcaseProduct[]
   semiDesigns            SemiDesign[]
+  faqLinks               FaqCatalogProductLink[]
   productEmbeddings      ProductEmbedding[]
   createdBy              User?                   @relation("CatalogProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__created_by")
   updatedBy              User?                   @relation("CatalogProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__updated_by")
@@ -1572,12 +1573,30 @@ model Faq {
   updatedById BigInt?       @map("updated_by")
   rowVersion  Int           @default(1) @map("row_version")
 
-  category  FaqCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__category_id")
-  createdBy User?        @relation("FaqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__created_by")
-  updatedBy User?        @relation("FaqUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__updated_by")
+  category        FaqCategory?            @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__category_id")
+  createdBy       User?                   @relation("FaqCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__created_by")
+  updatedBy       User?                   @relation("FaqUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faqs__updated_by")
+  catalogProducts FaqCatalogProductLink[]
 
   @@index([categoryId, sort], map: "ix_faqs__category_id__sort")
+  @@index([questionTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_faqs__question_th_trgm")
   @@map("faqs")
+}
+
+/// The catalogue products a FAQ answers questions about (U-B0.1, schema-design A-50); shown on the product page.
+model FaqCatalogProductLink {
+  faqId            BigInt   @map("faq_id")
+  catalogProductId BigInt   @map("catalog_product_id")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?  @map("created_by")
+
+  faq            Faq            @relation(fields: [faqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faq_catalog_product_links__faq_id")
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faq_catalog_product_links__catalog_product_id")
+  createdBy      User?          @relation("FaqCatalogProductLinkCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_faq_catalog_product_links__created_by")
+
+  @@id([faqId, catalogProductId], map: "pk_faq_catalog_product_links")
+  @@index([catalogProductId], map: "ix_faq_catalog_product_links__catalog_product_id")
+  @@map("faq_catalog_product_links")
 }
 
 /// SEO meta per page (legacy `sitemaps`).

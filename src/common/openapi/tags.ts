@@ -105,6 +105,7 @@ export const API_TAGS: Record<string, string> = {
   'admin.claims':
     'Claims: review, information requests, factory review, liability rules and overrides (D-083), decisions and resolutions through existing mechanisms.',
   'store.conversations': 'My chat with Packio CS from the web or LINE LIFF (D-151).',
+  'store.support': 'How to reach Packio CS: support channels and the contact form (D-221, D-005).',
   'admin.conversations':
     'The CS inbox: LINE and web conversations, replies pushed to LINE, assignment (D-151, D-143).',
   'admin.line': 'The LINE official account: rich menus for guests and members (D-151).',

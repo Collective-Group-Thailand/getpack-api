@@ -24,14 +24,22 @@ import {
   SHOWCASE_IDS,
 } from '../showcase/showcase.dto';
 import { semiDesigns, semiDesignTemplates } from '../showcase/showcase.resources';
-import { ArticleDto, CMS_IDS, HomeSectionDto, ReorderDto, ReplaceArticleCategoriesDto } from './cms.dto';
-import { ARTICLE_EXAMPLE, articles, homeSections } from './cms.resources';
+import {
+  ArticleDto,
+  CMS_IDS,
+  FaqDto,
+  HomeSectionDto,
+  ReorderDto,
+  ReplaceArticleCategoriesDto,
+  ReplaceFaqCatalogProductsDto,
+} from './cms.dto';
+import { ARTICLE_EXAMPLE, articles, faqs, homeSections } from './cms.resources';
 
 const ERRORS = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
 
 async function resolveAll(
   refs: RefResolver,
-  model: 'articleCategory' | 'designFont',
+  model: 'articleCategory' | 'designFont' | 'catalogProduct',
   ids: string[],
   path: string,
 ) {
@@ -167,6 +175,52 @@ export class ArticleActionsController extends ChildrenController {
       },
     );
     return this.respond(articles, row, res);
+  }
+}
+
+@ApiSurface('admin', 'cmsFaqs')
+@Controller('cms/faqs')
+export class FaqActionsController extends ChildrenController {
+  @Put(':id/catalog-products')
+  @Can('cms.manage')
+  @ApiEndpoint({
+    id: 'admin.cmsFaqs.replaceCatalogProducts',
+    summary: 'Replace the catalogue products of a FAQ',
+    description:
+      'The whole list is replaced; the FAQ then shows on those product pages (`store.catalog.listProductFaqs`). ' +
+      'Guarded by the FAQ ETag; audited.',
+    implements: ['D-005'],
+  })
+  @ApiConcurrency()
+  @ApiBody({
+    type: ReplaceFaqCatalogProductsDto,
+    examples: { default: { value: { catalogProductIds: [CMS_IDS.catalogProduct] } } },
+  })
+  @ApiSuccess(200, { description: 'The FAQ', type: FaqDto, example: faqs.example })
+  @ApiStandardErrors(...ERRORS)
+  async replaceCatalogProducts(
+    @CurrentActor() actor: Actor,
+    @Param('id', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: ReplaceFaqCatalogProductsDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<object> {
+    const user = staffActor(actor);
+    const row = await this.crud.mutateChildren(
+      faqs,
+      user,
+      id,
+      ifMatch,
+      ['catalogProductIds'],
+      async (tx, faq) => {
+        const ids = await resolveAll(new RefResolver(tx), 'catalogProduct', body.catalogProductIds, 'catalogProductIds');
+        await tx.faqCatalogProductLink.deleteMany({ where: { faqId: faq.id } });
+        await tx.faqCatalogProductLink.createMany({
+          data: ids.map((catalogProductId) => ({ faqId: faq.id, catalogProductId, createdById: user.userId })),
+        });
+      },
+    );
+    return this.respond(faqs, row, res);
   }
 }
 

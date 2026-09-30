@@ -143,6 +143,15 @@ export interface SettingValues {
   'design.extra_revision_fee': { minimumAmount: string; pctOfDesignFee: string };
   /** Not seeded: no slip passes automatically until set (D-061). */
   'payments.slip_receiver_accounts': { accountType: string; accountNumber: string; accountNameTH?: string }[];
+  /** D-221 Packio's support contacts on the storefront; not seeded (Packio's own accounts, D-005). */
+  'storefront.support_channels': {
+    lineOaId?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    hours?: string | null;
+  };
+  /** D-221 first-response target of a contact-form / hand-off conversation, in business days. */
+  'support.first_response_business_days': number;
 }
 
 export type SettingKey = keyof SettingValues;

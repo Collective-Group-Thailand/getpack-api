@@ -302,6 +302,7 @@ model User {
   articlesCreated                Article[]                @relation("ArticleCreatedBy")
   articlesUpdated                Article[]                @relation("ArticleUpdatedBy")
   articleCategoryLinksCreated    ArticleCategoryLink[]    @relation("ArticleCategoryLinkCreatedBy")
+  faqCatalogProductLinksCreated  FaqCatalogProductLink[]  @relation("FaqCatalogProductLinkCreatedBy")
   faqCategoriesCreated           FaqCategory[]            @relation("FaqCategoryCreatedBy")
   faqCategoriesUpdated           FaqCategory[]            @relation("FaqCategoryUpdatedBy")
   faqsCreated                    Faq[]                    @relation("FaqCreatedBy")

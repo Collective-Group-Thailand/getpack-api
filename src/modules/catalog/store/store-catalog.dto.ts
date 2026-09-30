@@ -215,6 +215,32 @@ export class StoreProductListQuery extends PageQuery {
   @IsOptional()
   @Matches(SNAKE_CODE)
   productType?: string;
+
+  @ApiPropertyOptional({
+    example: 'boxes',
+    description: 'Product category code; includes its sub-categories (D-228)',
+  })
+  @IsOptional()
+  @Matches(SNAKE_CODE)
+  category?: string;
+}
+
+/** A product category a customer can browse (it or a sub-category holds an active product type). */
+export class StoreProductCategoryDto {
+  @ApiProperty({ example: 'folding_carton' })
+  code!: string;
+
+  @ApiProperty({ example: 'กล่องกระดาษแข็ง' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Folding cartons' })
+  nameEn!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'boxes', description: 'Parent category code' })
+  parentCode!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 10 })
+  sort!: number;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -291,6 +317,14 @@ export class StoreStockProductListQuery extends PageQuery {
   @IsOptional()
   @Matches(SNAKE_CODE)
   productType?: string;
+
+  @ApiPropertyOptional({
+    example: 'boxes',
+    description: 'Product category code; includes its sub-categories (D-228)',
+  })
+  @IsOptional()
+  @Matches(SNAKE_CODE)
+  category?: string;
 
   @ApiPropertyOptional({
     example: 'colour:clear,shape:round',
@@ -555,13 +589,17 @@ export class StoreSearchQuery {
 
 export class StoreSearchHitDto {
   @ApiProperty({
-    enum: ['catalog_product', 'stock_product', 'showcase_product', 'article'],
+    enum: ['catalog_product', 'stock_product', 'showcase_product', 'article', 'faq'],
     enumName: 'StoreSearchHitKind',
     example: 'catalog_product',
+    description: 'Clients must tolerate new kinds (additive enum)',
   })
   kind!: string;
 
-  @ApiProperty({ example: 'mailer-box', description: 'Slug (or SKU for stock products) to open' })
+  @ApiProperty({
+    example: 'mailer-box',
+    description: 'Slug to open; SKU for stock products; the FAQ id (uuid) for `faq`',
+  })
   key!: string;
 
   @ApiProperty({ example: 'กล่องไปรษณีย์' })
@@ -583,4 +621,43 @@ export class StoreSearchResultDto {
 
   @ApiProperty({ type: [StoreSearchHitDto] })
   hits!: StoreSearchHitDto[];
+}
+
+// ------------------------------------------------------------------------------------------------
+// Sitemap, support channels
+// ------------------------------------------------------------------------------------------------
+
+export const SITEMAP_KINDS = ['category', 'catalog_product', 'stock_product', 'article'] as const;
+
+/**
+ * One indexable storefront page. The API names the page; the storefront owns its URL rules (it
+ * builds the path and the locale alternates from `kind` + `key`).
+ */
+export class StoreSitemapEntryDto {
+  @ApiProperty({ enum: SITEMAP_KINDS, enumName: 'StoreSitemapKind', example: 'catalog_product' })
+  kind!: (typeof SITEMAP_KINDS)[number];
+
+  @ApiProperty({
+    example: 'tuck-end-box',
+    description: 'Category code, catalogue product slug, stock product SKU or article slug',
+  })
+  key!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-09-25T09:00:00+07:00' })
+  lastModified!: string;
+}
+
+/** Packio's own support contacts (D-005), from the setting `storefront.support_channels` (D-221). */
+export class StoreSupportChannelsDto {
+  @ApiProperty({ type: String, nullable: true, example: '@packio-test', description: 'LINE Official Account id' })
+  lineOaId!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '0800000000' })
+  phone!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'support@example.com' })
+  email!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'จันทร์–ศุกร์ 09:00–18:00' })
+  hours!: string | null;
 }

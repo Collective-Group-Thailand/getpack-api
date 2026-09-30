@@ -726,6 +726,38 @@ export const SETTINGS: readonly SettingSeed[] = [
     description: 'D-160 minimum factories per breakdown in anonymised exports and the partner prospectus',
     decisions: ['D-160', 'D-044'],
   },
+
+  // --- Support (U-B0.1, D-221): owned by the CS Lead.
+  {
+    key: 'storefront.support_channels',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        lineOaId: { type: ['string', 'null'], maxLength: 100 },
+        phone: { type: ['string', 'null'], maxLength: 40 },
+        email: { type: ['string', 'null'], maxLength: 254 },
+        hours: { type: ['string', 'null'], maxLength: 200 },
+      },
+    },
+    description:
+      'D-221 Packio support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); Packio’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it',
+    decisions: ['D-221', 'D-005'],
+    ownerRole: 'cs_lead',
+  },
+  {
+    key: 'support.first_response_business_days',
+    valueType: 'integer',
+    value: 1,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-221 first-response target of a contact-form or guided-help conversation, in business days (business hours D-175, calendar D-161)',
+    decisions: ['D-221', 'D-175'],
+    ownerRole: 'cs_lead',
+  },
 ];
 
 /** Entity-scoped legal data (D-092) — values come from SEED_ENTITY_* env vars, never from code. */

@@ -22052,6 +22052,17 @@
             "example": "ขึ้นอยู่กับประเภทสินค้า ดูได้ในหน้าสินค้าแต่ละรายการ",
             "type": "string"
           },
+          "catalogProductIds": {
+            "description": "Catalogue products whose page shows this FAQ (set through `PUT …/catalog-products`)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000c004"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "categoryId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
             "format": "uuid",
@@ -22103,6 +22114,7 @@
           "answerEn",
           "sort",
           "status",
+          "catalogProductIds",
           "updatedAt"
         ],
         "type": "object"
@@ -36800,6 +36812,25 @@
         ],
         "type": "object"
       },
+      "ReplaceFaqCatalogProductsDto": {
+        "properties": {
+          "catalogProductIds": {
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000c004"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "type": "array"
+          }
+        },
+        "required": [
+          "catalogProductIds"
+        ],
+        "type": "object"
+      },
       "ReplaceFluteTypesDto": {
         "properties": {
           "fluteTypeIds": {
@@ -44799,6 +44830,42 @@
         ],
         "type": "object"
       },
+      "StoreProductCategoryDto": {
+        "properties": {
+          "code": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Folding cartons",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องกระดาษแข็ง",
+            "type": "string"
+          },
+          "parentCode": {
+            "description": "Parent category code",
+            "example": "boxes",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort": {
+            "example": 10,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "parentCode",
+          "sort"
+        ],
+        "type": "object"
+      },
       "StoreProductDetailDto": {
         "properties": {
           "descriptionEn": {
@@ -44958,7 +45025,7 @@
             ]
           },
           "key": {
-            "description": "Slug (or SKU for stock products) to open",
+            "description": "Slug to open; SKU for stock products; the FAQ id (uuid) for `faq`",
             "example": "mailer-box",
             "type": "string"
           },
@@ -44968,6 +45035,7 @@
                 "$ref": "#/components/schemas/StoreSearchHitKind"
               }
             ],
+            "description": "Clients must tolerate new kinds (additive enum)",
             "example": "catalog_product"
           },
           "score": {
@@ -44998,11 +45066,13 @@
         "type": "object"
       },
       "StoreSearchHitKind": {
+        "description": "Clients must tolerate new kinds (additive enum)",
         "enum": [
           "catalog_product",
           "stock_product",
           "showcase_product",
-          "article"
+          "article",
+          "faq"
         ],
         "type": "string"
       },
@@ -45361,6 +45431,43 @@
         ],
         "type": "object"
       },
+      "StoreSitemapEntryDto": {
+        "properties": {
+          "key": {
+            "description": "Category code, catalogue product slug, stock product SKU or article slug",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreSitemapKind"
+              }
+            ],
+            "example": "catalog_product"
+          },
+          "lastModified": {
+            "example": "2026-09-25T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "lastModified"
+        ],
+        "type": "object"
+      },
+      "StoreSitemapKind": {
+        "enum": [
+          "category",
+          "catalog_product",
+          "stock_product",
+          "article"
+        ],
+        "type": "string"
+      },
       "StoreSizeRulesDto": {
         "properties": {
           "lengthMustExceedHeight": {
@@ -45611,6 +45718,46 @@
           "inStock",
           "attributes",
           "imageUrls"
+        ],
+        "type": "object"
+      },
+      "StoreSupportChannelsDto": {
+        "properties": {
+          "email": {
+            "example": "support@example.com",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hours": {
+            "example": "จันทร์–ศุกร์ 09:00–18:00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineOaId": {
+            "description": "LINE Official Account id",
+            "example": "@packio-test",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "0800000000",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "lineOaId",
+          "phone",
+          "email",
+          "hours"
         ],
         "type": "object"
       },
@@ -112018,7 +112165,7 @@
     },
     "/v1/admin/cms/faqs": {
       "get": {
-        "description": "Filters, sort and `q` (free text over questionTh, questionEn, answerTh).\n\nImplements: D-005.",
+        "description": "Filters, sort and `q` (free text over questionTh, questionEn, answerTh). Linked catalogue products are set through `PUT …/catalog-products`.\n\nImplements: D-005.",
         "operationId": "admin.cmsFaqs.list",
         "parameters": [
           {
@@ -112102,6 +112249,9 @@
                     {
                       "answerEn": "It depends on the product type; see each product page.",
                       "answerTh": "ขึ้นอยู่กับประเภทสินค้า ดูได้ในหน้าสินค้าแต่ละรายการ",
+                      "catalogProductIds": [
+                        "0192f3a0-7c1e-7d2a-9b1f-00000000c004"
+                      ],
                       "categoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
                       "questionEn": "What is the minimum order?",
@@ -112271,7 +112421,7 @@
         ]
       },
       "post": {
-        "description": "Audited (config) and published as `catalog.faq.created`.\n\nImplements: D-005.",
+        "description": "Audited (config) and published as `catalog.faq.created`. Linked catalogue products are set through `PUT …/catalog-products`.\n\nImplements: D-005.",
         "operationId": "admin.cmsFaqs.create",
         "parameters": [
           {
@@ -112304,6 +112454,9 @@
                 "example": {
                   "answerEn": "It depends on the product type; see each product page.",
                   "answerTh": "ขึ้นอยู่กับประเภทสินค้า ดูได้ในหน้าสินค้าแต่ละรายการ",
+                  "catalogProductIds": [
+                    "0192f3a0-7c1e-7d2a-9b1f-00000000c004"
+                  ],
                   "categoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
                   "questionEn": "What is the minimum order?",
@@ -112721,7 +112874,7 @@
         ]
       },
       "get": {
-        "description": "Returns the FAQ and its ETag for a later update.\n\nImplements: D-005.",
+        "description": "Returns the FAQ and its ETag for a later update. Linked catalogue products are set through `PUT …/catalog-products`.\n\nImplements: D-005.",
         "operationId": "admin.cmsFaqs.get",
         "parameters": [
           {
@@ -112745,6 +112898,9 @@
                 "example": {
                   "answerEn": "It depends on the product type; see each product page.",
                   "answerTh": "ขึ้นอยู่กับประเภทสินค้า ดูได้ในหน้าสินค้าแต่ละรายการ",
+                  "catalogProductIds": [
+                    "0192f3a0-7c1e-7d2a-9b1f-00000000c004"
+                  ],
                   "categoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
                   "questionEn": "What is the minimum order?",
@@ -112915,7 +113071,7 @@
         ]
       },
       "patch": {
-        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.faq.updated`.\n\nImplements: D-005.",
+        "description": "Partial update guarded by `If-Match`. Rows are archived through `status`, never deleted (schema-design §1.6). Audited and published as `catalog.faq.updated`. Linked catalogue products are set through `PUT …/catalog-products`.\n\nImplements: D-005.",
         "operationId": "admin.cmsFaqs.update",
         "parameters": [
           {
@@ -112959,6 +113115,9 @@
                 "example": {
                   "answerEn": "It depends on the product type; see each product page.",
                   "answerTh": "ขึ้นอยู่กับประเภทสินค้า ดูได้ในหน้าสินค้าแต่ละรายการ",
+                  "catalogProductIds": [
+                    "0192f3a0-7c1e-7d2a-9b1f-00000000c004"
+                  ],
                   "categoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
                   "questionEn": "What is the minimum order?",
@@ -113204,6 +113363,288 @@
           }
         ],
         "summary": "Update a FAQ",
+        "tags": [
+          "admin.cmsFaqs"
+        ],
+        "x-required-permissions": [
+          "cms.manage"
+        ]
+      }
+    },
+    "/v1/admin/cms/faqs/{id}/catalog-products": {
+      "put": {
+        "description": "The whole list is replaced; the FAQ then shows on those product pages (`store.catalog.listProductFaqs`). Guarded by the FAQ ETag; audited.\n\nImplements: D-005.",
+        "operationId": "admin.cmsFaqs.replaceCatalogProducts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "catalogProductIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000c004"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceFaqCatalogProductsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "answerEn": "It depends on the product type; see each product page.",
+                  "answerTh": "ขึ้นอยู่กับประเภทสินค้า ดูได้ในหน้าสินค้าแต่ละรายการ",
+                  "catalogProductIds": [
+                    "0192f3a0-7c1e-7d2a-9b1f-00000000c004"
+                  ],
+                  "categoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                  "questionEn": "What is the minimum order?",
+                  "questionTh": "สั่งขั้นต่ำกี่ชิ้น",
+                  "sort": 10,
+                  "status": "published",
+                  "updatedAt": "2026-09-25T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FaqDto"
+                }
+              }
+            },
+            "description": "The FAQ",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Replace the catalogue products of a FAQ",
         "tags": [
           "admin.cmsFaqs"
         ],
@@ -250063,6 +250504,130 @@
         ]
       }
     },
+    "/v1/store/catalog/product-categories": {
+      "get": {
+        "description": "Active categories that hold at least one active product type, directly or through a sub-category, in admin sort order; `parentCode` builds the menu tree. Filter products by `category` (includes sub-categories, D-228).\n\nImplements: D-100, D-228.",
+        "operationId": "store.catalog.listProductCategories",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "code": "boxes",
+                    "nameEn": "Boxes",
+                    "nameTh": "กล่อง",
+                    "parentCode": null,
+                    "sort": 10
+                  },
+                  {
+                    "code": "folding_carton",
+                    "nameEn": "Folding cartons",
+                    "nameTh": "กล่องกระดาษแข็ง",
+                    "parentCode": "boxes",
+                    "sort": 20
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreProductCategoryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Categories",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the product categories to browse",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/catalog/product-types": {
       "get": {
         "description": "Active types with their quote mode (D-100). A configuration may still route to RFQ when no factory price path covers it (D-043).\n\nImplements: D-100, D-043.",
@@ -250182,7 +250747,7 @@
     },
     "/v1/store/catalog/products": {
       "get": {
-        "description": "Active products of active types; filter by type code, `q` searches the names. No prices here.\n\nImplements: D-100, D-050.",
+        "description": "Active products of active types; filter by type code or product category (with its sub-categories, D-228), `q` searches the names. No prices here.\n\nImplements: D-100, D-050.",
         "operationId": "store.catalog.listProducts",
         "parameters": [
           {
@@ -250242,6 +250807,16 @@
             "required": false,
             "schema": {
               "example": "folding_carton",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Product category code; includes its sub-categories (D-228)",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "example": "boxes",
               "type": "string"
             }
           },
@@ -250785,6 +251360,151 @@
         ]
       }
     },
+    "/v1/store/catalog/products/{slug}/faqs": {
+      "get": {
+        "description": "Published FAQs that the CMS links to this product (`PUT /v1/admin/cms/faqs/{id}/catalog-products`), in admin sort order; empty when none is linked.\n\nImplements: D-005.",
+        "operationId": "store.catalog.listProductFaqs",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "tuck-end-box",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "answerEn": "It depends on the product type.",
+                    "answerTh": "ขึ้นอยู่กับประเภทสินค้า",
+                    "questionEn": "What is the minimum order?",
+                    "questionTh": "สั่งขั้นต่ำกี่ชิ้น"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreFaqDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "FAQs",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the FAQs of a catalogue product",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/catalog/products/{slug}/semi-designs": {
       "get": {
         "description": "Active semi-custom designs with their palette and the sizes that have a template.\n\nImplements: D-005.",
@@ -251095,7 +251815,7 @@
     },
     "/v1/store/catalog/search": {
       "get": {
-        "description": "Trigram search (`pg_trgm`) over catalogue products, stock products, showcase products and articles, ranked by similarity (top 20).\n\nImplements: D-100, D-102.",
+        "description": "Trigram search (`pg_trgm`) over catalogue products, stock products, showcase products, articles and published FAQ questions (`faq`, key = FAQ id), ranked by similarity (top 20).\n\nImplements: D-100, D-102.",
         "operationId": "store.catalog.search",
         "parameters": [
           {
@@ -251217,7 +251937,7 @@
           }
         },
         "security": [],
-        "summary": "Search products and articles",
+        "summary": "Search products, articles and FAQs",
         "tags": [
           "store.catalog"
         ]
@@ -251723,7 +252443,7 @@
     },
     "/v1/store/catalog/stock-products": {
       "get": {
-        "description": "Active stock products with attribute filters (`attributes=colour:clear,shape:round`) and `q`. `inStock` aggregates the supplying factories without naming them (D-050); prices come from quotes.\n\nImplements: D-100, D-050.",
+        "description": "Active stock products with attribute filters (`attributes=colour:clear,shape:round`), the product category (with its sub-categories, D-228) and `q`. `inStock` aggregates the supplying factories without naming them (D-050); prices come from quotes.\n\nImplements: D-100, D-050, D-228.",
         "operationId": "store.catalog.listStockProducts",
         "parameters": [
           {
@@ -251783,6 +252503,16 @@
             "required": false,
             "schema": {
               "example": "standard_product",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Product category code; includes its sub-categories (D-228)",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "example": "boxes",
               "type": "string"
             }
           },
@@ -278850,6 +279580,136 @@
         ]
       }
     },
+    "/v1/store/sitemap": {
+      "get": {
+        "description": "Browsable product categories, active catalogue and stock products and published articles, with their last change; pages whose SEO meta says `noindex` are left out. Nothing from the legacy site (D-005). The storefront builds each URL and its locale alternates from `kind` + `key`.\n\nImplements: D-005.",
+        "operationId": "store.catalog.getSitemap",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "key": "folding_carton",
+                    "kind": "category",
+                    "lastModified": "2026-09-25T09:00:00+07:00"
+                  },
+                  {
+                    "key": "tuck-end-box",
+                    "kind": "catalog_product",
+                    "lastModified": "2026-09-26T10:30:00+07:00"
+                  },
+                  {
+                    "key": "PKO-BTL-0250",
+                    "kind": "stock_product",
+                    "lastModified": "2026-09-26T10:30:00+07:00"
+                  },
+                  {
+                    "key": "how-to-choose-a-mailer-box",
+                    "kind": "article",
+                    "lastModified": "2026-09-25T09:00:00+07:00"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StoreSitemapEntryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Sitemap entries",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "List the indexable storefront pages",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/store-credit": {
       "get": {
         "description": "Credits from credit notes (shortages within tolerance D-021, cancellations, claims) and their use or refund.\n\nImplements: D-021, D-033.",
@@ -278990,6 +279850,117 @@
         "summary": "My credit balance",
         "tags": [
           "store.documents"
+        ]
+      }
+    },
+    "/v1/store/support-channels": {
+      "get": {
+        "description": "Packio’s own LINE Official Account, phone, e-mail and opening hours (D-005), from the setting `storefront.support_channels` kept by the CS Lead (D-221). A field is null until it is set.\n\nImplements: D-221, D-005.",
+        "operationId": "store.support.getChannels",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "email": "support@example.com",
+                  "hours": "จันทร์–ศุกร์ 09:00–18:00",
+                  "lineOaId": "@packio-test",
+                  "phone": "0800000000"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSupportChannelsDto"
+                }
+              }
+            },
+            "description": "Support channels",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the ways to reach Packio CS",
+        "tags": [
+          "store.support"
         ]
       }
     },
@@ -282769,6 +283740,10 @@
     {
       "description": "Saved quotations: 15-day price lock, share links, PDF in the name of the issuing entity, re-pricing after expiry (D-051).",
       "name": "store.savedQuotes"
+    },
+    {
+      "description": "How to reach Packio CS: support channels and the contact form (D-221, D-005).",
+      "name": "store.support"
     },
     {
       "description": "Buyer data for full-form tax invoices: tax id, head office / branch, withholding flag (D-092, D-174).",
