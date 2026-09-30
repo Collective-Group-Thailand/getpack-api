@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsIn,
   IsInt,
   IsObject,
@@ -11,6 +13,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 /** Proofs, annotations and templates (D-070, D-073). */
@@ -82,26 +85,40 @@ export class AnnotateProofDto {
   @IsUUID()
   parentId?: string;
 
-  @ApiProperty({ type: 'integer', minimum: 1, maximum: 999, example: 1 })
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    maximum: 999,
+    example: 1,
+    description: 'Required for a new annotation; a reply (`parentId`) takes its parent’s',
+  })
+  @ValidateIf((o: AnnotateProofDto) => !o.parentId || o.page !== undefined)
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(999)
-  page!: number;
+  page?: number;
 
-  @ApiProperty({ enum: ANNOTATION_KINDS, enumName: 'AnnotationKind', example: 'pin' })
+  @ApiPropertyOptional({
+    enum: ANNOTATION_KINDS,
+    enumName: 'AnnotationKind',
+    example: 'pin',
+    description: 'Required for a new annotation; a reply takes its parent’s',
+  })
+  @ValidateIf((o: AnnotateProofDto) => !o.parentId || o.kind !== undefined)
   @IsIn(ANNOTATION_KINDS)
-  kind!: (typeof ANNOTATION_KINDS)[number];
+  kind?: (typeof ANNOTATION_KINDS)[number];
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: 'object',
     additionalProperties: true,
     example: { x: 0.42, y: 0.31 },
     description:
-      'Page-relative (0–1) coordinates: pin `{x,y}`, rect `{x,y,w,h}`, draw `{points:[[x,y],…]}` (≤ 500 points)',
+      'Page-relative (0–1) coordinates: pin `{x,y}`, rect `{x,y,w,h}`, draw `{points:[[x,y],…]}` (≤ 500 points). Required for a new annotation; a reply takes its parent’s',
   })
+  @ValidateIf((o: AnnotateProofDto) => !o.parentId || o.geometry !== undefined)
   @IsObject()
-  geometry!: Record<string, unknown>;
+  geometry?: Record<string, unknown>;
 
   @ApiProperty({ example: 'ขอโลโก้ใหญ่ขึ้นอีกนิด', minLength: 1, maxLength: 2000 })
   @IsString()
@@ -283,6 +300,21 @@ export class ProofDto {
     type: String,
     nullable: true,
     example: null,
+    description: 'Who decided: the customer’s name, or “Packio” for a staff decision on their behalf',
+  })
+  decidedByName!: string | null;
+
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'Approval checklist items confirmed (`artwork.approval_checklist`)',
+  })
+  decisionChecklist!: string[];
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
     description: 'CS approvals on behalf: the reason given',
   })
   onBehalfReason!: string | null;
@@ -354,6 +386,8 @@ export const PROOF_EXAMPLE: ProofDto = {
   decidedAt: null,
   decisionChannel: null,
   decisionComment: null,
+  decidedByName: null,
+  decisionChecklist: [],
   onBehalfReason: null,
   approvedFileId: null,
   approvedFileSha256: null,
@@ -384,3 +418,23 @@ export const DELIVERY_EXAMPLE: DielineDeliveryDto = {
   note: 'แบบแปลนกล่องขนาด 100×100×50 มม.',
   sentAt: '2026-09-27T09:00:00+07:00',
 };
+
+/** Optional approval evidence (U-B0.1): the checklist items confirmed and a note. */
+export class ApproveProofDto {
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['spelling_checked', 'colours_checked'],
+    description: 'Keys of `artwork.approval_checklist`; every item must be confirmed once the checklist is set',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  checklist?: string[];
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: null, maxLength: 2000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  note?: string | null;
+}

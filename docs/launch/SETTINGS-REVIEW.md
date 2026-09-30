@@ -5,13 +5,14 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**69 settings** — 38 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 10 defined without a value (not set until their owner sets them).
+**70 settings** — 38 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 11 defined without a value (not set until their owner sets them).
 
 ## Settings
 
 | Key | Seeded value | Status | Owner | Decisions | What it controls |
 |---|---|---|---|---|---|
 | `analytics.prospectus_min_group_size` | `3` | confirmed | superadmin | D-160, D-044 | D-160 minimum factories per breakdown in anonymised exports and the partner prospectus |
+| `artwork.approval_checklist` | `— (not set)` | not set | superadmin | D-073 | D-073 items the customer confirms when approving a proof (spelling, colours, size…), kept as approval evidence; not seeded — no checklist until set |
 | `artwork.preflight_rules` | `{"severities":{"size_mismatch":"block","missing_bleed":"block","low_resolution":"warn","rgb_colour":"warn","fonts_not_embedded":"info","safe_zone":"info","thin_lines":"info","overprint":"info","ink_coverage":"info"},"bleedMm":"3","sizeToleranceMm":"1","minEffectivePpi":300,"safeZoneMm":"3","minLineWidthPt":"0.25","maxInkCoveragePct":300}` | proposed | superadmin | D-070 | D-070 preflight: block on size mismatch or missing bleed, warn on low resolution or RGB; other checks report only; technical thresholds proposed (ADR-0009) |
 | `artwork.prepress_sla_business_hours` | `— (not set)` | not set | superadmin | D-070 | D-070 prepress queue: business hours to answer a submission; no decision gives it, no due time until set |
 | `audit.business_hours` | `{"start":"08:00","end":"18:00","weekdays":[1,2,3,4,5]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §8 exception report: manual journals posted outside these hours (Asia/Bangkok, ISO weekdays) are listed for the auditor (proposed) |

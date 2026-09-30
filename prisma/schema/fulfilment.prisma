@@ -258,6 +258,8 @@ model Proof {
   decisionChannel    DecisionChannel? @map("decision_channel")
   onBehalfReason     String?          @map("on_behalf_reason")
   decisionComment    String?          @map("decision_comment")
+  /// Checklist items the customer confirmed when approving (`artwork.approval_checklist`, U-B0.1): approval evidence.
+  decisionChecklist  String[]         @default([]) @map("decision_checklist")
   decisionIp         String?          @map("decision_ip") @db.Inet
   decisionUserAgent  String?          @map("decision_user_agent")
   /// The locked copy of the approved file (never the working file) and its SHA-256.
@@ -395,27 +397,29 @@ model DesignServiceRequest {
 }
 
 model DesignRound {
-  id            BigInt            @id(map: "pk_design_rounds") @default(autoincrement())
-  publicId      String            @unique(map: "ux_design_rounds__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  requestId     BigInt            @map("request_id")
-  roundNo       Int               @map("round_no") @db.SmallInt
-  kind          DesignRoundKind
-  chargeable    Boolean           @default(false)
+  id               BigInt            @id(map: "pk_design_rounds") @default(autoincrement())
+  publicId         String            @unique(map: "ux_design_rounds__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  requestId        BigInt            @map("request_id")
+  roundNo          Int               @map("round_no") @db.SmallInt
+  kind             DesignRoundKind
+  chargeable       Boolean           @default(false)
   /// max(minimum, % × design fee) snapshot (D-071); net of VAT.
-  feeAmount     Decimal?          @map("fee_amount") @db.Decimal(14, 2)
-  orderLineId   BigInt?           @map("order_line_id")
-  instalmentId  BigInt?           @map("instalment_id")
-  status        DesignRoundStatus
-  changeRequest String?           @map("change_request")
+  feeAmount        Decimal?          @map("fee_amount") @db.Decimal(14, 2)
+  orderLineId      BigInt?           @map("order_line_id")
+  instalmentId     BigInt?           @map("instalment_id")
+  status           DesignRoundStatus
+  changeRequest    String?           @map("change_request")
+  /// Reference files the customer sent with a paid revision request (public ids; U-B0.1).
+  referenceFileIds String[]          @default([]) @map("reference_file_ids")
   /// The artwork the designer delivered for this round.
-  submissionId  BigInt?           @map("submission_id")
-  requestedAt   DateTime          @default(now()) @map("requested_at") @db.Timestamptz(6)
-  startedAt     DateTime?         @map("started_at") @db.Timestamptz(6)
-  deliveredAt   DateTime?         @map("delivered_at") @db.Timestamptz(6)
-  decidedAt     DateTime?         @map("decided_at") @db.Timestamptz(6)
-  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion    Int               @default(1) @map("row_version")
+  submissionId     BigInt?           @map("submission_id")
+  requestedAt      DateTime          @default(now()) @map("requested_at") @db.Timestamptz(6)
+  startedAt        DateTime?         @map("started_at") @db.Timestamptz(6)
+  deliveredAt      DateTime?         @map("delivered_at") @db.Timestamptz(6)
+  decidedAt        DateTime?         @map("decided_at") @db.Timestamptz(6)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int               @default(1) @map("row_version")
 
   request    DesignServiceRequest @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_rounds__request_id")
   orderLine  OrderLine?           @relation("DesignRoundOrderLine", fields: [orderLineId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_rounds__order_line_id")

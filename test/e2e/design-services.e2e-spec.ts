@@ -208,13 +208,17 @@ describe('design services and mockups (e2e, B4.1)', () => {
       .set('Idempotency-Key', randomUUID())
       .expect(409);
     const before = await as(ctx, token).get(`/v1/store/order-groups/${group.id}`).expect(200);
+    const reference = await uploadFile(ctx, token, 'gold-sample', 'evidence');
     const confirmed = await as(ctx, token)
       .post(`/v1/store/orders/${orderId}/design-service/actions/confirm-extra-round`, {
         expectedFeeGross: feeGross,
         changeRequest: 'เปลี่ยนสีตัวอักษร',
+        referenceFileIds: [reference],
       })
       .set('Idempotency-Key', randomUUID())
       .expect(200);
+    // U-B0.1: reference files travel with the paid revision.
+    expect((confirmed.body.rounds as { referenceFileIds: string[] }[]).at(-1)!.referenceFileIds).toEqual([reference]);
     const extra = (
       confirmed.body.rounds as {
         roundNo: number;

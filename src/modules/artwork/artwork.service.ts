@@ -13,10 +13,16 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
+import { FILE_PURPOSES } from '@platform/files/file-purposes';
 import { FilesService } from '@platform/files/files.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
-import { type PrepressQueueItemDto } from './artwork.dto';
+import {
+  type ArtworkRulesDto,
+  MAX_ARTWORK_FILES,
+  MAX_ARTWORK_LINKS,
+  type PrepressQueueItemDto,
+} from './artwork.dto';
 import { SUBMISSION_INCLUDE, type SubmissionRow } from './artwork-views';
 
 /** Artwork may change until it is approved and production starts (D-073). */
@@ -81,6 +87,51 @@ export class ArtworkService implements OnModuleInit {
   }
 
   // --- reads ----------------------------------------------------------------------------------------
+
+  /** The rules of the upload page for one of my orders (U-B0.1): file limits, D-070 checks, checklist, dieline. */
+  async rules(orderPublicId: string, customerUserId: bigint): Promise<ArtworkRulesDto> {
+    const order = await this.orders.order({ publicId: orderPublicId }, customerUserId);
+    const now = new Date();
+    const rules = (await this.settings.at('artwork.preflight_rules', { at: now })).value;
+    let checklist: ArtworkRulesDto['approvalChecklist'] = [];
+    try {
+      checklist = (await this.settings.at('artwork.approval_checklist', { at: now })).value ?? [];
+    } catch (error) {
+      if (!(error instanceof SettingNotFoundError)) throw error;
+    }
+    const cfg = (order.quote.input as { configuration?: { patternId?: string; w?: number; l?: number; d?: number } })
+      .configuration;
+    const pattern = cfg?.patternId
+      ? await this.prisma.pattern.findUnique({
+          where: { publicId: cfg.patternId },
+          select: { code: true, dielineKey: true },
+        })
+      : null;
+    const purpose = FILE_PURPOSES.artwork;
+    return {
+      purpose: 'artwork',
+      accept: [...purpose.mimeTypes],
+      maxBytes: purpose.maxBytes,
+      maxFiles: MAX_ARTWORK_FILES,
+      maxLinks: MAX_ARTWORK_LINKS,
+      bleedMm: rules.bleedMm,
+      safeZoneMm: rules.safeZoneMm,
+      minEffectivePpi: rules.minEffectivePpi,
+      colourMode: 'cmyk',
+      checks: Object.entries(rules.severities).map(([check, severity]) => ({ check, severity })),
+      approvalChecklist: checklist,
+      dieline:
+        pattern && cfg
+          ? {
+              patternCode: pattern.code,
+              dielineKey: pattern.dielineKey,
+              widthMm: Number(cfg.w),
+              lengthMm: Number(cfg.l),
+              depthMm: Number(cfg.d),
+            }
+          : null,
+    };
+  }
 
   async list(orderPublicId: string, customerUserId?: bigint): Promise<SubmissionRow[]> {
     const order = await this.orders.order({ publicId: orderPublicId }, customerUserId);

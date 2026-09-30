@@ -7138,7 +7138,7 @@
           },
           "geometry": {
             "additionalProperties": true,
-            "description": "Page-relative (0–1) coordinates: pin `{x,y}`, rect `{x,y,w,h}`, draw `{points:[[x,y],…]}` (≤ 500 points)",
+            "description": "Page-relative (0–1) coordinates: pin `{x,y}`, rect `{x,y,w,h}`, draw `{points:[[x,y],…]}` (≤ 500 points). Required for a new annotation; a reply takes its parent’s",
             "example": {
               "x": 0.42,
               "y": 0.31
@@ -7151,9 +7151,11 @@
                 "$ref": "#/components/schemas/AnnotationKind"
               }
             ],
+            "description": "Required for a new annotation; a reply takes its parent’s",
             "example": "pin"
           },
           "page": {
+            "description": "Required for a new annotation; a reply (`parentId`) takes its parent’s",
             "example": 1,
             "maximum": 999,
             "minimum": 1,
@@ -7170,9 +7172,6 @@
           }
         },
         "required": [
-          "page",
-          "kind",
-          "geometry",
           "comment"
         ],
         "type": "object"
@@ -7724,6 +7723,31 @@
         },
         "type": "object"
       },
+      "ApproveProofDto": {
+        "properties": {
+          "checklist": {
+            "description": "Keys of `artwork.approval_checklist`; every item must be confirmed once the checklist is set",
+            "example": [
+              "spelling_checked",
+              "colours_checked"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "note": {
+            "example": null,
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "ArItemStatus": {
         "enum": [
           "open",
@@ -7908,6 +7932,85 @@
         ],
         "type": "object"
       },
+      "ArtworkCheckRuleDto": {
+        "properties": {
+          "check": {
+            "example": "missing_bleed",
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreflightSeverity"
+              }
+            ],
+            "example": "block"
+          }
+        },
+        "required": [
+          "check",
+          "severity"
+        ],
+        "type": "object"
+      },
+      "ArtworkChecklistItemDto": {
+        "properties": {
+          "key": {
+            "example": "spelling_checked",
+            "type": "string"
+          },
+          "labelEn": {
+            "example": "Spelling checked",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "ตรวจคำสะกดแล้ว",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "labelTh",
+          "labelEn"
+        ],
+        "type": "object"
+      },
+      "ArtworkDielineDto": {
+        "properties": {
+          "depthMm": {
+            "example": 150,
+            "type": "number"
+          },
+          "dielineKey": {
+            "description": "Dieline drawing key (designer / drawing service)",
+            "example": "rte",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lengthMm": {
+            "example": 60,
+            "type": "number"
+          },
+          "patternCode": {
+            "example": "RTE-01",
+            "type": "string"
+          },
+          "widthMm": {
+            "example": 60,
+            "type": "number"
+          }
+        },
+        "required": [
+          "patternCode",
+          "dielineKey",
+          "widthMm",
+          "lengthMm",
+          "depthMm"
+        ],
+        "type": "object"
+      },
       "ArtworkFileDto": {
         "properties": {
           "fileId": {
@@ -8003,6 +8106,97 @@
           "reference"
         ],
         "type": "string"
+      },
+      "ArtworkRulesDto": {
+        "properties": {
+          "accept": {
+            "example": [
+              "application/pdf",
+              "image/png"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "approvalChecklist": {
+            "description": "Items confirmed when approving the proof (`artwork.approval_checklist`); empty until set",
+            "items": {
+              "$ref": "#/components/schemas/ArtworkChecklistItemDto"
+            },
+            "type": "array"
+          },
+          "bleedMm": {
+            "description": "Bleed each side, mm (D-070 blocks without it)",
+            "example": "3",
+            "type": "string"
+          },
+          "checks": {
+            "description": "What each preflight check does: block, warn or inform",
+            "items": {
+              "$ref": "#/components/schemas/ArtworkCheckRuleDto"
+            },
+            "type": "array"
+          },
+          "colourMode": {
+            "description": "RGB artwork is warned about (D-070)",
+            "example": "cmyk",
+            "type": "string"
+          },
+          "dieline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtworkDielineDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for RFQ orders (no calculator configuration)"
+          },
+          "maxBytes": {
+            "example": 2147483648,
+            "type": "integer"
+          },
+          "maxFiles": {
+            "example": 20,
+            "type": "integer"
+          },
+          "maxLinks": {
+            "example": 5,
+            "type": "integer"
+          },
+          "minEffectivePpi": {
+            "description": "Lowest effective resolution before a warning",
+            "example": 300,
+            "type": "integer"
+          },
+          "purpose": {
+            "description": "File purpose to presign uploads with",
+            "example": "artwork",
+            "type": "string"
+          },
+          "safeZoneMm": {
+            "description": "Keep text this far inside the cut line, mm",
+            "example": "3",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "accept",
+          "maxBytes",
+          "maxFiles",
+          "maxLinks",
+          "bleedMm",
+          "safeZoneMm",
+          "minEffectivePpi",
+          "colourMode",
+          "checks",
+          "approvalChecklist",
+          "dieline"
+        ],
+        "type": "object"
       },
       "ArtworkSource": {
         "enum": [
@@ -13224,6 +13418,16 @@
             "description": "The fee incl. VAT the customer agrees to (from `nextRevision.feeGross`); refused if it changed",
             "example": "535.00",
             "type": "string"
+          },
+          "referenceFileIds": {
+            "description": "My uploaded reference files for this revision (≤ 10)",
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
           }
         },
         "required": [
@@ -20423,6 +20627,14 @@
             ],
             "example": "initial"
           },
+          "referenceFileIds": {
+            "description": "Reference files sent with a paid revision",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "requestedAt": {
             "example": "2026-09-27T10:00:00+07:00",
             "type": "string"
@@ -20465,6 +20677,7 @@
           "feeNet",
           "status",
           "changeRequest",
+          "referenceFileIds",
           "submissionId",
           "instalmentId",
           "requestedAt",
@@ -35599,6 +35812,14 @@
               "null"
             ]
           },
+          "decidedByName": {
+            "description": "Who decided: the customer’s name, or “Packio” for a staff decision on their behalf",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "decisionChannel": {
             "anyOf": [
               {
@@ -35609,6 +35830,14 @@
               }
             ],
             "example": null
+          },
+          "decisionChecklist": {
+            "description": "Approval checklist items confirmed (`artwork.approval_checklist`)",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "decisionComment": {
             "example": null,
@@ -35689,6 +35918,8 @@
           "decidedAt",
           "decisionChannel",
           "decisionComment",
+          "decidedByName",
+          "decisionChecklist",
           "onBehalfReason",
           "approvedFileId",
           "approvedFileSha256",
@@ -48529,7 +48760,6 @@
             "items": {
               "$ref": "#/components/schemas/ArtworkFileInputDto"
             },
-            "maxItems": 20,
             "type": "array"
           },
           "links": {
@@ -48541,7 +48771,6 @@
               "pattern": "^https:\\/\\/\\S{3,500}$",
               "type": "string"
             },
-            "maxItems": 5,
             "type": "array"
           },
           "note": {
@@ -136399,6 +136628,7 @@
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                           "instalmentId": null,
                           "kind": "initial",
+                          "referenceFileIds": [],
                           "requestedAt": "2026-09-27T10:00:00+07:00",
                           "roundNo": 1,
                           "startedAt": "2026-09-27T10:00:00+07:00",
@@ -136622,6 +136852,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                       "instalmentId": null,
                       "kind": "initial",
+                      "referenceFileIds": [],
                       "requestedAt": "2026-09-27T10:00:00+07:00",
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
@@ -136863,6 +137094,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                       "instalmentId": null,
                       "kind": "initial",
+                      "referenceFileIds": [],
                       "requestedAt": "2026-09-27T10:00:00+07:00",
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
@@ -137144,6 +137376,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                       "instalmentId": null,
                       "kind": "initial",
+                      "referenceFileIds": [],
                       "requestedAt": "2026-09-27T10:00:00+07:00",
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
@@ -137428,6 +137661,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                       "instalmentId": null,
                       "kind": "initial",
+                      "referenceFileIds": [],
                       "requestedAt": "2026-09-27T10:00:00+07:00",
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
@@ -137715,6 +137949,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                       "instalmentId": null,
                       "kind": "initial",
+                      "referenceFileIds": [],
                       "requestedAt": "2026-09-27T10:00:00+07:00",
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
@@ -179103,7 +179338,9 @@
                       "previousVersionNo": 1
                     },
                     "decidedAt": null,
+                    "decidedByName": null,
                     "decisionChannel": null,
+                    "decisionChecklist": [],
                     "decisionComment": null,
                     "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -179355,7 +179592,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
+                  "decidedByName": null,
                   "decisionChannel": null,
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -194011,7 +194250,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
+                  "decidedByName": null,
                   "decisionChannel": null,
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -194242,7 +194483,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
+                  "decidedByName": null,
                   "decisionChannel": null,
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -194494,7 +194737,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": "2026-09-27T12:00:00+07:00",
+                  "decidedByName": null,
                   "decisionChannel": "cs_on_behalf",
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -194808,7 +195053,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": "2026-09-27T12:00:00+07:00",
+                  "decidedByName": null,
                   "decisionChannel": "cs_on_behalf",
+                  "decisionChecklist": [],
                   "decisionComment": "สีพื้นหลังเข้มเกินไป ขอโทนอ่อนลง",
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -195109,7 +195356,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
+                  "decidedByName": null,
                   "decisionChannel": null,
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -275918,6 +276167,216 @@
         ]
       }
     },
+    "/v1/store/orders/{orderId}/artwork-rules": {
+      "get": {
+        "description": "What the upload page needs: accepted file types, size and count limits, the D-070 preflight rules (bleed, safe zone, resolution, CMYK; which checks block and which warn), the proof-approval checklist (`artwork.approval_checklist`, empty until set) and the order’s dieline and box size.\n\nImplements: D-070, D-073.",
+        "operationId": "store.artwork.getRules",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accept": [
+                    "application/pdf",
+                    "image/png"
+                  ],
+                  "approvalChecklist": [],
+                  "bleedMm": "3",
+                  "checks": [
+                    {
+                      "check": "missing_bleed",
+                      "severity": "block"
+                    },
+                    {
+                      "check": "rgb_colour",
+                      "severity": "warn"
+                    }
+                  ],
+                  "colourMode": "cmyk",
+                  "dieline": {
+                    "depthMm": 150,
+                    "dielineKey": "rte",
+                    "lengthMm": 60,
+                    "patternCode": "RTE-01",
+                    "widthMm": 60
+                  },
+                  "maxBytes": 2147483648,
+                  "maxFiles": 20,
+                  "maxLinks": 5,
+                  "minEffectivePpi": 300,
+                  "purpose": "artwork",
+                  "safeZoneMm": "3"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ArtworkRulesDto"
+                }
+              }
+            },
+            "description": "Rules",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get the artwork rules of my order",
+        "tags": [
+          "store.artwork"
+        ]
+      }
+    },
     "/v1/store/orders/{orderId}/artwork-submissions": {
       "get": {
         "description": "Newest first, each with its preflight report (D-070).\n\nImplements: D-070, D-073.",
@@ -277303,6 +277762,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                       "instalmentId": null,
                       "kind": "initial",
+                      "referenceFileIds": [],
                       "requestedAt": "2026-09-27T10:00:00+07:00",
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
@@ -277542,6 +278002,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                       "instalmentId": null,
                       "kind": "initial",
+                      "referenceFileIds": [],
                       "requestedAt": "2026-09-27T10:00:00+07:00",
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
@@ -277846,6 +278307,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e3003",
                       "instalmentId": null,
                       "kind": "initial",
+                      "referenceFileIds": [],
                       "requestedAt": "2026-09-27T10:00:00+07:00",
                       "roundNo": 1,
                       "startedAt": "2026-09-27T10:00:00+07:00",
@@ -278312,7 +278774,9 @@
                       "previousVersionNo": 1
                     },
                     "decidedAt": null,
+                    "decidedByName": null,
                     "decisionChannel": null,
+                    "decisionChecklist": [],
                     "decisionComment": null,
                     "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -280736,7 +281200,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
+                  "decidedByName": null,
                   "decisionChannel": null,
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -280964,7 +281430,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
+                  "decidedByName": null,
                   "decisionChannel": null,
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -281159,6 +281627,26 @@
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "checklist": [
+                      "spelling_checked"
+                    ],
+                    "note": null
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ApproveProofDto"
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "200": {
             "content": {
@@ -281195,7 +281683,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": "2026-09-27T12:00:00+07:00",
+                  "decidedByName": null,
                   "decisionChannel": "web",
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -281498,7 +281988,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": "2026-09-27T12:00:00+07:00",
+                  "decidedByName": null,
                   "decisionChannel": "web",
+                  "decisionChecklist": [],
                   "decisionComment": "สีพื้นหลังเข้มเกินไป ขอโทนอ่อนลง",
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",
@@ -281795,7 +282287,9 @@
                     "previousVersionNo": 1
                   },
                   "decidedAt": null,
+                  "decidedByName": null,
                   "decisionChannel": null,
+                  "decisionChecklist": [],
                   "decisionComment": null,
                   "dielineFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e2005",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e2002",

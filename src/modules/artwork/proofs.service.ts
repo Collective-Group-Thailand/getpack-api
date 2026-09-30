@@ -8,6 +8,7 @@ import { OrdersService } from '@modules/orders/orders.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { FilesService } from '@platform/files/files.service';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { ArtworkService } from './artwork.service';
 import { type AnnotationDto, type DielineDeliveryDto, type ProofDto } from './proofs.dto';
@@ -17,6 +18,7 @@ export const PROOF_INCLUDE = {
   submission: { select: { publicId: true } },
   proofFile: true,
   dielineFile: { select: { publicId: true } },
+  decidedBy: { select: { displayName: true, kind: true } },
   approvedFile: { select: { publicId: true } },
   previousProof: {
     include: {
@@ -43,9 +45,10 @@ export interface SendProofInput {
 
 export interface AnnotationInput {
   parentId?: string;
-  page: number;
-  kind: 'pin' | 'rect' | 'draw';
-  geometry: Record<string, unknown>;
+  /** Required for a new annotation; a reply takes its parent's when left out (U-B0.1). */
+  page?: number;
+  kind?: 'pin' | 'rect' | 'draw';
+  geometry?: Record<string, unknown>;
   comment: string;
 }
 
@@ -54,6 +57,9 @@ export interface DecisionOptions {
   /** The customer deciding (store / LIFF); CS decisions on behalf pass none. */
   customerUserId?: bigint;
   onBehalf?: { reason: string; confirmedVia: string };
+  /** The checklist keys the customer confirmed and an optional note (U-B0.1 approval evidence). */
+  checklist?: string[];
+  note?: string | null;
 }
 
 /** Bound of a drawn annotation (technical). */
@@ -97,6 +103,7 @@ export class ProofsService {
     private readonly artwork: ArtworkService,
     private readonly files: FilesService,
     private readonly audit: AuditService,
+    private readonly settings: SettingsService,
   ) {}
 
   // --- reads ----------------------------------------------------------------------------------------
@@ -183,16 +190,6 @@ export class ProofsService {
     input: AnnotationInput,
     customerUserId?: bigint,
   ): Promise<ProofRow> {
-    if (!validGeometry(input.kind, input.geometry))
-      throw new DomainException('validation.failed', {
-        errors: [
-          {
-            path: 'geometry',
-            code: 'invalid',
-            message: `not a valid ${input.kind} geometry (page-relative 0–1)`,
-          },
-        ],
-      });
     return this.prisma.withTx(async (tx) => {
       const proof = await this.get(proofPublicId, customerUserId, tx);
       // Customers annotate while they decide; Prepress also answers after changes were requested.
@@ -201,18 +198,34 @@ export class ProofsService {
       if (!open.includes(proof.status))
         throw new DomainException('proofs.annotation_closed', { params: { status: proof.status } });
       let parentId: bigint | null = null;
+      let place = { page: input.page, kind: input.kind, geometry: input.geometry };
       if (input.parentId) {
         const parent = await tx.proofAnnotation.findUnique({ where: { publicId: input.parentId } });
         if (!parent || parent.proofId !== proof.id) throw new DomainException('http.not_found');
         parentId = parent.id;
+        place = {
+          page: input.page ?? parent.page,
+          kind: input.kind ?? (parent.kind),
+          geometry: input.geometry ?? (parent.geometry as Record<string, unknown>),
+        };
       }
+      if (place.page === undefined || !place.kind || !place.geometry || !validGeometry(place.kind, place.geometry))
+        throw new DomainException('validation.failed', {
+          errors: [
+            {
+              path: 'geometry',
+              code: 'invalid',
+              message: `not a valid ${place.kind ?? 'annotation'} geometry (page-relative 0–1)`,
+            },
+          ],
+        });
       const annotation = await tx.proofAnnotation.create({
         data: {
           proofId: proof.id,
           parentId,
-          page: input.page,
-          kind: input.kind,
-          geometry: input.geometry as Prisma.InputJsonValue,
+          page: place.page,
+          kind: place.kind,
+          geometry: place.geometry as Prisma.InputJsonValue,
           comment: input.comment,
           authorUserId: actor.userId,
         },
@@ -271,6 +284,7 @@ export class ProofsService {
       const order = await tx.order.findUniqueOrThrow({ where: { id: proof.orderId } });
       this.artwork.assertTakesArtwork(order.status, order.artworkStatus);
       const source = await tx.fileObject.findUniqueOrThrow({ where: { id: proof.proofFileId } });
+      const checklist = await this.confirmedChecklist(opts, new Date());
       const locked = await this.files.lockedCopy(tx, source);
       const context = RequestContext.current();
       const at = new Date();
@@ -286,6 +300,8 @@ export class ProofsService {
           decisionUserAgent: context?.userAgent ?? null,
           approvedFileId: locked.id,
           approvedFileSha256: locked.sha256,
+          decisionChecklist: checklist,
+          ...(opts.note ? { decisionComment: opts.note } : {}),
           rowVersion: { increment: 1 },
         },
       });
@@ -308,6 +324,35 @@ export class ProofsService {
       await this.orders.applyFact(tx, order.id, { kind: 'artwork_approved' }, actor, at);
       return this.get(proofPublicId, undefined, tx);
     });
+  }
+
+  /**
+   * The customer confirms every item of `artwork.approval_checklist` (none while it is not set); staff approving on
+   * behalf confirm nothing. Unknown keys are refused.
+   */
+  private async confirmedChecklist(opts: DecisionOptions, at: Date): Promise<string[]> {
+    if (opts.customerUserId === undefined) return [];
+    let items: { key: string }[] = [];
+    try {
+      items = (await this.settings.at('artwork.approval_checklist', { at })).value ?? [];
+    } catch (error) {
+      if (!(error instanceof SettingNotFoundError)) throw error;
+    }
+    const given = [...new Set(opts.checklist ?? [])];
+    const known = new Set(items.map((i) => i.key));
+    const unknown = given.find((k) => !known.has(k));
+    const missing = items.find((i) => !given.includes(i.key));
+    if (unknown || missing)
+      throw new DomainException('validation.failed', {
+        errors: [
+          {
+            path: 'checklist',
+            code: unknown ? 'unknown' : 'required',
+            message: unknown ? `unknown checklist item ${unknown}` : `confirm ${missing!.key}`,
+          },
+        ],
+      });
+    return items.map((i) => i.key);
   }
 
   async requestChanges(
@@ -481,6 +526,8 @@ export function proofDto(row: ProofRow, forCustomer: boolean): ProofDto {
     decidedAt: row.decidedAt ? toBangkokIso(row.decidedAt) : null,
     decisionChannel: row.decisionChannel,
     decisionComment: row.decisionComment,
+    decidedByName: row.decidedBy ? (row.decidedBy.kind === 'staff' ? 'Packio' : row.decidedBy.displayName) : null,
+    decisionChecklist: row.decisionChecklist,
     onBehalfReason: row.onBehalfReason,
     approvedFileId: row.approvedFile?.publicId ?? null,
     approvedFileSha256: row.approvedFileSha256 ? Buffer.from(row.approvedFileSha256).toString('hex') : null,

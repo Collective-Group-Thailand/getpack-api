@@ -12,6 +12,7 @@ import {
   AnnotateProofDto,
   ANNOTATION_EXAMPLE,
   APPROVED_EXAMPLE,
+  ApproveProofDto,
   DecideOnBehalfDto,
   DELIVERY_EXAMPLE,
   DielineDeliveryDto,
@@ -158,6 +159,11 @@ export class StoreProofsController {
       'instalments required before production are paid (D-073).',
     implements: DECISIONS,
   })
+  @ApiBody({
+    type: ApproveProofDto,
+    required: false,
+    examples: { default: { value: { checklist: ['spelling_checked'], note: null } } },
+  })
   @ApiSuccess(200, { description: 'Approved', type: ProofDto, example: APPROVED_EXAMPLE })
   @ApiStandardErrors(
     'http.not_found',
@@ -166,10 +172,19 @@ export class StoreProofsController {
     'artwork.not_accepting',
     'file.not_ready',
   )
-  async approve(@CurrentActor() actor: Actor, @Param('proofId', ParseUUIDPipe) proofId: string) {
+  async approve(
+    @CurrentActor() actor: Actor,
+    @Param('proofId', ParseUUIDPipe) proofId: string,
+    @Body() body: ApproveProofDto,
+  ) {
     const me = customer(actor);
     return proofDto(
-      await this.proofs.approve(me, proofId, { channel: 'web', customerUserId: me.userId }),
+      await this.proofs.approve(me, proofId, {
+        channel: 'web',
+        customerUserId: me.userId,
+        checklist: body?.checklist,
+        note: body?.note ?? null,
+      }),
       true,
     );
   }

@@ -436,10 +436,17 @@ export class DesignServicesService implements OnModuleInit {
   async confirmExtraRound(
     actor: UserActor,
     orderPublicId: string,
-    input: { expectedFeeGross: string; changeRequest: string },
+    input: { expectedFeeGross: string; changeRequest: string; referenceFileIds?: string[] },
   ): Promise<RequestRow> {
     return this.prisma.withTx(async (tx) => {
       const request = await this.forOrder(tx, orderPublicId, actor.userId);
+      const fileIds = [...new Set(input.referenceFileIds ?? [])];
+      const files = await tx.fileObject.findMany({ where: { publicId: { in: fileIds } } });
+      if (
+        files.length !== fileIds.length ||
+        files.some((f) => f.ownerUserId !== actor.userId || f.uploadStatus !== 'uploaded' || f.scanStatus === 'infected')
+      )
+        throw new DomainException('artwork.file_not_usable', { params: { fileId: fileIds.join(', ') } });
       const last = request.rounds.at(-1);
       if (request.status !== 'revision_requested' || !last || last.roundNo <= request.freeRounds)
         throw new DomainException('design_services.no_extra_round');
@@ -481,8 +488,21 @@ export class DesignServicesService implements OnModuleInit {
           instalmentId: charge.instalmentId,
           status: 'awaiting_payment',
           changeRequest: input.changeRequest,
+          referenceFileIds: fileIds,
         },
       });
+      // The designer opens them through the request's attachment policy (U-B0.1).
+      for (const [sort, f] of files.entries()) {
+        await tx.attachment.create({
+          data: {
+            fileObjectId: f.id,
+            subjectType: 'design_service_request',
+            subjectId: request.id,
+            role: `design.revision_${roundNo}`,
+            sort,
+          },
+        });
+      }
       await this.record(
         tx,
         request.order.publicId,
@@ -618,6 +638,7 @@ export class DesignServicesService implements OnModuleInit {
         feeNet: r.feeAmount?.toFixed(2) ?? null,
         status: r.status,
         changeRequest: r.changeRequest,
+        referenceFileIds: r.referenceFileIds,
         submissionId: r.submission?.publicId ?? null,
         instalmentId: r.instalment?.publicId ?? null,
         requestedAt: toBangkokIso(r.requestedAt),

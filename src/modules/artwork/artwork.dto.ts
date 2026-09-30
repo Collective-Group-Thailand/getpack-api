@@ -18,6 +18,10 @@ import { PREFLIGHT_CHECKS } from './preflight/rules';
 
 /** Artwork submissions and preflight (D-070, ADR-0009). */
 
+/** Files and links one submission may carry (the upload page reads them from `store.artwork.getRules`). */
+export const MAX_ARTWORK_FILES = 20;
+export const MAX_ARTWORK_LINKS = 5;
+
 export const ARTWORK_SOURCES = ['upload', 'designer', 'design_service'] as const;
 export const ARTWORK_FILE_ROLES = ['artwork', 'font', 'link', 'reference'] as const;
 export const SUBMISSION_STATUSES = ['submitted', 'superseded', 'accepted_for_proof', 'rejected'] as const;
@@ -65,7 +69,7 @@ export class SubmitArtworkDto {
   })
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(20)
+  @ArrayMaxSize(MAX_ARTWORK_FILES)
   @ValidateNested({ each: true })
   @Type(() => ArtworkFileInputDto)
   files?: ArtworkFileInputDto[];
@@ -77,7 +81,7 @@ export class SubmitArtworkDto {
   })
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(5)
+  @ArrayMaxSize(MAX_ARTWORK_LINKS)
   @IsString({ each: true })
   @Matches(/^https:\/\/\S{3,500}$/, { each: true })
   links?: string[];
@@ -382,4 +386,102 @@ export const QUEUE_EXAMPLE: PrepressQueueItemDto = {
 export const SUBMIT_EXAMPLE = {
   files: [{ fileId: ARTWORK_IDS.file, role: 'artwork' }],
   note: 'ใช้โลโก้สีทอง',
+};
+
+// --- store: the rules of the upload page (U-B0.1) ----------------------------------------------------------
+
+export class ArtworkCheckRuleDto {
+  @ApiProperty({ example: 'missing_bleed' })
+  check!: string;
+
+  @ApiProperty({ enum: PREFLIGHT_SEVERITIES, enumName: 'PreflightSeverity', example: 'block' })
+  severity!: string;
+}
+
+export class ArtworkChecklistItemDto {
+  @ApiProperty({ example: 'spelling_checked' })
+  key!: string;
+
+  @ApiProperty({ example: 'ตรวจคำสะกดแล้ว' })
+  labelTh!: string;
+
+  @ApiProperty({ example: 'Spelling checked' })
+  labelEn!: string;
+}
+
+export class ArtworkDielineDto {
+  @ApiProperty({ example: 'RTE-01' })
+  patternCode!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'rte', description: 'Dieline drawing key (designer / drawing service)' })
+  dielineKey!: string | null;
+
+  @ApiProperty({ example: 60 })
+  widthMm!: number;
+
+  @ApiProperty({ example: 60 })
+  lengthMm!: number;
+
+  @ApiProperty({ example: 150 })
+  depthMm!: number;
+}
+
+/** What an artwork upload for this order must meet (D-070) and what the customer confirms on approval. */
+export class ArtworkRulesDto {
+  @ApiProperty({ example: 'artwork', description: 'File purpose to presign uploads with' })
+  purpose!: string;
+
+  @ApiProperty({ type: [String], example: ['application/pdf', 'image/png'] })
+  accept!: string[];
+
+  @ApiProperty({ type: 'integer', example: 2147483648 })
+  maxBytes!: number;
+
+  @ApiProperty({ type: 'integer', example: 20 })
+  maxFiles!: number;
+
+  @ApiProperty({ type: 'integer', example: 5 })
+  maxLinks!: number;
+
+  @ApiProperty({ example: '3', description: 'Bleed each side, mm (D-070 blocks without it)' })
+  bleedMm!: string;
+
+  @ApiProperty({ example: '3', description: 'Keep text this far inside the cut line, mm' })
+  safeZoneMm!: string;
+
+  @ApiProperty({ type: 'integer', example: 300, description: 'Lowest effective resolution before a warning' })
+  minEffectivePpi!: number;
+
+  @ApiProperty({ example: 'cmyk', description: 'RGB artwork is warned about (D-070)' })
+  colourMode!: string;
+
+  @ApiProperty({ type: [ArtworkCheckRuleDto], description: 'What each preflight check does: block, warn or inform' })
+  checks!: ArtworkCheckRuleDto[];
+
+  @ApiProperty({
+    type: [ArtworkChecklistItemDto],
+    description: 'Items confirmed when approving the proof (`artwork.approval_checklist`); empty until set',
+  })
+  approvalChecklist!: ArtworkChecklistItemDto[];
+
+  @ApiProperty({ type: ArtworkDielineDto, nullable: true, description: 'Null for RFQ orders (no calculator configuration)' })
+  dieline!: ArtworkDielineDto | null;
+}
+
+export const ARTWORK_RULES_EXAMPLE: ArtworkRulesDto = {
+  purpose: 'artwork',
+  accept: ['application/pdf', 'image/png'],
+  maxBytes: 2147483648,
+  maxFiles: 20,
+  maxLinks: 5,
+  bleedMm: '3',
+  safeZoneMm: '3',
+  minEffectivePpi: 300,
+  colourMode: 'cmyk',
+  checks: [
+    { check: 'missing_bleed', severity: 'block' },
+    { check: 'rgb_colour', severity: 'warn' },
+  ],
+  approvalChecklist: [],
+  dieline: { patternCode: 'RTE-01', dielineKey: 'rte', widthMm: 60, lengthMm: 60, depthMm: 150 },
 };

@@ -10,6 +10,8 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } fr
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import {
+  ARTWORK_RULES_EXAMPLE,
+  ArtworkRulesDto,
   ArtworkSubmissionDto,
   PrepressQueueItemDto,
   PrepressQueueQuery,
@@ -48,6 +50,24 @@ function staff(actor: Actor): UserActor {
 @Controller()
 export class StoreArtworkController {
   constructor(private readonly artwork: ArtworkService) {}
+
+  @Get('orders/:orderId/artwork-rules')
+  @orderParam
+  @ApiEndpoint({
+    id: 'store.artwork.getRules',
+    summary: 'Get the artwork rules of my order',
+    description:
+      'What the upload page needs: accepted file types, size and count limits, the D-070 preflight rules (bleed, ' +
+      'safe zone, resolution, CMYK; which checks block and which warn), the proof-approval checklist ' +
+      '(`artwork.approval_checklist`, empty until set) and the order’s dieline and box size.',
+    implements: ['D-070', 'D-073'],
+  })
+  @ApiSuccess(200, { description: 'Rules', type: ArtworkRulesDto, example: ARTWORK_RULES_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  rules(@CurrentActor() actor: Actor, @Param('orderId', ParseUUIDPipe) orderId: string): Promise<ArtworkRulesDto> {
+    if (actor.type !== 'user' || actor.audience !== 'customer') throw new DomainException('auth.forbidden');
+    return this.artwork.rules(orderId, actor.userId);
+  }
 
   @Post('orders/:orderId/artwork-submissions')
   @orderParam

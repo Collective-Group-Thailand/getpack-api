@@ -727,6 +727,31 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-160', 'D-044'],
   },
 
+  // --- Artwork (U-B0.1): the proof approval checklist. No decision gives the items: definition only.
+  {
+    key: 'artwork.approval_checklist',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'array',
+      maxItems: 20,
+      items: {
+        type: 'object',
+        required: ['key', 'labelTh', 'labelEn'],
+        properties: {
+          key: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,39}$' },
+          labelTh: { type: 'string', minLength: 1, maxLength: 200 },
+          labelEn: { type: 'string', minLength: 1, maxLength: 200 },
+        },
+      },
+    },
+    description:
+      'D-073 items the customer confirms when approving a proof (spelling, colours, size…), kept as approval evidence; not seeded — no checklist until set',
+    decisions: ['D-073'],
+    confirmation: 'pending_business',
+  },
+
   // --- PDPA requests (U-B0.1, D-222): Superadmin (D-063).
   {
     key: 'privacy.response_days',

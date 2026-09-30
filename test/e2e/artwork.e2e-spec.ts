@@ -313,16 +313,15 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       })
       .expect(201);
     const noteId = noted.body.annotations[0].id as string;
+    // A reply takes its parent's page, kind and geometry (U-B0.1).
     const replied = await as(ctx, prepress)
-      .post(`/v1/admin/proofs/${p1.body.id as string}/annotations`, {
-        parentId: noteId,
-        page: 1,
-        kind: 'pin',
-        geometry: { x: 0.2, y: 0.2 },
-        comment: 'รับทราบ',
-      })
+      .post(`/v1/admin/proofs/${p1.body.id as string}/annotations`, { parentId: noteId, comment: 'รับทราบ' })
       .expect(201);
     expect(replied.body.annotations).toHaveLength(2);
+    expect(replied.body.annotations[1]).toMatchObject({ parentId: noteId, page: 1, kind: 'rect' });
+    await as(ctx, token)
+      .post(`/v1/store/proofs/${p1.body.id as string}/annotations`, { comment: 'no place (fake)' })
+      .expect(422);
     const storeView = await as(ctx, token)
       .get(`/v1/store/proofs/${p1.body.id as string}`)
       .expect(200);
@@ -368,14 +367,30 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       previousDecisionComment: 'สีพื้นหลังเข้มเกินไป',
       openAnnotationsOnPrevious: 2,
     });
+    // U-B0.1: the upload page's rules, then an approval that must confirm the checklist once one is set.
+    const rules = await as(ctx, token).get(`/v1/store/orders/${orderId}/artwork-rules`).expect(200);
+    expect(rules.body).toMatchObject({ purpose: 'artwork', bleedMm: '3', colourMode: 'cmyk', approvalChecklist: [] });
+    expect(rules.body.checks).toContainEqual({ check: 'missing_bleed', severity: 'block' });
+    await setSetting(ctx, 'artwork.approval_checklist', [
+      { key: 'spelling_checked', labelTh: 'ตรวจคำสะกดแล้ว', labelEn: 'Spelling checked' },
+    ]);
     const key = randomUUID();
     await as(ctx, token)
       .post(`/v1/store/proofs/${p2.body.id as string}/actions/approve`)
       .expect(400);
+    const missing = await as(ctx, token)
+      .post(`/v1/store/proofs/${p2.body.id as string}/actions/approve`, {})
+      .set('Idempotency-Key', randomUUID())
+      .expect(422);
+    expect(missing.body.errors[0]).toMatchObject({ path: 'checklist', code: 'required' });
     const approved = await as(ctx, token)
-      .post(`/v1/store/proofs/${p2.body.id as string}/actions/approve`)
+      .post(`/v1/store/proofs/${p2.body.id as string}/actions/approve`, { checklist: ['spelling_checked'] })
       .set('Idempotency-Key', key)
       .expect(200);
+    await setSetting(ctx, 'artwork.approval_checklist', []);
+    expect(approved.body.decisionChecklist).toEqual(['spelling_checked']);
+    expect(approved.body.decidedByName).toEqual(expect.any(String));
+    expect(approved.body.decidedByName).not.toBe('Packio');
     const source = await ctx.prisma.fileObject.findUniqueOrThrow({ where: { publicId: proof2File } });
     expect(approved.body).toMatchObject({
       status: 'approved',
@@ -394,7 +409,7 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       .expect(200);
     // Replay returns the same answer; a new attempt is refused; the order's artwork is approved.
     const replay = await as(ctx, token)
-      .post(`/v1/store/proofs/${p2.body.id as string}/actions/approve`)
+      .post(`/v1/store/proofs/${p2.body.id as string}/actions/approve`, { checklist: ['spelling_checked'] })
       .set('Idempotency-Key', key)
       .expect(200);
     expect(replay.body.approvedFileId).toBe(approved.body.approvedFileId);

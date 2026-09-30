@@ -96,6 +96,17 @@ export class ConfirmExtraRoundDto {
   @MinLength(3)
   @MaxLength(4000)
   changeRequest!: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: [],
+    description: 'My uploaded reference files for this revision (≤ 10)',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  referenceFileIds?: string[];
 }
 
 export class AssignDesignerDto {
@@ -192,6 +203,9 @@ export class DesignRoundDto {
 
   @ApiProperty({ type: String, nullable: true, example: null })
   changeRequest!: string | null;
+
+  @ApiProperty({ type: [String], example: [], description: 'Reference files sent with a paid revision' })
+  referenceFileIds!: string[];
 
   @ApiProperty({
     type: String,
@@ -359,6 +373,7 @@ export const DESIGN_SERVICE_EXAMPLE: DesignServiceDto = {
       feeNet: null,
       status: 'in_progress',
       changeRequest: null,
+      referenceFileIds: [],
       submissionId: null,
       instalmentId: null,
       requestedAt: '2026-09-27T10:00:00+07:00',
