@@ -2,8 +2,16 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { formatMoney } from '@common/money/money';
+import {
+  ApiConcurrency,
+  ApiEndpoint,
+  ApiEtag,
+  ApiStandardErrors,
+  ApiSuccess,
+} from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
@@ -12,14 +20,16 @@ import { orderDto, orderViewContext } from '@modules/orders/order-views';
 import { ORDER_EXAMPLE, OrderDto } from '@modules/orders/orders.dto';
 import { OrdersService } from '@modules/orders/orders.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { SettingsService } from '@platform/settings/settings.service';
+import { type Response } from 'express';
 
 import { DeliveryService } from './delivery.service';
 import {
   ADMIN_SHIPMENT_EXAMPLE,
   AdminShipmentDto,
+  AdminShipmentListQuery,
   BookCarrierDto,
   CancelShipmentDto,
   CreateShipmentDto,
@@ -29,9 +39,14 @@ import {
   POD_EXAMPLE,
   RECONCILIATION_EXAMPLE,
   RecordPodDto,
+  ResolveShipmentExceptionDto,
+  ReviewPodDto,
   SHIPMENT_IDS,
+  ShipmentCarrierQuoteDto,
   ShipmentListQuery,
   ShipmentStatusUpdateDto,
+  SplitShipmentDto,
+  SplitShipmentResultDto,
   STORE_SHIPMENT_EXAMPLE,
   StoreShipmentDto,
 } from './logistics.dto';
@@ -43,7 +58,7 @@ import {
   type ShipmentRow,
   storeShipmentDto,
 } from './shipment-views';
-import { ShipmentsService } from './shipments.service';
+import { shipmentEtag, ShipmentsService } from './shipments.service';
 import { ShipmentsQueryService } from './shipments-query.service';
 
 const shipmentParam = ApiParam({ name: 'shipmentId', format: 'uuid' });
@@ -358,15 +373,26 @@ export class AdminShipmentsController {
     private readonly prisma: PrismaService,
   ) {}
 
-  private async dtos(actor: Actor, rows: ShipmentRow[]) {
-    const granted =
-      actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
-    const photos = await this.query.podPhotos(rows);
-    return rows.map((r) => adminShipmentDto(r, { cost: granted.has('factory_cost.read') }, photos.get(r.id)));
+  private async canSeeCost(actor: Actor): Promise<boolean> {
+    return (
+      actor.type === 'user' &&
+      (await this.permissions.forUser(actor.userId)).permissions.has('factory_cost.read')
+    );
   }
 
-  private async dto(actor: Actor, publicId: string) {
-    return (await this.dtos(actor, [await this.query.get(actor, publicId)]))[0]!;
+  private async dtos(actor: Actor, rows: ShipmentRow[]) {
+    const [cost, photos, blocked] = await Promise.all([
+      this.canSeeCost(actor),
+      this.query.podPhotos(rows),
+      this.shipments.blockedByPayment(rows),
+    ]);
+    return rows.map((r) => adminShipmentDto(r, { cost }, photos.get(r.id), blocked.has(r.id)));
+  }
+
+  private async dto(actor: Actor, publicId: string, res?: Response) {
+    const row = await this.query.get(actor, publicId);
+    res?.setHeader('ETag', shipmentEtag(row));
+    return (await this.dtos(actor, [row]))[0]!;
   }
 
   @Get('shipments')
@@ -374,13 +400,16 @@ export class AdminShipmentsController {
   @ApiEndpoint({
     id: 'admin.shipments.list',
     summary: 'List shipments',
-    description: 'Newest first; payout and carrier cost only with `factory_cost.read` (D-141).',
-    implements: ['D-013', 'D-141'],
+    description:
+      'Newest first; payout and carrier cost only with `factory_cost.read` (D-141). `queue` picks a work queue ' +
+      '(awaiting pickup, in transit, delivery exceptions D-230, POD reviews D-229); `carrier` and `factoryId` ' +
+      'narrow it.',
+    implements: ['D-013', 'D-141', 'D-229', 'D-230'],
   })
   @ApiPaginated(AdminShipmentDto, { example: ADMIN_SHIPMENT_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async list(@CurrentActor() actor: Actor, @Query() q: ShipmentListQuery) {
-    const [rows, total] = await this.query.list(actor, listWhere(q), q.page, q.perPage);
+  async list(@CurrentActor() actor: Actor, @Query() q: AdminShipmentListQuery) {
+    const [rows, total] = await this.query.list(actor, adminListWhere(q), q.page, q.perPage);
     return { data: await this.dtos(actor, rows), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
@@ -390,13 +419,20 @@ export class AdminShipmentsController {
   @ApiEndpoint({
     id: 'admin.shipments.get',
     summary: 'Get a shipment',
-    description: 'Items, events, POD, carrier booking; costs per D-141.',
-    implements: ['D-013', 'D-141'],
+    description:
+      'Items, cartons, events, POD with its review (D-229), the delivery exception (D-230), carrier booking, ' +
+      'whether unpaid instalments block pickup (B3.2); costs per D-141. The `ETag` guards the staff actions.',
+    implements: ['D-013', 'D-141', 'D-229', 'D-230'],
   })
+  @ApiEtag()
   @ApiSuccess(200, { description: 'Shipment', type: AdminShipmentDto, example: ADMIN_SHIPMENT_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  get(@CurrentActor() actor: Actor, @Param('shipmentId', ParseUUIDPipe) shipmentId: string) {
-    return this.dto(actor, shipmentId);
+  get(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.dto(actor, shipmentId, res);
   }
 
   @Post('shipments/:shipmentId/actions/book-carrier')
@@ -410,10 +446,15 @@ export class AdminShipmentsController {
     description:
       'Where the factory’s fleet cannot serve the area (D-013, D-114): Packio’s carrier account books the ' +
       'pickup at the factory for a packed shipment; the carrier’s quote is kept as Packio’s cost (P25). The ' +
-      'shipping gate applies. Carrier callbacks then move the shipment; delivery by carrier POD.',
+      'shipping gate applies. Carrier callbacks then move the shipment; delivery by carrier POD. An optional ' +
+      '`reason` is kept on the event and the audit trail.',
     implements: ['D-013', 'D-114'],
   })
-  @ApiBody({ type: BookCarrierDto, examples: { default: { value: { carrier: 'flash_express' } } } })
+  @ApiConcurrency({ optional: true })
+  @ApiBody({
+    type: BookCarrierDto,
+    examples: { default: { value: { carrier: 'flash_express', reason: 'โรงงานไม่มีรถวิ่งเชียงราย' } } },
+  })
   @ApiSuccess(200, {
     description: 'Booked',
     type: AdminShipmentDto,
@@ -439,10 +480,244 @@ export class AdminShipmentsController {
     @CurrentActor() actor: Actor,
     @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
     @Body() body: BookCarrierDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
   ) {
     const row = await this.query.get(actor, shipmentId);
-    await this.shipments.bookCarrier(staff(actor), row.id, body.carrier, when(body.pickupAt));
-    return this.dto(actor, shipmentId);
+    await this.shipments.bookCarrier(staff(actor), row.id, body.carrier, when(body.pickupAt), {
+      reason: body.reason,
+      ifMatch,
+    });
+    return this.dto(actor, shipmentId, res);
+  }
+
+  @Post('shipments/:shipmentId/carrier-quotes')
+  @HttpCode(200)
+  @Can('shipments.manage')
+  @shipmentParam
+  @ApiEndpoint({
+    id: 'admin.shipments.carrierQuotes',
+    summary: 'Quote the fallback carriers for a shipment',
+    description:
+      'Every fallback carrier’s quote for this trip — pickup at the factory, the destination, one parcel per ' +
+      'carton (D-114) — before booking; a carrier that is not enabled, has no account or cannot quote comes back ' +
+      'unavailable with the reason. Amounts are Packio’s cost, shown only with `factory_cost.read` (D-141). ' +
+      'Nothing is booked or stored.',
+    implements: ['D-013', 'D-114', 'D-141'],
+  })
+  @ApiSuccess(200, {
+    description: 'Quotes',
+    type: [ShipmentCarrierQuoteDto],
+    example: [
+      {
+        carrier: 'deliveree',
+        available: false,
+        amount: null,
+        transitDays: null,
+        reason: 'not enabled',
+        currency: 'THB',
+      },
+      {
+        carrier: 'flash_express',
+        available: true,
+        amount: '85.00',
+        transitDays: 2,
+        reason: null,
+        currency: 'THB',
+      },
+    ],
+  })
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    'shipments.invalid_status',
+    'shipments.carrier_unavailable',
+  )
+  async carrierQuotes(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+  ): Promise<ShipmentCarrierQuoteDto[]> {
+    const row = await this.query.get(actor, shipmentId);
+    const [quotes, cost] = await Promise.all([this.shipments.carrierQuotes(row.id), this.canSeeCost(actor)]);
+    return quotes.map((q) => ({
+      carrier: q.carrier,
+      available: q.reason === null,
+      amount: cost && q.amount ? formatMoney(q.amount) : null,
+      transitDays: q.transitDays,
+      reason: q.reason,
+      currency: 'THB',
+    }));
+  }
+
+  @Post('shipments/:shipmentId/actions/resolve-exception')
+  @HttpCode(200)
+  @Idempotent({ optional: true })
+  @Can('shipments.manage')
+  @shipmentParam
+  @ApiEndpoint({
+    id: 'admin.shipments.resolveException',
+    summary: 'Resolve a failed or returned delivery',
+    description:
+      'D-230: a failed delivery → `retry` (in transit again for another attempt) or `return` (the goods go back ' +
+      'to the factory and their quantity can ship again on a new trip); a returned shipment is closed as `retry` ' +
+      '(it ships again on a new trip) or `cancel` (it will not be delivered). With a reason; audited, event ' +
+      '`shipment.exception_resolved`.',
+    implements: ['D-230', 'D-013'],
+  })
+  @ApiConcurrency({ optional: true })
+  @ApiBody({
+    type: ResolveShipmentExceptionDto,
+    examples: { default: { value: { resolution: 'retry', reason: 'ลูกค้านัดรับใหม่พรุ่งนี้' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Resolved',
+    type: AdminShipmentDto,
+    example: {
+      ...ADMIN_SHIPMENT_EXAMPLE,
+      status: 'in_transit',
+      pickedUpAt: '2026-10-20T10:00:00+07:00',
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'shipments.invalid_status',
+  )
+  async resolveException(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @Body() body: ResolveShipmentExceptionDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.query.get(actor, shipmentId);
+    await this.shipments.resolveException(staff(actor), row.id, body.resolution, body.reason, ifMatch);
+    return this.dto(actor, shipmentId, res);
+  }
+
+  @Post('shipments/:shipmentId/actions/split')
+  @Idempotent({ optional: true })
+  @Can('shipments.manage')
+  @shipmentParam
+  @ApiEndpoint({
+    id: 'admin.shipments.split',
+    summary: 'Split a draft shipment',
+    description:
+      'Moves pieces (per destination) with their cartons and weight to a new draft shipment to the same address ' +
+      'from the same factory (D-230); at least one piece, carton and gram stays. A packed shipment is not split ' +
+      '(labels, tracking link and payout are frozen): cancel and re-pack it. Audited, events `shipment.split` ' +
+      'and `shipment.created`.',
+    implements: ['D-230', 'D-013'],
+  })
+  @ApiConcurrency({ optional: true })
+  @ApiBody({
+    type: SplitShipmentDto,
+    examples: {
+      default: {
+        value: {
+          items: [{ destinationId: SHIPMENT_IDS.destination, quantity: 200 }],
+          cartonsCount: 1,
+          weightG: 6000,
+          reason: 'แยกส่งสองรอบ รถเล็ก',
+        },
+      },
+    },
+  })
+  @ApiSuccess(201, {
+    description: 'The original and the new shipment',
+    type: SplitShipmentResultDto,
+    example: {
+      shipment: { ...ADMIN_SHIPMENT_EXAMPLE, status: 'draft', readyAt: null, cartons: [], cartonsCount: 2 },
+      created: {
+        ...ADMIN_SHIPMENT_EXAMPLE,
+        id: '0192f3a0-7c1e-7d2a-9b1f-0000000f2008',
+        shipmentNo: 'SH-2610-0002',
+        status: 'draft',
+        readyAt: null,
+        cartons: [],
+        cartonsCount: 1,
+        weightG: 6000,
+        splitFrom: { id: SHIPMENT_IDS.shipment, shipmentNo: 'SH-2610-0001' },
+      },
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'shipments.invalid_status',
+  )
+  async split(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @Body() body: SplitShipmentDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SplitShipmentResultDto> {
+    const row = await this.query.get(actor, shipmentId);
+    const created = await this.shipments.split(staff(actor), row.id, body, ifMatch);
+    return { shipment: await this.dto(actor, shipmentId, res), created: await this.dto(actor, created) };
+  }
+
+  @Post('shipments/:shipmentId/pod/actions/:decision')
+  @HttpCode(200)
+  @Can('shipments.manage')
+  @shipmentParam
+  @ApiParam({ name: 'decision', enum: ['accept', 'reject'], enumName: 'PodReviewAction' })
+  @ApiEndpoint({
+    id: 'admin.shipments.reviewPod',
+    summary: 'Accept or reject a proof of delivery',
+    description:
+      'A staff check of the recorded POD (D-229): `reject` needs a note and raises `shipment.pod_rejected` for ' +
+      'follow-up; neither changes the delivery, the tolerance reconciliation or the payout rule (D-022). ' +
+      'Reviews are kept; the latest is the POD’s state.',
+    implements: ['D-229', 'D-013', 'D-022'],
+  })
+  @ApiConcurrency({ optional: true })
+  @ApiBody({ type: ReviewPodDto, examples: { default: { value: { note: 'ลายเซ็นไม่ชัด' } } } })
+  @ApiSuccess(200, {
+    description: 'Reviewed',
+    type: AdminShipmentDto,
+    example: {
+      ...ADMIN_SHIPMENT_EXAMPLE,
+      status: 'delivered',
+      proofOfDelivery: POD_EXAMPLE,
+      podReview: {
+        state: 'rejected',
+        note: 'ลายเซ็นไม่ชัด',
+        reviewedAt: '2026-10-22T10:00:00+07:00',
+        reviewedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000f2009', displayName: 'Dev Logistics' },
+      },
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'shipments.invalid_status',
+  )
+  async reviewPod(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @Param('decision') decision: string,
+    @Body() body: ReviewPodDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (decision !== 'accept' && decision !== 'reject') throw new DomainException('http.not_found');
+    const row = await this.query.get(actor, shipmentId);
+    await this.shipments.reviewPod(
+      staff(actor),
+      row.id,
+      decision === 'accept' ? 'accepted' : 'rejected',
+      body.note ?? null,
+      ifMatch,
+    );
+    return this.dto(actor, shipmentId, res);
   }
 
   @Post('shipments/:shipmentId/events')
@@ -651,6 +926,26 @@ export class StoreShipmentsController {
       await orderViewContext(this.settings),
     );
   }
+}
+
+const QUEUES: Record<NonNullable<AdminShipmentListQuery['queue']>, Prisma.ShipmentWhereInput> = {
+  awaiting_pickup: { status: 'ready' },
+  in_transit: { status: { in: ['picked_up', 'in_transit', 'out_for_delivery'] } },
+  exceptions: { OR: [{ status: 'failed' }, { status: 'returned', exceptionResolvedAt: null }] },
+  pod_review: { status: 'delivered', proofOfDelivery: { reviews: { none: {} } } },
+};
+
+function adminListWhere(q: AdminShipmentListQuery): Prisma.ShipmentWhereInput {
+  return {
+    AND: [
+      listWhere(q),
+      q.queue ? QUEUES[q.queue] : {},
+      {
+        ...(q.carrier && { carrier: { code: q.carrier } }),
+        ...(q.factoryId && { factory: { publicId: q.factoryId } }),
+      },
+    ],
+  };
 }
 
 function listWhere(q: ShipmentListQuery): Prisma.ShipmentWhereInput {

@@ -183,6 +183,52 @@ export class CarriersService {
     );
   }
 
+  /**
+   * A quote of every fallback carrier for one trip (staff choosing a carrier, D-114): a carrier that is not
+   * enabled, has no account, fails or times out comes back unavailable with the reason.
+   */
+  async quoteAll(input: { from: CarrierPlace; to: CarrierPlace; parcels: readonly CarrierParcel[] }): Promise<
+    {
+      carrier: FallbackCarrierCode;
+      amount: MoneyValue | null;
+      transitDays: number | null;
+      reason: string | null;
+    }[]
+  > {
+    const carriers = await this.prisma.carrier.findMany({
+      where: { code: { not: 'factory_fleet' } },
+      orderBy: { code: 'asc' },
+    });
+    const [from, to] = await Promise.all([this.enrich(input.from), this.enrich(input.to)]);
+    return Promise.all(
+      carriers.map(async (carrier) => {
+        const code = carrier.code as FallbackCarrierCode;
+        const unavailable = (reason: string) => ({ carrier: code, amount: null, transitDays: null, reason });
+        const adapter = this.adapters.get(code);
+        if (!adapter || !carrier.enabled) return unavailable('not enabled');
+        const account = await this.activeAccount(this.prisma, carrier.id);
+        if (!account) return unavailable('no active account');
+        try {
+          const quote = await withTimeout(
+            adapter.quote(await this.call(account), { from, to, parcels: input.parcels }),
+            ESTIMATE_TIMEOUT_MS,
+          );
+          return {
+            carrier: code,
+            amount: new MoneyDecimal(quote.amount),
+            transitDays: quote.transitDays,
+            reason: null,
+          };
+        } catch (error) {
+          this.logger.warn({ carrier: code, err: (error as Error).message }, 'carrier quote failed');
+          return unavailable(
+            error instanceof ProviderUnavailableError ? 'unavailable' : 'cannot quote this trip',
+          );
+        }
+      }),
+    );
+  }
+
   /** Staff test of an account: a quote straight from the carrier, errors surfaced. */
   async testQuote(
     code: CarrierCode,

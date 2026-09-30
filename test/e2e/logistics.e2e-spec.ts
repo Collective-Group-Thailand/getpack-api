@@ -458,8 +458,12 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     await ensureFactoryPickup(fixture.factoryPublicId);
     const booked = await post(logistics, `/v1/admin/shipments/${s.id}/actions/book-carrier`, {
       carrier: 'flash_express',
+      reason: 'โรงงานไม่มีรถวิ่งพื้นที่นี้',
     }).expect(200);
     expect(booked.body).toMatchObject({ carrier: 'flash_express', status: 'ready' });
+    expect((booked.body as Shipment & { events: { note: string | null }[] }).events.at(-1)!.note).toBe(
+      'booked with flash_express: โรงงานไม่มีรถวิ่งพื้นที่นี้',
+    );
     const ref = booked.body.carrierBookingRef as string;
     // The factory no longer reports steps of a carrier-booked trip.
     await post(owner, `/v1/partner/shipments/${s.id}/events`, { status: 'in_transit' }).expect(409);
@@ -491,6 +495,152 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
       await ctx.prisma.trackingLink.count({ where: { shipment: { publicId: s2.id }, revokedAt: null } }),
     ).toBe(0);
     await createShipment(owner, o.jobId, [[d2.id, 400]], 1).expect(201);
+  });
+
+  it('U-B0.2: splits a draft, quotes carriers, resolves delivery exceptions and reviews a POD (D-229, D-230)', async () => {
+    await setSetting(ctx, 'payments.schedule_split_threshold', THRESHOLD);
+    await setSetting(ctx, 'qc.inspection_sampling', SAMPLING);
+    const o = await acceptedOrder(5);
+    await finish(o.jobRowId, 1000);
+    await passInspection(o.jobRowId);
+    const d1 = o.destinations.find((d) => d.quantity === 600)!;
+    const s = (await createShipment(owner, o.jobId, [[d1.id, 600]], 2).expect(201)).body as Shipment;
+    const logistics = await staffToken(ctx, 'logistics');
+    const admin = (id: string) => as(ctx, logistics).get(`/v1/admin/shipments/${id}`).expect(200);
+
+    // The staff view: ETag, province, cartons, payment block.
+    const draft = await admin(s.id);
+    expect(draft.headers['etag']).toEqual(expect.any(String));
+    expect(draft.body).toMatchObject({
+      destination: { province: { id: expect.any(String), nameTh: expect.any(String) } },
+      cartons: [],
+      blockedByPayment: false,
+      exception: null,
+      podReview: null,
+      splitFrom: null,
+    });
+
+    // Split a draft (D-230): stale ETag, everything, then 200 pieces with a carton and 4 kg.
+    const split = (body: Record<string, unknown>) =>
+      post(logistics, `/v1/admin/shipments/${s.id}/actions/split`, {
+        cartonsCount: 1,
+        weightG: 4000,
+        reason: 'แยกส่งสองรอบ',
+        ...body,
+      });
+    await split({ items: [{ destinationId: d1.id, quantity: 200 }] })
+      .set('If-Match', '"stale"')
+      .expect(412);
+    await split({ items: [{ destinationId: d1.id, quantity: 600 }] }).expect(422);
+    const done = await split({ items: [{ destinationId: d1.id, quantity: 200 }] })
+      .set('If-Match', draft.headers['etag'] as string)
+      .expect(201);
+    expect(done.body.shipment).toMatchObject({ cartonsCount: 1, weightG: 8000, items: [{ quantity: 400 }] });
+    expect(done.body.created).toMatchObject({
+      status: 'draft',
+      cartonsCount: 1,
+      weightG: 4000,
+      items: [{ destinationId: d1.id, quantity: 200 }],
+      splitFrom: { id: s.id },
+    });
+    const s2 = done.body.created.id as string;
+
+    // Carrier quotes for a packed trip; the cost stays hidden without `factory_cost.read` (D-141).
+    await post(owner, `/v1/partner/shipments/${s.id}/actions/ready`).expect(200);
+    await split({ items: [{ destinationId: d1.id, quantity: 100 }] }).expect(409);
+    expect((await admin(s.id)).body.cartons).toHaveLength(1);
+    await ctx.prisma.carrier.update({ where: { code: 'flash_express' }, data: { enabled: true } });
+    await ensureCarrierAccount('flash_express');
+    await ensureFactoryPickup(fixture.factoryPublicId);
+    const quotes = await post(logistics, `/v1/admin/shipments/${s.id}/carrier-quotes`).expect(200);
+    expect(quotes.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ carrier: 'flash_express', available: true, amount: null, currency: 'THB' }),
+      ]),
+    );
+
+    // A failed delivery: in the exceptions queue; retry puts it back in transit; a new failure reopens it.
+    await post(owner, `/v1/partner/shipments/${s.id}/actions/dispatch`).expect(200);
+    await post(owner, `/v1/partner/shipments/${s.id}/events`, {
+      status: 'failed',
+      note: 'ไม่มีผู้รับ',
+    }).expect(200);
+    const queue = async (name: string) =>
+      (
+        (await as(ctx, logistics).get(`/v1/admin/shipments?queue=${name}&perPage=100`).expect(200)).body
+          .data as { id: string }[]
+      ).map((x) => x.id);
+    expect(await queue('exceptions')).toContain(s.id);
+    expect((await admin(s.id)).body.exception).toMatchObject({
+      status: 'failed',
+      note: 'ไม่มีผู้รับ',
+      resolution: null,
+    });
+    const resolve = (resolution: string) =>
+      post(logistics, `/v1/admin/shipments/${s.id}/actions/resolve-exception`, {
+        resolution,
+        reason: 'ลูกค้านัดรับใหม่',
+      });
+    await resolve('cancel').expect(409);
+    const retried = await resolve('retry').expect(200);
+    expect(retried.body.status).toBe('in_transit');
+    expect(await queue('exceptions')).not.toContain(s.id);
+    await post(owner, `/v1/partner/shipments/${s.id}/events`, { status: 'failed', note: 'ปิดร้าน' }).expect(
+      200,
+    );
+    expect((await admin(s.id)).body.exception).toMatchObject({ note: 'ปิดร้าน', resolution: null });
+    const returned = await resolve('return').expect(200);
+    expect(returned.body).toMatchObject({
+      status: 'returned',
+      exception: {
+        status: 'returned',
+        resolution: 'return',
+        resolvedBy: expect.objectContaining({ id: expect.any(String) }),
+      },
+    });
+    expect(await queue('exceptions')).not.toContain(s.id);
+    await resolve('cancel').expect(409);
+    expect(
+      await ctx.prisma.domainEvent.count({
+        where: { type: 'shipment.exception_resolved', aggregateId: s.id },
+      }),
+    ).toBe(2);
+
+    // POD review of the split trip (D-229): pending in the queue; a rejection needs a note.
+    await post(owner, `/v1/partner/shipments/${s2}/actions/ready`).expect(200);
+    await post(owner, `/v1/partner/shipments/${s2}/actions/dispatch`).expect(200);
+    await pod(owner, s2, d1.id, 200, 201);
+    expect((await admin(s2)).body.podReview).toMatchObject({ state: 'pending', reviewedBy: null });
+    expect(await queue('pod_review')).toContain(s2);
+    await as(ctx, logistics).post(`/v1/admin/shipments/${s2}/pod/actions/reject`, {}).expect(422);
+    await as(ctx, logistics).post(`/v1/admin/shipments/${s2}/pod/actions/approve`, {}).expect(404);
+    const rejected = await as(ctx, logistics)
+      .post(`/v1/admin/shipments/${s2}/pod/actions/reject`, { note: 'ลายเซ็นไม่ชัด' })
+      .expect(200);
+    expect(rejected.body).toMatchObject({
+      status: 'delivered',
+      podReview: {
+        state: 'rejected',
+        note: 'ลายเซ็นไม่ชัด',
+        reviewedBy: expect.objectContaining({ id: expect.any(String) }),
+      },
+    });
+    expect(await queue('pod_review')).not.toContain(s2);
+    expect(
+      await ctx.prisma.domainEvent.count({ where: { type: 'shipment.pod_rejected', aggregateId: s2 } }),
+    ).toBe(1);
+    await as(ctx, logistics).post(`/v1/admin/shipments/${s2}/pod/actions/accept`, {}).expect(200);
+    expect((await admin(s2)).body.podReview.state).toBe('accepted');
+
+    // Filters: carrier and factory.
+    const byFactory = await as(ctx, logistics)
+      .get(`/v1/admin/shipments?factoryId=${fixture.factoryPublicId}&carrier=factory_fleet&perPage=100`)
+      .expect(200);
+    expect((byFactory.body.data as { id: string }[]).map((x) => x.id)).toEqual(
+      expect.arrayContaining([s.id, s2]),
+    );
+    const byCarrier = await as(ctx, logistics).get('/v1/admin/shipments?carrier=deliveree').expect(200);
+    expect((byCarrier.body.data as { id: string }[]).map((x) => x.id)).not.toContain(s.id);
   });
 
   async function ensureCarrierAccount(code: 'flash_express') {

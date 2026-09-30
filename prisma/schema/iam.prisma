@@ -547,15 +547,17 @@ model User {
   // --- end Fulfilment B4.5
 
   // --- Fulfilment B4.6 (generated back-relations)
-  lineAccounts             LineAccount[]         @relation("LineAccountUser")
-  lineRichMenusUpdated     LineRichMenu[]        @relation("LineRichMenuUpdatedBy")
-  conversations            Conversation[]        @relation("ConversationCustomer")
-  conversationsAssigned    Conversation[]        @relation("ConversationAssignedUser")
-  supportTickets           SupportTicket[]       @relation("SupportTicketCustomer")
-  brandAssetsCreated       CompanyBrandAsset[]   @relation("CompanyBrandAssetCreatedBy")
-  brandAssetsRemoved       CompanyBrandAsset[]   @relation("CompanyBrandAssetRemovedBy")
-  prepressOrders           Order[]               @relation("OrderPrepressAssignee")
-  conversationMessagesSent ConversationMessage[] @relation("ConversationMessageSender")
+  lineAccounts               LineAccount[]           @relation("LineAccountUser")
+  lineRichMenusUpdated       LineRichMenu[]          @relation("LineRichMenuUpdatedBy")
+  conversations              Conversation[]          @relation("ConversationCustomer")
+  conversationsAssigned      Conversation[]          @relation("ConversationAssignedUser")
+  supportTickets             SupportTicket[]         @relation("SupportTicketCustomer")
+  brandAssetsCreated         CompanyBrandAsset[]     @relation("CompanyBrandAssetCreatedBy")
+  brandAssetsRemoved         CompanyBrandAsset[]     @relation("CompanyBrandAssetRemovedBy")
+  prepressOrders             Order[]                 @relation("OrderPrepressAssignee")
+  shipmentExceptionsResolved Shipment[]              @relation("ShipmentExceptionResolvedBy")
+  podReviews                 ProofOfDeliveryReview[] @relation("ProofOfDeliveryReviewedBy")
+  conversationMessagesSent   ConversationMessage[]   @relation("ConversationMessageSender")
   // --- end Fulfilment B4.6
 
   // --- Finance B5.1 (generated back-relations)

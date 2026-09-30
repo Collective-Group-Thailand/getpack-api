@@ -2,10 +2,14 @@ import { createHash, randomBytes } from 'node:crypto';
 
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Shipment, type ShipmentStatus } from '@generated/prisma/client';
-import { type FallbackCarrierCode } from '@integrations/carriers/carrier-adapter.port';
+import {
+  type CarrierBookingRequest,
+  type FallbackCarrierCode,
+} from '@integrations/carriers/carrier-adapter.port';
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { OrdersService } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
@@ -48,6 +52,22 @@ export const TRANSITIONS: Partial<Record<ShipmentStatus, readonly ShipmentStatus
   out_for_delivery: ['in_transit', 'out_for_delivery', 'failed', 'returned'],
   failed: ['in_transit', 'out_for_delivery', 'returned'],
 };
+
+export const shipmentEtag = (s: { publicId: string; rowVersion: number }) => etagOf(s.publicId, s.rowVersion);
+
+/** D-230: what staff may do with a failed or returned delivery. */
+const RESOLUTIONS: Partial<Record<ShipmentStatus, readonly ('retry' | 'return' | 'cancel')[]>> = {
+  failed: ['retry', 'return'],
+  returned: ['retry', 'cancel'],
+};
+
+export interface SplitInput {
+  items: { destinationId: string; quantity: number }[];
+  cartonsCount: number;
+  weightG: number;
+  volumeCm3?: number;
+  reason: string;
+}
 
 export const hashToken = (token: string): Uint8Array<ArrayBuffer> =>
   new Uint8Array(createHash('sha256').update(token).digest());
@@ -392,6 +412,13 @@ export class ShipmentsService {
         statusChangedAt: at,
         updatedById: actor.type === 'user' ? actor.userId : null,
         rowVersion: { increment: 1 },
+        // A new failure or return is a new exception (D-230).
+        ...((to === 'failed' || to === 'returned') && {
+          exceptionResolution: null,
+          exceptionResolvedAt: null,
+          exceptionResolvedById: null,
+          exceptionNote: null,
+        }),
       },
     });
     await this.addEvent(tx, shipment.id, to, at, actor, extra, source);
@@ -440,40 +467,20 @@ export class ShipmentsService {
     shipmentId: bigint,
     code: FallbackCarrierCode,
     pickupAt?: Date,
+    opts: { reason?: string; ifMatch?: string } = {},
   ): Promise<void> {
     const shipment = await this.prisma.shipment.findUniqueOrThrow({
       where: { id: shipmentId },
       include: { factory: { include: { addresses: true, contacts: true } }, carrier: true, cartons: true },
     });
+    assertIfMatch(opts.ifMatch, shipmentEtag(shipment), { required: false });
     if (shipment.status !== 'ready' || shipment.carrier.code !== 'factory_fleet')
       throw new DomainException('shipments.invalid_status', { params: { status: shipment.status } });
     await this.prisma.withTx((tx) => this.assertShippable(tx, shipment.id));
-    const pickup =
-      shipment.factory.addresses.find((a) => a.kind === 'pickup') ??
-      shipment.factory.addresses.find((a) => a.kind === 'plant');
-    const contact = shipment.factory.contacts.find((c) => c.isPrimary) ?? shipment.factory.contacts[0];
-    if (!pickup?.postcode || !contact?.phone)
-      throw new DomainException('shipments.carrier_unavailable', {
-        params: { carrier: code, reason: 'the factory has no pickup address or contact phone' },
-      });
-    const perCarton = Math.max(1, Math.round(shipment.weightG / shipment.cartonsCount));
+    const route = this.route(shipment, code);
     const { booking, carrierId, costAmount } = await this.carriers.book(code, {
       reference: shipment.shipmentNo,
-      from: {
-        name: contact.name,
-        phone: contact.phone,
-        addressLine: [pickup.line1, pickup.line2].filter(Boolean).join(' '),
-        postcode: pickup.postcode,
-        lat: pickup.lat === null ? null : Number(pickup.lat),
-        lng: pickup.lng === null ? null : Number(pickup.lng),
-      },
-      to: {
-        name: shipment.recipientName,
-        phone: shipment.phone,
-        addressLine: [shipment.line1, shipment.line2].filter(Boolean).join(' '),
-        postcode: shipment.postcode,
-      },
-      parcels: shipment.cartons.map((c) => ({ weightG: c.weightG ?? perCarton })),
+      ...route,
       pickupAt: pickupAt ?? null,
     });
     await this.prisma.withTx(async (tx) => {
@@ -494,15 +501,271 @@ export class ShipmentsService {
           rowVersion: { increment: 1 },
         },
       });
-      await this.addEvent(tx, shipment.id, 'ready', at, actor, { note: `booked with ${code}` }, 'staff');
+      const note = opts.reason ? `booked with ${code}: ${opts.reason}` : `booked with ${code}`;
+      await this.addEvent(tx, shipment.id, 'ready', at, actor, { note }, 'staff');
       await this.record(
         tx,
         locked,
         'shipment.carrier_booked',
-        { carrier: code, trackingNo: booking.trackingNo },
+        { carrier: code, trackingNo: booking.trackingNo, reason: opts.reason ?? null },
         actor,
       );
     });
+  }
+
+  /** Quotes of every fallback carrier for the trip, from the factory's pickup address (D-114). */
+  async carrierQuotes(shipmentId: bigint) {
+    const shipment = await this.prisma.shipment.findUniqueOrThrow({
+      where: { id: shipmentId },
+      include: { factory: { include: { addresses: true, contacts: true } }, carrier: true, cartons: true },
+    });
+    if (shipment.status !== 'draft' && shipment.status !== 'ready')
+      throw new DomainException('shipments.invalid_status', { params: { status: shipment.status } });
+    const { from, to, parcels } = this.route(shipment, 'fallback');
+    return this.carriers.quoteAll({ from, to, parcels });
+  }
+
+  /** Pickup at the factory (pickup, else plant address; primary contact) to the destination, per carton. */
+  private route(
+    shipment: Shipment & {
+      factory: {
+        addresses: {
+          kind: string;
+          line1: string;
+          line2: string | null;
+          postcode: string | null;
+          lat: { toString(): string } | null;
+          lng: { toString(): string } | null;
+        }[];
+        contacts: { isPrimary: boolean; name: string; phone: string | null }[];
+      };
+      cartons: { weightG: number | null }[];
+    },
+    carrier: string,
+  ): Pick<CarrierBookingRequest, 'from' | 'to' | 'parcels'> {
+    const pickup =
+      shipment.factory.addresses.find((a) => a.kind === 'pickup') ??
+      shipment.factory.addresses.find((a) => a.kind === 'plant');
+    const contact = shipment.factory.contacts.find((c) => c.isPrimary) ?? shipment.factory.contacts[0];
+    if (!pickup?.postcode || !contact?.phone)
+      throw new DomainException('shipments.carrier_unavailable', {
+        params: { carrier, reason: 'the factory has no pickup address or contact phone' },
+      });
+    const perCarton = Math.max(1, Math.round(shipment.weightG / shipment.cartonsCount));
+    return {
+      from: {
+        name: contact.name,
+        phone: contact.phone,
+        addressLine: [pickup.line1, pickup.line2].filter(Boolean).join(' '),
+        postcode: pickup.postcode,
+        lat: pickup.lat === null ? null : Number(pickup.lat),
+        lng: pickup.lng === null ? null : Number(pickup.lng),
+      },
+      to: {
+        name: shipment.recipientName,
+        phone: shipment.phone,
+        addressLine: [shipment.line1, shipment.line2].filter(Boolean).join(' '),
+        postcode: shipment.postcode,
+      },
+      parcels:
+        shipment.cartons.length > 0
+          ? shipment.cartons.map((c) => ({ weightG: c.weightG ?? perCarton }))
+          : Array.from({ length: shipment.cartonsCount }, () => ({ weightG: perCarton })),
+    };
+  }
+
+  // --- exceptions and splits (D-230) --------------------------------------------------------------------------
+
+  /** failed → retry (in transit again) or return; returned → closed as retry (ships again) or cancel. */
+  async resolveException(
+    actor: UserActor,
+    shipmentId: bigint,
+    resolution: 'retry' | 'return' | 'cancel',
+    reason: string,
+    ifMatch?: string,
+  ): Promise<void> {
+    await this.prisma.withTx(async (tx) => {
+      const shipment = await this.lock(tx, shipmentId);
+      assertIfMatch(ifMatch, shipmentEtag(shipment), { required: false });
+      if (!(RESOLUTIONS[shipment.status] ?? []).includes(resolution))
+        throw new DomainException('shipments.invalid_status', { params: { status: shipment.status } });
+      const at = new Date();
+      if (shipment.status === 'failed') {
+        const to = resolution === 'retry' ? 'in_transit' : 'returned';
+        await this.transition(tx, shipment, to, at, actor, 'staff', { note: reason });
+      } else if (shipment.exceptionResolvedAt) {
+        throw new DomainException('shipments.invalid_status', { params: { status: 'returned (closed)' } });
+      }
+      await tx.shipment.update({
+        where: { id: shipment.id },
+        data: {
+          exceptionResolution: resolution,
+          exceptionResolvedAt: at,
+          exceptionResolvedById: actor.userId,
+          exceptionNote: reason,
+          updatedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      await this.record(
+        tx,
+        shipment,
+        'shipment.exception_resolved',
+        { from: shipment.status, resolution, reason },
+        actor,
+      );
+    });
+  }
+
+  /** Moves pieces of a draft shipment to a new draft to the same address (D-230); returns the new one. */
+  async split(actor: UserActor, shipmentId: bigint, input: SplitInput, ifMatch?: string): Promise<string> {
+    const invalid = (path: string, message: string): never => {
+      throw new DomainException('validation.failed', { errors: [{ path, code: 'split', message }] });
+    };
+    const destinationIds = input.items.map((i) => i.destinationId);
+    if (new Set(destinationIds).size !== destinationIds.length)
+      invalid('items', 'each destination appears once');
+    return this.prisma.withTx(async (tx) => {
+      const shipment = await this.lock(tx, shipmentId);
+      assertIfMatch(ifMatch, shipmentEtag(shipment), { required: false });
+      if (shipment.status !== 'draft')
+        throw new DomainException('shipments.invalid_status', { params: { status: shipment.status } });
+      const items = await tx.shipmentItem.findMany({
+        where: { shipmentId: shipment.id },
+        include: { orderDestination: { select: { publicId: true } } },
+      });
+      const moves = input.items.map((m, i) => {
+        const item = items.find((x) => x.orderDestination.publicId === m.destinationId);
+        if (!item) return invalid(`items.${i}.destinationId`, 'not on this shipment');
+        if (m.quantity > item.quantity) invalid(`items.${i}.quantity`, `at most ${item.quantity}`);
+        return { item, quantity: m.quantity };
+      });
+      const moved = moves.reduce((a, m) => a + m.quantity, 0);
+      const total = items.reduce((a, i) => a + i.quantity, 0);
+      if (moved >= total) invalid('items', 'at least one piece stays on the shipment');
+      if (input.cartonsCount >= shipment.cartonsCount)
+        invalid('cartonsCount', `fewer than the shipment's ${shipment.cartonsCount}`);
+      if (input.weightG >= shipment.weightG)
+        invalid('weightG', `less than the shipment's ${shipment.weightG}`);
+      const volume = shipment.volumeCm3 === null ? null : Number(shipment.volumeCm3);
+      if (input.volumeCm3 !== undefined && volume !== null && input.volumeCm3 >= volume)
+        invalid('volumeCm3', `less than the shipment's ${volume}`);
+
+      const at = new Date();
+      const created = await tx.shipment.create({
+        data: {
+          shipmentNo: await this.numbering.next(tx, 'shipment', at, shipment.entityId),
+          entityId: shipment.entityId,
+          factoryId: shipment.factoryId,
+          carrierId: shipment.carrierId,
+          recipientName: shipment.recipientName,
+          phone: shipment.phone,
+          line1: shipment.line1,
+          line2: shipment.line2,
+          subdistrictId: shipment.subdistrictId,
+          postcode: shipment.postcode,
+          provinceId: shipment.provinceId,
+          cartonsCount: input.cartonsCount,
+          weightG: input.weightG,
+          volumeCm3: input.volumeCm3 === undefined ? null : BigInt(input.volumeCm3),
+          plannedShipOn: shipment.plannedShipOn,
+          splitFromId: shipment.id,
+          createdById: actor.userId,
+        },
+      });
+      for (const { item, quantity } of moves) {
+        if (quantity === item.quantity)
+          await tx.shipmentItem.update({ where: { id: item.id }, data: { shipmentId: created.id } });
+        else {
+          await tx.shipmentItem.update({
+            where: { id: item.id },
+            data: { quantity: item.quantity - quantity },
+          });
+          await tx.shipmentItem.create({
+            data: {
+              shipmentId: created.id,
+              orderId: item.orderId,
+              orderDestinationId: item.orderDestinationId,
+              productionJobId: item.productionJobId,
+              quantity,
+            },
+          });
+        }
+      }
+      await tx.shipment.update({
+        where: { id: shipment.id },
+        data: {
+          cartonsCount: shipment.cartonsCount - input.cartonsCount,
+          weightG: shipment.weightG - input.weightG,
+          ...(input.volumeCm3 !== undefined &&
+            volume !== null && { volumeCm3: BigInt(volume - input.volumeCm3) }),
+          updatedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
+      });
+      await this.addEvent(tx, created.id, 'draft', at, actor, { note: input.reason });
+      const split = {
+        createdShipmentId: created.publicId,
+        createdShipmentNo: created.shipmentNo,
+        items: moves.map((m) => ({ destinationId: m.item.orderDestination.publicId, quantity: m.quantity })),
+        reason: input.reason,
+      };
+      await this.record(tx, shipment, 'shipment.split', split, actor);
+      await this.record(
+        tx,
+        created,
+        'shipment.created',
+        { splitFrom: shipment.publicId, cartonsCount: input.cartonsCount },
+        actor,
+      );
+      return created.publicId;
+    });
+  }
+
+  // --- proof-of-delivery review (D-229) ----------------------------------------------------------------------
+
+  /** Staff accept or reject (with a note) a recorded POD; the delivery itself stands. */
+  async reviewPod(
+    actor: UserActor,
+    shipmentId: bigint,
+    decision: 'accepted' | 'rejected',
+    note: string | null,
+    ifMatch?: string,
+  ): Promise<void> {
+    if (decision === 'rejected' && !note)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'note', code: 'required', message: 'a rejection says why' }],
+      });
+    await this.prisma.withTx(async (tx) => {
+      const shipment = await this.lock(tx, shipmentId);
+      assertIfMatch(ifMatch, shipmentEtag(shipment), { required: false });
+      const pod = await tx.proofOfDelivery.findUnique({ where: { shipmentId: shipment.id } });
+      if (!pod)
+        throw new DomainException('shipments.invalid_status', { params: { status: shipment.status } });
+      await tx.proofOfDeliveryReview.create({
+        data: { proofOfDeliveryId: pod.id, decision, note, reviewedById: actor.userId },
+      });
+      await tx.shipment.update({
+        where: { id: shipment.id },
+        data: { updatedById: actor.userId, rowVersion: { increment: 1 } },
+      });
+      await this.record(
+        tx,
+        shipment,
+        decision === 'accepted' ? 'shipment.pod_accepted' : 'shipment.pod_rejected',
+        { podId: pod.publicId, note },
+        actor,
+      );
+    });
+  }
+
+  /** Shipments not picked up yet whose orders still owe instalments due before shipping (B3.2). */
+  async blockedByPayment(rows: { id: bigint; status: ShipmentStatus; items: { orderId: bigint }[] }[]) {
+    const waiting = rows.filter((r) => r.status === 'draft' || r.status === 'ready');
+    const orderIds = [...new Set(waiting.flatMap((r) => r.items.map((i) => i.orderId)))];
+    const open = new Map<bigint, boolean>();
+    for (const orderId of orderIds) open.set(orderId, await this.schedules.canShip(orderId));
+    return new Set(waiting.filter((r) => r.items.some((i) => !open.get(i.orderId))).map((r) => r.id));
   }
 
   // --- helpers --------------------------------------------------------------------------------------------

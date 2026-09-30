@@ -757,6 +757,10 @@ const CHECKS = [
   'ck_audit_samples__size',
   'ck_audit_samples__population',
   'ck_pbc_exports__sha256',
+  // --- U-B0.2 delivery exceptions, splits, POD reviews (D-229, D-230)
+  'ck_shipments__exception_resolution',
+  'ck_shipments__split_from',
+  'ck_proof_of_delivery_reviews__note',
 ];
 
 const TRIGGERS = [
@@ -969,6 +973,8 @@ const TRIGGERS = [
   'tg_close_tasks__no_delete',
   'tg_audit_samples__append_only',
   'tg_pbc_exports__append_only',
+  // --- U-B0.2 POD reviews (D-229)
+  'tg_proof_of_delivery_reviews__append_only',
 ];
 
 /** Expression (hand-written) and partial (Prisma preview) indexes. */

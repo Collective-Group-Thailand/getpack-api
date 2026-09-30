@@ -23,11 +23,45 @@ export const SHIPMENT_INCLUDE = {
     },
   },
   events: { orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }] },
-  proofOfDelivery: { include: { signatureFile: { select: { publicId: true } } } },
+  proofOfDelivery: {
+    include: {
+      signatureFile: { select: { publicId: true } },
+      reviews: {
+        orderBy: [{ reviewedAt: 'desc' }, { id: 'desc' }],
+        take: 1,
+        include: { reviewedBy: { select: { publicId: true, displayName: true } } },
+      },
+    },
+  },
+  province: { select: { publicId: true, nameTh: true, nameEn: true } },
+  cartons: { orderBy: { seq: 'asc' } },
+  splitFrom: { select: { publicId: true, shipmentNo: true } },
+  exceptionResolvedBy: { select: { publicId: true, displayName: true } },
 } satisfies Prisma.ShipmentInclude;
 export type ShipmentRow = Prisma.ShipmentGetPayload<{ include: typeof SHIPMENT_INCLUDE }>;
 
 const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
+const province = (row: ShipmentRow) => ({
+  id: row.province.publicId,
+  nameTh: row.province.nameTh,
+  nameEn: row.province.nameEn,
+});
+const userRef = (u: { publicId: string; displayName: string } | null) =>
+  u ? { id: u.publicId, displayName: u.displayName } : null;
+
+function exceptionDto(row: ShipmentRow): AdminShipmentDto['exception'] {
+  if (row.status !== 'failed' && row.status !== 'returned') return null;
+  const event = [...row.events].reverse().find((e) => e.status === row.status);
+  return {
+    status: row.status,
+    note: event?.note ?? null,
+    occurredAt: toBangkokIso(event?.occurredAt ?? row.statusChangedAt),
+    resolution: row.exceptionResolution,
+    resolutionNote: row.exceptionNote,
+    resolvedAt: iso(row.exceptionResolvedAt),
+    resolvedBy: userRef(row.exceptionResolvedBy),
+  };
+}
 const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 
 function podDto(row: ShipmentRow, photos: string[]): ProofOfDeliveryDto | null {
@@ -58,6 +92,7 @@ export function partnerShipmentDto(row: ShipmentRow, podPhotos: string[] = []): 
       line1: row.line1,
       line2: row.line2,
       postcode: row.postcode,
+      province: province(row),
     },
     cartonsCount: row.cartonsCount,
     weightG: row.weightG,
@@ -92,7 +127,9 @@ export function adminShipmentDto(
   row: ShipmentRow,
   grants: { cost: boolean },
   podPhotos: string[] = [],
+  blockedByPayment = false,
 ): AdminShipmentDto {
+  const review = row.proofOfDelivery?.reviews[0];
   return {
     ...partnerShipmentDto(row, podPhotos),
     factoryId: row.factory.publicId,
@@ -103,6 +140,18 @@ export function adminShipmentDto(
     carrierCostAmount: grants.cost ? (row.carrierCostAmount?.toFixed(2) ?? null) : null,
     cancelledAt: iso(row.cancelledAt),
     cancelReason: row.cancelReason,
+    cartons: row.cartons.map((c) => ({ seq: c.seq, labelCode: c.labelCode, weightG: c.weightG })),
+    blockedByPayment,
+    exception: exceptionDto(row),
+    podReview: row.proofOfDelivery
+      ? {
+          state: review?.decision ?? 'pending',
+          note: review?.note ?? null,
+          reviewedAt: iso(review?.reviewedAt ?? null),
+          reviewedBy: userRef(review?.reviewedBy ?? null),
+        }
+      : null,
+    splitFrom: row.splitFrom ? { id: row.splitFrom.publicId, shipmentNo: row.splitFrom.shipmentNo } : null,
   };
 }
 
@@ -126,6 +175,7 @@ export function storeShipmentDto(
       line1: row.line1,
       line2: row.line2,
       postcode: row.postcode,
+      province: province(row),
     },
     cartonsCount: row.cartonsCount,
     pickedUpAt: iso(row.pickedUpAt),

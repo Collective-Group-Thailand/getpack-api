@@ -1,5 +1,7 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { GeoRefDto } from '@modules/customers/customers.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -38,6 +40,9 @@ export type ShipmentStatusValue = (typeof SHIPMENT_STATUSES)[number];
 export const TRANSIT_STATUSES = ['in_transit', 'out_for_delivery', 'failed', 'returned'] as const;
 export const CARRIER_CODES = ['factory_fleet', 'flash_express', 'deliveree'] as const;
 export const FALLBACK_CARRIERS = ['flash_express', 'deliveree'] as const;
+/** Staff work queues (U-B0.2): pickup, transit, delivery exceptions (D-230) and POD reviews (D-229). */
+export const SHIPMENT_QUEUES = ['awaiting_pickup', 'in_transit', 'exceptions', 'pod_review'] as const;
+export const EXCEPTION_RESOLUTIONS = ['retry', 'return', 'cancel'] as const;
 export const TOLERANCE_OUTCOMES = [
   'exact',
   'shortage_within',
@@ -166,6 +171,101 @@ export class BookCarrierDto {
   @IsOptional()
   @IsISO8601()
   pickupAt?: string;
+
+  @ApiPropertyOptional({
+    example: 'โรงงานไม่มีรถวิ่งเชียงราย',
+    minLength: 3,
+    maxLength: 400,
+    description: 'Why the factory’s fleet cannot serve (kept on the event and the audit trail)',
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(400)
+  reason?: string;
+}
+
+export class ResolveShipmentExceptionDto {
+  @ApiProperty({
+    enum: EXCEPTION_RESOLUTIONS,
+    enumName: 'ShipmentExceptionResolution',
+    example: 'retry',
+    description: 'failed: retry | return; returned: retry | cancel (D-230)',
+  })
+  @IsIn(EXCEPTION_RESOLUTIONS)
+  resolution!: (typeof EXCEPTION_RESOLUTIONS)[number];
+
+  @ApiProperty({ example: 'ลูกค้านัดรับใหม่พรุ่งนี้', minLength: 3, maxLength: 400 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(400)
+  reason!: string;
+}
+
+export class SplitItemDto {
+  @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.destination })
+  @IsUUID()
+  destinationId!: string;
+
+  @ApiProperty({
+    type: 'integer',
+    minimum: 1,
+    example: 200,
+    description: 'Pieces that move to the new shipment',
+  })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  quantity!: number;
+}
+
+export class SplitShipmentDto {
+  @ApiProperty({ type: [SplitItemDto] })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => SplitItemDto)
+  items!: SplitItemDto[];
+
+  @ApiProperty({ type: 'integer', minimum: 1, example: 1, description: 'Cartons of the new shipment' })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  cartonsCount!: number;
+
+  @ApiProperty({ type: 'integer', minimum: 1, example: 6000, description: 'Weight of the new shipment (g)' })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  weightG!: number;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, example: 40000 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  volumeCm3?: number;
+
+  @ApiProperty({ example: 'แยกส่งสองรอบ รถเล็ก', minLength: 3, maxLength: 400 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(400)
+  reason!: string;
+}
+
+export class ReviewPodDto {
+  @ApiPropertyOptional({
+    example: 'ลายเซ็นไม่ชัด',
+    minLength: 3,
+    maxLength: 500,
+    description: 'Required to reject (D-229)',
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
+  note?: string;
 }
 
 export class PodItemDto {
@@ -264,6 +364,29 @@ export class ShipmentListQuery extends PageQuery {
   orderId?: string;
 }
 
+export class AdminShipmentListQuery extends ShipmentListQuery {
+  @ApiPropertyOptional({
+    enum: SHIPMENT_QUEUES,
+    enumName: 'ShipmentQueue',
+    description:
+      'awaiting_pickup = packed; in_transit = picked up, in transit or out for delivery; exceptions = failed, or ' +
+      'returned and not closed (D-230); pod_review = delivered with a POD not reviewed yet (D-229)',
+  })
+  @IsOptional()
+  @IsIn(SHIPMENT_QUEUES)
+  queue?: (typeof SHIPMENT_QUEUES)[number];
+
+  @ApiPropertyOptional({ enum: CARRIER_CODES, enumName: 'CarrierCode' })
+  @IsOptional()
+  @IsIn(CARRIER_CODES)
+  carrier?: (typeof CARRIER_CODES)[number];
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'The shipping factory' })
+  @IsOptional()
+  @IsUUID()
+  factoryId?: string;
+}
+
 // --- responses -----------------------------------------------------------------------------------------
 
 export class ShipmentItemDto {
@@ -344,6 +467,9 @@ export class ShipmentDestinationDto {
 
   @ApiProperty({ example: '10110' })
   postcode!: string;
+
+  @ApiProperty({ type: GeoRefDto })
+  province!: GeoRefDto;
 }
 
 /** The factory's view (D-142): destination contacts, no price, no customer identity beyond the recipient. */
@@ -411,6 +537,74 @@ export class PartnerShipmentDto {
   note!: string | null;
 }
 
+export class ShipmentCartonDto {
+  @ApiProperty({ type: 'integer', example: 1 })
+  seq!: number;
+
+  @ApiProperty({ example: '9F3A0C1B2D4E-01', description: 'Printed on the carton label (QR → tracking)' })
+  labelCode!: string;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: null })
+  weightG!: number | null;
+}
+
+/** A failed or returned delivery and how staff resolved it (D-230). */
+export class ShipmentExceptionDto {
+  @ApiProperty({ enum: ['failed', 'returned'], enumName: 'ShipmentExceptionStatus', example: 'failed' })
+  status!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'ไม่มีผู้รับ',
+    description: 'From the failure event',
+  })
+  note!: string | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-21T15:00:00+07:00' })
+  occurredAt!: string;
+
+  @ApiProperty({
+    enum: EXCEPTION_RESOLUTIONS,
+    enumName: 'ShipmentExceptionResolution',
+    nullable: true,
+    example: null,
+  })
+  resolution!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  resolutionNote!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  resolvedAt!: string | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  resolvedBy!: UserRefDto | null;
+}
+
+/** The staff review of the proof of delivery (D-229). */
+export class PodReviewDto {
+  @ApiProperty({ enum: ['pending', 'accepted', 'rejected'], enumName: 'PodReviewState', example: 'pending' })
+  state!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  note!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  reviewedAt!: string | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  reviewedBy!: UserRefDto | null;
+}
+
+export class ShipmentRefDto {
+  @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.shipment })
+  id!: string;
+
+  @ApiProperty({ example: 'SH-2610-0001' })
+  shipmentNo!: string;
+}
+
 export class AdminShipmentDto extends PartnerShipmentDto {
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.factory })
   factoryId!: string;
@@ -443,6 +637,61 @@ export class AdminShipmentDto extends PartnerShipmentDto {
 
   @ApiProperty({ nullable: true, example: null })
   cancelReason!: string | null;
+
+  @ApiProperty({ type: [ShipmentCartonDto], description: 'One per carton once packed' })
+  cartons!: ShipmentCartonDto[];
+
+  @ApiProperty({
+    example: false,
+    description: 'Not picked up yet and an order still owes instalments due before shipping (B3.2)',
+  })
+  blockedByPayment!: boolean;
+
+  @ApiProperty({ type: ShipmentExceptionDto, nullable: true, description: 'Failed or returned (D-230)' })
+  exception!: ShipmentExceptionDto | null;
+
+  @ApiProperty({
+    type: PodReviewDto,
+    nullable: true,
+    description: 'Null without a proof of delivery (D-229)',
+  })
+  podReview!: PodReviewDto | null;
+
+  @ApiProperty({ type: ShipmentRefDto, nullable: true, description: 'The shipment this one was split from' })
+  splitFrom!: ShipmentRefDto | null;
+}
+
+export class SplitShipmentResultDto {
+  @ApiProperty({ type: AdminShipmentDto, description: 'The original, with what stays on it' })
+  shipment!: AdminShipmentDto;
+
+  @ApiProperty({ type: AdminShipmentDto, description: 'The new draft shipment' })
+  created!: AdminShipmentDto;
+}
+
+export class ShipmentCarrierQuoteDto {
+  @ApiProperty({ enum: FALLBACK_CARRIERS, enumName: 'FallbackCarrier', example: 'flash_express' })
+  carrier!: string;
+
+  @ApiProperty({ example: true, description: 'The carrier quoted the trip' })
+  available!: boolean;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '85.00',
+    description: 'Packio’s cost (P25), THB; only with `factory_cost.read` (D-141)',
+  })
+  amount!: string | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 2 })
+  transitDays!: number | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Why the carrier cannot quote' })
+  reason!: string | null;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
 }
 
 export class CreatedShipmentDto extends PartnerShipmentDto {}
@@ -459,6 +708,7 @@ const SHIPMENT_BASE = {
     line1: '99/9 ถนนสุขุมวิท',
     line2: 'แขวงคลองตัน เขตคลองเตย',
     postcode: '10110',
+    province: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000f2007', nameTh: 'กรุงเทพมหานคร', nameEn: 'Bangkok' },
   },
   cartonsCount: 3,
   weightG: 18000,
@@ -502,6 +752,15 @@ export const ADMIN_SHIPMENT_EXAMPLE = {
   carrierCostAmount: null,
   cancelledAt: null,
   cancelReason: null,
+  cartons: [
+    { seq: 1, labelCode: '9F3A0C1B2D4E-01', weightG: null },
+    { seq: 2, labelCode: '9F3A0C1B2D4E-02', weightG: null },
+    { seq: 3, labelCode: '9F3A0C1B2D4E-03', weightG: null },
+  ],
+  blockedByPayment: false,
+  exception: null,
+  podReview: null,
+  splitFrom: null,
 };
 export const POD_EXAMPLE = {
   kind: 'factory_photo_signature',

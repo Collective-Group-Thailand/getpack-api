@@ -7450,6 +7450,11 @@
       },
       "AdminShipmentDto": {
         "properties": {
+          "blockedByPayment": {
+            "description": "Not picked up yet and an order still owes instalments due before shipping (B3.2)",
+            "example": false,
+            "type": "boolean"
+          },
           "cancelReason": {
             "example": null,
             "type": [
@@ -7488,6 +7493,13 @@
               "null"
             ]
           },
+          "cartons": {
+            "description": "One per carton once packed",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentCartonDto"
+            },
+            "type": "array"
+          },
           "cartonsCount": {
             "example": 3,
             "type": "integer"
@@ -7508,6 +7520,17 @@
               "$ref": "#/components/schemas/ShipmentEventDto"
             },
             "type": "array"
+          },
+          "exception": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentExceptionDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Failed or returned (D-230)"
           },
           "factoryCode": {
             "example": "F-0001",
@@ -7577,6 +7600,17 @@
               "null"
             ]
           },
+          "podReview": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PodReviewDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null without a proof of delivery (D-229)"
+          },
           "proofOfDelivery": {
             "anyOf": [
               {
@@ -7598,6 +7632,17 @@
           "shipmentNo": {
             "example": "SH-2610-0001",
             "type": "string"
+          },
+          "splitFrom": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The shipment this one was split from"
           },
           "status": {
             "allOf": [
@@ -7660,7 +7705,12 @@
           "payoutAmount",
           "carrierCostAmount",
           "cancelledAt",
-          "cancelReason"
+          "cancelReason",
+          "cartons",
+          "blockedByPayment",
+          "exception",
+          "podReview",
+          "splitFrom"
         ],
         "type": "object"
       },
@@ -10834,6 +10884,13 @@
           "pickupAt": {
             "example": "2026-10-20T10:00:00+07:00",
             "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the factory’s fleet cannot serve (kept on the event and the audit trail)",
+            "example": "โรงงานไม่มีรถวิ่งเชียงราย",
+            "maxLength": 400,
+            "minLength": 3,
             "type": "string"
           }
         },
@@ -36654,6 +36711,65 @@
         ],
         "type": "string"
       },
+      "PodReviewAction": {
+        "enum": [
+          "accept",
+          "reject"
+        ],
+        "type": "string"
+      },
+      "PodReviewDto": {
+        "properties": {
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reviewedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reviewedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PodReviewState"
+              }
+            ],
+            "example": "pending"
+          }
+        },
+        "required": [
+          "state",
+          "note",
+          "reviewedAt",
+          "reviewedBy"
+        ],
+        "type": "object"
+      },
+      "PodReviewState": {
+        "enum": [
+          "pending",
+          "accepted",
+          "rejected"
+        ],
+        "type": "string"
+      },
       "PointsEntryDto": {
         "properties": {
           "availableAt": {
@@ -44543,6 +44659,30 @@
         ],
         "type": "object"
       },
+      "ResolveShipmentExceptionDto": {
+        "properties": {
+          "reason": {
+            "example": "ลูกค้านัดรับใหม่พรุ่งนี้",
+            "maxLength": 400,
+            "minLength": 3,
+            "type": "string"
+          },
+          "resolution": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentExceptionResolution"
+              }
+            ],
+            "description": "failed: retry | return; returned: retry | cancel (D-230)",
+            "example": "retry"
+          }
+        },
+        "required": [
+          "resolution",
+          "reason"
+        ],
+        "type": "object"
+      },
       "ResolvedReportFiltersDto": {
         "properties": {
           "asOf": {
@@ -44820,6 +44960,18 @@
         "required": [
           "outcome"
         ],
+        "type": "object"
+      },
+      "ReviewPodDto": {
+        "properties": {
+          "note": {
+            "description": "Required to reject (D-229)",
+            "example": "ลายเซ็นไม่ชัด",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "ReviewStatus": {
@@ -48556,6 +48708,85 @@
         ],
         "type": "object"
       },
+      "ShipmentCarrierQuoteDto": {
+        "properties": {
+          "amount": {
+            "description": "Packio’s cost (P25), THB; only with `factory_cost.read` (D-141)",
+            "example": "85.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "available": {
+            "description": "The carrier quoted the trip",
+            "example": true,
+            "type": "boolean"
+          },
+          "carrier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FallbackCarrier"
+              }
+            ],
+            "example": "flash_express"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why the carrier cannot quote",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "transitDays": {
+            "example": 2,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "carrier",
+          "available",
+          "amount",
+          "transitDays",
+          "reason",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "ShipmentCartonDto": {
+        "properties": {
+          "labelCode": {
+            "description": "Printed on the carton label (QR → tracking)",
+            "example": "9F3A0C1B2D4E-01",
+            "type": "string"
+          },
+          "seq": {
+            "example": 1,
+            "type": "integer"
+          },
+          "weightG": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "seq",
+          "labelCode",
+          "weightG"
+        ],
+        "type": "object"
+      },
       "ShipmentDestinationDto": {
         "properties": {
           "line1": {
@@ -48577,6 +48808,9 @@
             "example": "10110",
             "type": "string"
           },
+          "province": {
+            "$ref": "#/components/schemas/GeoRefDto"
+          },
           "recipientName": {
             "example": "สมหญิง ใจดี",
             "type": "string"
@@ -48587,7 +48821,8 @@
           "phone",
           "line1",
           "line2",
-          "postcode"
+          "postcode",
+          "province"
         ],
         "type": "object"
       },
@@ -48643,6 +48878,92 @@
           "carrier_webhook",
           "carrier_poll",
           "staff"
+        ],
+        "type": "string"
+      },
+      "ShipmentExceptionDto": {
+        "properties": {
+          "note": {
+            "description": "From the failure event",
+            "example": "ไม่มีผู้รับ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurredAt": {
+            "example": "2026-10-21T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentExceptionResolution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "resolutionNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolvedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolvedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentExceptionStatus"
+              }
+            ],
+            "example": "failed"
+          }
+        },
+        "required": [
+          "status",
+          "note",
+          "occurredAt",
+          "resolution",
+          "resolutionNote",
+          "resolvedAt",
+          "resolvedBy"
+        ],
+        "type": "object"
+      },
+      "ShipmentExceptionResolution": {
+        "enum": [
+          "retry",
+          "return",
+          "cancel"
+        ],
+        "type": "string"
+      },
+      "ShipmentExceptionStatus": {
+        "enum": [
+          "failed",
+          "returned"
         ],
         "type": "string"
       },
@@ -48712,6 +49033,33 @@
           "jobId",
           "destinationId",
           "quantity"
+        ],
+        "type": "object"
+      },
+      "ShipmentQueue": {
+        "enum": [
+          "awaiting_pickup",
+          "in_transit",
+          "exceptions",
+          "pod_review"
+        ],
+        "type": "string"
+      },
+      "ShipmentRefDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "shipmentNo": {
+            "example": "SH-2610-0001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "shipmentNo"
         ],
         "type": "object"
       },
@@ -49811,6 +50159,93 @@
           "vatAmount",
           "grossAmount",
           "productTypeCode"
+        ],
+        "type": "object"
+      },
+      "SplitItemDto": {
+        "properties": {
+          "destinationId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Pieces that move to the new shipment",
+            "example": 200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "destinationId",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "SplitShipmentDto": {
+        "properties": {
+          "cartonsCount": {
+            "description": "Cartons of the new shipment",
+            "example": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SplitItemDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "reason": {
+            "example": "แยกส่งสองรอบ รถเล็ก",
+            "maxLength": 400,
+            "minLength": 3,
+            "type": "string"
+          },
+          "volumeCm3": {
+            "example": 40000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "weightG": {
+            "description": "Weight of the new shipment (g)",
+            "example": 6000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "cartonsCount",
+          "weightG",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "SplitShipmentResultDto": {
+        "properties": {
+          "created": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminShipmentDto"
+              }
+            ],
+            "description": "The new draft shipment"
+          },
+          "shipment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminShipmentDto"
+              }
+            ],
+            "description": "The original, with what stays on it"
+          }
+        },
+        "required": [
+          "shipment",
+          "created"
         ],
         "type": "object"
       },
@@ -221652,7 +222087,7 @@
     },
     "/v1/admin/shipments": {
       "get": {
-        "description": "Newest first; payout and carrier cost only with `factory_cost.read` (D-141).\n\nImplements: D-013, D-141.",
+        "description": "Newest first; payout and carrier cost only with `factory_cost.read` (D-141). `queue` picks a work queue (awaiting pickup, in transit, delivery exceptions D-230, POD reviews D-229); `carrier` and `factoryId` narrow it.\n\nImplements: D-013, D-141, D-229, D-230.",
         "operationId": "admin.shipments.list",
         "parameters": [
           {
@@ -221724,6 +222159,33 @@
             }
           },
           {
+            "description": "awaiting_pickup = packed; in_transit = picked up, in transit or out for delivery; exceptions = failed, or returned and not closed (D-230); pod_review = delivered with a POD not reviewed yet (D-229)",
+            "in": "query",
+            "name": "queue",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ShipmentQueue"
+            }
+          },
+          {
+            "in": "query",
+            "name": "carrier",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CarrierCode"
+            }
+          },
+          {
+            "description": "The shipping factory",
+            "in": "query",
+            "name": "factoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -221734,11 +222196,29 @@
                 "example": {
                   "data": [
                     {
+                      "blockedByPayment": false,
                       "cancelReason": null,
                       "cancelledAt": null,
                       "carrier": "factory_fleet",
                       "carrierBookingRef": null,
                       "carrierCostAmount": null,
+                      "cartons": [
+                        {
+                          "labelCode": "9F3A0C1B2D4E-01",
+                          "seq": 1,
+                          "weightG": null
+                        },
+                        {
+                          "labelCode": "9F3A0C1B2D4E-02",
+                          "seq": 2,
+                          "weightG": null
+                        },
+                        {
+                          "labelCode": "9F3A0C1B2D4E-03",
+                          "seq": 3,
+                          "weightG": null
+                        }
+                      ],
                       "cartonsCount": 3,
                       "deliveredAt": null,
                       "destination": {
@@ -221746,6 +222226,11 @@
                         "line2": "แขวงคลองตัน เขตคลองเตย",
                         "phone": "+66810001234",
                         "postcode": "10110",
+                        "province": {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                          "nameEn": "Bangkok",
+                          "nameTh": "กรุงเทพมหานคร"
+                        },
                         "recipientName": "สมหญิง ใจดี"
                       },
                       "events": [
@@ -221757,6 +222242,7 @@
                           "status": "ready"
                         }
                       ],
+                      "exception": null,
                       "factoryCode": "F-0001",
                       "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -221776,9 +222262,11 @@
                       "payoutAmount": "120.00",
                       "pickedUpAt": null,
                       "plannedShipOn": "2026-10-20",
+                      "podReview": null,
                       "proofOfDelivery": null,
                       "readyAt": "2026-10-19T16:00:00+07:00",
                       "shipmentNo": "SH-2610-0001",
+                      "splitFrom": null,
                       "status": "ready",
                       "trackingNo": null,
                       "trackingUrl": null,
@@ -221948,7 +222436,7 @@
     },
     "/v1/admin/shipments/{shipmentId}": {
       "get": {
-        "description": "Items, events, POD, carrier booking; costs per D-141.\n\nImplements: D-013, D-141.",
+        "description": "Items, cartons, events, POD with its review (D-229), the delivery exception (D-230), carrier booking, whether unpaid instalments block pickup (B3.2); costs per D-141. The `ETag` guards the staff actions.\n\nImplements: D-013, D-141, D-229, D-230.",
         "operationId": "admin.shipments.get",
         "parameters": [
           {
@@ -221969,11 +222457,29 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "cancelReason": null,
                   "cancelledAt": null,
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -221981,6 +222487,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -221992,6 +222503,7 @@
                       "status": "ready"
                     }
                   ],
+                  "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -222011,9 +222523,11 @@
                   "payoutAmount": "120.00",
                   "pickedUpAt": null,
                   "plannedShipOn": "2026-10-20",
+                  "podReview": null,
                   "proofOfDelivery": null,
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
+                  "splitFrom": null,
                   "status": "ready",
                   "trackingNo": null,
                   "trackingUrl": null,
@@ -222027,6 +222541,9 @@
             },
             "description": "Shipment",
             "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -222181,7 +222698,7 @@
     },
     "/v1/admin/shipments/{shipmentId}/actions/book-carrier": {
       "post": {
-        "description": "Where the factory’s fleet cannot serve the area (D-013, D-114): Packio’s carrier account books the pickup at the factory for a packed shipment; the carrier’s quote is kept as Packio’s cost (P25). The shipping gate applies. Carrier callbacks then move the shipment; delivery by carrier POD.\n\nImplements: D-013, D-114.",
+        "description": "Where the factory’s fleet cannot serve the area (D-013, D-114): Packio’s carrier account books the pickup at the factory for a packed shipment; the carrier’s quote is kept as Packio’s cost (P25). The shipping gate applies. Carrier callbacks then move the shipment; delivery by carrier POD. An optional `reason` is kept on the event and the audit trail.\n\nImplements: D-013, D-114.",
         "operationId": "admin.shipments.bookCarrier",
         "parameters": [
           {
@@ -222192,6 +222709,9 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchOptional"
           },
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -222206,7 +222726,8 @@
               "examples": {
                 "default": {
                   "value": {
-                    "carrier": "flash_express"
+                    "carrier": "flash_express",
+                    "reason": "โรงงานไม่มีรถวิ่งเชียงราย"
                   }
                 }
               },
@@ -222222,11 +222743,29 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "cancelReason": null,
                   "cancelledAt": null,
                   "carrier": "flash_express",
                   "carrierBookingRef": "FLASH-1",
                   "carrierCostAmount": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -222234,6 +222773,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -222245,6 +222789,7 @@
                       "status": "ready"
                     }
                   ],
+                  "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -222264,9 +222809,11 @@
                   "payoutAmount": "120.00",
                   "pickedUpAt": null,
                   "plannedShipOn": "2026-10-20",
+                  "podReview": null,
                   "proofOfDelivery": null,
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
+                  "splitFrom": null,
                   "status": "ready",
                   "trackingNo": "TH0123",
                   "trackingUrl": null,
@@ -222280,6 +222827,9 @@
             },
             "description": "Booked",
             "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
               "Idempotent-Replayed": {
                 "$ref": "#/components/headers/IdempotentReplayed"
               },
@@ -222409,6 +222959,26 @@
               }
             },
             "description": "Problem: `idempotency.in_progress`, `shipments.inspection_pending`, `shipments.invalid_status`, `shipments.payment_pending`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -222562,11 +223132,29 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "cancelReason": null,
                   "cancelledAt": null,
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -222574,6 +223162,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -222585,6 +223178,7 @@
                       "status": "ready"
                     }
                   ],
+                  "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -222604,9 +223198,11 @@
                   "payoutAmount": "120.00",
                   "pickedUpAt": null,
                   "plannedShipOn": "2026-10-20",
+                  "podReview": null,
                   "proofOfDelivery": null,
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
+                  "splitFrom": null,
                   "status": "cancelled",
                   "trackingNo": null,
                   "trackingUrl": null,
@@ -222853,6 +223449,1011 @@
         ]
       }
     },
+    "/v1/admin/shipments/{shipmentId}/actions/resolve-exception": {
+      "post": {
+        "description": "D-230: a failed delivery → `retry` (in transit again for another attempt) or `return` (the goods go back to the factory and their quantity can ship again on a new trip); a returned shipment is closed as `retry` (it ships again on a new trip) or `cancel` (it will not be delivered). With a reason; audited, event `shipment.exception_resolved`.\n\nImplements: D-230, D-013.",
+        "operationId": "admin.shipments.resolveException",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shipmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchOptional"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้านัดรับใหม่พรุ่งนี้",
+                    "resolution": "retry"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ResolveShipmentExceptionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "blockedByPayment": false,
+                  "cancelReason": null,
+                  "cancelledAt": null,
+                  "carrier": "factory_fleet",
+                  "carrierBookingRef": null,
+                  "carrierCostAmount": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
+                  "cartonsCount": 3,
+                  "deliveredAt": null,
+                  "destination": {
+                    "line1": "99/9 ถนนสุขุมวิท",
+                    "line2": "แขวงคลองตัน เขตคลองเตย",
+                    "phone": "+66810001234",
+                    "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
+                    "recipientName": "สมหญิง ใจดี"
+                  },
+                  "events": [
+                    {
+                      "location": null,
+                      "note": null,
+                      "occurredAt": "2026-10-19T16:00:00+07:00",
+                      "source": "factory",
+                      "status": "ready"
+                    }
+                  ],
+                  "exception": null,
+                  "factoryCode": "F-0001",
+                  "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "items": [
+                    {
+                      "deliveredQuantity": null,
+                      "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+                      "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "jobNo": "JOB-2610-0001",
+                      "orderCode": "PK-2610-0001-01",
+                      "quantity": 600
+                    }
+                  ],
+                  "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "note": null,
+                  "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
+                  "payoutAmount": "120.00",
+                  "pickedUpAt": "2026-10-20T10:00:00+07:00",
+                  "plannedShipOn": "2026-10-20",
+                  "podReview": null,
+                  "proofOfDelivery": null,
+                  "readyAt": "2026-10-19T16:00:00+07:00",
+                  "shipmentNo": "SH-2610-0001",
+                  "splitFrom": null,
+                  "status": "in_transit",
+                  "trackingNo": null,
+                  "trackingUrl": null,
+                  "volumeCm3": 120000,
+                  "weightG": 18000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminShipmentDto"
+                }
+              }
+            },
+            "description": "Resolved",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "shipments.invalid_status": {
+                    "$ref": "#/components/examples/problem.shipments.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `shipments.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Resolve a failed or returned delivery",
+        "tags": [
+          "admin.logistics"
+        ],
+        "x-required-permissions": [
+          "shipments.manage"
+        ]
+      }
+    },
+    "/v1/admin/shipments/{shipmentId}/actions/split": {
+      "post": {
+        "description": "Moves pieces (per destination) with their cartons and weight to a new draft shipment to the same address from the same factory (D-230); at least one piece, carton and gram stays. A packed shipment is not split (labels, tracking link and payout are frozen): cancel and re-pack it. Audited, events `shipment.split` and `shipment.created`.\n\nImplements: D-230, D-013.",
+        "operationId": "admin.shipments.split",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shipmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchOptional"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "cartonsCount": 1,
+                    "items": [
+                      {
+                        "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+                        "quantity": 200
+                      }
+                    ],
+                    "reason": "แยกส่งสองรอบ รถเล็ก",
+                    "weightG": 6000
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SplitShipmentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "created": {
+                    "blockedByPayment": false,
+                    "cancelReason": null,
+                    "cancelledAt": null,
+                    "carrier": "factory_fleet",
+                    "carrierBookingRef": null,
+                    "carrierCostAmount": null,
+                    "cartons": [],
+                    "cartonsCount": 1,
+                    "deliveredAt": null,
+                    "destination": {
+                      "line1": "99/9 ถนนสุขุมวิท",
+                      "line2": "แขวงคลองตัน เขตคลองเตย",
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "province": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                        "nameEn": "Bangkok",
+                        "nameTh": "กรุงเทพมหานคร"
+                      },
+                      "recipientName": "สมหญิง ใจดี"
+                    },
+                    "events": [
+                      {
+                        "location": null,
+                        "note": null,
+                        "occurredAt": "2026-10-19T16:00:00+07:00",
+                        "source": "factory",
+                        "status": "ready"
+                      }
+                    ],
+                    "exception": null,
+                    "factoryCode": "F-0001",
+                    "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2008",
+                    "items": [
+                      {
+                        "deliveredQuantity": null,
+                        "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+                        "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                        "jobNo": "JOB-2610-0001",
+                        "orderCode": "PK-2610-0001-01",
+                        "quantity": 600
+                      }
+                    ],
+                    "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                    "note": null,
+                    "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
+                    "payoutAmount": "120.00",
+                    "pickedUpAt": null,
+                    "plannedShipOn": "2026-10-20",
+                    "podReview": null,
+                    "proofOfDelivery": null,
+                    "readyAt": null,
+                    "shipmentNo": "SH-2610-0002",
+                    "splitFrom": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                      "shipmentNo": "SH-2610-0001"
+                    },
+                    "status": "draft",
+                    "trackingNo": null,
+                    "trackingUrl": null,
+                    "volumeCm3": 120000,
+                    "weightG": 6000
+                  },
+                  "shipment": {
+                    "blockedByPayment": false,
+                    "cancelReason": null,
+                    "cancelledAt": null,
+                    "carrier": "factory_fleet",
+                    "carrierBookingRef": null,
+                    "carrierCostAmount": null,
+                    "cartons": [],
+                    "cartonsCount": 2,
+                    "deliveredAt": null,
+                    "destination": {
+                      "line1": "99/9 ถนนสุขุมวิท",
+                      "line2": "แขวงคลองตัน เขตคลองเตย",
+                      "phone": "+66810001234",
+                      "postcode": "10110",
+                      "province": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                        "nameEn": "Bangkok",
+                        "nameTh": "กรุงเทพมหานคร"
+                      },
+                      "recipientName": "สมหญิง ใจดี"
+                    },
+                    "events": [
+                      {
+                        "location": null,
+                        "note": null,
+                        "occurredAt": "2026-10-19T16:00:00+07:00",
+                        "source": "factory",
+                        "status": "ready"
+                      }
+                    ],
+                    "exception": null,
+                    "factoryCode": "F-0001",
+                    "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                    "items": [
+                      {
+                        "deliveredQuantity": null,
+                        "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+                        "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                        "jobNo": "JOB-2610-0001",
+                        "orderCode": "PK-2610-0001-01",
+                        "quantity": 600
+                      }
+                    ],
+                    "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                    "note": null,
+                    "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
+                    "payoutAmount": "120.00",
+                    "pickedUpAt": null,
+                    "plannedShipOn": "2026-10-20",
+                    "podReview": null,
+                    "proofOfDelivery": null,
+                    "readyAt": null,
+                    "shipmentNo": "SH-2610-0001",
+                    "splitFrom": null,
+                    "status": "draft",
+                    "trackingNo": null,
+                    "trackingUrl": null,
+                    "volumeCm3": 120000,
+                    "weightG": 18000
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SplitShipmentResultDto"
+                }
+              }
+            },
+            "description": "The original and the new shipment",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "shipments.invalid_status": {
+                    "$ref": "#/components/examples/problem.shipments.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `shipments.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Split a draft shipment",
+        "tags": [
+          "admin.logistics"
+        ],
+        "x-required-permissions": [
+          "shipments.manage"
+        ]
+      }
+    },
+    "/v1/admin/shipments/{shipmentId}/carrier-quotes": {
+      "post": {
+        "description": "Every fallback carrier’s quote for this trip — pickup at the factory, the destination, one parcel per carton (D-114) — before booking; a carrier that is not enabled, has no account or cannot quote comes back unavailable with the reason. Amounts are Packio’s cost, shown only with `factory_cost.read` (D-141). Nothing is booked or stored.\n\nImplements: D-013, D-114, D-141.",
+        "operationId": "admin.shipments.carrierQuotes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shipmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "amount": null,
+                    "available": false,
+                    "carrier": "deliveree",
+                    "currency": "THB",
+                    "reason": "not enabled",
+                    "transitDays": null
+                  },
+                  {
+                    "amount": "85.00",
+                    "available": true,
+                    "carrier": "flash_express",
+                    "currency": "THB",
+                    "reason": null,
+                    "transitDays": 2
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ShipmentCarrierQuoteDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Quotes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipments.invalid_status": {
+                    "$ref": "#/components/examples/problem.shipments.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipments.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipments.carrier_unavailable": {
+                    "$ref": "#/components/examples/problem.shipments.carrier_unavailable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipments.carrier_unavailable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Quote the fallback carriers for a shipment",
+        "tags": [
+          "admin.logistics"
+        ],
+        "x-required-permissions": [
+          "shipments.manage"
+        ]
+      }
+    },
     "/v1/admin/shipments/{shipmentId}/events": {
       "post": {
         "description": "Staff correction for any carrier (recorded as a staff event); delivery needs a POD.\n\nImplements: D-013, D-114.",
@@ -222898,11 +224499,29 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "cancelReason": null,
                   "cancelledAt": null,
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -222910,6 +224529,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -222921,6 +224545,7 @@
                       "status": "ready"
                     }
                   ],
+                  "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -222940,9 +224565,11 @@
                   "payoutAmount": "120.00",
                   "pickedUpAt": null,
                   "plannedShipOn": "2026-10-20",
+                  "podReview": null,
                   "proofOfDelivery": null,
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
+                  "splitFrom": null,
                   "status": "out_for_delivery",
                   "trackingNo": null,
                   "trackingUrl": null,
@@ -223166,6 +224793,377 @@
         ]
       }
     },
+    "/v1/admin/shipments/{shipmentId}/pod/actions/{decision}": {
+      "post": {
+        "description": "A staff check of the recorded POD (D-229): `reject` needs a note and raises `shipment.pod_rejected` for follow-up; neither changes the delivery, the tolerance reconciliation or the payout rule (D-022). Reviews are kept; the latest is the POD’s state.\n\nImplements: D-229, D-013, D-022.",
+        "operationId": "admin.shipments.reviewPod",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shipmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "decision",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PodReviewAction"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatchOptional"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "ลายเซ็นไม่ชัด"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReviewPodDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "blockedByPayment": false,
+                  "cancelReason": null,
+                  "cancelledAt": null,
+                  "carrier": "factory_fleet",
+                  "carrierBookingRef": null,
+                  "carrierCostAmount": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
+                  "cartonsCount": 3,
+                  "deliveredAt": null,
+                  "destination": {
+                    "line1": "99/9 ถนนสุขุมวิท",
+                    "line2": "แขวงคลองตัน เขตคลองเตย",
+                    "phone": "+66810001234",
+                    "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
+                    "recipientName": "สมหญิง ใจดี"
+                  },
+                  "events": [
+                    {
+                      "location": null,
+                      "note": null,
+                      "occurredAt": "2026-10-19T16:00:00+07:00",
+                      "source": "factory",
+                      "status": "ready"
+                    }
+                  ],
+                  "exception": null,
+                  "factoryCode": "F-0001",
+                  "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "items": [
+                    {
+                      "deliveredQuantity": null,
+                      "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+                      "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
+                      "jobNo": "JOB-2610-0001",
+                      "orderCode": "PK-2610-0001-01",
+                      "quantity": 600
+                    }
+                  ],
+                  "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "note": null,
+                  "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
+                  "payoutAmount": "120.00",
+                  "pickedUpAt": null,
+                  "plannedShipOn": "2026-10-20",
+                  "podReview": {
+                    "note": "ลายเซ็นไม่ชัด",
+                    "reviewedAt": "2026-10-22T10:00:00+07:00",
+                    "reviewedBy": {
+                      "displayName": "Dev Logistics",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2009"
+                    },
+                    "state": "rejected"
+                  },
+                  "proofOfDelivery": {
+                    "capturedAt": "2026-10-21T14:05:00+07:00",
+                    "carrierPodRef": null,
+                    "deliveredQuantity": 590,
+                    "kind": "factory_photo_signature",
+                    "photoFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000f2005"
+                    ],
+                    "receiverName": "สมหญิง ใจดี",
+                    "signatureFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2006"
+                  },
+                  "readyAt": "2026-10-19T16:00:00+07:00",
+                  "shipmentNo": "SH-2610-0001",
+                  "splitFrom": null,
+                  "status": "delivered",
+                  "trackingNo": null,
+                  "trackingUrl": null,
+                  "volumeCm3": 120000,
+                  "weightG": 18000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminShipmentDto"
+                }
+              }
+            },
+            "description": "Reviewed",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipments.invalid_status": {
+                    "$ref": "#/components/examples/problem.shipments.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipments.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Accept or reject a proof of delivery",
+        "tags": [
+          "admin.logistics"
+        ],
+        "x-required-permissions": [
+          "shipments.manage"
+        ]
+      }
+    },
     "/v1/admin/shipments/{shipmentId}/proof-of-delivery": {
       "post": {
         "description": "Mandatory for factory deliveries (D-013): receiver name, signature and at least one photo (evidence uploads), and the pieces accepted per destination on the trip (≤ shipped). Delivers the shipment; when every shipment of an order’s job is delivered the order is delivered and reconciled against the tolerance frozen in the quote (D-021, D-080: shortage within → pro-rata credit; overage within → no charge; outside → automatic claim; factory payable min(delivered, ordered), D-165). A packed shipment the factory delivers straight away is picked up first (shipping gate applies). Idempotent. Staff may instead record a carrier POD with `carrierPodRef`.\n\nImplements: D-013, D-021, D-080, D-165.",
@@ -223221,11 +225219,29 @@
             "content": {
               "application/json": {
                 "example": {
+                  "blockedByPayment": false,
                   "cancelReason": null,
                   "cancelledAt": null,
                   "carrier": "factory_fleet",
                   "carrierBookingRef": null,
                   "carrierCostAmount": null,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2,
+                      "weightG": null
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3,
+                      "weightG": null
+                    }
+                  ],
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
@@ -223233,6 +225249,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -223244,6 +225265,7 @@
                       "status": "ready"
                     }
                   ],
+                  "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
@@ -223263,6 +225285,7 @@
                   "payoutAmount": "120.00",
                   "pickedUpAt": null,
                   "plannedShipOn": "2026-10-20",
+                  "podReview": null,
                   "proofOfDelivery": {
                     "capturedAt": "2026-10-21T14:05:00+07:00",
                     "carrierPodRef": null,
@@ -223276,6 +225299,7 @@
                   },
                   "readyAt": "2026-10-19T16:00:00+07:00",
                   "shipmentNo": "SH-2610-0001",
+                  "splitFrom": null,
                   "status": "delivered",
                   "trackingNo": null,
                   "trackingUrl": null,
@@ -259738,6 +261762,11 @@
                         "line2": "แขวงคลองตัน เขตคลองเตย",
                         "phone": "+66810001234",
                         "postcode": "10110",
+                        "province": {
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                          "nameEn": "Bangkok",
+                          "nameTh": "กรุงเทพมหานคร"
+                        },
                         "recipientName": "สมหญิง ใจดี"
                       },
                       "events": [
@@ -259984,6 +262013,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -260273,6 +262307,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -260518,6 +262557,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -260804,6 +262848,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -261090,6 +263139,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -261409,6 +263463,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -261724,6 +263783,11 @@
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "province": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                      "nameEn": "Bangkok",
+                      "nameTh": "กรุงเทพมหานคร"
+                    },
                     "recipientName": "สมหญิง ใจดี"
                   },
                   "events": [
@@ -297054,6 +299118,11 @@
                       "line2": "แขวงคลองตัน เขตคลองเตย",
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "province": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
+                        "nameEn": "Bangkok",
+                        "nameTh": "กรุงเทพมหานคร"
+                      },
                       "recipientName": "สมหญิง ใจดี"
                     },
                     "events": [

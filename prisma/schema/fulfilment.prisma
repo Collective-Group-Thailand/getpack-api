@@ -1077,6 +1077,23 @@ enum PodKind {
   @@map("pod_kind")
 }
 
+/// Staff check of a recorded proof of delivery (D-229): informational, it never reverses the delivery.
+enum PodReviewDecision {
+  accepted
+  rejected
+
+  @@map("pod_review_decision")
+}
+
+/// How staff closed a delivery exception (D-230).
+enum ShipmentExceptionResolution {
+  retry
+  return
+  cancel
+
+  @@map("shipment_exception_resolution")
+}
+
 enum ToleranceOutcome {
   exact
   shortage_within
@@ -1091,50 +1108,60 @@ enum ToleranceOutcome {
 /// partner projection never reads users or customer addresses (D-142). Items may come from several
 /// orders of the same factory when they go to the same address.
 model Shipment {
-  id                     BigInt         @id(map: "pk_shipments") @default(autoincrement())
-  publicId               String         @unique(map: "ux_shipments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  shipmentNo             String         @unique(map: "ux_shipments__shipment_no") @map("shipment_no")
-  entityId               BigInt         @map("entity_id")
-  factoryId              BigInt         @map("factory_id")
+  id                     BigInt                       @id(map: "pk_shipments") @default(autoincrement())
+  publicId               String                       @unique(map: "ux_shipments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  shipmentNo             String                       @unique(map: "ux_shipments__shipment_no") @map("shipment_no")
+  entityId               BigInt                       @map("entity_id")
+  factoryId              BigInt                       @map("factory_id")
   /// `factory_fleet` by default (D-013); a Packio-booked carrier as fallback (D-114).
-  carrierId              BigInt         @map("carrier_id")
-  carrierBookingRef      String?        @map("carrier_booking_ref")
-  trackingNo             String?        @map("tracking_no")
-  trackingUrl            String?        @map("tracking_url")
-  bookedAt               DateTime?      @map("booked_at") @db.Timestamptz(6)
-  status                 ShipmentStatus @default(draft)
-  statusChangedAt        DateTime       @default(now()) @map("status_changed_at") @db.Timestamptz(6)
-  recipientName          String         @map("recipient_name")
+  carrierId              BigInt                       @map("carrier_id")
+  carrierBookingRef      String?                      @map("carrier_booking_ref")
+  trackingNo             String?                      @map("tracking_no")
+  trackingUrl            String?                      @map("tracking_url")
+  bookedAt               DateTime?                    @map("booked_at") @db.Timestamptz(6)
+  status                 ShipmentStatus               @default(draft)
+  statusChangedAt        DateTime                     @default(now()) @map("status_changed_at") @db.Timestamptz(6)
+  recipientName          String                       @map("recipient_name")
   phone                  String
   line1                  String
   line2                  String?
-  subdistrictId          BigInt?        @map("subdistrict_id")
-  postcode               String         @db.Char(5)
-  provinceId             BigInt         @map("province_id")
-  cartonsCount           Int            @map("cartons_count")
-  weightG                Int            @map("weight_g")
-  volumeCm3              BigInt?        @map("volume_cm3")
-  plannedShipOn          DateTime?      @map("planned_ship_on") @db.Date
-  readyAt                DateTime?      @map("ready_at") @db.Timestamptz(6)
-  pickedUpAt             DateTime?      @map("picked_up_at") @db.Timestamptz(6)
-  deliveredAt            DateTime?      @map("delivered_at") @db.Timestamptz(6)
-  cancelledAt            DateTime?      @map("cancelled_at") @db.Timestamptz(6)
-  cancelReason           String?        @map("cancel_reason")
-  labelFileId            BigInt?        @map("label_file_id")
-  packingListFileId      BigInt?        @map("packing_list_file_id")
-  customerRateVersionId  BigInt?        @map("customer_rate_version_id")
+  subdistrictId          BigInt?                      @map("subdistrict_id")
+  postcode               String                       @db.Char(5)
+  provinceId             BigInt                       @map("province_id")
+  cartonsCount           Int                          @map("cartons_count")
+  weightG                Int                          @map("weight_g")
+  volumeCm3              BigInt?                      @map("volume_cm3")
+  plannedShipOn          DateTime?                    @map("planned_ship_on") @db.Date
+  readyAt                DateTime?                    @map("ready_at") @db.Timestamptz(6)
+  pickedUpAt             DateTime?                    @map("picked_up_at") @db.Timestamptz(6)
+  deliveredAt            DateTime?                    @map("delivered_at") @db.Timestamptz(6)
+  cancelledAt            DateTime?                    @map("cancelled_at") @db.Timestamptz(6)
+  cancelReason           String?                      @map("cancel_reason")
+  labelFileId            BigInt?                      @map("label_file_id")
+  packingListFileId      BigInt?                      @map("packing_list_file_id")
+  customerRateVersionId  BigInt?                      @map("customer_rate_version_id")
   /// Staff-only (P15): the factory's shipping payout for this trip, frozen when it is ready.
-  factoryPayoutVersionId BigInt?        @map("factory_payout_version_id")
-  payoutAmount           Decimal?       @map("payout_amount") @db.Decimal(14, 2)
+  factoryPayoutVersionId BigInt?                      @map("factory_payout_version_id")
+  payoutAmount           Decimal?                     @map("payout_amount") @db.Decimal(14, 2)
   /// Staff-only (P25): what the fallback carrier charges Packio.
-  carrierCostAmount      Decimal?       @map("carrier_cost_amount") @db.Decimal(14, 2)
+  carrierCostAmount      Decimal?                     @map("carrier_cost_amount") @db.Decimal(14, 2)
   note                   String?
-  createdAt              DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById            BigInt?        @map("created_by")
-  updatedAt              DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  updatedById            BigInt?        @map("updated_by")
-  rowVersion             Int            @default(1) @map("row_version")
+  /// The shipment this one was split from (D-230), same factory, destination and draft state.
+  splitFromId            BigInt?                      @map("split_from_id")
+  /// Staff resolution of a failed or returned delivery (D-230).
+  exceptionResolution    ShipmentExceptionResolution? @map("exception_resolution")
+  exceptionResolvedAt    DateTime?                    @map("exception_resolved_at") @db.Timestamptz(6)
+  exceptionResolvedById  BigInt?                      @map("exception_resolved_by")
+  exceptionNote          String?                      @map("exception_note")
+  createdAt              DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById            BigInt?                      @map("created_by")
+  updatedAt              DateTime                     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedById            BigInt?                      @map("updated_by")
+  rowVersion             Int                          @default(1) @map("row_version")
 
+  splitFrom            Shipment?                        @relation("ShipmentSplitFrom", fields: [splitFromId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__split_from_id")
+  splits               Shipment[]                       @relation("ShipmentSplitFrom")
+  exceptionResolvedBy  User?                            @relation("ShipmentExceptionResolvedBy", fields: [exceptionResolvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__exception_resolved_by")
   entity               Entity                           @relation("ShipmentEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__entity_id")
   factory              Factory                          @relation("ShipmentFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__factory_id")
   carrier              Carrier                          @relation("ShipmentCarrier", fields: [carrierId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_shipments__carrier_id")
@@ -1174,6 +1201,8 @@ model Shipment {
   @@index([factoryPayoutVersionId], map: "ix_shipments__factory_payout_version_id")
   @@index([createdById], map: "ix_shipments__created_by")
   @@index([updatedById], map: "ix_shipments__updated_by")
+  @@index([splitFromId], map: "ix_shipments__split_from_id")
+  @@index([exceptionResolvedById], map: "ix_shipments__exception_resolved_by")
   @@index([pickedUpAt], map: "ix_shipments__picked_up_at", where: raw("(picked_up_at IS NOT NULL)"))
   @@index([deliveredAt], map: "ix_shipments__delivered_at", where: raw("(delivered_at IS NOT NULL)"))
   @@map("shipments")
@@ -1261,13 +1290,32 @@ model ProofOfDelivery {
   note              String?
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  shipment      Shipment    @relation(fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__shipment_id")
-  signatureFile FileObject? @relation("ProofOfDeliverySignature", fields: [signatureFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__signature_file_id")
-  capturedBy    User?       @relation("ProofOfDeliveryCapturedBy", fields: [capturedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__captured_by")
+  shipment      Shipment                @relation(fields: [shipmentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__shipment_id")
+  signatureFile FileObject?             @relation("ProofOfDeliverySignature", fields: [signatureFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__signature_file_id")
+  reviews       ProofOfDeliveryReview[]
+  capturedBy    User?                   @relation("ProofOfDeliveryCapturedBy", fields: [capturedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proofs_of_delivery__captured_by")
 
   @@index([signatureFileId], map: "ix_proofs_of_delivery__signature_file_id")
   @@index([capturedById], map: "ix_proofs_of_delivery__captured_by")
   @@map("proofs_of_delivery")
+}
+
+/// Staff reviews of a proof of delivery (D-229), append-only: the latest one is the POD's review state.
+model ProofOfDeliveryReview {
+  id                BigInt            @id(map: "pk_proof_of_delivery_reviews") @default(autoincrement())
+  publicId          String            @unique(map: "ux_proof_of_delivery_reviews__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  proofOfDeliveryId BigInt            @map("proof_of_delivery_id")
+  decision          PodReviewDecision
+  note              String?
+  reviewedById      BigInt            @map("reviewed_by")
+  reviewedAt        DateTime          @default(now()) @map("reviewed_at") @db.Timestamptz(6)
+
+  proofOfDelivery ProofOfDelivery @relation(fields: [proofOfDeliveryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_of_delivery_reviews__proof_of_delivery_id")
+  reviewedBy      User            @relation("ProofOfDeliveryReviewedBy", fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_proof_of_delivery_reviews__reviewed_by")
+
+  @@index([proofOfDeliveryId, reviewedAt], map: "ix_proof_of_delivery_reviews__pod_id__reviewed_at")
+  @@index([reviewedById], map: "ix_proof_of_delivery_reviews__reviewed_by")
+  @@map("proof_of_delivery_reviews")
 }
 
 /// Delivered vs ordered once the order is delivered, with the tolerance frozen in the quote (D-021,
