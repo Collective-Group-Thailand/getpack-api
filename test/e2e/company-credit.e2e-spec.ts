@@ -125,19 +125,32 @@ describe('company credit (e2e, B3.5)', () => {
         reason: 'ทดสอบ',
       })
       .expect(422);
+    const limitKey = randomUUID();
+    const limitBody = {
+      limitAmount: '50000.00',
+      termDays: 30,
+      basis: 'paid_orders',
+      reason: 'ชำระตรงเวลา 3 ครั้ง',
+    };
     const requested = await as(ctx, csLead)
-      .post(`/v1/admin/companies/${companyId}/credit-limits`, {
-        limitAmount: '50000.00',
-        termDays: 30,
-        basis: 'paid_orders',
-        reason: 'ชำระตรงเวลา 3 ครั้ง',
-      })
+      .post(`/v1/admin/companies/${companyId}/credit-limits`, limitBody)
+      .set('Idempotency-Key', limitKey)
       .expect(201);
     expect(requested.body).toMatchObject({
       creditStatus: 'eligible',
       limitAmount: null,
-      pendingRequest: { limitAmount: '50000.00', termDays: 30 },
+      pendingRequest: { limitAmount: '50000.00', termDays: 30, versionNo: 1, approvalId: expect.any(String) },
+      eligibility: { eligible: true, reason: 'paid_orders' },
+      versions: [
+        expect.objectContaining({ versionNo: 1, status: 'proposed', basis: 'paid_orders', decidedAt: null }),
+      ],
     });
+    // The same key replays the response instead of a second request (U-B0.2).
+    const replayed = await as(ctx, csLead)
+      .post(`/v1/admin/companies/${companyId}/credit-limits`, limitBody)
+      .set('Idempotency-Key', limitKey)
+      .expect(201);
+    expect(replayed.body.pendingRequest.approvalId).toBe(requested.body.pendingRequest.approvalId);
     await as(ctx, csLead)
       .post(`/v1/admin/companies/${companyId}/credit-limits`, {
         limitAmount: '60000.00',
@@ -159,6 +172,20 @@ describe('company credit (e2e, B3.5)', () => {
       where: { type: 'approval.approved', aggregateId: version.approvalRequest!.publicId },
     });
     await ctx.prisma.withTx((tx) => credit.onApprovalOutcome(envelopeFromRow(outcome), tx));
+    const staffCredit = await as(ctx, csLead).get(`/v1/admin/companies/${companyId}/credit`).expect(200);
+    expect(staffCredit.body).toMatchObject({
+      creditStatus: 'credit',
+      pendingRequest: null,
+      versions: [
+        expect.objectContaining({
+          versionNo: 1,
+          status: 'approved',
+          approvalId: requested.body.pendingRequest.approvalId,
+          requestedBy: expect.objectContaining({ id: expect.any(String) }),
+          decidedAt: expect.any(String),
+        }),
+      ],
+    });
     const view = await as(ctx, admin.token).get(`/v1/store/companies/${companyId}/credit`).expect(200);
     expect(view.body).toMatchObject({
       creditStatus: 'credit',
@@ -218,6 +245,17 @@ describe('company credit (e2e, B3.5)', () => {
     expect(
       (await ctx.prisma.company.findUniqueOrThrow({ where: { publicId: companyId } })).creditStatus,
     ).toBe('blocked_overdue');
+    const owing = await as(ctx, csLead).get(`/v1/admin/companies/${companyId}/receivables`).expect(200);
+    expect(owing.body).toMatchObject({ creditOrdersBlocked: true });
+    const row = await as(ctx, csLead).get(`/v1/admin/companies/${companyId}`).expect(200);
+    expect(row.body.receivables).toMatchObject({
+      creditOrdersBlocked: true,
+      oldestOverdueDays: expect.any(Number),
+    });
+    const blockedList = await as(ctx, csLead)
+      .get('/v1/admin/companies?creditStatus=blocked_overdue')
+      .expect(200);
+    expect((blockedList.body.data as { id: string }[]).map((c) => c.id)).toContain(companyId);
     const blockedOrder = await companyOrder(admin.token, companyId);
     expect(blockedOrder.preview.notices).toEqual(
       expect.arrayContaining([{ code: 'company.credit_unavailable', params: { reason: 'blocked_overdue' } }]),
@@ -241,5 +279,11 @@ describe('company credit (e2e, B3.5)', () => {
       expect.arrayContaining([first.group.id, onCredit.group.id, blockedOrder.group.id]),
     );
     await as(ctx, admin.token).get(`/v1/store/companies/${companyId}/statement?month=2026-13`).expect(422);
+    // Staff see the issued statements; a month not issued has no PDF (U-B0.2).
+    await as(ctx, csLead)
+      .get(`/v1/admin/companies/${companyId}/issued-statements`)
+      .expect(200)
+      .expect((r) => expect(Array.isArray(r.body)).toBe(true));
+    await as(ctx, finance).get(`/v1/admin/companies/${companyId}/statements/2020-01/pdf`).expect(404);
   });
 });

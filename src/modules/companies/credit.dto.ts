@@ -1,5 +1,7 @@
 import { AgingBucketsDto } from '@modules/receivables/receivables.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
+import { CONFIG_VERSION_STATUSES } from '@platform/settings/settings.dto';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
@@ -34,6 +36,15 @@ export class CreditEligibilityDto {
 
   @ApiProperty({ type: 'integer', example: 30 })
   defaultTermDays!: number;
+
+  @ApiProperty({
+    enum: ['paid_orders', 'financial_statement'],
+    enumName: 'CreditEligibilityBasis',
+    nullable: true,
+    example: 'paid_orders',
+    description: 'Why the company is eligible; null while it is not',
+  })
+  reason!: 'paid_orders' | 'financial_statement' | null;
 }
 
 export class CompanyCreditDto {
@@ -64,7 +75,10 @@ export class CompanyCreditDto {
   @ApiProperty({ type: CreditRequestSummaryDto, nullable: true, description: 'A limit waiting for approval' })
   pendingRequest!: CreditRequestSummaryDto | null;
 
-  @ApiProperty({ type: CreditEligibilityDto, description: 'Whether the company may apply for credit (D-121)' })
+  @ApiProperty({
+    type: CreditEligibilityDto,
+    description: 'Whether the company may apply for credit (D-121)',
+  })
   eligibility!: CreditEligibilityDto;
 
   @ApiProperty({ example: 'THB' })
@@ -85,8 +99,104 @@ export const CREDIT_EXAMPLE: CompanyCreditDto = {
     financialStatementOnFile: false,
     allowedTermDays: [15, 30, 45, 60],
     defaultTermDays: 30,
+    reason: 'paid_orders',
   },
   currency: 'THB',
+};
+
+/** The pending request as staff see it: with its version and approval (D-121). */
+export class AdminCreditRequestSummaryDto extends CreditRequestSummaryDto {
+  @ApiProperty({ type: 'integer', example: 2 })
+  versionNo!: number;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1030',
+  })
+  approvalId!: string | null;
+}
+
+/** One version of the company's credit limit (D-121): requested, approved, rejected or withdrawn. */
+export class CreditLimitVersionDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1031' })
+  id!: string;
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  versionNo!: number;
+
+  @ApiProperty({ enum: CONFIG_VERSION_STATUSES, enumName: 'ConfigVersionStatus', example: 'approved' })
+  status!: string;
+
+  @ApiProperty({ example: '100000.00' })
+  limitAmount!: string;
+
+  @ApiProperty({ type: 'integer', example: 30 })
+  termDays!: number;
+
+  @ApiProperty({
+    enum: ['paid_orders', 'financial_statement'],
+    enumName: 'CreditEligibilityBasis',
+    example: 'paid_orders',
+  })
+  basis!: string;
+
+  @ApiProperty({ example: 'ชำระตรงเวลา 3 ครั้ง' })
+  reason!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-05T10:00:00+07:00' })
+  effectiveFrom!: string;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  requestedBy!: UserRefDto | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-05T10:00:00+07:00' })
+  requestedAt!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1030',
+  })
+  approvalId!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-06T10:00:00+07:00' })
+  decidedAt!: string | null;
+}
+
+export class AdminCompanyCreditDto extends CompanyCreditDto {
+  @ApiProperty({
+    type: AdminCreditRequestSummaryDto,
+    nullable: true,
+    description: 'A limit waiting for approval',
+  })
+  declare pendingRequest: AdminCreditRequestSummaryDto | null;
+
+  @ApiProperty({ type: [CreditLimitVersionDto], description: 'Every limit version, newest first' })
+  versions!: CreditLimitVersionDto[];
+}
+
+export const ADMIN_CREDIT_EXAMPLE: AdminCompanyCreditDto = {
+  ...CREDIT_EXAMPLE,
+  pendingRequest: null,
+  versions: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-0000000c1031',
+      versionNo: 1,
+      status: 'approved',
+      limitAmount: '100000.00',
+      termDays: 30,
+      basis: 'paid_orders',
+      reason: 'ชำระตรงเวลา 3 ครั้ง',
+      effectiveFrom: '2026-10-05T10:00:00+07:00',
+      requestedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000c1012', displayName: 'Dev CS' },
+      requestedAt: '2026-10-05T10:00:00+07:00',
+      approvalId: '0192f3a0-7c1e-7d2a-9b1f-0000000c1030',
+      decidedAt: '2026-10-06T10:00:00+07:00',
+    },
+  ],
 };
 
 /** The Company Admin applies for credit (D-121); Finance / C-Level decide through `credit_limit`. */
@@ -149,7 +259,10 @@ export class CompanyReceivablesDto {
   @ApiProperty({ format: 'date', example: '2026-11-08' })
   asOf!: string;
 
-  @ApiProperty({ example: '25000.00', description: 'Open receivables and open credit instalments (the exposure)' })
+  @ApiProperty({
+    example: '25000.00',
+    description: 'Open receivables and open credit instalments (the exposure)',
+  })
   openAmount!: string;
 
   @ApiProperty({ example: '0.00', description: 'Open receivables past their due date' })
@@ -182,7 +295,9 @@ export const RECEIVABLES_EXAMPLE: CompanyReceivablesDto = {
   oldestOverdueDays: null,
   nextDueAt: '2026-11-15T10:00:00+07:00',
   creditOrdersBlocked: false,
-  notices: [{ code: 'due_soon', groupCode: 'OG-2610-00001', dueAt: '2026-11-15T10:00:00+07:00', amount: '12000.00' }],
+  notices: [
+    { code: 'due_soon', groupCode: 'OG-2610-00001', dueAt: '2026-11-15T10:00:00+07:00', amount: '12000.00' },
+  ],
   currency: 'THB',
 };
 

@@ -222,7 +222,12 @@ export class UpdateCompanySettingsDto {
 }
 
 export class ChangeMemberRolesDto {
-  @ApiProperty({ enum: COMPANY_ROLES, enumName: 'CompanyRole', isArray: true, example: ['company_buyer', 'company_approver'] })
+  @ApiProperty({
+    enum: COMPANY_ROLES,
+    enumName: 'CompanyRole',
+    isArray: true,
+    example: ['company_buyer', 'company_approver'],
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(4)
@@ -454,7 +459,8 @@ export class CompanyDto {
     type: String,
     nullable: true,
     example: '3.0000',
-    description: 'The company discount % in force (D-124, approved through a discount memo); null without one',
+    description:
+      'The company discount % in force (D-124, approved through a discount memo); null without one',
   })
   discountPct!: string | null;
 
@@ -467,7 +473,10 @@ export class CompanyDto {
   })
   myRoles!: string[];
 
-  @ApiProperty({ type: CompanyCapabilitiesDto, description: 'What my roles allow (all false in staff views)' })
+  @ApiProperty({
+    type: CompanyCapabilitiesDto,
+    description: 'What my roles allow (all false in staff views)',
+  })
   can!: CompanyCapabilitiesDto;
 
   @ApiProperty({ type: [CompanyBranchDto] })
@@ -492,12 +501,119 @@ export class CompanyDto {
   createdAt!: string;
 }
 
+/** A member's account as staff see it: with the contact details (D-123). */
+export class CompanyMemberContactDto {
+  @ApiProperty({ format: 'uuid', example: IDS.user })
+  id!: string;
+
+  @ApiProperty({ example: 'สมชาย ทดสอบ' })
+  displayName!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'somchai@example.com' })
+  email!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '0800000000' })
+  phone!: string | null;
+}
+
+export class AdminCompanyMemberDto extends CompanyMemberDto {
+  @ApiProperty({ type: CompanyMemberContactDto })
+  declare user: CompanyMemberContactDto;
+}
+
+export class AdminKycDocumentDto extends CompanyKycDocumentDto {
+  @ApiProperty({ example: 'หนังสือรับรอง.pdf' })
+  fileName!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'https://files.example.com/signed/kyc.pdf',
+    description: 'Short-lived signed download URL; null until the file is uploaded and scanned clean',
+  })
+  fileUrl!: string | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-01T10:00:00+07:00' })
+  uploadedAt!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-02T10:00:00+07:00' })
+  reviewedAt!: string | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  reviewedBy!: UserRefDto | null;
+}
+
+/** The company discount version in force (D-124). */
+export class CompanyDiscountDto {
+  @ApiProperty({ example: '3.0000', description: 'Discount %' })
+  pct!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-01T00:00:00+07:00' })
+  effectiveFrom!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  validTo!: string | null;
+
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1011',
+    description: 'The approved memo',
+  })
+  discountMemoId!: string;
+}
+
+/** What the company owes now (D-122); the full view is `admin.companyCredit.receivables`. */
+export class CompanyReceivablesSummaryDto {
+  @ApiProperty({
+    example: '25000.00',
+    description: 'Open receivables and credit instalments not invoiced yet',
+  })
+  openAmount!: string;
+
+  @ApiProperty({ example: '0.00' })
+  overdueAmount!: string;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: null })
+  oldestOverdueDays!: number | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-15T10:00:00+07:00' })
+  nextDueAt!: string | null;
+
+  @ApiProperty({
+    example: false,
+    description: 'More than the overdue grace → new credit orders blocked (D-122)',
+  })
+  creditOrdersBlocked!: boolean;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+}
+
 export class AdminCompanyDto extends CompanyDto {
   @ApiProperty({ type: 'integer', example: 2, description: 'Paid order groups (credit eligibility, D-121)' })
   paidOrdersCount!: number;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   kycApprovedAt!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 1, description: 'Invited and active members' })
+  membersCount!: number;
+
+  @ApiProperty({ type: [AdminCompanyMemberDto] })
+  declare members: AdminCompanyMemberDto[];
+
+  @ApiProperty({ type: [AdminKycDocumentDto] })
+  declare kycDocuments: AdminKycDocumentDto[];
+
+  @ApiProperty({
+    type: CompanyDiscountDto,
+    nullable: true,
+    description: 'The company discount in force (D-124)',
+  })
+  discount!: CompanyDiscountDto | null;
+
+  @ApiProperty({ type: CompanyReceivablesSummaryDto })
+  receivables!: CompanyReceivablesSummaryDto;
 }
 
 export const COMPANY_EXAMPLE: CompanyDto = {
@@ -570,8 +686,51 @@ export const COMPANY_EXAMPLE: CompanyDto = {
 
 export const ADMIN_COMPANY_EXAMPLE: AdminCompanyDto = {
   ...COMPANY_EXAMPLE,
+  myRoles: [],
+  can: {
+    manageMembers: false,
+    manageSettings: false,
+    manageAssets: false,
+    approveOrders: false,
+    viewFinance: false,
+    order: false,
+  },
+  members: [
+    {
+      id: IDS.member,
+      user: { id: IDS.user, displayName: 'สมชาย ทดสอบ', email: 'somchai@example.com', phone: '0800000000' },
+      status: 'active',
+      roles: ['company_admin'],
+      joinedAt: '2026-10-01T10:00:00+07:00',
+    },
+  ],
+  kycDocuments: [
+    {
+      id: IDS.document,
+      docType: 'company_certificate',
+      fileId: IDS.file,
+      fileName: 'หนังสือรับรอง.pdf',
+      fileUrl: 'https://files.example.com/signed/kyc.pdf',
+      issuedOn: '2026-09-01',
+      status: 'verified',
+      note: null,
+      uploadedAt: '2026-10-01T10:00:00+07:00',
+      reviewedAt: '2026-10-02T10:00:00+07:00',
+      reviewedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000c1012', displayName: 'Dev CS' },
+    },
+  ],
   paidOrdersCount: 2,
   kycApprovedAt: '2026-10-02T10:00:00+07:00',
+  membersCount: 1,
+  discount: null,
+  receivables: {
+    openAmount: '0.00',
+    overdueAmount: '0.00',
+    oldestOverdueDays: null,
+    nextDueAt: null,
+    creditOrdersBlocked: false,
+    currency: 'THB',
+  },
 };
 
 export const APPLY_EXAMPLE = {
@@ -624,6 +783,11 @@ export class CompanyListQuery extends PageQuery {
   @IsOptional()
   @IsIn(COMPANY_STATUSES)
   status?: (typeof COMPANY_STATUSES)[number];
+
+  @ApiPropertyOptional({ enum: CREDIT_STATUSES, enumName: 'CreditStatus' })
+  @IsOptional()
+  @IsIn(CREDIT_STATUSES)
+  creditStatus?: (typeof CREDIT_STATUSES)[number];
 }
 
 export class CompanyApprovalDto {
@@ -666,14 +830,20 @@ export class CompanyApprovalDto {
     type: String,
     nullable: true,
     example: '50000.00',
-    description: 'The company threshold the order was above (D-123); null for approvals made before it was kept',
+    description:
+      'The company threshold the order was above (D-123); null for approvals made before it was kept',
   })
   threshold!: string | null;
 
   @ApiProperty({ type: 'integer', example: 2, description: 'Orders in the group' })
   ordersCount!: number;
 
-  @ApiProperty({ type: String, nullable: true, example: 'สำนักงานใหญ่', description: 'Branch on the tax invoice' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'สำนักงานใหญ่',
+    description: 'Branch on the tax invoice',
+  })
   branchName!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-04T10:00:00+07:00' })
@@ -685,7 +855,12 @@ export class CompanyApprovalDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   decidedAt!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'The approver’s comment or reason' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'The approver’s comment or reason',
+  })
   decisionComment!: string | null;
 }
 

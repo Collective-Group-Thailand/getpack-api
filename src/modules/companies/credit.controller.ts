@@ -14,6 +14,8 @@ import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { CompanySpendDto, CompanySpendQuery, SPEND_EXAMPLE } from './companies.dto';
 import { CompaniesService } from './companies.service';
 import {
+  ADMIN_CREDIT_EXAMPLE,
+  AdminCompanyCreditDto,
   ApplyForCreditDto,
   CompanyCreditDto,
   CompanyReceivablesDto,
@@ -27,6 +29,8 @@ import {
   StatementQuery,
 } from './credit.dto';
 import { CreditService, type CreditView, type ReceivablesView, type StatementData } from './credit.service';
+
+type LimitVersionRow = Awaited<ReturnType<CreditService['versions']>>[number];
 
 const companyParam = ApiParam({ name: 'companyId', format: 'uuid' });
 
@@ -45,6 +49,54 @@ function creditDto(v: CreditView): CompanyCreditDto {
         }
       : null,
     eligibility: v.eligibility,
+    currency: 'THB',
+  };
+}
+
+function adminCreditDto(v: CreditView, versions: LimitVersionRow[]): AdminCompanyCreditDto {
+  const base = creditDto(v);
+  const pending = v.pending ? versions.find((x) => x.id === v.pending!.id) : undefined;
+  return {
+    ...base,
+    pendingRequest:
+      base.pendingRequest && pending
+        ? {
+            ...base.pendingRequest,
+            versionNo: pending.versionNo,
+            approvalId: pending.approvalRequest?.publicId ?? null,
+          }
+        : null,
+    versions: versions.map((x) => ({
+      id: x.publicId,
+      versionNo: x.versionNo,
+      status: x.status,
+      limitAmount: x.limitAmount.toFixed(2),
+      termDays: x.termDays,
+      basis: x.eligibilityBasis,
+      reason: x.reason,
+      effectiveFrom: toBangkokIso(x.effectiveFrom),
+      requestedBy: x.createdBy ? { id: x.createdBy.publicId, displayName: x.createdBy.displayName } : null,
+      requestedAt: toBangkokIso(x.createdAt),
+      approvalId: x.approvalRequest?.publicId ?? null,
+      decidedAt: x.decidedAt ? toBangkokIso(x.decidedAt) : null,
+    })),
+  };
+}
+
+type StatementRow = Awaited<ReturnType<PrismaService['companyStatement']['findMany']>>[number];
+
+function issuedStatementDto(r: StatementRow): IssuedStatementDto {
+  return {
+    id: r.publicId,
+    month: r.periodMonth.toISOString().slice(0, 7),
+    openingAmount: r.opening.toFixed(2),
+    invoicedAmount: r.invoiced.toFixed(2),
+    paidAmount: r.paid.toFixed(2),
+    creditedAmount: r.credited.toFixed(2),
+    closingAmount: r.closing.toFixed(2),
+    pdfReady: r.fileObjectId !== null,
+    generatedAt: toBangkokIso(r.generatedAt),
+    sentAt: r.sentAt ? toBangkokIso(r.sentAt) : null,
     currency: 'THB',
   };
 }
@@ -149,7 +201,9 @@ export class StoreCompanyCreditController {
   @ApiBody({
     type: ApplyForCreditDto,
     examples: {
-      default: { value: { limitAmount: '100000.00', termDays: 30, basis: 'paid_orders', note: 'สั่งซื้อทุกเดือน' } },
+      default: {
+        value: { limitAmount: '100000.00', termDays: 30, basis: 'paid_orders', note: 'สั่งซื้อทุกเดือน' },
+      },
     },
   })
   @ApiSuccess(201, {
@@ -236,19 +290,7 @@ export class StoreCompanyCreditController {
       orderBy: { periodMonth: 'desc' },
       take: 24,
     });
-    return rows.map((r) => ({
-      id: r.publicId,
-      month: r.periodMonth.toISOString().slice(0, 7),
-      openingAmount: r.opening.toFixed(2),
-      invoicedAmount: r.invoiced.toFixed(2),
-      paidAmount: r.paid.toFixed(2),
-      creditedAmount: r.credited.toFixed(2),
-      closingAmount: r.closing.toFixed(2),
-      pdfReady: r.fileObjectId !== null,
-      generatedAt: toBangkokIso(r.generatedAt),
-      sentAt: r.sentAt ? toBangkokIso(r.sentAt) : null,
-      currency: 'THB',
-    }));
+    return rows.map(issuedStatementDto);
   }
 
   @Get('spend')
@@ -299,7 +341,16 @@ export class AdminCompanyCreditController {
   constructor(
     private readonly companies: CompaniesService,
     private readonly credit: CreditService,
+    private readonly prisma: PrismaService,
   ) {}
+
+  private async adminView(companyId: bigint, v?: CreditView): Promise<AdminCompanyCreditDto> {
+    const [view, versions] = await Promise.all([
+      v ?? this.credit.view(companyId),
+      this.credit.versions(companyId),
+    ]);
+    return adminCreditDto(view, versions);
+  }
 
   @Get('credit')
   @Can('companies.read')
@@ -307,16 +358,64 @@ export class AdminCompanyCreditController {
   @ApiEndpoint({
     id: 'admin.companyCredit.get',
     summary: 'Get a company’s credit',
-    description: 'Status, limit, term, exposure, available and a pending request (D-121).',
+    description:
+      'Status, limit, term, exposure, available, eligibility with its reason, the pending request with its ' +
+      'version and approval, and every limit version newest first (D-121).',
     implements: ['D-121'],
   })
-  @ApiSuccess(200, { description: 'Credit', type: CompanyCreditDto, example: CREDIT_EXAMPLE })
+  @ApiSuccess(200, { description: 'Credit', type: AdminCompanyCreditDto, example: ADMIN_CREDIT_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async get(@Param('companyId', ParseUUIDPipe) id: string): Promise<CompanyCreditDto> {
-    return creditDto(await this.credit.view((await this.companies.get(id)).id));
+  async get(@Param('companyId', ParseUUIDPipe) id: string): Promise<AdminCompanyCreditDto> {
+    return this.adminView((await this.companies.get(id)).id);
+  }
+
+  @Get('receivables')
+  @Can('companies.read')
+  @companyParam
+  @ApiEndpoint({
+    id: 'admin.companyCredit.receivables',
+    summary: 'What a company owes',
+    description:
+      'Open receivables by days past due, the credit exposure, the next due credit instalment and the D-122 ' +
+      'notices — the view the company’s Admin and Accountant see.',
+    implements: ['D-122', 'D-121'],
+  })
+  @ApiSuccess(200, { description: 'Receivables', type: CompanyReceivablesDto, example: RECEIVABLES_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async receivables(@Param('companyId', ParseUUIDPipe) id: string): Promise<CompanyReceivablesDto> {
+    return receivablesDto(await this.credit.owed((await this.companies.get(id)).id));
+  }
+
+  @Get('issued-statements')
+  @Can('companies.read')
+  @companyParam
+  @ApiEndpoint({
+    id: 'admin.companyCredit.listStatements',
+    summary: 'List a company’s issued statements',
+    description:
+      'The monthly statements issued so far, newest first (at most 24), with their balances and whether the PDF ' +
+      'is ready (`admin.receivables.companyStatementPdf`, D-125). A statement has no due date of its own: each ' +
+      'invoice keeps its credit term (D-121).',
+    implements: ['D-125'],
+  })
+  @ApiSuccess(200, {
+    description: 'Statements',
+    type: [IssuedStatementDto],
+    example: [ISSUED_STATEMENT_EXAMPLE],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async statements(@Param('companyId', ParseUUIDPipe) id: string): Promise<IssuedStatementDto[]> {
+    const company = await this.companies.get(id);
+    const rows = await this.prisma.companyStatement.findMany({
+      where: { companyId: company.id },
+      orderBy: { periodMonth: 'desc' },
+      take: 24,
+    });
+    return rows.map(issuedStatementDto);
   }
 
   @Post('credit-limits')
+  @Idempotent({ optional: true })
   @Can('company_credit.manage')
   @companyParam
   @ApiEndpoint({
@@ -325,7 +424,8 @@ export class AdminCompanyCreditController {
     description:
       'For an eligible company (3 paid orders) or after a verified financial statement (D-121). Routed by ' +
       '`credit_limit`: Finance up to THB 100,000, C-Level above; the requester cannot approve. Terms from ' +
-      '`b2b.credit_terms` (15 / 30 / 45 / 60, default 30).',
+      '`b2b.credit_terms` (15 / 30 / 45 / 60, default 30). The response carries the new version and its ' +
+      'approval. The verified financial statement is a KYC document, so the request takes no evidence files.',
     implements: ['D-121'],
   })
   @ApiBody({
@@ -343,13 +443,20 @@ export class AdminCompanyCreditController {
   })
   @ApiSuccess(201, {
     description: 'Credit with the pending request',
-    type: CompanyCreditDto,
+    type: AdminCompanyCreditDto,
     example: {
-      ...CREDIT_EXAMPLE,
+      ...ADMIN_CREDIT_EXAMPLE,
       creditStatus: 'eligible',
       limitAmount: null,
       termDays: null,
-      pendingRequest: { limitAmount: '100000.00', termDays: 30, requestedAt: '2026-10-05T10:00:00+07:00' },
+      pendingRequest: {
+        limitAmount: '100000.00',
+        termDays: 30,
+        requestedAt: '2026-10-05T10:00:00+07:00',
+        versionNo: 1,
+        approvalId: '0192f3a0-7c1e-7d2a-9b1f-0000000c1030',
+      },
+      versions: [{ ...ADMIN_CREDIT_EXAMPLE.versions[0]!, status: 'proposed', decidedAt: null }],
     },
   })
   @ApiStandardErrors(
@@ -365,8 +472,9 @@ export class AdminCompanyCreditController {
     @CurrentActor() actor: Actor,
     @Param('companyId', ParseUUIDPipe) id: string,
     @Body() body: RequestCreditLimitDto,
-  ): Promise<CompanyCreditDto> {
-    return creditDto(await this.credit.requestLimit(staff(actor), id, body));
+  ): Promise<AdminCompanyCreditDto> {
+    const view = await this.credit.requestLimit(staff(actor), id, body);
+    return this.adminView((await this.companies.get(id)).id, view);
   }
 
   @Get('statement')

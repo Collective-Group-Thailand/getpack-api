@@ -130,6 +130,49 @@ describe('companies (e2e, B3.5)', () => {
       .post(`/v1/admin/companies/${id}/actions/approve-kyc`)
       .expect(403);
 
+    // U-B0.2: the staff view — member contacts, reviewed KYC files, discount, receivables, ETag; filters.
+    const staffView = await as(ctx, reviewer).get(`/v1/admin/companies/${id}`).expect(200);
+    expect(staffView.headers['etag']).toEqual(expect.any(String));
+    expect(staffView.body).toMatchObject({
+      membersCount: 1,
+      discount: null,
+      receivables: { openAmount: '0.00', overdueAmount: '0.00', creditOrdersBlocked: false, currency: 'THB' },
+    });
+    expect(staffView.body.members[0].user).toMatchObject({ phone: admin.phone });
+    expect(Object.keys(staffView.body.members[0].user as object)).toContain('email');
+    const reviewed = (
+      staffView.body.kycDocuments as {
+        status: string;
+        reviewedBy: unknown;
+        uploadedAt: string;
+        fileName: string;
+      }[]
+    ).filter((d) => d.status === 'verified');
+    expect(reviewed.length).toBeGreaterThan(0);
+    for (const d of reviewed)
+      expect(d).toMatchObject({
+        reviewedBy: expect.objectContaining({ id: expect.any(String) }),
+        fileName: expect.any(String),
+      });
+    const prepaid = await as(ctx, reviewer).get('/v1/admin/companies?creditStatus=prepaid').expect(200);
+    expect((prepaid.body.data as { id: string }[]).map((c) => c.id)).toContain(id);
+    const onCredit = await as(ctx, reviewer).get('/v1/admin/companies?creditStatus=credit').expect(200);
+    expect((onCredit.body.data as { id: string }[]).map((c) => c.id)).not.toContain(id);
+    const manager = await staffToken(ctx, 'admin');
+    await as(ctx, manager)
+      .post(`/v1/admin/companies/${id}/actions/suspend`, { reason: 'ทดสอบระงับ' })
+      .set('If-Match', '"stale"')
+      .expect(412);
+    const suspended = await as(ctx, manager)
+      .post(`/v1/admin/companies/${id}/actions/suspend`, { reason: 'ทดสอบระงับ' })
+      .set('If-Match', staffView.headers['etag'] as string)
+      .expect(200);
+    expect(suspended.body.status).toBe('suspended');
+    expect(suspended.headers['etag']).not.toBe(staffView.headers['etag']);
+    await as(ctx, manager)
+      .post(`/v1/admin/companies/${id}/actions/reactivate`, { reason: 'ทดสอบคืนสถานะ' })
+      .expect(200);
+
     // Settings: the approval threshold is audited (D-123); If-Match guards the change.
     const got = await as(ctx, admin.token).get(`/v1/store/companies/${id}`).expect(200);
     await as(ctx, admin.token)

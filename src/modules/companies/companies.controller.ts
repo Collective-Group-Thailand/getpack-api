@@ -31,6 +31,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { FilesService } from '@platform/files/files.service';
 import { type Response } from 'express';
 
 import {
@@ -54,13 +55,9 @@ import {
   ReviewKycDocumentDto,
   UpdateCompanySettingsDto,
 } from './companies.dto';
-import {
-  CompaniesService,
-  type CompanyApprovalRow,
-  companyEtag,
-  type CompanyRow,
-} from './companies.service';
+import { CompaniesService, type CompanyApprovalRow, companyEtag, type CompanyRow } from './companies.service';
 import { adminCompanyDto, companyDto, invitationDto } from './company-views';
+import { CreditService } from './credit.service';
 
 const DECISIONS = ['D-120', 'D-123', 'D-125'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
@@ -530,14 +527,24 @@ export class StoreCompanyApprovalsController {
 @ApiSurface('admin', 'companies')
 @Controller('companies')
 export class AdminCompaniesController {
-  constructor(private readonly companies: CompaniesService) {}
+  constructor(
+    private readonly companies: CompaniesService,
+    private readonly credit: CreditService,
+    private readonly files: FilesService,
+  ) {}
+
+  private view(row: CompanyRow): Promise<AdminCompanyDto> {
+    return adminCompanyDto(row, { files: this.files, credit: this.credit });
+  }
 
   @Get()
   @Can('companies.read')
   @ApiEndpoint({
     id: 'admin.companies.list',
     summary: 'List companies',
-    description: 'Newest first; `status=kyc_review` is the review queue (D-120).',
+    description:
+      'Newest first; `status=kyc_review` is the review queue (D-120), `creditStatus` narrows by credit (D-121, ' +
+      'D-122). Each row carries the members count, the discount in force (D-124) and what the company owes now.',
     implements: DECISIONS,
   })
   @ApiPaginated(AdminCompanyDto, { example: ADMIN_COMPANY_EXAMPLE })
@@ -545,6 +552,7 @@ export class AdminCompaniesController {
   async list(@Query() q: CompanyListQuery) {
     const where: Prisma.CompanyWhereInput = {
       ...(q.status && { status: q.status }),
+      ...(q.creditStatus && { creditStatus: q.creditStatus }),
       ...(q.q && {
         OR: [
           { taxId: q.q },
@@ -554,7 +562,10 @@ export class AdminCompaniesController {
       }),
     };
     const [rows, total] = await this.companies.list(where, q.page, q.perPage);
-    return { data: rows.map(adminCompanyDto), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: await Promise.all(rows.map((r) => this.view(r))),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get(':companyId')
@@ -563,13 +574,24 @@ export class AdminCompaniesController {
   @ApiEndpoint({
     id: 'admin.companies.get',
     summary: 'Get a company',
-    description: 'With members, branches and KYC documents.',
-    implements: DECISIONS,
+    description:
+      'With members (and their contact details), branches, KYC documents (signed file URL, uploaded, reviewed by), ' +
+      'the discount in force (D-124) and what the company owes now (D-122). The `ETag` guards the staff actions.',
+    implements: [...DECISIONS, 'D-122', 'D-124'],
   })
+  @ApiEtag()
   @ApiSuccess(200, { description: 'Company', type: AdminCompanyDto, example: ADMIN_COMPANY_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async get(@Param('companyId', ParseUUIDPipe) id: string): Promise<AdminCompanyDto> {
-    return adminCompanyDto(await this.companies.get(id));
+  async get(
+    @Param('companyId', ParseUUIDPipe) id: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AdminCompanyDto> {
+    return this.respond(await this.companies.get(id), res);
+  }
+
+  private respond(row: CompanyRow, res: Response): Promise<AdminCompanyDto> {
+    res.setHeader('ETag', companyEtag(row));
+    return this.view(row);
   }
 
   @Post(':companyId/kyc-documents/:documentId/actions/review')
@@ -586,15 +608,26 @@ export class AdminCompaniesController {
   })
   @ApiBody({ type: ReviewKycDocumentDto, examples: { default: { value: { outcome: 'verified' } } } })
   @ApiSuccess(200, { description: 'Company', type: AdminCompanyDto, example: ADMIN_COMPANY_EXAMPLE })
+  @ApiConcurrency({ optional: true })
   @ApiStandardErrors(...WRITE, 'companies.certificate_too_old')
   async review(
     @CurrentActor() actor: Actor,
     @Param('companyId', ParseUUIDPipe) id: string,
     @Param('documentId', ParseUUIDPipe) documentId: string,
     @Body() body: ReviewKycDocumentDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AdminCompanyDto> {
-    return adminCompanyDto(
-      await this.companies.reviewKycDocument(staff(actor), id, documentId, body.outcome, body.note ?? null),
+    return this.respond(
+      await this.companies.reviewKycDocument(
+        staff(actor),
+        id,
+        documentId,
+        body.outcome,
+        body.note ?? null,
+        ifMatch,
+      ),
+      res,
     );
   }
 
@@ -610,6 +643,7 @@ export class AdminCompaniesController {
     implements: ['D-120', 'D-121'],
   })
   @ApiSuccess(200, { description: 'Company', type: AdminCompanyDto, example: ADMIN_COMPANY_EXAMPLE })
+  @ApiConcurrency({ optional: true })
   @ApiStandardErrors(
     'http.not_found',
     'validation.failed',
@@ -619,8 +653,10 @@ export class AdminCompaniesController {
   async approve(
     @CurrentActor() actor: Actor,
     @Param('companyId', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AdminCompanyDto> {
-    return adminCompanyDto(await this.companies.decideKyc(staff(actor), id, true, null));
+    return this.respond(await this.companies.decideKyc(staff(actor), id, true, null, ifMatch), res);
   }
 
   @Post(':companyId/actions/reject-kyc')
@@ -639,13 +675,16 @@ export class AdminCompaniesController {
     type: AdminCompanyDto,
     example: { ...ADMIN_COMPANY_EXAMPLE, status: 'applied' },
   })
+  @ApiConcurrency({ optional: true })
   @ApiStandardErrors(...WRITE, 'companies.invalid_status')
   async reject(
     @CurrentActor() actor: Actor,
     @Param('companyId', ParseUUIDPipe) id: string,
     @Body() body: ReasonDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AdminCompanyDto> {
-    return adminCompanyDto(await this.companies.decideKyc(staff(actor), id, false, body.reason));
+    return this.respond(await this.companies.decideKyc(staff(actor), id, false, body.reason, ifMatch), res);
   }
 
   @Post(':companyId/actions/:action')
@@ -661,15 +700,18 @@ export class AdminCompaniesController {
   })
   @ApiBody({ type: ReasonDto, examples: { default: { value: { reason: 'ลูกค้าขอปิดบัญชี' } } } })
   @ApiSuccess(200, { description: 'Company', type: AdminCompanyDto, example: ADMIN_COMPANY_EXAMPLE })
+  @ApiConcurrency({ optional: true })
   @ApiStandardErrors(...WRITE, 'companies.invalid_status')
   async setStatus(
     @CurrentActor() actor: Actor,
     @Param('companyId', ParseUUIDPipe) id: string,
     @Param('action') action: string,
     @Body() body: ReasonDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AdminCompanyDto> {
     if (action !== 'suspend' && action !== 'reactivate' && action !== 'close')
       throw new DomainException('http.not_found');
-    return adminCompanyDto(await this.companies.setStatus(staff(actor), id, action, body.reason));
+    return this.respond(await this.companies.setStatus(staff(actor), id, action, body.reason, ifMatch), res);
   }
 }

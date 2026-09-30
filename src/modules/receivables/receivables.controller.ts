@@ -502,6 +502,32 @@ export class AdminReceivablesController {
     if (!company) throw new DomainException('http.not_found');
     return statementDto(await this.prisma.withTx((tx) => this.files.statement(tx, company.id, q.month)));
   }
+
+  @Get('companies/:companyId/statements/:month/pdf')
+  @Can('receivables.read')
+  @ApiParam({ name: 'companyId', format: 'uuid' })
+  @ApiParam({ name: 'month', example: '2026-10' })
+  @ApiEndpoint({
+    id: 'admin.receivables.companyStatementPdf',
+    summary: 'Download a company’s statement',
+    description:
+      'A short-lived signed URL of the issued statement PDF (D-125); `admin.companyCredit.listStatements` lists ' +
+      'the issued months.',
+    implements: ['D-125'],
+  })
+  @ApiSuccess(200, { description: 'Signed URL', type: DownloadUrlDto, example: DOWNLOAD_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'file.not_ready')
+  async statementPdf(
+    @Param('companyId', ParseUUIDPipe) companyId: string,
+    @Param('month') month: string,
+  ): Promise<DownloadUrlDto> {
+    if (!/^\d{4}-\d{2}$/.test(month)) throw new DomainException('http.not_found');
+    const statement = await this.prisma.companyStatement.findFirst({
+      where: { company: { publicId: companyId }, periodMonth: dateOnly(`${month}-01`) },
+    });
+    if (!statement) throw new DomainException('http.not_found');
+    return download(await this.files.downloadUrl(statement.fileObjectId));
+  }
 }
 
 @ApiSurface('store', 'documents')

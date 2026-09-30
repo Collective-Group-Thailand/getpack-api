@@ -39,6 +39,7 @@ export interface CreditView {
     financialStatementOnFile: boolean;
     allowedTermDays: number[];
     defaultTermDays: number;
+    reason: 'paid_orders' | 'financial_statement' | null;
   };
 }
 
@@ -112,6 +113,9 @@ export class CreditService {
     ]);
     const available = MoneyDecimal.max(D(limit?.limitAmount ?? 0).sub(exposure), D(0));
     const { allowedDays, defaultDays } = terms.value as { allowedDays: number[]; defaultDays: number };
+    const statementVerified = company.kycDocuments.some((d) => d.status === 'verified');
+    const eligible = company.creditStatus !== 'prepaid' || statementVerified;
+    const basis = limit?.eligibilityBasis as 'paid_orders' | 'financial_statement' | undefined;
     return {
       creditStatus: company.creditStatus,
       limit,
@@ -121,13 +125,31 @@ export class CreditService {
       eligibility: {
         paidOrdersCount: company.paidOrdersCount,
         paidOrdersNeeded: Number(needed.value),
-        eligible:
-          company.creditStatus !== 'prepaid' || company.kycDocuments.some((d) => d.status === 'verified'),
+        eligible,
         financialStatementOnFile: company.kycDocuments.length > 0,
         allowedTermDays: allowedDays,
         defaultTermDays: defaultDays,
+        reason: !eligible
+          ? null
+          : company.paidOrdersCount >= Number(needed.value)
+            ? 'paid_orders'
+            : statementVerified
+              ? 'financial_statement'
+              : (basis ?? 'paid_orders'),
       },
     };
+  }
+
+  /** Every credit-limit version of the company, newest first, with who asked and its approval (D-121). */
+  versions(companyId: bigint) {
+    return this.prisma.companyCreditLimitVersion.findMany({
+      where: { creditLimit: { companyId } },
+      include: {
+        createdBy: { select: { publicId: true, displayName: true } },
+        approvalRequest: { select: { publicId: true } },
+      },
+      orderBy: { versionNo: 'desc' },
+    });
   }
 
   /**
@@ -164,8 +186,7 @@ export class CreditService {
       const due = i.dueAt!;
       const owed = D(i.cashAmount).sub(i.paidAmount.toString());
       const code = due < today ? 'overdue' : due < tomorrow ? 'due_today' : due < soon ? 'due_soon' : null;
-      if (code)
-        notices.push({ code, groupCode: i.schedule.orderGroup.groupCode, dueAt: due, amount: owed });
+      if (code) notices.push({ code, groupCode: i.schedule.orderGroup.groupCode, dueAt: due, amount: owed });
       if (due < today) {
         const days = Math.floor((today.getTime() - startOfBangkokDay(bangkokDate(due)).getTime()) / DAY_MS);
         oldest = Math.max(oldest ?? 0, days);

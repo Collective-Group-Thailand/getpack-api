@@ -38,7 +38,11 @@ export const COMPANY_INCLUDE = {
   },
   discount: {
     include: {
-      versions: { where: { status: 'approved' }, orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }] },
+      versions: {
+        where: { status: 'approved' },
+        orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+        include: { discountMemo: { select: { publicId: true } } },
+      },
     },
   },
   members: {
@@ -46,7 +50,10 @@ export const COMPANY_INCLUDE = {
     include: { user: { select: { publicId: true, displayName: true, phone: true, email: true } } },
     orderBy: { id: 'asc' },
   },
-  kycDocuments: { include: { fileObject: { select: { publicId: true } } }, orderBy: { id: 'asc' } },
+  kycDocuments: {
+    include: { fileObject: true, verifiedBy: { select: { publicId: true, displayName: true } } },
+    orderBy: { id: 'asc' },
+  },
 } as const satisfies Prisma.CompanyInclude;
 export type CompanyRow = Prisma.CompanyGetPayload<{ include: typeof COMPANY_INCLUDE }>;
 
@@ -458,9 +465,11 @@ export class CompaniesService {
     documentId: string,
     outcome: 'verified' | 'rejected',
     note: string | null,
+    ifMatch?: string,
   ) {
     return this.prisma.withTx(async (tx) => {
       const company = await this.get(publicId, tx);
+      assertIfMatch(ifMatch, companyEtag(company), { required: false });
       const doc = company.kycDocuments.find((d) => d.publicId === documentId);
       if (!doc) throw new DomainException('http.not_found');
       if (outcome === 'verified' && doc.docType === 'company_certificate') {
@@ -497,9 +506,11 @@ export class CompaniesService {
     publicId: string,
     approve: boolean,
     reason: string | null,
+    ifMatch?: string,
   ): Promise<CompanyRow> {
     return this.prisma.withTx(async (tx) => {
       const company = await this.get(publicId, tx);
+      assertIfMatch(ifMatch, companyEtag(company), { required: false });
       if (company.status !== 'kyc_review')
         throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       if (!approve) {
@@ -544,6 +555,7 @@ export class CompaniesService {
     publicId: string,
     action: 'suspend' | 'reactivate' | 'close',
     reason: string,
+    ifMatch?: string,
   ): Promise<CompanyRow> {
     const allowed: Record<typeof action, [string[], 'suspended' | 'active' | 'closed']> = {
       suspend: [['active'], 'suspended'],
@@ -553,6 +565,7 @@ export class CompaniesService {
     const [from, to] = allowed[action];
     return this.prisma.withTx(async (tx) => {
       const company = await this.get(publicId, tx);
+      assertIfMatch(ifMatch, companyEtag(company), { required: false });
       if (!from.includes(company.status))
         throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       const row = await tx.company.update({
@@ -703,7 +716,9 @@ export class CompaniesService {
       if (!member) throw new DomainException('http.not_found');
       const next = [...new Set(roles)];
       const before = member.roleKeys as CompanyRole[];
-      const admins = company.members.filter((m) => m.status === 'active' && m.roleKeys.includes('company_admin'));
+      const admins = company.members.filter(
+        (m) => m.status === 'active' && m.roleKeys.includes('company_admin'),
+      );
       if (
         member.status === 'active' &&
         before.includes('company_admin') &&
@@ -736,7 +751,11 @@ export class CompaniesService {
               actor,
               resourceType: 'user',
               resourcePublicId: member.user.publicId,
-              data: { role: role.key, scope: { type: 'company', id: company.publicId }, reason: 'Company roles changed' },
+              data: {
+                role: role.key,
+                scope: { type: 'company', id: company.publicId },
+                reason: 'Company roles changed',
+              },
             });
         }
         await this.grantRoles(
@@ -893,7 +912,12 @@ export class CompaniesService {
       },
     });
     type Sum = { orders: number; net: Prisma.Decimal; vat: Prisma.Decimal; gross: Prisma.Decimal };
-    const zero = (): Sum => ({ orders: 0, net: new Prisma.Decimal(0), vat: new Prisma.Decimal(0), gross: new Prisma.Decimal(0) });
+    const zero = (): Sum => ({
+      orders: 0,
+      net: new Prisma.Decimal(0),
+      vat: new Prisma.Decimal(0),
+      gross: new Prisma.Decimal(0),
+    });
     const add = (m: Map<string, Sum>, key: string, o: (typeof orders)[number]) => {
       const sum = m.get(key) ?? zero();
       sum.orders += 1;
@@ -926,7 +950,9 @@ export class CompaniesService {
       grossAmount: sum.gross.toFixed(2),
     });
     const monthKeys = Array.from({ length: months }, (_, i) =>
-      new Date(Date.UTC(firstMonth.getUTCFullYear(), firstMonth.getUTCMonth() + i, 1)).toISOString().slice(0, 7),
+      new Date(Date.UTC(firstMonth.getUTCFullYear(), firstMonth.getUTCMonth() + i, 1))
+        .toISOString()
+        .slice(0, 7),
     );
     const byGross = <T extends { grossAmount: string }>(a: T, b: T) =>
       new Prisma.Decimal(b.grossAmount).comparedTo(a.grossAmount);
@@ -935,14 +961,23 @@ export class CompaniesService {
       to,
       total: amounts(total.get('all') ?? zero()),
       byMonth: monthKeys.map((month) => ({ month, ...amounts(byMonth.get(month) ?? zero()) })),
-      byMember: [...byMember].map(([id, sum]) => ({ user: { id, displayName: members.get(id)!.displayName }, ...amounts(sum) })).sort(byGross),
+      byMember: [...byMember]
+        .map(([id, sum]) => ({ user: { id, displayName: members.get(id)!.displayName }, ...amounts(sum) }))
+        .sort(byGross),
       byBranch: [...byBranch]
         .map(([key, sum]) => {
           const b = branches.get(key) ?? null;
-          return { branchId: b?.publicId ?? null, branchCode: b?.branchCode ?? null, name: b?.name ?? null, ...amounts(sum) };
+          return {
+            branchId: b?.publicId ?? null,
+            branchCode: b?.branchCode ?? null,
+            name: b?.name ?? null,
+            ...amounts(sum),
+          };
         })
         .sort(byGross),
-      byProductType: [...byType].map(([productTypeCode, sum]) => ({ productTypeCode, ...amounts(sum) })).sort(byGross),
+      byProductType: [...byType]
+        .map(([productTypeCode, sum]) => ({ productTypeCode, ...amounts(sum) }))
+        .sort(byGross),
       currency: 'THB',
     };
   }
