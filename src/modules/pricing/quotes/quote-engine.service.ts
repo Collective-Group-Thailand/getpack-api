@@ -38,6 +38,8 @@ export interface QuoteContext {
   anonymousId?: string;
   ip?: string;
   deliveryPostcode?: string;
+  /** false: not a customer calculation (e.g. the price-hint refresh, D-220), so no calculate log (D-102). */
+  log?: boolean;
 }
 
 export interface QuoteStepView {
@@ -365,7 +367,8 @@ export class QuoteEngineService {
         calculatorVersion: adapter.version,
       },
     };
-    view.calculateLog = await this.log(adapter, cfg, resolved, view, ctx, at, Date.now() - started);
+    view.calculateLog =
+      ctx.log === false ? null : await this.log(adapter, cfg, resolved, view, ctx, at, Date.now() - started);
     return view;
   }
 

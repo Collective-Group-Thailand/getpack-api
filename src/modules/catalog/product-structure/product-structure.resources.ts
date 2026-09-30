@@ -315,6 +315,7 @@ export function catalogProductDto(row: CatalogProductRow, optionIds: OptionPubli
     quantityMax: row.quantityMax,
     quantityDefault: row.quantityDefault,
     quantityPresets: [...(row.quantityPresets ?? [])].sort((a, b) => a - b),
+    referenceConfiguration: (row.referenceConfiguration as Record<string, unknown> | null) ?? null,
     sort: row.sort,
     status: row.status,
     patterns: row.patterns.map((p) => ({
@@ -360,6 +361,7 @@ export const CATALOG_PRODUCT_EXAMPLE: CatalogProductDto = {
   quantityMax: null,
   quantityDefault: null,
   quantityPresets: [],
+  referenceConfiguration: null,
   sort: 10,
   status: 'active',
   patterns: [

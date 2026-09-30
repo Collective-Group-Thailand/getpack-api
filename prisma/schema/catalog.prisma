@@ -359,6 +359,8 @@ model CatalogProduct {
   quantityMax              Int?                 @map("quantity_max")
   quantityDefault          Int?                 @map("quantity_default")
   quantityPresets          Int[]                @default([]) @map("quantity_presets")
+  /// D-220 the configuration its "starting from" price is quoted at (calculator input, one quantity); null = no price hint.
+  referenceConfiguration   Json?                @map("reference_configuration")
   sort                     Int                  @default(0)
   status                   CatalogStatus        @default(draft)
   createdAt                DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -377,6 +379,7 @@ model CatalogProduct {
   showcaseProducts       ShowcaseProduct[]
   semiDesigns            SemiDesign[]
   faqLinks               FaqCatalogProductLink[]
+  priceHint              CatalogPriceHint?
   productEmbeddings      ProductEmbedding[]
   createdBy              User?                   @relation("CatalogProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__created_by")
   updatedBy              User?                   @relation("CatalogProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__updated_by")
@@ -1989,4 +1992,22 @@ model PatternStandardBlank {
   @@unique([patternId, standardSizeId], map: "ux_pattern_standard_blanks__pattern_id__standard_size_id")
   @@index([standardSizeId], map: "ix_pattern_standard_blanks__standard_size_id")
   @@map("pattern_standard_blanks")
+}
+
+/// D-220 cached "starting from" price of a catalogue product: its reference configuration priced by the ported
+/// calculator through the quote path (cheapest instant path, no factory identity, D-050). No row = no hint.
+/// Recomputed on price-list, catalogue and quote-mode events and hourly (schema-design A-52).
+model CatalogPriceHint {
+  catalogProductId  BigInt   @id(map: "pk_catalog_price_hints") @map("catalog_product_id")
+  quantity          Int
+  /// Per piece, incl. VAT (customer prices include VAT), excluding delivery and design.
+  unitPrice         Decimal  @map("unit_price") @db.Decimal(18, 6)
+  leadTimeDays      Int?     @map("lead_time_days")
+  specSummary       Json     @map("spec_summary")
+  calculatorVersion String   @map("calculator_version")
+  computedAt        DateTime @map("computed_at") @db.Timestamptz(6)
+
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_price_hints__catalog_product_id")
+
+  @@map("catalog_price_hints")
 }

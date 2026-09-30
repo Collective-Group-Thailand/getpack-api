@@ -424,6 +424,16 @@ export class CatalogProductDto {
   })
   quantityPresets!: number[];
 
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    nullable: true,
+    example: null,
+    description:
+      'D-220: the calculator configuration (one quantity) its "starting from" price is quoted at; set through `PUT …/reference-configuration`',
+  })
+  referenceConfiguration!: Record<string, unknown> | null;
+
   @ApiProperty({ type: 'integer', example: 10 })
   sort!: number;
 
@@ -955,4 +965,26 @@ export class UpdateSubPatternDto extends PartialType(OmitType(CreateSubPatternDt
 export class SubPatternListQuery extends PageQuery {
   @RefField({ example: EXAMPLE_IDS.pattern, optional: true })
   patternId?: string;
+}
+
+/** D-220: the reference configuration of a catalogue product's price hint. */
+export class ReferenceConfigurationDto {
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    example: {
+      patternId: EXAMPLE_IDS.pattern,
+      w: 60,
+      l: 60,
+      d: 150,
+      materialId: EXAMPLE_IDS.material,
+      difficultyLevelId: '0192f3a0-7c1e-7d2a-9b1f-00000000c020',
+      quantities: [1000],
+      parts: [{}],
+    },
+    description:
+      "The product type's calculator configuration (`FoldingConfigurationDto` / `CorrugateConfigurationDto`) with exactly one quantity; `catalogProductId` is set to this product",
+  })
+  @IsObject()
+  configuration!: Record<string, unknown>;
 }

@@ -2,7 +2,8 @@ import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch } from '@common/etag/etag';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type QuoteMode } from '@generated/prisma/client';
+import { Prisma, type QuoteMode } from '@generated/prisma/client';
+import { assertStoreRules, validateConfiguration } from '@modules/pricing/quotes/configurations';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -25,6 +26,9 @@ import { SHIPPED_CALCULATORS } from './shipped-calculators';
  * a catalogue product and a pattern. Each replaces the collection in one transaction, bumps the
  * parent's `row_version` (so its ETag changes), writes an audit row and a domain event.
  */
+/** Calculators whose configuration can be a price-hint reference (the box calculators, D-220). */
+const REFERENCE_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate']);
+
 @Injectable()
 export class ProductStructureService {
   constructor(
@@ -104,6 +108,47 @@ export class ProductStructureService {
       );
       await tx.catalogProductPattern.deleteMany({ where: { catalogProductId: product.id } });
       await tx.catalogProductPattern.createMany({ data: rows });
+    });
+  }
+
+  /**
+   * D-220: the configuration a product's "starting from" price is quoted at — validated as a store request of its
+   * type's calculator (DTO and store rules, one quantity), or cleared with `null`.
+   */
+  async setReferenceConfiguration(
+    actor: UserActor,
+    publicId: string,
+    ifMatch: string | undefined,
+    configuration: Record<string, unknown> | null,
+  ) {
+    return this.onCatalogProduct(actor, publicId, ifMatch, 'referenceConfiguration', async (tx, product) => {
+      let value: Record<string, unknown> | null = null;
+      if (configuration !== null) {
+        const type = await tx.productType.findFirstOrThrow({
+          where: { catalogProducts: { some: { id: product.id } } },
+          select: { calculatorKey: true },
+        });
+        const fail = (path: string, message: string): never => {
+          throw new DomainException('validation.failed', { errors: [{ path, code: 'invalid', message }] });
+        };
+        if (!type.calculatorKey || !REFERENCE_CALCULATORS.has(type.calculatorKey)) {
+          fail('configuration', 'the product type has no ported calculator to price a reference with');
+        }
+        value = await validateConfiguration(
+          type.calculatorKey!,
+          { ...configuration, catalogProductId: publicId },
+          { staff: false },
+        );
+        const quantities = value['quantities'];
+        if (!Array.isArray(quantities) || quantities.length !== 1) {
+          fail('configuration.quantities', 'a reference configuration names exactly one quantity');
+        }
+        await assertStoreRules(tx, type.calculatorKey!, value);
+      }
+      await tx.catalogProduct.update({
+        where: { id: product.id },
+        data: { referenceConfiguration: value === null ? Prisma.DbNull : (value as Prisma.InputJsonValue) },
+      });
     });
   }
 

@@ -1,5 +1,6 @@
 import { type Type } from '@nestjs/common';
 
+import { StorePriceHintsController } from './hints/price-hints.controller';
 import {
   AdminCsCorrugateController,
   AdminCsFoldingController,
@@ -10,7 +11,7 @@ import {
 import { SellMarginTablesController } from './sell-margins/sell-margins.controller';
 
 /** `/v1/store/*` controllers of the pricing context. */
-export const PRICING_STORE_CONTROLLERS: Type<unknown>[] = [StoreQuotesController];
+export const PRICING_STORE_CONTROLLERS: Type<unknown>[] = [StoreQuotesController, StorePriceHintsController];
 
 /** `/v1/admin/*` controllers of the pricing context. */
 export const PRICING_ADMIN_CONTROLLERS: Type<unknown>[] = [

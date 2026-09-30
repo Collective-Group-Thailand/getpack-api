@@ -3,6 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor } from '@common/context/actor';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { ApiConcurrency, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { PriceHintsService } from '@modules/pricing/hints/price-hints.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Delete, HttpCode, Param, ParseUUIDPipe, Post, Put, Res } from '@nestjs/common';
 import { ApiBody } from '@nestjs/swagger';
@@ -18,6 +19,7 @@ import {
   EXAMPLE_IDS,
   PatternDto,
   ProductTypeDto,
+  ReferenceConfigurationDto,
   ReplaceFluteTypesDto,
   ReplaceOptionsDto,
   ReplacePatternsDto,
@@ -93,6 +95,7 @@ export class CatalogProductRelationsController {
   constructor(
     private readonly service: ProductStructureService,
     private readonly crud: CatalogCrudService,
+    private readonly hints: PriceHintsService,
   ) {}
 
   @Put(':id/patterns')
@@ -128,6 +131,73 @@ export class CatalogProductRelationsController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<object> {
     return this.respond(await this.service.replacePatterns(staffActor(actor), id, ifMatch, body), res);
+  }
+
+  @Put(':id/reference-configuration')
+  @Can('catalog.manage')
+  @ApiEndpoint({
+    id: 'admin.catalogProducts.setReferenceConfiguration',
+    summary: 'Set the reference configuration of the "starting from" price',
+    description:
+      'D-220: the calculator configuration (one quantity) a product card\'s starting price is quoted at, validated ' +
+      'as a store request of the product type\'s calculator. The price hint is recomputed at once and shown by ' +
+      '`store.catalog.listPriceHints`; no hint while nothing can price it. Guarded by the product ETag; audited.',
+    implements: ['D-220', 'D-181'],
+  })
+  @ApiConcurrency()
+  @ApiBody({
+    type: ReferenceConfigurationDto,
+    examples: {
+      default: {
+        value: {
+          configuration: {
+            patternId: EXAMPLE_IDS.pattern,
+            w: 60,
+            l: 60,
+            d: 150,
+            materialId: EXAMPLE_IDS.material,
+            difficultyLevelId: '0192f3a0-7c1e-7d2a-9b1f-00000000c020',
+            quantities: [1000],
+            parts: [{}],
+          },
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, { description: 'The catalogue product', type: CatalogProductDto, example: CATALOG_PRODUCT_EXAMPLE })
+  @ApiStandardErrors(...COLLECTION_ERRORS)
+  async setReferenceConfiguration(
+    @CurrentActor() actor: Actor,
+    @Param('id', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: ReferenceConfigurationDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<object> {
+    const row = await this.service.setReferenceConfiguration(staffActor(actor), id, ifMatch, body.configuration);
+    await this.hints.refresh((row as unknown as { id: bigint }).id);
+    return this.respond(row, res);
+  }
+
+  @Delete(':id/reference-configuration')
+  @Can('catalog.manage')
+  @ApiEndpoint({
+    id: 'admin.catalogProducts.clearReferenceConfiguration',
+    summary: 'Remove the reference configuration',
+    description: 'The product then has no "starting from" price (D-220). Guarded by the product ETag; audited.',
+    implements: ['D-220'],
+  })
+  @ApiConcurrency()
+  @ApiSuccess(200, { description: 'The catalogue product', type: CatalogProductDto, example: CATALOG_PRODUCT_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async clearReferenceConfiguration(
+    @CurrentActor() actor: Actor,
+    @Param('id', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<object> {
+    const row = await this.service.setReferenceConfiguration(staffActor(actor), id, ifMatch, null);
+    await this.hints.refresh((row as unknown as { id: bigint }).id);
+    return this.respond(row, res);
   }
 
   @Put(':id/options')

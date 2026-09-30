@@ -9244,6 +9244,23 @@
         ],
         "type": "object"
       },
+      "BusinessDayRangeDto": {
+        "properties": {
+          "max": {
+            "example": 7,
+            "type": "integer"
+          },
+          "min": {
+            "example": 7,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min",
+          "max"
+        ],
+        "type": "object"
+      },
       "CalculateQuoteDto": {
         "properties": {
           "configuration": {
@@ -10881,6 +10898,15 @@
             },
             "type": "array"
           },
+          "referenceConfiguration": {
+            "additionalProperties": true,
+            "description": "D-220: the calculator configuration (one quantity) its \"starting from\" price is quoted at; set through `PUT …/reference-configuration`",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "seoPageId": {
             "example": null,
             "format": "uuid",
@@ -10943,6 +10969,7 @@
           "quantityMax",
           "quantityDefault",
           "quantityPresets",
+          "referenceConfiguration",
           "sort",
           "status",
           "patterns",
@@ -18155,7 +18182,6 @@
         "type": "object"
       },
       "Currency": {
-        "description": "Always THB (one currency)",
         "enum": [
           "THB"
         ],
@@ -32459,6 +32485,131 @@
         ],
         "type": "string"
       },
+      "PriceHintBasisDto": {
+        "properties": {
+          "includesDelivery": {
+            "description": "Delivery is quoted for the delivery postcode, not in this figure",
+            "example": false,
+            "type": "boolean"
+          },
+          "includesVat": {
+            "example": true,
+            "type": "boolean"
+          },
+          "quantity": {
+            "description": "Quantity the price per piece is for",
+            "example": 1000,
+            "type": "integer"
+          },
+          "sizeCode": {
+            "description": "Standard size code, when the reference is one",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "specs": {
+            "description": "The reference specification, as spec lines",
+            "items": {
+              "$ref": "#/components/schemas/SpecLineDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "quantity",
+          "sizeCode",
+          "includesVat",
+          "includesDelivery",
+          "specs"
+        ],
+        "type": "object"
+      },
+      "PriceHintDto": {
+        "properties": {
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceHintBasisDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "computedAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "example": "THB"
+          },
+          "key": {
+            "description": "Catalogue product slug or stock product SKU",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PriceHintKind"
+              }
+            ],
+            "example": "catalog_product"
+          },
+          "leadTimeBusinessDays": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BusinessDayRangeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Production lead time in working days (factory capacity, D-101); null when unknown"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "startingFromPerPiece": {
+            "description": "Price per piece at the reference configuration, rounded up to the satang; null = no instant price (RFQ, D-043)",
+            "example": "4.28",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "kind",
+          "productTypeCode",
+          "startingFromPerPiece",
+          "currency",
+          "basis",
+          "leadTimeBusinessDays",
+          "computedAt"
+        ],
+        "type": "object"
+      },
+      "PriceHintKind": {
+        "enum": [
+          "catalog_product",
+          "stock_product"
+        ],
+        "type": "string"
+      },
       "PriceLineDecisionAction": {
         "enum": [
           "accept",
@@ -36804,6 +36955,33 @@
           "rejected"
         ],
         "type": "string"
+      },
+      "ReferenceConfigurationDto": {
+        "properties": {
+          "configuration": {
+            "additionalProperties": true,
+            "description": "The product type's calculator configuration (`FoldingConfigurationDto` / `CorrugateConfigurationDto`) with exactly one quantity; `catalogProductId` is set to this product",
+            "example": {
+              "d": 150,
+              "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000c020",
+              "l": 60,
+              "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+              "parts": [
+                {}
+              ],
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+              "quantities": [
+                1000
+              ],
+              "w": 60
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "configuration"
+        ],
+        "type": "object"
       },
       "ReferralCountsDto": {
         "properties": {
@@ -67369,6 +67547,7 @@
                       "quantityMax": null,
                       "quantityMin": null,
                       "quantityPresets": [],
+                      "referenceConfiguration": null,
                       "seoPageId": null,
                       "slug": "tuck-end-box",
                       "sort": 10,
@@ -67611,6 +67790,7 @@
                   "quantityMax": null,
                   "quantityMin": null,
                   "quantityPresets": [],
+                  "referenceConfiguration": null,
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -67871,6 +68051,7 @@
                   "quantityMax": null,
                   "quantityMin": null,
                   "quantityPresets": [],
+                  "referenceConfiguration": null,
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -68123,6 +68304,7 @@
                   "quantityMax": null,
                   "quantityMin": null,
                   "quantityPresets": [],
+                  "referenceConfiguration": null,
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -68461,6 +68643,7 @@
                   "quantityMax": null,
                   "quantityMin": null,
                   "quantityPresets": [],
+                  "referenceConfiguration": null,
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -68767,6 +68950,7 @@
                   "quantityMax": null,
                   "quantityMin": null,
                   "quantityPresets": [],
+                  "referenceConfiguration": null,
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -69065,6 +69249,7 @@
                   "quantityMax": null,
                   "quantityMin": null,
                   "quantityPresets": [],
+                  "referenceConfiguration": null,
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -69387,6 +69572,7 @@
                   "quantityMax": null,
                   "quantityMin": null,
                   "quantityPresets": [],
+                  "referenceConfiguration": null,
                   "seoPageId": null,
                   "slug": "tuck-end-box",
                   "sort": 10,
@@ -69612,6 +69798,609 @@
           }
         ],
         "summary": "Replace the patterns of a catalogue product",
+        "tags": [
+          "admin.catalogProducts"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
+    "/v1/admin/catalog/catalog-products/{id}/reference-configuration": {
+      "delete": {
+        "description": "The product then has no \"starting from\" price (D-220). Guarded by the product ETag; audited.\n\nImplements: D-220.",
+        "operationId": "admin.catalogProducts.clearReferenceConfiguration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "defaultDifficultyLevelId": null,
+                  "descriptionEn": "Reverse tuck-end folding box",
+                  "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
+                  "images": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c012",
+                      "sort": 0,
+                      "variant": {
+                        "material": "art-card-350"
+                      }
+                    }
+                  ],
+                  "isCombination": false,
+                  "nameEn": "Tuck-end box",
+                  "nameTh": "กล่องฝาเสียบ",
+                  "options": [
+                    {
+                      "isDefault": true,
+                      "kind": "material",
+                      "optionId": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+                      "sort": 0
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "factorNd": 1,
+                      "factorNl": 1,
+                      "factorNw": 1,
+                      "patternCode": "RTE-01",
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                      "sort": 0
+                    }
+                  ],
+                  "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
+                  "referenceConfiguration": null,
+                  "seoPageId": null,
+                  "slug": "tuck-end-box",
+                  "sort": 10,
+                  "status": "active",
+                  "templateAvailability": "drawing",
+                  "updatedAt": "2026-09-25T10:00:00+07:00",
+                  "videoUrl": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductDto"
+                }
+              }
+            },
+            "description": "The catalogue product",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Remove the reference configuration",
+        "tags": [
+          "admin.catalogProducts"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      },
+      "put": {
+        "description": "D-220: the calculator configuration (one quantity) a product card's starting price is quoted at, validated as a store request of the product type's calculator. The price hint is recomputed at once and shown by `store.catalog.listPriceHints`; no hint while nothing can price it. Guarded by the product ETag; audited.\n\nImplements: D-220, D-181.",
+        "operationId": "admin.catalogProducts.setReferenceConfiguration",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "configuration": {
+                      "d": 150,
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000c020",
+                      "l": 60,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+                      "parts": [
+                        {}
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 60
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReferenceConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "defaultDifficultyLevelId": null,
+                  "descriptionEn": "Reverse tuck-end folding box",
+                  "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
+                  "images": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c012",
+                      "sort": 0,
+                      "variant": {
+                        "material": "art-card-350"
+                      }
+                    }
+                  ],
+                  "isCombination": false,
+                  "nameEn": "Tuck-end box",
+                  "nameTh": "กล่องฝาเสียบ",
+                  "options": [
+                    {
+                      "isDefault": true,
+                      "kind": "material",
+                      "optionId": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+                      "sort": 0
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "factorNd": 1,
+                      "factorNl": 1,
+                      "factorNw": 1,
+                      "patternCode": "RTE-01",
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                      "sort": 0
+                    }
+                  ],
+                  "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
+                  "referenceConfiguration": null,
+                  "seoPageId": null,
+                  "slug": "tuck-end-box",
+                  "sort": 10,
+                  "status": "active",
+                  "templateAvailability": "drawing",
+                  "updatedAt": "2026-09-25T10:00:00+07:00",
+                  "videoUrl": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductDto"
+                }
+              }
+            },
+            "description": "The catalogue product",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Set the reference configuration of the \"starting from\" price",
         "tags": [
           "admin.catalogProducts"
         ],
@@ -252615,6 +253404,186 @@
         },
         "security": [],
         "summary": "Google Merchant feed",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/price-hints": {
+      "get": {
+        "description": "Per catalogue product: its reference configuration (kept by catalogue admins) priced by the ported calculator through the quote path — the cheapest instant path, no factory named (D-220, D-043, D-050) — rounded up to the satang, with the basis it assumes (quantity, VAT, no delivery, the reference spec) and the lead time. `startingFromPerPiece` is null when nothing can price it (the product is RFQ); never an estimate (D-181). Refreshed when prices, quote modes or the product change, and hourly.\n\nImplements: D-220, D-181, D-043, D-050.",
+        "operationId": "store.catalog.listPriceHints",
+        "parameters": [
+          {
+            "description": "Product type code",
+            "in": "query",
+            "name": "productType",
+            "required": false,
+            "schema": {
+              "example": "folding_carton",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Catalogue product slugs (comma-separated or repeated, ≤ 100); all products of the type when omitted",
+            "in": "query",
+            "name": "slugs",
+            "required": false,
+            "schema": {
+              "example": [
+                "tuck-end-box"
+              ],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Stock product SKUs (comma-separated or repeated, ≤ 100)",
+            "in": "query",
+            "name": "skus",
+            "required": false,
+            "schema": {
+              "example": [
+                "PKO-BTL-0250"
+              ],
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "maxLength": 60,
+              "type": "array"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "basis": {
+                      "includesDelivery": false,
+                      "includesVat": true,
+                      "quantity": 1000,
+                      "sizeCode": null,
+                      "specs": [
+                        {
+                          "key": "size",
+                          "labelEn": "Size (W × L × D)",
+                          "labelTh": "ขนาด (กว้าง × ยาว × ลึก)",
+                          "valueEn": "60 × 60 × 150 mm",
+                          "valueTh": "60 × 60 × 150 มม."
+                        }
+                      ]
+                    },
+                    "computedAt": "2026-10-01T09:00:00+07:00",
+                    "currency": "THB",
+                    "key": "tuck-end-box",
+                    "kind": "catalog_product",
+                    "leadTimeBusinessDays": {
+                      "max": 7,
+                      "min": 7
+                    },
+                    "productTypeCode": "folding_carton",
+                    "startingFromPerPiece": "4.28"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PriceHintDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Price hints",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get \"starting from\" prices",
         "tags": [
           "store.catalog"
         ]
