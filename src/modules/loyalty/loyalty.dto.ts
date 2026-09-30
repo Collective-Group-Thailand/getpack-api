@@ -52,6 +52,21 @@ export class LoyaltySummaryDto {
   })
   spend12m!: string;
 
+  @ApiProperty({
+    enum: ['member', 'silver', 'gold'],
+    enumName: 'LoyaltyTier',
+    nullable: true,
+    example: 'silver',
+    description: 'The next tier up (D-134); null at the top tier',
+  })
+  nextTier!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '50000.00', description: '12-month spend the next tier needs' })
+  nextTierMinSpend12m!: string | null;
+
+  @ApiProperty({ example: '42.50', description: 'My 12-month spend as % of the next tier (100 at the top)' })
+  nextTierProgressPct!: string;
+
   @ApiProperty({ type: 'integer', example: 128, description: 'Points that can be redeemed now' })
   availablePoints!: number;
 
@@ -82,6 +97,9 @@ export const SUMMARY_EXAMPLE: LoyaltySummaryDto = {
   tier: 'silver',
   multiplier: '1.25',
   spend12m: '62500.00',
+  nextTier: 'silver',
+  nextTierMinSpend12m: '50000.00',
+  nextTierProgressPct: '42.50',
   availablePoints: 128,
   pendingPoints: 25,
   pointValue: '2.50',
@@ -116,6 +134,9 @@ export class PointsEntryDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   expiresAt!: string | null;
 
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null, description: 'Link to the order page' })
+  orderId!: string | null;
+
   @ApiProperty({ type: String, nullable: true, example: 'OR-2610-0001' })
   orderCode!: string | null;
 
@@ -137,6 +158,7 @@ export const ENTRY_EXAMPLE: PointsEntryDto = {
   status: 'pending',
   availableAt: '2026-10-28T10:00:00+07:00',
   expiresAt: null,
+  orderId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0002',
   orderCode: 'OR-2610-0001',
   groupCode: 'OG-2610-0001',
   reason: null,

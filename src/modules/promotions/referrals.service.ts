@@ -2,11 +2,13 @@ import { randomBytes } from 'node:crypto';
 
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
-import { startOfBangkokMonth } from '@common/time/bangkok';
+import { MoneyDecimal } from '@common/money/money';
+import { startOfBangkokMonth, toBangkokIso } from '@common/time/bangkok';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma, type ReferralAttribution, type ReferralStatus } from '@generated/prisma/client';
 import { CustomersService } from '@modules/customers/customers.service';
+import { pointsForBaht } from '@modules/loyalty/points-math';
 import { Injectable, Logger } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { ApprovalsService } from '@platform/approvals/approvals.service';
@@ -34,6 +36,12 @@ export type ReferralRow = Prisma.ReferralAttributionGetPayload<{ include: typeof
  * other or a referrer over the monthly cap go to Marketing (`referral_review`); otherwise it qualifies
  * and `referral.qualified` asks loyalty (B3.4) for the referrer's points.
  */
+/** A referee as the referrer may see them: the first letter only (PDPA; never a phone, e-mail or full name). */
+export function maskName(name: string | null): string {
+  const first = [...(name ?? '').trim()][0];
+  return first ? `${first}•••` : '•••';
+}
+
 @Injectable()
 export class ReferralsService {
   private readonly logger = new Logger(ReferralsService.name);
@@ -71,6 +79,27 @@ export class ReferralsService {
       where: { referrerUserId: userId },
       _count: { _all: true },
     });
+    const now = new Date();
+    const [rules, value, rewardedThisMonth, recent] = await Promise.all([
+      this.settings.at('referral.rules', { at: now }),
+      this.settings.at('loyalty.point_value', { at: now }),
+      this.prisma.referralAttribution.count({
+        where: {
+          referrerUserId: userId,
+          status: { in: ['qualified', 'rewarded'] },
+          qualifiedAt: { gte: startOfBangkokMonth(now) },
+        },
+      }),
+      this.prisma.referralAttribution.findMany({
+        where: { referrerUserId: userId },
+        include: {
+          referee: { select: { displayName: true } },
+          pointsEntries: { where: { userId }, select: { points: true } },
+        },
+        orderBy: { attributedAt: 'desc' },
+        take: 50,
+      }),
+    ]);
     const web = this.config.get('STOREFRONT_BASE_URL') ?? 'https://www.packio.invalid';
     const byStatus = Object.fromEntries(counts.map((c) => [c.status, c._count._all])) as Partial<
       Record<ReferralStatus, number>
@@ -85,6 +114,22 @@ export class ReferralsService {
         rewarded: byStatus.rewarded ?? 0,
         rejected: byStatus.rejected_fraud ?? 0,
       },
+      // D-136 as the settings hold it; the web never restates the rules.
+      rules: {
+        refereeDiscountPct: rules.value.refereeDiscountPct,
+        refereeDiscountMaxAmount: new MoneyDecimal(rules.value.refereeDiscountMaxBaht).toFixed(2),
+        referrerRewardAmount: new MoneyDecimal(rules.value.referrerRewardBaht).toFixed(2),
+        referrerRewardPoints: pointsForBaht(rules.value.referrerRewardBaht, String(value.value)),
+        maxRewardedPerMonth: rules.value.maxRewardedReferralsPerMonth,
+      },
+      rewardedThisMonth,
+      recent: recent.map((a) => ({
+        id: a.publicId,
+        refereeName: maskName(a.referee.displayName),
+        status: a.status,
+        joinedAt: toBangkokIso(a.attributedAt),
+        rewardPoints: a.pointsEntries.reduce((sum, e) => sum + e.points, 0),
+      })),
     };
   }
 

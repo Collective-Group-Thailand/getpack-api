@@ -32,6 +32,7 @@ export const API_TAGS: Record<string, string> = {
   'admin.promotions':
     'Promotions with validated conditions and benefits, coupon codes (single, bulk-unique, per-customer), CSV export and the redemption report (D-053).',
   'store.referral': 'My referral code and link; use a friend’s code before the first order (D-136).',
+  'store.promotions': 'Check a promotion code before the cart, and the codes I hold (D-053).',
   'admin.referrals': 'Referrals with their fraud flags; `under_review` is Marketing’s queue (D-136).',
   'store.loyalty':
     'My points, tier and points history (D-130…D-134); redeem at checkout with `redeemPoints` (D-133).',

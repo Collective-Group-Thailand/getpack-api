@@ -26,6 +26,7 @@ export function entryDto(e: LedgerRow): PointsEntryDto {
     status: e.status,
     availableAt: e.availableAt ? toBangkokIso(e.availableAt) : null,
     expiresAt: e.expiresAt ? toBangkokIso(e.expiresAt) : null,
+    orderId: e.order?.publicId ?? null,
     orderCode: e.order?.orderCode ?? null,
     groupCode: e.orderGroup?.groupCode ?? null,
     reason: e.reason,

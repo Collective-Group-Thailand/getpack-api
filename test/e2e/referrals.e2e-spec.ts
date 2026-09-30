@@ -166,6 +166,16 @@ describe('referrals (e2e, B3.3)', () => {
     ).toBe('rewarded');
     const points = await as(ctx, referrer.token).get('/v1/store/loyalty').expect(200);
     expect(points.body.availablePoints).toBe(200);
+    // U-B0.1: the rules, this month's count and my referrals with the name masked (PDPA).
+    const mineNow = (await as(ctx, referrer.token).get('/v1/store/referral').expect(200)).body as {
+      rules: Record<string, unknown>;
+      rewardedThisMonth: number;
+      recent: { refereeName: string; status: string; rewardPoints: number }[];
+    };
+    expect(mineNow.rules).toMatchObject({ referrerRewardPoints: 200, maxRewardedPerMonth: 10 });
+    expect(mineNow.rewardedThisMonth).toBe(1);
+    expect(mineNow.recent).toEqual([expect.objectContaining({ status: 'rewarded', rewardPoints: 200 })]);
+    expect(mineNow.recent[0]!.refereeName).toMatch(/^.•••$/u);
 
     // The referee discount is a system promotion: its values are the referral settings, not editable.
     const system = await ctx.prisma.promotion.findFirstOrThrow({ where: { kind: 'referral' } });

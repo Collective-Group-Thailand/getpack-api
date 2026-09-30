@@ -11290,6 +11290,32 @@
         ],
         "type": "object"
       },
+      "CheckCodeDto": {
+        "properties": {
+          "code": {
+            "example": "WELCOME10",
+            "pattern": "^[A-Za-z0-9-]{3,40}$",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "description": "Check the product-type condition too",
+            "example": "folding_carton",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "quantity": {
+            "description": "Check the minimum-quantity condition too",
+            "example": 1000,
+            "maximum": 100000000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
       "CheckItemDto": {
         "properties": {
           "amount": {
@@ -12090,6 +12116,47 @@
           "waived"
         ],
         "type": "string"
+      },
+      "CodeCheckDto": {
+        "properties": {
+          "code": {
+            "example": "WELCOME10",
+            "type": "string"
+          },
+          "offer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PromotionOfferDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Shown when the code is valid or only its conditions do not match; the amount is worked out on the cart"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PromotionCodeReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "valid": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "valid",
+          "reason",
+          "offer"
+        ],
+        "type": "object"
       },
       "CompanyAction": {
         "enum": [
@@ -27145,6 +27212,31 @@
             "example": "1.25",
             "type": "string"
           },
+          "nextTier": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LoyaltyTier"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The next tier up (D-134); null at the top tier",
+            "example": "silver"
+          },
+          "nextTierMinSpend12m": {
+            "description": "12-month spend the next tier needs",
+            "example": "50000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nextTierProgressPct": {
+            "description": "My 12-month spend as % of the next tier (100 at the top)",
+            "example": "42.50",
+            "type": "string"
+          },
           "pendingPoints": {
             "description": "Earned on completed orders, credited after the claim window (D-132)",
             "example": 25,
@@ -27173,6 +27265,9 @@
           "tier",
           "multiplier",
           "spend12m",
+          "nextTier",
+          "nextTierMinSpend12m",
+          "nextTierProgressPct",
           "availablePoints",
           "pendingPoints",
           "pointValue",
@@ -28057,6 +28152,13 @@
             "example": "https://www.packio.invalid/r/PK7QX2MA",
             "type": "string"
           },
+          "recent": {
+            "description": "The 50 most recent, newest first",
+            "items": {
+              "$ref": "#/components/schemas/MyReferralItemDto"
+            },
+            "type": "array"
+          },
           "referrals": {
             "allOf": [
               {
@@ -28064,12 +28166,62 @@
               }
             ],
             "description": "People who used my code, by status"
+          },
+          "rewardedThisMonth": {
+            "description": "Referrals qualified or rewarded this calendar month (the D-136 cap)",
+            "example": 1,
+            "type": "integer"
+          },
+          "rules": {
+            "$ref": "#/components/schemas/ReferralRulesDto"
           }
         },
         "required": [
           "code",
           "link",
-          "referrals"
+          "referrals",
+          "rules",
+          "rewardedThisMonth",
+          "recent"
+        ],
+        "type": "object"
+      },
+      "MyReferralItemDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e9001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "joinedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "refereeName": {
+            "example": "ส•••",
+            "type": "string"
+          },
+          "rewardPoints": {
+            "description": "Points I received for it",
+            "example": 200,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReferralStatus"
+              }
+            ],
+            "example": "rewarded"
+          }
+        },
+        "required": [
+          "id",
+          "refereeName",
+          "status",
+          "joinedAt",
+          "rewardPoints"
         ],
         "type": "object"
       },
@@ -28307,6 +28459,89 @@
           "Bearer"
         ],
         "type": "string"
+      },
+      "OfferBenefitDto": {
+        "properties": {
+          "amount": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "maxAmount": {
+            "example": "500.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pct": {
+            "example": "10",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "description": "`percent`, `fixed`, `tiered`, … as the promotion engine applies it",
+            "example": "percent",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "pct",
+          "amount",
+          "maxAmount"
+        ],
+        "type": "object"
+      },
+      "OfferConditionsDto": {
+        "properties": {
+          "firstOrderOnly": {
+            "example": true,
+            "type": "boolean"
+          },
+          "minOrderValue": {
+            "example": "3000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "minQuantity": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "paymentMethods": {
+            "description": "Empty = any payment method",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "productTypeCodes": {
+            "description": "Empty = every product type",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "minOrderValue",
+          "minQuantity",
+          "productTypeCodes",
+          "firstOrderOnly",
+          "paymentMethods"
+        ],
+        "type": "object"
       },
       "OfferableOptionKind": {
         "enum": [
@@ -31856,6 +32091,15 @@
               "null"
             ]
           },
+          "orderId": {
+            "description": "Link to the order page",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "points": {
             "description": "Signed: earnings positive, redemptions and expiry negative",
             "example": 25,
@@ -31886,6 +32130,7 @@
           "status",
           "availableAt",
           "expiresAt",
+          "orderId",
           "orderCode",
           "groupCode",
           "reason",
@@ -34556,6 +34801,20 @@
         ],
         "type": "string"
       },
+      "PromotionCodeReason": {
+        "enum": [
+          "not_found",
+          "disabled",
+          "used_up",
+          "not_yours",
+          "inactive",
+          "not_started",
+          "expired",
+          "budget_exhausted",
+          "not_applicable"
+        ],
+        "type": "string"
+      },
       "PromotionConditionsDto": {
         "properties": {
           "catalogProductIds": {
@@ -34783,6 +35042,71 @@
           "coupon",
           "automatic",
           "referral"
+        ],
+        "type": "string"
+      },
+      "PromotionOfferDto": {
+        "properties": {
+          "benefit": {
+            "$ref": "#/components/schemas/OfferBenefitDto"
+          },
+          "code": {
+            "example": "WELCOME10",
+            "type": "string"
+          },
+          "conditions": {
+            "$ref": "#/components/schemas/OfferConditionsDto"
+          },
+          "description": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PromotionOfferStatus"
+              }
+            ],
+            "example": "usable"
+          },
+          "title": {
+            "example": "ลด 10% ลูกค้าใหม่",
+            "type": "string"
+          },
+          "validUntil": {
+            "example": "2026-12-31T23:59:59+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "title",
+          "description",
+          "benefit",
+          "conditions",
+          "validUntil",
+          "status"
+        ],
+        "type": "object"
+      },
+      "PromotionOfferStatus": {
+        "enum": [
+          "usable",
+          "disabled",
+          "used_up",
+          "not_yours",
+          "inactive",
+          "not_started",
+          "expired",
+          "budget_exhausted",
+          "not_applicable"
         ],
         "type": "string"
       },
@@ -37555,6 +37879,43 @@
           "attributedAt",
           "qualifiedAt",
           "rewardedAt"
+        ],
+        "type": "object"
+      },
+      "ReferralRulesDto": {
+        "properties": {
+          "maxRewardedPerMonth": {
+            "description": "Rewarded referrals per calendar month",
+            "example": 10,
+            "type": "integer"
+          },
+          "refereeDiscountMaxAmount": {
+            "description": "Cap of that discount",
+            "example": "500.00",
+            "type": "string"
+          },
+          "refereeDiscountPct": {
+            "description": "The friend's discount on their first order, %",
+            "example": "5",
+            "type": "string"
+          },
+          "referrerRewardAmount": {
+            "description": "My reward per rewarded referral, in baht",
+            "example": "500.00",
+            "type": "string"
+          },
+          "referrerRewardPoints": {
+            "description": "The same reward in points (D-131)",
+            "example": 200,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "refereeDiscountPct",
+          "refereeDiscountMaxAmount",
+          "referrerRewardAmount",
+          "referrerRewardPoints",
+          "maxRewardedPerMonth"
         ],
         "type": "object"
       },
@@ -133735,6 +134096,9 @@
                     }
                   ],
                   "multiplier": "1.25",
+                  "nextTier": "silver",
+                  "nextTierMinSpend12m": "50000.00",
+                  "nextTierProgressPct": "42.50",
                   "pendingPoints": 25,
                   "pointValue": "2.50",
                   "spend12m": "62500.00",
@@ -133951,6 +134315,7 @@
                   "groupCode": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
                   "orderCode": null,
+                  "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                   "points": 40,
                   "reason": "ชดเชยงานล่าช้า",
                   "status": "available"
@@ -134255,6 +134620,7 @@
                       "groupCode": "OG-2610-0001",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
                       "orderCode": "OR-2610-0001",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "points": 25,
                       "reason": null,
                       "status": "pending"
@@ -268936,6 +269302,9 @@
                     }
                   ],
                   "multiplier": "1.25",
+                  "nextTier": "silver",
+                  "nextTierMinSpend12m": "50000.00",
+                  "nextTierProgressPct": "42.50",
                   "pendingPoints": 25,
                   "pointValue": "2.50",
                   "spend12m": "62500.00",
@@ -269151,6 +269520,7 @@
                       "groupCode": "OG-2610-0001",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000b0001",
                       "orderCode": "OR-2610-0001",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
                       "points": 25,
                       "reason": null,
                       "status": "pending"
@@ -278150,6 +278520,394 @@
         ]
       }
     },
+    "/v1/store/promotions/actions/check": {
+      "post": {
+        "description": "The same rules as entering it on the cart — status, dates, whom it is for, uses left — and, when given, the product type and quantity conditions (D-053). Nothing is saved. Another customer's code says `not_yours` and shows nothing of it. Attempts count against the hourly limits per customer, IP and device (`promotions.code_attempt_limits`, 429 with `Retry-After`). The amount is worked out on the cart.\n\nImplements: D-053, D-181.",
+        "operationId": "store.promotions.checkCode",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "code": "WELCOME10",
+                    "productTypeCode": "folding_carton"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CheckCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "WELCOME10",
+                  "offer": {
+                    "benefit": {
+                      "amount": null,
+                      "maxAmount": "500.00",
+                      "pct": "10",
+                      "type": "percent"
+                    },
+                    "code": "WELCOME10",
+                    "conditions": {
+                      "firstOrderOnly": true,
+                      "minOrderValue": "3000.00",
+                      "minQuantity": null,
+                      "paymentMethods": [],
+                      "productTypeCodes": []
+                    },
+                    "description": null,
+                    "status": "usable",
+                    "title": "ลด 10% ลูกค้าใหม่",
+                    "validUntil": "2026-12-31T23:59:59+07:00"
+                  },
+                  "reason": null,
+                  "valid": true
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CodeCheckDto"
+                }
+              }
+            },
+            "description": "Check result",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  },
+                  "promotions.too_many_attempts": {
+                    "$ref": "#/components/examples/problem.promotions.too_many_attempts"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`, `promotions.too_many_attempts`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Check a promotion code before adding it to the cart",
+        "tags": [
+          "store.promotions"
+        ]
+      }
+    },
+    "/v1/store/promotions/mine": {
+      "get": {
+        "description": "Codes assigned to me (e.g. referral rewards) and codes I saved, with their benefit, main conditions, validity and whether each can be used now (D-053).\n\nImplements: D-053, D-181.",
+        "operationId": "store.promotions.listMine",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "benefit": {
+                      "amount": null,
+                      "maxAmount": "500.00",
+                      "pct": "10",
+                      "type": "percent"
+                    },
+                    "code": "WELCOME10",
+                    "conditions": {
+                      "firstOrderOnly": true,
+                      "minOrderValue": "3000.00",
+                      "minQuantity": null,
+                      "paymentMethods": [],
+                      "productTypeCodes": []
+                    },
+                    "description": null,
+                    "status": "usable",
+                    "title": "ลด 10% ลูกค้าใหม่",
+                    "validUntil": "2026-12-31T23:59:59+07:00"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PromotionOfferDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "My codes",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List the promotion codes I hold",
+        "tags": [
+          "store.promotions"
+        ]
+      }
+    },
     "/v1/store/proof-annotations/{annotationId}/actions/resolve": {
       "post": {
         "description": "Only the author’s own notes (D-070).\n\nImplements: D-070.",
@@ -282765,12 +283523,29 @@
                 "example": {
                   "code": "PK7QX2MA",
                   "link": "https://www.packio.invalid/r/PK7QX2MA",
+                  "recent": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e9001",
+                      "joinedAt": "2026-10-01T10:00:00+07:00",
+                      "refereeName": "ส•••",
+                      "rewardPoints": 200,
+                      "status": "rewarded"
+                    }
+                  ],
                   "referrals": {
                     "pending": 2,
                     "qualified": 1,
                     "rejected": 0,
                     "rewarded": 3,
                     "underReview": 0
+                  },
+                  "rewardedThisMonth": 1,
+                  "rules": {
+                    "maxRewardedPerMonth": 10,
+                    "refereeDiscountMaxAmount": "500.00",
+                    "refereeDiscountPct": "5",
+                    "referrerRewardAmount": "500.00",
+                    "referrerRewardPoints": 200
                   }
                 },
                 "schema": {
@@ -289264,6 +290039,10 @@
     {
       "description": "Pay instalments by SCB QR, 2C2P or bank transfer with a slip (D-061, D-176).",
       "name": "store.payments"
+    },
+    {
+      "description": "Check a promotion code before the cart, and the codes I hold (D-053).",
+      "name": "store.promotions"
     },
     {
       "description": "Instant price calculation per quantity (D-043, D-100); save it as a quotation with `store.savedQuotes` (D-051).",

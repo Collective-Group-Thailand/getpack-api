@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
 import { MoneyDecimal } from '@common/money/money';
+import { REDIS } from '@database/redis.module';
 import { type FakeScbGateway } from '@integrations/payments/fake-payment-gateways';
 import { SCB_GATEWAY } from '@integrations/payments/payment-gateways.port';
 import { PromotionRedemptions } from '@modules/promotions/promotion-redemptions.service';
 import { envelopeFromRow } from '@platform/domain-events/domain-event';
+import { type Redis } from 'ioredis';
 import request from 'supertest';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
@@ -296,6 +298,45 @@ describe('promotions at checkout (e2e, B3.3)', () => {
       .post(`/v1/admin/promotions/${auto.body.id as string}/actions/end`)
       .expect(200);
     automatic.pop();
+  });
+
+  it('checks a code before the cart without saving anything, and lists the codes I hold (U-B0.1)', async () => {
+    const promo = await coupon({ productTypeCodes: ['folding_carton'], minQuantity: 500 });
+    const check = (body: object, token?: string) => {
+      const r = request(ctx.server).post('/v1/store/promotions/actions/check').set('x-device-id', `dev-${ctx.run}`);
+      return (token ? r.auth(token, { type: 'bearer' }) : r).send(body);
+    };
+    try {
+      const ok = await check({ code: promo.code, productTypeCode: 'folding_carton', quantity: 1000 }).expect(200);
+      expect(ok.body).toMatchObject({
+        valid: true,
+        reason: null,
+        offer: { code: promo.code, title: 'ลด 5%', benefit: { type: 'percent', pct: '5', maxAmount: '100.00' } },
+      });
+      expect(ok.body.offer.conditions).toMatchObject({ productTypeCodes: ['folding_carton'], minQuantity: 500 });
+      const other = await check({ code: promo.code, productTypeCode: 'corrugated' }).expect(200);
+      expect(other.body).toMatchObject({ valid: false, reason: 'not_applicable' });
+      expect(other.body.offer).not.toBeNull();
+      await check({ code: 'NO-SUCH-CODE' }).expect(200, { code: 'NO-SUCH-CODE', valid: false, reason: 'not_found', offer: null });
+
+      // A code assigned to someone else: said so, nothing shown.
+      const { token: mineToken, phone } = await customerToken(ctx, 7);
+      const owner = await ctx.prisma.user.findFirstOrThrow({ where: { phone } });
+      const assigned = await ctx.prisma.couponCode.update({
+        where: { code: promo.code },
+        data: { assignedUserId: owner.id },
+      });
+      await check({ code: assigned.code }).expect(200, { code: assigned.code, valid: false, reason: 'not_yours', offer: null });
+      expect((await check({ code: assigned.code }, mineToken).expect(200)).body.valid).toBe(true);
+      const mine = await as(ctx, mineToken).get('/v1/store/promotions/mine').expect(200);
+      expect(mine.body).toEqual([expect.objectContaining({ code: assigned.code, status: 'usable' })]);
+      // Nothing was written by the checks.
+      expect(await ctx.prisma.cartCode.count({ where: { code: assigned.code } })).toBe(0);
+    } finally {
+      // Give the shared 127.0.0.1 budget back (every e2e suite comes from it).
+      const redis = ctx.app.get<Redis>(REDIS);
+      for (const key of await redis.keys('packio:coupon:ip:*')) await redis.del(key);
+    }
   });
 
   it('limits code attempts per customer each hour and lets CS enter a code on a customer’s CS cart', async () => {

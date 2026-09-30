@@ -129,6 +129,10 @@ describe('loyalty points (e2e, B3.4)', () => {
       pendingPoints: 0,
       pointValue: '2.50',
       availableValue: '50.00',
+      // D-134 tier progress from the tier settings (U-B0.1): no spend yet → 0 % towards Silver.
+      nextTier: 'silver',
+      nextTierMinSpend12m: '50000.00',
+      nextTierProgressPct: '0.00',
     });
     const ledger = await as(ctx, token).get('/v1/store/loyalty/ledger').expect(200);
     expect(ledger.body.data).toEqual([

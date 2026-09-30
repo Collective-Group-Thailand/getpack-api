@@ -57,7 +57,7 @@ export class LoyaltyService {
 
   /** Available points (unexpired lots), pending earnings and lots expiring within the reminder window. */
   async summary(userId: bigint, now = new Date()) {
-    const [membership, lots, pending, value, expiry] = await Promise.all([
+    const [membership, lots, pending, value, expiry, tiers] = await Promise.all([
       this.prisma.loyaltyMembership.findUnique({ where: { userId } }),
       this.prisma.pointsLot.findMany({
         where: { userId, remaining: { gt: 0 }, expiresAt: { gt: now } },
@@ -66,13 +66,25 @@ export class LoyaltyService {
       this.prisma.pointsEntry.aggregate({ where: { userId, status: 'pending' }, _sum: { points: true } }),
       this.settings.at('loyalty.point_value', { at: now }),
       this.settings.at('loyalty.points_expiry', { at: now }),
+      this.settings.at('loyalty.tiers', { at: now }),
     ]);
     const available = lots.reduce((a, l) => a + l.remaining, 0);
+    // Tier progress (D-134): the next tier above my 12-month spend, from the tier settings, never computed by the web.
+    const spend = D(membership?.spend12m.toString() ?? '0');
+    const next = [...tiers.value]
+      .sort((a, b) => D(a.minSpend12m).cmp(D(b.minSpend12m)))
+      .find((t) => D(t.minSpend12m).gt(spend));
+    const progressPct = next
+      ? MoneyDecimal.min(spend.div(next.minSpend12m).mul(100), D(100)).toDecimalPlaces(2, MoneyDecimal.ROUND_DOWN).toFixed(2)
+      : '100.00';
     const soon = new Date(now.getTime() + expiry.value.reminderDaysBefore * DAY_MS);
     return {
       tier: membership?.tier ?? 'member',
       multiplier: membership?.multiplier.toString() ?? '1',
       spend12m: membership?.spend12m.toFixed(2) ?? '0.00',
+      nextTier: next?.tier ?? null,
+      nextTierMinSpend12m: next ? D(next.minSpend12m).toFixed(2) : null,
+      nextTierProgressPct: progressPct,
       availablePoints: available,
       pendingPoints: pending._sum.points ?? 0,
       pointValue: D(value.value).toFixed(2),

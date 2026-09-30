@@ -39,6 +39,42 @@ export class ReferralCountsDto {
   rejected!: number;
 }
 
+/** The referral rules (D-136, setting `referral.rules`). */
+export class ReferralRulesDto {
+  @ApiProperty({ example: '5', description: "The friend's discount on their first order, %" })
+  refereeDiscountPct!: string;
+
+  @ApiProperty({ example: '500.00', description: 'Cap of that discount' })
+  refereeDiscountMaxAmount!: string;
+
+  @ApiProperty({ example: '500.00', description: 'My reward per rewarded referral, in baht' })
+  referrerRewardAmount!: string;
+
+  @ApiProperty({ type: 'integer', example: 200, description: 'The same reward in points (D-131)' })
+  referrerRewardPoints!: number;
+
+  @ApiProperty({ type: 'integer', example: 10, description: 'Rewarded referrals per calendar month' })
+  maxRewardedPerMonth!: number;
+}
+
+/** Someone who used my code, as I may see them (first letter of the name only, PDPA). */
+export class MyReferralItemDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000e9001' })
+  id!: string;
+
+  @ApiProperty({ example: 'ส•••' })
+  refereeName!: string;
+
+  @ApiProperty({ enum: REFERRAL_STATUSES, enumName: 'ReferralStatus', example: 'rewarded' })
+  status!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-01T10:00:00+07:00' })
+  joinedAt!: string;
+
+  @ApiProperty({ type: 'integer', example: 200, description: 'Points I received for it' })
+  rewardPoints!: number;
+}
+
 export class MyReferralDto {
   @ApiProperty({ example: 'PK7QX2MA', pattern: '^[A-Z0-9]{6,12}$' })
   code!: string;
@@ -48,12 +84,38 @@ export class MyReferralDto {
 
   @ApiProperty({ type: ReferralCountsDto, description: 'People who used my code, by status' })
   referrals!: ReferralCountsDto;
+
+  @ApiProperty({ type: ReferralRulesDto })
+  rules!: ReferralRulesDto;
+
+  @ApiProperty({ type: 'integer', example: 1, description: 'Referrals qualified or rewarded this calendar month (the D-136 cap)' })
+  rewardedThisMonth!: number;
+
+  @ApiProperty({ type: [MyReferralItemDto], description: 'The 50 most recent, newest first' })
+  recent!: MyReferralItemDto[];
 }
 
 export const MY_REFERRAL_EXAMPLE: MyReferralDto = {
   code: 'PK7QX2MA',
   link: 'https://www.packio.invalid/r/PK7QX2MA',
   referrals: { pending: 2, underReview: 0, qualified: 1, rewarded: 3, rejected: 0 },
+  rules: {
+    refereeDiscountPct: '5',
+    refereeDiscountMaxAmount: '500.00',
+    referrerRewardAmount: '500.00',
+    referrerRewardPoints: 200,
+    maxRewardedPerMonth: 10,
+  },
+  rewardedThisMonth: 1,
+  recent: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-0000000e9001',
+      refereeName: 'ส•••',
+      status: 'rewarded',
+      joinedAt: '2026-10-01T10:00:00+07:00',
+      rewardPoints: 200,
+    },
+  ],
 };
 
 export class AttributeReferralDto {
