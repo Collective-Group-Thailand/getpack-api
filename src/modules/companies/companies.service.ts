@@ -1,7 +1,7 @@
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
-import { addCalendarDays, bangkokDate } from '@common/time/bangkok';
+import { addCalendarDays, bangkokDate, startOfBangkokDay as startOfDay } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Company, type KycDocType, Prisma } from '@generated/prisma/client';
 import { isValidThaiTaxId } from '@modules/customers/thai-tax-id';
@@ -14,6 +14,8 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { EntitiesService } from '@platform/entities/entities.service';
 import { DocumentNumberingService } from '@platform/numbering/document-numbering.service';
 import { SettingsService } from '@platform/settings/settings.service';
+
+import { type CompanySpendDto } from './companies.dto';
 
 export const COMPANY_ROLES = [
   'company_admin',
@@ -47,6 +49,18 @@ export const COMPANY_INCLUDE = {
   kycDocuments: { include: { fileObject: { select: { publicId: true } } }, orderBy: { id: 'asc' } },
 } as const satisfies Prisma.CompanyInclude;
 export type CompanyRow = Prisma.CompanyGetPayload<{ include: typeof COMPANY_INCLUDE }>;
+
+const APPROVAL_INCLUDE = {
+  requester: { select: { publicId: true, displayName: true } },
+  actions: {
+    where: { action: { in: ['approve', 'reject'] } },
+    include: { actor: { select: { publicId: true, displayName: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 1,
+  },
+} satisfies Prisma.ApprovalRequestInclude;
+type ApprovalRow = Prisma.ApprovalRequestGetPayload<{ include: typeof APPROVAL_INCLUDE }>;
+export type CompanyApprovalRow = Awaited<ReturnType<CompaniesService['approvalsOf']>>[number];
 
 export const companyEtag = (c: { publicId: string; rowVersion: number }) => etagOf(c.publicId, c.rowVersion);
 
@@ -784,21 +798,42 @@ export class CompaniesService {
 
   // --- company order approvals (D-123) --------------------------------------------------------------
 
-  /** Orders of the company waiting for its approver. */
-  async pendingApprovals(actor: UserActor, publicId: string) {
+  /**
+   * The company's order approvals (D-123): waiting ones for its approvers (oldest first), or the decided history
+   * (newest first), with the decision, the threshold and the invoice branch.
+   */
+  async approvalsOf(
+    actor: UserActor,
+    publicId: string,
+    q: { status?: 'pending' | 'decided' | 'all'; limit?: number; offset?: number } = {},
+  ) {
     const company = await this.forMember(actor, publicId, 'company_orders.approve');
+    const status = q.status ?? 'pending';
+    // The company approvals are the ones its order groups point at.
     const groups = await this.prisma.orderGroup.findMany({
-      where: {
-        companyId: company.id,
-        status: 'pending_company_approval',
-        companyApprovalRequestId: { not: null },
-      },
-      include: {
-        companyApprovalRequest: { include: { requester: { select: { publicId: true, displayName: true } } } },
-      },
-      orderBy: { placedAt: 'asc' },
+      where: { companyId: company.id, companyApprovalRequestId: { not: null } },
+      select: { companyApprovalRequestId: true },
     });
-    return groups.filter((g) => g.companyApprovalRequest?.status === 'pending');
+    const requests = await this.prisma.approvalRequest.findMany({
+      where: {
+        id: { in: groups.map((g) => g.companyApprovalRequestId!) },
+        ...(status === 'pending' && { status: 'pending' }),
+        ...(status === 'decided' && { status: { not: 'pending' } }),
+      },
+      include: APPROVAL_INCLUDE,
+      orderBy: { createdAt: status === 'pending' ? 'asc' : 'desc' },
+      skip: q.offset ?? 0,
+      take: q.limit ?? 100,
+    });
+    return this.withGroups(requests);
+  }
+
+  private async withGroups(requests: ApprovalRow[]) {
+    const groups = await this.prisma.orderGroup.findMany({
+      where: { id: { in: requests.map((r) => r.subjectId) } },
+      include: { companyBranch: { select: { name: true } }, _count: { select: { orders: true } } },
+    });
+    return requests.map((request) => ({ request, group: groups.find((g) => g.id === request.subjectId)! }));
   }
 
   /** The company approver approves or rejects in the store; the approval engine checks the role and SoD. */
@@ -816,10 +851,100 @@ export class CompaniesService {
     if (!group) throw new DomainException('http.not_found');
     if (approve) await this.approvals.approve(actor, approvalPublicId, comment ?? undefined);
     else await this.approvals.reject(actor, approvalPublicId, comment ?? 'rejected by the company approver');
-    return this.prisma.approvalRequest.findUniqueOrThrow({
+    const request = await this.prisma.approvalRequest.findUniqueOrThrow({
       where: { publicId: approvalPublicId },
-      include: { requester: { select: { publicId: true, displayName: true } } },
+      include: APPROVAL_INCLUDE,
     });
+    return (await this.withGroups([request]))[0]!;
+  }
+
+  // --- spend (D-125) ----------------------------------------------------------------------------------------
+
+  /**
+   * The company's placed orders over the last `months` calendar months (Bangkok) summed with decimal.js — net
+   * (before VAT, shipping included), VAT and gross — by month, member, invoice branch and product type. Cancelled
+   * orders and groups still waiting for the company approver are left out.
+   */
+  async spend(actor: UserActor, publicId: string, months: number): Promise<CompanySpendDto> {
+    const company = await this.forMember(actor, publicId, 'company_documents.read');
+    const today = bangkokDate(new Date());
+    const firstMonth = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - months, 1));
+    const from = firstMonth.toISOString().slice(0, 10);
+    const endMonth = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)), 0));
+    const to = endMonth.toISOString().slice(0, 10);
+    const orders = await this.prisma.order.findMany({
+      where: {
+        status: { not: 'cancelled' },
+        orderGroup: {
+          companyId: company.id,
+          status: { notIn: ['cancelled', 'pending_company_approval'] },
+          placedAt: { gte: startOfDay(from), lt: startOfDay(addCalendarDays(to, 1)) },
+        },
+      },
+      include: {
+        productType: { select: { code: true } },
+        orderGroup: {
+          select: {
+            placedAt: true,
+            placedBy: { select: { publicId: true, displayName: true } },
+            companyBranch: { select: { publicId: true, branchCode: true, name: true } },
+          },
+        },
+      },
+    });
+    type Sum = { orders: number; net: Prisma.Decimal; vat: Prisma.Decimal; gross: Prisma.Decimal };
+    const zero = (): Sum => ({ orders: 0, net: new Prisma.Decimal(0), vat: new Prisma.Decimal(0), gross: new Prisma.Decimal(0) });
+    const add = (m: Map<string, Sum>, key: string, o: (typeof orders)[number]) => {
+      const sum = m.get(key) ?? zero();
+      sum.orders += 1;
+      sum.net = sum.net.add(o.netAmount);
+      sum.vat = sum.vat.add(o.vatAmount);
+      sum.gross = sum.gross.add(o.grossAmount);
+      m.set(key, sum);
+    };
+    const total = new Map<string, Sum>();
+    const byMonth = new Map<string, Sum>();
+    const byMember = new Map<string, Sum>();
+    const byBranch = new Map<string, Sum>();
+    const byType = new Map<string, Sum>();
+    const members = new Map<string, { publicId: string; displayName: string }>();
+    const branches = new Map<string, { publicId: string; branchCode: string; name: string } | null>();
+    for (const o of orders) {
+      add(total, 'all', o);
+      add(byMonth, bangkokDate(o.orderGroup.placedAt).slice(0, 7), o);
+      add(byMember, o.orderGroup.placedBy.publicId, o);
+      members.set(o.orderGroup.placedBy.publicId, o.orderGroup.placedBy);
+      const branchKey = o.orderGroup.companyBranch?.publicId ?? '-';
+      add(byBranch, branchKey, o);
+      branches.set(branchKey, o.orderGroup.companyBranch);
+      add(byType, o.productType.code, o);
+    }
+    const amounts = (sum: Sum) => ({
+      orders: sum.orders,
+      netAmount: sum.net.toFixed(2),
+      vatAmount: sum.vat.toFixed(2),
+      grossAmount: sum.gross.toFixed(2),
+    });
+    const monthKeys = Array.from({ length: months }, (_, i) =>
+      new Date(Date.UTC(firstMonth.getUTCFullYear(), firstMonth.getUTCMonth() + i, 1)).toISOString().slice(0, 7),
+    );
+    const byGross = <T extends { grossAmount: string }>(a: T, b: T) =>
+      new Prisma.Decimal(b.grossAmount).comparedTo(a.grossAmount);
+    return {
+      from,
+      to,
+      total: amounts(total.get('all') ?? zero()),
+      byMonth: monthKeys.map((month) => ({ month, ...amounts(byMonth.get(month) ?? zero()) })),
+      byMember: [...byMember].map(([id, sum]) => ({ user: { id, displayName: members.get(id)!.displayName }, ...amounts(sum) })).sort(byGross),
+      byBranch: [...byBranch]
+        .map(([key, sum]) => {
+          const b = branches.get(key) ?? null;
+          return { branchId: b?.publicId ?? null, branchCode: b?.branchCode ?? null, name: b?.name ?? null, ...amounts(sum) };
+        })
+        .sort(byGross),
+      byProductType: [...byType].map(([productTypeCode, sum]) => ({ productTypeCode, ...amounts(sum) })).sort(byGross),
+      currency: 'THB',
+    };
   }
 
   // --- helpers ------------------------------------------------------------------------------------------

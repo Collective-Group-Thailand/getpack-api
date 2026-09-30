@@ -552,6 +552,8 @@ model User {
   conversations            Conversation[]        @relation("ConversationCustomer")
   conversationsAssigned    Conversation[]        @relation("ConversationAssignedUser")
   supportTickets           SupportTicket[]       @relation("SupportTicketCustomer")
+  brandAssetsCreated       CompanyBrandAsset[]   @relation("CompanyBrandAssetCreatedBy")
+  brandAssetsRemoved       CompanyBrandAsset[]   @relation("CompanyBrandAssetRemovedBy")
   conversationMessagesSent ConversationMessage[] @relation("ConversationMessageSender")
   // --- end Fulfilment B4.6
 

@@ -1,3 +1,4 @@
+import { AgingBucketsDto } from '@modules/receivables/receivables.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
@@ -13,6 +14,26 @@ export class CreditRequestSummaryDto {
 
   @ApiProperty({ format: 'date-time', example: '2026-10-05T10:00:00+07:00' })
   requestedAt!: string;
+}
+
+export class CreditEligibilityDto {
+  @ApiProperty({ type: 'integer', example: 2, description: 'Paid order groups so far (D-121)' })
+  paidOrdersCount!: number;
+
+  @ApiProperty({ type: 'integer', example: 3, description: '`b2b.credit_eligibility_paid_orders`' })
+  paidOrdersNeeded!: number;
+
+  @ApiProperty({ example: false, description: 'Enough paid orders, or a verified financial statement' })
+  eligible!: boolean;
+
+  @ApiProperty({ example: false, description: 'A financial statement is on file (reviewed or waiting)' })
+  financialStatementOnFile!: boolean;
+
+  @ApiProperty({ type: [Number], example: [15, 30, 45, 60], description: '`b2b.credit_terms.allowedDays`' })
+  allowedTermDays!: number[];
+
+  @ApiProperty({ type: 'integer', example: 30 })
+  defaultTermDays!: number;
 }
 
 export class CompanyCreditDto {
@@ -43,6 +64,9 @@ export class CompanyCreditDto {
   @ApiProperty({ type: CreditRequestSummaryDto, nullable: true, description: 'A limit waiting for approval' })
   pendingRequest!: CreditRequestSummaryDto | null;
 
+  @ApiProperty({ type: CreditEligibilityDto, description: 'Whether the company may apply for credit (D-121)' })
+  eligibility!: CreditEligibilityDto;
+
   @ApiProperty({ example: 'THB' })
   currency!: string;
 }
@@ -54,6 +78,111 @@ export const CREDIT_EXAMPLE: CompanyCreditDto = {
   exposureAmount: '25000.00',
   availableAmount: '75000.00',
   pendingRequest: null,
+  eligibility: {
+    paidOrdersCount: 5,
+    paidOrdersNeeded: 3,
+    eligible: true,
+    financialStatementOnFile: false,
+    allowedTermDays: [15, 30, 45, 60],
+    defaultTermDays: 30,
+  },
+  currency: 'THB',
+};
+
+/** The Company Admin applies for credit (D-121); Finance / C-Level decide through `credit_limit`. */
+export class ApplyForCreditDto {
+  @ApiProperty({ example: '100000.00', description: 'THB; above 100,000 goes to C-Level (D-121)' })
+  @IsString()
+  @Matches(/^\d{1,12}(\.\d{1,2})?$/)
+  limitAmount!: string;
+
+  @ApiPropertyOptional({
+    type: 'integer',
+    example: 30,
+    description: 'One of `eligibility.allowedTermDays`; default `defaultTermDays`',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  termDays?: number;
+
+  @ApiProperty({
+    enum: ['paid_orders', 'financial_statement'],
+    enumName: 'CreditEligibilityBasis',
+    example: 'paid_orders',
+    description:
+      '`paid_orders` once eligible; `financial_statement` with a statement added as a KYC document (Finance reviews it)',
+  })
+  @IsIn(['paid_orders', 'financial_statement'])
+  basis!: 'paid_orders' | 'financial_statement';
+
+  @ApiProperty({ example: 'สั่งซื้อทุกเดือน ขอเครดิต 30 วัน', minLength: 3, maxLength: 500 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
+  note!: string;
+}
+
+export const CREDIT_NOTICE_CODES = ['due_soon', 'due_today', 'overdue', 'credit_blocked'] as const;
+
+export class CreditNoticeDto {
+  @ApiProperty({
+    enum: CREDIT_NOTICE_CODES,
+    enumName: 'CompanyCreditNoticeCode',
+    example: 'due_soon',
+    description: 'D-122: due within the reminder window, due today, overdue, credit orders blocked',
+  })
+  code!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'OG-2610-00001' })
+  groupCode!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-15T10:00:00+07:00' })
+  dueAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '42800.00' })
+  amount!: string | null;
+}
+
+/** What the company owes (D-122): aging of its receivables, what is due next and the D-122 notices. */
+export class CompanyReceivablesDto {
+  @ApiProperty({ format: 'date', example: '2026-11-08' })
+  asOf!: string;
+
+  @ApiProperty({ example: '25000.00', description: 'Open receivables and open credit instalments (the exposure)' })
+  openAmount!: string;
+
+  @ApiProperty({ example: '0.00', description: 'Open receivables past their due date' })
+  overdueAmount!: string;
+
+  @ApiProperty({ type: AgingBucketsDto, description: 'Open receivables by days past due' })
+  aging!: AgingBucketsDto;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: null })
+  oldestOverdueDays!: number | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-15T10:00:00+07:00' })
+  nextDueAt!: string | null;
+
+  @ApiProperty({ example: false, description: 'New credit orders blocked for overdue payments (D-122)' })
+  creditOrdersBlocked!: boolean;
+
+  @ApiProperty({ type: [CreditNoticeDto] })
+  notices!: CreditNoticeDto[];
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+}
+
+export const RECEIVABLES_EXAMPLE: CompanyReceivablesDto = {
+  asOf: '2026-11-08',
+  openAmount: '25000.00',
+  overdueAmount: '0.00',
+  aging: { current: '12000.00', d1_30: '0.00', d31_60: '0.00', d61_90: '0.00', over_90: '0.00' },
+  oldestOverdueDays: null,
+  nextDueAt: '2026-11-15T10:00:00+07:00',
+  creditOrdersBlocked: false,
+  notices: [{ code: 'due_soon', groupCode: 'OG-2610-00001', dueAt: '2026-11-15T10:00:00+07:00', amount: '12000.00' }],
   currency: 'THB',
 };
 
@@ -165,5 +294,54 @@ export const STATEMENT_EXAMPLE: StatementDto = {
   totalGrossAmount: '42800.00',
   totalPaidAmount: '0.00',
   openBalance: '42800.00',
+  currency: 'THB',
+};
+
+export class IssuedStatementDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1020' })
+  id!: string;
+
+  @ApiProperty({ example: '2026-10' })
+  month!: string;
+
+  @ApiProperty({ example: '0.00' })
+  openingAmount!: string;
+
+  @ApiProperty({ example: '42800.00' })
+  invoicedAmount!: string;
+
+  @ApiProperty({ example: '0.00' })
+  paidAmount!: string;
+
+  @ApiProperty({ example: '0.00' })
+  creditedAmount!: string;
+
+  @ApiProperty({ example: '42800.00' })
+  closingAmount!: string;
+
+  @ApiProperty({ example: true, description: 'The PDF can be downloaded' })
+  pdfReady!: boolean;
+
+  @ApiProperty({ format: 'date-time', example: '2026-11-01T02:00:00+07:00' })
+  generatedAt!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-01T02:05:00+07:00' })
+  sentAt!: string | null;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+}
+
+export const ISSUED_STATEMENT_EXAMPLE: IssuedStatementDto = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-0000000c1020',
+  month: '2026-10',
+  openingAmount: '0.00',
+  invoicedAmount: '42800.00',
+  paidAmount: '0.00',
+  creditedAmount: '0.00',
+  closingAmount: '42800.00',
+  pdfReady: true,
+  generatedAt: '2026-11-01T02:00:00+07:00',
+  sentAt: '2026-11-01T02:05:00+07:00',
   currency: 'THB',
 };

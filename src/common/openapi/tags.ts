@@ -43,7 +43,8 @@ export const API_TAGS: Record<string, string> = {
     'B2B companies: apply, KYC, members and company roles, branches, PO policy and approval threshold (D-120…D-125).',
   'store.companyApprovals':
     'Company approvers decide orders above the company threshold before placement (D-123).',
-  'store.companyCredit': 'My company’s credit and monthly statement (D-121, D-122, D-125).',
+  'store.companyCredit': 'My company’s credit, receivables, statements and spend (D-121, D-122, D-125).',
+  'store.companyAssets': 'My company’s brand asset library (D-227).',
   'admin.companyCredit':
     'Company credit: limit requests through the approval matrix, exposure, statements (D-121, D-125).',
   'admin.companies': 'B2B companies for staff: KYC review and activation, suspension and closure (D-120).',

@@ -781,6 +781,10 @@
     "last_admin": {
       "title": "Last Company Admin",
       "detail": "The company needs at least one active Company Admin"
+    },
+    "asset_exists": {
+      "title": "Asset exists",
+      "detail": "This file is in the company’s brand library already"
     }
   },
   "discounts": {

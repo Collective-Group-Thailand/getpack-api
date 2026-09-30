@@ -826,6 +826,17 @@
           "type": "https://errors.packio/companies.already_member"
         }
       },
+      "problem.companies.asset_exists": {
+        "summary": "companies.asset_exists",
+        "value": {
+          "code": "companies.asset_exists",
+          "detail": "ไฟล์นี้อยู่ในคลังแบรนด์ของบริษัทแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีไฟล์นี้แล้ว",
+          "type": "https://errors.packio/companies.asset_exists"
+        }
+      },
       "problem.companies.branch_exists": {
         "summary": "companies.branch_exists",
         "value": {
@@ -3562,6 +3573,36 @@
           "quoteId",
           "quoteOptionId",
           "designOption"
+        ],
+        "type": "object"
+      },
+      "AddCompanyAssetDto": {
+        "properties": {
+          "fileId": {
+            "description": "A file I uploaded (for the company or myself), scanned clean",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c2001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyAssetKind"
+              }
+            ],
+            "example": "logo"
+          },
+          "name": {
+            "example": "โลโก้หลัก",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "kind",
+          "name"
         ],
         "type": "object"
       },
@@ -7555,6 +7596,42 @@
           "taxId",
           "isVatRegistered",
           "headOffice"
+        ],
+        "type": "object"
+      },
+      "ApplyForCreditDto": {
+        "properties": {
+          "basis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditEligibilityBasis"
+              }
+            ],
+            "description": "`paid_orders` once eligible; `financial_statement` with a statement added as a KYC document (Finance reviews it)",
+            "example": "paid_orders"
+          },
+          "limitAmount": {
+            "description": "THB; above 100,000 goes to C-Level (D-121)",
+            "example": "100000.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "note": {
+            "example": "สั่งซื้อทุกเดือน ขอเครดิต 30 วัน",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "termDays": {
+            "description": "One of `eligibility.allowedTermDays`; default `defaultTermDays`",
+            "example": 30,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limitAmount",
+          "basis",
+          "note"
         ],
         "type": "object"
       },
@@ -12901,9 +12978,52 @@
             "example": "85600.00",
             "type": "string"
           },
+          "branchName": {
+            "description": "Branch on the tax invoice",
+            "example": "สำนักงานใหญ่",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "currency": {
             "example": "THB",
             "type": "string"
+          },
+          "decidedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who approved or rejected it"
+          },
+          "decisionComment": {
+            "description": "The approver’s comment or reason",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "example": "2026-10-04T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "groupCode": {
             "example": "OG-2610-00001",
@@ -12919,6 +13039,11 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1010",
             "format": "uuid",
             "type": "string"
+          },
+          "ordersCount": {
+            "description": "Orders in the group",
+            "example": 2,
+            "type": "integer"
           },
           "poNumber": {
             "example": "PO-0001",
@@ -12947,6 +13072,14 @@
               }
             ],
             "example": "pending"
+          },
+          "threshold": {
+            "description": "The company threshold the order was above (D-123); null for approvals made before it was kept",
+            "example": "50000.00",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -12958,9 +13091,106 @@
           "amount",
           "requester",
           "requestedAt",
-          "currency"
+          "currency",
+          "threshold",
+          "ordersCount",
+          "branchName",
+          "expiresAt",
+          "decidedBy",
+          "decidedAt",
+          "decisionComment"
         ],
         "type": "object"
+      },
+      "CompanyApprovalStatusFilter": {
+        "enum": [
+          "pending",
+          "decided",
+          "all"
+        ],
+        "type": "string"
+      },
+      "CompanyAssetDto": {
+        "properties": {
+          "addedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "addedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              }
+            ],
+            "description": "Who added it"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c2001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "fileName": {
+            "example": "logo.png",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c2002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyAssetKind"
+              }
+            ],
+            "example": "logo"
+          },
+          "mimeType": {
+            "example": "image/png",
+            "type": "string"
+          },
+          "name": {
+            "example": "โลโก้หลัก",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "example": 48213,
+            "type": "integer"
+          },
+          "url": {
+            "description": "Signed download URL (5 minutes); null until the file is scanned clean",
+            "example": "https://files.example.test/customer_content/2026/10/0192f3a0?X-Amz-Signature=fake",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "fileId",
+          "fileName",
+          "mimeType",
+          "sizeBytes",
+          "url",
+          "addedBy",
+          "addedAt"
+        ],
+        "type": "object"
+      },
+      "CompanyAssetKind": {
+        "enum": [
+          "logo",
+          "guideline",
+          "font",
+          "artwork",
+          "other"
+        ],
+        "type": "string"
       },
       "CompanyBankAccountDto": {
         "properties": {
@@ -13270,6 +13500,14 @@
             "example": "THB",
             "type": "string"
           },
+          "eligibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditEligibilityDto"
+              }
+            ],
+            "description": "Whether the company may apply for credit (D-121)"
+          },
           "exposureAmount": {
             "description": "Open credit-term instalments",
             "example": "25000.00",
@@ -13309,9 +13547,20 @@
           "exposureAmount",
           "availableAmount",
           "pendingRequest",
+          "eligibility",
           "currency"
         ],
         "type": "object"
+      },
+      "CompanyCreditNoticeCode": {
+        "description": "D-122: due within the reminder window, due today, overdue, credit orders blocked",
+        "enum": [
+          "due_soon",
+          "due_today",
+          "overdue",
+          "credit_blocked"
+        ],
+        "type": "string"
       },
       "CompanyDto": {
         "properties": {
@@ -13743,6 +13992,75 @@
         ],
         "type": "object"
       },
+      "CompanyReceivablesDto": {
+        "properties": {
+          "aging": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgingBucketsDto"
+              }
+            ],
+            "description": "Open receivables by days past due"
+          },
+          "asOf": {
+            "example": "2026-11-08",
+            "format": "date",
+            "type": "string"
+          },
+          "creditOrdersBlocked": {
+            "description": "New credit orders blocked for overdue payments (D-122)",
+            "example": false,
+            "type": "boolean"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "nextDueAt": {
+            "example": "2026-11-15T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notices": {
+            "items": {
+              "$ref": "#/components/schemas/CreditNoticeDto"
+            },
+            "type": "array"
+          },
+          "oldestOverdueDays": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "openAmount": {
+            "description": "Open receivables and open credit instalments (the exposure)",
+            "example": "25000.00",
+            "type": "string"
+          },
+          "overdueAmount": {
+            "description": "Open receivables past their due date",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asOf",
+          "openAmount",
+          "overdueAmount",
+          "aging",
+          "oldestOverdueDays",
+          "nextDueAt",
+          "creditOrdersBlocked",
+          "notices",
+          "currency"
+        ],
+        "type": "object"
+      },
       "CompanyRole": {
         "description": "My company roles (empty in staff views)",
         "enum": [
@@ -13771,6 +14089,63 @@
         "required": [
           "name",
           "position"
+        ],
+        "type": "object"
+      },
+      "CompanySpendDto": {
+        "properties": {
+          "byBranch": {
+            "items": {
+              "$ref": "#/components/schemas/SpendByBranchDto"
+            },
+            "type": "array"
+          },
+          "byMember": {
+            "items": {
+              "$ref": "#/components/schemas/SpendByMemberDto"
+            },
+            "type": "array"
+          },
+          "byMonth": {
+            "description": "Every month of the window, oldest first",
+            "items": {
+              "$ref": "#/components/schemas/SpendByMonthDto"
+            },
+            "type": "array"
+          },
+          "byProductType": {
+            "items": {
+              "$ref": "#/components/schemas/SpendByProductTypeDto"
+            },
+            "type": "array"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "from": {
+            "example": "2025-11-01",
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "example": "2026-10-31",
+            "format": "date",
+            "type": "string"
+          },
+          "total": {
+            "$ref": "#/components/schemas/SpendAmountsDto"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "total",
+          "byMonth",
+          "byMember",
+          "byBranch",
+          "byProductType",
+          "currency"
         ],
         "type": "object"
       },
@@ -19230,11 +19605,62 @@
         "type": "string"
       },
       "CreditEligibilityBasis": {
+        "description": "`paid_orders` once eligible; `financial_statement` with a statement added as a KYC document (Finance reviews it)",
         "enum": [
           "paid_orders",
           "financial_statement"
         ],
         "type": "string"
+      },
+      "CreditEligibilityDto": {
+        "properties": {
+          "allowedTermDays": {
+            "description": "`b2b.credit_terms.allowedDays`",
+            "example": [
+              15,
+              30,
+              45,
+              60
+            ],
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "defaultTermDays": {
+            "example": 30,
+            "type": "integer"
+          },
+          "eligible": {
+            "description": "Enough paid orders, or a verified financial statement",
+            "example": false,
+            "type": "boolean"
+          },
+          "financialStatementOnFile": {
+            "description": "A financial statement is on file (reviewed or waiting)",
+            "example": false,
+            "type": "boolean"
+          },
+          "paidOrdersCount": {
+            "description": "Paid order groups so far (D-121)",
+            "example": 2,
+            "type": "integer"
+          },
+          "paidOrdersNeeded": {
+            "description": "`b2b.credit_eligibility_paid_orders`",
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "paidOrdersCount",
+          "paidOrdersNeeded",
+          "eligible",
+          "financialStatementOnFile",
+          "allowedTermDays",
+          "defaultTermDays"
+        ],
+        "type": "object"
       },
       "CreditNoteKind": {
         "enum": [
@@ -19360,6 +19786,48 @@
           "withdrawn"
         ],
         "type": "string"
+      },
+      "CreditNoticeDto": {
+        "properties": {
+          "amount": {
+            "example": "42800.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyCreditNoticeCode"
+              }
+            ],
+            "description": "D-122: due within the reminder window, due today, overdue, credit orders blocked",
+            "example": "due_soon"
+          },
+          "dueAt": {
+            "example": "2026-11-15T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groupCode": {
+            "example": "OG-2610-00001",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "groupCode",
+          "dueAt",
+          "amount"
+        ],
+        "type": "object"
       },
       "CreditRequestSummaryDto": {
         "properties": {
@@ -28067,6 +28535,75 @@
           "resolved"
         ],
         "type": "string"
+      },
+      "IssuedStatementDto": {
+        "properties": {
+          "closingAmount": {
+            "example": "42800.00",
+            "type": "string"
+          },
+          "creditedAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "generatedAt": {
+            "example": "2026-11-01T02:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1020",
+            "format": "uuid",
+            "type": "string"
+          },
+          "invoicedAmount": {
+            "example": "42800.00",
+            "type": "string"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "openingAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "paidAmount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "pdfReady": {
+            "description": "The PDF can be downloaded",
+            "example": true,
+            "type": "boolean"
+          },
+          "sentAt": {
+            "example": "2026-11-01T02:05:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "month",
+          "openingAmount",
+          "invoicedAmount",
+          "paidAmount",
+          "creditedAmount",
+          "closingAmount",
+          "pdfReady",
+          "generatedAt",
+          "sentAt",
+          "currency"
+        ],
+        "type": "object"
       },
       "IssuedWhtCertificateDto": {
         "properties": {
@@ -46623,6 +47160,195 @@
           "sort",
           "status",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SpendAmountsDto": {
+        "properties": {
+          "grossAmount": {
+            "description": "Incl. VAT",
+            "example": "42800.00",
+            "type": "string"
+          },
+          "netAmount": {
+            "description": "Before VAT, shipping included",
+            "example": "40000.00",
+            "type": "string"
+          },
+          "orders": {
+            "example": 4,
+            "type": "integer"
+          },
+          "vatAmount": {
+            "example": "2800.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orders",
+          "netAmount",
+          "vatAmount",
+          "grossAmount"
+        ],
+        "type": "object"
+      },
+      "SpendByBranchDto": {
+        "properties": {
+          "branchCode": {
+            "example": "00000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "branchId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossAmount": {
+            "description": "Incl. VAT",
+            "example": "42800.00",
+            "type": "string"
+          },
+          "name": {
+            "example": "สำนักงานใหญ่",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "netAmount": {
+            "description": "Before VAT, shipping included",
+            "example": "40000.00",
+            "type": "string"
+          },
+          "orders": {
+            "example": 4,
+            "type": "integer"
+          },
+          "vatAmount": {
+            "example": "2800.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orders",
+          "netAmount",
+          "vatAmount",
+          "grossAmount",
+          "branchId",
+          "branchCode",
+          "name"
+        ],
+        "type": "object"
+      },
+      "SpendByMemberDto": {
+        "properties": {
+          "grossAmount": {
+            "description": "Incl. VAT",
+            "example": "42800.00",
+            "type": "string"
+          },
+          "netAmount": {
+            "description": "Before VAT, shipping included",
+            "example": "40000.00",
+            "type": "string"
+          },
+          "orders": {
+            "example": 4,
+            "type": "integer"
+          },
+          "user": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              }
+            ],
+            "description": "Who placed the orders"
+          },
+          "vatAmount": {
+            "example": "2800.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orders",
+          "netAmount",
+          "vatAmount",
+          "grossAmount",
+          "user"
+        ],
+        "type": "object"
+      },
+      "SpendByMonthDto": {
+        "properties": {
+          "grossAmount": {
+            "description": "Incl. VAT",
+            "example": "42800.00",
+            "type": "string"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "netAmount": {
+            "description": "Before VAT, shipping included",
+            "example": "40000.00",
+            "type": "string"
+          },
+          "orders": {
+            "example": 4,
+            "type": "integer"
+          },
+          "vatAmount": {
+            "example": "2800.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orders",
+          "netAmount",
+          "vatAmount",
+          "grossAmount",
+          "month"
+        ],
+        "type": "object"
+      },
+      "SpendByProductTypeDto": {
+        "properties": {
+          "grossAmount": {
+            "description": "Incl. VAT",
+            "example": "42800.00",
+            "type": "string"
+          },
+          "netAmount": {
+            "description": "Before VAT, shipping included",
+            "example": "40000.00",
+            "type": "string"
+          },
+          "orders": {
+            "example": 4,
+            "type": "integer"
+          },
+          "productTypeCode": {
+            "example": "folding_box",
+            "type": "string"
+          },
+          "vatAmount": {
+            "example": "2800.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orders",
+          "netAmount",
+          "vatAmount",
+          "grossAmount",
+          "productTypeCode"
         ],
         "type": "object"
       },
@@ -124583,6 +125309,19 @@
                   "availableAmount": "75000.00",
                   "creditStatus": "credit",
                   "currency": "THB",
+                  "eligibility": {
+                    "allowedTermDays": [
+                      15,
+                      30,
+                      45,
+                      60
+                    ],
+                    "defaultTermDays": 30,
+                    "eligible": true,
+                    "financialStatementOnFile": false,
+                    "paidOrdersCount": 5,
+                    "paidOrdersNeeded": 3
+                  },
                   "exposureAmount": "25000.00",
                   "limitAmount": "100000.00",
                   "pendingRequest": null,
@@ -124793,6 +125532,19 @@
                   "availableAmount": "75000.00",
                   "creditStatus": "eligible",
                   "currency": "THB",
+                  "eligibility": {
+                    "allowedTermDays": [
+                      15,
+                      30,
+                      45,
+                      60
+                    ],
+                    "defaultTermDays": 30,
+                    "eligible": true,
+                    "financialStatementOnFile": false,
+                    "paidOrdersCount": 5,
+                    "paidOrdersNeeded": 3
+                  },
                   "exposureAmount": "25000.00",
                   "limitAmount": null,
                   "pendingRequest": {
@@ -264306,7 +265058,7 @@
     },
     "/v1/store/companies/{companyId}/approvals": {
       "get": {
-        "description": "Company approvers: orders above the company threshold, waiting before placement (D-123).\n\nImplements: D-123.",
+        "description": "Company approvers: orders above the company threshold, waiting before placement (D-123) — or, with `status=decided|all`, the history with who decided, when and why. Paged with `limit` / `offset`.\n\nImplements: D-123.",
         "operationId": "store.companyApprovals.list",
         "parameters": [
           {
@@ -264316,6 +265068,37 @@
             "schema": {
               "format": "uuid",
               "type": "string"
+            }
+          },
+          {
+            "description": "`pending` (oldest first) or the decided history (newest first)",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CompanyApprovalStatusFilter"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Rows to skip (paging)",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "type": "integer"
             }
           },
           {
@@ -264329,17 +265112,24 @@
                 "example": [
                   {
                     "amount": "85600.00",
+                    "branchName": "สำนักงานใหญ่",
                     "currency": "THB",
+                    "decidedAt": null,
+                    "decidedBy": null,
+                    "decisionComment": null,
+                    "expiresAt": "2026-10-04T10:00:00+07:00",
                     "groupCode": "OG-2610-00001",
                     "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1011",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1010",
+                    "ordersCount": 1,
                     "poNumber": "PO-0001",
                     "requestedAt": "2026-10-01T10:00:00+07:00",
                     "requester": {
                       "displayName": "สมชาย ทดสอบ",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
                     },
-                    "status": "pending"
+                    "status": "pending",
+                    "threshold": "50000.00"
                   }
                 ],
                 "schema": {
@@ -264562,17 +265352,24 @@
               "application/json": {
                 "example": {
                   "amount": "85600.00",
+                  "branchName": "สำนักงานใหญ่",
                   "currency": "THB",
+                  "decidedAt": null,
+                  "decidedBy": null,
+                  "decisionComment": null,
+                  "expiresAt": "2026-10-04T10:00:00+07:00",
                   "groupCode": "OG-2610-00001",
                   "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1011",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1010",
+                  "ordersCount": 1,
                   "poNumber": "PO-0001",
                   "requestedAt": "2026-10-01T10:00:00+07:00",
                   "requester": {
                     "displayName": "สมชาย ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
                   },
-                  "status": "approved"
+                  "status": "approved",
+                  "threshold": "50000.00"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CompanyApprovalDto"
@@ -265391,6 +266188,655 @@
         ]
       }
     },
+    "/v1/store/companies/{companyId}/brand-assets": {
+      "get": {
+        "description": "Every member: the logos, guidelines, fonts and approved artwork of the company, with signed URLs (D-227).\n\nImplements: D-227.",
+        "operationId": "store.companyAssets.list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "addedAt": "2026-10-01T10:00:00+07:00",
+                    "addedBy": {
+                      "displayName": "สมชาย ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                    },
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c2001",
+                    "fileName": "logo.png",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c2002",
+                    "kind": "logo",
+                    "mimeType": "image/png",
+                    "name": "โลโก้หลัก",
+                    "sizeBytes": 48213,
+                    "url": "https://files.example.test/customer_content/2026/10/0192f3a0?X-Amz-Signature=fake"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyAssetDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Brand assets",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my company’s brand assets",
+        "tags": [
+          "store.companyAssets"
+        ]
+      },
+      "post": {
+        "description": "Company Admin: a file uploaded for the company (presign with `companyId`) or by me, scanned clean; audited (D-227). 409 `companies.asset_exists` when the file is in the library already.\n\nImplements: D-227.",
+        "operationId": "store.companyAssets.add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c2001",
+                    "kind": "logo",
+                    "name": "โลโก้หลัก"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddCompanyAssetDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "addedAt": "2026-10-01T10:00:00+07:00",
+                  "addedBy": {
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                  },
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000c2001",
+                  "fileName": "logo.png",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c2002",
+                  "kind": "logo",
+                  "mimeType": "image/png",
+                  "name": "โลโก้หลัก",
+                  "sizeBytes": 48213,
+                  "url": "https://files.example.test/customer_content/2026/10/0192f3a0?X-Amz-Signature=fake"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyAssetDto"
+                }
+              }
+            },
+            "description": "Added",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "companies.asset_exists": {
+                    "$ref": "#/components/examples/problem.companies.asset_exists"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `companies.asset_exists`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `artwork.file_not_usable`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Add a brand asset",
+        "tags": [
+          "store.companyAssets"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/brand-assets/{assetId}": {
+      "delete": {
+        "description": "Company Admin; the file itself is kept (D-227). Audited.\n\nImplements: D-227.",
+        "operationId": "store.companyAssets.remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Remove a brand asset",
+        "tags": [
+          "store.companyAssets"
+        ]
+      }
+    },
     "/v1/store/companies/{companyId}/credit": {
       "get": {
         "description": "Company Admin / Accountant: status, limit, term, what is open and available (D-121, D-122).\n\nImplements: D-121, D-122.",
@@ -265417,6 +266863,19 @@
                   "availableAmount": "75000.00",
                   "creditStatus": "credit",
                   "currency": "THB",
+                  "eligibility": {
+                    "allowedTermDays": [
+                      15,
+                      30,
+                      45,
+                      60
+                    ],
+                    "defaultTermDays": 30,
+                    "eligible": true,
+                    "financialStatementOnFile": false,
+                    "paidOrdersCount": 5,
+                    "paidOrdersNeeded": 3
+                  },
                   "exposureAmount": "25000.00",
                   "limitAmount": "100000.00",
                   "pendingRequest": null,
@@ -265573,6 +267032,493 @@
           }
         ],
         "summary": "Get my company’s credit",
+        "tags": [
+          "store.companyCredit"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/credit-applications": {
+      "post": {
+        "description": "Company Admin: a credit limit and term (one of `eligibility.allowedTermDays`) on the basis of the paid orders (once eligible) or of a financial statement added as a KYC document. It goes to the `credit_limit` approval (Finance up to THB 100,000, C-Level above, D-121); `pendingRequest` shows it until decided. 409 `companies.credit_not_eligible` when not eligible, `approval.already_pending` while one is waiting.\n\nImplements: D-121.",
+        "operationId": "store.companyCredit.apply",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "basis": "paid_orders",
+                    "limitAmount": "100000.00",
+                    "note": "สั่งซื้อทุกเดือน",
+                    "termDays": 30
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ApplyForCreditDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "availableAmount": "75000.00",
+                  "creditStatus": "eligible",
+                  "currency": "THB",
+                  "eligibility": {
+                    "allowedTermDays": [
+                      15,
+                      30,
+                      45,
+                      60
+                    ],
+                    "defaultTermDays": 30,
+                    "eligible": true,
+                    "financialStatementOnFile": false,
+                    "paidOrdersCount": 5,
+                    "paidOrdersNeeded": 3
+                  },
+                  "exposureAmount": "25000.00",
+                  "limitAmount": null,
+                  "pendingRequest": {
+                    "limitAmount": "100000.00",
+                    "requestedAt": "2026-10-05T10:00:00+07:00",
+                    "termDays": 30
+                  },
+                  "termDays": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCreditDto"
+                }
+              }
+            },
+            "description": "Credit with the pending request",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "approval.already_pending": {
+                    "$ref": "#/components/examples/problem.approval.already_pending"
+                  },
+                  "companies.credit_not_eligible": {
+                    "$ref": "#/components/examples/problem.companies.credit_not_eligible"
+                  },
+                  "companies.invalid_status": {
+                    "$ref": "#/components/examples/problem.companies.invalid_status"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `approval.already_pending`, `companies.credit_not_eligible`, `companies.invalid_status`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Apply for company credit",
+        "tags": [
+          "store.companyCredit"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/issued-statements": {
+      "get": {
+        "description": "Company Admin / Accountant: the monthly statements issued so far, newest first (at most 24), with their balances and whether the PDF is ready (`store.documents.companyStatementPdf`, D-125).\n\nImplements: D-125.",
+        "operationId": "store.companyCredit.listStatements",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "closingAmount": "42800.00",
+                    "creditedAmount": "0.00",
+                    "currency": "THB",
+                    "generatedAt": "2026-11-01T02:00:00+07:00",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1020",
+                    "invoicedAmount": "42800.00",
+                    "month": "2026-10",
+                    "openingAmount": "0.00",
+                    "paidAmount": "0.00",
+                    "pdfReady": true,
+                    "sentAt": "2026-11-01T02:05:00+07:00"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/IssuedStatementDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Statements",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my company’s issued statements",
         "tags": [
           "store.companyCredit"
         ]
@@ -266824,6 +268770,450 @@
         "summary": "Change a member’s company roles",
         "tags": [
           "store.companies"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/receivables": {
+      "get": {
+        "description": "Company Admin / Accountant: open receivables by days past due (current, 1–30, 31–60, 61–90, over 90), the credit exposure, the next due credit instalment and the D-122 notices — due within the reminder window, due today, overdue, credit orders blocked.\n\nImplements: D-122, D-121.",
+        "operationId": "store.companyCredit.receivables",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "aging": {
+                    "current": "12000.00",
+                    "d1_30": "0.00",
+                    "d31_60": "0.00",
+                    "d61_90": "0.00",
+                    "over_90": "0.00"
+                  },
+                  "asOf": "2026-11-08",
+                  "creditOrdersBlocked": false,
+                  "currency": "THB",
+                  "nextDueAt": "2026-11-15T10:00:00+07:00",
+                  "notices": [
+                    {
+                      "amount": "12000.00",
+                      "code": "due_soon",
+                      "dueAt": "2026-11-15T10:00:00+07:00",
+                      "groupCode": "OG-2610-00001"
+                    }
+                  ],
+                  "oldestOverdueDays": null,
+                  "openAmount": "25000.00",
+                  "overdueAmount": "0.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyReceivablesDto"
+                }
+              }
+            },
+            "description": "Receivables",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "What my company owes",
+        "tags": [
+          "store.companyCredit"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/spend": {
+      "get": {
+        "description": "Company Admin / Accountant: placed orders of the last `months` calendar months (default 12, Bangkok) — net (before VAT, shipping included), VAT and gross — by month, member, invoice branch and product type. Cancelled orders and orders waiting for the company approver are not counted (D-125).\n\nImplements: D-125.",
+        "operationId": "store.companies.spend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Calendar months back from this one (Bangkok), this month included",
+            "in": "query",
+            "name": "months",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 24,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "byBranch": [
+                    {
+                      "branchCode": "00000",
+                      "branchId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1002",
+                      "grossAmount": "42800.00",
+                      "name": "สำนักงานใหญ่",
+                      "netAmount": "40000.00",
+                      "orders": 4,
+                      "vatAmount": "2800.00"
+                    }
+                  ],
+                  "byMember": [
+                    {
+                      "grossAmount": "42800.00",
+                      "netAmount": "40000.00",
+                      "orders": 4,
+                      "user": {
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1007"
+                      },
+                      "vatAmount": "2800.00"
+                    }
+                  ],
+                  "byMonth": [
+                    {
+                      "grossAmount": "42800.00",
+                      "month": "2026-10",
+                      "netAmount": "40000.00",
+                      "orders": 4,
+                      "vatAmount": "2800.00"
+                    }
+                  ],
+                  "byProductType": [
+                    {
+                      "grossAmount": "42800.00",
+                      "netAmount": "40000.00",
+                      "orders": 4,
+                      "productTypeCode": "folding_box",
+                      "vatAmount": "2800.00"
+                    }
+                  ],
+                  "currency": "THB",
+                  "from": "2025-11-01",
+                  "to": "2026-10-31",
+                  "total": {
+                    "grossAmount": "42800.00",
+                    "netAmount": "40000.00",
+                    "orders": 4,
+                    "vatAmount": "2800.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanySpendDto"
+                }
+              }
+            },
+            "description": "Spend",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "What my company ordered",
+        "tags": [
+          "store.companyCredit"
         ]
       }
     },
@@ -298396,7 +300786,11 @@
       "name": "store.companyApprovals"
     },
     {
-      "description": "My company’s credit and monthly statement (D-121, D-122, D-125).",
+      "description": "My company’s brand asset library (D-227).",
+      "name": "store.companyAssets"
+    },
+    {
+      "description": "My company’s credit, receivables, statements and spend (D-121, D-122, D-125).",
       "name": "store.companyCredit"
     },
     {

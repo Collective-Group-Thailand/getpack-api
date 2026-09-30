@@ -182,6 +182,7 @@ export class CompanyCheckout implements CheckoutExtension, OnModuleInit {
         amount: group.grossAmount.toFixed(2),
         orders: placed.orders.length,
         poNumber: group.poNumber,
+        threshold: state.threshold,
       },
     });
     await tx.orderGroup.update({ where: { id: group.id }, data: { companyApprovalRequestId: request.id } });

@@ -1,7 +1,7 @@
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
-import { startOfBangkokDay, startOfBangkokMonth } from '@common/time/bangkok';
+import { bangkokDate, startOfBangkokDay, startOfBangkokMonth } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Company, type CompanyCreditLimitVersion } from '@generated/prisma/client';
 import {
@@ -11,7 +11,7 @@ import {
   type CheckoutInput,
   type PlacedGroup,
 } from '@modules/checkout/checkout.extensions';
-import { ReceivablesService } from '@modules/receivables/receivables.service';
+import { type AgingBucket, ReceivablesService } from '@modules/receivables/receivables.service';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { ApprovalsService } from '@platform/approvals/approvals.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
@@ -32,6 +32,25 @@ export interface CreditView {
   exposure: MoneyValue;
   available: MoneyValue;
   pending: CompanyCreditLimitVersion | null;
+  eligibility: {
+    paidOrdersCount: number;
+    paidOrdersNeeded: number;
+    eligible: boolean;
+    financialStatementOnFile: boolean;
+    allowedTermDays: number[];
+    defaultTermDays: number;
+  };
+}
+
+export interface ReceivablesView {
+  asOf: string;
+  open: MoneyValue;
+  overdue: MoneyValue;
+  aging: Record<AgingBucket, MoneyValue>;
+  oldestOverdueDays: number | null;
+  nextDueAt: Date | null;
+  creditOrdersBlocked: boolean;
+  notices: { code: string; groupCode: string | null; dueAt: Date | null; amount: MoneyValue | null }[];
 }
 
 function companyOf(input: CheckoutInput): string | null {
@@ -77,17 +96,101 @@ export class CreditService {
   }
 
   async view(companyId: bigint, db: Tx = this.prisma): Promise<CreditView> {
-    const company = await db.company.findUniqueOrThrow({ where: { id: companyId } });
-    const [limit, exposure, pending] = await Promise.all([
+    const company = await db.company.findUniqueOrThrow({
+      where: { id: companyId },
+      include: { kycDocuments: { where: { docType: 'financial_statement', status: { not: 'rejected' } } } },
+    });
+    const [limit, exposure, pending, needed, terms] = await Promise.all([
       this.currentLimit(db, companyId),
       this.exposure(db, companyId),
       db.companyCreditLimitVersion.findFirst({
         where: { creditLimit: { companyId }, status: 'proposed' },
         orderBy: { versionNo: 'desc' },
       }),
+      this.settings.at('b2b.credit_eligibility_paid_orders'),
+      this.settings.at('b2b.credit_terms'),
     ]);
     const available = MoneyDecimal.max(D(limit?.limitAmount ?? 0).sub(exposure), D(0));
-    return { creditStatus: company.creditStatus, limit, exposure, available, pending };
+    const { allowedDays, defaultDays } = terms.value as { allowedDays: number[]; defaultDays: number };
+    return {
+      creditStatus: company.creditStatus,
+      limit,
+      exposure,
+      available,
+      pending,
+      eligibility: {
+        paidOrdersCount: company.paidOrdersCount,
+        paidOrdersNeeded: Number(needed.value),
+        eligible:
+          company.creditStatus !== 'prepaid' || company.kycDocuments.some((d) => d.status === 'verified'),
+        financialStatementOnFile: company.kycDocuments.length > 0,
+        allowedTermDays: allowedDays,
+        defaultTermDays: defaultDays,
+      },
+    };
+  }
+
+  /**
+   * What the company owes at `now` (D-122): its open receivables by days past due, the credit exposure, the next
+   * due credit instalment and the notices of the dunning rules (due soon, due today, overdue, credit blocked).
+   */
+  async owed(companyId: bigint, now = new Date()): Promise<ReceivablesView> {
+    const asOf = bangkokDate(now);
+    const company = await this.prisma.company.findUniqueOrThrow({ where: { id: companyId } });
+    const [aging, open, rules, instalments] = await Promise.all([
+      this.receivables.aging(asOf, companyId),
+      this.exposure(this.prisma, companyId),
+      this.settings.at('b2b.overdue_rules', { at: now }),
+      this.prisma.instalment.findMany({
+        where: {
+          status: { in: [...OPEN] },
+          dueAt: { not: null },
+          schedule: {
+            orderGroup: { companyId, status: { not: 'cancelled' } },
+            templateVersion: { template: { key: 'credit_term' } },
+          },
+        },
+        include: { schedule: { include: { orderGroup: { select: { groupCode: true } } } } },
+        orderBy: { dueAt: 'asc' },
+      }),
+    ]);
+    const { reminderDaysBeforeDue } = rules.value as { reminderDaysBeforeDue: number };
+    const today = startOfBangkokDay(asOf);
+    const tomorrow = new Date(today.getTime() + DAY_MS);
+    const soon = new Date(today.getTime() + (reminderDaysBeforeDue + 1) * DAY_MS);
+    const notices: ReceivablesView['notices'] = [];
+    let oldest: number | null = null;
+    for (const i of instalments) {
+      const due = i.dueAt!;
+      const owed = D(i.cashAmount).sub(i.paidAmount.toString());
+      const code = due < today ? 'overdue' : due < tomorrow ? 'due_today' : due < soon ? 'due_soon' : null;
+      if (code)
+        notices.push({ code, groupCode: i.schedule.orderGroup.groupCode, dueAt: due, amount: owed });
+      if (due < today) {
+        const days = Math.floor((today.getTime() - startOfBangkokDay(bangkokDate(due)).getTime()) / DAY_MS);
+        oldest = Math.max(oldest ?? 0, days);
+      }
+    }
+    for (const party of aging.parties)
+      for (const bucket of ['d1_30', 'd31_60', 'd61_90', 'over_90'] as const)
+        if (party.buckets[bucket].gt(0))
+          oldest = Math.max(oldest ?? 0, { d1_30: 1, d31_60: 31, d61_90: 61, over_90: 91 }[bucket]);
+    const blocked = company.creditStatus === 'blocked_overdue';
+    if (blocked) notices.unshift({ code: 'credit_blocked', groupCode: null, dueAt: null, amount: null });
+    const overdue = (['d1_30', 'd31_60', 'd61_90', 'over_90'] as const).reduce(
+      (a, b) => a.add(aging.totals[b]),
+      D(0),
+    );
+    return {
+      asOf,
+      open,
+      overdue,
+      aging: aging.totals,
+      oldestOverdueDays: oldest,
+      nextDueAt: instalments.find((i) => i.dueAt! >= today)?.dueAt ?? null,
+      creditOrdersBlocked: blocked,
+      notices,
+    };
   }
 
   // --- eligibility (D-121) -------------------------------------------------------------------------
@@ -140,6 +243,7 @@ export class CreditService {
       basis: 'paid_orders' | 'financial_statement';
       reason: string;
     },
+    opts: { statementOnFile?: boolean } = {},
   ) {
     const terms = (await this.settings.at('b2b.credit_terms')).value as {
       allowedDays: number[];
@@ -156,10 +260,12 @@ export class CreditService {
         throw new DomainException('companies.invalid_status', { params: { status: company.status } });
       if (input.basis === 'paid_orders' && company.creditStatus === 'prepaid')
         throw new DomainException('companies.credit_not_eligible');
-      if (
-        input.basis === 'financial_statement' &&
-        !company.kycDocuments.some((d) => d.docType === 'financial_statement' && d.status === 'verified')
-      )
+      // Staff request on a verified statement; the Company Admin applies with one on file (Finance reviews it
+      // within the approval, D-121).
+      const statementOk = (d: { docType: string; status: string }) =>
+        d.docType === 'financial_statement' &&
+        (d.status === 'verified' || (opts.statementOnFile === true && d.status !== 'rejected'));
+      if (input.basis === 'financial_statement' && !company.kycDocuments.some(statementOk))
         throw new DomainException('companies.credit_not_eligible');
       const identity =
         (await tx.companyCreditLimit.findUnique({ where: { companyId: company.id } })) ??

@@ -10,12 +10,15 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsISO8601,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
+  Min,
   MinLength,
   ValidateNested,
 } from 'class-validator';
@@ -658,6 +661,61 @@ export class CompanyApprovalDto {
 
   @ApiProperty({ example: 'THB' })
   currency!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '50000.00',
+    description: 'The company threshold the order was above (D-123); null for approvals made before it was kept',
+  })
+  threshold!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 2, description: 'Orders in the group' })
+  ordersCount!: number;
+
+  @ApiProperty({ type: String, nullable: true, example: 'สำนักงานใหญ่', description: 'Branch on the tax invoice' })
+  branchName!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-04T10:00:00+07:00' })
+  expiresAt!: string | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true, description: 'Who approved or rejected it' })
+  decidedBy!: UserRefDto | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  decidedAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'The approver’s comment or reason' })
+  decisionComment!: string | null;
+}
+
+export const COMPANY_APPROVAL_STATUS_FILTERS = ['pending', 'decided', 'all'] as const;
+
+export class CompanyApprovalListQuery {
+  @ApiPropertyOptional({
+    enum: COMPANY_APPROVAL_STATUS_FILTERS,
+    enumName: 'CompanyApprovalStatusFilter',
+    default: 'pending',
+    description: '`pending` (oldest first) or the decided history (newest first)',
+  })
+  @IsOptional()
+  @IsIn(COMPANY_APPROVAL_STATUS_FILTERS)
+  status?: (typeof COMPANY_APPROVAL_STATUS_FILTERS)[number];
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 1, maximum: 100, default: 100 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @ApiPropertyOptional({ type: 'integer', minimum: 0, default: 0, description: 'Rows to skip (paging)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
 }
 
 export const COMPANY_APPROVAL_EXAMPLE: CompanyApprovalDto = {
@@ -670,6 +728,13 @@ export const COMPANY_APPROVAL_EXAMPLE: CompanyApprovalDto = {
   requester: { id: IDS.user, displayName: 'สมชาย ทดสอบ' },
   requestedAt: '2026-10-01T10:00:00+07:00',
   currency: 'THB',
+  threshold: '50000.00',
+  ordersCount: 1,
+  branchName: 'สำนักงานใหญ่',
+  expiresAt: '2026-10-04T10:00:00+07:00',
+  decidedBy: null,
+  decidedAt: null,
+  decisionComment: null,
 };
 
 export class CompanyApprovalDecisionDto {
@@ -679,3 +744,100 @@ export class CompanyApprovalDecisionDto {
   @MaxLength(500)
   comment?: string | null;
 }
+
+// --- spend (U-B0.1, D-125) ---------------------------------------------------------------------------------
+
+export class CompanySpendQuery {
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 1,
+    maximum: 24,
+    default: 12,
+    description: 'Calendar months back from this one (Bangkok), this month included',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(24)
+  months?: number;
+}
+
+export class SpendAmountsDto {
+  @ApiProperty({ type: 'integer', example: 4 })
+  orders!: number;
+
+  @ApiProperty({ example: '40000.00', description: 'Before VAT, shipping included' })
+  netAmount!: string;
+
+  @ApiProperty({ example: '2800.00' })
+  vatAmount!: string;
+
+  @ApiProperty({ example: '42800.00', description: 'Incl. VAT' })
+  grossAmount!: string;
+}
+
+export class SpendByMonthDto extends SpendAmountsDto {
+  @ApiProperty({ example: '2026-10' })
+  month!: string;
+}
+
+export class SpendByMemberDto extends SpendAmountsDto {
+  @ApiProperty({ type: UserRefDto, description: 'Who placed the orders' })
+  user!: UserRefDto;
+}
+
+export class SpendByBranchDto extends SpendAmountsDto {
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.branch })
+  branchId!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '00000' })
+  branchCode!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'สำนักงานใหญ่' })
+  name!: string | null;
+}
+
+export class SpendByProductTypeDto extends SpendAmountsDto {
+  @ApiProperty({ example: 'folding_box' })
+  productTypeCode!: string;
+}
+
+/** What the company ordered (D-125): placed orders (not cancelled, not waiting for approval) by month and more. */
+export class CompanySpendDto {
+  @ApiProperty({ format: 'date', example: '2025-11-01' })
+  from!: string;
+
+  @ApiProperty({ format: 'date', example: '2026-10-31' })
+  to!: string;
+
+  @ApiProperty({ type: SpendAmountsDto })
+  total!: SpendAmountsDto;
+
+  @ApiProperty({ type: [SpendByMonthDto], description: 'Every month of the window, oldest first' })
+  byMonth!: SpendByMonthDto[];
+
+  @ApiProperty({ type: [SpendByMemberDto] })
+  byMember!: SpendByMemberDto[];
+
+  @ApiProperty({ type: [SpendByBranchDto] })
+  byBranch!: SpendByBranchDto[];
+
+  @ApiProperty({ type: [SpendByProductTypeDto] })
+  byProductType!: SpendByProductTypeDto[];
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+}
+
+const SPEND = { orders: 4, netAmount: '40000.00', vatAmount: '2800.00', grossAmount: '42800.00' };
+export const SPEND_EXAMPLE: CompanySpendDto = {
+  from: '2025-11-01',
+  to: '2026-10-31',
+  total: SPEND,
+  byMonth: [{ month: '2026-10', ...SPEND }],
+  byMember: [{ user: { id: IDS.user, displayName: 'สมชาย ทดสอบ' }, ...SPEND }],
+  byBranch: [{ branchId: IDS.branch, branchCode: '00000', name: 'สำนักงานใหญ่', ...SPEND }],
+  byProductType: [{ productTypeCode: 'folding_box', ...SPEND }],
+  currency: 'THB',
+};

@@ -44,6 +44,7 @@ import {
   COMPANY_EXAMPLE,
   CompanyApprovalDecisionDto,
   CompanyApprovalDto,
+  CompanyApprovalListQuery,
   CompanyBranchInputDto,
   CompanyDto,
   CompanyInvitationDto,
@@ -53,7 +54,12 @@ import {
   ReviewKycDocumentDto,
   UpdateCompanySettingsDto,
 } from './companies.dto';
-import { CompaniesService, companyEtag, type CompanyRow } from './companies.service';
+import {
+  CompaniesService,
+  type CompanyApprovalRow,
+  companyEtag,
+  type CompanyRow,
+} from './companies.service';
 import { adminCompanyDto, companyDto, invitationDto } from './company-views';
 
 const DECISIONS = ['D-120', 'D-123', 'D-125'];
@@ -68,6 +74,34 @@ function customer(actor: Actor): UserActor {
 function staff(actor: Actor): UserActor {
   if (actor.type !== 'user' || actor.audience !== 'staff') throw new DomainException('auth.forbidden');
   return actor;
+}
+
+function approvalDto({ request, group }: CompanyApprovalRow): CompanyApprovalDto {
+  const payload = request.payloadSnapshot as {
+    groupCode: string;
+    poNumber: string | null;
+    amount: string;
+    threshold?: string | null;
+  };
+  const decision = request.status === 'pending' ? undefined : request.actions[0];
+  return {
+    id: request.publicId,
+    status: request.status,
+    groupId: group.publicId,
+    groupCode: payload.groupCode,
+    poNumber: payload.poNumber,
+    amount: payload.amount,
+    requester: { id: request.requester.publicId, displayName: request.requester.displayName },
+    requestedAt: toBangkokIso(request.createdAt),
+    currency: 'THB',
+    threshold: payload.threshold ?? null,
+    ordersCount: group._count.orders,
+    branchName: group.companyBranch?.name ?? null,
+    expiresAt: request.expiresAt ? toBangkokIso(request.expiresAt) : null,
+    decidedBy: decision ? { id: decision.actor.publicId, displayName: decision.actor.displayName } : null,
+    decidedAt: request.decidedAt ? toBangkokIso(request.decidedAt) : null,
+    decisionComment: decision?.comment ?? null,
+  };
 }
 
 async function respond(
@@ -424,7 +458,9 @@ export class StoreCompanyApprovalsController {
   @ApiEndpoint({
     id: 'store.companyApprovals.list',
     summary: 'List orders waiting for my approval',
-    description: 'Company approvers: orders above the company threshold, waiting before placement (D-123).',
+    description:
+      'Company approvers: orders above the company threshold, waiting before placement (D-123) — or, with ' +
+      '`status=decided|all`, the history with who decided, when and why. Paged with `limit` / `offset`.',
     implements: ['D-123'],
   })
   @ApiSuccess(200, {
@@ -436,22 +472,9 @@ export class StoreCompanyApprovalsController {
   async list(
     @CurrentActor() actor: Actor,
     @Param('companyId', ParseUUIDPipe) id: string,
+    @Query() q: CompanyApprovalListQuery,
   ): Promise<CompanyApprovalDto[]> {
-    const groups = await this.companies.pendingApprovals(customer(actor), id);
-    return groups.map((g) => ({
-      id: g.companyApprovalRequest!.publicId,
-      status: g.companyApprovalRequest!.status,
-      groupId: g.publicId,
-      groupCode: g.groupCode,
-      poNumber: g.poNumber,
-      amount: g.grossAmount.toFixed(2),
-      requester: {
-        id: g.companyApprovalRequest!.requester.publicId,
-        displayName: g.companyApprovalRequest!.requester.displayName,
-      },
-      requestedAt: toBangkokIso(g.companyApprovalRequest!.createdAt),
-      currency: 'THB',
-    }));
+    return (await this.companies.approvalsOf(customer(actor), id, q)).map(approvalDto);
   }
 
   @Post(':approvalId/actions/:decision')
@@ -493,30 +516,14 @@ export class StoreCompanyApprovalsController {
     @Body() body: CompanyApprovalDecisionDto,
   ): Promise<CompanyApprovalDto> {
     if (decision !== 'approve' && decision !== 'reject') throw new DomainException('http.not_found');
-    const request = await this.companies.decideApproval(
+    const row = await this.companies.decideApproval(
       customer(actor),
       id,
       approvalId,
       decision === 'approve',
       body.comment ?? null,
     );
-    const payload = request.payloadSnapshot as {
-      groupId: string;
-      groupCode: string;
-      poNumber: string | null;
-      amount: string;
-    };
-    return {
-      id: request.publicId,
-      status: request.status,
-      groupId: payload.groupId,
-      groupCode: payload.groupCode,
-      poNumber: payload.poNumber,
-      amount: payload.amount,
-      requester: { id: request.requester.publicId, displayName: request.requester.displayName },
-      requestedAt: toBangkokIso(request.createdAt),
-      currency: 'THB',
-    };
+    return approvalDto(row);
   }
 }
 

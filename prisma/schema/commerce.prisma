@@ -1927,6 +1927,7 @@ model Company {
   kycDocuments  CompanyKycDocument[]
   creditLimit   CompanyCreditLimit?
   discount      CompanyDiscount?
+  brandAssets   CompanyBrandAsset[]
   discountMemos DiscountMemo[]
   carts         Cart[]               @relation("CartCompany")
   orderGroups   OrderGroup[]         @relation("OrderGroupCompany")
@@ -2020,6 +2021,43 @@ model CompanyMember {
   @@index([userId], map: "ix_company_members__user_id")
   @@index([invitedById], map: "ix_company_members__invited_by")
   @@map("company_members")
+}
+
+enum CompanyAssetKind {
+  logo
+  guideline
+  font
+  artwork
+  other
+
+  @@map("company_asset_kind")
+}
+
+/// The company's shared brand library (D-227): the Company Admin adds and removes files, every member uses them.
+/// Removing keeps the file (orders and designs may reference it). U4.B5 brand kits extend it.
+model CompanyBrandAsset {
+  id           BigInt           @id(map: "pk_company_brand_assets") @default(autoincrement())
+  publicId     String           @unique(map: "ux_company_brand_assets__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  companyId    BigInt           @map("company_id")
+  fileObjectId BigInt           @map("file_object_id")
+  kind         CompanyAssetKind
+  name         String
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById  BigInt           @map("created_by")
+  removedAt    DateTime?        @map("removed_at") @db.Timestamptz(6)
+  removedById  BigInt?          @map("removed_by")
+
+  company    Company    @relation(fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__company_id")
+  fileObject FileObject @relation("CompanyBrandAssetFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__file_object_id")
+  createdBy  User       @relation("CompanyBrandAssetCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__created_by")
+  removedBy  User?      @relation("CompanyBrandAssetRemovedBy", fields: [removedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_company_brand_assets__removed_by")
+
+  @@unique([companyId, fileObjectId], map: "ux_company_brand_assets__live_file", where: raw("(removed_at IS NULL)"))
+  @@index([companyId], map: "ix_company_brand_assets__company_id")
+  @@index([fileObjectId], map: "ix_company_brand_assets__file_object_id")
+  @@index([createdById], map: "ix_company_brand_assets__created_by")
+  @@index([removedById], map: "ix_company_brand_assets__removed_by")
+  @@map("company_brand_assets")
 }
 
 /// KYC documents reviewed by staff (D-120: certificate ≤ 6 months old, ภ.พ.20 if VAT-registered, signatory).

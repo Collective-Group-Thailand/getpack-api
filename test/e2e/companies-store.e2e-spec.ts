@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import {
   activeCompany,
   as,
@@ -5,6 +7,7 @@ import {
   type CommerceApp,
   customerToken,
   fakeTaxId,
+  uploadFile,
 } from '../support/commerce-e2e';
 
 /**
@@ -115,5 +118,61 @@ describe('store companies (e2e, U-B0.1)', () => {
     expect(
       await ctx.prisma.auditLog.count({ where: { action: 'iam.role_revoked', data: { path: ['reason'], equals: 'Company roles changed' } } }),
     ).toBeGreaterThanOrEqual(2);
+  });
+
+  it('keeps a brand library the Company Admin manages and every member uses (D-227)', async () => {
+    const admin = await customerToken(ctx, 6);
+    const buyer = await customerToken(ctx, 7);
+    const id = await activeCompany(ctx, admin.token, 6, [{ ...buyer, roles: ['company_buyer'] }]);
+    const fileId = await uploadFile(ctx, admin.token, 'fake-logo', 'design_asset');
+    await as(ctx, buyer.token).post(`/v1/store/companies/${id}/brand-assets`, { fileId, kind: 'logo', name: 'โลโก้' }).expect(403);
+    const added = await as(ctx, admin.token)
+      .post(`/v1/store/companies/${id}/brand-assets`, { fileId, kind: 'logo', name: 'โลโก้' })
+      .expect(201);
+    expect(added.body).toMatchObject({ kind: 'logo', name: 'โลโก้', fileId, mimeType: 'image/png', url: expect.any(String) });
+    expect((await as(ctx, admin.token).post(`/v1/store/companies/${id}/brand-assets`, { fileId, kind: 'logo', name: 'x' }).expect(409)).body.code).toBe('companies.asset_exists');
+    const listed = (await as(ctx, buyer.token).get(`/v1/store/companies/${id}/brand-assets`).expect(200)).body as { id: string }[];
+    expect(listed.map((a) => a.id)).toEqual([added.body.id]);
+    // The buyer reads the file through the files API too.
+    await as(ctx, buyer.token).get(`/v1/store/files/${fileId}/download`).expect(200);
+    await as(ctx, buyer.token).delete(`/v1/store/companies/${id}/brand-assets/${added.body.id as string}`).expect(403);
+    await as(ctx, admin.token).delete(`/v1/store/companies/${id}/brand-assets/${added.body.id as string}`).expect(204);
+    expect((await as(ctx, buyer.token).get(`/v1/store/companies/${id}/brand-assets`).expect(200)).body).toEqual([]);
+  });
+
+  it('shows credit eligibility, lets the Company Admin apply and summarises what is owed (D-121, D-122)', async () => {
+    const admin = await customerToken(ctx, 8);
+    const buyer = await customerToken(ctx, 9);
+    const id = await activeCompany(ctx, admin.token, 8, [{ ...buyer, roles: ['company_buyer'] }]);
+    const credit = (await as(ctx, admin.token).get(`/v1/store/companies/${id}/credit`).expect(200)).body;
+    expect(credit.eligibility).toMatchObject({
+      paidOrdersCount: 0,
+      paidOrdersNeeded: 3,
+      eligible: false,
+      financialStatementOnFile: false,
+      allowedTermDays: [15, 30, 45, 60],
+      defaultTermDays: 30,
+    });
+    const apply = (body: object, token = admin.token) =>
+      as(ctx, token).post(`/v1/store/companies/${id}/credit-applications`, body).set('Idempotency-Key', randomUUID());
+    const body = { limitAmount: '50000.00', termDays: 30, basis: 'paid_orders', note: 'สั่งซื้อทุกเดือน' };
+    await apply(body, buyer.token).expect(403);
+    expect((await apply(body).expect(409)).body.code).toBe('companies.credit_not_eligible');
+    await apply({ ...body, termDays: 20 }).expect(422);
+    await ctx.prisma.company.update({ where: { publicId: id }, data: { creditStatus: 'eligible', paidOrdersCount: 3 } });
+    const applied = await apply(body).expect(201);
+    expect(applied.body).toMatchObject({ pendingRequest: { limitAmount: '50000.00', termDays: 30 }, eligibility: { eligible: true } });
+    expect((await apply(body).expect(409)).body.code).toBe('approval.already_pending');
+
+    const owed = (await as(ctx, admin.token).get(`/v1/store/companies/${id}/receivables`).expect(200)).body;
+    expect(owed).toMatchObject({ openAmount: '0.00', overdueAmount: '0.00', creditOrdersBlocked: false, notices: [], oldestOverdueDays: null });
+    await as(ctx, buyer.token).get(`/v1/store/companies/${id}/receivables`).expect(403);
+    await ctx.prisma.company.update({ where: { publicId: id }, data: { creditStatus: 'blocked_overdue' } });
+    const blocked = (await as(ctx, admin.token).get(`/v1/store/companies/${id}/receivables`).expect(200)).body;
+    expect(blocked).toMatchObject({ creditOrdersBlocked: true, notices: [expect.objectContaining({ code: 'credit_blocked' })] });
+    expect((await as(ctx, admin.token).get(`/v1/store/companies/${id}/issued-statements`).expect(200)).body).toEqual([]);
+    const spend = (await as(ctx, admin.token).get(`/v1/store/companies/${id}/spend`).expect(200)).body;
+    expect(spend).toMatchObject({ total: { orders: 0, grossAmount: '0.00' }, byMember: [] });
+    expect(spend.byMonth).toHaveLength(12);
   });
 });

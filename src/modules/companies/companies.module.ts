@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 
+import { BrandAssetsService } from './brand-assets.service';
 import { CompaniesJobs } from './companies.jobs';
 import { CompaniesService } from './companies.service';
 import { CompanyCheckout } from './company-checkout.extension';
@@ -14,9 +15,10 @@ import { CreditCheckout, CreditService } from './credit.service';
     CompaniesService,
     CompanyCheckout,
     CreditService,
+    BrandAssetsService,
     CreditCheckout,
     CompaniesJobs,
   ],
-  exports: [CompaniesService, CreditService],
+  exports: [CompaniesService, CreditService, BrandAssetsService],
 })
 export class CompaniesModule {}
