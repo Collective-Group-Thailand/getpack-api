@@ -2,8 +2,11 @@ import { toBangkokIso } from '@common/time/bangkok';
 
 import { type AdminClaimDto, type PartnerClaimDto, type StoreClaimDto } from './claims.dto';
 import { type ClaimRow } from './claims.service';
+import { liabilityRule } from './liability';
 
 const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
+const userRef = (u: { publicId: string; displayName: string } | null) =>
+  u ? { id: u.publicId, displayName: u.displayName } : null;
 type Photos = { product: string[]; carton: string[] };
 
 export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carton: [] }): StoreClaimDto {
@@ -67,6 +70,7 @@ export function partnerClaimDto(c: ClaimRow, photos?: Photos): PartnerClaimDto {
 
 export function adminClaimDto(c: ClaimRow, photos?: Photos): AdminClaimDto {
   const base = storeClaimDto(c, photos);
+  const proof = c.order.proofs[0];
   return {
     ...base,
     resolutions: c.resolutions.map((r) => ({
@@ -85,5 +89,24 @@ export function adminClaimDto(c: ClaimRow, photos?: Photos): AdminClaimDto {
     shipmentId: c.shipment?.publicId ?? null,
     infoResponse: c.infoResponse,
     decidedAt: iso(c.decidedAt),
+    customer: {
+      id: c.customer.publicId,
+      customerCode: c.customer.customerProfile?.customerCode ?? null,
+      displayName: c.customer.displayName,
+      companyName: c.order.orderGroup.company?.legalName ?? null,
+    },
+    shipmentNo: c.shipment?.shipmentNo ?? null,
+    liabilityRule: liabilityRule(c.type, c.liabilityByRule),
+    liabilityOverriddenBy: userRef(c.liabilityOverriddenBy),
+    decidedBy: userRef(c.decidedBy),
+    approvedProof: proof
+      ? {
+          id: proof.publicId,
+          versionNo: proof.versionNo,
+          approvedAt: iso(proof.decidedAt),
+          channel: proof.decisionChannel,
+          approvedFileId: proof.approvedFile?.publicId ?? null,
+        }
+      : null,
   };
 }

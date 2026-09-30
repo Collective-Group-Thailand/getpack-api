@@ -4311,6 +4311,17 @@
       },
       "AdminClaimDto": {
         "properties": {
+          "approvedProof": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClaimApprovedProofDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when no proof was approved"
+          },
           "claimNo": {
             "example": "DEVCL-2610-0001",
             "type": "string"
@@ -4329,12 +4340,25 @@
               "null"
             ]
           },
+          "customer": {
+            "$ref": "#/components/schemas/OrderCustomerRefDto"
+          },
           "decidedAt": {
             "example": null,
             "format": "date-time",
             "type": [
               "string",
               "null"
+            ]
+          },
+          "decidedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "decisionNote": {
@@ -4432,6 +4456,26 @@
             ],
             "example": "factory"
           },
+          "liabilityOverriddenBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who overrode the rule’s liability"
+          },
+          "liabilityRule": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimLiabilityRule"
+              }
+            ],
+            "description": "The D-083 rule behind `liabilityByRule`: factory_production (wrong spec, print defect), factory_short_delivery, factory_fleet_transit / carrier_transit (damage by who shipped), staff_decides (late, other)",
+            "example": "factory_production"
+          },
           "orderCode": {
             "example": "PK-2610-0001-01",
             "type": "string"
@@ -4482,6 +4526,13 @@
           "shipmentId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
             "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shipmentNo": {
+            "example": "SH-2610-0001",
             "type": [
               "string",
               "null"
@@ -4544,7 +4595,13 @@
           "factoryCode",
           "shipmentId",
           "infoResponse",
-          "decidedAt"
+          "decidedAt",
+          "customer",
+          "shipmentNo",
+          "liabilityRule",
+          "liabilityOverriddenBy",
+          "decidedBy",
+          "approvedProof"
         ],
         "type": "object"
       },
@@ -13628,6 +13685,55 @@
         ],
         "type": "string"
       },
+      "ClaimApprovedProofDto": {
+        "properties": {
+          "approvedAt": {
+            "example": "2026-10-10T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "approvedFileId": {
+            "description": "The locked copy of the approved file",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DecisionChannel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "web"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "versionNo": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "versionNo",
+          "approvedAt",
+          "channel",
+          "approvedFileId"
+        ],
+        "type": "object"
+      },
       "ClaimDecision": {
         "enum": [
           "approved",
@@ -13877,6 +13983,17 @@
           "carrier",
           "packio",
           "undetermined"
+        ],
+        "type": "string"
+      },
+      "ClaimLiabilityRule": {
+        "description": "The D-083 rule behind `liabilityByRule`: factory_production (wrong spec, print defect), factory_short_delivery, factory_fleet_transit / carrier_transit (damage by who shipped), staff_decides (late, other)",
+        "enum": [
+          "factory_production",
+          "factory_short_delivery",
+          "factory_fleet_transit",
+          "carrier_transit",
+          "staff_decides"
         ],
         "type": "string"
       },
@@ -111035,7 +111152,7 @@
     },
     "/v1/admin/claims": {
       "get": {
-        "description": "Newest first.\n\nImplements: D-082.",
+        "description": "Newest first; `type`, `origin` (customer, automatic from the tolerance, staff), `customerId` and `factoryId` narrow it. Each row names the customer.\n\nImplements: D-082.",
         "operationId": "admin.claims.list",
         "parameters": [
           {
@@ -111106,6 +111223,42 @@
             }
           },
           {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ClaimType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ClaimOrigin"
+            }
+          },
+          {
+            "description": "Claims of this customer",
+            "in": "query",
+            "name": "customerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Claims against this factory",
+            "in": "query",
+            "name": "factoryId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -111116,10 +111269,24 @@
                 "example": {
                   "data": [
                     {
+                      "approvedProof": {
+                        "approvedAt": "2026-10-10T10:00:00+07:00",
+                        "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                        "channel": "web",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                        "versionNo": 2
+                      },
                       "claimNo": "DEVCL-2610-0001",
                       "claimedAmount": null,
                       "claimedQuantity": 120,
+                      "customer": {
+                        "companyName": null,
+                        "customerCode": "CU-000042",
+                        "displayName": "สมชาย ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                      },
                       "decidedAt": null,
+                      "decidedBy": null,
                       "decisionNote": null,
                       "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                       "factoryCode": "F-0001",
@@ -111133,6 +111300,8 @@
                       "jobNo": "DEVJOB-2610-00001",
                       "liability": "factory",
                       "liabilityByRule": "factory",
+                      "liabilityOverriddenBy": null,
+                      "liabilityRule": "factory_production",
                       "orderCode": "PK-2610-0001-01",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                       "origin": "customer",
@@ -111149,6 +111318,7 @@
                       "requestedResolution": "reprint",
                       "resolutions": [],
                       "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                      "shipmentNo": "SH-2610-0001",
                       "status": "under_review",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
                       "type": "damaged",
@@ -111317,7 +111487,7 @@
     },
     "/v1/admin/claims/{claimId}": {
       "get": {
-        "description": "Evidence, liability by rule vs decided (D-083), factory response and resolutions.\n\nImplements: D-082, D-083.",
+        "description": "Evidence, liability by rule (with the D-083 rule that gave it) vs decided and who overrode it, the proof the customer approved (evidence for errors in approved artwork), factory response, who decided, and resolutions. Claim actions take an `Idempotency-Key`; the `ETag` tracks changes.\n\nImplements: D-082, D-083.",
         "operationId": "admin.claims.get",
         "parameters": [
           {
@@ -111338,10 +111508,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": null,
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -111355,6 +111539,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -111371,6 +111557,7 @@
                   "requestedResolution": "reprint",
                   "resolutions": [],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -111383,6 +111570,9 @@
             },
             "description": "Claim",
             "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -111561,10 +111751,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": "2026-10-24T10:00:00+07:00",
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -111578,6 +111782,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -111603,6 +111809,7 @@
                     }
                   ],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "closed",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -111863,10 +112070,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": null,
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -111880,6 +112101,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -111896,6 +112119,7 @@
                   "requestedResolution": "reprint",
                   "resolutions": [],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "approved",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -112165,10 +112389,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": null,
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -112182,6 +112420,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "customer",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -112198,6 +112438,7 @@
                   "requestedResolution": "reprint",
                   "resolutions": [],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -112466,10 +112707,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": null,
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -112483,6 +112738,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -112499,6 +112756,7 @@
                   "requestedResolution": "reprint",
                   "resolutions": [],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "need_info",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -112769,10 +113027,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": "2026-10-24T10:00:00+07:00",
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -112786,6 +113058,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -112811,6 +113085,7 @@
                     }
                   ],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "resolved",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -113071,10 +113346,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": null,
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -113088,6 +113377,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -113104,6 +113395,7 @@
                   "requestedResolution": "reprint",
                   "resolutions": [],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -113346,10 +113638,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": null,
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -113363,6 +113669,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -113379,6 +113687,7 @@
                   "requestedResolution": "reprint",
                   "resolutions": [],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "factory_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -186167,10 +186476,24 @@
             "content": {
               "application/json": {
                 "example": {
+                  "approvedProof": {
+                    "approvedAt": "2026-10-10T10:00:00+07:00",
+                    "approvedFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f3005",
+                    "channel": "web",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3004",
+                    "versionNo": 2
+                  },
                   "claimNo": "DEVCL-2610-0001",
                   "claimedAmount": null,
                   "claimedQuantity": 120,
+                  "customer": {
+                    "companyName": null,
+                    "customerCode": "CU-000042",
+                    "displayName": "สมชาย ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3006"
+                  },
                   "decidedAt": null,
+                  "decidedBy": null,
                   "decisionNote": null,
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
@@ -186184,6 +186507,8 @@
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
                   "liabilityByRule": "factory",
+                  "liabilityOverriddenBy": null,
+                  "liabilityRule": "factory_production",
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "staff",
@@ -186200,6 +186525,7 @@
                   "requestedResolution": "reprint",
                   "resolutions": [],
                   "shipmentId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
+                  "shipmentNo": "SH-2610-0001",
                   "status": "submitted",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",

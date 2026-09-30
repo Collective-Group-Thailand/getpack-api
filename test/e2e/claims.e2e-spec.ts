@@ -153,8 +153,31 @@ describe('claims and reorder (e2e, B4.5)', () => {
     // The factory sees the claim only once Packio sends it.
     await as(ctx, owner).get(`/v1/partner/claims/${submitted.id}`).expect(404);
     const cs = await staffToken(ctx, 'cs');
-    const admin = (await as(ctx, cs).get(`/v1/admin/claims/${submitted.id}`).expect(200)).body as Claim;
+    const adminRes = await as(ctx, cs).get(`/v1/admin/claims/${submitted.id}`).expect(200);
+    const admin = adminRes.body as Claim;
     expect(admin).toMatchObject({ liabilityByRule: 'factory', liability: 'factory' });
+    // U-B0.2: customer ref, the D-083 rule, the approved proof, ETag; list filters.
+    expect(adminRes.headers['etag']).toEqual(expect.any(String));
+    expect(adminRes.body).toMatchObject({
+      customer: { id: expect.any(String), displayName: expect.any(String) },
+      liabilityRule: expect.stringMatching(/^factory_/),
+      decidedBy: null,
+      liabilityOverriddenBy: null,
+      approvedProof: {
+        id: expect.any(String),
+        versionNo: expect.any(Number),
+        approvedFileId: expect.any(String),
+      },
+    });
+    const listed = async (query: string) =>
+      (
+        (await as(ctx, cs).get(`/v1/admin/claims?${query}&perPage=100`).expect(200)).body.data as {
+          id: string;
+        }[]
+      ).map((c) => c.id);
+    expect(await listed(`origin=customer&type=${adminRes.body.type as string}`)).toContain(submitted.id);
+    expect(await listed('origin=staff')).not.toContain(submitted.id);
+    expect(await listed(`customerId=${adminRes.body.customer.id as string}`)).toContain(submitted.id);
     await post(cs, `/v1/admin/claims/${submitted.id}/actions/decide`, {
       decision: 'approved',
       note: 'ยังไม่ตรวจ',
@@ -185,10 +208,11 @@ describe('claims and reorder (e2e, B4.5)', () => {
       liability: 'customer',
       reason: 'ทดสอบสิทธิ์การเปลี่ยนผู้รับผิดชอบ',
     }).expect(403);
-    await post(cs, `/v1/admin/claims/${submitted.id}/actions/decide`, {
+    const decided = await post(cs, `/v1/admin/claims/${submitted.id}/actions/decide`, {
       decision: 'approved',
       note: 'ยืนยันความเสียหาย',
     }).expect(200);
+    expect(decided.body.decidedBy).toMatchObject({ id: expect.any(String) });
     const lead = await staffToken(ctx, 'cs_lead');
     const resolveBody = {
       actions: [
@@ -281,7 +305,12 @@ describe('claims and reorder (e2e, B4.5)', () => {
       liability: 'packio',
       reason: 'Packio นัดส่งผิดวัน (ทดสอบ)',
     }).expect(200);
-    expect(overridden.body).toMatchObject({ liability: 'packio', liabilityByRule: 'undetermined' });
+    expect(overridden.body).toMatchObject({
+      liability: 'packio',
+      liabilityByRule: 'undetermined',
+      liabilityRule: 'staff_decides',
+      liabilityOverriddenBy: { id: expect.any(String) },
+    });
     await post(cs, `/v1/admin/claims/${opened.id}/actions/decide`, {
       decision: 'approved',
       note: 'ยอมรับ',

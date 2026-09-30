@@ -24,6 +24,31 @@ export function liabilityByRule(
   }
 }
 
+/** Which D-083 rule gave `liabilityByRule`, for staff to see why (U-B0.2). */
+export const LIABILITY_RULES = [
+  'factory_production',
+  'factory_short_delivery',
+  'factory_fleet_transit',
+  'carrier_transit',
+  'staff_decides',
+] as const;
+export type LiabilityRuleKey = (typeof LIABILITY_RULES)[number];
+
+/** Derived from the stored rule outcome: for transit damage it names who shipped (D-083, D-114). */
+export function liabilityRule(type: ClaimTypeValue, byRule: LiabilityValue): LiabilityRuleKey {
+  switch (type) {
+    case 'wrong_spec':
+    case 'print_defect':
+      return 'factory_production';
+    case 'quantity_short':
+      return 'factory_short_delivery';
+    case 'damaged':
+      return byRule === 'carrier' ? 'carrier_transit' : 'factory_fleet_transit';
+    default:
+      return 'staff_decides';
+  }
+}
+
 /** Claim statuses from which nothing more happens. */
 export const FINAL_CLAIM_STATUSES = ['rejected', 'resolved', 'closed'] as const;
 

@@ -1,5 +1,8 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { DECISION_CHANNELS } from '@modules/artwork/proofs.dto';
+import { OrderCustomerRefDto } from '@modules/orders/orders.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -17,6 +20,8 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+
+import { LIABILITY_RULES } from './liability';
 
 /** Claims and reorder (D-080, D-082, D-083, D-153; B4.5). */
 
@@ -298,6 +303,30 @@ export class ClaimListQuery extends PageQuery {
   orderId?: string;
 }
 
+export const CLAIM_ORIGINS = ['customer', 'tolerance_auto', 'staff'] as const;
+
+export class AdminClaimListQuery extends ClaimListQuery {
+  @ApiPropertyOptional({ enum: CLAIM_TYPES, enumName: 'ClaimType' })
+  @IsOptional()
+  @IsIn(CLAIM_TYPES)
+  type?: (typeof CLAIM_TYPES)[number];
+
+  @ApiPropertyOptional({ enum: CLAIM_ORIGINS, enumName: 'ClaimOrigin' })
+  @IsOptional()
+  @IsIn(CLAIM_ORIGINS)
+  origin?: (typeof CLAIM_ORIGINS)[number];
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Claims of this customer' })
+  @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Claims against this factory' })
+  @IsOptional()
+  @IsUUID()
+  factoryId?: string;
+}
+
 export class ReorderOrderDto {
   @ApiPropertyOptional({
     type: 'integer',
@@ -469,6 +498,30 @@ export class PartnerClaimDto extends StoreClaimDto {
   factoryResponseNote!: string | null;
 }
 
+/** The proof the customer approved for the order: evidence for errors in approved artwork (D-083). */
+export class ClaimApprovedProofDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000f3004' })
+  id!: string;
+
+  @ApiProperty({ type: 'integer', example: 2 })
+  versionNo!: number;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-10T10:00:00+07:00' })
+  approvedAt!: string | null;
+
+  @ApiProperty({ enum: DECISION_CHANNELS, enumName: 'DecisionChannel', nullable: true, example: 'web' })
+  channel!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000f3005',
+    description: 'The locked copy of the approved file',
+  })
+  approvedFileId!: string | null;
+}
+
 export class AdminClaimDto extends PartnerClaimDto {
   @ApiProperty({ enum: LIABILITIES, enumName: 'ClaimLiability', example: 'factory' })
   liabilityByRule!: string;
@@ -494,6 +547,36 @@ export class AdminClaimDto extends PartnerClaimDto {
 
   @ApiProperty({ format: 'date-time', nullable: true, example: null })
   decidedAt!: string | null;
+
+  @ApiProperty({ type: OrderCustomerRefDto })
+  customer!: OrderCustomerRefDto;
+
+  @ApiProperty({ type: String, nullable: true, example: 'SH-2610-0001' })
+  shipmentNo!: string | null;
+
+  @ApiProperty({
+    enum: LIABILITY_RULES,
+    enumName: 'ClaimLiabilityRule',
+    example: 'factory_production',
+    description:
+      'The D-083 rule behind `liabilityByRule`: factory_production (wrong spec, print defect), ' +
+      'factory_short_delivery, factory_fleet_transit / carrier_transit (damage by who shipped), staff_decides ' +
+      '(late, other)',
+  })
+  liabilityRule!: string;
+
+  @ApiProperty({ type: UserRefDto, nullable: true, description: 'Who overrode the rule’s liability' })
+  liabilityOverriddenBy!: UserRefDto | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  decidedBy!: UserRefDto | null;
+
+  @ApiProperty({
+    type: ClaimApprovedProofDto,
+    nullable: true,
+    description: 'Null when no proof was approved',
+  })
+  approvedProof!: ClaimApprovedProofDto | null;
 }
 
 const BASE = {
@@ -536,6 +619,23 @@ export const ADMIN_CLAIM_EXAMPLE = {
   shipmentId: CLAIM_IDS.shipment,
   infoResponse: null,
   decidedAt: null,
+  customer: {
+    id: '0192f3a0-7c1e-7d2a-9b1f-0000000f3006',
+    customerCode: 'CU-000042',
+    displayName: 'สมชาย ทดสอบ',
+    companyName: null,
+  },
+  shipmentNo: 'SH-2610-0001',
+  liabilityRule: 'factory_production',
+  liabilityOverriddenBy: null,
+  decidedBy: null,
+  approvedProof: {
+    id: '0192f3a0-7c1e-7d2a-9b1f-0000000f3004',
+    versionNo: 2,
+    approvedAt: '2026-10-10T10:00:00+07:00',
+    channel: 'web',
+    approvedFileId: '0192f3a0-7c1e-7d2a-9b1f-0000000f3005',
+  },
 };
 export const RESOLVED_EXAMPLE = {
   ...ADMIN_CLAIM_EXAMPLE,

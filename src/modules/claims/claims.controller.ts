@@ -2,8 +2,9 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { etagOf } from '@common/etag/etag';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
@@ -20,6 +21,7 @@ import { adminClaimDto, partnerClaimDto, storeClaimDto } from './claim-views';
 import {
   ADMIN_CLAIM_EXAMPLE,
   AdminClaimDto,
+  AdminClaimListQuery,
   BULK_PREVIEW_EXAMPLE,
   BulkReorderAddDto,
   BulkReorderPreviewDto,
@@ -74,6 +76,13 @@ function staff(actor: Actor): UserActor {
 const listWhere = (q: ClaimListQuery): Prisma.ClaimWhereInput => ({
   ...(q.status && { status: q.status }),
   ...(q.orderId && { order: { publicId: q.orderId } }),
+});
+const adminListWhere = (q: AdminClaimListQuery): Prisma.ClaimWhereInput => ({
+  ...listWhere(q),
+  ...(q.type && { type: q.type }),
+  ...(q.origin && { origin: q.origin }),
+  ...(q.customerId && { customer: { publicId: q.customerId } }),
+  ...(q.factoryId && { factory: { publicId: q.factoryId } }),
 });
 
 abstract class ClaimViews {
@@ -467,13 +476,15 @@ export class AdminClaimsController extends ClaimViews {
   @ApiEndpoint({
     id: 'admin.claims.list',
     summary: 'List claims',
-    description: 'Newest first.',
+    description:
+      'Newest first; `type`, `origin` (customer, automatic from the tolerance, staff), `customerId` and ' +
+      '`factoryId` narrow it. Each row names the customer.',
     implements: ['D-082'],
   })
   @ApiPaginated(AdminClaimDto, { example: ADMIN_CLAIM_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async list(@CurrentActor() actor: Actor, @Query() q: ClaimListQuery) {
-    const [rows, total] = await this.claims.list(actor, listWhere(q), q.page, q.perPage);
+  async list(@CurrentActor() actor: Actor, @Query() q: AdminClaimListQuery) {
+    const [rows, total] = await this.claims.list(actor, adminListWhere(q), q.page, q.perPage);
     return { data: await this.many(rows, adminClaimDto), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
@@ -483,13 +494,23 @@ export class AdminClaimsController extends ClaimViews {
   @ApiEndpoint({
     id: 'admin.claims.get',
     summary: 'Get a claim',
-    description: 'Evidence, liability by rule vs decided (D-083), factory response and resolutions.',
+    description:
+      'Evidence, liability by rule (with the D-083 rule that gave it) vs decided and who overrode it, the proof ' +
+      'the customer approved (evidence for errors in approved artwork), factory response, who decided, and ' +
+      'resolutions. Claim actions take an `Idempotency-Key`; the `ETag` tracks changes.',
     implements: ['D-082', 'D-083'],
   })
+  @ApiEtag()
   @ApiSuccess(200, { description: 'Claim', type: AdminClaimDto, example: ADMIN_CLAIM_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  get(@CurrentActor() actor: Actor, @Param('claimId', ParseUUIDPipe) claimId: string) {
-    return this.one(actor, claimId, adminClaimDto);
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('claimId', ParseUUIDPipe) claimId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.claims.get(actor, claimId);
+    res.setHeader('ETag', etagOf(row.publicId, row.rowVersion));
+    return adminClaimDto(row, (await this.claims.photos([row.id])).get(row.id));
   }
 
   @Post('orders/:orderId/claims')

@@ -16,7 +16,19 @@ const resolution = (action: string, amount: string | null) => ({
 const claim = {
   publicId: '0192f3a0-7c1e-7d2a-9b1f-0000000f3001',
   claimNo: 'DEVCLM-2610-00001',
-  order: { publicId: '0192f3a0-7c1e-7d2a-9b1f-0000000f1002', orderCode: 'DEV-2610-00001' },
+  order: {
+    publicId: '0192f3a0-7c1e-7d2a-9b1f-0000000f1002',
+    orderCode: 'DEV-2610-00001',
+    orderGroup: { company: null },
+    proofs: [],
+  },
+  customer: {
+    publicId: '0192f3a0-7c1e-7d2a-9b1f-0000000f3006',
+    displayName: 'ลูกค้า ทดสอบ',
+    customerProfile: null,
+  },
+  decidedBy: null,
+  liabilityOverriddenBy: null,
   type: 'print_defect',
   origin: 'customer',
   status: 'resolved',
@@ -64,6 +76,14 @@ describe('claim views', () => {
       'store_credit',
     ]);
     expect(admin[1]!.amount).toBe('1250.00');
+  });
+
+  it('names the D-083 rule and the customer for staff (U-B0.2)', () => {
+    expect(adminClaimDto(claim)).toMatchObject({
+      liabilityRule: 'factory_production',
+      customer: { customerCode: null, companyName: null },
+      approvedProof: null,
+    });
   });
 
   it('shows the factory its own deduction amount only', () => {

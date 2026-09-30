@@ -57,8 +57,33 @@ export interface ResolutionInput {
   note?: string;
 }
 
+const USER_REF = { select: { publicId: true, displayName: true } } as const;
+
 export const CLAIM_INCLUDE = {
-  order: { select: { publicId: true, orderCode: true } },
+  order: {
+    select: {
+      publicId: true,
+      orderCode: true,
+      orderGroup: { select: { company: { select: { legalName: true } } } },
+      proofs: {
+        where: { status: 'approved' },
+        orderBy: { versionNo: 'desc' },
+        take: 1,
+        select: {
+          publicId: true,
+          versionNo: true,
+          decidedAt: true,
+          decisionChannel: true,
+          approvedFile: { select: { publicId: true } },
+        },
+      },
+    },
+  },
+  customer: {
+    select: { publicId: true, displayName: true, customerProfile: { select: { customerCode: true } } },
+  },
+  decidedBy: USER_REF,
+  liabilityOverriddenBy: USER_REF,
   shipment: { select: { publicId: true, shipmentNo: true } },
   productionJob: { select: { publicId: true, jobNo: true } },
   factory: { select: { publicId: true, code: true } },
