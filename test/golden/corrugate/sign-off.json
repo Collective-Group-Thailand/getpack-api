@@ -1,0 +1,9 @@
+{
+  "calculatorVersion": "1.0.0",
+  "goldenSha256": "b554b1e7bf98fbdebe3ed39d20f4cb7472e8f4673f829dfbea45970c4d414f36",
+  "evidence": "The 20 cases were replayed on a Locopack staging copy (CS corrugate calculator) and agreed with the values in this document.",
+  "signatures": [
+    { "role": "Pricing owner", "name": "Superball", "date": "2026-09-30" },
+    { "role": "Finance", "name": "Superball", "date": "2026-09-30" }
+  ]
+}
