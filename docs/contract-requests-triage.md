@@ -2,22 +2,45 @@
 
 Every contract request `packio-web` has open against this repo, classified per U1 §U-B0 step 2. This repo owns the contract (api-conventions §1): where the requested shape and the domain model disagree, the published shape wins and the mapping is written here; business rules are never weakened to fit a mock.
 
-- **Sources** (sibling checkout, read-only): `packio-web@9cbd99a` — `docs/contract-requests.md` (open table, 133 ids), `docs/contract-requests.openapi.json` (115 ids, 293 operations), `src/lib/api/requests/awaiting-migration.ts` (86 operations). Compared with `contract/openapi.json` at **`v0.2.0`**.
-- **Triaged** 2026-09-29. Verdict per frontend operation, rolled up per id.
+- **Sources** (sibling checkout, read-only): `packio-web@f225d30` — `docs/contract-requests.md` (open table, 134 ids), `src/lib/api/requests/` (the zod registry; `awaiting-triage.ts` listed one new request, `awaiting-migration.ts` 86 operations). Compared with `contract/openapi.json` at **`v0.3.0`**. The frontend's `pnpm gen:triage` reads this file (`scripts/gen-triage.ts`): keep the group headings (``### U-B0.x``), request headings (``#### `id` — verdict``), operation lines (``- **METHOD path** — verdict → `operationId` (`METHOD path`)``) and gap bullets (``  - **gap (U-B0.x):**``) in *Details* exactly in this form.
+- **Triaged** 2026-09-29 against `packio-web@9cbd99a` and `v0.2.0` (133 ids); **re-triaged** 2026-09-30 against `packio-web@f225d30` and `v0.3.0` (the delta below). Verdict per frontend operation, rolled up per id.
 - **Legend:** `published as <operationId>` — shape identical for the frontend (extra backend response fields allowed; path-parameter names may differ) · `published differently` — the operation exists; the frontend applies the mapping in *Details* · `implement here` — build it in the named group and module · `reject` — conflicts with a decision; **proposed only, needs the user's OK** · `mixed` — per-operation verdicts differ (see *Details*).
 - **Additive gaps**: under `published differently`, something the screen needs that the published operation lacks. It is added here (additive, never breaking) in the named group; the rest of the mapping stays on the frontend.
 - When a group ships, its rows move to `published`; after U-B0.3 every row is `published` or `rejected` (U1 §U-B0 step 4).
+
+## Changes since the 2026-09-29 triage
+
+What changed: contract `v0.3.0` (U-B6 corrugate: +16 operations, quote configuration `anyOf` Folding | Corrugate, `toolingAmount` on calculate steps, store option `id`), decisions D-182–D-219 (U2.0 intake), and one new frontend request.
+
+| Id | Was | Now | Why |
+|---|---|---|---|
+| `store.configurator` | implement here (U-B0.1) | **published differently** → `store.catalog.getConfigurator`, 4 additive gaps | Published at the requested path in `v0.3.0` |
+| `admin.analytics-journeys` | — (awaiting triage) | **implement here** (U-B0.3 row), **built in U5.B6** | New request (packio-web U5.0); U5 owns the journey analytics, and D-219 makes it post-launch |
+| `store.quote-configurations` | implement here | implement here (5 calculators left) | Corrugate configuration published; one typed DTO per calculator (backend wins) |
+| `admin.cs-calculators` | published differently (folding) | published differently (folding + corrugate) | `admin.csCorrugate.*` published; gaps now name 5 calculators |
+| `store.quotes`, `admin.quotations` | 10 / 7 gaps | 12 / 9 gaps | + `options[].toolingAmount` on the saved option (calculate has it since `v0.3.0`, the saved view drops it) |
+| `admin.prepress` | 8 gaps | 7 gaps | Mockup job ref moved to U2.F with the `sample` entity (D-192) — out of U-B0.2 |
+| `store.quotes` share | expiresAt "missing (lives with validity)" | expiresAt delivered by **U2.1** | D-185 (F5): 15-day, revocable links, 410 after expiry |
+| `store.checkout`, `store.wallet` | — | note | D-196 (F3): store credit at checkout, U2.F |
+| `store.reorder`, `store.company-reorder` | — | note | D-205 (F1): tooling register + waiver, U2.F |
+| `admin.cs-create-order` | — | note | D-192: mockup → `sample`, CS "add mockup" deprecated additively in U2.F |
+| `partner.capacity-calendar`, B6.3 calendar gap | — | note | D-209: who edits factory hours / closures |
+| `store.sample-kits` | open question 5 | still open, cross-referenced | D-192–D-197 cover configured samples, not material kits |
+
+No verdict became `reject`. Items moved out of U-B0 scope: `admin.analytics-journeys` (→ U5.B6), the prepress mockup ref (→ U2.F), share-link expiry (→ U2.1), store credit at checkout (→ U2.F), tooling waiver (→ U2.F). U2.1 and U2.F are pre-launch (D-219), so nothing launch-blocking was dropped.
 
 ## Summary
 
 | Group | Ids | published | published differently | implement here | reject (proposed) | mixed | Ops: published / differently / implement / reject | Additive gaps |
 |---|---|---|---|---|---|---|---|---|
-| U-B0.1 | 49 | 0 | 21 | 23 | 0 | 5 | 1 / 79 / 39 / 0 | 87 |
-| U-B0.2 | 34 | 0 | 23 | 2 | 0 | 9 | 0 / 88 / 18 / 0 | 139 |
-| U-B0.3 | 50 | 0 | 18 | 27 | 0 | 5 | 0 / 46 / 41 / 0 | 56 |
-| **Total** | **133** | **0** | **62** | **52** | **0** | **19** | **1 / 213 / 98 / 0** | **282** |
+| U-B0.1 | 49 | 0 | 22 | 22 | 0 | 5 | 1 / 80 / 38 / 0 | 93 |
+| U-B0.2 | 34 | 0 | 23 | 2 | 0 | 9 | 0 / 88 / 18 / 0 | 140 |
+| U-B0.3 | 51 | 0 | 18 | 28 | 0 | 5 | 0 / 46 / 42 / 0 | 56 |
+| **Total** | **134** | **0** | **63** | **52** | **0** | **19** | **1 / 214 / 98 / 0** | **289** |
 
 Plus the three known contract defects and the two B6.3 launch gaps below (not frontend requests; counted separately).
+
+The *Ops* and *Additive gaps* columns count per frontend operation, including field-level entries (for example `… (OtpChallengeDto.codeLength)`) and the scope bullets of the first triage. `pnpm gen:triage` counts only the `- **METHOD path**` lines and their `gap` bullets, so the generated `triage.ts` holds **134 requests and 305 operations** (1 published · 210 published differently · 94 implement here; gaps 93 / 140 / 53 by group). The 2026-09-30 deltas above are the same on both bases.
 
 ## U-B0.1 — `auth.*` / `store.*`: catalogue, quotes, RFQ, cart, checkout, payments, orders
 
@@ -33,16 +56,16 @@ Plus the three known contract defects and the two B6.3 launch gaps below (not fr
 | `store.search-faq-hits` | `GET /v1/store/catalog/search` (StoreSearchHitKind += faq)` | implement here (U-B0.1) | `store.catalog.search` | U-B0.1: implement in `catalog` | StoreSearchHitKind is catalog_product\|stock_product\|showcase_product\|article — no faq. Additive enum value in store.catalog.search. |
 | `store.order-by-code` | `GET /v1/store/orders/by-code/{orderCode}` | published differently | `store.orders.getByCode` | — (frontend migrates) | Published at the same path as store.orders.getByCode (404 for other customers' codes), returning the full OrderDto rather than a lookup DTO; orderId → id, createdAt absent. |
 | `store.profile` | `PATCH /v1/store/me` | published differently | `store.customerProfile.update` | U-B0.1: 2 additive gap(s) | Covered by PATCH /v1/store/customer-profile (store.customerProfile.update, If-Match), not PATCH /v1/store/me; customerType is read from GET /v1/store/customer-profile. E-mail is not writable there. |
-| `store.configurator` | `GET /v1/store/catalog/products/{slug}/configurator` | implement here (U-B0.1) | — | U-B0.1: implement in `catalog` | No configurator read. store.catalog.getProduct gives option codes and free-form pattern constraints, not the catalogue ids the calculator takes. Implement a public configurator DTO in catalog. |
-| `store.quote-configurations` | `POST /v1/store/quotes/actions/calculate` | implement here (U-B0.1) | `store.quotes.calculate` | U-B0.1: implement in `pricing` | Still open: calculate/save accept FoldingConfigurationDto only (one calculator ported), and the contract's AssemblyDto name collision persists. earliestDeliveryDate is already published. |
-| `store.quotes` | `GET /v1/store/quotes`<br>`POST /v1/store/quotes`<br>`GET /v1/store/quotes/{quoteId}`<br>`POST /v1/store/quotes/{quoteId}/actions/export-pdf`<br>`POST /v1/store/quotes/{quoteId}/actions/share`<br>`GET /v1/store/shared-quotes/{token}` | published differently | `store.quotes.list`, `store.quotes.save`, `store.quotes.get`, `store.quotes.requestPdf`, `store.quotes.share`, `store.quotes.getShared` | U-B0.1: 10 additive gap(s) | Saved quotations are published (save/list/get/share/shared read/PDF) but modelled differently: one quotation holds every quantity tier as options[], promotions live on cart/checkout, the PDF is async request+poll, and the shared read is at /v1/store/quotes/shared/{token}. |
+| `store.configurator` | `GET /v1/store/catalog/products/{slug}/configurator` | published differently | `store.catalog.getConfigurator` | U-B0.1: 4 additive gap(s) | **Re-triaged 2026-09-30** (was implement here): published in `v0.3.0` at the same path for the ported calculators (folding, corrugate). It has patterns with parts and typed size rules, standard sizes, option groups with the ids the configuration takes, the difficulty level, print areas and quote validity, but a different shape: flat patterns / standardSizes / optionGroups by catalogue kind instead of size + stepper groups. Gaps: sales unit, quantity presets / limits, option content, design options. |
+| `store.quote-configurations` | `POST /v1/store/quotes/actions/calculate` | implement here (U-B0.1) | `store.quotes.calculate` | U-B0.1: implement in `pricing` | Still open for five calculators: calculate/save accept Folding \| Corrugate configuration DTOs (`anyOf`, corrugate since `v0.3.0`); label, tag_sleeve, pouch, standard_product and service follow in U-B6, one typed DTO each (backend wins over the generic group-kind proposal). The AssemblyDto name collision persists. earliestDeliveryDate and (since `v0.3.0`) toolingAmount are published on the calculate steps. |
+| `store.quotes` | `GET /v1/store/quotes`<br>`POST /v1/store/quotes`<br>`GET /v1/store/quotes/{quoteId}`<br>`POST /v1/store/quotes/{quoteId}/actions/export-pdf`<br>`POST /v1/store/quotes/{quoteId}/actions/share`<br>`GET /v1/store/shared-quotes/{token}` | published differently | `store.quotes.list`, `store.quotes.save`, `store.quotes.get`, `store.quotes.requestPdf`, `store.quotes.share`, `store.quotes.getShared` | U-B0.1: 12 additive gap(s) | Saved quotations are published (save/list/get/share/shared read/PDF) but modelled differently: one quotation holds every quantity tier as options[], promotions live on cart/checkout, the PDF is async request+poll, and the shared read is at /v1/store/quotes/shared/{token}. Since `v0.3.0` the configuration may be corrugate. The saved option lacks toolingAmount (gap). Share-link expiry comes from U2.1 (D-185, F5). |
 | `store.promo-check` | `POST /v1/store/promotions/actions/check` | implement here (U-B0.1) | — | U-B0.1: implement in `promotions` | No pre-cart promo check. Codes are validated only when entered on the cart (store.cart.applyCode) and evaluated at checkout preview. Implement a public, rate-limited check in promotions. |
 | `store.support-channels` | `GET /v1/store/support-channels` | implement here (U-B0.1) | — | U-B0.1: implement in `catalog` | No public support-contact read and no setting for LINE OA / phone / e-mail / hours. Implement settings + a public read. |
 | `store.rfq-forms` | `GET /v1/store/rfq-forms/{productTypeCode}` | implement here (U-B0.1) | — | U-B0.1: implement in `rfq` | No public RFQ form read; product_types.rfq_spec_schema is admin-only JSON Schema. Implement a typed form DTO in rfq. |
 | `store.rfqs` | `GET /v1/store/rfqs`<br>`POST /v1/store/rfqs`<br>`GET /v1/store/rfqs/{rfqId}`<br>`GET /v1/store/rfqs/{rfqId}/messages`<br>`POST /v1/store/rfqs/{rfqId}/messages`<br>`POST /v1/store/rfqs/{rfqId}/quotes/{quoteId}/actions/accept` | published differently | `store.rfqs.list`, `store.rfqs.submit`, `store.rfqs.get`, `store.rfqs.postMessage`, `store.rfqs.accept` | U-B0.1: 9 additive gap(s) | The customer RFQ flow is published (list/submit/get/post message/accept) with a different model: messages are embedded in RfqDto, accept is POST /rfqs/{rfqId}/actions/accept with rfqQuoteId in the body, every mutation returns RfqDto. |
 | `store.cart` | `GET /v1/store/cart`<br>`POST /v1/store/cart/items`<br>`DELETE /v1/store/cart/items/{itemId}`<br>`PATCH /v1/store/cart/items/{itemId}`<br>`POST /v1/store/cart/items/{itemId}/actions/accept-reprice`<br>`PUT /v1/store/cart/items/{itemId}/destinations` | published differently | `store.cart.get`, `store.cart.addItem`, `store.cart.removeItem`, `store.cart.updateItem`, `store.cart.confirmReprice`, `store.cart.setDestinations` | U-B0.1: 2 additive gap(s) | The multi-item cart is published (get/add/update/remove/destinations/confirm-reprice) with CartDto, If-Match on mutations, quoteOptionId per item and a two-step reprice (reprice → confirm-reprice). |
 | `store.address-book` | `GET /v1/store/me/addresses`<br>`POST /v1/store/me/addresses`<br>`DELETE /v1/store/me/addresses/{addressId}`<br>`PATCH /v1/store/me/addresses/{addressId}`<br>`GET /v1/store/me/tax-profiles`<br>`POST /v1/store/me/tax-profiles`<br>`DELETE /v1/store/me/tax-profiles/{profileId}`<br>`PATCH /v1/store/me/tax-profiles/{profileId}` | published differently | `store.addresses.list`, `store.addresses.create`, `store.addresses.delete`, `store.addresses.update`, `store.taxProfiles.list`, `store.taxProfiles.create`, `store.taxProfiles.delete`, `store.taxProfiles.update` | — (frontend migrates) | Address book and tax profiles are published at /v1/store/addresses and /v1/store/tax-profiles (not under /me), with geo ids instead of free-text province/subdistrict, structured tax-profile address, paging and If-Match on PATCH. |
-| `store.checkout` | `POST /v1/store/checkout/actions/preview`<br>`POST /v1/store/checkout` | published differently | `store.checkout.preview`, `store.checkout.place` | U-B0.1: 4 additive gap(s) | Preview and place are published at the same paths but with a different model: codes are applied to the cart first, delivery comes from cart item destinations, the schedule is rule-selected (no customer choice), the price guard is expectedGrossAmount (no previewToken), and the payment method is chosen when paying. |
+| `store.checkout` | `POST /v1/store/checkout/actions/preview`<br>`POST /v1/store/checkout` | published differently | `store.checkout.preview`, `store.checkout.place` | U-B0.1: 4 additive gap(s) | Preview and place are published at the same paths but with a different model: codes are applied to the cart first, delivery comes from cart item destinations, the schedule is rule-selected (no customer choice), the price guard is expectedGrossAmount (no previewToken), and the payment method is chosen when paying. Store credit at checkout comes with U2.F (D-196, F3). |
 | `store.payments` | `POST /v1/store/instalments/{instalmentId}/payments`<br>`GET /v1/store/payments/{paymentId}`<br>`POST /v1/store/payments/{paymentId}/slips` | published differently | `store.payments.initiate`, `store.payments.get`, `store.payments.uploadSlip` | U-B0.1: 4 additive gap(s) | Payments are published, but started per order group (with optional instalmentIds) rather than per instalment; QR is qrPayload only, no receiver bank account, no returnUrl. |
 | `store.instalments` | `GET /v1/store/instalments` | implement here (U-B0.1) | — | U-B0.1: implement in `payment-schedules` | No cross-order instalment list; instalments are only per order group (store.paymentSchedules.get). Implement a paged customer list in payment-schedules. |
 | `store.orders` | `GET /v1/store/orders`<br>`GET /v1/store/orders/{orderId}`<br>`POST /v1/store/orders/{orderId}/documents/{documentId}/actions/download` | published differently | `store.orders.listGroups`, `store.orders.get`, `store.documents.pdf` | U-B0.1: 6 additive gap(s) | Orders are published group-first: the list is /v1/store/order-groups, the order detail is lean with sub-resources (timeline, progress, shipments, proofs, design service, claims, documents), and document downloads go through /v1/store/documents/{id}/pdf. |
@@ -52,7 +75,7 @@ Plus the three known contract defects and the two B6.3 launch gaps below (not fr
 | Id | Frontend operations | Verdict | Backend operationId(s) | Work here | Notes |
 |---|---|---|---|---|---|
 | `store.loyalty` | `GET /v1/store/me/points`<br>`GET /v1/store/me/points/entries`<br>`GET /v1/store/me/referral` | published differently | `store.loyalty.get`, `store.loyalty.ledger`, `store.referral.get` | U-B0.1: 5 additive gap(s) | Points balance/tier and history exist as store.loyalty.get and store.loyalty.ledger under /v1/store/loyalty; referral exists as store.referral.get but only with the code, link and per-status counts. Tier progress and the referral friend list, rules and monthly counter are additive gaps. |
-| `store.wallet` | `GET /v1/store/me/wallet` | published differently | `store.documents.storeCredit` | U-B0.1: 1 additive gap(s) | Store credit exists as store.documents.storeCredit (GET /v1/store/store-credit) with a different entry shape; there is no customer-facing list of the promotion codes a customer holds, which is an additive gap. |
+| `store.wallet` | `GET /v1/store/me/wallet` | published differently | `store.documents.storeCredit` | U-B0.1: 1 additive gap(s) | Store credit exists as store.documents.storeCredit (GET /v1/store/store-credit) with a different entry shape; there is no customer-facing list of the promotion codes a customer holds, which is an additive gap. Spending the balance at checkout: U2.F (D-196). |
 | `store.privacy` | `GET /v1/store/me/privacy-requests`<br>`POST /v1/store/me/privacy-requests` | implement here (U-B0.1) | — | U-B0.1: implement in `customers` | No PDPA data-subject request (export / deletion) exists in the backend; it must be built. |
 | `store.identities` | `DELETE /v1/store/me/identities/{provider}` | implement here (U-B0.1) | — | U-B0.1: implement in `auth` | Linked identities are listed on store.me.get (identities[]) but there is no unlink endpoint; it must be built. |
 | `store.artwork` | `GET /v1/store/orders/{orderId}/artwork`<br>`POST /v1/store/orders/{orderId}/artwork/submissions` | published differently | `store.artwork.list`, `store.artwork.submit` | U-B0.1: 5 additive gap(s) | The backend has no single artwork aggregate: the same data comes from store.orders.get + store.artwork.list + store.artwork.listProofs + store.artwork.listTemplates + store.designServices.get, and submitting is store.artwork.submit (hyphenated path, returns the submission). The file rules, checklist, dieline dimensions and nextActions are gaps. |
@@ -65,10 +88,10 @@ Plus the three known contract defects and the two B6.3 launch gaps below (not fr
 | `store.tracking` | `GET /v1/store/tracking/{token}` | published differently | `store.tracking.get` | U-B0.1: 2 additive gap(s) | Public tracking exists as store.tracking.get at /v1/store/track/{token} (tokens from store.timeline.createTrackingLink), with steps/shipments in a different shape; per-order stages for the signed-in customer are store.timeline.progress. Backend deliberately exposes no location (no province), no product name or quantity. |
 | `store.receipt` | `POST /v1/store/orders/{orderId}/actions/confirm-receipt` | published differently | `store.orders.confirmReceipt` | U-B0.1: 1 additive gap(s) | store.orders.confirmReceipt exists at the same path with Idempotency-Key, but returns OrderDto without a receipt block and uses 409 order.invalid_transition; confirmedAt / claimWindowEndsAt are a gap. |
 | `store.claims` | `GET /v1/store/orders/{orderId}/claim-form`<br>`POST /v1/store/orders/{orderId}/claims`<br>`GET /v1/store/orders/{orderId}/claims/{claimId}`<br>`POST /v1/store/orders/{orderId}/claims/{claimId}/messages` | mixed: 1 implement here · 3 published differently | `store.claims.submit`, `store.claims.get`, `store.claims.respondInfo` | U-B0.1: implement in `claims`; 2 additive gap(s) | Claim submit exists (store.claims.submit, same path), claim read is store.claims.get at /v1/store/claims/{claimId}, and replies are only the answer to an info request (store.claims.respondInfo). There is no claim-form endpoint and no free message thread. |
-| `store.reorder` | `POST /v1/store/orders/{orderId}/actions/reorder`<br>`GET /v1/store/orders/{orderId}/reorder` | mixed: 1 published differently · 1 implement here | `store.claims.reorder` | U-B0.1: implement in `claims`; 1 additive gap(s) | The reorder action exists (store.claims.reorder) but adds straight to the cart and returns the CartDto, with no preview token; the re-priced preview GET must be built. |
+| `store.reorder` | `POST /v1/store/orders/{orderId}/actions/reorder`<br>`GET /v1/store/orders/{orderId}/reorder` | mixed: 1 published differently · 1 implement here | `store.claims.reorder` | U-B0.1: implement in `claims`; 1 additive gap(s) | The reorder action exists (store.claims.reorder) but adds straight to the cart and returns the CartDto, with no preview token; the re-priced preview GET must be built. The tooling waiver follows D-205 (U2.F, F1). |
 | `store.support` | `POST /v1/store/support/actions/contact`<br>`POST /v1/store/support/actions/handoff` | implement here (U-B0.1) | — | U-B0.1: implement in `conversations` | No contact-form or guided-help hand-off endpoint exists; both must be built (public, rate-limited). |
 | `store.guided-help` | `POST /v1/store/guided-help/actions/recommend` | implement here (U-B0.1) | — | U-B0.1: implement in `catalog` | No recommendation endpoint exists; it must be built from catalogue data. |
-| `store.sample-kits` | `GET /v1/store/sample-kits`<br>`POST /v1/store/sample-kits/actions/request` | implement here (U-B0.1) | — | U-B0.1: implement in `catalog` | No sample-kit catalogue or request flow exists; it must be built, but kit contents, prices and first-order crediting are business values with no decision yet. |
+| `store.sample-kits` | `GET /v1/store/sample-kits`<br>`POST /v1/store/sample-kits/actions/request` | implement here (U-B0.1) | — | U-B0.1: implement in `catalog` | No sample-kit catalogue or request flow exists; it must be built, but kit contents, prices and first-order crediting are business values with no decision yet (D-192–D-197 cover configured samples, not kits). |
 | `store.companies` | `POST /v1/store/companies`<br>`GET /v1/store/me/company`<br>`PATCH /v1/store/me/company` | published differently | `store.companies.apply`, `store.companies.get`, `store.companies.updateSettings` | U-B0.1: 7 additive gap(s) | Company sign-up and settings exist per company id (store.companies.apply, store.companies.get, store.companies.updateSettings, plus addKycDocument/submitKyc and companyCredit.get); there is no singular /me/company, and a user may belong to several companies. Signatory details, contact phone, role capabilities, receivables and notices are gaps. |
 | `store.company-members` | `GET /v1/store/me/company/members`<br>`POST /v1/store/me/company/members`<br>`DELETE /v1/store/me/company/members/{memberId}`<br>`PATCH /v1/store/me/company/members/{memberId}` | mixed: 3 published differently · 1 implement here | `store.companies.get`, `store.companies.inviteMember`, `store.companies.removeMember` | U-B0.1: implement in `companies`; 1 additive gap(s) | Members come inside CompanyDto (store.companies.get); invite and remove exist under /v1/store/companies/{companyId}/members; changing a member's roles does not exist and must be built. |
 | `store.company-branches` | `GET /v1/store/me/company/branches`<br>`POST /v1/store/me/company/branches`<br>`DELETE /v1/store/me/company/branches/{branchId}` | published differently | `store.companies.get`, `store.companies.addBranch`, `store.companies.removeBranch` | U-B0.1: 1 additive gap(s) | Branches come inside CompanyDto; add and remove exist under /v1/store/companies/{companyId}/branches with a structured address. |
@@ -87,17 +110,17 @@ Plus the three known contract defects and the two B6.3 launch gaps below (not fr
 | `admin.order-actions` | `GET /v1/admin/order-cancel-reasons`<br>`POST /v1/admin/orders/{orderId}/actions/approve-slip`<br>`POST /v1/admin/orders/{orderId}/actions/cancel`<br>`POST /v1/admin/orders/{orderId}/actions/record-slip`<br>`POST /v1/admin/orders/{orderId}/actions/reject-slip`<br>`POST /v1/admin/orders/{orderId}/actions/send-payment-reminder`<br>`POST /v1/admin/orders/{orderId}/actions/start-production`<br>`POST /v1/admin/orders/actions/send-payment-reminders` | mixed: 3 implement here · 5 published differently | `admin.payments.reviewSlip`, `admin.orders.cancel`, `admin.payments.uploadSlip`, `admin.production.startManually` | U-B0.2: implement in `orders`, `payment-schedules`; 2 additive gap(s) | Cancel and manual start exist on the order (cancel answers AdminOrderDto, start answers the production job, neither declares Idempotency-Key); slip approve/reject/record live on the payments resources (Finance slip queue, payment slips); cancel reasons and payment reminders have no endpoint. |
 | `admin.customers` | `GET /v1/admin/customers`<br>`POST /v1/admin/customers`<br>`GET /v1/admin/customers/{customerId}`<br>`POST /v1/admin/customers/{customerId}/addresses` | published differently | `admin.customers.list`, `admin.customers.findOrCreate`, `admin.customers.get`, `admin.customers.createAddress` | U-B0.2: 4 additive gap(s) | All four ops exist. Create is find-or-create (200/201 with { created, customer }); the detail has no addresses/tax profiles/loyalty (separate endpoints); addresses take provinceId/subdistrictId uuids and answer province/subdistrict objects. |
 | `admin.geo` | `GET /v1/admin/geo/postcodes/{postcode}` | published differently | `store.catalog.lookupPostcode` | U-B0.2: 1 additive gap(s) | No admin postcode endpoint, but the store's public postcode lookup (and the admin geography subdistricts list filtered by postcode) cover it with a flat list of subdistrict/district/province areas. |
-| `admin.cs-calculators` | `POST /v1/admin/cs/{type}/calculate`<br>`GET /v1/admin/cs/{type}/input-data` | published differently | `admin.csFolding.calculate`, `admin.csFolding.inputData` | U-B0.2: 6 additive gap(s) | Only the folding calculator is published (B2.3): GET /v1/admin/cs/folding/input-data and POST /v1/admin/cs/folding/calculate with a folding-specific body and an AdminQuoteCalculationDto; the other six calculators (corrugate, label, tag_sleeve, pouch, standard_product, service) are not published (U-B6 work). |
-| `admin.quotations` | `GET /v1/admin/quotations`<br>`POST /v1/admin/quotations`<br>`GET /v1/admin/quotations/{quoteId}`<br>`POST /v1/admin/quotations/{quoteId}/actions/export-pdf` | published differently | `admin.quotes.list`, `admin.quotes.create`, `admin.quotes.get`, `admin.quotes.requestPdf` | U-B0.2: 7 additive gap(s) | Published as /v1/admin/quotes (list, create, get, request-pdf + GET pdf, share). Create prices a configuration (no calculationId/resultId) and discounts are not on the quotation — CS discount and memo apply at checkout. |
+| `admin.cs-calculators` | `POST /v1/admin/cs/{type}/calculate`<br>`GET /v1/admin/cs/{type}/input-data` | published differently | `admin.csFolding.calculate`, `admin.csFolding.inputData`, `admin.csCorrugate.calculate`, `admin.csCorrugate.inputData` | U-B0.2: 6 additive gap(s) | Folding (B2.3) and, since `v0.3.0`, corrugate are published as fixed paths per calculator (`/v1/admin/cs/{folding\|corrugate}/input-data`, `…/calculate`) with calculator-specific bodies and an AdminQuoteCalculationDto (steps carry toolingAmount). The other five calculators (label, tag_sleeve, pouch, standard_product, service) are not published (U-B6 work). |
+| `admin.quotations` | `GET /v1/admin/quotations`<br>`POST /v1/admin/quotations`<br>`GET /v1/admin/quotations/{quoteId}`<br>`POST /v1/admin/quotations/{quoteId}/actions/export-pdf` | published differently | `admin.quotes.list`, `admin.quotes.create`, `admin.quotes.get`, `admin.quotes.requestPdf` | U-B0.2: 9 additive gap(s) | Published as /v1/admin/quotes (list, create, get, request-pdf + GET pdf, share). Create prices a configuration (no calculationId/resultId) and discounts are not on the quotation — CS discount and memo apply at checkout. Since `v0.3.0` the configuration may be corrugate; the saved option lacks toolingAmount (gap). |
 | `admin.discount-memos` | `GET /v1/admin/discount-memos`<br>`POST /v1/admin/discount-memos`<br>`GET /v1/admin/discount-memos/{memoId}` | published differently | `admin.discountMemos.list`, `admin.discountMemos.raise`, `admin.discountMemos.get` | U-B0.2: 4 additive gap(s) | All three ops exist; the memo prices the customer's CS cart (no calculationId/resultId), has no memoCode or evidence file refs, and names the approval `approvalId`. |
-| `admin.cs-create-order` | `POST /v1/admin/orders` | published differently | `admin.checkout.place` | — (frontend migrates) | CS orders through the customer's cart: add the quotation option to /v1/admin/customers/{customerId}/cart/items (with destinations, design/mockup options), then POST …/checkout (Idempotency-Key) which returns the order group. |
+| `admin.cs-create-order` | `POST /v1/admin/orders` | published differently | `admin.checkout.place` | — (frontend migrates) | CS orders through the customer's cart: add the quotation option to /v1/admin/customers/{customerId}/cart/items (with destinations, design/mockup options), then POST …/checkout (Idempotency-Key) which returns the order group. The mockup option becomes a `sample` in U2.F (D-192). |
 | `admin.rfqs` | `GET /v1/admin/rfqs`<br>`GET /v1/admin/rfqs/{rfqId}` | published differently | `admin.rfqs.list`, `admin.rfqs.get` | U-B0.2: 10 additive gap(s) | List and detail exist, both returning the full AdminRfqDto (messages, consultations, quotations inline); no named queues, spec is a raw map, and files/events/nextActions/urgency/SLA target/quote defaults are missing. |
 | `admin.rfq-messages` | `GET /v1/admin/rfqs/{rfqId}/messages`<br>`POST /v1/admin/rfqs/{rfqId}/messages` | published differently | `admin.rfqs.get`, `admin.rfqs.postMessage` | U-B0.2: 2 additive gap(s) | Posting a message exists (answers the whole AdminRfqDto, no fileIds); there is no separate message list — messages come inline on admin.rfqs.get. |
 | `admin.rfq-actions` | `POST /v1/admin/rfqs/{rfqId}/actions/assign`<br>`POST /v1/admin/rfqs/{rfqId}/actions/decline`<br>`POST /v1/admin/rfqs/{rfqId}/actions/request-info`<br>`POST /v1/admin/rfqs/{rfqId}/actions/start-review` | mixed: 3 published differently · 1 implement here | `admin.rfqs.assign`, `admin.rfqs.decline`, `admin.rfqs.requestInfo` | U-B0.2: implement in `rfq`; 2 additive gap(s) | assign, request-info and decline exist (answer AdminRfqDto) with renamed body fields; there is no start-review — assignment or a factory consultation moves submitted → in_review. |
 | `admin.unmet-demand-reasons` | `GET /v1/admin/unmet-demand-reasons` | implement here (U-B0.2) | — | U-B0.2: implement in `rfq` | The `unmet_demand_reasons` table is seeded, but no endpoint lists it (only the analytics report GET /v1/admin/analytics/unmet-demand). |
 | `admin.rfq-consultations` | `GET /v1/admin/rfqs/{rfqId}/candidate-factories`<br>`POST /v1/admin/rfqs/{rfqId}/consultations`<br>`POST /v1/admin/rfqs/{rfqId}/consultations/{consultationId}/actions/remind` | mixed: 2 implement here · 1 published differently | `admin.rfqs.requestConsultation` | U-B0.2: implement in `rfq`; 2 additive gap(s) | Requesting a factory consultation exists but for one factory per call (factoryId) and answers the AdminRfqDto; candidate factories and remind are not published. |
 | `admin.rfq-quotes` | `POST /v1/admin/rfqs/{rfqId}/quotes`<br>`DELETE /v1/admin/rfqs/{rfqId}/quotes/{quoteId}`<br>`PUT /v1/admin/rfqs/{rfqId}/quotes/{quoteId}`<br>`POST /v1/admin/rfqs/{rfqId}/quotes/{quoteId}/actions/record-acceptance`<br>`POST /v1/admin/rfqs/{rfqId}/quotes/{quoteId}/actions/send` | mixed: 3 published differently · 2 implement here | `admin.rfqs.draftQuotation`, `admin.rfqs.discardQuotation`, `admin.rfqs.sendQuotation` | U-B0.2: implement in `rfq`; 3 additive gap(s) | Draft create, send and discard exist under different paths (/rfqs/{rfqId}/quotations, /rfq-quotations/{id}/actions/{send,discard}); there is no draft update (PUT) and no CS-recorded acceptance. |
-| `admin.prepress` | `GET /v1/admin/prepress`<br>`GET /v1/admin/prepress/{orderId}` | published differently | `admin.artwork.queue`, `admin.artwork.list` | U-B0.2: 8 additive gap(s) | The prepress queue exists as GET /v1/admin/prepress/queue with three kinds (submissions, changes_requested, proofs_waiting) and lean rows; there is no per-order workspace aggregate — the pieces are per-resource artwork, proof, template, design-service and design endpoints. |
+| `admin.prepress` | `GET /v1/admin/prepress`<br>`GET /v1/admin/prepress/{orderId}` | published differently | `admin.artwork.queue`, `admin.artwork.list` | U-B0.2: 7 additive gap(s) | The prepress queue exists as GET /v1/admin/prepress/queue with three kinds (submissions, changes_requested, proofs_waiting) and lean rows; there is no per-order workspace aggregate — the pieces are per-resource artwork, proof, template, design-service and design endpoints. The mockup job ref moved to U2.F with the `sample` entity (D-192, re-triaged 2026-09-30). |
 | `admin.prepress-actions` | `POST /v1/admin/prepress/{orderId}/actions/assign`<br>`POST /v1/admin/prepress/submissions/{submissionId}/actions/accept`<br>`POST /v1/admin/prepress/submissions/{submissionId}/actions/reject` | mixed: 1 implement here · 2 published differently | `admin.artwork.accept`, `admin.artwork.reject` | U-B0.2: implement in `artwork`; 1 additive gap(s) | Accept and reject exist on /v1/admin/artwork-submissions/{submissionId}/actions/{accept,reject} answering the submission (accept takes no note); prepress assignment of an order does not exist. |
 | `admin.prepress-proofs` | `POST /v1/admin/prepress/{orderId}/proofs`<br>`GET /v1/admin/prepress/proofs/{proofId}/annotations`<br>`POST /v1/admin/prepress/proofs/{proofId}/annotations`<br>`POST /v1/admin/prepress/proofs/{proofId}/annotations/{annotationId}/actions/resolve` | published differently | `admin.artwork.sendProof`, `admin.artwork.getProof`, `admin.artwork.annotate`, `admin.artwork.resolveAnnotation` | U-B0.2: 3 additive gap(s) | All four exist under the artwork resources: send proof on /v1/admin/orders/{orderId}/proofs, annotations inline on GET /v1/admin/proofs/{proofId}, annotate and resolve answer the whole proof; a staff reply currently needs kind/page/geometry. |
 | `admin.prepress-template` | `POST /v1/admin/prepress/{orderId}/actions/send-template`<br>`POST /v1/admin/prepress/{orderId}/drawing-jobs` | published differently | `admin.artwork.sendTemplate`, `admin.designs.drawForOrder` | U-B0.2: 2 additive gap(s) | Drawing (POST /v1/admin/orders/{orderId}/drawings, 202 or 501 drawing.engine_unavailable) and sending a template by hand (POST /v1/admin/orders/{orderId}/templates, a required fileId) exist under /orders. |
@@ -124,6 +147,7 @@ Plus the three known contract defects and the two B6.3 launch gaps below (not fr
 | `admin.menu-entries` | `GET /v1/admin/me` → `menu[]` | published differently | `admin.me.get` | U-B0.3: 2 additive gap(s) | GET /v1/admin/me already returns menu[{key,path}] from iam/menu.catalog.ts, but the catalogue only has platform entries (dashboard, approvals, users, settings, feature_flags, notification_templates, notification_routes, audit_logs, outbox, analytics, reports, ops); the business-module entries and `finance` are additive work. |
 | `admin.permissions` | `permission keys in `/v1/admin/me` → `permissions[]` | published differently | `admin.me.get` | — (frontend migrates) | Permissions are published in GET /v1/admin/me permissions[] and the catalogue already defines the business modules' keys, but many names differ from the frontend's proposal; backend names win and the frontend must re-map its mock. |
 | `admin.analytics` | `GET /v1/admin/analytics/campaigns`<br>`GET /v1/admin/analytics/demand`<br>`GET /v1/admin/analytics/factories`<br>`GET /v1/admin/analytics/overview`<br>`GET /v1/admin/analytics/unmet-demand` | published differently | `admin.analytics.campaigns`, `admin.analytics.demand`, `admin.analytics.factories`, `admin.analytics.sales`, `admin.analytics.unmetDemand` | U-B0.3: 1 additive gap(s) | B6.1 analytics is published but shaped differently: explicit from/to dates (no range preset), bare arrays instead of {period, rows} envelopes, different metric sets; the overview KPI endpoint does not exist and is composed from sales + funnel + traffic. |
+| `admin.analytics-journeys` | `GET /v1/admin/analytics/journeys` | implement here (U-B0.3) | — | U-B0.3: implement in `analytics` — **built in U5.B6** (post-launch, D-219) | **New 2026-09-30** (packio-web U5.0). One UX journey's funnel with week-over-week drop alerts. B6.1 publishes only the D-102 visit → paid funnel and five event names. U5.B6 owns journey dashboards and drop alerts (RUN-ORDER §1–2); the threshold becomes a setting (scorecard proposes 15 %). |
 | `admin.prospectus` | `POST /v1/admin/analytics/prospectus` | published differently | `admin.analytics.requestProspectus` | — (frontend migrates) | Published as an asynchronous export resource: POST /v1/admin/analytics/prospectus-exports (202, Idempotency-Key) → poll → GET …/{exportId}/file?format=pdf\|xlsx. k is the setting analytics.prospectus_min_group_size = 3 (D-160 supersedes B6.1's k≥5, as in D-044) and is returned as kThreshold. |
 | `admin.reports` | `GET /v1/admin/reports`<br>`GET /v1/admin/reports/{reportKey}` | published differently | `admin.reports.catalogue`, `admin.reports.preview` | U-B0.3: 4 additive gap(s) | The report catalogue and a report preview are published (B6.2) but with different keys, filter model and column types; the preview has no pagination, no totals row and caps at 200 rows (export for all rows). |
 | `admin.saved-views` | `GET /v1/admin/saved-views`<br>`POST /v1/admin/saved-views`<br>`DELETE /v1/admin/saved-views/{viewId}` | implement here (U-B0.3) | — | U-B0.3: implement in `iam` | No saved-views resource exists in packio-api; new per-user staff resource. |
@@ -160,7 +184,7 @@ Plus the three known contract defects and the two B6.3 launch gaps below (not fr
 | `partner.job-milestones` | `POST /v1/partner/factories/{factoryId}/jobs/{jobId}/milestones/{seq}/actions/complete`<br>`POST /v1/partner/factories/{factoryId}/jobs/{jobId}/milestones/{seq}/actions/start` | published differently | `partner.production.updateMilestone` | — (frontend migrates) | Published as one endpoint partner.production.updateMilestone with `action: start\|complete`, keyed by milestone id (not seq), returning {applied, job, reason}; conflict is `applied:false`, not 409. |
 | `partner.job-qc` | `POST /v1/partner/factories/{factoryId}/jobs/{jobId}/qc-checks` | published differently | `partner.production.recordQc` | U-B0.3: 2 additive gap(s) | Published as partner.production.recordQc under /production-jobs; body and response differ (checklist object + checklistVersion, coded defects with severity, returns QcCheckDto). |
 | `partner.job-issues` | `POST /v1/partner/factories/{factoryId}/jobs/{jobId}/issues`<br>`POST /v1/partner/factories/{factoryId}/jobs/{jobId}/issues/{issueId}/actions/resolve` | mixed: 1 published differently · 1 implement here | `partner.production.raiseIssue` | U-B0.3: implement in `production`; 3 additive gap(s) | Raise is published (partner.production.raiseIssue) with a free-text kind and JobIssueDto response; resolving from the factory side does not exist (resolve is staff-only: admin.production.resolveIssue). |
-| `partner.capacity-calendar` | `GET /v1/partner/factories/{factoryId}/capacity-calendar` | implement here (U-B0.3) | — | U-B0.3: implement in `partners` | Only partner.factories.getCapacity (one productTypeId per call, no closures) exists. Implement a multi-type calendar with national + factory closures. |
+| `partner.capacity-calendar` | `GET /v1/partner/factories/{factoryId}/capacity-calendar` | implement here (U-B0.3) | — | U-B0.3: implement in `partners` | Only partner.factories.getCapacity (one productTypeId per call, no closures) exists. Implement a multi-type calendar with national + factory closures. Who edits factory hours and closures: D-209. |
 | `partner.shipments` | `GET /v1/partner/factories/{factoryId}/ship-plan`<br>`GET /v1/partner/factories/{factoryId}/shipments`<br>`POST /v1/partner/factories/{factoryId}/shipments`<br>`GET /v1/partner/factories/{factoryId}/shipments/{shipmentId}`<br>`POST /v1/partner/factories/{factoryId}/shipments/{shipmentId}/actions/dispatch`<br>`POST /v1/partner/factories/{factoryId}/shipments/{shipmentId}/actions/request-carrier`<br>`POST /v1/partner/factories/{factoryId}/shipments/{shipmentId}/pod` | mixed: 2 implement here · 5 published differently | `partner.shipments.list`, `partner.shipments.create`, `partner.shipments.get`, `partner.shipments.dispatch`, `partner.shipments.recordPod` | U-B0.3: implement in `logistics`; 6 additive gap(s) | Published under /v1/partner/shipments (token-scoped) with a draft → ready (labels) → dispatch → POD flow and a multi-item body; ship-plan and the partner "request carrier" action do not exist. |
 | `partner.permissions` | `factory-scope permission keys` | published differently | — | — (frontend migrates) | rbac.md already has factory-scope production, QC, shipping, claims and payables keys (added in B4/B5), with different names from the FE proposal; backend keys win. |
 | `partner.billing-statements` | `GET /v1/partner/factories/{factoryId}/billing-statements`<br>`GET /v1/partner/factories/{factoryId}/billing-statements/{statementId}`<br>`POST /v1/partner/factories/{factoryId}/billing-statements/{statementId}/actions/confirm`<br>`POST /v1/partner/factories/{factoryId}/billing-statements/{statementId}/actions/dispute`<br>`POST /v1/partner/factories/{factoryId}/billing-statements/{statementId}/tax-invoices` | published differently | `partner.payables.listStatements`, `partner.payables.getStatement`, `partner.payables.confirmStatement`, `partner.payables.disputeStatement`, `partner.payables.submitTaxInvoice` | U-B0.3: 10 additive gap(s) | Published under /v1/partner/billing-statements (factoryId as optional query) with a flatter BillingStatementDto; totals breakdown, tax-invoice list and nextActions are missing; tax-invoice capture needs amounts and returns VendorInvoiceDto. |
@@ -184,10 +208,10 @@ These are not new endpoints. In each one the published document says something o
 | Defect | Evidence | Effect on the contract | Fix | Group |
 |---|---|---|---|---|
 | `contract.rate-card-line-response`: the enum and the DTO share one name | `src/modules/partners/pricing/pricing.dto.ts:315` (class `RateCardLineResponse`) and `:319` (`@EnumField([...], 'RateCardLineResponse')`) | The component references itself (the only such schema in the contract), and the `accept \| counter` values are lost in `partner.priceProposals.respondToRateCard` | Give the enum its own component name (for example `RateCardLineAnswer`) and keep the DTO. Add a contract check that fails on any self-referencing schema | U-B0.3 (`partners`) |
-| Duplicate `AssemblyDto` | `src/modules/pricing/quotes/quote.dto.ts:79` (quote input `{ assemblyId, amount?, w?, l? }`, used by `FoldingPartDto.assemblies`, `:151`) and `src/modules/catalog/materials/materials.dto.ts:553` (catalogue row) | Only one of them becomes the `AssemblyDto` component. `FoldingPartDto.assemblies` is published with the **catalogue row shape**, not the shape the controller validates, so a client built from the contract sends the wrong body to `store.quotes.calculate` / `admin.csFolding.calculate` | Rename the quote input class (for example `QuoteAssemblyInputDto`). Add a build-time check in `contract:build` that fails when two DTO classes map to one component name | U-B0.1 (`pricing`) |
+| Duplicate `AssemblyDto` | `src/modules/pricing/quotes/quote.dto.ts:83` (quote input `{ assemblyId, amount?, w?, l? }`, used by `FoldingPartDto.assemblies`, `:155`) and `src/modules/catalog/materials/materials.dto.ts:574` (catalogue row; `v0.3.0` added `autoAdd` to it). Still present at `v0.3.0`; the corrugate part avoided it with its own `CorrugateAssemblyDto` | Only one of them becomes the `AssemblyDto` component. `FoldingPartDto.assemblies` is published with the **catalogue row shape**, not the shape the controller validates, so a client built from the contract sends the wrong body to `store.quotes.calculate` / `admin.csFolding.calculate` | Rename the quote input class (for example `QuoteAssemblyInputDto`). Add a build-time check in `contract:build` that fails when two DTO classes map to one component name | U-B0.1 (`pricing`) |
 | `PriceSimulationDto.result` has no named schema | `src/modules/partners/pricing/pricing.dto.ts:680` is `additionalProperties: true`, but `RepriceResult` (`quote-repricer.port.ts`) has a fixed shape | `admin.priceSuggestions.getSimulation` / `admin.priceSuggestions.simulate` return an untyped object, and the impact card casts it | Replace it with `result: PriceSimulationResultDto \| null` (`quotesInWindow` integer; `priceChangePct`, `marginChangePct`, `selectionShareChangePct` decimal string or null). The endpoint stays staff-only (D-044) | U-B0.3 (`partners`) |
 
-The same two ids appear in the U-B0.3 table as `implement here`.
+The same two ids appear in the U-B0.3 table as `implement here`. Re-checked 2026-09-30 at `v0.3.0`: all three defects are still present (`RateCardLineResponse` still references itself; `PriceSimulationDto.result` is still `additionalProperties: true` at `pricing.dto.ts:670-680`).
 
 ## Also in U-B0.3: launch gaps from B6.3
 
@@ -195,7 +219,7 @@ These are not frontend requests. U1 §U-B0 step 3 puts them in U-B0.3 so the gro
 
 | Gap | Decision | Scope |
 |---|---|---|
-| No admin endpoint writes `business_calendar_days` | D-161 (one national calendar plus factory closures, admin-maintained), D-170 (Excel import pattern) | Admin CRUD for national holidays (loaded once a year) and factory closures, plus the Excel import (upload → preview → confirm). Audited and effective for SLA and lead-time calculations |
+| No admin endpoint writes `business_calendar_days` | D-161 (one national calendar plus factory closures, admin-maintained), D-170 (Excel import pattern) | Admin CRUD for national holidays (loaded once a year) and factory closures, plus the Excel import (upload → preview → confirm). Audited and effective for SLA and lead-time calculations. D-209 (2026-09-30): factory hours and closures are edited by the factory's Owner / Planner and by the Partner Manager — audited, effective from the next day, no approval, never shortening an accepted job's SLA. The staff side is built here; the partner-zone write is U2.9 (post-launch) |
 | No admin endpoint creates approval-policy versions | D-063 | Create a draft version → Superadmin approves it → it takes effect from its date. The running version is never edited in place |
 
 ## Proposed rejections (need the user's OK)
@@ -218,7 +242,9 @@ No request id is rejected. One requested **field** is not being added:
    - PDPA requests (`store.privacy`): the staff role that answers them (not in D-140).
 
    These stay `implement here`, but the U-B0.1 plan must record assumptions or get the values. None will be invented.
+   *2026-09-30:* D-192–D-197 answer this for **samples of a configured product** only. Material / finish kits are still open, including whether a kit is a kind of `sample` (D-192 "one sample path"). Free kit freight needs a real promotion (D-195, D-181).
 6. **To verify in U-B0.1:** the store claim view offers the resolution actions `factory_deduction` / `carrier_recovery`. They may reveal internal liability to the customer (D-083). If confirmed, this is a defect, fixed with a test.
+7. **`admin.analytics-journeys` drop-alert threshold (2026-09-30):** the scorecard proposes a 15 % week-over-week drop. It becomes the setting `analytics.journey_drop_alert_pct`; U5.B6 confirms the value with the business before it ships. It does not block U-B0.
 
 ## Cross-cutting findings for the implementing groups
 
@@ -227,11 +253,13 @@ No request id is rejected. One requested **field** is not being added:
 - **`nextActions`:** no entity (orders, prepress, RFQ, shipments, claims, jobs) publishes `nextActions`. It is delivered once, in U-B0.3 (`entity.next-actions`), and applied to each entity DTO.
 - **Enum names:** every status is already a named component. The frontend must adopt the backend names (`ProductionJobStatus`, not `JobStatus`, which means background jobs; `PayoutRunStatus`; `CustomerDocumentStatus`) and the backend action names (campaign `resume` → `activate`, company `reinstate` → `reactivate`, `return-kyc` → `reject-kyc`, and so on; see *Details*).
 - **Carrier enum inconsistency (backend):** the timeline's shipment reference uses carrier `packio`, while `ShipmentDto` uses `factory_fleet`. U-B0.2 aligns them to `factory_fleet` without breaking clients (both values accepted, then `packio` deprecated).
-- **Admin CS calculators:** only folding is published (`admin.csFolding.inputData` / `admin.csFolding.calculate`). The other six calculators arrive with U-B6, one per session. U-B0.2 only adds the D-052 direct-discount limit (`discounts.cs_limit_pct`) and the quantity presets to the input data. It never adds illustrative figures.
+- **Admin CS calculators:** folding and (since `v0.3.0`) corrugate are published (`admin.csFolding.*`, `admin.csCorrugate.*`). The other five calculators arrive with U-B6, one per session. U-B0.2 only adds the D-052 direct-discount limit (`discounts.cs_limit_pct`) and the quantity presets to the input data of each published calculator. It never adds illustrative figures.
+- **`unit` means two different things (2026-09-30):** the `unit` gaps in this triage (`store.quotes`, `store.configurator`, orders) are the **sales unit** of a response (piece, sheet, roll — `ProductUnit`, already stored on quote options). D-183 (U2.1) refuses a **measurement** unit in any request, because dimensions are mm only. U2.1 must name the refused request field precisely, so the refusal never catches the sales-unit response field.
+- **Pre-launch fixes outside U-B0 (D-219):** some requests are completed by U2.1 (share-link expiry, D-185) or U2.F (store credit at checkout D-196, tooling waiver D-205, mockup → `sample` D-192/D-193), not by a U-B0 group. Their rows carry a note, and U-B0 builds nothing that those sessions replace.
 
 ## Cross-check with `awaiting-migration.ts`
 
-packio-web lists **86** operations as "published, not yet migrated". Every one is in this triage: **1** is `published` (`DELETE /v1/store/designs/{designId}` → `store.designs.delete`) and **85** are `published differently`, each with its mapping in *Details*. None is `implement here`. The published shape nearly always differs somewhere (path, field name, envelope, nullability or headers), so migrating each screen means applying its mapping, not just swapping the client.
+packio-web lists **86** operations as "published, not yet migrated" (unchanged at `f225d30`). Every one is in this triage: **1** is `published` (`DELETE /v1/store/designs/{designId}` → `store.designs.delete`) and **85** are `published differently`, each with its mapping in *Details*. None is `implement here`. The published shape nearly always differs somewhere (path, field name, envelope, nullability or headers), so migrating each screen means applying its mapping, not just swapping the client.
 
 ## Not re-triaged
 
@@ -331,21 +359,48 @@ Decisions: D-020
   - **gap (U-B0.1):** a 'profile prompted/completed' signal: customerType defaults to individual so the UI cannot tell 'never asked' (firstName null is only a proxy)
   - *note:* D-020 (payment schedule depends on customer type) is cited by the backend op.
 
-#### `store.configurator` — implement here (U-B0.1)
+#### `store.configurator` — published differently
 
-Decisions: D-043, D-051, D-072, D-100
+Decisions: D-043, D-050, D-051, D-072, D-100, D-192
 
-- **GET /v1/store/catalog/products/{slug}/configurator** — implement here
-  - **scope (U-B0.1, `catalog`):** Public GET (catalog/store) → configurator DTO for instant types: patterns + sub-patterns with ids and typed size rules, standard sizes, option groups with catalogue ids (materials, ink colours/print presets, finishes, die-cuts, assemblies with requiresAmount/Width/Length), difficulty level, quantity presets/limits (≤10 tiers as calculate), design options + mockup add-ons (D-072), quoteValidityDays from `quotes.validity_days` (D-051); 404 for RFQ-only types (D-100). Cache like the catalogue.
-  - *note:* Existing pieces to reuse: store.catalog.getProduct (patterns[].constraints map, optionGroups by code, standardSizes), store.catalog.resolveQuotePath (instant vs rfq, D-043). Must follow the per-calculator configuration DTOs (see store.quote-configurations).
+*Re-triaged 2026-09-30:* published in `v0.3.0` (U-B6 corrugate slice 7c) at the requested path. It was `implement here` against `v0.2.0`.
+
+- **GET /v1/store/catalog/products/{slug}/configurator** — published differently → `store.catalog.getConfigurator` (`GET /v1/store/catalog/products/{slug}/configurator`)
+  - public, cacheable; 404 when the product's type has no ported calculator (RFQ only, D-100) → same as asked
+  - slug, catalogProductId, productTypeCode, calculator (CalculatorKey), quoteValidityDays (`quotes.validity_days`, D-051) → same
+  - size.kind → missing-on-backend: implied by `calculator` (folding and corrugate are boxes, L × W × H)
+  - size.patterns[] → patterns[] (top level): id, code, name, dielineKey same; parts[] {subPatternId, name} + seq; an **empty** parts[] means one part sent without subPatternId (the request expects one entry with subPatternId null)
+  - rules {minLengthMm, maxLengthMm, minWidthMm, maxWidthMm, minHeightMm, maxHeightMm} → rules {minLMm, maxLMm, minWMm, maxWMm, minHMm, maxHMm} (rename; all nullable = no limit)
+  - rules.lengthMustExceedWidth → same; + lengthMustExceedHeight, widthMustExceedHeight (corrugate: H ≤ 0.95 × W)
+  - rules.minGussetMm / maxGussetMm → missing-on-backend (no pouch calculator yet, U-B6)
+  - rules.stepMm → missing-on-backend
+  - size.standardSizes[] → standardSizes[] (top level): code, name, lengthMm, widthMm same; + id; heightMm is required (not nullable); patternId → missing-on-backend (standard sizes belong to the catalogue product, so they apply to any of its patterns); gussetMm → missing-on-backend
+  - size.customAllowed → missing-on-backend: the ported calculators always accept a custom size within `rules`
+  - groups[] {kind, step, nameTh/En, helpTh/En, selection, required, options[]} → optionGroups[] {kind: OfferableOptionKind, options[]}. Kinds: material → material; print → ink_colour (the configuration takes printFront/printBack[{inkColourId, percent}]); coating_front / coating_back → coating (the side is the part's coatingFrontId / coatingBackId); finish, diecut, assembly → same; shape, pouch_type, closure, window, product, service → none yet (their calculators are not ported, U-B6). step, names, help, selection and required → missing-on-backend: the storefront owns the stepper labels and layout per kind, and required / multiple follow the calculator's configuration DTO
+  - options[] → StoreOptionDto: id, code, nameTh, nameEn, isDefault same; + attributes (material: kind, gsm, micron, flute, isFoodGrade, coatable; finish / coating: finishKind, requiresAmount/Width/Length; ink_colour: colourKind; assembly: requiresAmount/Width/Length)
+  - options[].area {requiresAmount, requiresWidth, requiresLength, maxAmount} → attributes.requiresAmount / requiresWidth / requiresLength; maxAmount → missing-on-backend
+  - options[].print {front, back} presets → missing-on-backend: no print presets in the catalogue; the storefront composes the colours from the ink_colour options
+  - options[].descriptionTh/En, imageUrl, swatchHex → missing-on-backend
+  - pattern imageUrl → missing-on-backend
+  - quantity {presets, min, max, default, maxTiers} → missing-on-backend (calculate accepts up to 10 quantities)
+  - design {options, default} → missing-on-backend (chosen on the cart item, store.cart.addItem designOption)
+  - mockup {options} → missing-on-backend. D-192 turns the mockup add-on into the `sample` entity. Its order-attached part is built in U2.F (finding F4, pre-launch, D-219), so the configurator's sample offer comes from there, not from this group
+  - fixedInputs (record) → difficultyLevelId (typed, top level; null = not priced online)
+  - extra-on-backend: instant (the type is instant and the product has a difficulty level, D-043), printAreas (corrugate), patterns[].fluteTypeIds (corrugate)
+  - **gap (U-B0.1):** unit — the product's sales unit (quote options already store `ProductUnit`), shown in the request's language
+  - **gap (U-B0.1):** quantity presets, min, max and default from catalogue data or settings (never invented), plus maxTiers = 10
+  - **gap (U-B0.1):** option and pattern content for the storefront: descriptionTh/En, imageUrl, swatchHex (catalogue / CMS data)
+  - **gap (U-B0.1):** the design options this product offers and their default (D-071; `free_design` only through a real promotion, D-181)
+  - *note:* Every value the API cannot publish from catalogue data stays missing rather than guessed (CLAUDE.md). Service: `src/modules/catalog/store/store-configurator.service.ts`.
 
 #### `store.quote-configurations` — implement here (U-B0.1)
 
 Decisions: D-100, D-043
 
 - **POST /v1/store/quotes/actions/calculate** — implement here → `store.quotes.calculate` (`POST /v1/store/quotes/actions/calculate`)
-  - **scope (U-B0.1, `pricing`):** (1) Per-calculator configuration DTOs (oneOf by productTypeCode) as the remaining 6 instant calculators are ported with golden tests (D-100) — the backend owns the shape; a 'generic selection by group kind' is the frontend's proposal, to be accepted only if every calculator can map it losslessly. (2) Contract bug: rename the quote-part assembly class (src/modules/pricing/quotes/quote.dto.ts:79 `AssemblyDto`) — it collides with catalog materials.dto.ts:553 `AssemblyDto`, so FoldingPartDto.assemblies is published as catalogue rows (code, nameTh, status, updatedAt…) instead of {assemblyId, amount?, w?, l?}.
-  - *note:* earliestDeliveryDate is now published: CalculateQuote steps[].earliestDeliveryDate and SavedQuoteOptionDto.earliestDeliveryDate (date|null) — that part of the request is done. src/modules/pricing/calculators has only `folding`.
+  - **scope (U-B0.1, `pricing`):** (1) Per-calculator configuration DTOs, one per remaining instant calculator, ported with golden tests (D-100). **Corrugate has been done since `v0.3.0`**: `configuration` is `anyOf` FoldingConfigurationDto | CorrugateConfigurationDto on calculate, save and the saved views. Still to come, one per U-B6 session: label, tag_sleeve, pouch, standard_product, service. The backend owns the shape: corrugate set the pattern of **one typed DTO per calculator**, so the frontend's "generic selection by group kind" proposal is not adopted — backend wins. (2) Contract bug: rename the quote-part assembly class (`src/modules/pricing/quotes/quote.dto.ts:83` `AssemblyDto`). It collides with the catalogue row at `src/modules/catalog/materials/materials.dto.ts:574` `AssemblyDto`, so FoldingPartDto.assemblies is published as catalogue rows (code, nameTh, autoAdd, status, updatedAt…) instead of {assemblyId, amount?, w?, l?}. The corrugate part uses its own `CorrugateAssemblyDto` and is correct.
+  - *note:* earliestDeliveryDate is published: CalculateQuote steps[].earliestDeliveryDate and SavedQuoteOptionDto.earliestDeliveryDate (date|null) — that part of the request is done. Since `v0.3.0`, steps[].toolingAmount carries plates and die blocks apart from the pieces (corrugate flexo; 0.00 for folding). `src/modules/pricing/calculators` has `folding` and `corrugate`.
+  - *note:* U2.1 (pre-launch, D-219) adds `basis` (D-182) to every dimensioned configuration DTO, additively. D-183 refuses a **measurement** unit in any request; that is unrelated to the sales-unit `unit` gaps in this triage (see *Cross-cutting findings*).
 
 #### `store.quotes` — published differently
 
@@ -363,7 +418,7 @@ Decisions: D-051, D-010, D-050, D-092, D-053, D-072
   - extra-on-backend: configuration, deliveryPostcode, options[], priceLocked, pdfStatus, sharedAt
   - **gap (U-B0.1):** product {slug,name,imageUrl} and productType name on SavedQuoteDto (display without a second catalogue call)
 - **POST /v1/store/quotes** — published differently → `store.quotes.save` (`POST /v1/store/quotes`)
-  - body {productTypeCode, configuration, deliveryPostcode?} → same names (configuration must be FoldingConfigurationDto incl. catalogProductId and quantities[] ≤10)
+  - body {productTypeCode, configuration, deliveryPostcode?} → same names (configuration is the product type's calculator DTO — FoldingConfigurationDto or, since `v0.3.0`, CorrugateConfigurationDto — incl. catalogProductId and quantities[] ≤10)
   - catalogProductSlug → configuration.catalogProductId (uuid, rename+nesting)
   - quantity (single) → configuration.quantities[] (all tiers are saved as options[])
   - designOption, mockupOption → missing-on-backend here; set on store.cart.addItem
@@ -384,11 +439,12 @@ Decisions: D-051, D-010, D-050, D-092, D-053, D-072
   - nextActions → missing-on-backend
   - quoteCode: string → string|null (issued on share/PDF)
   - currency: string → enum Currency ['THB']
-  - status (QuoteStatus), source, validUntil, createdAt, id, configuration, deliveryPostcode → same (configuration is FoldingConfigurationDto|null)
+  - status (QuoteStatus), source, validUntil, createdAt, id, configuration, deliveryPostcode → same (configuration is FoldingConfigurationDto | CorrugateConfigurationDto | null since `v0.3.0`)
   - extra-on-backend: priceLocked, pdfStatus (none|pending|ready), sharedAt
   - **gap (U-B0.1):** product {slug,name,imageUrl} and productType name on SavedQuoteDto (display without a second catalogue call)
   - **gap (U-B0.1):** specs[{label,value}] human-readable spec summary (the UI must not derive it from ids)
   - **gap (U-B0.1):** unit
+  - **gap (U-B0.1):** options[].toolingAmount — the calculate step publishes plates and die blocks apart from the pieces since `v0.3.0` (QuoteStepDto.toolingAmount), but the saved option drops it (`src/modules/quotes/quote-views.ts`), although the stored `result` keeps it. It is the backend source for the request's one-off `lines[]` (plate / die_block). The reorder waiver fields come with D-205 in U2.F
 - **GET /v1/store/quotes/{quoteId}** — published differently → `store.quotes.get` (`GET /v1/store/quotes/{quoteId}`)
   - extra query anonymousId (owner = customer or anonymous session); others get 404
   - StoreQuoteDto → SavedQuoteDto (backend name)
@@ -406,18 +462,19 @@ Decisions: D-051, D-010, D-050, D-092, D-053, D-072
   - nextActions → missing-on-backend
   - quoteCode: string → string|null (issued on share/PDF)
   - currency: string → enum Currency ['THB']
-  - status (QuoteStatus), source, validUntil, createdAt, id, configuration, deliveryPostcode → same (configuration is FoldingConfigurationDto|null)
+  - status (QuoteStatus), source, validUntil, createdAt, id, configuration, deliveryPostcode → same (configuration is FoldingConfigurationDto | CorrugateConfigurationDto | null since `v0.3.0`)
   - extra-on-backend: priceLocked, pdfStatus (none|pending|ready), sharedAt
   - **gap (U-B0.1):** product {slug,name,imageUrl} and productType name on SavedQuoteDto (display without a second catalogue call)
   - **gap (U-B0.1):** specs[{label,value}] human-readable spec summary (the UI must not derive it from ids)
   - **gap (U-B0.1):** unit
+  - **gap (U-B0.1):** options[].toolingAmount — the calculate step publishes plates and die blocks apart from the pieces since `v0.3.0` (QuoteStepDto.toolingAmount), but the saved option drops it (`src/modules/quotes/quote-views.ts`), although the stored `result` keeps it. It is the backend source for the request's one-off `lines[]` (plate / die_block). The reorder waiver fields come with D-205 in U2.F
 - **POST /v1/store/quotes/{quoteId}/actions/export-pdf** — published differently → `store.quotes.requestPdf` (`POST /v1/store/quotes/{quoteId}/actions/request-pdf`)
   - export-pdf (sync SignedUrlDto) → request-pdf returns 202 SavedQuoteDto (pdfStatus=pending), then poll GET /v1/store/quotes/{quoteId}/pdf (store.quotes.getPdf) → QuotePdfDto {status: none|pending|ready, url|null, expiresAt|null}
   - url/expiresAt: non-null → nullable until status=ready
   - *note:* Issued by Collective Group (Thailand) under Packio (D-010, D-092); signed-in owners only; 409 when the quote is not live.
 - **POST /v1/store/quotes/{quoteId}/actions/share** — published differently → `store.quotes.share` (`POST /v1/store/quotes/{quoteId}/actions/share`)
   - QuoteShareDto.token → shareToken (rename)
-  - expiresAt → missing-on-backend (link lives with the quote's validity; sharing again revokes the previous link)
+  - expiresAt → missing-on-backend today (the link lives with the quote's validity; sharing again revokes the previous link). **D-185 (finding F5):** U2.1 (pre-launch, D-219) adds `expiresAt` (15 days, setting `configurations.share_link_days`) and explicit revocation, and `store.quotes.getShared` refuses an expired link (410). So this field is delivered by U2.1, not by U-B0.1
   - extra-on-backend: sharePath, quote (SavedQuoteDto)
   - extra query anonymousId
   - *note:* Token shown once, only its hash kept.
@@ -686,6 +743,7 @@ Decisions: D-020, D-051, D-053, D-060, D-013, D-133, D-142, D-174, D-125
   - 409 checkout.repriced / checkout.preview_expired → 409 checkout.total_changed / checkout.price_expired
   - extra-on-backend: status (pending_company_approval|waiting_payment|…), placedAt, poNumber, channel, ccEmails, cancelledAt
   - **gap (U-B0.1):** firstInstalment on the placed group (to go straight to payment) — optional, derivable from store.paymentSchedules.get
+  - *note:* D-196 (finding F3): store credit becomes usable at checkout as a payment method, up to the order total. U2.F delivers it (pre-launch, D-219; checkout accepts `storeCreditAmount` / payment method `store_credit`) once Finance confirms the 2320 → AR posting. U-B0.1 does not build it.
 
 #### `store.payments` — published differently
 
@@ -838,6 +896,7 @@ Decisions: D-053, D-080, D-021, D-033
   - promotions: WalletPromotionDto[] → missing-on-backend
   - **gap (U-B0.1):** customer-facing list of promotion codes assigned to me (promotion coupons carry assignedCustomerId) plus referral-reward codes, with title/benefit/conditions/validUntil/status — additive store endpoint in the promotions module
   - *note:* Backend description cites D-021/D-033 (credit notes). D-053, D-080.
+  - *note:* D-196 (F3): the balance shown here becomes spendable at checkout in U2.F; this read stays as mapped.
 
 #### `store.privacy` — implement here (U-B0.1)
 
@@ -1152,6 +1211,7 @@ Decisions: D-153
   - 409 → orders.reorder_unavailable | cart.item_exists; 422 pricing.not_instant
   - **gap (U-B0.1):** optional previewToken binding to the preview price once the preview GET exists
   - *note:* The FE note "quotation should carry the source order" is already served: CartItemDto.reorderOf + reusesApprovedArtwork. D-153.
+  - *note:* D-205 (finding F1): today the reorder charges plates and die blocks again. U2.F (pre-launch, D-219) adds the tooling register and the waiver: reusable for 12 months from last use at the same factory for an unchanged spec, confirmed by the factory at PO acceptance. The preview below shows the waiver from U2.F's `toolingWaived` / `toolingWaiverReason`; U-B0.1 does not invent its own rule.
 - **GET /v1/store/orders/{orderId}/reorder** — implement here
   - **scope (U-B0.1, `claims`):** Preview a reorder of my order at ?quantity: same spec re-priced at today's cost via the pricing engine (no invented formulas), reusable plate/die charges waived, proof skipped when artwork unchanged, min/max quantity, lead time and earliest ship date, a short-lived previewToken. Lives next to claims/reorder.service.ts. D-153.
 
@@ -1179,6 +1239,7 @@ Decisions: D-151, D-175
 - **POST /v1/store/sample-kits/actions/request** — implement here
   - **scope (U-B0.1, `catalog`):** Public, rate-limited, Idempotency-Key: request a kit to an address; a paid kit creates a payable (payment link through the payments module) and, if the kit says so, a first-order credit (promotions/store credit) — money-moving, so event-driven ledger postings.
   - *note:* uncertain: owner module for the paid part (payments/checkout) and the accounting treatment — needs a decision before building.
+  - *note:* D-192–D-197 (2026-09-30) cover **samples of a configured product** (the `sample` entity, sample credit against the bulk order, freight at the customer rate card). They do not cover **material / finish kits**, so kit prices and first-order crediting stay open (*Open questions* 5). Whether a kit is a kind of `sample` (D-192 "one sample path") is part of that question. D-195 and D-181 already rule out free kit freight unless a real promotion gives it.
 
 #### `store.companies` — published differently
 
@@ -1355,6 +1416,7 @@ Decisions: D-153
   - **scope (U-B0.1, `claims`):** Add the ok rows of a preview (previewToken) to the cart as reorder items via the existing reorder.service; Idempotency-Key; returns cartItemIds.
 - **POST /v1/store/me/company/bulk-reorders/actions/preview** — implement here
   - **scope (U-B0.1, `claims`):** Validate CSV rows {line, orderCode, quantity} against the company's orders, re-price each (D-153) or refuse with a reason; totals and a short-lived previewToken. Company-scoped (company_orders.place).
+  - *note:* Tooling waivers per row follow D-205 (U2.F), as in `store.reorder`.
 
 ### U-B0.2 — `admin.*` commerce & operations
 
@@ -1548,22 +1610,22 @@ Decisions: D-161
 
 Decisions: D-012, D-043, D-051, D-052, D-100, D-141
 
-- **POST /v1/admin/cs/{type}/calculate** — published differently → `admin.csFolding.calculate` (`POST /v1/admin/cs/folding/calculate`)
-  - path {type} → fixed path per calculator; only `folding` exists
+- **POST /v1/admin/cs/{type}/calculate** — published differently → `admin.csFolding.calculate` (`POST /v1/admin/cs/folding/calculate`), `admin.csCorrugate.calculate` (`POST /v1/admin/cs/corrugate/calculate`, since `v0.3.0`)
+  - path {type} → fixed path per calculator: `folding`, and `corrugate` since `v0.3.0` (body CsCorrugateConfigurationDto: patternId, materialId (board), difficultyLevelId, l, w, d, parts[{subPatternId?, printFront/printBack, coatingFrontId/BackId, assemblies[CorrugateAssemblyDto]}], digitalFrontCoveragePct? (staff only), design, quantities)
   - body {customerId?, postcode, quantities, input: oneOf[7] discriminated by `calculator`} → folding configuration at the top level: patternId, materialId, difficultyLevelId (uuids), l, w, d (mm, required), c, x, grainParallel dl|dw, catalogProductId, design{graphic,structure}, parts[{subPatternId, printFront[{inkColourId,percent}], printBack[], finish1FrontId, finish1BackId, finish2[{finishId,amount,l[],w[]}], diecutTypeId, assemblies[]}] (codes/names → uuids)
   - body.postcode → query deliveryPostcode (optional)
   - body.customerId → missing-on-backend (not needed to price)
   - quantities[] integer → number
   - 200 CsCalculationDto → AdminQuoteCalculationDto { calculatorVersion, steps[] (per quantity: unitPrice, productAmount, designFeeAmount, structureDesignFeeAmount, shippingAmount/Net/Vat, vatAmount, grossAmount, leadTimeDays, earliestShipDate, earliestDeliveryDate, tolerance pcts, instant, reason, shippingPending(+Reason), internal{factoryId, printTypeId, priceListVersionId, productionRun, buyPrice, marginPct, belowMarginFloor, parts[], shipping}), options[{optionKey, error}] }
-  - results[] factory × print type grid with cheapest/fastest flags → backend picks one factory/print type per quantity (internal.factoryId/printTypeId); no cheapest/fastest, no plate/die-block split, no perPieceWithDelivery
+  - results[] factory × print type grid with cheapest/fastest flags → backend picks one factory/print type per quantity (internal.factoryId/printTypeId); no cheapest/fastest, no perPieceWithDelivery; the plate/die-block split is steps[].toolingAmount since `v0.3.0` (corrugate flexo; 0.00 for folding)
   - calculationId, validUntil → none: save with admin.quotes.create (configuration re-priced, D-051 validity)
   - routeToRfq → steps[].instant=false with reason
   - marginPct → steps[].internal.marginPct (null without margin.read, D-141)
-  - **gap (U-B0.2):** The six other calculators (corrugate with combine parts, label, tag_sleeve, pouch, standard_product, service) — U-B6 work, must be ported with golden tests, not invented
+  - **gap (U-B0.2):** The five other calculators (label, tag_sleeve, pouch, standard_product, service) — U-B6 work, one per session, ported with golden tests, not invented. Corrugate (with combine parts) shipped in `v0.3.0`
   - **gap (U-B0.2):** If the multi-factory comparison grid is required: per-factory × print-type results with API-computed cheapest/fastest (D-043/D-100) — confirm against the legacy CS calculator
-  - *note:* Published part: folding only. Not published: corrugate, label, tag_sleeve, pouch, standard_product, service (U-B6). D-100, D-043, D-051, D-012, D-141.
-- **GET /v1/admin/cs/{type}/input-data** — published differently → `admin.csFolding.inputData` (`GET /v1/admin/cs/folding/input-data`)
-  - path {type} → fixed `folding` path; other six types not published (U-B6)
+  - *note:* Published: folding (B2.3) and corrugate (U-B6, `v0.3.0`). Not published: label, tag_sleeve, pouch, standard_product, service (U-B6). D-100, D-043, D-051, D-012, D-141.
+- **GET /v1/admin/cs/{type}/input-data** — published differently → `admin.csFolding.inputData` (`GET /v1/admin/cs/folding/input-data`), `admin.csCorrugate.inputData` (`GET /v1/admin/cs/corrugate/input-data`, since `v0.3.0`)
+  - path {type} → fixed path per calculator: `folding`, and `corrugate` since `v0.3.0` (CorrugateInputDataDto: patterns with flutes, boards, coatings, inkColours, assemblies, difficultyLevels, printAreas); the other five types are not published (U-B6)
   - type field → implied by path
   - patterns[].code, name, subPatterns[].name same; + id, geometryFormula, subPatterns[].id/seq; subPatterns[].code missing
   - patterns[].constraints, standardSizes → missing-on-backend
@@ -1574,8 +1636,8 @@ Decisions: D-012, D-043, D-051, D-052, D-100, D-141
   - **gap (U-B0.2):** discountPolicy.directLimitPct from setting `discounts.cs_limit_pct` (D-052) so the UI does not hard-code 5 %
   - **gap (U-B0.2):** pattern size constraints and standard sizes
   - **gap (U-B0.2):** quantity presets
-  - **gap (U-B0.2):** input data for the six non-folding calculators (U-B6)
-  - *note:* Only folding is published (B2.3).
+  - **gap (U-B0.2):** input data for the five calculators not yet ported (U-B6); corrugate shipped in `v0.3.0`
+  - *note:* Folding (B2.3) and corrugate (`v0.3.0`) are published; the gaps above apply to both.
 
 #### `admin.quotations` — published differently
 
@@ -1598,7 +1660,7 @@ Decisions: D-010, D-051, D-052, D-092
   - *note:* D-051, D-010.
 - **POST /v1/admin/quotations** — published differently → `admin.quotes.create` (`POST /v1/admin/quotes`)
   - path /quotations → /quotes
-  - body {calculationId, resultId} → {productTypeCode, configuration (the same folding configuration as admin.csFolding.calculate), deliveryPostcode?} — the server re-prices; no calculation id
+  - body {calculationId, resultId} → {productTypeCode, configuration (the same calculator configuration as admin.csFolding.calculate / admin.csCorrugate.calculate — `anyOf` since `v0.3.0`), deliveryPostcode?} — the server re-prices; no calculation id
   - body.customerId → customerUserId (optional)
   - body.discountPct, discountMemoId → not on the quotation: admin.checkout.place body csDiscountPct (≤ discounts.cs_limit_pct) / discountMemoId (D-052)
   - body.note → missing-on-backend
@@ -1606,6 +1668,7 @@ Decisions: D-010, D-051, D-052, D-092
   - **gap (U-B0.2):** specs[{label,value}] rendered by the API
   - **gap (U-B0.2):** nextActions
   - **gap (U-B0.2):** note on the quotation
+  - **gap (U-B0.2):** options[].toolingAmount on AdminQuoteDto — admin.csCorrugate.calculate returns it per step (`v0.3.0`), but the saved option drops it (as `store.quotes`)
   - *note:* Backend wins: discount belongs to the checkout, not the quotation.
 - **GET /v1/admin/quotations/{quoteId}** — published differently → `admin.quotes.get` (`GET /v1/admin/quotes/{quoteId}`)
   - path /quotations → /quotes; quoteId same
@@ -1613,6 +1676,7 @@ Decisions: D-010, D-051, D-052, D-092
   - pdf FileRef → pdfStatus none|pending|ready + admin.quotes.getPdf
   - discount{pct,memo} → none on the quote (memo via admin.discountMemos.*)
   - **gap (U-B0.2):** specs, nextActions, rfq ref
+  - **gap (U-B0.2):** options[].toolingAmount on AdminQuoteDto — admin.csCorrugate.calculate returns it per step (`v0.3.0`), but the saved option drops it (as `store.quotes`)
 - **POST /v1/admin/quotations/{quoteId}/actions/export-pdf** — published differently → `admin.quotes.requestPdf` (`POST /v1/admin/quotes/{quoteId}/actions/request-pdf`)
   - export-pdf → request-pdf (issues the QT number, renders in background) → 202 AdminQuoteDto
   - {url, expiresAt} → poll admin.quotes.getPdf (GET /v1/admin/quotes/{quoteId}/pdf) → {status none|pending|ready, url|null, expiresAt|null}
@@ -1660,6 +1724,7 @@ Decisions: D-051, D-052, D-060, D-142, D-174
   - 201 {groupId, groupCode, orders[{id, orderCode}]} → AdminOrderGroupDto: groupId → id (rename); groupCode, orders[].id, orders[].orderCode same; + totals, status, …
   - preview first: admin.checkout.preview
   - *note:* Backend wins: one flow for store and CS (cart → checkout). D-051, D-060, D-142, D-174.
+  - *note:* D-192: the cart item's `mockupOption` stays as mapped until U2.F. U2.F turns the mockup into a `sample` attached to the order and deprecates the CS "add mockup" endpoints additively; they are removed in U-B5.
 
 #### `admin.rfqs` — published differently
 
@@ -1828,7 +1893,7 @@ Decisions: D-070, D-071, D-072, D-141, D-175
   - **gap (U-B0.2):** nextActions per submission and per workspace
   - **gap (U-B0.2):** assignee
   - **gap (U-B0.2):** drawing-jobs list per order
-  - **gap (U-B0.2):** mockup job ref (D-072)
+  - mockup job ref (D-072) → no longer a U-B0.2 gap: D-192 replaces the mockup with the `sample` entity, and its reference on the prepress workspace comes with U2.F (finding F4, pre-launch). Re-triaged 2026-09-30
   - **gap (U-B0.2):** decide: add a page-shaped workspace endpoint (artwork module) or compose client-side
   - *note:* No cost or margin on any of these (D-141). D-070, D-071, D-072.
 
@@ -2488,6 +2553,17 @@ Decisions: D-102, D-044, D-101, D-053, D-154
   - productType names are inline (nameTh/nameEn), so roles without catalog.read can read them (as the frontend asked)
   - *note:* permission analytics.read
 
+#### `admin.analytics-journeys` — implement here (U-B0.3)
+
+Decisions: D-102, D-144, D-217, D-219
+
+*Triaged 2026-09-30:* new since the 2026-09-29 triage (packio-web U5.0, `awaiting-triage.ts`).
+
+- **GET /v1/admin/analytics/journeys** — implement here
+  - **scope (U-B0.3, `analytics`), built in U5.B6:** one journey's funnel (`configurator | checkout | studio | claims | reorder`, from the UX scorecard) over a period (`range` 7d | 30d | 90d | custom, resolved in Asia/Bangkok as the frontend asks): sessions and conversion per step, the same figures for the previous period of equal length, week-over-week change of each step's conversion, and a per-step `alert` when the weekly drop exceeds the threshold. Reuse the B6.1 pieces: `src/modules/analytics/event-schemas.ts` (validated event names — `AnalyticsEventName` has only `page_view | configurator_step | quote_shown | add_to_cart | checkout_step`, so the journey step events of the studio, claims and reorder journeys must be added there first), the daily funnel rollups (`admin.analytics.funnel`), and `src/modules/ops/ops-signals.service.ts` to raise the drop as an ops signal (`ops.alert_raised`, at most once an hour per signal). Permission `analytics.read`; consent-gated events only (D-144).
+  - *note:* The alert threshold is a business value. The scorecard (§4) proposes 15 % week over week; it becomes the setting `analytics.journey_drop_alert_pct` (effective-dated, Superadmin, D-063), with its value confirmed by the business in U5.B6 (*Open questions* 7). It is not a constant.
+  - *note:* **Built in U5.B6, not in U-B0.3.** RUN-ORDER §1 puts "dashboards per journey, week-over-week drop alerts" in U5.B6 (U5 precedence, §2), and D-219 makes all of U5 post-launch. The row sits under U-B0.3 only because the triage groups are U-B0.1–0.3. U-B0 step 4 ("every row published or rejected") counts it as carried over to U5.B6. The screen stays on its mock until then.
+
 #### `admin.prospectus` — published differently
 
 Decisions: D-102, D-044, D-160
@@ -2889,6 +2965,7 @@ Decisions: D-101, D-161
 - **GET /v1/partner/factories/{factoryId}/capacity-calendar** — implement here
   - **scope (U-B0.3, `partners`):** partners/capacity + platform/calendar: weeks × product types {capacity, booked, free} (decimal strings like CapacityWeekDto) and closures from the national calendar (only days that count as non-working, D-161) plus the factory's own; permission factory_capacity.read.
   - *note:* Capacity values are strings in CapacityWeekDto — FE should keep them as decimal strings. Depends on the B6.3 launch gap (admin CRUD for business_calendar_days).
+  - *note:* D-209: the factory's own business hours and closures are edited by its Owner or Planner and by the Partner Manager. The change is audited, takes effect from the next day, needs no approval, and never shortens the SLA of a job already accepted. This read shows them; the partner-side write belongs to U2.9 (post-launch), and the staff write is part of the B6.3 calendar gap below.
 
 #### `partner.shipments` — mixed: 2 implement here · 5 published differently
 

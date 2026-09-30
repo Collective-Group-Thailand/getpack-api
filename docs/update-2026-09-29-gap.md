@@ -2,6 +2,25 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U-B0 steps 1–2 — re-run: release tag and triage refresh (2026-09-30, docs only)
+Steps 1–2 first ran on 2026-09-29 (section below). Since then: contract `v0.3.0` (U-B6 corrugate), packio-web `9cbd99a` → `f225d30` (it imports the triage with `scripts/gen-triage.ts` and listed one new request in `awaiting-triage.ts`), and decisions D-182–D-219 (U2.0).
+
+| # | Requirement | Before | Evidence | This session |
+|---|---|---|---|---|
+| 1.1 | Version bumped and released | met | `package.json` 0.3.0; `contract/openapi.json` `info.version` 0.3.0 | — |
+| 1.2 | Contract at the latest tag = HEAD | met | `git diff v0.3.0 HEAD -- contract src prisma package.json` empty; sha256 `9cd9be72…ce13` identical at the tag and at HEAD | — (no contract change, so no new tag) |
+| 1.3 | Tag with `openapi.json` as release asset | partial (not in this repo's hands) | annotated `v0.2.0` → `6b12ccd`, `v0.3.0` → `f7ffeb7`; `.github/workflows/release.yml` publishes the asset on a tag push; this checkout has **no git remote** | Nothing to tag. Pushing both tags (which runs the release workflow) is the user's |
+| 1.4 | Tag recorded in PROGRESS for packio-web to pin | met | PROGRESS 2026-09-30 `v0.3.0` entry (URL + sha256); packio-web still pins `v0.2.0` (`contract.lock.json`) | — (adoption is packio-web U-F0) |
+| 2.1 | Both frontend sources read from the sibling checkout | partial | the triage named `packio-web@9cbd99a`; sibling at `f225d30`; since then request definitions changed only in `src/lib/api/requests/admin-analytics.ts` (+ journeys); `awaiting-migration.ts` unchanged (86) | Re-read at `f225d30` |
+| 2.2 | One row per request id | partial | 133 of 134: `admin.analytics-journeys` (`GET /v1/admin/analytics/journeys`) has no verdict | Added (`implement here`, built in U5.B6 — RUN-ORDER §1–2, D-219) |
+| 2.3 | Verdicts current against the latest tag | partial | `v0.3.0` added `store.catalog.getConfigurator` at the requested path, `admin.csCorrugate.*`, the configuration `anyOf` Folding \| Corrugate, `QuoteStepDto.toolingAmount`; rows affected: `store.configurator`, `store.quote-configurations`, `admin.cs-calculators`, `store.quotes`, `admin.quotations` | `store.configurator` → published differently (field mapping, 4 gaps); others updated; + `toolingAmount` gap on saved quote options (`quote-views.ts` drops it) |
+| 2.4 | Verdicts consistent with the decisions | partial | written before D-182–D-219: share-link expiry (D-185), store credit at checkout (D-196), tooling waiver (D-205), mockup → `sample` (D-192), factory hours (D-209), sample kits (D-192–D-197 do not cover kits) | Notes and one scope move (prepress mockup ref → U2.F); no reject |
+| 2.5 | Three known defects recorded | met, still present | `RateCardLineResponse` self-reference (`pricing.dto.ts:315,319`); `AssemblyDto` twice (`quote.dto.ts:83`, `materials.dto.ts:574`); `PriceSimulationDto.result` untyped (`pricing.dto.ts:670-680`) | Evidence refreshed |
+| 2.6 | Rejections need the user's OK | met | no id rejected; one field not added (`scheduleKey`, D-020) | — |
+| 3 | Implement rows (U-B0.1–0.3) | missing | — | out of scope (later sessions) |
+
+Verified: packio-web's `scripts/gen-triage.ts`, run on a scratch copy, reads the new triage as 134 requests / 305 operations with `TRIAGE_SOURCE` `packio-web@f225d30` / `v0.3.0`; every `publishedAs` exists in `v0.3.0` with the named operationId, and every registry key at `f225d30` has a verdict. Only `store.catalog.getConfigurator` is missing from the `v0.2.0` the frontend pins, so it must adopt `v0.3.0` before `pnpm gen:triage`.
+
 ## U2.0 — benchmark §4 intake (2026-09-30, no code)
 
 Scope: every requirement of U2.1–U2.9 (benchmark `docs/benchmark/kumopack-2026-09-29.md` §4 and §2.5) against the code at `32a03c7` (contract `v0.3.0`, 757 paths). U3, U4 and U5 run their own gap analyses in their sessions; their business decisions are collected here (RUN-ORDER §3). **Totals: 44 requirements — 0 met, 18 partial, 26 missing** (quantity tolerance, inside 1.8, is met end to end). "Session" = where the work lands.
