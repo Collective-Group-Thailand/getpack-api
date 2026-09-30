@@ -42,6 +42,12 @@
 | 8.4 | Staff trained per role; CS scripts for payments, claims and RFQs | Yes | CS Lead | Training log | |
 | 8.5 | packio-web release pinned to the same contract version; both repos deployed together | Yes | Tech lead | `contract.lock.json` | |
 | 8.6 | Communications ready (launch announcement, LINE OA welcome, factory brief) | No | Marketing | | |
+| **9** | **U2–U5 pre-launch items (D-219)** — only these U2–U5 items block go-live; everything else in U2–U5 ships after launch | | | | |
+| 9.1 | U2.1 specification model v2 done: measurement basis on every spec with the conversion service, mm-only API with display unit, immutable style codes, draft configurations and expiring share links, published dimensional / colour / quantity tolerances (D-182–D-187); packio-web pinned to the tag | Yes | Tech lead | PROGRESS entry + tag | |
+| 9.2 | Findings F1–F6 fixed (`docs/update-2026-09-29-gap.md` §U2.0): tooling waiver on reorder (D-205), RFQ tolerance (D-187), store credit at checkout (D-196, posting confirmed by Finance), mockup shipping / approval / production hold (D-193), share-link expiry (D-185), immutable style codes (D-184) | Yes | Tech lead + Finance Manager (F3) | Tests + PROGRESS | |
+| 9.3 | U2.5 items 1–2: guarantee policies as data read by the claim engine and the public page, claim SLA timeline and overdue ops signal (D-198–D-200) | Yes | CS Lead + tech lead | Public page walk-through | |
+| 9.4 | U2.9 item 6: release-hygiene CI check green on the release build (D-210) | Yes | Tech lead | CI run | |
+| 9.5 | Post-launch U2–U5 items (D-219) are **not** launch criteria; the UX scorecard competitor baseline may run before launch and does not block it (D-217) | No | C-Level | decisions.md | |
 
 **Decision:** Go / No-go — signed by C-Level: ______________________ Date: __________
 

@@ -219,5 +219,94 @@ Consequences: all 7 calculators are ported with golden tests before launch; the 
 | D-180 | **Packio visual direction** (no brand kit yet): warm paper/kraft neutrals as the base, near-black warm ink for text, **one primary accent (deep teal-green)** for actions and links, amber as a secondary highlight for campaign badges only, generous white space, product photography on clean paper/white with soft shadows, 12–16 px radii, hairline warm borders, no heavy gradients. Token values are proposed in `packio-web/docs/prompts/design-system.md` §Art direction and are replaced wholesale when a real brand kit arrives (tokens only, no component changes). Layout patterns are informed by a reference packaging store the business supplied; its design, imagery, fonts and copy are never copied. | Accepted (values Proposed) |
 | D-181 | **No manufactured urgency on the storefront**: no countdown timers, "only N left" or struck-through reference prices unless they come from a real promotion/campaign in the promotions engine with a real end date (D-053). Product cards for made-to-order items show starting price per piece, the quantity that price assumes, MOQ and lead time instead of retail discount framing. | Accepted |
 
+## U2–U5 intake (2026-09-30)
+Collected in session U2.0 (`docs/prompts/RUN-ORDER-U1-U5.md` §3, `docs/prompts/U2-benchmark-2026-09-29.md`); gap analysis and findings F1–F6 in `packio-api/docs/update-2026-09-29-gap.md` §U2.0. Every value below is a setting with effective dates and audit where the decision says so (D-063 unless another owner is named).
+
+### Specification model (U2.1)
+| ID | Decision | Status |
+|---|---|---|
+| D-182 | **Measurement basis on every dimensioned spec**: enum `internal \| external \| over_crease \| product` on configurator input, quote, order line, design document, job spec snapshot and RFQ; dimensions stored in mm with their basis. The customer **must choose** the basis (no silent default); the other bases are computed from the material caliper and the style's construction rules by one pure conversion service shared by API and web, and shown alongside. The ported folding and corrugate calculators take **internal** dimensions; existing rows are marked `internal` in the backfill. | Accepted (2026-09-30) — "legacy inputs are internal" to be confirmed by the Pricing owner before U2.1 closes (see Still open) |
+| D-183 | **Units**: the API is mm-only and rejects requests that send a unit. Display unit `mm \| cm \| in` is a per-user preference (default mm), used only by the web for display and input conversion. | Accepted (2026-09-30) |
+| D-184 | **Style codes**: every style has a public code `PK-<FAMILY>-<NN>`, unique and **immutable once published** (changes refused), carried on the quote, order line, proof, job sheet, partner bundle and every export. The international name (RSC, FOL, RTE …) is a separate field, filled only when verified (D-211) — empty rather than guessed. Closes finding F6. | Accepted (2026-09-30) |
+| D-185 | **Draft configurations and share links**: an incomplete configuration is persisted with a completeness score and kept **90 days** after its last change; share links are signed, expire after **15 days** (as D-051) and can be revoked; drafts convert to a quote or an RFQ. Existing quote share links get the same expiry and stop resolving after it (finding F5). Settings `configurations.draft_retention_days` = 90, `configurations.share_link_days` = 15. | Accepted (2026-09-30) |
+| D-186 | **Published tolerances beyond quantity**: dimensional **± 1 mm for folding cartons, ± 3 mm for corrugated**; colour **ΔE2000 ≤ 3 against the approved proof (≤ 5 for flexo)**. Effective-dated platform defaults, overridable per factory × product type at onboarding with the same approval as D-173; shown before purchase, frozen in the quote snapshot and read by the claim engine. | Accepted (2026-09-30) — values agreed with the launch factory at onboarding, like D-163 |
+| D-187 | **RFQ-accepted quotes freeze tolerance like instant quotes**: the quote created from an accepted RFQ response snapshots the factory's tolerance (or the D-163 platform default); no order is reconciled at 0 %. Closes finding F2. | Accepted (2026-09-30) |
+
+### Structure Advisor (U2.2)
+| ID | Decision | Status |
+|---|---|---|
+| D-188 | **Advisor data and factors**: rule set + McKee relation; safety factors (humidity, stacking duration, pallet overhang, transport shock) are effective-dated settings changed by a Superadmin (D-063). Board strength (ECT, caliper) comes from the partner's **signed board data sheets** entered as typed material data; a board without data is never recommended. | Accepted (2026-09-30) |
+| D-189 | **Advisor sign-off and wording**: golden cases signed by the **Partner Manager and the Prepress lead**; output is always a range with a fixed "indicative" notice, reason codes and numbers only, never the word "AI" while no model is used. A customer may proceed against a structural warning; the acknowledgement (who, when, warning codes) is stored with the recommendation log. | Accepted (2026-09-30) |
+
+### Target price (U2.3)
+| ID | Decision | Status |
+|---|---|---|
+| D-190 | **Target price privacy**: optional target price per unit (THB) on configuration, quote and RFQ; **never shown to any factory**, not even in aggregate outside the prospectus; aggregated target-price figures require **≥ 5 distinct customers per cell** — new setting `analytics.target_price_min_group_size` = 5, enforced in the query layer (D-160 k = 3 stays for other prospectus figures). | Accepted (2026-09-30) |
+| D-191 | **Levers and outcomes**: levers are recomputed by the real engine and valid **15 days** (D-051); "send to CS" creates a pre-filled RFQ; quote outcomes (won / lost / expired / converted to RFQ) are recorded with the target, the gap, the levers shown and the one taken; a loss reason is optional for the customer. | Accepted (2026-09-30) |
+
+### Samples (U2.4)
+| ID | Decision | Status |
+|---|---|---|
+| D-192 | **One sample path — extend D-072**: the mockup / physical-proof add-on becomes a single `sample` entity, either **standalone** (before any bulk order, linked to the configuration) or **attached** to an order (replacing today's in-order mockup), reusing the mockup job kind, PO kind and milestone route. The CS "add mockup" endpoints are deprecated additively and removed in U-B5. | Accepted (2026-09-30) |
+| D-193 | **Sample lifecycle**: a sample is shipped to the customer and approved by the customer with evidence (who, when, IP, UA, photo hashes); approval **locks the spec and artwork version** for the bulk order; **bulk production is held until the sample is approved** whenever a sample is part of the order; "changes requested" leads to a new, re-quoted sample. Closes finding F4. | Accepted (2026-09-30) |
+| D-194 | **Sample price and validity**: price entered by CS (as the mockup today) until a sample rule set has a **signed validation document** — no new formula before that; a sample quote is valid **15 days** (D-051). | Accepted (2026-09-30) |
+| D-195 | **Sample freight** is paid by the customer at the customer shipping rate card (D-013); free sample freight only through a real promotion (D-053, D-181). | Accepted (2026-09-30) |
+| D-196 | **Store credit is usable at checkout** as a payment method, up to the order total, from the store-credit wallet (2320). Closes finding F3. | Accepted (2026-09-30) — posting (2320 → AR) ⚖ to be confirmed by Finance |
+| D-197 | **Sample cost credited against the bulk order**: **100 % of the sample's product price** (freight excluded) as a discount line on a bulk order for the **same spec** placed within **30 days** of sample approval; the discount is removed if that bulk order is cancelled. Settings `samples.credit_pct` = 100, `samples.credit_window_days` = 30. | Accepted (2026-09-30) |
+
+### Guarantee & trust (U2.5)
+| ID | Decision | Status |
+|---|---|---|
+| D-198 | **Remedies matrix** (published as data, read by the claim engine): severity `minor \| major \| critical`. Factory-liable defects (D-083) that are major or critical → reprint of the affected quantity **or** refund, the customer's choice; minor → partial credit; shortage beyond tolerance → reprint of the shortfall or pro-rata refund; errors in customer-approved artwork → no remedy; goodwill only through the discount-memo matrix (D-052). | Accepted (2026-09-30) |
+| D-199 | **Claim SLAs**: first response within **1 business day**, decision within **3 business days** of complete evidence (business hours D-175, calendar D-161); overdue claims raise an ops signal. **No late-delivery guarantee at launch.** | Accepted (2026-09-30) |
+| D-200 | **Guarantee-policy changes**: new policy version requested by the **CS Lead**, approved by **C-Level** (approval policy `guarantee_policy_change`). | Accepted (2026-09-30) |
+| D-201 | **Public network statistics**: audit criteria (content) and capability coverage by product type (yes / no) are public; partner counts, on-time and first-pass-quality rates are published only when **≥ 3 active factories** and **≥ 30 completed jobs in a rolling 90 days** (rates rounded to whole %); never a partner's identity or the factory of an order. | Accepted (2026-09-30) |
+| D-202 | **Reviews**: verified only (delivered order), **one per order line**, moderated by Marketing, replies by CS; public display shows an abbreviated name and the product type; the D-135 review reward stays one per order; reviews are never fabricated or synthesised (D-181). | Accepted (2026-09-30) |
+
+### Library, dielines (U2.6 / U3.B5)
+| ID | Decision | Status |
+|---|---|---|
+| D-203 | **Free dieline download**: signed-in customers only, watermark-free, no plan gating; **20 per user per day and 5 per minute** (settings); only published styles within their size limits; every download logged. Staff are not limited. | Accepted (2026-09-30) |
+
+### Repeat business (U2.7)
+| ID | Decision | Status |
+|---|---|---|
+| D-204 | **Reorder suggestions**: only after **≥ 3 earlier orders** of the same SKU (approved spec + artwork version); suggested date = simple moving average of the order intervals + lead time + **7 days** safety stock (settings); reminders count as marketing (D-144: consent, 09:00–20:00). | Accepted (2026-09-30) |
+| D-205 | **Tooling (plates, die blocks) reuse**: reusable for **12 months from last use at the same factory** for an unchanged spec; kept at the factory and recorded in a tooling register (owner, location, validity, condition); the factory confirms usability at PO acceptance; if a waived tool proves unusable, Packio absorbs the remake (customer price unchanged, as D-012). Implements the D-153 waiver (finding F1). | Accepted (2026-09-30) — tooling **ownership** open (see Still open) |
+| D-206 | **Call-off orders = price lock only**: a committed quantity with the price held up to **6 months** (factory agreement required); each release ≥ the factory's minimum order and becomes a normal order with the normal payment schedule (D-020); **no deposit, no stock held**; unreleased quantity lapses at expiry without charge. Stock holding or deposits need the accountant first (2310). | Accepted (2026-09-30) |
+| D-207 | **B2B API access**: the Company Admin issues up to **5** scoped API keys per company; outbound webhooks are signed and delivery-logged. Post-launch (D-219). | Accepted (2026-09-30) |
+
+### Sustainability & partner parity (U2.8 / U2.9)
+| ID | Decision | Status |
+|---|---|---|
+| D-208 | **Sustainability data is out of scope** until a partner supplies real certificates; no system-generated claims. | Accepted (2026-09-30) |
+| D-209 | **Factory business hours and closures** are edited by the factory's **Owner or Planner** and by the **Partner Manager**; audited, effective from the next day, no approval; a change never shortens the SLA of a job already accepted. | Accepted (2026-09-30) |
+| D-210 | **Release hygiene**: a production build fails on debug markers (`[Dev]`, `mock`, `TODO-REMOVE`), test tax ids or `dev_only` feature flags enabled; `DEV`-prefixed document numbers are allowed outside production only. | Accepted (2026-09-30) |
+
+### Style library (U3)
+| ID | Decision | Status |
+|---|---|---|
+| D-211 | **Industry reference codes** (FEFCO / ECMA) are shown only after Prepress verifies them against an edition Packio legally holds; until then the field stays empty. | Accepted (2026-09-30) — whether Packio holds the editions is open (see Still open) |
+| D-212 | **Style names and waves**: Thai / English names approved by **Marketing** (wording) and **Prepress** (technical terms); **wave 1 publishes only variants the launch factory can make** (U3.B3 capability); wave order as `docs/design-tool/style-library-program.md`. | Accepted (2026-09-30) |
+
+### 3D studio (U4)
+| ID | Decision | Status |
+|---|---|---|
+| D-213 | **Studio fonts**: only **OFL-licensed** Thai + Latin families (e.g. Sarabun, Noto Sans Thai, IBM Plex Sans Thai, Prompt, Kanit); no customer-uploaded fonts in the first release. | Accepted (2026-09-30) |
+| D-214 | **Background removal** ships after launch; when built, a self-hosted model in Packio's AWS region — no external vendor without a data-processing agreement. | Accepted (2026-09-30) |
+| D-215 | **Soft proof**: simplified per-material-class transforms until the factory supplies ICC profiles; always labelled "preview, not a contract proof". | Accepted (2026-09-30) |
+| D-216 | **First template set**: **20** templates across the 7 use cases of the studio spec, made by the in-house / design-service team and approved by Marketing; never third-party templates. | Accepted (2026-09-30) — named author open (see Still open) |
+
+### UX (U5)
+| ID | Decision | Status |
+|---|---|---|
+| D-217 | **UX scorecard**: Marketing recruits **8–10 participants** per round; the competitor baseline round may run before launch but does **not** block it; the "failed gate blocks the journey" rule of `docs/ux/competitive-scorecard.md` applies from the first round **after** launch. | Accepted (2026-09-30) — moderator open (see Still open) |
+| D-218 | **Assistant off at launch**; model / vendor and data terms (no training on customer data, PDPA cross-border assessment) decided in an ADR before it is enabled in any environment. | Accepted (2026-09-30) |
+
+### Launch gating (D-113)
+| ID | Decision | Status |
+|---|---|---|
+| D-219 | **U2–U5 launch gating.** **Pre-launch (blocking `docs/LAUNCH-CHECKLIST.md` §9):** U2.1 specification model v2 (D-182–D-187); the fixes for findings **F1** tooling waiver (D-205), **F2** RFQ tolerance (D-187), **F3** store credit at checkout (D-196), **F4** mockup lifecycle — shipping, customer approval, production hold (D-193), **F5** share-link expiry (D-185), **F6** immutable style codes (D-184); U2.5 items 1–2 (guarantee policies as data, claim SLA timeline and ops signal — D-198–D-200); U2.9 item 6 release hygiene (D-210). U-B0 and U-B6 remain pre-launch as before. **Post-launch (never blocking):** U2.2, U2.3, U2.4 beyond F4 (standalone samples, sample credit D-197), U2.5 items 3–4, U2.6, U2.7 beyond F1, U2.8, U2.9 items 1–5, all of U3, U4 and U5. | Accepted (2026-09-30) |
+
 ## Still open
-Approval tier boundaries in D-052 (proposed 5–10 % Director, 10–15 % VP, > 15 % C-Level) · carrier choice in D-114 (proposed Flash Express + Deliveree) · all ⚖ items in `accounting-design.md` §10 (CPA review; defaults are in place). · ~~D-161 geography entry method~~ → D-170
+Approval tier boundaries in D-052 (proposed 5–10 % Director, 10–15 % VP, > 15 % C-Level) · carrier choice in D-114 (proposed Flash Express + Deliveree) · all ⚖ items in `accounting-design.md` §10 (CPA review; defaults are in place). · ~~D-161 geography entry method~~ → D-170 · D-182: Pricing owner confirms the Locopack calculators took **internal** dimensions · D-196: Finance confirms the store-credit posting · D-205: who **owns** tooling paid through an order (Collective Group, the customer or the factory) · D-211: whether Packio holds the FEFCO / ECMA editions (until then no reference codes are shown) · D-216: named author of the first template set · D-217: scorecard moderator
