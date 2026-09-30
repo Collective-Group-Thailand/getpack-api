@@ -158,6 +158,8 @@ export interface SettingValues {
   'privacy.response_days': number;
   /** D-222 days a PDPA data export stays downloadable. */
   'privacy.export_link_days': number;
+  /** D-185 / D-226 days a share link (design, later configuration) stays valid. */
+  'configurations.share_link_days': number;
 }
 
 export type SettingKey = keyof SettingValues;

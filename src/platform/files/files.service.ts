@@ -348,6 +348,20 @@ export class FilesService {
   }
 
   /**
+   * A signed download URL for a file the caller already authorised through its owning row (a design's assets,
+   * a shared design); null while it is not uploaded, scanned clean and unpurged.
+   */
+  async signedUrl(file: FileObject): Promise<{ url: string; expiresAt: Date } | null> {
+    if (file.uploadStatus !== 'uploaded' || file.scanStatus !== 'clean' || file.purgedAt) return null;
+    const url = await this.storage.presignGet(file.storageKey, {
+      expiresInSeconds: DOWNLOAD_URL_TTL_SECONDS,
+      fileName: file.originalName,
+      contentType: file.mimeType,
+    });
+    return { url, expiresAt: new Date(Date.now() + DOWNLOAD_URL_TTL_SECONDS * 1000) };
+  }
+
+  /**
    * Owner (uploader), staff with `files.read`, principals whose factory/company scope owns the
    * file, or an attachment policy of the owning module. A thumbnail follows its original.
    */

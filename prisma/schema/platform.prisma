@@ -833,14 +833,15 @@ model FileObject {
   companyKycDocuments CompanyKycDocument[] @relation("CompanyKycDocumentFile")
 
   // --- Fulfilment B4.1 (generated back-relations)
-  artworkFiles       ArtworkSubmissionFile[] @relation("ArtworkSubmissionFileObject")
-  proofFiles         Proof[]                 @relation("ProofFile")
-  proofDielineFiles  Proof[]                 @relation("ProofDielineFile")
-  proofApprovedFiles Proof[]                 @relation("ProofApprovedFile")
-  dielineDeliveries  DielineDelivery[]       @relation("DielineDeliveryFile")
-  designThumbnails   DesignDocument[]        @relation("DesignDocumentThumbnail")
-  designAssets       DesignAsset[]           @relation("DesignAssetFile")
-  drawingOutputs     DrawingJob[]            @relation("DrawingJobOutputFile")
+  artworkFiles            ArtworkSubmissionFile[] @relation("ArtworkSubmissionFileObject")
+  proofFiles              Proof[]                 @relation("ProofFile")
+  proofDielineFiles       Proof[]                 @relation("ProofDielineFile")
+  proofApprovedFiles      Proof[]                 @relation("ProofApprovedFile")
+  dielineDeliveries       DielineDelivery[]       @relation("DielineDeliveryFile")
+  designThumbnails        DesignDocument[]        @relation("DesignDocumentThumbnail")
+  designVersionThumbnails DesignDocumentVersion[] @relation("DesignDocumentVersionThumbnail")
+  designAssets            DesignAsset[]           @relation("DesignAssetFile")
+  drawingOutputs          DrawingJob[]            @relation("DrawingJobOutputFile")
   // --- end Fulfilment B4.1
 
   // --- Fulfilment B4.3 (generated back-relations)

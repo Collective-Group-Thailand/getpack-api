@@ -1,4 +1,4 @@
-import { CurrentActor } from '@common/auth/auth.decorators';
+import { CurrentActor, Public } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
@@ -12,12 +12,13 @@ import {
   ApiSuccess,
 } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
-import { PageQuery } from '@common/pagination/pagination.dto';
+import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { ArtworkSubmissionDto, SUBMISSION_EXAMPLE } from '@modules/artwork/artwork.dto';
 import { ArtworkService } from '@modules/artwork/artwork.service';
 import { submissionDto } from '@modules/artwork/artwork-views';
 import { ApiSurface } from '@modules/surfaces/surfaces';
+import { TRACKING_THROTTLE } from '@modules/timeline/timeline.controller';
 import {
   Body,
   Controller,
@@ -33,6 +34,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { type Response } from 'express';
 
 import {
@@ -42,27 +44,60 @@ import {
   DESIGN_EXAMPLE,
   DESIGN_IDS,
   DesignDocumentDto,
+  DesignListQuery,
   DesignVersionDto,
+  DesignVersionListQuery,
   DRAWING_EXAMPLE,
   DrawingJobDto,
+  DuplicateDesignDto,
+  ImportDesignsDto,
+  ImportDesignsResultDto,
   OrderDrawingDto,
   RequestDrawingDto,
   SaveDesignDto,
   SetTemplateDesignDto,
+  SHARED_DESIGN_EXAMPLE,
+  SharedDesignDto,
+  ShareDesignResultDto,
   SubmitFromDesignDto,
 } from './designs.dto';
-import { designDto, designEtag, DesignsService, versionDto } from './designs.service';
+import { designEtag, DesignsService } from './designs.service';
 import { drawingDto, DrawingsService } from './drawings.service';
 
 const designParam = ApiParam({ name: 'designId', format: 'uuid' });
 const DECISIONS = ['D-152', 'D-070'];
-const SAVE_EXAMPLE = { title: 'กล่องกาแฟของฉัน v2', schemaVersion: 1, document: DESIGN_EXAMPLE.document };
+const SAVE_EXAMPLE = {
+  title: 'กล่องกาแฟของฉัน v2',
+  schemaVersion: 1,
+  document: DESIGN_EXAMPLE.document,
+  kind: 'manual',
+  label: 'ก่อนเปลี่ยนสีพื้น',
+};
 const VERSION_EXAMPLE: DesignVersionDto = {
   versionNo: 3,
   schemaVersion: 1,
   contentSha256: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
   document: null,
+  kind: 'manual',
+  label: 'ก่อนเปลี่ยนสีพื้น',
+  thumbnailFileId: null,
+  thumbnailUrl: null,
   createdAt: '2026-09-27T10:00:00+07:00',
+};
+const IMPORT_EXAMPLE = {
+  designs: [
+    {
+      localId: 'guest-a1b2c3',
+      title: 'กล่องกาแฟของฉัน',
+      catalogProductId: DESIGN_IDS.product,
+      patternId: DESIGN_IDS.pattern,
+      lengthMm: 100,
+      widthMm: 60,
+      heightMm: 40,
+      schemaVersion: 1,
+      document: DESIGN_EXAMPLE.document,
+    },
+  ],
 };
 
 function customer(actor: Actor): UserActor {
@@ -89,14 +124,16 @@ export class StoreDesignsController {
   @ApiEndpoint({
     id: 'store.designs.list',
     summary: 'List my designs',
-    description: 'Most recently changed first; without the document body.',
+    description:
+      'Most recently changed first; without the document body. Each design carries its product, a signed preview URL ' +
+      'and the orders that used it; `linked` keeps only designs used by an order, or only unused ones.',
     implements: DECISIONS,
   })
   @ApiPaginated(DesignDocumentDto, { example: { ...DESIGN_EXAMPLE, document: null } })
   @ApiStandardErrors('validation.failed')
-  async list(@CurrentActor() actor: Actor, @Query() q: PageQuery) {
-    const [rows, total] = await this.designs.list(customer(actor).userId, q.page, q.perPage);
-    return { data: rows.map((r) => designDto(r, false)), meta: { page: q.page, perPage: q.perPage, total } };
+  async list(@CurrentActor() actor: Actor, @Query() q: DesignListQuery) {
+    const [rows, total] = await this.designs.list(customer(actor).userId, q.page, q.perPage, q.linked);
+    return { data: await this.designs.views(rows, false), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Post('designs')
@@ -126,7 +163,7 @@ export class StoreDesignsController {
   ) {
     const row = await this.designs.create(customer(actor), body);
     res.setHeader('ETag', designEtag(row));
-    return designDto(row, true);
+    return this.designs.view(row);
   }
 
   @Get('designs/:designId')
@@ -147,7 +184,7 @@ export class StoreDesignsController {
   ) {
     const row = await this.designs.get(id, customer(actor).userId);
     res.setHeader('ETag', designEtag(row));
-    return designDto(row, true);
+    return this.designs.view(row);
   }
 
   @Put('designs/:designId')
@@ -155,7 +192,9 @@ export class StoreDesignsController {
   @ApiEndpoint({
     id: 'store.designs.save',
     summary: 'Save my design as a new version',
-    description: 'Versions are immutable; `If-Match` is required — a stale ETag is refused with 412.',
+    description: 'Versions are immutable; `If-Match` is required — a stale ETag is refused with 412. `kind` tells the ' +
+      'editor’s autosaves from the customer’s saves (the history can hide autosaves) and `label` names the version; ' +
+      'the box style, material and size can change with the save.',
     implements: DECISIONS,
   })
   @ApiConcurrency()
@@ -179,7 +218,7 @@ export class StoreDesignsController {
     const me = customer(actor);
     const row = await this.designs.save(me, id, ifMatch, body, me.userId);
     res.setHeader('ETag', designEtag(row));
-    return designDto(row, true);
+    return this.designs.view(row);
   }
 
   @Delete('designs/:designId')
@@ -203,13 +242,20 @@ export class StoreDesignsController {
   @ApiEndpoint({
     id: 'store.designs.listVersions',
     summary: 'List the versions of my design',
-    description: 'Newest first, without bodies.',
+    description:
+      'Newest first, without bodies. A long history pages with `limit` and `before` (the last `versionNo` of the ' +
+      'previous page; fewer than `limit` rows means no more); `kind=manual` hides autosaves.',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Versions', type: [DesignVersionDto], example: [VERSION_EXAMPLE] })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async versions(@CurrentActor() actor: Actor, @Param('designId', ParseUUIDPipe) id: string) {
-    return (await this.designs.versions(id, customer(actor).userId)).map((v) => versionDto(v, false));
+  async versions(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) id: string,
+    @Query() q: DesignVersionListQuery,
+  ) {
+    const rows = await this.designs.versions(id, customer(actor).userId, q);
+    return Promise.all(rows.map((v) => this.designs.versionView(v, false)));
   }
 
   @Get('designs/:designId/versions/:versionNo')
@@ -232,7 +278,159 @@ export class StoreDesignsController {
     @Param('designId', ParseUUIDPipe) id: string,
     @Param('versionNo', ParseIntPipe) versionNo: number,
   ) {
-    return versionDto(await this.designs.version(id, versionNo, customer(actor).userId), true);
+    return this.designs.versionView(await this.designs.version(id, versionNo, customer(actor).userId), true);
+  }
+
+  @Post('designs/:designId/versions/:versionNo/actions/restore')
+  @HttpCode(200)
+  @designParam
+  @ApiParam({ name: 'versionNo', schema: { type: 'integer', minimum: 1 } })
+  @ApiEndpoint({
+    id: 'store.designs.restoreVersion',
+    summary: 'Restore an earlier version of my design',
+    description:
+      'Saves a new version (kind `restore`) whose document is that version’s — the history is never rewritten. ' +
+      '`If-Match` the design’s current ETag (412 when stale); answers the design with its new ETag.',
+    implements: DECISIONS,
+  })
+  @ApiConcurrency()
+  @ApiEtag()
+  @ApiSuccess(200, { description: 'Restored', type: DesignDocumentDto, example: DESIGN_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'designs.document_too_large')
+  async restore(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) id: string,
+    @Param('versionNo', ParseIntPipe) versionNo: number,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.designs.restore(customer(actor), id, versionNo, ifMatch);
+    res.setHeader('ETag', designEtag(row));
+    return this.designs.view(row);
+  }
+
+  @Post('designs/:designId/actions/duplicate')
+  @Idempotent({ optional: true })
+  @designParam
+  @ApiEndpoint({
+    id: 'store.designs.duplicate',
+    summary: 'Duplicate my design',
+    description:
+      'A new design with the current version and the assets of mine, under the given title; not linked to any ' +
+      'order and not shared.',
+    implements: DECISIONS,
+  })
+  @ApiBody({ type: DuplicateDesignDto, examples: { default: { value: { title: 'กล่องกาแฟของฉัน (สำเนา)' } } } })
+  @ApiEtag()
+  @ApiSuccess(201, {
+    description: 'The copy',
+    type: DesignDocumentDto,
+    example: { ...DESIGN_EXAMPLE, title: 'กล่องกาแฟของฉัน (สำเนา)', versionNo: 1, orders: [] },
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async duplicate(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) id: string,
+    @Body() body: DuplicateDesignDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.designs.duplicate(customer(actor), id, body.title);
+    res.setHeader('ETag', designEtag(row));
+    return this.designs.view(row);
+  }
+
+  @Post('designs/actions/import')
+  @HttpCode(200)
+  @Idempotent({ optional: true })
+  @ApiEndpoint({
+    id: 'store.designs.import',
+    summary: 'Import the designs I made before signing in',
+    description:
+      'Designs the browser kept for a guest become mine, each as version 1 (kind `import`). Importing a local id ' +
+      'again answers the same design (a no-op). A row without an active catalogue product, or over 2 MB, is ' +
+      'skipped with its reason; a box style or material no longer in the catalogue is left out.',
+    implements: DECISIONS,
+  })
+  @ApiBody({ type: ImportDesignsDto, examples: { default: { value: IMPORT_EXAMPLE } } })
+  @ApiSuccess(200, {
+    description: 'What was imported and skipped',
+    type: ImportDesignsResultDto,
+    example: {
+      imported: [{ localId: 'guest-a1b2c3', designId: DESIGN_IDS.design }],
+      skipped: [{ localId: 'guest-d4e5f6', reason: 'product_not_found' }],
+    },
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
+  async importGuest(@CurrentActor() actor: Actor, @Body() body: ImportDesignsDto): Promise<ImportDesignsResultDto> {
+    return this.designs.importGuest(customer(actor), body.designs);
+  }
+
+  @Post('designs/:designId/actions/share')
+  @designParam
+  @ApiEndpoint({
+    id: 'store.designs.share',
+    summary: 'Share my design (view only)',
+    description:
+      'A new view-only link to the current version; the token is shown once and only its hash is kept. Sharing ' +
+      'again replaces the previous link; it expires after `configurations.share_link_days` (D-185) and can be ' +
+      'revoked (D-226).',
+    implements: ['D-226', 'D-185'],
+  })
+  @ApiSuccess(201, {
+    description: 'Shared',
+    type: ShareDesignResultDto,
+    example: {
+      shareToken: 'bX2kQ9…',
+      sharePath: '/v1/store/shared-designs/bX2kQ9…',
+      sharedAt: '2026-09-30T10:00:00+07:00',
+      expiresAt: '2026-10-15T10:00:00+07:00',
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async share(
+    @CurrentActor() actor: Actor,
+    @Param('designId', ParseUUIDPipe) id: string,
+  ): Promise<ShareDesignResultDto> {
+    const { token, sharedAt, expiresAt } = await this.designs.share(customer(actor), id);
+    return {
+      shareToken: token,
+      sharePath: `/v1/store/shared-designs/${token}`,
+      sharedAt: toBangkokIso(sharedAt),
+      expiresAt: toBangkokIso(expiresAt),
+    };
+  }
+
+  @Delete('designs/:designId/share')
+  @HttpCode(204)
+  @designParam
+  @ApiEndpoint({
+    id: 'store.designs.unshare',
+    summary: 'Stop sharing my design',
+    description: 'Revokes the live link: it stops opening at once (D-226). 404 when not shared.',
+    implements: ['D-226'],
+  })
+  @ApiSuccess(204, { description: 'Revoked' })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async unshare(@CurrentActor() actor: Actor, @Param('designId', ParseUUIDPipe) id: string) {
+    await this.designs.unshare(customer(actor), id);
+  }
+
+  @Get('shared-designs/:token')
+  @Public()
+  @Throttle(TRACKING_THROTTLE)
+  @ApiParam({ name: 'token', schema: { type: 'string', pattern: '^[A-Za-z0-9_-]{43}$' } })
+  @ApiEndpoint({
+    id: 'store.designs.getShared',
+    summary: 'Open a shared design',
+    description:
+      'Anyone with the link sees the current version of the design with signed asset URLs — never its owner. ' +
+      'Revoked, expired or deleted answers 404 (D-226). Rate-limited per client.',
+    implements: ['D-226'],
+  })
+  @ApiSuccess(200, { description: 'The shared design', type: SharedDesignDto, example: SHARED_DESIGN_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'http.too_many_requests')
+  async shared(@Param('token') token: string): Promise<SharedDesignDto> {
+    return this.designs.sharedView(await this.designs.shared(token));
   }
 
   @Post('designs/:designId/assets')
@@ -261,7 +459,7 @@ export class StoreDesignsController {
     @Body() body: AddDesignAssetDto,
   ) {
     const me = customer(actor);
-    return designDto(await this.designs.addAsset(me, id, body, me.userId), true);
+    return this.designs.view(await this.designs.addAsset(me, id, body, me.userId));
   }
 
   @Delete('designs/:designId/assets/:assetId')
@@ -284,7 +482,7 @@ export class StoreDesignsController {
     @Param('designId', ParseUUIDPipe) id: string,
     @Param('assetId', ParseUUIDPipe) assetId: string,
   ) {
-    return designDto(await this.designs.removeAsset(id, assetId, customer(actor).userId), true);
+    return this.designs.view(await this.designs.removeAsset(id, assetId, customer(actor).userId));
   }
 
   @Post('orders/:orderId/artwork-submissions/from-design')
@@ -426,7 +624,7 @@ export class AdminDesignsController {
   async get(@Param('designId', ParseUUIDPipe) id: string, @Res({ passthrough: true }) res: Response) {
     const row = await this.designs.get(id);
     res.setHeader('ETag', designEtag(row));
-    return designDto(row, true);
+    return this.designs.view(row);
   }
 
   @Post('designs')
@@ -455,7 +653,7 @@ export class AdminDesignsController {
   ) {
     const row = await this.designs.create(staff(actor), body);
     res.setHeader('ETag', designEtag(row));
-    return designDto(row, true);
+    return this.designs.view(row);
   }
 
   @Put('designs/:designId')
@@ -488,7 +686,7 @@ export class AdminDesignsController {
     const me = staff(actor);
     const row = await this.designs.save(me, id, ifMatch, body, me.userId);
     res.setHeader('ETag', designEtag(row));
-    return designDto(row, true);
+    return this.designs.view(row);
   }
 
   @Post('catalog/semi-design-templates/:templateId/actions/set-design')

@@ -132,6 +132,17 @@ enum DesignAssetKind {
   @@map("design_asset_kind")
 }
 
+/// How a design version came about (U-B0.1): the editor's periodic autosave, a save the customer made, a restore
+/// of an earlier version, or an import of a design kept in the browser before sign-in.
+enum DesignVersionKind {
+  manual
+  autosave
+  restore
+  import
+
+  @@map("design_version_kind")
+}
+
 enum DrawingFormat {
   svg
   dxf
@@ -450,6 +461,12 @@ model DesignDocument {
   title                String
   thumbnailFileId      BigInt?   @map("thumbnail_file_id")
   currentVersionId     BigInt?   @unique(map: "ux_design_documents__current_version_id") @map("current_version_id")
+  /// View-only share link (D-226): SHA-256 of the token, shown once; sharing again replaces it, revoking clears it.
+  shareTokenHash       Bytes?    @unique(map: "ux_design_documents__share_token_hash") @map("share_token_hash")
+  sharedAt             DateTime? @map("shared_at") @db.Timestamptz(6)
+  shareExpiresAt       DateTime? @map("share_expires_at") @db.Timestamptz(6)
+  /// The browser-side id of a guest design imported after sign-in; a replay of the same id is a no-op.
+  importLocalId        String?   @map("import_local_id")
   deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -469,6 +486,7 @@ model DesignDocument {
   cartItems          CartItem[]              @relation("CartItemDesignDocument")
   orders             Order[]                 @relation("OrderDesignDocument")
 
+  @@unique([ownerUserId, importLocalId], map: "ux_design_documents__owner__import_local_id", where: raw("(import_local_id IS NOT NULL)"))
   @@index([ownerUserId, updatedAt(sort: Desc)], map: "ix_design_documents__owner_user_id__updated_at")
   @@index([companyId], map: "ix_design_documents__company_id")
   @@index([catalogProductId], map: "ix_design_documents__catalog_product_id")
@@ -481,17 +499,21 @@ model DesignDocument {
 
 /// Immutable snapshot of a design document (schema-design §3.7).
 model DesignDocumentVersion {
-  id            BigInt   @id(map: "pk_design_document_versions") @default(autoincrement())
-  publicId      String   @unique(map: "ux_design_document_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  documentId    BigInt   @map("document_id")
-  versionNo     Int      @map("version_no")
-  schemaVersion Int      @map("schema_version") @db.SmallInt
-  document      Json
-  contentSha256 Bytes    @map("content_sha256")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById   BigInt?  @map("created_by")
+  id              BigInt            @id(map: "pk_design_document_versions") @default(autoincrement())
+  publicId        String            @unique(map: "ux_design_document_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  documentId      BigInt            @map("document_id")
+  versionNo       Int               @map("version_no")
+  schemaVersion   Int               @map("schema_version") @db.SmallInt
+  document        Json
+  contentSha256   Bytes             @map("content_sha256")
+  kind            DesignVersionKind @default(manual)
+  label           String?
+  thumbnailFileId BigInt?           @map("thumbnail_file_id")
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById     BigInt?           @map("created_by")
 
   designDocument      DesignDocument       @relation("DesignDocumentVersions", fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__document_id")
+  thumbnailFile       FileObject?          @relation("DesignDocumentVersionThumbnail", fields: [thumbnailFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__thumbnail_file_id")
   currentOf           DesignDocument?      @relation("DesignDocumentCurrentVersion")
   createdBy           User?                @relation("DesignDocumentVersionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_design_document_versions__created_by")
   submissions         ArtworkSubmission[]  @relation("ArtworkSubmissionDesignVersion")
@@ -499,6 +521,7 @@ model DesignDocumentVersion {
 
   @@unique([documentId, versionNo], map: "ux_design_document_versions__document_id__version_no")
   @@index([createdById], map: "ix_design_document_versions__created_by")
+  @@index([thumbnailFileId], map: "ix_design_document_versions__thumbnail_file_id")
   @@map("design_document_versions")
 }
 

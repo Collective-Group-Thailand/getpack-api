@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**70 settings** — 38 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 11 defined without a value (not set until their owner sets them).
+**71 settings** — 39 confirmed · 16 proposed · 4 pending the CPA (⚖) · 1 pending the business · 11 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -30,6 +30,7 @@
 | `campaigns.budget_alert_pct` | `80` | confirmed | superadmin | D-154 | D-154 Marketing is alerted when a campaign has used this share of its budget |
 | `claims.window_days` | `7` | confirmed | superadmin | D-082 | D-082 claim window after receipt (days) |
 | `close.unmatched_items_threshold` | `0` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 1: unmatched bank / gateway items allowed at close before each must be explained (proposed: none) |
+| `configurations.share_link_days` | `15` | confirmed | superadmin | D-185, D-226 | D-185 days a share link stays valid (as the D-051 quotation validity); design share links use it (D-226) |
 | `design.extra_revision_fee` | `{"minimumAmount":"500.00","pctOfDesignFee":"20"}` | confirmed | superadmin | D-071 | D-071 fee per revision round from round 4: max(minimum, % of the design fee) |
 | `design.free_revision_rounds` | `3` | confirmed | superadmin | D-071 | D-071 free revision rounds per hired design |
 | `design.hired_design_sla` | `{"targetBusinessDays":5,"maxBusinessDays":10}` | confirmed | superadmin | D-071 | D-071 hired design delivery target and maximum |

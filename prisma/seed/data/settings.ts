@@ -772,6 +772,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'superadmin',
   },
 
+  // --- Share links (D-185; design share links U-B0.1, D-226): Superadmin (D-063).
+  {
+    key: 'configurations.share_link_days',
+    valueType: 'integer',
+    value: 15,
+    valueSchema: { minimum: 1, maximum: 365 },
+    description: 'D-185 days a share link stays valid (as the D-051 quotation validity); design share links use it (D-226)',
+    decisions: ['D-185', 'D-226'],
+    ownerRole: 'superadmin',
+  },
+
   // --- Support (U-B0.1, D-221): owned by the CS Lead.
   {
     key: 'storefront.support_channels',

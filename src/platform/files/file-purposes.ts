@@ -50,6 +50,12 @@ export const FILE_PURPOSES = {
     mimeTypes: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'],
   },
   avatar: { retentionClass: 'standard', maxBytes: 5 * MiB, mimeTypes: IMAGES },
+  /** Images, logos, SVGs and fonts placed in an online design (B4.1, U-B0.1). */
+  design_asset: {
+    retentionClass: 'customer_content',
+    maxBytes: 50 * MiB,
+    mimeTypes: [...IMAGES, 'image/svg+xml', 'font/ttf', 'font/otf', 'font/woff', 'font/woff2'],
+  },
 } as const satisfies Record<string, FilePurposeRule>;
 
 export type FilePurpose = keyof typeof FILE_PURPOSES;
