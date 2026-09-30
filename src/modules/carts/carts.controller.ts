@@ -218,7 +218,8 @@ function cartController(surface: CartSurface): Type<unknown> {
       implements: DECISIONS,
     })
     @ApiSuccess(200, { description: 'Cart', type: CartDto, example: { ...CART_EXAMPLE, items: [] } })
-    @ApiStandardErrors('http.not_found', 'validation.failed', 'concurrency.stale')
+    @ApiStandardErrors('http.not_found', 'validation.failed')
+    @ApiConcurrency({ optional: true })
     async removeItem(
       @CurrentActor() actor: Actor,
       @Param('customerId', new ParseUUIDPipe({ optional: true })) customerId: string | undefined,

@@ -80,7 +80,7 @@ export class Finish2Dto {
   l?: number[];
 }
 
-export class AssemblyDto {
+export class QuoteAssemblyInputDto {
   @RefField({ example: IDS.diecut, description: 'Gluing, window film, handle…' })
   assemblyId!: string;
 
@@ -146,13 +146,13 @@ export class FoldingPartDto {
   @RefField({ example: IDS.diecut, optional: true })
   diecutTypeId?: string;
 
-  @ApiPropertyOptional({ type: [AssemblyDto] })
+  @ApiPropertyOptional({ type: [QuoteAssemblyInputDto] })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(6)
   @ValidateNested({ each: true })
-  @Type(() => AssemblyDto)
-  assemblies?: AssemblyDto[];
+  @Type(() => QuoteAssemblyInputDto)
+  assemblies?: QuoteAssemblyInputDto[];
 }
 
 export class DesignOptionsDto {

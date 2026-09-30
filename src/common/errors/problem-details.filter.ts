@@ -8,7 +8,7 @@ import { resolveLanguage } from '../i18n/language';
 import { requestIdOf } from '../request-id/request-id';
 import { DomainException } from './domain.exception';
 import { codeForStatus, type ErrorCode, PROBLEM_TYPE_BASE } from './error-codes';
-import { type ProblemDetails, type ProblemFieldError } from './problem-details.dto';
+import { type ProblemDetails, type ProblemExtensions, type ProblemFieldError } from './problem-details.dto';
 
 export const PROBLEM_CONTENT_TYPE = 'application/problem+json; charset=utf-8';
 
@@ -17,6 +17,7 @@ interface NormalisedError {
   status: number;
   params: Record<string, string | number>;
   errors?: ProblemFieldError[];
+  extensions?: ProblemExtensions;
   headers: Record<string, string>;
 }
 
@@ -51,6 +52,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       code: error.code,
       detail: this.translate(`errors.${error.code}.detail`, lang, error.params),
       ...(error.errors?.length ? { errors: error.errors } : {}),
+      ...error.extensions,
       requestId: requestIdOf(req) ?? '',
     };
 
@@ -70,6 +72,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
         status: exception.status,
         params: exception.params,
         errors: exception.errors,
+        extensions: exception.extensions,
         headers: exception.headers,
       };
     }

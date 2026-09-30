@@ -3,6 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
+import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import {
   ApiConcurrency,
   ApiEndpoint,
@@ -78,6 +79,7 @@ export class StoreCompaniesController {
   constructor(private readonly companies: CompaniesService) {}
 
   @Post('companies')
+  @Idempotent({ optional: true })
   @ApiEndpoint({
     id: 'store.companies.apply',
     summary: 'Apply for a B2B company account',
@@ -409,6 +411,7 @@ export class StoreCompanyApprovalsController {
   @Post(':approvalId/actions/:decision')
   @HttpCode(200)
   @companyParam
+  @Idempotent({ optional: true })
   @ApiParam({ name: 'approvalId', format: 'uuid' })
   @ApiParam({ name: 'decision', enum: ['approve', 'reject'], enumName: 'CompanyApprovalDecision' })
   @ApiEndpoint({

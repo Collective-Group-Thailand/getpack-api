@@ -14,6 +14,14 @@ export class ProblemFieldError {
   message!: string;
 }
 
+/**
+ * Extension members a problem may carry (RFC 9457 §3.2). Each is published on `ProblemDetails`
+ * and set only by the codes named in its description.
+ */
+export interface ProblemExtensions {
+  attemptsRemaining?: number;
+}
+
 /** RFC 9457 problem details, served as `application/problem+json` (contract §3). */
 export class ProblemDetails {
   @ApiProperty({ example: 'https://errors.packio/order.invalid_transition' })
@@ -35,6 +43,14 @@ export class ProblemDetails {
 
   @ApiPropertyOptional({ type: () => [ProblemFieldError] })
   errors?: ProblemFieldError[];
+
+  @ApiPropertyOptional({
+    type: 'integer',
+    minimum: 0,
+    example: 4,
+    description: '`auth.otp_invalid` only: codes that may still be tried on this challenge (D-143)',
+  })
+  attemptsRemaining?: number;
 
   @ApiProperty({ example: '6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e' })
   requestId!: string;

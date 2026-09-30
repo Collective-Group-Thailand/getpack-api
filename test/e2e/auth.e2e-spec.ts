@@ -56,7 +56,12 @@ describe('auth (e2e, ADR-0004)', () => {
       .expect(200);
     const e164 = `+66${localPhone.replace(/-/g, '').slice(1)}`;
     const code = /\b(\d{6})\b/.exec(sms.lastTo(e164)!.text)![1]!;
-    return { challengeId: requested.body.challengeId as string, code };
+    return {
+      challengeId: requested.body.challengeId as string,
+      code,
+      codeLength: requested.body.codeLength as number,
+      maxAttempts: requested.body.maxAttempts as number,
+    };
   };
 
   const customerLogin = async (localPhone: string): Promise<Tokens> => {
@@ -124,13 +129,16 @@ describe('auth (e2e, ADR-0004)', () => {
   });
 
   it('rejects a wrong OTP, spends attempts, and rate-limits resends', async () => {
-    const { challengeId, code } = await otpLogin('081-000-1002');
+    const { challengeId, code, codeLength, maxAttempts } = await otpLogin('081-000-1002');
+    expect(codeLength).toBe(code.length); // auth.otp_policy, not a UI constant
     const wrongCode = code === '000000' ? '111111' : '000000';
     const wrong = await request(server)
       .post('/v1/auth/customer/otp/verify')
       .send({ challengeId, code: wrongCode })
       .expect(422);
     expect(wrong.body.code).toBe('auth.otp_invalid');
+    expect(wrong.body.attemptsRemaining).toBe(maxAttempts - 1);
+    expect(wrong.body).not.toHaveProperty('params');
     const again = await request(server)
       .post('/v1/auth/customer/otp/request')
       .send({ phone: '081-000-1002' })

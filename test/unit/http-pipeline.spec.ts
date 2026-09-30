@@ -92,6 +92,30 @@ describe('HTTP pipeline', () => {
       expect(res.body.code).toBe('idempotency.key_required');
     });
 
+    it('optional mode: passes through without a key and deduplicates with one', async () => {
+      await request(server).post('/v1/pipeline-test/optional-things').send(body).expect(201);
+      await request(server).post('/v1/pipeline-test/optional-things').send(body).expect(201);
+      expect(app.get(PipelineTestController).calls).toBe(2);
+      const first = await request(server)
+        .post('/v1/pipeline-test/optional-things')
+        .set('Idempotency-Key', KEY)
+        .send(body)
+        .expect(201);
+      const replay = await request(server)
+        .post('/v1/pipeline-test/optional-things')
+        .set('Idempotency-Key', KEY)
+        .send(body)
+        .expect(201);
+      expect(replay.body).toEqual(first.body);
+      expect(replay.headers['idempotent-replayed']).toBe('true');
+      expect(app.get(PipelineTestController).calls).toBe(3);
+      await request(server)
+        .post('/v1/pipeline-test/optional-things')
+        .set('Idempotency-Key', 'nope')
+        .send(body)
+        .expect(400);
+    });
+
     it('rejects a key that is not a uuid', async () => {
       const res = await request(server)
         .post('/v1/pipeline-test/things')

@@ -3,6 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
+import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import {
   ApiConcurrency,
   ApiEndpoint,
@@ -99,6 +100,7 @@ export class StoreDesignsController {
   }
 
   @Post('designs')
+  @Idempotent({ optional: true })
   @ApiEndpoint({
     id: 'store.designs.create',
     summary: 'Create a design',

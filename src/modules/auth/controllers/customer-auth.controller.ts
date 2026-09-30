@@ -27,6 +27,8 @@ const OTP_EXAMPLE: OtpChallengeDto = {
   challengeId: '0192f3a0-7c1e-7d2a-9b1f-00000000c0de',
   expiresAt: '2026-09-23T14:10:00+07:00',
   resendAvailableAt: '2026-09-23T14:06:00+07:00',
+  codeLength: 6,
+  maxAttempts: 5,
 };
 
 const signedInCustomer = (actor: Actor | undefined) =>
@@ -75,6 +77,8 @@ export class CustomerAuthController {
       challengeId: issued.challengeId,
       expiresAt: toBangkokIso(issued.expiresAt),
       resendAvailableAt: toBangkokIso(issued.resendAvailableAt),
+      codeLength: issued.codeLength,
+      maxAttempts: issued.maxAttempts,
     };
   }
 

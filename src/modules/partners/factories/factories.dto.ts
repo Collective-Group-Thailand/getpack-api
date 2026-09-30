@@ -496,7 +496,7 @@ export class CreateKycDocumentDto {
   expiresOn?: Date | null;
 }
 
-export class ReviewKycDocumentDto {
+export class ReviewFactoryKycDocumentDto {
   @EnumField(['verified', 'rejected'] as const, 'KycReviewOutcome', { example: 'verified' })
   outcome!: 'verified' | 'rejected';
 

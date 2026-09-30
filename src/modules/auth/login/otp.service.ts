@@ -16,6 +16,8 @@ export interface OtpChallengeIssued {
   challengeId: string;
   expiresAt: Date;
   resendAvailableAt: Date;
+  codeLength: number;
+  maxAttempts: number;
 }
 
 /**
@@ -82,7 +84,13 @@ export class OtpService {
       text: `รหัส OTP Packio ของคุณคือ ${code} (หมดอายุใน ${minutes} นาที) ห้ามแจ้งรหัสนี้กับผู้อื่น`,
     });
     await this.prisma.otpChallenge.update({ where: { id: created.id }, data: { providerMessageId } });
-    return { challengeId, expiresAt, resendAvailableAt: new Date(now + policy.resendCooldownSeconds * 1000) };
+    return {
+      challengeId,
+      expiresAt,
+      resendAvailableAt: new Date(now + policy.resendCooldownSeconds * 1000),
+      codeLength: policy.codeLength,
+      maxAttempts: policy.maxAttempts,
+    };
   }
 
   /** Returns the verified phone (E.164). Each call spends one attempt; a used code cannot be reused. */
@@ -96,8 +104,10 @@ export class OtpService {
       RETURNING id, phone, code_hash, attempts, max_attempts`;
     if (!row) throw new DomainException('auth.otp_expired');
     if (!sameDigest(this.digest(challengeId, code), row.code_hash)) {
+      const remaining = row.max_attempts - row.attempts;
       throw new DomainException('auth.otp_invalid', {
-        params: { remaining: row.max_attempts - row.attempts },
+        params: { remaining },
+        extensions: { attemptsRemaining: remaining },
       });
     }
     const consumed = await this.prisma.otpChallenge.updateMany({

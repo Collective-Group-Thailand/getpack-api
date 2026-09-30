@@ -24,7 +24,7 @@ import {
   type IdempotencyStore,
   type StoredResponse,
 } from './idempotency.store';
-import { IDEMPOTENCY_KEY_HEADER, IDEMPOTENT_METADATA } from './idempotent.decorator';
+import { IDEMPOTENCY_KEY_HEADER, IDEMPOTENT_METADATA, type IdempotentMode } from './idempotent.decorator';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 /** Response headers worth replaying; everything else is recomputed per request. */
@@ -64,15 +64,18 @@ export class IdempotencyInterceptor implements NestInterceptor {
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const enabled = this.reflector.get<boolean | undefined>(IDEMPOTENT_METADATA, context.getHandler());
-    if (!enabled || context.getType() !== 'http') return next.handle();
+    const mode = this.reflector.get<IdempotentMode | undefined>(IDEMPOTENT_METADATA, context.getHandler());
+    if (!mode || context.getType() !== 'http') return next.handle();
 
     const req = context.switchToHttp().getRequest<Request>();
     const res = context.switchToHttp().getResponse<Response>();
 
     const header = req.headers[IDEMPOTENCY_KEY_HEADER];
     const idempotencyKey = Array.isArray(header) ? header[0] : header;
-    if (!idempotencyKey) throw new DomainException('idempotency.key_required');
+    if (!idempotencyKey) {
+      if (mode === 'optional') return next.handle();
+      throw new DomainException('idempotency.key_required');
+    }
     if (!UUID.test(idempotencyKey)) throw new DomainException('idempotency.key_invalid');
 
     const storeKey = [actorKeyOf(req), req.method, req.path, idempotencyKey.toLowerCase()].join('|');

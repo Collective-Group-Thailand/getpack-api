@@ -29,7 +29,7 @@ import {
   type CreateKycDocumentDto,
   type FactoryListQuery,
   ONBOARDING_STEPS,
-  type ReviewKycDocumentDto,
+  type ReviewFactoryKycDocumentDto,
   type UpdateFactoryAddressDto,
   type UpdateFactoryContactDto,
   type UpdateFactoryDto,
@@ -575,7 +575,7 @@ export class FactoriesService {
     actor: UserActor,
     publicId: string,
     documentId: string,
-    input: ReviewKycDocumentDto,
+    input: ReviewFactoryKycDocumentDto,
   ) {
     const factory = await this.access.factory(actor, publicId);
     return this.prisma.withTx(async (tx) => {

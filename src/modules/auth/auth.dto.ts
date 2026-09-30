@@ -187,6 +187,21 @@ export class OtpChallengeDto {
     description: 'When a new code may be requested',
   })
   resendAvailableAt!: string;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 6,
+    description: 'Digits in the code sent (setting `auth.otp_policy.codeLength`); never assume 6',
+  })
+  codeLength!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 5,
+    description:
+      'Codes that may be tried on this challenge (`auth.otp_policy.maxAttempts`); a wrong code answers `auth.otp_invalid` with `attemptsRemaining`',
+  })
+  maxAttempts!: number;
 }
 
 export class OtpVerifyDto {

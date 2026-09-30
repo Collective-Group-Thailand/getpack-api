@@ -92,12 +92,17 @@ export function ApiStandardErrors(...codes: ErrorCode[]) {
   return ext(EXT.errors, 'standard', [...new Set<ErrorCode>([...codes, 'internal.unexpected'])]);
 }
 
-/** Irreversible POST protected by `Idempotency-Key` (contract §3); use through `@Idempotent()`. */
-export function ApiIdempotent() {
+/**
+ * Irreversible POST protected by `Idempotency-Key` (contract §3); use through `@Idempotent()`.
+ * `optional` documents a header added to an already published operation (additive until U-B5).
+ */
+export function ApiIdempotent(options: { optional?: boolean } = {}) {
   return applyDecorators(
-    ext(EXT.parameters, 'idempotency', ['IdempotencyKey'] satisfies ParameterName[]),
+    ext(EXT.parameters, 'idempotency', [
+      options.optional ? 'IdempotencyKeyOptional' : 'IdempotencyKey',
+    ] satisfies ParameterName[]),
     ext(EXT.errors, 'idempotency', [
-      'idempotency.key_required',
+      ...(options.optional ? [] : ['idempotency.key_required' as const]),
       'idempotency.key_invalid',
       'idempotency.in_progress',
       'idempotency.key_reused',
@@ -106,13 +111,18 @@ export function ApiIdempotent() {
   );
 }
 
-/** Update guarded by `If-Match` / `ETag` (contract §3 "Concurrency"). */
-export function ApiConcurrency() {
+/**
+ * Update guarded by `If-Match` / `ETag` (contract §3 "Concurrency"). `optional`: the header is
+ * checked when sent (412 on mismatch) and never required (no 428).
+ */
+export function ApiConcurrency(options: { optional?: boolean } = {}) {
   return applyDecorators(
-    ext(EXT.parameters, 'concurrency', ['IfMatch'] satisfies ParameterName[]),
+    ext(EXT.parameters, 'concurrency', [
+      options.optional ? 'IfMatchOptional' : 'IfMatch',
+    ] satisfies ParameterName[]),
     ext(EXT.errors, 'concurrency', [
       'concurrency.stale',
-      'concurrency.precondition_required',
+      ...(options.optional ? [] : ['concurrency.precondition_required' as const]),
     ] satisfies ErrorCode[]),
     ext(EXT.successHeaders, 'concurrency', ['ETag'] satisfies HeaderName[]),
   );

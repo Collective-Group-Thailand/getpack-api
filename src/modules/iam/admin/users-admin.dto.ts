@@ -1,3 +1,4 @@
+import { ReasonDto } from '@common/dto/reason.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -162,13 +163,7 @@ export class CreateUserDto {
   initialPassword!: string;
 }
 
-export class ReasonDto {
-  @ApiProperty({ example: 'Left the company', minLength: 3, maxLength: 500 })
-  @IsString()
-  @MinLength(3)
-  @MaxLength(500)
-  reason!: string;
-}
+export { ReasonDto };
 
 export class GrantRoleDto extends ReasonDto {
   @ApiProperty({ example: 'finance', pattern: '^[a-z][a-z0-9_]*$' })

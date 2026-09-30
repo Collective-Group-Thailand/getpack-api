@@ -44,7 +44,7 @@ import {
   OnboardingStepDto,
   OwnerAccountDto,
   ReasonBodyDto,
-  ReviewKycDocumentDto,
+  ReviewFactoryKycDocumentDto,
   UpdateFactoryDto,
   UpdateOnboardingStepDto,
   UpdateOwnFactoryDto,
@@ -384,7 +384,7 @@ export class AdminFactoriesController {
     description: 'The `kyc` step is approved once every document is verified.',
     implements: ['D-011'],
   })
-  @ApiBody({ type: ReviewKycDocumentDto, examples: { default: { value: { outcome: 'verified' } } } })
+  @ApiBody({ type: ReviewFactoryKycDocumentDto, examples: { default: { value: { outcome: 'verified' } } } })
   @ApiSuccess(200, {
     description: 'The document',
     type: KycDocumentDto,
@@ -404,7 +404,7 @@ export class AdminFactoriesController {
     @CurrentActor() actor: Actor,
     @Param('factoryId', ParseUUIDPipe) factoryId: string,
     @Param('documentId', ParseUUIDPipe) documentId: string,
-    @Body() body: ReviewKycDocumentDto,
+    @Body() body: ReviewFactoryKycDocumentDto,
   ): Promise<KycDocumentDto> {
     return kycDto(await this.factories.reviewKycDocument(staffOrPartner(actor), factoryId, documentId, body));
   }

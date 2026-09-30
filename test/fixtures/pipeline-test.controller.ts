@@ -49,6 +49,13 @@ export class PipelineTestController {
     return { callNumber: this.calls, name: body.name };
   }
 
+  @Post('optional-things')
+  @Idempotent({ optional: true })
+  createOptional(@Body() body: CreateThingDto): { callNumber: number; name: string } {
+    this.calls += 1;
+    return { callNumber: this.calls, name: body.name };
+  }
+
   @Post('fail-once')
   @Idempotent()
   @HttpCode(200)

@@ -32,6 +32,25 @@ export const PARAMETERS = {
       'A failed attempt releases the key.',
     schema: { type: 'string', format: 'uuid', example: '3b241101-e2bb-4255-8caf-4136c566a962' },
   },
+  IdempotencyKeyOptional: {
+    name: 'Idempotency-Key',
+    in: 'header',
+    required: false,
+    description:
+      'Recommended client-generated uuid; required from U-B5. When sent, a replay with the same key and body ' +
+      'within 24 h returns the original response with `Idempotent-Replayed: true`; the same key with a ' +
+      'different body → 422 `idempotency.key_reused`; while the first request is still running → 409 ' +
+      '`idempotency.in_progress`. Without it the request is not deduplicated.',
+    schema: { type: 'string', format: 'uuid', example: '3b241101-e2bb-4255-8caf-4136c566a962' },
+  },
+  IfMatchOptional: {
+    name: 'If-Match',
+    in: 'header',
+    required: false,
+    description:
+      'ETag from the last read of this resource. When sent and it does not match → 412 `concurrency.stale`.',
+    schema: { type: 'string', example: '"k8QeW2mV0pYt4sLr9nXc1bJ7aZd"' },
+  },
   IfMatch: {
     name: 'If-Match',
     in: 'header',

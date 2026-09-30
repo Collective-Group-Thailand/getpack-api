@@ -1,3 +1,4 @@
+import { ReasonDto } from '@common/dto/reason.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
@@ -353,13 +354,7 @@ export class StoreDocumentListQuery extends PageQuery {
   companyId?: string;
 }
 
-export class ReasonDto {
-  @ApiProperty({ example: 'สินค้าบกพร่อง ไม่ครบตามสั่ง' })
-  @IsString()
-  @MinLength(3)
-  @MaxLength(500)
-  reason!: string;
-}
+export { ReasonDto };
 
 export class RequestCreditNoteDto {
   @ApiProperty({ example: '535.00', pattern: MONEY.source, description: 'Gross amount credited (incl. VAT)' })

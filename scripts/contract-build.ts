@@ -1,8 +1,12 @@
 /**
  * `pnpm contract:build` — boots the HTTP app with fake integrations (no listening, no database or
  * Redis connection: both connect lazily) and writes a deterministic `contract/openapi.json`.
- * Fails when the document breaks a contract rule (unnamed enum, tag without surface prefix).
+ * Fails when the document breaks a contract rule (unnamed enum, tag without surface prefix, two
+ * DTO classes published under one component name).
  */
+// Must stay the first import: it records DTO classes as their modules load.
+import '../src/common/openapi/schema-classes.track';
+
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -11,6 +15,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { APP_VERSION, configureApp } from '../src/bootstrap';
 import { buildOpenApiDocument, contractViolations } from '../src/common/openapi/openapi.document';
+import { duplicateSchemaClasses } from '../src/common/openapi/schema-classes';
 
 const CONTRACT_ENV = {
   NODE_ENV: 'test',
@@ -29,7 +34,7 @@ async function main(): Promise<void> {
   const document = buildOpenApiDocument(app, APP_VERSION);
   await app.close();
 
-  const problems = contractViolations(document);
+  const problems = [...contractViolations(document), ...duplicateSchemaClasses(document)];
   if (problems.length > 0) {
     console.error(`Contract violations:\n  - ${problems.join('\n  - ')}`);
     process.exit(1);

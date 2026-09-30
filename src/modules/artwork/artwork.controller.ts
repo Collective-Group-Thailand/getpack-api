@@ -2,6 +2,7 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { ApiSurface } from '@modules/surfaces/surfaces';
@@ -50,6 +51,7 @@ export class StoreArtworkController {
 
   @Post('orders/:orderId/artwork-submissions')
   @orderParam
+  @Idempotent({ optional: true })
   @ApiEndpoint({
     id: 'store.artwork.submit',
     summary: 'Submit artwork for my order',
