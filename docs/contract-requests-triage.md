@@ -40,6 +40,8 @@ No verdict became `reject`. Items moved out of U-B0 scope: `admin.analytics-jour
 
 **U-B0.1 shipped in `v0.4.0` (2026-10-01):** its 49 ids are published (47, most with the mapping in *Details*) or deferred by decision (2: guided help, sample kits — D-223); see *U-B0.1 shipped*. The table above keeps the counts of the triage.
 
+**U-B0.2 shipped in `v0.5.0` (2026-10-01):** its 34 ids are published (most with the mapping in *Details*); see *U-B0.2 shipped*. `allowedActions` / `nextActions` everywhere stay with U-B0.3.
+
 Plus the three known contract defects and the two B6.3 launch gaps below (not frontend requests; counted separately).
 
 The *Ops* and *Additive gaps* columns count per frontend operation, including field-level entries (for example `… (OtpChallengeDto.codeLength)`) and the scope bullets of the first triage. `pnpm gen:triage` counts only the `- **METHOD path**` lines and their `gap` bullets, so the generated `triage.ts` holds **134 requests and 305 operations** (1 published · 210 published differently · 94 implement here; gaps 93 / 140 / 53 by group). The 2026-09-30 deltas above are the same on both bases.
@@ -156,6 +158,47 @@ Every U-B0.1 row below is now **published** (`v0.4.0`), except the two deferred 
 | `store.company-credit` | `POST /v1/store/me/company/credit-applications`<br>`GET /v1/store/me/company/statements`<br>`POST /v1/store/me/company/statements/{statementId}/actions/download` | mixed: 1 implement here · 2 published differently | `store.documents.companyStatement`, `store.documents.companyStatementPdf` | U-B0.1: implement in `companies`; 2 additive gap(s) | Monthly statements exist per month (store.documents.companyStatement / store.companyCredit.statement, PDF via store.documents.companyStatementPdf) but not as a list with aging; a customer credit application does not exist (only the admin-side admin.companyCredit.requestLimit). |
 | `store.company-spend` | `GET /v1/store/me/company/spend` | implement here (U-B0.1) | — | U-B0.1: implement in `companies` | No company spend summary exists; it must be built. |
 | `store.company-reorder` | `POST /v1/store/me/company/bulk-reorders`<br>`POST /v1/store/me/company/bulk-reorders/actions/preview` | implement here (U-B0.1) | — | U-B0.1: implement in `claims` | No bulk reorder exists; single reorder is store.claims.reorder. Both bulk preview and add must be built. |
+
+## U-B0.2 shipped (`v0.5.0`, 2026-10-01)
+
+Every U-B0.2 row below is now **published** (`v0.5.0`). "Published differently" keeps its mapping in *Details*; the table says what the group added. Nothing was removed or made required on the wire: every new `Idempotency-Key` and `If-Match` is optional (required would break `v0.4.0` clients), every new field is additive. `allowedActions` / `nextActions` are U-B0.3 for every row.
+
+| Id | Now | Added in U-B0.2 (operationIds / fields) | Published differently / left out |
+|---|---|---|---|
+| `admin.orders` | published differently | `admin.orders.list` (filters, customer / factory refs, next instalment, slip-review SLA); group `customer`, `placedBy`, `taxProfile`, `hasSlipToReview`; staff timeline `promisedAt` | Page-shaped aggregate (the web composes); order `urgency` (no order SLA decided) |
+| `admin.order-notes` | published | `OrderNoteDto.mentions` | — |
+| `admin.order-actions` | published differently | `admin.orders.listCancelReasons`, `admin.orders.sendPaymentReminder`, `sendPaymentReminders` (one per group per hour); optional `Idempotency-Key` on cancel / cancelGroup / startManually; `admin.payments.list?groupId&orderId` | Slips stay on the payments resources |
+| `admin.customers` | published differently | `?customerType&createdVia`; `companyName`, `ordersCount`, `lastOrderAt`, `referralCode` | Birth date (not collected) |
+| `admin.geo` | published differently | geography reads carry ids (`CodeNameRefDto`) | Uses `store.catalog.lookupPostcode` |
+| `admin.cs-calculators` | published differently (2 calculators) | pattern `rules`, `catalogProducts`, `discountPolicy.directLimitPct` | The five other calculators → U-B6 |
+| `admin.quotations` | published differently | `?channel`, `customerCode`, `rfq` ref, internal `note` | Multi-factory grid (the API picks the factory, D-043) |
+| `admin.discount-memos` | published differently | `?requestedBy`, `evidence` | No memo code (no series decided) |
+| `admin.cs-create-order` | published differently | — | Through the customer's cart + `admin.checkout.place` |
+| `admin.rfqs` | published differently | list filters (product type, channel, dates, `awaitingFactory`); `customerCode`, `contact`, `slaTargetHours`, `routedFromCalculator`, `specLines`, `quoteDefaults.validUntil`; ETag on get | `suggestedUnitPrice` (needs the engine's sell-margin resolution) |
+| `admin.rfq-messages` | published differently | staff message `fileIds` | Messages inline on `admin.rfqs.get` |
+| `admin.rfq-actions` | published | `admin.rfqs.startReview`; assign `null` unassigns; optional `Idempotency-Key` on decline | — |
+| `admin.unmet-demand-reasons` | published | `admin.rfqs.listUnmetDemandReasons` | — |
+| `admin.rfq-consultations` | published differently | `admin.rfqs.listCandidateFactories`, `admin.rfqs.remindConsultation`; factory notifications for requested / reminded | One factory per consultation call |
+| `admin.rfq-quotes` | published | `admin.rfqs.replaceDraftQuotation` (If-Match), `admin.rfqs.recordAcceptance` | — |
+| `admin.prepress` | published differently | queue filters (assignee, product type, artwork status) and refs | Per-order workspace composed client-side; mockup ref → U2.F (D-192) |
+| `admin.prepress-actions` | published | `admin.artwork.assignPrepress` (A-62); accept note | — |
+| `admin.prepress-proofs` | published differently | annotation `resolvedBy`; reply inherits geometry | — |
+| `admin.prepress-template` | published differently | `admin.designs.listOrderDrawings`, `DrawingJobDto.outputFile` | — |
+| `admin.design-services` | published differently | optional `Idempotency-Key` on deliver / requote | — |
+| `admin.design-documents` | published | `owner`, `editable`, `admin.designs.copy`, 409 `designs.read_only` | — |
+| `admin.production-board` | published | `admin.production.board`; list `?factoryId&productTypeCode`; `productTypeCode`, `currentMilestoneKey`, `riskReason` | — |
+| `admin.inspections` | published differently | `?factoryId`; typed `accept` / `found`, `aql`, order ref, product type, `inspectorUser`; optional `Idempotency-Key` on record | — |
+| `admin.scorecards` | published | `admin.inspections.monthScorecards` | — |
+| `admin.campaigns` | published differently | `owner`, `spentPct`, `promotionsCount`, `createdAt`; action `reason` | Campaign `newCustomersCount` (no decided definition) |
+| `admin.promotions` | published differently | `admin.promotions.reorder` (priorities 10, 20, …); `benefitSummaryTh/En`, `usage`, `campaign` ref, `updatedAt` | Zones instead of provinces (D-053) |
+| `admin.coupons` | published differently | `admin.promotions.listCouponBatches`; coupon `?batchId&status`, `batchId`, `assignedCustomer`; disable `reason` | Codes stay under the promotion |
+| `admin.referrals` | published differently | `?referrerId`; `firstOrderGrossAmount`, `firstOrderClaimWindowEndsAt`, `rewardPoints`, `ReferralFraudFlag` | — |
+| `admin.customer-loyalty` | published differently | ledger `?entryType` | Balance on `…/loyalty` |
+| `admin.customer-consents` | published | `admin.consentPurposes.customerConsents` | — |
+| `admin.companies` | published differently | `?creditStatus`; `membersCount`, member `email` / `phone`, KYC file name / signed URL / uploaded / reviewed by, `discount`, `receivables` summary; ETag; optional If-Match on staff actions | Members, branches and KYC stay inline |
+| `admin.company-credit` | published differently | eligibility `reason`, `versions[]`, pending `versionNo` / `approvalId`; optional `Idempotency-Key` on requestLimit; `admin.companyCredit.receivables`, `admin.companyCredit.listStatements`, `admin.receivables.companyStatementPdf` | No evidence files (the statement is a KYC document, D-121); no statement due date or status (each invoice keeps its term) |
+| `admin.shipments` | published | `?queue&carrier&factoryId`; `cartons`, destination `province`, `blockedByPayment`, `exception`, `podReview`, `splitFrom`; ETag; `admin.shipments.resolveException`, `split`, `carrierQuotes`, `reviewPod` (D-229, D-230, A-63); `bookCarrier` `reason` | Documents are file ids (`admin.files.download`); only drafts split (D-230); no per-trip customer charge |
+| `admin.claims` | published differently | `?type&origin&customerId&factoryId`; `customer`, `shipmentNo`, `liabilityRule`, `liabilityOverriddenBy`, `decidedBy`, `approvedProof`; ETag | One op per action (Idempotency-Key); `slaDueAt` → U2.5; no message thread (D-225) |
 
 ## U-B0.2 — `admin.*` commerce & operations
 
