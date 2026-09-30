@@ -234,16 +234,17 @@ No request id is rejected. One requested **field** is not being added:
 
 1. **`partner.job-issues` resolve:** only staff resolve issues today (`admin.production.resolveIssue`). May a factory close its own issue, or is the partner "resolve" operation dropped?
 2. **`admin.shipments` POD accept/reject:** no decision covers staff review of proof of delivery. The row is `implement` and flagged uncertain.
-3. **`store.tracking` location:** the public page (`store.tracking.get`) deliberately shows no location. The frontend row allows the destination province. Should the province be shown?
-4. **`store.profile` e-mail:** `store.customerProfile.update` has no e-mail field. Should customers change their e-mail there, or does it come only from verified identities?
+3. **`store.tracking` location:** the public page (`store.tracking.get`) deliberately shows no location. The frontend row allows the destination province. Should the province be shown? *Answered 2026-09-30 by D-224: no location, order code, product or quantity on the public page.*
+4. **`store.profile` e-mail:** `store.customerProfile.update` has no e-mail field. Should customers change their e-mail there, or does it come only from verified identities? *Answered 2026-09-30 by D-224: only from verified identities; not editable on the profile.*
 5. **Business values not yet set:**
    - sample kits (`store.sample-kits`): kit prices and whether a kit is credited on the first order;
    - guided help (`store.guided-help`): the answer-to-box-style rules;
    - PDPA requests (`store.privacy`): the staff role that answers them (not in D-140).
 
    These stay `implement here`, but the U-B0.1 plan must record assumptions or get the values. None will be invented.
+   *Answered 2026-09-30:* sample kits and guided help are not built in U-B0.1 (D-223 — U2.4 / U2.2); PDPA requests are answered by the new Data Protection Officer role within 30 days (D-222).
    *2026-09-30:* D-192–D-197 answer this for **samples of a configured product** only. Material / finish kits are still open, including whether a kit is a kind of `sample` (D-192 "one sample path"). Free kit freight needs a real promotion (D-195, D-181).
-6. **To verify in U-B0.1:** the store claim view offers the resolution actions `factory_deduction` / `carrier_recovery`. They may reveal internal liability to the customer (D-083). If confirmed, this is a defect, fixed with a test.
+6. **To verify in U-B0.1:** the store claim view offers the resolution actions `factory_deduction` / `carrier_recovery`. They may reveal internal liability to the customer (D-083). If confirmed, this is a defect, fixed with a test. *Confirmed 2026-09-30 (`claim-views.ts:29-36` maps every resolution with its amount); fixed in U-B0.1 S1.*
 7. **`admin.analytics-journeys` drop-alert threshold (2026-09-30):** the scorecard proposes a 15 % week-over-week drop. It becomes the setting `analytics.journey_drop_alert_pct`; U5.B6 confirms the value with the business before it ships. It does not block U-B0.
 
 ## Cross-cutting findings for the implementing groups

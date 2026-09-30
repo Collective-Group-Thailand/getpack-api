@@ -2,6 +2,74 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U-B0.1 — `auth.*` / `store.*` contract requests (2026-09-30, planning)
+Scope: the 49 U-B0.1 ids of `docs/contract-requests-triage.md` (refreshed against `v0.3.0` and `packio-web@f225d30`; 38 operations `implement here`, 93 additive gaps), plus the U-B0.1 known defect (`AssemblyDto`), triage open question 6 and the cross-cutting idempotency / concurrency findings on `store.*` operations. Code at `main` = `cb2ebe4`; `src`, `prisma` and `contract` are identical to `v0.3.0` (`git diff --quiet v0.3.0 HEAD`). Per-field evidence is in the triage *Details*; the rows below cite the code checked for this plan. **Slice** = the planned commit (see the outcome below the table).
+
+| # | Requirement (triage id) | Before | Evidence | This session |
+|---|---|---|---|---|
+| 1.1 | Duplicate `AssemblyDto` (quote input vs catalogue row) | missing (defect) | `quote.dto.ts:83` and `materials.dto.ts:574` both named `AssemblyDto`; `FoldingPartDto.assemblies` published with the catalogue shape | S1: rename the quote input `QuoteAssemblyInputDto`; `contract:build` fails when two classes map to one component |
+| 1.2 | Store claim view hides internal liability actions (open question 6) | missing (defect) | `claim-views.ts:29-36` maps every resolution, incl. `factory_deduction` / `carrier_recovery` with amount, into `StoreClaimDto` | S1: store view drops internal actions (D-083, D-050, D-044); unit test |
+| 1.3 | `Idempotency-Key` on irreversible store ops (cross-cutting) | missing | not declared on `store.artwork.submit`, `store.designs.create`, `store.companies.apply`, `store.companyApprovals.decide` | S1: add (optional header first, as the contract is published — additive) |
+| 1.4 | `store.cart.removeItem` documents 412 without `If-Match` | partial (defect) | contract lists 412; no `If-Match` parameter | S1: take `If-Match` like the other cart mutations (optional → documented) |
+| 2.1 | `otp.code-length` | missing | `OtpChallengeDto` (`auth.dto.ts:177-190`) has no `codeLength`; policy in `auth.otp_policy` (`setting-keys.ts:14`) | S1: `codeLength`, `maxAttempts` on `OtpChallengeDto` |
+| 2.2 | `otp.attempts-remaining` | partial | `otp.service.ts:100` passes `remaining` to the localised detail only; `ProblemDetailsDto` has no extension members (`problem-details.dto.ts:18-40`) | S1: opt-in, whitelisted problem extension `attemptsRemaining` on `auth.otp_invalid` (never all `params`) |
+| 3.1 | `store.product-categories` | missing | `ProductCategory` (`catalog.prisma:184`) admin-only; no store read | S2 |
+| 3.2 | `store.catalog-category-filter` | missing | `listProducts` / `listStockProducts` filter by type only (`store-catalog.controller.ts:142,262`) | S2: `category` (parent includes descendants, D-228) |
+| 3.3 | `store.product-faqs` | missing | `Faq` has `categoryId` only (`catalog.prisma:1558`) | S2: `catalog_product_faqs` link (migration, admin CMS edit, audit) + public read |
+| 3.4 | `store.search-faq-hits` | missing | `StoreSearchHitKind` has no `faq` (`store-catalog.dto.ts:559`) | S2: additive enum value + trigram index on FAQ text |
+| 3.5 | `store.sitemap` | missing | no operation (contract) | S2 |
+| 3.6 | `store.support-channels` | missing | no setting key (`setting-keys.ts`); settings need an owner role (`settings-admin.service.ts:71`) | S2 (D-221: owner CS Lead) |
+| 4.1 | `store.configurator` gaps: sales unit, quantity presets / min / max / default, option content (description, image, swatch), design options + default | partial | `store.catalog.getConfigurator` (`store-catalog.controller.ts:209`, `store-configurator.dto.ts`) has none of them; `CatalogProduct` holds no quantity data (`catalog.prisma:342-363`) | S3: fields from catalogue data; quantity limits as admin-maintained catalogue fields (null until entered, never invented); design options from D-071 settings |
+| 4.2 | `store.quote-configurations` — AssemblyDto part | missing | see 1.1 | S1 |
+| 4.3 | `store.quote-configurations` — five calculators | out of scope | label, tag_sleeve, pouch, standard_product, service | U-B6 (one per session) |
+| 4.4 | `store.quotes` gaps: product summary + productType name, `specs[]`, `unit`, `options[].toolingAmount` | missing | `quote-views.ts` drops tooling although the stored result keeps it | S3: one shared *line summary* builder (product, type name, spec labels per calculator from catalogue names, unit) reused by quotes, cart, orders |
+| 4.5 | `store.quotes` share expiry | out of scope | D-185 (F5) | U2.1 |
+| 4.6 | `store.price-hints` | missing | no operation; catalogue products hold no reference configuration | S4: admin-maintained reference configuration per catalogue product, priced by the ported calculator (D-220); shared with U-B4 `startingPricePerPiece` |
+| 5.1 | `store.cart` gaps: item product / type / specs / unit; `readyForCheckout` + blockers | missing | `CartDto` items carry ids only | S3 (summary), S5 (blockers from the checkout-preview rules, no second rule set) |
+| 5.2 | `store.checkout` gaps: payment methods + fee, points min / max / to-earn, company block, `firstInstalment` on the placed group | missing | `CheckoutPreviewDto` (`checkout.dto.ts:326-338`) has schedule, totals, orders, withholding, notices only; fees in `payments.service.ts:276` | S5 (store credit at checkout → U2.F, D-196) |
+| 5.3 | `store.payments` gaps: receiver bank account, `failureReason`, 2C2P return | missing | slip accounts read in `payments.service.ts:905`, not exposed | S5: accounts from `payments.slip_receiver_accounts`; return = documented fixed route (no client `returnUrl` — open-redirect risk, assumption A7) |
+| 5.4 | `store.instalments` | missing | instalments only per group (`store.paymentSchedules.get`) | S5 |
+| 5.5 | `store.orders` gaps: product / unit / specs, receipt dates (`confirmedAt`, `autoCompleteAt`, `claimWindowEndsAt`), `toleranceOutcome`, `cancelReason`, `estimatedDeliveryDate`, `createdAt` | missing | `OrderDto` (`orders.dto.ts:161`) has none; settings `orders.auto_complete_days`, `claims.window_days` exist | S3 (summary) + S5 |
+| 5.6 | `store.orders` gap: `orderId` filter on `store.documents.list` | missing | `StoreDocumentListQuery` has `companyId` only (`receivables.dto.ts:346`); admin query has `orderId` (`:323`) | S5 |
+| 5.7 | `store.receipt` gap: receipt block | missing | same as 5.5 | S5 |
+| 5.8 | `store.order-by-code`, `store.address-book` | met (published differently, no gap) | triage | — |
+| 5.9 | `nextActions` on quotes, RFQs, orders, designs | out of scope | cross-cutting `entity.next-actions` | U-B0.3 |
+| 6.1 | `store.rfq-forms` (+ `specSchemaVersion` on submit) | missing | `rfqs.service.ts:149` stamps version 1; schema admin-only | S6 (measurement basis D-182 → U2.1) |
+| 6.2 | `store.rfqs` gaps: `files[]`, message `fileIds` / files, `routedFrom` | partial | files stored as `attachments` role `rfq.spec_file` (`rfqs.service.ts:162-172`) but not in `RfqDto`; `Rfq.routedFromCalculateLogId` exists (`pricing.prisma:709`), not accepted on submit | S6 |
+| 7.1 | `store.promo-check` | missing | validation + attempt budget live in the cart path (`promotion-codes.service.ts:101-118`, per customer / IP / device) | S7: same validator, read-only, guest budget by IP / device |
+| 7.2 | `store.loyalty` gaps: tier progress, entry order id, referral rules, `rewardedThisMonth`, masked referral list | missing | settings `loyalty.tiers`, `referral.rules` exist (`setting-keys.ts:94,98`) | S7 |
+| 7.3 | `store.wallet` gap: my promotion codes | missing | coupons carry `assignedCustomerId`; no store list | S7 (spending credit at checkout → U2.F) |
+| 8.1 | `store.identities` unlink | missing | `UserIdentity` (`iam.prisma:636`), `IdentityProvider` enum (`:26`); no delete op | S8: 409 last method, revoke that identity's sessions, audit + event |
+| 8.2 | `store.profile` gaps: e-mail write; "profile completed" signal | missing | open question 4 | S8: signal (`profileCompletedAt`) only; e-mail stays identity-sourced (D-224) |
+| 8.3 | `store.privacy` (list, create; admin queue) | missing | no table, no operation | S8: DPO role, 30-day deadline, anonymising deletion (D-222) |
+| 9.1 | `store.artwork` gaps: file rules, approval checklist, dieline key + box dimensions, `Idempotency-Key` | missing | rules in `artwork.preflight_rules` (`setting-keys.ts:129`), not exposed; `artwork` purpose limits (`file-purposes.ts:20`) | S9: rules read; checklist = new setting, not seeded (empty until set); aggregate GET not built (web composes; assumption A8) |
+| 9.2 | `store.proofs` gaps: checklist keys + note on approval evidence, approver name, reply validation | missing | triage | S9 |
+| 9.3 | `store.proofs` gap: rasterised pages + per-page dieline overlay | missing | no rasteriser (preflight note) | Deferred (assumption A9): the web renders the PDF; revisit with U4.B4 |
+| 9.4 | `store.design-service` gap: reference files on a paid round | missing | triage | S9 |
+| 9.5 | `store.designs` gaps: product summary + thumbnail, order link + filter, `Idempotency-Key` on create, save kind, versions cursor + kind / label / thumbnail, pattern / material change on save | missing | `DesignDocument` (`fulfilment.prisma:434`) | S9 |
+| 9.6 | `store.designs` implement: duplicate, restore, import | missing | no operations | S9 |
+| 9.7 | `store.design-assets` gaps: `design_asset` file purpose, signed URL + mime / size / px | missing | no such purpose (`file-purposes.ts`) | S9 |
+| 9.8 | `store.designer-catalog` (catalogue + one template) | missing | pieces exist (patterns, semi-designs, admin design fonts in `catalog/showcase`) | S9: read over existing data only; U4.B5 font registry / template catalogue extend it |
+| 9.9 | `store.design-share` (share, revoke, public read) | missing | quote share-token pattern exists | S9: view-only, hashed token, 15-day expiry, revocable (D-226); U4.B6 adds scopes |
+| 10.1 | `store.tracking` gaps: per-stage promised dates; order code / product / quantity on the public page | missing | open question 3 | S10: promised dates only; nothing identifying on the public page (D-224) |
+| 10.2 | `store.claims` claim-form read | missing | no operation | S10 |
+| 10.3 | `store.claims` gaps: `respondBy`; message thread | missing | D-199 claim SLAs | `respondBy` → U2.5 items 1–2 (D-199); thread not built (D-225) |
+| 10.4 | `store.reorder` preview GET + `previewToken` | missing | `reorder.service.ts:29` adds straight to cart | S10: re-price through the quote engine; tooling waiver → U2.F (D-205) |
+| 10.5 | `store.support` contact + hand-off | missing | `Conversation` allows no customer (`fulfilment.prisma:1587`) | S10: on the existing conversations (U5.B2 extends, never a second store); first response 1 business day (D-221) |
+| 10.6 | `store.guided-help` | missing | answer-to-style rules not decided (open question 5) | Not built (D-223 → U2.2) |
+| 10.7 | `store.sample-kits` | missing | kits not covered by D-192–D-197 | Not built (D-223 → U2.4) |
+| 11.1 | `store.companies` gaps: signatory name / position, contact phone, `Idempotency-Key`, my roles + `can{}`, credit eligibility, receivables + D-122 notices, company discount % | missing | triage | S11 |
+| 11.2 | `store.company-members`: change roles (+ last-admin 409); member e-mail / phone | missing | invite / remove only | S11: role change; contacts not shown (D-224) |
+| 11.3 | `store.company-branches` gap: province / subdistrict names | missing | triage | S11 |
+| 11.4 | `store.company-assets` (list, add, remove) | missing | no purpose, no table | S11: files-based library, Company Admin adds / removes (D-227); U4.B5 brand kits extend it |
+| 11.5 | `store.company-approvals` gaps: filter + paging + history, decision fields, preview company block, `Idempotency-Key` on decide | missing | triage | S11 (header in S1) |
+| 11.6 | `store.company-credit`: credit application; statement list + aging | missing | admin-only `admin.companyCredit.requestLimit` | S11: routes into the existing D-121 credit approval |
+| 11.7 | `store.company-spend` | missing | no operation | S11 |
+| 11.8 | `store.company-reorder` (preview + add) | missing | single reorder only | S11 (after S10's preview) |
+| 12 | Release: rows → `published`, PROGRESS, tag | missing | latest tag `v0.3.0` | S12: `v0.4.0` |
+
+**Decisions (2026-09-30):** the plan's proposals were accepted as D-220–D-228 (`docs/decisions.md` §Store contract answers, copied to packio-web). **Technical assumptions** (recorded in PROGRESS): A7 no client-supplied payment `returnUrl` (open-redirect risk; a documented fixed return route) · A8 no server-side artwork aggregate (the web composes the published reads) · A9 proof page rasterisation deferred (the web renders the PDF; revisit with U4.B4).
+
 ## U-B0 steps 1–2 — re-run: release tag and triage refresh (2026-09-30, docs only)
 Steps 1–2 first ran on 2026-09-29 (section below). Since then: contract `v0.3.0` (U-B6 corrugate), packio-web `9cbd99a` → `f225d30` (it imports the triage with `scripts/gen-triage.ts` and listed one new request in `awaiting-triage.ts`), and decisions D-182–D-219 (U2.0).
 
