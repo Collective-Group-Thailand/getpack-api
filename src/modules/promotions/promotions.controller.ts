@@ -13,7 +13,6 @@ import {
   ApiSuccess,
 } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
-import { PageQuery } from '@common/pagination/pagination.dto';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Campaign, type Prisma } from '@generated/prisma/client';
 import { ApiSurface } from '@modules/surfaces/surfaces';
