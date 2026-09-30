@@ -16,6 +16,7 @@ import {
   ADMIN_REVIEW_EXAMPLE,
   AdminReviewDto,
   ENTRY_EXAMPLE,
+  LedgerQuery,
   LoyaltySummaryDto,
   PointsEntryDto,
   REVIEW_EXAMPLE,
@@ -168,11 +169,12 @@ export class AdminLoyaltyController {
   })
   @ApiPaginated(PointsEntryDto, { example: ENTRY_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async ledger(@Param('customerId', ParseUUIDPipe) customerId: string, @Query() q: PageQuery) {
+  async ledger(@Param('customerId', ParseUUIDPipe) customerId: string, @Query() q: LedgerQuery) {
     const [rows, total] = await this.loyalty.ledger(
       await this.customers.customerIdOf(customerId),
       q.page,
       q.perPage,
+      q.entryType,
     );
     return { data: rows.map(entryDto), meta: { page: q.page, perPage: q.perPage, total } };
   }

@@ -95,8 +95,8 @@ export class LoyaltyService {
     };
   }
 
-  ledger(userId: bigint, page: number, perPage: number) {
-    const where = { userId };
+  ledger(userId: bigint, page: number, perPage: number, entryType?: PointsEntryType) {
+    const where = { userId, ...(entryType && { entryType }) };
     return Promise.all([
       this.prisma.pointsEntry.findMany({
         where,

@@ -47,6 +47,7 @@ import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.co
 import { AdminFilesController } from '@platform/files/files.controllers';
 import { AdminInboxController } from '@platform/notifications/my-notifications.controller';
 import {
+  AdminCustomerConsentsController,
   ConsentPurposesController,
   NotificationRoutesController,
   NotificationTemplatesController,
@@ -78,6 +79,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     NotificationTemplatesController,
     NotificationRoutesController,
     ConsentPurposesController,
+    AdminCustomerConsentsController,
     AdminInboxController,
     AuditLogsController,
     DocumentSeriesController,

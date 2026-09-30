@@ -4,15 +4,18 @@ import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
+import { PrismaService } from '@database/prisma.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, ParseUUIDPipe, Post } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { AuditService } from '@platform/audit/audit.service';
 
 import { ConsentPurposesAdminService } from './consent-purposes-admin.service';
+import { MyNotificationsService } from './my-notifications.service';
 import { NoAddressError, NotificationDelivery } from './notification-delivery';
 import {
   AddTemplateVersionDto,
+  AdminConsentDto,
   ConsentPurposeDto,
   CreateRouteDto,
   CreateTemplateDto,
@@ -440,5 +443,57 @@ export class ConsentPurposesController {
     @Body() body: PublishConsentTextDto,
   ): Promise<ConsentPurposeDto> {
     return ConsentPurposesController.toDto(await this.purposes.publish(staff(actor), key, body));
+  }
+}
+
+@ApiSurface('admin', 'consentPurposes')
+@Controller('customers/:customerId/consents')
+export class AdminCustomerConsentsController {
+  constructor(
+    private readonly mine: MyNotificationsService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  @Get()
+  @Can('customers.read')
+  @ApiParam({ name: 'customerId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.consentPurposes.customerConsents',
+    summary: 'A customer’s PDPA consents',
+    description:
+      'Every purpose with the text version in force and the customer’s latest decision — granted or not, for ' +
+      'which version, from where and when (D-144, D-222). Read-only.',
+    implements: ['D-144', 'D-222'],
+  })
+  @ApiSuccess(200, {
+    description: 'Consents',
+    type: [AdminConsentDto],
+    example: [
+      {
+        purpose: 'marketing_line',
+        required: false,
+        versionNo: 2,
+        granted: true,
+        decidedVersionNo: 1,
+        outdated: true,
+        source: 'web',
+        recordedAt: '2026-10-01T10:00:00+07:00',
+      },
+    ],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async list(@Param('customerId', ParseUUIDPipe) customerId: string): Promise<AdminConsentDto[]> {
+    const user = await this.prisma.user.findFirst({ where: { publicId: customerId, kind: 'customer' } });
+    if (!user) throw new DomainException('http.not_found');
+    return (await this.mine.consents(user.id)).map(({ purpose, version, latest }) => ({
+      purpose: purpose.key,
+      required: purpose.required,
+      versionNo: version?.versionNo ?? null,
+      granted: latest?.granted ?? null,
+      decidedVersionNo: latest?.purposeVersion.versionNo ?? null,
+      outdated: latest !== null && version !== null && latest.purposeVersionId !== version.id,
+      source: latest?.source ?? null,
+      recordedAt: latest ? toBangkokIso(latest.recordedAt) : null,
+    }));
   }
 }

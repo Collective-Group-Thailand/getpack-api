@@ -41,7 +41,7 @@ function referralDto(r: ReferralRow): ReferralDto {
   };
 }
 
-function adminReferralDto(r: ReferralRow): AdminReferralDto {
+function adminReferralDto(r: ReferralRow, claimWindowEndsAt: Date | null): AdminReferralDto {
   return {
     ...referralDto(r),
     referrer: { id: r.referrer.publicId, displayName: r.referrer.displayName },
@@ -51,6 +51,9 @@ function adminReferralDto(r: ReferralRow): AdminReferralDto {
     fraudFlags: r.fraudFlags,
     approvalId: r.approvalRequest?.publicId ?? null,
     decidedAt: iso(r.decidedAt),
+    firstOrderGrossAmount: r.firstOrderGroup?.grossAmount.toFixed(2) ?? null,
+    firstOrderClaimWindowEndsAt: iso(claimWindowEndsAt),
+    rewardPoints: r.pointsEntries.filter((e) => e.userId === r.referrerUserId).reduce((a, e) => a + e.points, 0),
   };
 }
 
@@ -119,8 +122,13 @@ export class AdminReferralsController {
   @ApiPaginated(AdminReferralDto, { example: ADMIN_REFERRAL_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@Query() q: ReferralListQuery) {
-    const [rows, total] = await this.referrals.list(q.status ? { status: q.status } : {}, q.page, q.perPage);
-    return { data: rows.map(adminReferralDto), meta: { page: q.page, perPage: q.perPage, total } };
+    const [rows, total] = await this.referrals.list(
+      { ...(q.status && { status: q.status }), ...(q.referrerId && { referrer: { publicId: q.referrerId } }) },
+      q.page,
+      q.perPage,
+    );
+    const data = await Promise.all(rows.map(async (r) => adminReferralDto(r, await this.referrals.claimWindowEnd(r))));
+    return { data, meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get(':referralId')
@@ -135,6 +143,7 @@ export class AdminReferralsController {
   @ApiSuccess(200, { description: 'Referral', type: AdminReferralDto, example: ADMIN_REFERRAL_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@Param('referralId', ParseUUIDPipe) id: string): Promise<AdminReferralDto> {
-    return adminReferralDto(await this.referrals.get(id));
+    const row = await this.referrals.get(id);
+    return adminReferralDto(row, await this.referrals.claimWindowEnd(row));
   }
 }

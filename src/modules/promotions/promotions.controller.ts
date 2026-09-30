@@ -1,6 +1,7 @@
 import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
+import { OptionalReasonDto } from '@common/dto/optional-reason.dto';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
@@ -14,7 +15,7 @@ import {
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { toBangkokIso } from '@common/time/bangkok';
-import { type Prisma } from '@generated/prisma/client';
+import { type Campaign, type Prisma } from '@generated/prisma/client';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import {
   Body,
@@ -25,6 +26,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   Res,
 } from '@nestjs/common';
@@ -37,10 +39,12 @@ import {
   CampaignDto,
   CampaignListQuery,
   COUPON_EXAMPLE,
+  CouponBatchDto,
   CouponBatchResultDto,
   CouponCodeDto,
   CouponExportDto,
   CouponExportQuery,
+  CouponListQuery,
   CREATE_PROMOTION_EXAMPLE,
   CreateCampaignDto,
   CreatePromotionDto,
@@ -48,13 +52,15 @@ import {
   PROMOTION_EXAMPLE,
   PromotionDto,
   PromotionListQuery,
+  PromotionPriorityDto,
+  PromotionPriorityResultDto,
   PromotionReportDto,
   REPORT_EXAMPLE,
   ReportQuery,
   UpdateCampaignDto,
   UpdatePromotionDto,
 } from './promotions.dto';
-import { campaignEtag, promotionEtag, PromotionsAdminService } from './promotions-admin.service';
+import { campaignEtag, promotionEtag, type PromotionRow, PromotionsAdminService } from './promotions-admin.service';
 
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
 const campaignParam = ApiParam({ name: 'campaignId', format: 'uuid' });
@@ -92,7 +98,8 @@ export class AdminCampaignsController {
       q.page,
       q.perPage,
     );
-    return { data: rows.map(campaignDto), meta: { page: q.page, perPage: q.perPage, total } };
+    const extras = await this.promotions.campaignExtras(rows.map((r) => r.id));
+    return { data: rows.map((r) => campaignDto(r, extras.get(r.id))), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Post()
@@ -131,7 +138,7 @@ export class AdminCampaignsController {
   ) {
     const row = await this.promotions.createCampaign(staff(actor), body);
     res.setHeader('ETag', campaignEtag(row));
-    return campaignDto(row);
+    return this.campaignView(row);
   }
 
   @Get(':campaignId')
@@ -149,7 +156,7 @@ export class AdminCampaignsController {
   async get(@Param('campaignId', ParseUUIDPipe) id: string, @Res({ passthrough: true }) res: Response) {
     const row = await this.promotions.campaign(id);
     res.setHeader('ETag', campaignEtag(row));
-    return campaignDto(row);
+    return this.campaignView(row);
   }
 
   @Patch(':campaignId')
@@ -176,7 +183,7 @@ export class AdminCampaignsController {
   ) {
     const row = await this.promotions.updateCampaign(staff(actor), id, ifMatch, body);
     res.setHeader('ETag', campaignEtag(row));
-    return campaignDto(row);
+    return this.campaignView(row);
   }
 
   @Post(':campaignId/actions/:action')
@@ -189,21 +196,30 @@ export class AdminCampaignsController {
     summary: 'Activate, pause or end a campaign',
     description:
       '`activate` makes it active (or scheduled before its start); `pause` stops its promotions applying; ' +
-      '`end` is final. A campaign whose budget is spent stops by itself (`exhausted`, D-154).',
+      '`end` is final. A campaign whose budget is spent stops by itself (`exhausted`, D-154). An optional ' +
+      '`reason` is recorded with the change.',
     implements: ['D-154'],
   })
+  @ApiBody({ type: OptionalReasonDto, required: false, examples: { default: { value: { reason: 'งบหมดก่อนกำหนด (fake)' } } } })
   @ApiSuccess(200, { description: 'Campaign', type: CampaignDto, example: CAMPAIGN_EXAMPLE })
-  @ApiStandardErrors('http.not_found', 'validation.failed', 'promotions.invalid_transition')
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json','http.not_found', 'validation.failed', 'promotions.invalid_transition')
   async action(
     @CurrentActor() actor: Actor,
     @Param('campaignId', ParseUUIDPipe) id: string,
     @Param('action') action: string,
     @IfMatch() ifMatch: string | undefined,
+    @Body() body: OptionalReasonDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const row = await this.promotions.campaignAction(staff(actor), id, action, ifMatch);
+    const row = await this.promotions.campaignAction(staff(actor), id, action, ifMatch, body.reason);
     res.setHeader('ETag', campaignEtag(row));
-    return campaignDto(row);
+    return this.campaignView(row);
+  }
+
+  private async campaignView(row: Campaign): Promise<CampaignDto> {
+    return campaignDto(row, (await this.promotions.campaignExtras([row.id])).get(row.id));
   }
 }
 
@@ -229,7 +245,26 @@ export class AdminPromotionsController {
       ...(q.campaignId && { campaign: { publicId: q.campaignId } }),
     };
     const [rows, total] = await this.promotions.listPromotions(where, q.page, q.perPage);
-    return { data: rows.map(promotionDto), meta: { page: q.page, perPage: q.perPage, total } };
+    const usage = await this.promotions.usage(rows.map((r) => r.id));
+    return { data: rows.map((r) => promotionDto(r, usage.get(r.id))), meta: { page: q.page, perPage: q.perPage, total } };
+  }
+
+  @Put('priority')
+  @Can('promotions.manage')
+  @Idempotent({ optional: true })
+  @ApiEndpoint({
+    id: 'admin.promotions.reorder',
+    summary: 'Set the evaluation order of promotions',
+    description:
+      'The promotions in the order given get priorities 10, 20, … in one transaction; each change is recorded ' +
+      '(D-053). Referral promotions are system-managed (409 `promotions.system_managed`).',
+    implements: ['D-053'],
+  })
+  @ApiBody({ type: PromotionPriorityDto, examples: { default: { value: { promotionIds: [PROMOTION_EXAMPLE.id] } } } })
+  @ApiSuccess(200, { description: 'Reordered', type: PromotionPriorityResultDto, example: { updated: 3 } })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed', 'promotions.system_managed')
+  async reorder(@CurrentActor() actor: Actor, @Body() body: PromotionPriorityDto): Promise<PromotionPriorityResultDto> {
+    return { updated: await this.promotions.reorder(staff(actor), body.promotionIds) };
   }
 
   @Get('report')
@@ -279,7 +314,7 @@ export class AdminPromotionsController {
   ) {
     const row = await this.promotions.createPromotion(staff(actor), body);
     res.setHeader('ETag', promotionEtag(row));
-    return promotionDto(row);
+    return this.promotionView(row);
   }
 
   @Get(':promotionId')
@@ -297,7 +332,7 @@ export class AdminPromotionsController {
   async get(@Param('promotionId', ParseUUIDPipe) id: string, @Res({ passthrough: true }) res: Response) {
     const row = await this.promotions.promotion(id);
     res.setHeader('ETag', promotionEtag(row));
-    return promotionDto(row);
+    return this.promotionView(row);
   }
 
   @Patch(':promotionId')
@@ -327,7 +362,7 @@ export class AdminPromotionsController {
   ) {
     const row = await this.promotions.updatePromotion(staff(actor), id, ifMatch, body);
     res.setHeader('ETag', promotionEtag(row));
-    return promotionDto(row);
+    return this.promotionView(row);
   }
 
   @Post(':promotionId/actions/:action')
@@ -341,8 +376,11 @@ export class AdminPromotionsController {
     description: 'A coupon promotion needs at least one code before it is activated; `end` is final (D-053).',
     implements: ['D-053'],
   })
+  @ApiBody({ type: OptionalReasonDto, required: false, examples: { default: { value: { reason: 'งบหมดก่อนกำหนด (fake)' } } } })
   @ApiSuccess(200, { description: 'Promotion', type: PromotionDto, example: PROMOTION_EXAMPLE })
   @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
     'http.not_found',
     'validation.failed',
     'promotions.invalid_transition',
@@ -353,11 +391,12 @@ export class AdminPromotionsController {
     @Param('promotionId', ParseUUIDPipe) id: string,
     @Param('action') action: string,
     @IfMatch() ifMatch: string | undefined,
+    @Body() body: OptionalReasonDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const row = await this.promotions.promotionAction(staff(actor), id, action, ifMatch);
+    const row = await this.promotions.promotionAction(staff(actor), id, action, ifMatch, body.reason);
     res.setHeader('ETag', promotionEtag(row));
-    return promotionDto(row);
+    return this.promotionView(row);
   }
 
   @Post(':promotionId/coupons')
@@ -382,7 +421,15 @@ export class AdminPromotionsController {
   @ApiSuccess(201, {
     description: 'Batch generated',
     type: CouponBatchResultDto,
-    example: { batchId: '0192f3a0-7c1e-7d2a-9b1f-000000090004', count: 500 },
+    example: {
+      batchId: '0192f3a0-7c1e-7d2a-9b1f-000000090004',
+      count: 500,
+      kind: 'bulk_unique',
+      prefix: 'PK',
+      usageLimit: 1,
+      generatedAt: '2026-10-20T10:00:00+07:00',
+      generatedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000e0001', displayName: 'Dev Marketing' },
+    },
   })
   @ApiStandardErrors(...WRITE, 'promotions.not_a_coupon', 'promotions.ended', 'promotions.code_taken')
   async generate(
@@ -399,14 +446,14 @@ export class AdminPromotionsController {
   @ApiEndpoint({
     id: 'admin.promotions.listCoupons',
     summary: 'List coupon codes of a promotion',
-    description: 'In generation order, with uses and the assigned customer (D-053).',
+    description: 'In generation order, with uses, batch and the assigned customer; filter by batch or status (D-053).',
     implements: ['D-053'],
   })
   @ApiPaginated(CouponCodeDto, { example: COUPON_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async coupons(@Param('promotionId', ParseUUIDPipe) id: string, @Query() q: PageQuery) {
+  async coupons(@Param('promotionId', ParseUUIDPipe) id: string, @Query() q: CouponListQuery) {
     const promotion = await this.promotions.promotion(id);
-    const [rows, total] = await this.promotions.coupons(promotion.id, q.page, q.perPage);
+    const [rows, total] = await this.promotions.coupons(promotion.id, q.page, q.perPage, q);
     return { data: rows.map(couponDto), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
@@ -459,15 +506,61 @@ export class AdminPromotionsController {
       'A disabled code is refused at the cart; re-enabling restores `active` or `used_up` (D-053).',
     implements: ['D-053'],
   })
+  @ApiBody({ type: OptionalReasonDto, required: false, examples: { default: { value: { reason: 'รหัสรั่วไหล (fake)' } } } })
   @ApiSuccess(200, { description: 'Coupon code', type: CouponCodeDto, example: COUPON_EXAMPLE })
-  @ApiStandardErrors('http.not_found', 'validation.failed')
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
   async setCouponStatus(
     @CurrentActor() actor: Actor,
     @Param('promotionId', ParseUUIDPipe) id: string,
     @Param('couponId', ParseUUIDPipe) couponId: string,
     @Param('action') action: string,
+    @Body() body: OptionalReasonDto,
   ) {
     if (action !== 'disable' && action !== 'enable') throw new DomainException('http.not_found');
-    return couponDto(await this.promotions.setCouponStatus(staff(actor), id, couponId, action === 'disable'));
+    return couponDto(
+      await this.promotions.setCouponStatus(staff(actor), id, couponId, action === 'disable', body.reason),
+    );
+  }
+
+  @Get(':promotionId/coupon-batches')
+  @Can('promotions.read')
+  @promotionParam
+  @ApiEndpoint({
+    id: 'admin.promotions.listCouponBatches',
+    summary: 'List the coupon batches of a promotion',
+    description: 'Each generation: kind, count, prefix, uses per code, when and by whom (D-053).',
+    implements: ['D-053'],
+  })
+  @ApiSuccess(200, {
+    description: 'Batches',
+    type: [CouponBatchDto],
+    example: [
+      {
+        id: '0192f3a0-7c1e-7d2a-9b1f-000000090004',
+        kind: 'bulk_unique',
+        count: 500,
+        prefix: 'PK',
+        usageLimit: 1,
+        generatedAt: '2026-10-20T10:00:00+07:00',
+        generatedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000e0001', displayName: 'Dev Marketing' },
+      },
+    ],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async batches(@Param('promotionId', ParseUUIDPipe) id: string): Promise<CouponBatchDto[]> {
+    const promotion = await this.promotions.promotion(id);
+    return (await this.promotions.batches(promotion.id)).map((b) => ({
+      id: b.publicId,
+      kind: b.kind,
+      count: b.count,
+      prefix: b.prefix,
+      usageLimit: b.usageLimit,
+      generatedAt: toBangkokIso(b.generatedAt),
+      generatedBy: b.createdBy ? { id: b.createdBy.publicId, displayName: b.createdBy.displayName } : null,
+    }));
+  }
+
+  private async promotionView(row: PromotionRow): Promise<PromotionDto> {
+    return promotionDto(row, (await this.promotions.usage([row.id])).get(row.id));
   }
 }

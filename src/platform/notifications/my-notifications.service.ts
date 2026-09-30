@@ -79,7 +79,12 @@ export class MyNotificationsService {
           orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
           take: 1,
         },
-        records: { where: { userId }, orderBy: { recordedAt: 'desc' }, take: 1 },
+        records: {
+          where: { userId },
+          orderBy: { recordedAt: 'desc' },
+          take: 1,
+          include: { purposeVersion: { select: { versionNo: true } } },
+        },
       },
       orderBy: { key: 'asc' },
     });

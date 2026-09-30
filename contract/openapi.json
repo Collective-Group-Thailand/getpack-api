@@ -2399,6 +2399,17 @@
           "type": "https://errors.packio/promotions.payment_method_required"
         }
       },
+      "problem.promotions.system_managed": {
+        "summary": "promotions.system_managed",
+        "value": {
+          "code": "promotions.system_managed",
+          "detail": "โปรโมชันนี้ระบบจัดการเอง ค่าตั้งอยู่ในการตั้งค่าโปรแกรมแนะนำเพื่อน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "แก้ไขไม่ได้",
+          "type": "https://errors.packio/promotions.system_managed"
+        }
+      },
       "problem.promotions.too_many_attempts": {
         "summary": "promotions.too_many_attempts",
         "value": {
@@ -4740,6 +4751,77 @@
         ],
         "type": "object"
       },
+      "AdminConsentDto": {
+        "properties": {
+          "decidedVersionNo": {
+            "description": "Text version the decision was for",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "granted": {
+            "description": "Latest decision; null = never asked",
+            "example": true,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "outdated": {
+            "description": "The latest decision was for an older text version",
+            "example": true,
+            "type": "boolean"
+          },
+          "purpose": {
+            "example": "marketing_line",
+            "type": "string"
+          },
+          "recordedAt": {
+            "example": "2026-10-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required": {
+            "example": false,
+            "type": "boolean"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConsentSource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "web"
+          },
+          "versionNo": {
+            "description": "Text version in force",
+            "example": 2,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "purpose",
+          "required",
+          "versionNo",
+          "granted",
+          "decidedVersionNo",
+          "outdated",
+          "source",
+          "recordedAt"
+        ],
+        "type": "object"
+      },
       "AdminCustomerDto": {
         "properties": {
           "companyName": {
@@ -5878,7 +5960,7 @@
           "factory": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/FactoryRefDto"
+                "$ref": "#/components/schemas/CodedRefDto"
               },
               {
                 "type": "null"
@@ -6577,6 +6659,23 @@
               "null"
             ]
           },
+          "firstOrderClaimWindowEndsAt": {
+            "description": "End of the first order’s claim window: the reward waits for it (D-132)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstOrderGrossAmount": {
+            "description": "Gross amount of the first order group",
+            "example": "14182.80",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "firstOrderGroupCode": {
             "example": "OG-2610-0001",
             "type": [
@@ -6597,7 +6696,7 @@
             "description": "Why it was held or rejected: `<kind>_match` (same phone / address / card / device as the referrer), `linked_referees`, `monthly_cap`",
             "example": [],
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/ReferralFraudFlag"
             },
             "type": "array"
           },
@@ -6619,6 +6718,11 @@
           },
           "referrer": {
             "$ref": "#/components/schemas/UserRefDto"
+          },
+          "rewardPoints": {
+            "description": "Points credited to the referrer for this referral",
+            "example": 0,
+            "type": "integer"
           },
           "rewardedAt": {
             "example": null,
@@ -6649,6 +6753,9 @@
           "firstOrderGroupId",
           "firstOrderGroupCode",
           "fraudFlags",
+          "firstOrderGrossAmount",
+          "firstOrderClaimWindowEndsAt",
+          "rewardPoints",
           "approvalId",
           "decidedAt"
         ],
@@ -10855,6 +10962,11 @@
             "example": "launch-2026",
             "type": "string"
           },
+          "createdAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
           "currency": {
             "example": "THB",
             "type": "string"
@@ -10883,9 +10995,32 @@
             "example": "เปิดตัว Packio",
             "type": "string"
           },
+          "owner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who created it"
+          },
+          "promotionsCount": {
+            "example": 3,
+            "type": "integer"
+          },
           "spentAmount": {
             "example": "12500.00",
             "type": "string"
+          },
+          "spentPct": {
+            "description": "Spent as % of the budget (2 decimals); null without a budget (D-154)",
+            "example": "25.00",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "startsAt": {
             "example": "2026-11-01T00:00:00+07:00",
@@ -10913,7 +11048,11 @@
           "alertThresholdPct",
           "alertedAt",
           "goals",
-          "currency"
+          "currency",
+          "owner",
+          "spentPct",
+          "promotionsCount",
+          "createdAt"
         ],
         "type": "object"
       },
@@ -13979,6 +14118,29 @@
         ],
         "type": "object"
       },
+      "CodedRefDto": {
+        "properties": {
+          "code": {
+            "example": "F0001",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "โรงพิมพ์ ทดสอบ",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ],
+        "type": "object"
+      },
       "CompanyAction": {
         "enum": [
           "suspend",
@@ -16402,6 +16564,66 @@
         ],
         "type": "string"
       },
+      "CouponBatchDto": {
+        "properties": {
+          "count": {
+            "example": 500,
+            "type": "integer"
+          },
+          "generatedAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "generatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CouponKind"
+              }
+            ],
+            "example": "bulk_unique"
+          },
+          "prefix": {
+            "example": "PK",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "usageLimit": {
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "count",
+          "prefix",
+          "usageLimit",
+          "generatedAt",
+          "generatedBy"
+        ],
+        "type": "object"
+      },
       "CouponBatchResultDto": {
         "properties": {
           "batchId": {
@@ -16412,18 +16634,80 @@
           "count": {
             "example": 500,
             "type": "integer"
+          },
+          "generatedAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "generatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CouponKind"
+              }
+            ],
+            "example": "bulk_unique"
+          },
+          "prefix": {
+            "example": "PK",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "usageLimit": {
+            "description": "Uses per code; null = unlimited",
+            "example": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         },
         "required": [
           "batchId",
-          "count"
+          "count",
+          "kind",
+          "prefix",
+          "usageLimit",
+          "generatedAt",
+          "generatedBy"
         ],
         "type": "object"
       },
       "CouponCodeDto": {
         "properties": {
+          "assignedCustomer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The customer a per-customer code belongs to"
+          },
           "assignedCustomerId": {
             "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "batchId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
             "format": "uuid",
             "type": [
               "string",
@@ -16465,7 +16749,9 @@
           "status",
           "usageLimit",
           "usedCount",
-          "assignedCustomerId"
+          "assignedCustomerId",
+          "assignedCustomer",
+          "batchId"
         ],
         "type": "object"
       },
@@ -25922,29 +26208,6 @@
         ],
         "type": "object"
       },
-      "FactoryRefDto": {
-        "properties": {
-          "code": {
-            "example": "F0001",
-            "type": "string"
-          },
-          "id": {
-            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d1003",
-            "format": "uuid",
-            "type": "string"
-          },
-          "name": {
-            "example": "โรงพิมพ์ ทดสอบ",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "code",
-          "name"
-        ],
-        "type": "object"
-      },
       "FactoryScorecardDto": {
         "properties": {
           "claimRatePct": {
@@ -25959,7 +26222,7 @@
             "type": "string"
           },
           "factory": {
-            "$ref": "#/components/schemas/FactoryRefDto"
+            "$ref": "#/components/schemas/CodedRefDto"
           },
           "jobsCount": {
             "example": 20,
@@ -32557,6 +32820,17 @@
         },
         "type": "object"
       },
+      "OptionalReasonDto": {
+        "properties": {
+          "reason": {
+            "example": "งบหมดก่อนกำหนด (fake)",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "OrderCustomerRefDto": {
         "properties": {
           "companyName": {
@@ -38943,11 +39217,30 @@
               }
             ]
           },
+          "benefitSummaryEn": {
+            "example": "10% off, up to THB 500.00",
+            "type": "string"
+          },
+          "benefitSummaryTh": {
+            "description": "The benefit in words (Thai)",
+            "example": "ลด 10% สูงสุด 500.00 บาท",
+            "type": "string"
+          },
           "budgetAmount": {
             "example": null,
             "type": [
               "string",
               "null"
+            ]
+          },
+          "campaign": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CodedRefDto"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "campaignId": {
@@ -39034,6 +39327,14 @@
             ],
             "example": "active"
           },
+          "updatedAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/PromotionUsageDto"
+          },
           "usageLimitPerCustomer": {
             "example": 1,
             "type": [
@@ -39066,7 +39367,12 @@
           "usageLimitTotal",
           "usageLimitPerCustomer",
           "budgetAmount",
-          "spentAmount"
+          "spentAmount",
+          "benefitSummaryTh",
+          "benefitSummaryEn",
+          "usage",
+          "campaign",
+          "updatedAt"
         ],
         "type": "object"
       },
@@ -39143,6 +39449,40 @@
         ],
         "type": "string"
       },
+      "PromotionPriorityDto": {
+        "properties": {
+          "promotionIds": {
+            "description": "In evaluation order",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-000000090002"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "promotionIds"
+        ],
+        "type": "object"
+      },
+      "PromotionPriorityResultDto": {
+        "properties": {
+          "updated": {
+            "description": "Promotions whose priority changed",
+            "example": 3,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "updated"
+        ],
+        "type": "object"
+      },
       "PromotionReportDto": {
         "properties": {
           "appliedRedemptions": {
@@ -39203,6 +39543,31 @@
           "ended"
         ],
         "type": "string"
+      },
+      "PromotionUsageDto": {
+        "properties": {
+          "cappedAmount": {
+            "description": "Removed by the margin guard or the budget",
+            "example": "800.00",
+            "type": "string"
+          },
+          "discountAmount": {
+            "description": "Discounts given, before VAT",
+            "example": "12500.00",
+            "type": "string"
+          },
+          "redemptions": {
+            "description": "Reserved and applied redemptions",
+            "example": 42,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "redemptions",
+          "discountAmount",
+          "cappedAmount"
+        ],
+        "type": "object"
       },
       "ProofCompareDto": {
         "properties": {
@@ -41992,6 +42357,18 @@
           "rewardedAt"
         ],
         "type": "object"
+      },
+      "ReferralFraudFlag": {
+        "description": "Why it was held or rejected: `<kind>_match` (same phone / address / card / device as the referrer), `linked_referees`, `monthly_cap`",
+        "enum": [
+          "phone_match",
+          "address_match",
+          "card_token_match",
+          "device_match",
+          "linked_referees",
+          "monthly_cap"
+        ],
+        "type": "string"
       },
       "ReferralRulesDto": {
         "properties": {
@@ -70564,6 +70941,7 @@
                       "alertedAt": null,
                       "budgetAmount": "50000.00",
                       "code": "launch-2026",
+                      "createdAt": "2026-10-20T10:00:00+07:00",
                       "currency": "THB",
                       "endsAt": null,
                       "goals": {
@@ -70571,7 +70949,13 @@
                       },
                       "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                       "name": "เปิดตัว Packio",
+                      "owner": {
+                        "displayName": "Dev Marketing",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e0001"
+                      },
+                      "promotionsCount": 3,
                       "spentAmount": "12500.00",
+                      "spentPct": "25.00",
                       "startsAt": "2026-11-01T00:00:00+07:00",
                       "status": "active"
                     }
@@ -70772,6 +71156,7 @@
                   "alertedAt": null,
                   "budgetAmount": "50000.00",
                   "code": "launch-2026",
+                  "createdAt": "2026-10-20T10:00:00+07:00",
                   "currency": "THB",
                   "endsAt": null,
                   "goals": {
@@ -70779,7 +71164,13 @@
                   },
                   "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                   "name": "เปิดตัว Packio",
+                  "owner": {
+                    "displayName": "Dev Marketing",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e0001"
+                  },
+                  "promotionsCount": 3,
                   "spentAmount": "0.00",
+                  "spentPct": "25.00",
                   "startsAt": "2026-11-01T00:00:00+07:00",
                   "status": "draft"
                 },
@@ -71012,6 +71403,7 @@
                   "alertedAt": null,
                   "budgetAmount": "50000.00",
                   "code": "launch-2026",
+                  "createdAt": "2026-10-20T10:00:00+07:00",
                   "currency": "THB",
                   "endsAt": null,
                   "goals": {
@@ -71019,7 +71411,13 @@
                   },
                   "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                   "name": "เปิดตัว Packio",
+                  "owner": {
+                    "displayName": "Dev Marketing",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e0001"
+                  },
+                  "promotionsCount": 3,
                   "spentAmount": "12500.00",
+                  "spentPct": "25.00",
                   "startsAt": "2026-11-01T00:00:00+07:00",
                   "status": "active"
                 },
@@ -71230,6 +71628,7 @@
                   "alertedAt": null,
                   "budgetAmount": "50000.00",
                   "code": "launch-2026",
+                  "createdAt": "2026-10-20T10:00:00+07:00",
                   "currency": "THB",
                   "endsAt": null,
                   "goals": {
@@ -71237,7 +71636,13 @@
                   },
                   "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                   "name": "เปิดตัว Packio",
+                  "owner": {
+                    "displayName": "Dev Marketing",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e0001"
+                  },
+                  "promotionsCount": 3,
                   "spentAmount": "12500.00",
+                  "spentPct": "25.00",
                   "startsAt": "2026-11-01T00:00:00+07:00",
                   "status": "active"
                 },
@@ -71488,7 +71893,7 @@
     },
     "/v1/admin/campaigns/{campaignId}/actions/{action}": {
       "post": {
-        "description": "`activate` makes it active (or scheduled before its start); `pause` stops its promotions applying; `end` is final. A campaign whose budget is spent stops by itself (`exhausted`, D-154).\n\nImplements: D-154.",
+        "description": "`activate` makes it active (or scheduled before its start); `pause` stops its promotions applying; `end` is final. A campaign whose budget is spent stops by itself (`exhausted`, D-154). An optional `reason` is recorded with the change.\n\nImplements: D-154.",
         "operationId": "admin.campaigns.action",
         "parameters": [
           {
@@ -71512,6 +71917,23 @@
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "งบหมดก่อนกำหนด (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OptionalReasonDto"
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "200": {
             "content": {
@@ -71521,6 +71943,7 @@
                   "alertedAt": null,
                   "budgetAmount": "50000.00",
                   "code": "launch-2026",
+                  "createdAt": "2026-10-20T10:00:00+07:00",
                   "currency": "THB",
                   "endsAt": null,
                   "goals": {
@@ -71528,7 +71951,13 @@
                   },
                   "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                   "name": "เปิดตัว Packio",
+                  "owner": {
+                    "displayName": "Dev Marketing",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e0001"
+                  },
+                  "promotionsCount": 3,
                   "spentAmount": "12500.00",
+                  "spentPct": "25.00",
                   "startsAt": "2026-11-01T00:00:00+07:00",
                   "status": "active"
                 },
@@ -71548,6 +71977,29 @@
               "X-RateLimit-Reset": {
                 "$ref": "#/components/headers/RateLimitReset"
               },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
               }
@@ -139456,6 +139908,202 @@
         ]
       }
     },
+    "/v1/admin/customers/{customerId}/consents": {
+      "get": {
+        "description": "Every purpose with the text version in force and the customer’s latest decision — granted or not, for which version, from where and when (D-144, D-222). Read-only.\n\nImplements: D-144, D-222.",
+        "operationId": "admin.consentPurposes.customerConsents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "decidedVersionNo": 1,
+                    "granted": true,
+                    "outdated": true,
+                    "purpose": "marketing_line",
+                    "recordedAt": "2026-10-01T10:00:00+07:00",
+                    "required": false,
+                    "source": "web",
+                    "versionNo": 2
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AdminConsentDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Consents",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "A customer’s PDPA consents",
+        "tags": [
+          "admin.consentPurposes"
+        ],
+        "x-required-permissions": [
+          "customers.read"
+        ]
+      }
+    },
     "/v1/admin/customers/{customerId}/loyalty": {
       "get": {
         "description": "Available, pending and expiring points, point value and tier (D-130…D-134).\n\nImplements: D-130, D-131, D-132, D-133, D-134.",
@@ -139992,6 +140640,14 @@
             "schema": {
               "maxLength": 200,
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entryType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PointsEntryType"
             }
           },
           {
@@ -198995,7 +199651,14 @@
                         "pct": "10",
                         "type": "percent"
                       },
+                      "benefitSummaryEn": "10% off, up to THB 500.00",
+                      "benefitSummaryTh": "ลด 10% สูงสุด 500.00 บาท",
                       "budgetAmount": null,
+                      "campaign": {
+                        "code": "launch-2026",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                        "name": "เปิดตัว Packio"
+                      },
                       "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                       "conditions": {
                         "productTypeCodes": [
@@ -199016,6 +199679,12 @@
                       "stacking": "stackable",
                       "startsAt": "2026-11-01T00:00:00+07:00",
                       "status": "active",
+                      "updatedAt": "2026-10-20T10:00:00+07:00",
+                      "usage": {
+                        "cappedAmount": "0.00",
+                        "discountAmount": "0.00",
+                        "redemptions": 0
+                      },
                       "usageLimitPerCustomer": 1,
                       "usageLimitTotal": 1000
                     }
@@ -199234,7 +199903,14 @@
                     "pct": "10",
                     "type": "percent"
                   },
+                  "benefitSummaryEn": "10% off, up to THB 500.00",
+                  "benefitSummaryTh": "ลด 10% สูงสุด 500.00 บาท",
                   "budgetAmount": null,
+                  "campaign": {
+                    "code": "launch-2026",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                    "name": "เปิดตัว Packio"
+                  },
                   "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                   "conditions": {
                     "productTypeCodes": [
@@ -199255,6 +199931,12 @@
                   "stacking": "stackable",
                   "startsAt": "2026-11-01T00:00:00+07:00",
                   "status": "draft",
+                  "updatedAt": "2026-10-20T10:00:00+07:00",
+                  "usage": {
+                    "cappedAmount": "0.00",
+                    "discountAmount": "0.00",
+                    "redemptions": 0
+                  },
                   "usageLimitPerCustomer": 1,
                   "usageLimitTotal": 1000
                 },
@@ -199432,6 +200114,258 @@
           }
         ],
         "summary": "Create a promotion",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.manage"
+        ]
+      }
+    },
+    "/v1/admin/promotions/priority": {
+      "put": {
+        "description": "The promotions in the order given get priorities 10, 20, … in one transaction; each change is recorded (D-053). Referral promotions are system-managed (409 `promotions.system_managed`).\n\nImplements: D-053.",
+        "operationId": "admin.promotions.reorder",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "promotionIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-000000090002"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PromotionPriorityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "updated": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PromotionPriorityResultDto"
+                }
+              }
+            },
+            "description": "Reordered",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "promotions.system_managed": {
+                    "$ref": "#/components/examples/problem.promotions.system_managed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `promotions.system_managed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Set the evaluation order of promotions",
         "tags": [
           "admin.promotions"
         ],
@@ -199672,7 +200606,14 @@
                     "pct": "10",
                     "type": "percent"
                   },
+                  "benefitSummaryEn": "10% off, up to THB 500.00",
+                  "benefitSummaryTh": "ลด 10% สูงสุด 500.00 บาท",
                   "budgetAmount": null,
+                  "campaign": {
+                    "code": "launch-2026",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                    "name": "เปิดตัว Packio"
+                  },
                   "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                   "conditions": {
                     "productTypeCodes": [
@@ -199693,6 +200634,12 @@
                   "stacking": "stackable",
                   "startsAt": "2026-11-01T00:00:00+07:00",
                   "status": "active",
+                  "updatedAt": "2026-10-20T10:00:00+07:00",
+                  "usage": {
+                    "cappedAmount": "0.00",
+                    "discountAmount": "0.00",
+                    "redemptions": 0
+                  },
                   "usageLimitPerCustomer": 1,
                   "usageLimitTotal": 1000
                 },
@@ -199905,7 +200852,14 @@
                     "pct": "10",
                     "type": "percent"
                   },
+                  "benefitSummaryEn": "10% off, up to THB 500.00",
+                  "benefitSummaryTh": "ลด 10% สูงสุด 500.00 บาท",
                   "budgetAmount": null,
+                  "campaign": {
+                    "code": "launch-2026",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                    "name": "เปิดตัว Packio"
+                  },
                   "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                   "conditions": {
                     "productTypeCodes": [
@@ -199926,6 +200880,12 @@
                   "stacking": "stackable",
                   "startsAt": "2026-11-01T00:00:00+07:00",
                   "status": "active",
+                  "updatedAt": "2026-10-20T10:00:00+07:00",
+                  "usage": {
+                    "cappedAmount": "0.00",
+                    "discountAmount": "0.00",
+                    "redemptions": 0
+                  },
                   "usageLimitPerCustomer": 1,
                   "usageLimitTotal": 1000
                 },
@@ -200200,6 +201160,23 @@
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "งบหมดก่อนกำหนด (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OptionalReasonDto"
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "200": {
             "content": {
@@ -200210,7 +201187,14 @@
                     "pct": "10",
                     "type": "percent"
                   },
+                  "benefitSummaryEn": "10% off, up to THB 500.00",
+                  "benefitSummaryTh": "ลด 10% สูงสุด 500.00 บาท",
                   "budgetAmount": null,
+                  "campaign": {
+                    "code": "launch-2026",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
+                    "name": "เปิดตัว Packio"
+                  },
                   "campaignId": "0192f3a0-7c1e-7d2a-9b1f-000000090001",
                   "conditions": {
                     "productTypeCodes": [
@@ -200231,6 +201215,12 @@
                   "stacking": "stackable",
                   "startsAt": "2026-11-01T00:00:00+07:00",
                   "status": "active",
+                  "updatedAt": "2026-10-20T10:00:00+07:00",
+                  "usage": {
+                    "cappedAmount": "0.00",
+                    "discountAmount": "0.00",
+                    "redemptions": 0
+                  },
                   "usageLimitPerCustomer": 1,
                   "usageLimitTotal": 1000
                 },
@@ -200250,6 +201240,29 @@
               "X-RateLimit-Reset": {
                 "$ref": "#/components/headers/RateLimitReset"
               },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
               }
@@ -200416,9 +201429,207 @@
         ]
       }
     },
+    "/v1/admin/promotions/{promotionId}/coupon-batches": {
+      "get": {
+        "description": "Each generation: kind, count, prefix, uses per code, when and by whom (D-053).\n\nImplements: D-053.",
+        "operationId": "admin.promotions.listCouponBatches",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "promotionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "count": 500,
+                    "generatedAt": "2026-10-20T10:00:00+07:00",
+                    "generatedBy": {
+                      "displayName": "Dev Marketing",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e0001"
+                    },
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
+                    "kind": "bulk_unique",
+                    "prefix": "PK",
+                    "usageLimit": 1
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CouponBatchDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Batches",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the coupon batches of a promotion",
+        "tags": [
+          "admin.promotions"
+        ],
+        "x-required-permissions": [
+          "promotions.read"
+        ]
+      }
+    },
     "/v1/admin/promotions/{promotionId}/coupons": {
       "get": {
-        "description": "In generation order, with uses and the assigned customer (D-053).\n\nImplements: D-053.",
+        "description": "In generation order, with uses, batch and the assigned customer; filter by batch or status (D-053).\n\nImplements: D-053.",
         "operationId": "admin.promotions.listCoupons",
         "parameters": [
           {
@@ -200481,6 +201692,24 @@
             }
           },
           {
+            "description": "Codes of one generation batch",
+            "in": "query",
+            "name": "batchId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CouponStatus"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -200491,7 +201720,9 @@
                 "example": {
                   "data": [
                     {
+                      "assignedCustomer": null,
                       "assignedCustomerId": null,
+                      "batchId": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
                       "code": "PKAB23CD45",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-000000090003",
                       "status": "active",
@@ -200729,7 +201960,15 @@
               "application/json": {
                 "example": {
                   "batchId": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
-                  "count": 500
+                  "count": 500,
+                  "generatedAt": "2026-10-20T10:00:00+07:00",
+                  "generatedBy": {
+                    "displayName": "Dev Marketing",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e0001"
+                  },
+                  "kind": "bulk_unique",
+                  "prefix": "PK",
+                  "usageLimit": 1
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CouponBatchResultDto"
@@ -201236,12 +202475,31 @@
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "รหัสรั่วไหล (fake)"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OptionalReasonDto"
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "example": {
+                  "assignedCustomer": null,
                   "assignedCustomerId": null,
+                  "batchId": "0192f3a0-7c1e-7d2a-9b1f-000000090004",
                   "code": "PKAB23CD45",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-000000090003",
                   "status": "active",
@@ -201264,6 +202522,29 @@
               "X-RateLimit-Reset": {
                 "$ref": "#/components/headers/RateLimitReset"
               },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
               }
@@ -206982,6 +208263,16 @@
             }
           },
           {
+            "description": "Referrals of this referrer",
+            "in": "query",
+            "name": "referrerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -206996,6 +208287,8 @@
                       "attributedAt": "2026-10-01T10:00:00+07:00",
                       "code": "PK7QX2MA",
                       "decidedAt": null,
+                      "firstOrderClaimWindowEndsAt": null,
+                      "firstOrderGrossAmount": "14182.80",
                       "firstOrderGroupCode": "OG-2610-0001",
                       "firstOrderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0004",
                       "fraudFlags": [],
@@ -207009,6 +208302,7 @@
                         "displayName": "สมชาย ทดสอบ",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002"
                       },
+                      "rewardPoints": 0,
                       "rewardedAt": null,
                       "status": "pending"
                     }
@@ -207200,6 +208494,8 @@
                   "attributedAt": "2026-10-01T10:00:00+07:00",
                   "code": "PK7QX2MA",
                   "decidedAt": null,
+                  "firstOrderClaimWindowEndsAt": null,
+                  "firstOrderGrossAmount": "14182.80",
                   "firstOrderGroupCode": "OG-2610-0001",
                   "firstOrderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000a0004",
                   "fraudFlags": [],
@@ -207213,6 +208509,7 @@
                     "displayName": "สมชาย ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002"
                   },
+                  "rewardPoints": 0,
                   "rewardedAt": null,
                   "status": "pending"
                 },

@@ -2,7 +2,7 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 /** Referral programme (D-136). */
 
@@ -125,6 +125,15 @@ export class AttributeReferralDto {
   code!: string;
 }
 
+export const REFERRAL_FRAUD_FLAGS = [
+  'phone_match',
+  'address_match',
+  'card_token_match',
+  'device_match',
+  'linked_referees',
+  'monthly_cap',
+] as const;
+
 export class ReferralDto {
   @IdField(IDS.referral)
   id!: string;
@@ -165,12 +174,29 @@ export class AdminReferralDto extends ReferralDto {
   firstOrderGroupCode!: string | null;
 
   @ApiProperty({
-    type: [String],
+    enum: REFERRAL_FRAUD_FLAGS,
+    enumName: 'ReferralFraudFlag',
+    isArray: true,
     example: [],
     description:
       'Why it was held or rejected: `<kind>_match` (same phone / address / card / device as the referrer), `linked_referees`, `monthly_cap`',
   })
   fraudFlags!: string[];
+
+  @ApiProperty({ type: String, nullable: true, example: '14182.80', description: 'Gross amount of the first order group' })
+  firstOrderGrossAmount!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+    description: 'End of the first order’s claim window: the reward waits for it (D-132)',
+  })
+  firstOrderClaimWindowEndsAt!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 0, description: 'Points credited to the referrer for this referral' })
+  rewardPoints!: number;
 
   @ApiProperty({
     type: String,
@@ -203,6 +229,9 @@ export const ADMIN_REFERRAL_EXAMPLE: AdminReferralDto = {
   fraudFlags: [],
   approvalId: null,
   decidedAt: null,
+  firstOrderGrossAmount: '14182.80',
+  firstOrderClaimWindowEndsAt: null,
+  rewardPoints: 0,
 };
 
 export class ReferralListQuery extends PageQuery {
@@ -210,4 +239,9 @@ export class ReferralListQuery extends PageQuery {
   @IsOptional()
   @IsIn(REFERRAL_STATUSES)
   status?: (typeof REFERRAL_STATUSES)[number];
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Referrals of this referrer' })
+  @IsOptional()
+  @IsUUID()
+  referrerId?: string;
 }

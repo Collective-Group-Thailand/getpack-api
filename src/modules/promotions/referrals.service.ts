@@ -23,7 +23,10 @@ const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const REFERRAL_INCLUDE = {
   referrer: { select: { publicId: true, displayName: true } },
   referee: { select: { publicId: true, displayName: true } },
-  firstOrderGroup: { select: { publicId: true, groupCode: true, status: true } },
+  firstOrderGroup: {
+    select: { publicId: true, groupCode: true, status: true, grossAmount: true, orders: { select: { deliveredAt: true } } },
+  },
+  pointsEntries: { select: { userId: true, points: true } },
   approvalRequest: { select: { publicId: true, status: true } },
 } as const satisfies Prisma.ReferralAttributionInclude;
 export type ReferralRow = Prisma.ReferralAttributionGetPayload<{ include: typeof REFERRAL_INCLUDE }>;
@@ -400,5 +403,16 @@ export class ReferralsService {
       domainEventId: event.id,
       actor,
     });
+  }
+
+  /** When the claim window of the first order ends (last delivery + `claims.window_days`, D-082, D-132). */
+  async claimWindowEnd(r: ReferralRow): Promise<Date | null> {
+    const delivered = (r.firstOrderGroup?.orders ?? [])
+      .map((o) => o.deliveredAt)
+      .filter((d): d is Date => d !== null)
+      .sort((a, b) => b.getTime() - a.getTime())[0];
+    if (!delivered) return null;
+    const days = Number((await this.settings.at('claims.window_days', { at: delivered })).value);
+    return new Date(delivered.getTime() + days * 86_400_000);
   }
 }

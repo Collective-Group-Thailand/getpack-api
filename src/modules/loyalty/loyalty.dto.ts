@@ -257,3 +257,10 @@ export class AdjustPointsDto {
   @MaxLength(500)
   reason!: string;
 }
+
+export class LedgerQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: POINTS_ENTRY_TYPES, enumName: 'PointsEntryType', example: 'earn_order' })
+  @IsOptional()
+  @IsIn(POINTS_ENTRY_TYPES)
+  entryType?: (typeof POINTS_ENTRY_TYPES)[number];
+}

@@ -66,9 +66,19 @@ describe('promotions admin (e2e, B3.3)', () => {
       .expect(200)
       .expect((r) => expect(r.body.status).toBe('active'));
     await as(ctx, marketing)
-      .post(`/v1/admin/campaigns/${id}/actions/pause`)
+      .post(`/v1/admin/campaigns/${id}/actions/pause`, { reason: 'รอปรับงบ (fake)' })
       .expect(200)
       .expect((r) => expect(r.body.status).toBe('paused'));
+    // U-B0.2: the reason goes with the event; the view carries owner, spent % and counts.
+    const paused = await ctx.prisma.domainEvent.findFirstOrThrow({ where: { type: 'campaign.paused', aggregateId: id } });
+    expect(paused.payload).toMatchObject({ reason: 'รอปรับงบ (fake)' });
+    const view = (await as(ctx, marketing).get(`/v1/admin/campaigns/${id}`).expect(200)).body;
+    expect(view).toMatchObject({
+      owner: { id: expect.any(String) },
+      spentPct: '0.00',
+      promotionsCount: 0,
+      createdAt: expect.any(String),
+    });
     await as(ctx, marketing)
       .post(`/v1/admin/campaigns/${id}/actions/end`)
       .expect(200)
@@ -167,10 +177,31 @@ describe('promotions admin (e2e, B3.3)', () => {
     expect(generated.every((c) => c.usageLimit === 1 && /^PK[A-HJ-NP-Z2-9]{8}$/.test(c.code))).toBe(true);
     expect(rows.find((c) => c.assignedCustomerId === customer.body.id)).toBeDefined();
 
-    // Disable and re-enable one code.
+    // U-B0.2: batches, filters and the refs on the rows.
+    expect(bulk.body).toMatchObject({ kind: 'bulk_unique', prefix: 'PK', usageLimit: 1, generatedBy: expect.any(Object) });
+    const batches = (await as(ctx, marketing).get(`/v1/admin/promotions/${id}/coupon-batches`).expect(200)).body as {
+      id: string;
+      kind: string;
+    }[];
+    expect(batches.map((b) => b.kind)).toEqual(expect.arrayContaining(['single', 'bulk_unique', 'per_customer']));
+    const ofBulk = await as(ctx, marketing).get(`/v1/admin/promotions/${id}/coupons?batchId=${bulk.body.batchId as string}&perPage=100`).expect(200);
+    expect(ofBulk.body.meta.total).toBe(20);
+    expect(ofBulk.body.data[0]).toMatchObject({ batchId: bulk.body.batchId });
+    expect(rows.find((c) => c.assignedCustomerId === customer.body.id)).toMatchObject({
+      assignedCustomer: { id: customer.body.id },
+    });
+    const promoView = (await as(ctx, marketing).get(`/v1/admin/promotions/${id}`).expect(200)).body;
+    expect(promoView).toMatchObject({
+      benefitSummaryTh: expect.any(String),
+      benefitSummaryEn: expect.any(String),
+      usage: { redemptions: 0, discountAmount: '0.00', cappedAmount: '0.00' },
+      updatedAt: expect.any(String),
+    });
+
+    // Disable (with a reason) and re-enable one code.
     const first = rows[0]!.id;
     await as(ctx, marketing)
-      .post(`/v1/admin/promotions/${id}/coupons/${first}/actions/disable`)
+      .post(`/v1/admin/promotions/${id}/coupons/${first}/actions/disable`, { reason: 'รหัสรั่วไหล (fake)' })
       .expect(200)
       .expect((r) => expect(r.body.status).toBe('disabled'));
     await as(ctx, marketing)
@@ -262,5 +293,21 @@ describe('promotions admin (e2e, B3.3)', () => {
       customers: 0,
       currency: 'THB',
     });
+  });
+
+  it('rewrites the evaluation order in one call (D-053)', async () => {
+    const listed = (await as(ctx, marketing).get('/v1/admin/promotions?perPage=100').expect(200)).body.data as {
+      id: string;
+      kind: string;
+      priority: number;
+    }[];
+    const mine = listed.filter((p) => p.kind !== 'referral').slice(0, 2);
+    expect(mine).toHaveLength(2);
+    const order = [mine[1]!.id, mine[0]!.id];
+    const done = await as(ctx, marketing).put('/v1/admin/promotions/priority', { promotionIds: order }).expect(200);
+    expect(done.body.updated).toBeGreaterThanOrEqual(1);
+    const after = await Promise.all(order.map(async (id) => (await as(ctx, marketing).get(`/v1/admin/promotions/${id}`).expect(200)).body as { priority: number }));
+    expect(after.map((p) => p.priority)).toEqual([10, 20]);
+    await as(ctx, cs).put('/v1/admin/promotions/priority', { promotionIds: order }).expect(403);
   });
 });

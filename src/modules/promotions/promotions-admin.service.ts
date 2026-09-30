@@ -4,6 +4,7 @@ import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
+import { toBangkokIso } from '@common/time/bangkok';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import {
@@ -216,6 +217,7 @@ export class PromotionsAdminService {
     publicId: string,
     action: string,
     ifMatch: string | undefined,
+    reason?: string,
   ): Promise<Campaign> {
     const rule = CAMPAIGN_ACTIONS[action];
     if (!rule) throw new DomainException('http.not_found');
@@ -231,9 +233,29 @@ export class PromotionsAdminService {
         where: { id: current.id },
         data: { status: to, rowVersion: { increment: 1 } },
       });
-      await this.record(tx, 'campaign', row.publicId, `campaign.${to}`, { from: current.status }, actor);
+      await this.record(
+        tx,
+        'campaign',
+        row.publicId,
+        `campaign.${to}`,
+        { from: current.status, ...(reason && { reason }) },
+        actor,
+      );
       return row;
     });
+  }
+
+  /** The staff view's extras of campaigns: who created them, how many promotions they hold. */
+  async campaignExtras(ids: bigint[]) {
+    const rows = await this.prisma.campaign.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        createdBy: { select: { publicId: true, displayName: true } },
+        _count: { select: { promotions: true } },
+      },
+    });
+    return new Map(rows.map((r) => [r.id, { owner: r.createdBy, promotionsCount: r._count.promotions }]));
   }
 
   // --- promotions ---------------------------------------------------------------------------------------
@@ -345,7 +367,13 @@ export class PromotionsAdminService {
     });
   }
 
-  async promotionAction(actor: UserActor, publicId: string, action: string, ifMatch: string | undefined) {
+  async promotionAction(
+    actor: UserActor,
+    publicId: string,
+    action: string,
+    ifMatch: string | undefined,
+    reason?: string,
+  ) {
     const rule = PROMOTION_ACTIONS[action];
     if (!rule) throw new DomainException('http.not_found');
     return this.prisma.withTx(async (tx) => {
@@ -371,7 +399,7 @@ export class PromotionsAdminService {
         'promotion',
         current.publicId,
         `promotion.${rule.to}`,
-        { from: current.status },
+        { from: current.status, ...(reason && { reason }) },
         actor,
       );
       return this.promotion(current.publicId, tx);
@@ -437,20 +465,38 @@ export class PromotionsAdminService {
         { kind: input.kind, count: rows.length },
         actor,
       );
-      return { batchId: batch.publicId, count: rows.length };
+      return {
+        batchId: batch.publicId,
+        count: rows.length,
+        kind: batch.kind,
+        prefix: batch.prefix,
+        usageLimit: input.kind === 'single' ? (input.usageLimit ?? null) : (input.usageLimit ?? 1),
+        generatedAt: toBangkokIso(batch.generatedAt),
+        generatedBy: { id: actor.publicId, displayName: (await tx.user.findUniqueOrThrow({ where: { id: actor.userId } })).displayName },
+      };
     });
   }
 
-  coupons(promotionId: bigint, page: number, perPage: number) {
+  coupons(
+    promotionId: bigint,
+    page: number,
+    perPage: number,
+    filters: { batchId?: string; status?: 'active' | 'used_up' | 'disabled' } = {},
+  ) {
+    const where: Prisma.CouponCodeWhereInput = {
+      promotionId,
+      ...(filters.batchId && { batch: { publicId: filters.batchId } }),
+      ...(filters.status && { status: filters.status }),
+    };
     return Promise.all([
       this.prisma.couponCode.findMany({
-        where: { promotionId },
-        include: { assignedUser: true },
+        where,
+        include: { assignedUser: true, batch: { select: { publicId: true } } },
         orderBy: { id: 'asc' },
         skip: (page - 1) * perPage,
         take: perPage,
       }),
-      this.prisma.couponCode.count({ where: { promotionId } }),
+      this.prisma.couponCode.count({ where }),
     ]);
   }
 
@@ -459,6 +505,7 @@ export class PromotionsAdminService {
     promotionPublicId: string,
     couponPublicId: string,
     disabled: boolean,
+    reason?: string,
   ) {
     return this.prisma.withTx(async (tx) => {
       const promotion = await this.promotion(promotionPublicId, tx);
@@ -481,7 +528,7 @@ export class PromotionsAdminService {
         'promotion',
         promotion.publicId,
         disabled ? 'promotion.coupon_disabled' : 'promotion.coupon_enabled',
-        { code: row.code },
+        { code: row.code, ...(reason && { reason }) },
         actor,
       );
       return row;
@@ -552,6 +599,67 @@ export class PromotionsAdminService {
       codes: codes.length,
       expiresAt: new Date(now.getTime() + EXPORT_URL_TTL_SECONDS * 1000),
     };
+  }
+
+  /** Usage per promotion: reserved and applied redemptions, discounts given and capped (D-053). */
+  async usage(promotionIds: bigint[]) {
+    const rows = await this.prisma.promotionRedemption.groupBy({
+      by: ['promotionId'],
+      where: { promotionId: { in: promotionIds }, status: { in: ['reserved', 'applied'] } },
+      _count: { _all: true },
+      _sum: { amount: true, cappedAmount: true },
+    });
+    return new Map(
+      rows.map((r) => [
+        r.promotionId,
+        {
+          redemptions: r._count._all,
+          discountAmount: formatMoney(new MoneyDecimal((r._sum.amount ?? 0).toString())),
+          cappedAmount: formatMoney(new MoneyDecimal((r._sum.cappedAmount ?? 0).toString())),
+        },
+      ]),
+    );
+  }
+
+  /**
+   * Rewrites the evaluation order (D-053): the promotions in the order given get priorities 10, 20, …; one
+   * transaction, one event per promotion whose priority changed. Referral promotions are system-managed.
+   */
+  async reorder(actor: UserActor, promotionPublicIds: string[]): Promise<number> {
+    const ids = [...new Set(promotionPublicIds)];
+    return this.prisma.withTx(async (tx) => {
+      const rows = await tx.promotion.findMany({ where: { publicId: { in: ids } } });
+      if (rows.length !== ids.length) throw new DomainException('http.not_found');
+      if (rows.some((r) => r.kind === 'referral')) throw new DomainException('promotions.system_managed');
+      let updated = 0;
+      for (const [index, id] of ids.entries()) {
+        const row = rows.find((r) => r.publicId === id)!;
+        const priority = (index + 1) * 10;
+        if (row.priority === priority) continue;
+        await tx.promotion.update({
+          where: { id: row.id },
+          data: { priority, updatedById: actor.userId, rowVersion: { increment: 1 } },
+        });
+        await this.record(tx, 'promotion', row.publicId, 'promotion.priority_changed', { from: row.priority, to: priority }, actor);
+        updated += 1;
+      }
+      return updated;
+    });
+  }
+
+  /** The coupon batches of a promotion, newest first, with the per-code usage limit they were made with. */
+  async batches(promotionId: bigint) {
+    const batches = await this.prisma.couponBatch.findMany({
+      where: { promotionId },
+      include: { createdBy: { select: { publicId: true, displayName: true } } },
+      orderBy: { generatedAt: 'desc' },
+    });
+    const limits = await this.prisma.couponCode.findMany({
+      where: { batchId: { in: batches.map((b) => b.id) } },
+      distinct: ['batchId'],
+      select: { batchId: true, usageLimit: true },
+    });
+    return batches.map((b) => ({ ...b, usageLimit: limits.find((l) => l.batchId === b.id)?.usageLimit ?? null }));
   }
 
   // --- report (D-053 "reports") ------------------------------------------------------------------------

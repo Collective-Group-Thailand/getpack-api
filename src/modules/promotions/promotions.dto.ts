@@ -1,9 +1,12 @@
+import { CodedRefDto } from '@common/dto/factory-ref.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsIn,
   IsInt,
@@ -164,6 +167,23 @@ export class CampaignDto {
 
   @ApiProperty({ example: 'THB' })
   currency!: string;
+
+  @ApiProperty({ type: UserRefDto, nullable: true, description: 'Who created it' })
+  owner!: UserRefDto | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '25.00',
+    description: 'Spent as % of the budget (2 decimals); null without a budget (D-154)',
+  })
+  spentPct!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 3 })
+  promotionsCount!: number;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-20T10:00:00+07:00' })
+  createdAt!: string;
 }
 
 export const CAMPAIGN_EXAMPLE: CampaignDto = {
@@ -179,6 +199,10 @@ export const CAMPAIGN_EXAMPLE: CampaignDto = {
   alertedAt: null,
   goals: { newCustomers: 100 },
   currency: 'THB',
+  owner: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000e0001', displayName: 'Dev Marketing' },
+  spentPct: '25.00',
+  promotionsCount: 3,
+  createdAt: '2026-10-20T10:00:00+07:00',
 };
 
 export class CampaignListQuery extends PageQuery {
@@ -433,6 +457,43 @@ export class UpdatePromotionDto {
   budgetAmount?: string | null;
 }
 
+export class PromotionUsageDto {
+  @ApiProperty({ type: 'integer', example: 42, description: 'Reserved and applied redemptions' })
+  redemptions!: number;
+
+  @ApiProperty({ example: '12500.00', description: 'Discounts given, before VAT' })
+  discountAmount!: string;
+
+  @ApiProperty({ example: '800.00', description: 'Removed by the margin guard or the budget' })
+  cappedAmount!: string;
+}
+
+export class PromotionPriorityDto {
+  @ApiProperty({ type: [String], format: 'uuid', minItems: 1, maxItems: 500, example: [IDS.promotion], description: 'In evaluation order' })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(500)
+  @IsUUID('all', { each: true })
+  promotionIds!: string[];
+}
+
+export class PromotionPriorityResultDto {
+  @ApiProperty({ type: 'integer', example: 3, description: 'Promotions whose priority changed' })
+  updated!: number;
+}
+
+export class CouponListQuery extends PageQuery {
+  @ApiPropertyOptional({ format: 'uuid', description: 'Codes of one generation batch' })
+  @IsOptional()
+  @IsUUID()
+  batchId?: string;
+
+  @ApiPropertyOptional({ enum: ['active', 'used_up', 'disabled'], enumName: 'CouponStatus' })
+  @IsOptional()
+  @IsIn(['active', 'used_up', 'disabled'])
+  status?: 'active' | 'used_up' | 'disabled';
+}
+
 export class PromotionDto {
   @IdField(IDS.promotion)
   id!: string;
@@ -484,6 +545,21 @@ export class PromotionDto {
 
   @ApiProperty({ example: '0.00' })
   spentAmount!: string;
+
+  @ApiProperty({ example: 'ลด 10% สูงสุด 500.00 บาท', description: 'The benefit in words (Thai)' })
+  benefitSummaryTh!: string;
+
+  @ApiProperty({ example: '10% off, up to THB 500.00' })
+  benefitSummaryEn!: string;
+
+  @ApiProperty({ type: () => PromotionUsageDto })
+  usage!: PromotionUsageDto;
+
+  @ApiProperty({ type: () => CodedRefDto, nullable: true })
+  campaign!: CodedRefDto | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-20T10:00:00+07:00' })
+  updatedAt!: string;
 }
 
 export const PROMOTION_EXAMPLE: PromotionDto = {
@@ -504,6 +580,11 @@ export const PROMOTION_EXAMPLE: PromotionDto = {
   usageLimitPerCustomer: 1,
   budgetAmount: null,
   spentAmount: '0.00',
+  benefitSummaryTh: 'ลด 10% สูงสุด 500.00 บาท',
+  benefitSummaryEn: '10% off, up to THB 500.00',
+  usage: { redemptions: 0, discountAmount: '0.00', cappedAmount: '0.00' },
+  campaign: { id: IDS.campaign, code: 'launch-2026', name: 'เปิดตัว Packio' },
+  updatedAt: '2026-10-20T10:00:00+07:00',
 };
 
 export const CREATE_PROMOTION_EXAMPLE = {
@@ -594,6 +675,45 @@ export class CouponBatchResultDto {
 
   @ApiProperty({ type: 'integer', example: 500 })
   count!: number;
+
+  @ApiProperty({ enum: ['single', 'bulk_unique', 'per_customer'], enumName: 'CouponKind', example: 'bulk_unique' })
+  kind!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'PK' })
+  prefix!: string | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 1, description: 'Uses per code; null = unlimited' })
+  usageLimit!: number | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-20T10:00:00+07:00' })
+  generatedAt!: string;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  generatedBy!: UserRefDto | null;
+}
+
+/** A generated batch as listed (same facts, `id` names it). */
+export class CouponBatchDto {
+  @ApiProperty({ format: 'uuid', example: IDS.batch })
+  id!: string;
+
+  @ApiProperty({ enum: ['single', 'bulk_unique', 'per_customer'], enumName: 'CouponKind', example: 'bulk_unique' })
+  kind!: string;
+
+  @ApiProperty({ type: 'integer', example: 500 })
+  count!: number;
+
+  @ApiProperty({ type: String, nullable: true, example: 'PK' })
+  prefix!: string | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 1 })
+  usageLimit!: number | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-20T10:00:00+07:00' })
+  generatedAt!: string;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  generatedBy!: UserRefDto | null;
 }
 
 export class CouponCodeDto {
@@ -614,6 +734,12 @@ export class CouponCodeDto {
 
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: null })
   assignedCustomerId!: string | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true, description: 'The customer a per-customer code belongs to' })
+  assignedCustomer!: UserRefDto | null;
+
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.batch })
+  batchId!: string | null;
 }
 
 export const COUPON_EXAMPLE: CouponCodeDto = {
@@ -623,6 +749,8 @@ export const COUPON_EXAMPLE: CouponCodeDto = {
   usageLimit: 1,
   usedCount: 0,
   assignedCustomerId: null,
+  assignedCustomer: null,
+  batchId: IDS.batch,
 };
 
 export class PromotionReportDto {

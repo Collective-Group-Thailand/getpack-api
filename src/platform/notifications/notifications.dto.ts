@@ -330,6 +330,33 @@ export class ConsentDto {
   outdated!: boolean;
 }
 
+/** A customer's consent as staff see it (U-B0.2): the latest decision per purpose and how it was given. */
+export class AdminConsentDto {
+  @ApiProperty({ example: 'marketing_line' })
+  purpose!: string;
+
+  @ApiProperty({ example: false })
+  required!: boolean;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 2, description: 'Text version in force' })
+  versionNo!: number | null;
+
+  @ApiProperty({ type: Boolean, nullable: true, example: true, description: 'Latest decision; null = never asked' })
+  granted!: boolean | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 1, description: 'Text version the decision was for' })
+  decidedVersionNo!: number | null;
+
+  @ApiProperty({ example: true, description: 'The latest decision was for an older text version' })
+  outdated!: boolean;
+
+  @ApiProperty({ enum: CONSENT_SOURCES, enumName: 'ConsentSource', nullable: true, example: 'web' })
+  source!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-01T10:00:00+07:00' })
+  recordedAt!: string | null;
+}
+
 export class RecordConsentDto {
   @ApiProperty({ example: 'marketing_line', pattern: '^[a-z][a-z0-9_]*$' })
   @Matches(/^[a-z][a-z0-9_]*$/)
