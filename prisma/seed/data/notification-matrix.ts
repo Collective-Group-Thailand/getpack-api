@@ -520,6 +520,26 @@ const ROWS: Row[] = [
 
   // --- factories -------------------------------------------------------------------------------------------
   F(
+    'rfq.consultation_requested',
+    ['in_app', 'email', 'line'],
+    { th: 'ขอราคา {{payload.rfqCode}}', en: 'Price request {{payload.rfqCode}}' },
+    {
+      th: 'Packio ขอราคางาน {{payload.rfqCode}} ตอบได้ในพื้นที่พาร์ทเนอร์',
+      en: 'Packio asks your price for {{payload.rfqCode}}; answer in the partner zone',
+    },
+    'Factory: Packio asks for a buy price (D-043, D-143)',
+  ),
+  F(
+    'rfq.consultation_reminded',
+    ['in_app', 'email', 'line'],
+    { th: 'เตือนขอราคา {{payload.rfqCode}}', en: 'Reminder: price request {{payload.rfqCode}}' },
+    {
+      th: 'Packio รอราคางาน {{payload.rfqCode}} ของคุณ ตอบได้ในพื้นที่พาร์ทเนอร์',
+      en: 'Packio is waiting for your price for {{payload.rfqCode}}; answer in the partner zone',
+    },
+    'Factory: CS reminds of an open price request (U-B0.2, D-143)',
+  ),
+  F(
     'production_job.released',
     ['in_app', 'email', 'line'],
     { th: 'งานใหม่ {{payload.jobNo}}', en: 'New job {{payload.jobNo}}' },

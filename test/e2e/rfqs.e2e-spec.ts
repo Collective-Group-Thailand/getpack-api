@@ -88,6 +88,8 @@ describe('requests for quote (e2e, B2.5)', () => {
 
   const as = (role: string) => ({
     get: (url: string) => request(server).get(url).auth(tokens[role]!, { type: 'bearer' }),
+    put: (url: string, body: object = {}) =>
+      request(server).put(url).auth(tokens[role]!, { type: 'bearer' }).send(body),
     post: (url: string, body: object = {}) =>
       request(server)
         .post(url)
@@ -360,6 +362,56 @@ describe('requests for quote (e2e, B2.5)', () => {
       ],
     });
     await as('customer').post(`/v1/store/rfqs/${rfq.id}/messages`, { body: 'late (fake)' }).expect(409);
+  });
+
+  it('lets CS start a review, pick factories, remind them, revise the draft and record an acceptance (U-B0.2)', async () => {
+    const rfq = (await as('customer').post('/v1/store/rfqs', submission()).expect(201)).body as Rfq;
+    const admin = `/v1/admin/rfqs/${rfq.id}`;
+    expect((await as('cs').post(`${admin}/actions/start-review`).expect(200)).body.status).toBe('in_review');
+    expect((await as('cs').post(`${admin}/actions/start-review`).expect(409)).body.code).toBe('rfq.invalid_transition');
+
+    const candidates = (await as('cs').get(`${admin}/candidate-factories`).expect(200)).body as {
+      factoryId: string;
+      alreadyConsulted: boolean;
+    }[];
+    expect(JSON.stringify(candidates)).not.toMatch(/price/i);
+    const consulted = await as('cs')
+      .post(`${admin}/consultations`, { factoryId: fixture.factoryPublicId, dueAt: new Date(Date.now() + 86_400_000).toISOString() })
+      .expect(201);
+    const consultationId = (consulted.body as Rfq).consultations![0]!.id;
+    await as('cs').post(`/v1/admin/rfq-consultations/${consultationId}/actions/remind`).expect(204);
+    expect((await as('cs').post(`/v1/admin/rfq-consultations/${consultationId}/actions/remind`).expect(409)).body.code).toBe(
+      'rfq.reminder_recent',
+    );
+    expect(
+      await prisma.domainEvent.count({ where: { type: 'rfq.consultation_reminded', aggregateId: rfq.id } }),
+    ).toBe(1);
+    const after = (await as('cs').get(`${admin}/candidate-factories`).expect(200)).body as typeof candidates;
+    expect(after.find((c) => c.factoryId === fixture.factoryPublicId)?.alreadyConsulted ?? true).toBe(true);
+
+    const line = (quantity: number, unitPrice: string) => ({ quantity, unitPrice, shippingNetAmount: '300.00', leadTimeDays: 14 });
+    const drafted = (await as('cs').post(`${admin}/quotations`, { lines: [line(1000, '12.5')] }).expect(201)).body as Rfq;
+    const draft = drafted.quotations.find((q) => q.status === 'draft')!;
+    const got = await as('cs').get(admin).expect(200);
+    const etag = got.headers['etag'] as string;
+    await as('cs').put(`/v1/admin/rfq-quotations/${draft.id}`, { lines: [line(1000, '12')] }).expect(428);
+    const revised = await as('cs')
+      .put(`/v1/admin/rfq-quotations/${draft.id}`, { lines: [line(1000, '12'), line(3000, '11')] })
+      .set('If-Match', etag)
+      .expect(200);
+    expect((revised.body as Rfq).quotations.find((q) => q.id === draft.id)!.lines.map((l) => l.quantity)).toEqual([1000, 3000]);
+    await as('cs').put(`/v1/admin/rfq-quotations/${draft.id}`, { lines: [line(1000, '11')] }).set('If-Match', etag).expect(412);
+    await as('cs').post(`/v1/admin/rfq-quotations/${draft.id}/actions/send`).expect(200);
+
+    const accepted = await as('cs')
+      .post(`/v1/admin/rfq-quotations/${draft.id}/actions/record-acceptance`, { quantities: [3000], via: 'phone' })
+      .expect(200);
+    expect(accepted.body).toMatchObject({ status: 'accepted', acceptedQuoteId: expect.any(String) });
+    expect(
+      await prisma.auditLog.count({ where: { action: 'rfq.acceptance_recorded', resourcePublicId: rfq.id } }),
+    ).toBe(1);
+    const quote = await as('customer').get(`/v1/store/quotes/${accepted.body.acceptedQuoteId as string}`).expect(200);
+    expect((quote.body as { options: { quantity: number }[] }).options.map((o) => o.quantity)).toEqual([3000]);
   });
 
   it('records declined and expired requests as unmet demand (D-102)', async () => {

@@ -1,6 +1,7 @@
 import { type Actor, type UserActor } from '@common/context/actor';
 import { sha256 } from '@common/crypto/hashing';
 import { DomainException } from '@common/errors/domain.exception';
+import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma, type RfqStatus, type SalesChannel } from '@generated/prisma/client';
@@ -10,6 +11,7 @@ import { rfqSpecLines } from '@modules/quotes/line-summary';
 import { SavedQuotesService } from '@modules/quotes/saved-quotes.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
+import { AuditService } from '@platform/audit/audit.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { EntitiesService } from '@platform/entities/entities.service';
@@ -21,6 +23,8 @@ import { SettingNotFoundError, SettingsService } from '@platform/settings/settin
 import { MAX_RFQ_FILES, MAX_RFQ_TIERS, rfqDimensions, rfqFormFields } from './rfq-form';
 import { specErrors } from './rfq-spec';
 import { type StoreRfqFormDto } from './rfqs.dto';
+
+export const rfqEtag = (r: { publicId: string; rowVersion: number }) => etagOf(r.publicId, r.rowVersion);
 
 export const RFQ_INCLUDE = {
   productType: { select: { code: true, nameTh: true, nameEn: true } },
@@ -118,6 +122,7 @@ export class RfqsService implements OnModuleInit {
     private readonly files: FilesService,
     private readonly access: FactoryAccess,
     private readonly quotes: SavedQuotesService,
+    private readonly audit: AuditService,
   ) {}
 
   onModuleInit(): void {
@@ -295,6 +300,7 @@ export class RfqsService implements OnModuleInit {
     publicId: string,
     rfqQuotePublicId: string,
     quantities?: number[],
+    recordedBy?: { actor: UserActor; via: string; note: string | null },
   ): Promise<RfqRow> {
     return this.prisma.withTx(async (tx) => {
       const rfq = await this.forCustomer(customerUserId, publicId, tx);
@@ -408,7 +414,17 @@ export class RfqsService implements OnModuleInit {
       await this.record(tx, rfq.publicId, 'rfq.accepted', {
         quoteId: saved.publicId,
         quantities: lines.map((l) => l.quantity),
+        ...(recordedBy && { recordedBy: recordedBy.actor.publicId, via: recordedBy.via }),
       });
+      if (recordedBy)
+        await this.audit.record(tx, {
+          category: 'approval',
+          action: 'rfq.acceptance_recorded',
+          actor: recordedBy.actor,
+          resourceType: 'rfq',
+          resourcePublicId: rfq.publicId,
+          data: { quoteId: saved.publicId, via: recordedBy.via, note: recordedBy.note },
+        });
       return this.load(tx, rfq.id);
     });
   }
@@ -549,7 +565,7 @@ export class RfqsService implements OnModuleInit {
         tx,
         rfq.publicId,
         'rfq.consultation_requested',
-        { factoryId: factory.publicId, dueAt: dueAt.toISOString() },
+        { factoryId: factory.publicId, dueAt: dueAt.toISOString(), rfqCode: rfq.rfqCode },
         ['internal'],
       );
       return this.load(tx, rfq.id);
@@ -562,33 +578,11 @@ export class RfqsService implements OnModuleInit {
     publicId: string,
     input: { lines: RfqQuoteLineInput[]; note?: string },
   ): Promise<RfqRow> {
-    const quantities = input.lines.map((l) => l.quantity);
-    if (new Set(quantities).size !== quantities.length) {
-      throw new DomainException('validation.failed', {
-        errors: [{ path: 'lines', code: 'unique', message: 'one line per quantity' }],
-      });
-    }
-    const factories = new Map(
-      (
-        await this.prisma.factory.findMany({
-          where: { publicId: { in: input.lines.flatMap((l) => (l.factoryId ? [l.factoryId] : [])) } },
-          select: { id: true, publicId: true },
-        })
-      ).map((f) => [f.publicId, f.id]),
-    );
-    const unknown = input.lines.findIndex((l) => l.factoryId && !factories.has(l.factoryId));
-    if (unknown >= 0) {
-      throw new DomainException('validation.failed', {
-        errors: [{ path: `lines[${unknown}].factoryId`, code: 'exists', message: 'unknown factory' }],
-      });
-    }
     const now = new Date();
-    const floor = new MoneyDecimal(
-      String((await this.settings.at('pricing.margin_floor_pct', { at: now })).value),
-    );
+    const priced = await this.priceLines(input.lines, now);
     return this.prisma.withTx(async (tx) => {
       const rfq = await this.openRfq(tx, publicId);
-      const vat = await this.vatRate(tx, now);
+      const rows = await priced(tx);
       const last = await tx.rfqQuote.findFirst({ where: { rfqId: rfq.id }, orderBy: { versionNo: 'desc' } });
       let quote;
       try {
@@ -606,34 +600,217 @@ export class RfqsService implements OnModuleInit {
         }
         throw error;
       }
-      await tx.rfqQuoteLine.createMany({
-        data: input.lines.map((l) => {
-          const unit = new MoneyDecimal(l.unitPrice);
-          const shipping = new MoneyDecimal(l.shippingNetAmount ?? '0');
-          const net = unit.mul(l.quantity).add(shipping).toDecimalPlaces(2);
-          const vatAmount = net.mul(vat.ratePct).div(100).toDecimalPlaces(2);
-          const margin =
-            l.buyUnitPrice && !unit.isZero()
-              ? unit.sub(l.buyUnitPrice).div(unit).mul(100).toDecimalPlaces(4)
-              : null;
-          return {
-            rfqQuoteId: quote.id,
-            quantity: l.quantity,
-            unitPrice: unit.toFixed(6),
-            netAmount: net.toFixed(2),
-            vatAmount: vatAmount.toFixed(2),
-            grossAmount: net.add(vatAmount).toFixed(2),
-            shippingNetAmount: shipping.toFixed(2),
-            leadTimeDays: l.leadTimeDays,
-            factoryId: l.factoryId ? factories.get(l.factoryId)! : null,
-            buyUnitPrice: l.buyUnitPrice ?? null,
-            marginPct: margin?.toFixed(4) ?? null,
-            belowMarginFloor: margin !== null && margin.lessThan(floor),
-          };
-        }),
-      });
+      await tx.rfqQuoteLine.createMany({ data: rows.map((r) => ({ ...r, rfqQuoteId: quote.id })) });
       await this.record(tx, rfq.publicId, 'rfq.quote_drafted', { versionNo: quote.versionNo }, ['internal']);
       return this.load(tx, rfq.id);
+    });
+  }
+
+  /** Replaces the lines and note of the draft (re-priced as a new draft would be); If-Match the RFQ's ETag. */
+  async replaceDraft(
+    actor: UserActor,
+    rfqQuotePublicId: string,
+    ifMatch: string | undefined,
+    input: { lines: RfqQuoteLineInput[]; note?: string },
+  ): Promise<RfqRow> {
+    const now = new Date();
+    const priced = await this.priceLines(input.lines, now);
+    return this.prisma.withTx(async (tx) => {
+      const quote = await tx.rfqQuote.findUnique({ where: { publicId: rfqQuotePublicId } });
+      if (!quote) throw new DomainException('http.not_found');
+      if (quote.status !== 'draft') throw new DomainException('rfq.quote_not_draft');
+      const current = await tx.rfq.findUniqueOrThrow({ where: { id: quote.rfqId } });
+      assertIfMatch(ifMatch, rfqEtag(current));
+      const rfq = await this.openRfq(tx, current.publicId);
+      const { count } = await tx.rfq.updateMany({
+        where: { id: rfq.id, rowVersion: current.rowVersion },
+        data: { rowVersion: { increment: 1 } },
+      });
+      if (count === 0) throw new DomainException('concurrency.stale');
+      const rows = await priced(tx);
+      await tx.rfqQuoteLine.deleteMany({ where: { rfqQuoteId: quote.id } });
+      await tx.rfqQuoteLine.createMany({ data: rows.map((r) => ({ ...r, rfqQuoteId: quote.id })) });
+      await tx.rfqQuote.update({ where: { id: quote.id }, data: { note: input.note ?? '' } });
+      await this.record(tx, rfq.publicId, 'rfq.quote_revised', { versionNo: quote.versionNo, by: actor.publicId }, [
+        'internal',
+      ]);
+      return this.load(tx, rfq.id);
+    });
+  }
+
+  /** Validates the lines and prices them in the transaction it is given (VAT in force, margin floor, D-012). */
+  private async priceLines(lines: RfqQuoteLineInput[], now: Date) {
+    const quantities = lines.map((l) => l.quantity);
+    if (new Set(quantities).size !== quantities.length) {
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'lines', code: 'unique', message: 'one line per quantity' }],
+      });
+    }
+    const factories = new Map(
+      (
+        await this.prisma.factory.findMany({
+          where: { publicId: { in: lines.flatMap((l) => (l.factoryId ? [l.factoryId] : [])) } },
+          select: { id: true, publicId: true },
+        })
+      ).map((f) => [f.publicId, f.id]),
+    );
+    const unknown = lines.findIndex((l) => l.factoryId && !factories.has(l.factoryId));
+    if (unknown >= 0) {
+      throw new DomainException('validation.failed', {
+        errors: [{ path: `lines[${unknown}].factoryId`, code: 'exists', message: 'unknown factory' }],
+      });
+    }
+    const floor = new MoneyDecimal(
+      String((await this.settings.at('pricing.margin_floor_pct', { at: now })).value),
+    );
+    return async (tx: Tx) => {
+      const vat = await this.vatRate(tx, now);
+      return lines.map((l) => {
+        const unit = new MoneyDecimal(l.unitPrice);
+        const shipping = new MoneyDecimal(l.shippingNetAmount ?? '0');
+        const net = unit.mul(l.quantity).add(shipping).toDecimalPlaces(2);
+        const vatAmount = net.mul(vat.ratePct).div(100).toDecimalPlaces(2);
+        const margin =
+          l.buyUnitPrice && !unit.isZero() ? unit.sub(l.buyUnitPrice).div(unit).mul(100).toDecimalPlaces(4) : null;
+        return {
+          quantity: l.quantity,
+          unitPrice: unit.toFixed(6),
+          netAmount: net.toFixed(2),
+          vatAmount: vatAmount.toFixed(2),
+          grossAmount: net.add(vatAmount).toFixed(2),
+          shippingNetAmount: shipping.toFixed(2),
+          leadTimeDays: l.leadTimeDays,
+          factoryId: l.factoryId ? factories.get(l.factoryId)! : null,
+          buyUnitPrice: l.buyUnitPrice ?? null,
+          marginPct: margin?.toFixed(4) ?? null,
+          belowMarginFloor: margin !== null && margin.lessThan(floor),
+        };
+      });
+    };
+  }
+
+  /** CS moves a submitted request into review without assigning it (D-100). */
+  async startReview(publicId: string): Promise<RfqRow> {
+    return this.prisma.withTx(async (tx) => {
+      const rfq = await this.openRfq(tx, publicId);
+      if (rfq.status !== 'submitted') throw new DomainException('rfq.invalid_transition');
+      await this.transition(tx, rfq.id, rfq.status, 'in_review');
+      await this.record(tx, rfq.publicId, 'rfq.review_started', {}, ['internal']);
+      return this.load(tx, rfq.id);
+    });
+  }
+
+  /**
+   * Factories that could quote the request (D-043): an active capability for its category, the participation tier
+   * in force, whether the tiers fit the capability's quantity range, whether it was consulted, and the on-time
+   * shipping % of its latest scorecard (D-155). No prices.
+   */
+  async candidates(publicId: string) {
+    const rfq = await this.get(publicId);
+    const now = new Date();
+    const capabilities = await this.prisma.factoryCapability.findMany({
+      where: { productTypeId: rfq.productTypeId, status: 'active', factory: { status: { in: ['active', 'trial'] } } },
+      include: {
+        factory: {
+          select: {
+            id: true,
+            publicId: true,
+            code: true,
+            legalName: true,
+            tradeName: true,
+            status: true,
+            participations: {
+              where: { productTypeId: rfq.productTypeId },
+              include: {
+                versions: {
+                  where: { status: 'approved', effectiveFrom: { lte: now } },
+                  orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    const byFactory = new Map<bigint, typeof capabilities>();
+    for (const c of capabilities) byFactory.set(c.factoryId, [...(byFactory.get(c.factoryId) ?? []), c]);
+    const scorecards = await this.prisma.factoryScorecard.findMany({
+      where: { factoryId: { in: [...byFactory.keys()] } },
+      orderBy: { month: 'desc' },
+    });
+    const quantities = rfq.tiers.map((t) => t.quantity);
+    return [...byFactory.values()].map((caps) => {
+      const f = caps[0]!.factory;
+      const fits = caps.some(
+        (c) =>
+          quantities.every((q) => (c.minOrderQty === null || q >= c.minOrderQty) && (c.maxOrderQty === null || q <= c.maxOrderQty)),
+      );
+      const below = caps.every((c) => c.minOrderQty !== null && quantities.some((q) => q < c.minOrderQty!));
+      const card = scorecards.find((sc) => sc.factoryId === f.id);
+      return {
+        factoryId: f.publicId,
+        code: f.code,
+        name: f.tradeName ?? f.legalName,
+        status: f.status,
+        tier: f.participations[0]?.versions[0]?.tier ?? null,
+        capable: fits,
+        reason: fits ? null : below ? 'quantity_below_minimum' : 'quantity_above_maximum',
+        alreadyConsulted: rfq.consultations.some((c) => c.factoryId === f.id),
+        onTimeShippingPct: card?.onTimeShippingPct?.toFixed(2) ?? null,
+      };
+    });
+  }
+
+  /** Reminds the factory of an open consultation (D-143); once an hour at most (technical anti-spam bound). */
+  async remindConsultation(actor: UserActor, consultationPublicId: string): Promise<void> {
+    await this.prisma.withTx(async (tx) => {
+      const c = await tx.rfqFactoryConsultation.findUnique({
+        where: { publicId: consultationPublicId },
+        include: { factory: { select: { publicId: true } }, rfq: { select: { publicId: true, rfqCode: true } } },
+      });
+      if (!c) throw new DomainException('http.not_found');
+      if (c.status !== 'requested') throw new DomainException('rfq.consultation_not_open');
+      const recent = await tx.domainEvent.count({
+        where: {
+          type: 'rfq.consultation_reminded',
+          aggregateId: c.rfq.publicId,
+          occurredAt: { gt: new Date(Date.now() - 60 * 60_000) },
+          payload: { path: ['consultationId'], equals: c.publicId },
+        },
+      });
+      if (recent > 0) throw new DomainException('rfq.reminder_recent');
+      await this.record(
+        tx,
+        c.rfq.publicId,
+        'rfq.consultation_reminded',
+        {
+          consultationId: c.publicId,
+          factoryId: c.factory.publicId,
+          rfqCode: c.rfq.rfqCode,
+          dueAt: c.dueAt.toISOString(),
+          by: actor.publicId,
+        },
+        ['internal'],
+      );
+    });
+  }
+
+  /** CS records the customer's acceptance given by phone or LINE: the same path as the customer's own. */
+  async recordAcceptance(
+    actor: UserActor,
+    rfqQuotePublicId: string,
+    input: { quantities?: number[]; via: string; note?: string },
+  ): Promise<RfqRow> {
+    const quote = await this.prisma.rfqQuote.findUnique({
+      where: { publicId: rfqQuotePublicId },
+      include: { rfq: { select: { publicId: true, customerUserId: true } } },
+    });
+    if (!quote) throw new DomainException('http.not_found');
+    return this.accept(quote.rfq.customerUserId, quote.rfq.publicId, quote.publicId, input.quantities, {
+      actor,
+      via: input.via,
+      note: input.note ?? null,
     });
   }
 

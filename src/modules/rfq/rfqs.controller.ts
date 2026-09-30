@@ -2,26 +2,30 @@ import { CurrentActor, Public } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { addCalendarDays, startOfBangkokDay } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, Header, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { type Response } from 'express';
 
 import { factoryConsultationDto, rfqDto, staffRfqDto } from './rfq-views';
 import {
   AcceptRfqQuoteDto,
   AdminRfqListQuery,
   AssignRfqDto,
+  CandidateFactoryDto,
   ConsultationListQuery,
   DeclineConsultationDto,
   DeclineRfqDto,
   DraftRfqQuoteDto,
   FactoryConsultationDto,
+  RecordRfqAcceptanceDto,
   RequestConsultationDto,
   RespondConsultationDto,
   RFQ_FORM_EXAMPLE,
@@ -39,7 +43,7 @@ import {
   UNMET_EXAMPLE,
   UnmetDemandReasonDto,
 } from './rfqs.dto';
-import { type RfqFiles, type RfqRow, RfqsService } from './rfqs.service';
+import { rfqEtag, type RfqFiles, type RfqRow, RfqsService } from './rfqs.service';
 
 const DECISIONS = ['D-100', 'D-043', 'D-102'];
 const rfqParam = ApiParam({ name: 'rfqId', format: 'uuid' });
@@ -448,13 +452,16 @@ export class AdminRfqsController {
     description: 'Every message, consultation and quotation version; buy prices and margins per D-141.',
     implements: [...DECISIONS, 'D-141'],
   })
+  @ApiEtag()
   @ApiSuccess(200, { description: 'Request', type: StaffRfqDto, example: STAFF_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(
     @CurrentActor() actor: Actor,
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<StaffRfqDto> {
     const row = await this.rfqs.get(rfqId);
+    res.setHeader('ETag', rfqEtag(row));
     return this.view(actor, row, await this.rfqs.attachments(row));
   }
 
@@ -595,6 +602,129 @@ export class AdminRfqsController {
     @Body() body: RequestConsultationDto,
   ) {
     return this.view(actor, await this.rfqs.requestConsultation(actor as UserActor, rfqId, body));
+  }
+
+  @Post('rfqs/:rfqId/actions/start-review')
+  @HttpCode(200)
+  @Can('rfqs.manage')
+  @rfqParam
+  @ApiEndpoint({
+    id: 'admin.rfqs.startReview',
+    summary: 'Start reviewing a request',
+    description: 'Submitted → in review without assigning it (D-100); 409 `rfq.invalid_transition` otherwise.',
+    implements: DECISIONS,
+  })
+  @ApiSuccess(200, { description: 'Request', type: StaffRfqDto, example: STAFF_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'rfq.closed', 'rfq.invalid_transition')
+  async startReview(@CurrentActor() actor: Actor, @Param('rfqId', ParseUUIDPipe) rfqId: string) {
+    return this.view(actor, await this.rfqs.startReview(rfqId));
+  }
+
+  @Get('rfqs/:rfqId/candidate-factories')
+  @Can('rfqs.read')
+  @rfqParam
+  @ApiEndpoint({
+    id: 'admin.rfqs.listCandidateFactories',
+    summary: 'Factories that could quote a request',
+    description:
+      'Active or trial factories with an active capability for the category: participation tier in force (D-043), ' +
+      'whether the tiers fit the capability, whether already consulted, on-time shipping of the latest scorecard ' +
+      '(D-155). No prices.',
+    implements: ['D-043', 'D-155', 'D-100'],
+  })
+  @ApiSuccess(200, {
+    description: 'Candidates',
+    type: [CandidateFactoryDto],
+    example: [
+      {
+        factoryId: RFQ_IDS.factory,
+        code: 'F9001',
+        name: 'โรงพิมพ์ ทดสอบ',
+        status: 'active',
+        tier: 'A',
+        capable: true,
+        reason: null,
+        alreadyConsulted: false,
+        onTimeShippingPct: '96.50',
+      },
+    ],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  candidates(@Param('rfqId', ParseUUIDPipe) rfqId: string): Promise<CandidateFactoryDto[]> {
+    return this.rfqs.candidates(rfqId);
+  }
+
+  @Post('rfq-consultations/:consultationId/actions/remind')
+  @HttpCode(204)
+  @Can('rfqs.manage')
+  @Idempotent({ optional: true })
+  @ApiParam({ name: 'consultationId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.rfqs.remindConsultation',
+    summary: 'Remind a factory of a price request',
+    description:
+      'Notifies the factory again (partner zone, e-mail, LINE — D-143). 409 `rfq.consultation_not_open` when it is ' +
+      'no longer waiting, `rfq.reminder_recent` within an hour of the last reminder.',
+    implements: ['D-143', 'D-100'],
+  })
+  @ApiSuccess(204, { description: 'Reminded' })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'rfq.consultation_not_open', 'rfq.reminder_recent')
+  async remind(@CurrentActor() actor: Actor, @Param('consultationId', ParseUUIDPipe) id: string): Promise<void> {
+    await this.rfqs.remindConsultation(actor as UserActor, id);
+  }
+
+  @Put('rfq-quotations/:rfqQuoteId')
+  @Can('rfqs.manage')
+  @ApiParam({ name: 'rfqQuoteId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.rfqs.replaceDraftQuotation',
+    summary: 'Revise the draft quotation',
+    description:
+      'Replaces the lines and note of the draft, priced as a new draft (VAT in force, margin floor — D-012). ' +
+      '`If-Match` the request’s ETag (`admin.rfqs.get`); drafts only (409 `rfq.quote_not_draft`).',
+    implements: [...DECISIONS, 'D-012'],
+  })
+  @ApiConcurrency()
+  @ApiBody({
+    type: DraftRfqQuoteDto,
+    examples: { default: { value: { lines: [{ quantity: 1000, unitPrice: '12.000000', leadTimeDays: 14 }] } } },
+  })
+  @ApiSuccess(200, { description: 'Request', type: StaffRfqDto, example: STAFF_EXAMPLE, headers: ['ETag'] })
+  @ApiStandardErrors(...WRITE, 'rfq.closed', 'rfq.quote_not_draft', 'pricing.vat_rate_missing')
+  async replaceDraft(
+    @CurrentActor() actor: Actor,
+    @Param('rfqQuoteId', ParseUUIDPipe) rfqQuoteId: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: DraftRfqQuoteDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.rfqs.replaceDraft(actor as UserActor, rfqQuoteId, ifMatch, body);
+    res.setHeader('ETag', rfqEtag(row));
+    return this.view(actor, row);
+  }
+
+  @Post('rfq-quotations/:rfqQuoteId/actions/record-acceptance')
+  @HttpCode(200)
+  @Can('rfqs.manage')
+  @Idempotent()
+  @ApiParam({ name: 'rfqQuoteId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.rfqs.recordAcceptance',
+    summary: 'Record the customer’s acceptance of a quotation',
+    description:
+      'When the customer accepts by phone or LINE: the same result as their own acceptance — a saved quotation ' +
+      '(source `rfq`) CS then puts in their cart (D-100, D-051); audited with how it was given.',
+    implements: [...DECISIONS, 'D-051'],
+  })
+  @ApiBody({ type: RecordRfqAcceptanceDto, examples: { default: { value: { quantities: [1000], via: 'phone' } } } })
+  @ApiSuccess(200, { description: 'Request', type: StaffRfqDto, example: { ...STAFF_EXAMPLE, status: 'accepted' } })
+  @ApiStandardErrors(...WRITE, 'rfq.quote_not_open')
+  async recordAcceptance(
+    @CurrentActor() actor: Actor,
+    @Param('rfqQuoteId', ParseUUIDPipe) rfqQuoteId: string,
+    @Body() body: RecordRfqAcceptanceDto,
+  ) {
+    return this.view(actor, await this.rfqs.recordAcceptance(actor as UserActor, rfqQuoteId, body));
   }
 
   @Post('rfqs/:rfqId/quotations')

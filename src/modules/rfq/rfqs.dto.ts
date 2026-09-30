@@ -898,3 +898,74 @@ export const RFQ_FORM_EXAMPLE: StoreRfqFormDto = {
   files: { purpose: 'artwork', accept: ['application/pdf', 'image/png'], maxBytes: 2147483648, maxFiles: 20 },
   slaTargetHours: null,
 };
+
+// --- RFQ desk actions (U-B0.2) -----------------------------------------------------------------------
+
+export const ACCEPTANCE_CHANNELS = ['phone', 'line', 'email', 'other'] as const;
+
+export class RecordRfqAcceptanceDto {
+  @ApiPropertyOptional({
+    type: [Number],
+    example: [1000],
+    description: 'The quoted quantities the customer took; all when omitted',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_RFQ_TIERS)
+  @IsInt({ each: true })
+  quantities?: number[];
+
+  @EnumField(ACCEPTANCE_CHANNELS, 'RfqAcceptanceChannel', { example: 'phone', description: 'How the customer accepted' })
+  via!: (typeof ACCEPTANCE_CHANNELS)[number];
+
+  @ApiPropertyOptional({ example: 'ลูกค้ายืนยันทางโทรศัพท์ (fake)', maxLength: 1000 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  note?: string;
+}
+
+export class CandidateFactoryDto {
+  @ApiProperty({ format: 'uuid', example: IDS.factory })
+  factoryId!: string;
+
+  @ApiProperty({ example: 'F9001' })
+  code!: string;
+
+  @ApiProperty({ example: 'โรงพิมพ์ ทดสอบ' })
+  name!: string;
+
+  @ApiProperty({ enum: ['active', 'trial'], enumName: 'CandidateFactoryStatus', example: 'active' })
+  status!: string;
+
+  @ApiProperty({
+    enum: ['A', 'B', 'C'],
+    enumName: 'ParticipationTier',
+    nullable: true,
+    example: 'A',
+    description: 'Participation tier in force for the category (D-043); null without one',
+  })
+  tier!: string | null;
+
+  @ApiProperty({ example: true, description: 'The requested quantities fit its capability' })
+  capable!: boolean;
+
+  @ApiProperty({
+    enum: ['quantity_below_minimum', 'quantity_above_maximum'],
+    enumName: 'CandidateFactoryReason',
+    nullable: true,
+    example: null,
+  })
+  reason!: string | null;
+
+  @ApiProperty({ example: false })
+  alreadyConsulted!: boolean;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '96.50',
+    description: 'On-time shipping % of its latest monthly scorecard (D-155)',
+  })
+  onTimeShippingPct!: string | null;
+}

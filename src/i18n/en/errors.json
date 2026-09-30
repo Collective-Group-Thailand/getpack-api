@@ -513,6 +513,14 @@
     "consultation_closed": {
       "title": "Request closed",
       "detail": "The request for a buy price was already answered or has expired."
+    },
+    "consultation_not_open": {
+      "title": "Consultation not open",
+      "detail": "This factory consultation is no longer waiting for an answer"
+    },
+    "reminder_recent": {
+      "title": "Reminder sent recently",
+      "detail": "The factory was reminded within the last hour"
     }
   },
   "cart": {

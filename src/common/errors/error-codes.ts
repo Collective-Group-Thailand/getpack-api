@@ -121,6 +121,8 @@ export const ERROR_CODES = {
   'rfq.quote_empty': HttpStatus.UNPROCESSABLE_ENTITY,
   'rfq.draft_open': HttpStatus.CONFLICT,
   'rfq.consultation_open': HttpStatus.CONFLICT,
+  'rfq.consultation_not_open': HttpStatus.CONFLICT,
+  'rfq.reminder_recent': HttpStatus.CONFLICT,
   'rfq.consultation_closed': HttpStatus.CONFLICT,
   'service.unavailable': HttpStatus.SERVICE_UNAVAILABLE,
   'internal.unexpected': HttpStatus.INTERNAL_SERVER_ERROR,
