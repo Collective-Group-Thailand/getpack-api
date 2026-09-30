@@ -6,7 +6,10 @@ import { ScopingService } from '@modules/iam/scoping.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { FilesService } from '@platform/files/files.service';
 
+import { currentMilestone } from './job-views';
 import { JOB_INCLUDE, type JobRow } from './job-views';
+import { type BoardColumnDto, type ProductionBoardDto } from './production.dto';
+import { type RouteSnapshot } from './production.service';
 
 /**
  * Reads of production jobs, scoped (schema-design §2.5): staff see every job; a factory principal only the
@@ -83,5 +86,50 @@ export class JobsQueryService implements OnModuleInit {
     for (const a of attachments)
       map.set(a.subjectId, [...(map.get(a.subjectId) ?? []), a.fileObject.publicId]);
     return map;
+  }
+
+  /**
+   * The production board (D-074, D-075): open jobs grouped by the step they are at — released jobs not accepted
+   * yet under `awaiting_acceptance` — with totals and the jobs predicted to miss the promise.
+   */
+  async board(filters: { factoryId?: string; productTypeCode?: string }): Promise<ProductionBoardDto> {
+    const jobs = await this.prisma.productionJob.findMany({
+      where: {
+        status: { in: ['released', 'accepted', 'in_progress', 'on_hold'] },
+        ...(filters.factoryId && { factory: { publicId: filters.factoryId } }),
+        ...(filters.productTypeCode && { order: { productType: { code: filters.productTypeCode } } }),
+      },
+      select: {
+        status: true,
+        atRiskSince: true,
+        routeSnapshot: true,
+        milestones: { orderBy: { seq: 'asc' }, select: { seq: true, stepKey: true, status: true, dueAt: true } },
+      },
+      take: 5000,
+    });
+    const columns = new Map<string, BoardColumnDto & { order: number }>();
+    for (const job of jobs) {
+      const current = job.status === 'released' ? null : currentMilestone(job);
+      const key = job.status === 'released' ? 'awaiting_acceptance' : (current?.stepKey ?? 'finishing');
+      const route = job.routeSnapshot as unknown as RouteSnapshot;
+      const step = current ? route.steps.find((s) => s.seq === current.seq) : undefined;
+      const column = columns.get(key) ?? {
+        key,
+        labelTh: key === 'awaiting_acceptance' ? 'รอโรงงานรับงาน' : (step?.nameTh ?? key),
+        labelEn: key === 'awaiting_acceptance' ? 'Awaiting acceptance' : (step?.nameEn ?? key),
+        total: 0,
+        atRisk: 0,
+        order: key === 'awaiting_acceptance' ? -1 : (current?.seq ?? 999),
+      };
+      column.total += 1;
+      if (job.atRiskSince) column.atRisk += 1;
+      columns.set(key, column);
+    }
+    const list = [...columns.values()].sort((a, b) => a.order - b.order);
+    return {
+      columns: list.map(({ order: _o, ...c }) => c),
+      total: jobs.length,
+      atRisk: jobs.filter((j) => j.atRiskSince).length,
+    };
   }
 }

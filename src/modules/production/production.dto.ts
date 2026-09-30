@@ -1,5 +1,7 @@
+import { FactoryRefDto } from '@common/dto/factory-ref.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -110,6 +112,56 @@ export class JobListQuery extends PageQuery {
   @IsOptional()
   @IsUUID()
   orderId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Jobs of this factory' })
+  @IsOptional()
+  @IsUUID()
+  factoryId?: string;
+
+  @ApiPropertyOptional({ example: 'folding_box' })
+  @IsOptional()
+  @Matches(/^[a-z][a-z0-9_]{0,59}$/)
+  productTypeCode?: string;
+}
+
+export class ProductionBoardQuery {
+  @ApiPropertyOptional({ format: 'uuid', description: 'Jobs of this factory' })
+  @IsOptional()
+  @IsUUID()
+  factoryId?: string;
+
+  @ApiPropertyOptional({ example: 'folding_box' })
+  @IsOptional()
+  @Matches(/^[a-z][a-z0-9_]{0,59}$/)
+  productTypeCode?: string;
+}
+
+export class BoardColumnDto {
+  @ApiProperty({ example: 'printing', description: 'The step open jobs are at; `awaiting_acceptance` before acceptance' })
+  key!: string;
+
+  @ApiProperty({ example: 'กำลังพิมพ์' })
+  labelTh!: string;
+
+  @ApiProperty({ example: 'Printing' })
+  labelEn!: string;
+
+  @ApiProperty({ type: 'integer', example: 4 })
+  total!: number;
+
+  @ApiProperty({ type: 'integer', example: 1, description: 'Predicted to miss the promised date (D-075)' })
+  atRisk!: number;
+}
+
+export class ProductionBoardDto {
+  @ApiProperty({ type: [BoardColumnDto], description: 'In route order, then `awaiting_acceptance` first' })
+  columns!: BoardColumnDto[];
+
+  @ApiProperty({ type: 'integer', example: 12 })
+  total!: number;
+
+  @ApiProperty({ type: 'integer', example: 2 })
+  atRisk!: number;
 }
 
 export class MilestoneDto {
@@ -311,6 +363,21 @@ export class AdminJobDto extends PartnerJobDto {
   @ApiProperty({ format: 'uuid', example: JOB_IDS.order })
   orderId!: string;
 
+  @ApiProperty({ example: 'folding_box' })
+  productTypeCode!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'printing', description: 'The first step not done yet' })
+  currentMilestoneKey!: string | null;
+
+  @ApiProperty({
+    enum: ['step_overdue', 'late_plan'],
+    enumName: 'JobRiskReason',
+    nullable: true,
+    example: null,
+    description: '`step_overdue`: the current step is past due; `late_plan`: the plan already ends after the promise',
+  })
+  riskReason!: string | null;
+
   @ApiProperty({ example: 'DEVOR-2609-00001' })
   orderCode!: string;
 
@@ -423,6 +490,9 @@ export const ADMIN_JOB_EXAMPLE: AdminJobDto = {
   ...PARTNER_JOB_EXAMPLE,
   orderId: JOB_IDS.order,
   orderCode: 'DEVOR-2609-00001',
+  productTypeCode: 'folding_box',
+  currentMilestoneKey: 'printing',
+  riskReason: null,
   factoryId: JOB_IDS.factory,
   factoryCode: 'F9001',
   releaseMode: 'auto',
@@ -1042,6 +1112,11 @@ export class InspectionListQuery {
   @Min(1)
   @Max(100)
   perPage: number = 25;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Inspections of this factory’s jobs' })
+  @IsOptional()
+  @IsUUID()
+  factoryId?: string;
 }
 
 export class ScheduleInspectionDto {
@@ -1085,6 +1160,28 @@ export class RecordInspectionDto {
   photoFileIds?: string[];
 }
 
+export class DefectCountsDto {
+  @ApiProperty({ type: 'integer', example: 0 })
+  critical!: number;
+
+  @ApiProperty({ type: 'integer', example: 5 })
+  major!: number;
+
+  @ApiProperty({ type: 'integer', example: 7 })
+  minor!: number;
+}
+
+export class AqlLevelsDto {
+  @ApiProperty({ example: '0' })
+  critical!: string;
+
+  @ApiProperty({ example: '2.5' })
+  major!: string;
+
+  @ApiProperty({ example: '4.0' })
+  minor!: string;
+}
+
 export class InspectionDto {
   @ApiProperty({ format: 'uuid', example: JOB_IDS.milestone })
   id!: string;
@@ -1121,22 +1218,26 @@ export class InspectionDto {
   @ApiProperty({ type: 'integer', example: 80, description: 'ISO 2859-1 level II sample' })
   sampleSize!: number;
 
-  @ApiProperty({
-    example: { critical: 0, major: 5, minor: 7 },
-    type: 'object',
-    additionalProperties: true,
-    description: 'Acceptance numbers per class',
-  })
-  accept!: Record<string, number>;
+  @ApiProperty({ type: () => DefectCountsDto, description: 'Acceptance numbers per class' })
+  accept!: DefectCountsDto;
 
-  @ApiProperty({
-    type: 'object',
-    additionalProperties: true,
-    nullable: true,
-    example: null,
-    description: 'Defects found per class',
-  })
-  found!: Record<string, number> | null;
+  @ApiProperty({ type: () => DefectCountsDto, nullable: true, description: 'Defects found per class' })
+  found!: DefectCountsDto | null;
+
+  @ApiProperty({ type: () => AqlLevelsDto, description: 'AQL per class the plan used (D-076)' })
+  aql!: AqlLevelsDto;
+
+  @ApiProperty({ format: 'uuid', example: JOB_IDS.order })
+  orderId!: string;
+
+  @ApiProperty({ example: 'DEVOR-2609-00001' })
+  orderCode!: string;
+
+  @ApiProperty({ example: 'folding_box' })
+  productTypeCode!: string;
+
+  @ApiProperty({ type: UserRefDto, nullable: true, description: 'The scheduled inspector' })
+  inspectorUser!: UserRefDto | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
   scheduledAt!: string | null;
@@ -1212,11 +1313,27 @@ export const INSPECTION_EXAMPLE: InspectionDto = {
   sampleSize: 80,
   accept: { critical: 0, major: 5, minor: 7 },
   found: null,
+  aql: { critical: '0', major: '2.5', minor: '4.0' },
+  orderId: JOB_IDS.order,
+  orderCode: 'DEVOR-2609-00001',
+  productTypeCode: 'folding_box',
+  inspectorUser: null,
   scheduledAt: null,
   inspector: null,
   resultAt: null,
   notes: null,
 };
+
+export class ScorecardMonthQuery {
+  @ApiProperty({ example: '2026-09', pattern: '^\\d{4}-(0[1-9]|1[0-2])$', description: 'Month (Bangkok)' })
+  @Matches(/^\d{4}-(0[1-9]|1[0-2])$/)
+  month!: string;
+}
+
+export class FactoryScorecardDto extends ScorecardDto {
+  @ApiProperty({ type: FactoryRefDto })
+  factory!: FactoryRefDto;
+}
 
 export const SCORECARD_EXAMPLE: ScorecardDto = {
   month: '2026-09-01',

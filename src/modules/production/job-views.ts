@@ -13,7 +13,12 @@ import { type RouteSnapshot } from './production.service';
 
 export const JOB_INCLUDE = {
   order: {
-    select: { publicId: true, orderCode: true, destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }] } },
+    select: {
+      publicId: true,
+      orderCode: true,
+      productType: { select: { code: true } },
+      destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }] },
+    },
   },
   factory: { select: { publicId: true, code: true } },
   milestones: { orderBy: { seq: 'asc' } },
@@ -90,6 +95,20 @@ export function partnerJobDto(row: JobRow, photos: Map<bigint, string[]>): Partn
   };
 }
 
+/** The first step not completed or skipped. */
+export function currentMilestone<M extends { status: string; stepKey: string; dueAt: Date | null }>(row: {
+  milestones: M[];
+}): M | null {
+  return row.milestones.find((m) => m.status !== 'completed' && m.status !== 'skipped') ?? null;
+}
+
+/** Why a job is at risk (D-075): its current step is past due, or its plan already ends after the promise. */
+function riskReason(row: JobRow, now = new Date()): 'step_overdue' | 'late_plan' | null {
+  if (row.atRiskSince === null) return null;
+  const current = currentMilestone(row);
+  return current?.dueAt && current.dueAt < now ? 'step_overdue' : 'late_plan';
+}
+
 export function adminJobDto(
   row: JobRow,
   photos: Map<bigint, string[]>,
@@ -100,6 +119,9 @@ export function adminJobDto(
     ...partnerJobDto(row, photos),
     orderId: row.order.publicId,
     orderCode: row.order.orderCode,
+    productTypeCode: row.order.productType.code,
+    currentMilestoneKey: currentMilestone(row)?.stepKey ?? null,
+    riskReason: riskReason(row),
     factoryId: row.factory.publicId,
     factoryCode: row.factory.code,
     releaseMode: row.releaseMode,

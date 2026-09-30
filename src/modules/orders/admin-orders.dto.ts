@@ -1,3 +1,4 @@
+import { FactoryRefDto } from '@common/dto/factory-ref.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { SALES_CHANNELS } from '@modules/ledger/ledger.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -64,17 +65,6 @@ export class AdminOrderListQuery extends PageQuery {
   placedTo?: string;
 }
 
-export class OrderFactoryRefDto {
-  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d1003' })
-  id!: string;
-
-  @ApiProperty({ example: 'F0001' })
-  code!: string;
-
-  @ApiProperty({ example: 'โรงพิมพ์ ทดสอบ' })
-  name!: string;
-}
-
 export class NextInstalmentDto {
   @ApiProperty({ type: 'integer', example: 2 })
   seq!: number;
@@ -120,8 +110,8 @@ export class AdminOrderListItemDto {
   @ApiProperty({ type: OrderCustomerRefDto })
   customer!: OrderCustomerRefDto;
 
-  @ApiProperty({ type: OrderFactoryRefDto, nullable: true, description: 'Staff only (D-050)' })
-  factory!: OrderFactoryRefDto | null;
+  @ApiProperty({ type: FactoryRefDto, nullable: true, description: 'Staff only (D-050)' })
+  factory!: FactoryRefDto | null;
 
   @ApiProperty({ example: '14182.80' })
   grossAmount!: string;

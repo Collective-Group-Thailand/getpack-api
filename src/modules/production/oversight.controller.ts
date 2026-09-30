@@ -2,6 +2,7 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -11,14 +12,17 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } fr
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import {
+  FactoryScorecardDto,
   INSPECTION_EXAMPLE,
   InspectionDto,
   InspectionListQuery,
+  JOB_IDS,
   RecomputeScorecardDto,
   RecordInspectionDto,
   ScheduleInspectionDto,
   SCORECARD_EXAMPLE,
   ScorecardDto,
+  ScorecardMonthQuery,
 } from './production.dto';
 import { ProductionOversightService } from './production-oversight.service';
 
@@ -44,6 +48,11 @@ function inspectionDto(i: InspectionRow): InspectionDto {
     lotSize: i.lotSize,
     sampleSize: i.sampleSize,
     accept: { critical: i.acceptCritical, major: i.acceptMajor, minor: i.acceptMinor },
+    aql: { critical: i.aqlCritical.toString(), major: i.aqlMajor.toString(), minor: i.aqlMinor.toString() },
+    orderId: i.job.order.publicId,
+    orderCode: i.job.order.orderCode,
+    productTypeCode: i.job.order.productType.code,
+    inspectorUser: i.inspector ? { id: i.inspector.publicId, displayName: i.inspector.displayName } : null,
     found:
       i.foundCritical === null
         ? null
@@ -107,7 +116,10 @@ export class AdminOversightController {
   @ApiStandardErrors('validation.failed')
   async list(@Query() q: InspectionListQuery) {
     const [rows, total] = await this.oversight.listInspections(
-      q.status ? { status: q.status } : {},
+      {
+        ...(q.status && { status: q.status }),
+        ...(q.factoryId && { job: { factory: { publicId: q.factoryId } } }),
+      },
       q.page,
       q.perPage,
     );
@@ -155,6 +167,7 @@ export class AdminOversightController {
   @Post('inspections/:inspectionId/actions/record')
   @HttpCode(200)
   @Can('inspections.perform')
+  @Idempotent({ optional: true })
   @inspectionParam
   @ApiEndpoint({
     id: 'admin.inspections.record',
@@ -190,6 +203,27 @@ export class AdminOversightController {
   ) {
     await this.oversight.recordResult(staff(actor), id, body);
     return this.one(id);
+  }
+
+  @Get('scorecards')
+  @Can('production.read')
+  @ApiEndpoint({
+    id: 'admin.inspections.monthScorecards',
+    summary: 'Every factory’s scorecard of a month',
+    description: 'On-time acceptance and shipping, QC first pass, claim rate, on-time updates per factory (D-155).',
+    implements: ['D-155', 'D-075'],
+  })
+  @ApiSuccess(200, {
+    description: 'Scorecards',
+    type: [FactoryScorecardDto],
+    example: [{ ...SCORECARD_EXAMPLE, factory: { id: JOB_IDS.factory, code: 'F9001', name: 'โรงพิมพ์ ทดสอบ' } }],
+  })
+  @ApiStandardErrors('validation.failed')
+  async monthScorecards(@Query() q: ScorecardMonthQuery): Promise<FactoryScorecardDto[]> {
+    return (await this.oversight.monthScorecards(q.month)).map((s) => ({
+      ...scorecardDto(s),
+      factory: { id: s.factory.publicId, code: s.factory.code, name: s.factory.tradeName ?? s.factory.legalName },
+    }));
   }
 
   @Get('factories/:factoryId/scorecards')

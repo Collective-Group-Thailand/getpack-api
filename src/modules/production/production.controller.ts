@@ -28,6 +28,8 @@ import {
   JobIssueDto,
   JobListQuery,
   MilestoneRouteDto,
+  ProductionBoardDto,
+  ProductionBoardQuery,
   QC_EXAMPLE,
   QcCheckDto,
   ReassignJobDto,
@@ -63,6 +65,34 @@ export class AdminProductionController {
     );
   }
 
+  @Get('production-board')
+  @Can('production.read')
+  @ApiEndpoint({
+    id: 'admin.production.board',
+    summary: 'The production board',
+    description:
+      'Open jobs grouped by the step they are at (released, not accepted yet: `awaiting_acceptance`) with totals ' +
+      'and the ones predicted to miss the promised date (D-074, D-075); filter by factory and product type. ' +
+      'The jobs of a column: `admin.production.list`.',
+    implements: ['D-074', 'D-075'],
+  })
+  @ApiSuccess(200, {
+    description: 'Board',
+    type: ProductionBoardDto,
+    example: {
+      columns: [
+        { key: 'awaiting_acceptance', labelTh: 'รอโรงงานรับงาน', labelEn: 'Awaiting acceptance', total: 2, atRisk: 0 },
+        { key: 'printing', labelTh: 'กำลังพิมพ์', labelEn: 'Printing', total: 4, atRisk: 1 },
+      ],
+      total: 6,
+      atRisk: 1,
+    },
+  })
+  @ApiStandardErrors('validation.failed')
+  board(@Query() q: ProductionBoardQuery): Promise<ProductionBoardDto> {
+    return this.jobs.board(q);
+  }
+
   @Get('production-jobs')
   @Can('production.read')
   @ApiEndpoint({
@@ -80,6 +110,8 @@ export class AdminProductionController {
     const where: Prisma.ProductionJobWhereInput = {
       ...(q.status && { status: q.status }),
       ...(q.orderId && { order: { publicId: q.orderId } }),
+      ...(q.factoryId && { factory: { publicId: q.factoryId } }),
+      ...(q.productTypeCode && { order: { ...(q.orderId && { publicId: q.orderId }), productType: { code: q.productTypeCode } } }),
       ...(q.queue === 'awaiting_acceptance' && { status: 'released' }),
       ...(q.queue === 'escalated' && {
         escalatedAt: { not: null },

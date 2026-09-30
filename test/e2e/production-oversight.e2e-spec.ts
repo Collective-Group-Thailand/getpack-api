@@ -186,5 +186,29 @@ describe('production oversight (e2e, B4.2)', () => {
     expect((mine.body as { month: string }[]).some((s) => s.month === month)).toBe(true);
     const operator = await factoryToken(ctx, fixture.factoryPublicId, 'factory_operator', 22);
     await as(ctx, operator).get(`/v1/partner/factories/${fixture.factoryPublicId}/scorecards`).expect(403);
+    // U-B0.2: every factory's scorecard of the month, the board, filters and job extras.
+    const all = await as(ctx, lead).get(`/v1/admin/scorecards?month=${month.slice(0, 7)}`).expect(200);
+    expect(all.body).toContainEqual(
+      expect.objectContaining({ month, factory: expect.objectContaining({ id: fixture.factoryPublicId }) }),
+    );
+    await as(ctx, lead).get('/v1/admin/scorecards?month=2026-13').expect(422);
+    const board = (await as(ctx, lead).get(`/v1/admin/production-board?factoryId=${fixture.factoryPublicId}`).expect(200)).body as {
+      columns: { key: string; total: number; atRisk: number }[];
+      total: number;
+      atRisk: number;
+    };
+    expect(board.columns.reduce((a, c) => a + c.total, 0)).toBe(board.total);
+    expect(board.atRisk).toBeGreaterThanOrEqual(1);
+    const listed = await as(ctx, lead)
+      .get(`/v1/admin/production-jobs?factoryId=${fixture.factoryPublicId}&perPage=100`)
+      .expect(200);
+    const riskyJob = (listed.body.data as { atRisk: boolean; riskReason: string | null; productTypeCode: string }[]).find((j) => j.atRisk)!;
+    expect(riskyJob).toMatchObject({ riskReason: expect.stringMatching(/^(step_overdue|late_plan)$/), productTypeCode: expect.any(String) });
+    const inspections = await as(ctx, lead).get(`/v1/admin/inspections?factoryId=${fixture.factoryPublicId}&perPage=100`).expect(200);
+    expect(inspections.body.data[0]).toMatchObject({
+      aql: { critical: expect.any(String), major: expect.any(String), minor: expect.any(String) },
+      orderId: expect.any(String),
+      productTypeCode: expect.any(String),
+    });
   });
 });

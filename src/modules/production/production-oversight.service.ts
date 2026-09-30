@@ -167,7 +167,14 @@ export class ProductionOversightService {
 
   async listInspections(where: Prisma.InspectionWhereInput, page: number, perPage: number) {
     const include = {
-      job: { select: { publicId: true, jobNo: true, factory: { select: { code: true } } } },
+      job: {
+        select: {
+          publicId: true,
+          jobNo: true,
+          factory: { select: { code: true } },
+          order: { select: { publicId: true, orderCode: true, productType: { select: { code: true } } } },
+        },
+      },
       inspector: { select: { publicId: true, displayName: true } },
     } as const;
     return Promise.all([
@@ -511,6 +518,15 @@ export class ProductionOversightService {
   async recompute(actor: Actor, factoryId: bigint, month: string) {
     this.logger.log(`scorecard of factory ${factoryId} for ${month} recomputed by ${actor.type}`);
     return this.computeScorecard(factoryId, startOfBangkokDay(month));
+  }
+
+  /** Every factory's scorecard of one month (D-155), for allocation and the partner team. */
+  monthScorecards(month: string) {
+    return this.prisma.factoryScorecard.findMany({
+      where: { month: new Date(`${month}-01T00:00:00Z`) },
+      include: { factory: { select: { publicId: true, code: true, legalName: true, tradeName: true } } },
+      orderBy: { factory: { code: 'asc' } },
+    });
   }
 }
 
