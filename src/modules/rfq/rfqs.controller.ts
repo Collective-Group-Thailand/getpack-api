@@ -5,6 +5,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { addCalendarDays, startOfBangkokDay } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
@@ -36,8 +37,9 @@ import {
   StoreRfqMessageInputDto,
   SubmitRfqDto,
   UNMET_EXAMPLE,
+  UnmetDemandReasonDto,
 } from './rfqs.dto';
-import { type RfqRow, RfqsService } from './rfqs.service';
+import { type RfqFiles, type RfqRow, RfqsService } from './rfqs.service';
 
 const DECISIONS = ['D-100', 'D-043', 'D-102'];
 const rfqParam = ApiParam({ name: 'rfqId', format: 'uuid' });
@@ -136,8 +138,15 @@ const STAFF_EXAMPLE: StaffRfqDto = {
       lines: [{ quantity: 1000, buyUnitPrice: '9.800000', leadTimeDays: 12 }],
       responseNote: 'Price valid 30 days (fake)',
       respondedAt: '2026-10-02T11:00:00+07:00',
+      requestedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-00000000e706', displayName: 'Dev CS' },
     },
   ],
+  customerCode: 'CU-000042',
+  contact: { email: 'someone@example.test', phone: '+66800000001' },
+  slaTargetHours: 8,
+  routedFromCalculator: false,
+  specLines: [{ key: 'material', labelTh: 'วัสดุ', labelEn: 'Material', valueTh: 'kraft 150 gsm (fake)', valueEn: 'kraft 150 gsm (fake)' }],
+  quoteDefaults: { validUntil: '2026-10-16T10:00:00+07:00' },
 };
 const CONSULTATION_EXAMPLE: FactoryConsultationDto = {
   id: RFQ_IDS.consultation,
@@ -367,7 +376,9 @@ export class AdminRfqsController {
   @ApiEndpoint({
     id: 'admin.rfqs.list',
     summary: 'List requests for quote',
-    description: '`q` matches the RFQ code; filter by status, assignee or overdue first response (D-100).',
+    description:
+      '`q` matches the RFQ code; filter by status, assignee, overdue first response, product type, channel, ' +
+      'submission dates (Bangkok) or an open factory consultation (`awaitingFactory`) (D-100).',
     implements: DECISIONS,
   })
   @ApiPaginated(StaffRfqDto, { example: STAFF_EXAMPLE })
@@ -378,6 +389,15 @@ export class AdminRfqsController {
       ...(query.status ? { status: query.status } : {}),
       ...(query.q ? { rfqCode: { contains: query.q, mode: 'insensitive' } } : {}),
       ...(query.assignedToId ? { assignedTo: { publicId: query.assignedToId } } : {}),
+      ...(query.productTypeCode && { productType: { code: query.productTypeCode } }),
+      ...(query.channel && { channel: query.channel }),
+      ...((query.submittedFrom || query.submittedTo) && {
+        submittedAt: {
+          ...(query.submittedFrom && { gte: startOfBangkokDay(query.submittedFrom) }),
+          ...(query.submittedTo && { lt: startOfBangkokDay(addCalendarDays(query.submittedTo, 1)) }),
+        },
+      }),
+      ...(query.awaitingFactory && { consultations: { some: { status: 'requested' } } }),
       ...(query.overdue
         ? {
             status: { in: ['submitted', 'in_review', 'need_info'] },
@@ -388,10 +408,35 @@ export class AdminRfqsController {
     };
     const { rows, total } = await this.rfqs.list(where, query.page, query.perPage);
     const grants = await this.grants(actor);
+    const ctx = await this.rfqs.staffContext(rows, now);
     return {
-      data: rows.map((r) => staffRfqDto(r, grants, now)),
+      data: rows.map((r) =>
+        staffRfqDto(r, grants, now, undefined, {
+          slaTargetHours: ctx.hours.get(r.productTypeId) ?? null,
+          validUntil: ctx.validUntil,
+          schema: ctx.schemas.get(r.productTypeId) ?? null,
+        }),
+      ),
       meta: { page: query.page, perPage: query.perPage, total },
     };
+  }
+
+  @Get('unmet-demand-reasons')
+  @Can('rfqs.read')
+  @ApiEndpoint({
+    id: 'admin.rfqs.listUnmetDemandReasons',
+    summary: 'List the unmet-demand reasons',
+    description: 'The active reasons a declined request records (D-102), for the decline dialog.',
+    implements: ['D-102'],
+  })
+  @ApiSuccess(200, {
+    description: 'Reasons',
+    type: [UnmetDemandReasonDto],
+    example: [{ code: 'price_too_high', nameTh: 'ราคาสูงเกินไป', nameEn: 'Price too high' }],
+  })
+  @ApiStandardErrors('validation.failed')
+  async unmetDemandReasons(): Promise<UnmetDemandReasonDto[]> {
+    return (await this.rfqs.unmetDemandReasons()).map((r) => ({ code: r.code, nameTh: r.nameTh, nameEn: r.nameEn }));
   }
 
   @Get('rfqs/:rfqId')
@@ -410,7 +455,7 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
   ): Promise<StaffRfqDto> {
     const row = await this.rfqs.get(rfqId);
-    return staffRfqDto(row, await this.grants(actor), new Date(), await this.rfqs.attachments(row));
+    return this.view(actor, row, await this.rfqs.attachments(row));
   }
 
   @Post('rfqs')
@@ -440,7 +485,7 @@ export class AdminRfqsController {
       });
     }
     const rfq = await this.rfqs.submit(customer.id, 'cs', body, actor as UserActor);
-    return staffRfqDto(rfq, await this.grants(actor));
+    return this.view(actor, rfq);
   }
 
   @Post('rfqs/:rfqId/actions/assign')
@@ -464,10 +509,7 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: AssignRfqDto,
   ) {
-    return staffRfqDto(
-      await this.rfqs.assign(actor as UserActor, rfqId, body.userId),
-      await this.grants(actor),
-    );
+    return this.view(actor, await this.rfqs.assign(actor as UserActor, rfqId, body.userId));
   }
 
   @Post('rfqs/:rfqId/messages')
@@ -490,10 +532,7 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: StaffRfqMessageInputDto,
   ) {
-    return staffRfqDto(
-      await this.rfqs.staffMessage(actor as UserActor, rfqId, body.body, body.visibility),
-      await this.grants(actor),
-    );
+    return this.view(actor, await this.rfqs.staffMessage(actor as UserActor, rfqId, body.body, body.visibility, body.fileIds));
   }
 
   @Post('rfqs/:rfqId/actions/request-info')
@@ -521,13 +560,11 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: RfqMessageInputDto,
   ) {
-    return staffRfqDto(
-      await this.rfqs.requestInfo(actor as UserActor, rfqId, body.body),
-      await this.grants(actor),
-    );
+    return this.view(actor, await this.rfqs.requestInfo(actor as UserActor, rfqId, body.body));
   }
 
   @Post('rfqs/:rfqId/consultations')
+  @Idempotent({ optional: true })
   @Can('rfqs.manage')
   @rfqParam
   @ApiEndpoint({
@@ -557,13 +594,11 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: RequestConsultationDto,
   ) {
-    return staffRfqDto(
-      await this.rfqs.requestConsultation(actor as UserActor, rfqId, body),
-      await this.grants(actor),
-    );
+    return this.view(actor, await this.rfqs.requestConsultation(actor as UserActor, rfqId, body));
   }
 
   @Post('rfqs/:rfqId/quotations')
+  @Idempotent({ optional: true })
   @Can('rfqs.manage')
   @rfqParam
   @ApiEndpoint({
@@ -601,10 +636,11 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: DraftRfqQuoteDto,
   ) {
-    return staffRfqDto(await this.rfqs.draftQuote(actor as UserActor, rfqId, body), await this.grants(actor));
+    return this.view(actor, await this.rfqs.draftQuote(actor as UserActor, rfqId, body));
   }
 
   @Post('rfq-quotations/:rfqQuoteId/actions/send')
+  @Idempotent({ optional: true })
   @HttpCode(200)
   @Can('rfqs.manage')
   @ApiParam({ name: 'rfqQuoteId', format: 'uuid' })
@@ -624,7 +660,7 @@ export class AdminRfqsController {
     'rfq.quote_empty',
   )
   async send(@CurrentActor() actor: Actor, @Param('rfqQuoteId', ParseUUIDPipe) rfqQuoteId: string) {
-    return staffRfqDto(await this.rfqs.sendQuote(actor as UserActor, rfqQuoteId), await this.grants(actor));
+    return this.view(actor, await this.rfqs.sendQuote(actor as UserActor, rfqQuoteId));
   }
 
   @Post('rfq-quotations/:rfqQuoteId/actions/discard')
@@ -640,10 +676,11 @@ export class AdminRfqsController {
   @ApiSuccess(200, { description: 'Request', type: StaffRfqDto, example: STAFF_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed', 'rfq.quote_not_draft')
   async discard(@CurrentActor() actor: Actor, @Param('rfqQuoteId', ParseUUIDPipe) rfqQuoteId: string) {
-    return staffRfqDto(await this.rfqs.discardDraft(rfqQuoteId), await this.grants(actor));
+    return this.view(actor, await this.rfqs.discardDraft(rfqQuoteId));
   }
 
   @Post('rfqs/:rfqId/actions/decline')
+  @Idempotent({ optional: true })
   @HttpCode(200)
   @Can('rfqs.manage')
   @rfqParam
@@ -673,10 +710,17 @@ export class AdminRfqsController {
     @Param('rfqId', ParseUUIDPipe) rfqId: string,
     @Body() body: StaffDeclineRfqDto,
   ) {
-    return staffRfqDto(
-      await this.rfqs.staffDecline(actor as UserActor, rfqId, body.reasonCode, body.note),
-      await this.grants(actor),
-    );
+    return this.view(actor, await this.rfqs.staffDecline(actor as UserActor, rfqId, body.reasonCode, body.note));
+  }
+
+  private async view(actor: Actor, row: RfqRow, files?: RfqFiles): Promise<StaffRfqDto> {
+    const now = new Date();
+    const ctx = await this.rfqs.staffContext([row], now);
+    return staffRfqDto(row, await this.grants(actor), now, files, {
+      slaTargetHours: ctx.hours.get(row.productTypeId) ?? null,
+      validUntil: ctx.validUntil,
+      schema: ctx.schemas.get(row.productTypeId) ?? null,
+    });
   }
 
   private async grants(actor: Actor) {

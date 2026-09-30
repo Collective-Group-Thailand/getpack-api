@@ -25,7 +25,15 @@ import { type StoreRfqFormDto } from './rfqs.dto';
 export const RFQ_INCLUDE = {
   productType: { select: { code: true, nameTh: true, nameEn: true } },
   province: { select: { nameTh: true, nameEn: true } },
-  customer: { select: { publicId: true, displayName: true } },
+  customer: {
+    select: {
+      publicId: true,
+      displayName: true,
+      email: true,
+      phone: true,
+      customerProfile: { select: { customerCode: true } },
+    },
+  },
   assignedTo: { select: { publicId: true, displayName: true } },
   declineReason: { select: { code: true } },
   acceptedQuote: { select: { publicId: true } },
@@ -36,7 +44,10 @@ export const RFQ_INCLUDE = {
   },
   consultations: {
     orderBy: { createdAt: 'asc' },
-    include: { factory: { select: { publicId: true, code: true } } },
+    include: {
+      factory: { select: { publicId: true, code: true } },
+      requestedBy: { select: { publicId: true, displayName: true } },
+    },
   },
   quotes: {
     orderBy: { versionNo: 'desc' },
@@ -119,6 +130,16 @@ export class RfqsService implements OnModuleInit {
         select: { customerUserId: true },
       });
       return rfq?.customerUserId === actor.userId;
+    });
+    // Message files: staff, and the RFQ's customer for messages they can see.
+    this.files.registerAttachmentPolicy('rfq_message', async (actor, messageId) => {
+      if (actor.type !== 'user') return false;
+      if (actor.audience === 'staff') return true;
+      const message = await this.prisma.rfqMessage.findUnique({
+        where: { id: messageId },
+        select: { visibility: true, rfq: { select: { customerUserId: true } } },
+      });
+      return message?.visibility === 'customer' && message.rfq.customerUserId === actor.userId;
     });
   }
 
@@ -407,7 +428,14 @@ export class RfqsService implements OnModuleInit {
     return rfq;
   }
 
-  async assign(actor: UserActor, publicId: string, userPublicId: string): Promise<RfqRow> {
+  async assign(actor: UserActor, publicId: string, userPublicId: string | null): Promise<RfqRow> {
+    if (userPublicId === null)
+      return this.prisma.withTx(async (tx) => {
+        const rfq = await this.openRfq(tx, publicId);
+        await tx.rfq.update({ where: { id: rfq.id }, data: { assignedToUserId: null, rowVersion: { increment: 1 } } });
+        await this.record(tx, rfq.publicId, 'rfq.unassigned', {}, ['internal']);
+        return this.load(tx, rfq.id);
+      });
     const user = await this.prisma.user.findFirst({
       where: { publicId: userPublicId, kind: 'staff', status: 'active' },
     });
@@ -433,10 +461,27 @@ export class RfqsService implements OnModuleInit {
     publicId: string,
     body: string,
     visibility: 'customer' | 'internal',
+    fileIds: string[] = [],
   ): Promise<RfqRow> {
+    const files = await this.ownFiles(actor.userId, undefined, fileIds);
     return this.prisma.withTx(async (tx) => {
       const rfq = await this.openRfq(tx, publicId);
-      await tx.rfqMessage.create({ data: { rfqId: rfq.id, authorUserId: actor.userId, visibility, body } });
+      const message = await tx.rfqMessage.create({
+        data: { rfqId: rfq.id, authorUserId: actor.userId, visibility, body },
+      });
+      for (const [index, fileId] of files.entries())
+        await tx.attachment.create({
+          data: {
+            fileObjectId: fileId,
+            subjectType: 'rfq_message',
+            subjectId: message.id,
+            role: 'rfq.message_file',
+            sort: index,
+            createdById: actor.userId,
+            // An internal message's files stay with staff.
+            customerShareable: visibility === 'customer',
+          },
+        });
       if (visibility === 'customer') await this.firstResponse(tx, rfq);
       await this.record(
         tx,
@@ -865,7 +910,26 @@ export class RfqsService implements OnModuleInit {
     };
   }
 
-  private async slaHours(productTypeId: bigint, at: Date): Promise<number | null> {
+  /** The staff view's extras: the category's first-response target, the validity of a quotation sent now. */
+  async staffContext(rows: RfqRow[], now = new Date()) {
+    const types = [...new Set(rows.map((r) => r.productTypeId))];
+    const hours = new Map<bigint, number | null>();
+    for (const t of types) hours.set(t, await this.slaHours(t, now));
+    const validity = Number((await this.settings.at('quotes.validity_days', { at: now })).value);
+    const schemas = new Map(
+      (
+        await this.prisma.productType.findMany({ where: { id: { in: types } }, select: { id: true, rfqSpecSchema: true } })
+      ).map((t) => [t.id, t.rfqSpecSchema]),
+    );
+    return { hours, validUntil: new Date(now.getTime() + validity * DAY_MS), schemas };
+  }
+
+  /** The unmet-demand reasons a decline takes (D-102). */
+  unmetDemandReasons() {
+    return this.prisma.unmetDemandReason.findMany({ where: { active: true }, orderBy: { code: 'asc' } });
+  }
+
+  async slaHours(productTypeId: bigint, at: Date): Promise<number | null> {
     try {
       return Number(
         (await this.settings.at('rfq.sla_business_hours', { at, scope: { type: 'product_type', id: productTypeId } }))

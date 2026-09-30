@@ -256,6 +256,26 @@ describe('requests for quote (e2e, B2.5)', () => {
         dueAt: new Date(Date.now() + 86_400_000).toISOString(),
       })
       .expect(409);
+    // U-B0.2: the desk's filters and the staff view's extras.
+    const awaiting = (await as('cs').get('/v1/admin/rfqs?awaitingFactory=true&perPage=100').expect(200)).body.data as {
+      id: string;
+    }[];
+    expect(awaiting.map((r) => r.id)).toContain(rfq.id);
+    expect(
+      ((await as('cs').get('/v1/admin/rfqs?channel=cs&perPage=100').expect(200)).body.data as { id: string }[]).map((r) => r.id),
+    ).not.toContain(rfq.id);
+    const staffView = (await as('cs').get(admin).expect(200)).body;
+    expect(staffView).toMatchObject({
+      contact: { phone: expect.any(String) },
+      routedFromCalculator: false,
+      quoteDefaults: { validUntil: expect.any(String) },
+      consultations: [expect.objectContaining({ requestedBy: { id: cs.publicId, displayName: expect.any(String) } })],
+    });
+    expect(staffView.specLines.length).toBeGreaterThan(0);
+    const reasons = (await as('cs').get('/v1/admin/unmet-demand-reasons').expect(200)).body as { code: string }[];
+    expect(reasons.length).toBeGreaterThan(0);
+    expect((await as('cs').post(`${admin}/actions/assign`, { userId: null }).expect(200)).body.assignedTo).toBeNull();
+
     const partner = `/v1/partner/factories/${fixture.factoryPublicId}/rfq-consultations`;
     const open = (await as('owner').get(`${partner}?status=requested`).expect(200)).body as {
       id: string;

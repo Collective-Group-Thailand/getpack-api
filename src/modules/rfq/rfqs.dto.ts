@@ -1,10 +1,11 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
+import { SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { MONEY, POSTCODE, RATE } from '@modules/shipping/rates/customer-rates.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { AttachedFileDto } from '@platform/files/files.dto';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -13,6 +14,7 @@ import {
   IsDateString,
   IsIn,
   IsInt,
+  IsISO8601,
   IsNumber,
   IsObject,
   IsOptional,
@@ -22,6 +24,7 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -175,6 +178,13 @@ export class StoreRfqMessageInputDto extends RfqMessageInputDto {
 }
 
 export class StaffRfqMessageInputDto extends RfqMessageInputDto {
+  @ApiPropertyOptional({ type: [String], example: [IDS.file], description: 'Files I uploaded (purpose `artwork`), ≤ 10' })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsUUID('all', { each: true })
+  fileIds?: string[];
+
   @EnumField(MESSAGE_VISIBILITIES, 'MessageVisibility', {
     example: 'customer',
     description: '`internal` is never shown to the customer',
@@ -217,8 +227,10 @@ export class StaffDeclineRfqDto extends DeclineRfqDto {
 }
 
 export class AssignRfqDto {
-  @RefField({ example: IDS.user, description: 'Staff member' })
-  userId!: string;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true, example: IDS.user, description: 'Staff member; null unassigns' })
+  @ValidateIf((o: { userId: unknown }) => o.userId !== null)
+  @IsUUID()
+  userId!: string | null;
 }
 
 export class RequestConsultationDto {
@@ -356,6 +368,60 @@ export class AdminRfqListQuery extends RfqListQuery {
   @IsOptional()
   @IsUUID()
   assignedToId?: string;
+
+  @ApiPropertyOptional({ example: 'paper_bag' })
+  @IsOptional()
+  @Matches(/^[a-z][a-z0-9_]{0,59}$/)
+  productTypeCode?: string;
+
+  @ApiPropertyOptional({ enum: ['web', 'cs', 'line', 'b2b'], enumName: 'SalesChannel' })
+  @IsOptional()
+  @IsIn(['web', 'cs', 'line', 'b2b'])
+  channel?: 'web' | 'cs' | 'line' | 'b2b';
+
+  @ApiPropertyOptional({ format: 'date', example: '2026-10-01', description: 'Submitted on or after (Bangkok)' })
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  submittedFrom?: string;
+
+  @ApiPropertyOptional({ format: 'date', example: '2026-10-31', description: 'Submitted on or before (Bangkok)' })
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  submittedTo?: string;
+
+  @ApiPropertyOptional({ example: true, description: 'Only requests with a factory consultation still open' })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  awaitingFactory?: boolean;
+}
+
+export class UnmetDemandReasonDto {
+  @ApiProperty({ example: 'price_too_high' })
+  code!: string;
+
+  @ApiProperty({ example: 'ราคาสูงเกินไป' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Price too high' })
+  nameEn!: string;
+}
+
+export class RfqContactDto {
+  @ApiProperty({ type: String, nullable: true, example: 'someone@example.test' })
+  email!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '+66800000001' })
+  phone!: string | null;
+}
+
+export class RfqQuoteDefaultsDto {
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-10-16T10:00:00+07:00',
+    description: 'Validity of a quotation sent now (`quotes.validity_days`, D-051)',
+  })
+  validUntil!: string;
 }
 
 export class ConsultationListQuery {
@@ -498,6 +564,9 @@ export class RfqConsultationDto {
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-02T11:00:00+07:00' })
   respondedAt!: string | null;
+
+  @ApiProperty({ type: UserRefDto, description: 'Who asked the factory' })
+  requestedBy!: UserRefDto;
 }
 
 export class RfqDto {
@@ -601,6 +670,29 @@ export class StaffRfqDto extends RfqDto {
 
   @ApiProperty({ type: [RfqConsultationDto] })
   consultations!: RfqConsultationDto[];
+
+  @ApiProperty({ type: String, nullable: true, example: 'CU-000042' })
+  customerCode!: string | null;
+
+  @ApiProperty({ type: RfqContactDto, description: 'How to reach the customer (staff only)' })
+  contact!: RfqContactDto;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 8,
+    description: 'First-response target of the category in business hours (`rfq.sla_business_hours`); null while not set',
+  })
+  slaTargetHours!: number | null;
+
+  @ApiProperty({ example: false, description: 'Routed here from an instant calculation (D-102)' })
+  routedFromCalculator!: boolean;
+
+  @ApiProperty({ type: [SpecLineDto], description: 'The specification rendered from the category form' })
+  specLines!: SpecLineDto[];
+
+  @ApiProperty({ type: RfqQuoteDefaultsDto })
+  quoteDefaults!: RfqQuoteDefaultsDto;
 }
 
 export class FactoryConsultationDto {

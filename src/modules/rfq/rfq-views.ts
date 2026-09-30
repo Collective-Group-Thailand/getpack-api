@@ -1,4 +1,6 @@
 import { toBangkokIso } from '@common/time/bangkok';
+import { type Prisma } from '@generated/prisma/client';
+import { rfqSpecLines } from '@modules/quotes/line-summary';
 
 import {
   type ConsultationLineDto,
@@ -83,6 +85,7 @@ export function staffRfqDto(
   grants: { cost: boolean; margin: boolean },
   now = new Date(),
   files: RfqFiles = NO_FILES,
+  ctx: StaffRfqContext = { slaTargetHours: null, validUntil: now, schema: null },
 ): StaffRfqDto {
   const base = rfqDto(r, files);
   const open = ['submitted', 'in_review', 'need_info'].includes(r.status);
@@ -124,9 +127,26 @@ export function staffRfqDto(
         lines: grants.cost ? (response?.lines ?? null) : null,
         responseNote: response?.note ?? null,
         respondedAt: iso(c.respondedAt),
+        requestedBy: { id: c.requestedBy.publicId, displayName: c.requestedBy.displayName },
       };
     }),
+    customerCode: r.customer.customerProfile?.customerCode ?? null,
+    contact: { email: r.customer.email, phone: r.customer.phone },
+    slaTargetHours: ctx.slaTargetHours,
+    routedFromCalculator: r.routedFromCalculateLogId !== null,
+    specLines: rfqSpecLines(ctx.schema, (r.spec ?? {}) as Record<string, unknown>, {
+      lengthMm: num(r.lengthMm),
+      widthMm: num(r.widthMm),
+      heightMm: num(r.heightMm),
+    }),
+    quoteDefaults: { validUntil: toBangkokIso(ctx.validUntil) },
   };
+}
+
+export interface StaffRfqContext {
+  slaTargetHours: number | null;
+  validUntil: Date;
+  schema: Prisma.JsonValue | null;
 }
 
 type ConsultationRow = Awaited<ReturnType<import('./rfqs.service').RfqsService['consultations']>>[number];

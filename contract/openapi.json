@@ -9075,10 +9075,13 @@
       "AssignRfqDto": {
         "properties": {
           "userId": {
-            "description": "Staff member",
+            "description": "Staff member; null unassigns",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e705",
             "format": "uuid",
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -43297,6 +43300,14 @@
             "example": "Please quote the three tiers (fake)",
             "type": "string"
           },
+          "requestedBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              }
+            ],
+            "description": "Who asked the factory"
+          },
           "respondedAt": {
             "example": "2026-10-02T11:00:00+07:00",
             "format": "date-time",
@@ -43330,7 +43341,31 @@
           "note",
           "lines",
           "responseNote",
-          "respondedAt"
+          "respondedAt",
+          "requestedBy"
+        ],
+        "type": "object"
+      },
+      "RfqContactDto": {
+        "properties": {
+          "email": {
+            "example": "someone@example.test",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66800000001",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "phone"
         ],
         "type": "object"
       },
@@ -43811,6 +43846,20 @@
           "sentAt",
           "note",
           "lines"
+        ],
+        "type": "object"
+      },
+      "RfqQuoteDefaultsDto": {
+        "properties": {
+          "validUntil": {
+            "description": "Validity of a quotation sent now (`quotes.validity_days`, D-051)",
+            "example": "2026-10-16T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "validUntil"
         ],
         "type": "object"
       },
@@ -48354,8 +48403,23 @@
             },
             "type": "array"
           },
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RfqContactDto"
+              }
+            ],
+            "description": "How to reach the customer (staff only)"
+          },
           "customer": {
             "$ref": "#/components/schemas/UserRefDto"
+          },
+          "customerCode": {
+            "example": "CU-000042",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "declineReasonCode": {
             "example": null,
@@ -48445,9 +48509,17 @@
             },
             "type": "array"
           },
+          "quoteDefaults": {
+            "$ref": "#/components/schemas/RfqQuoteDefaultsDto"
+          },
           "rfqCode": {
             "example": "RFQ-2610-00001",
             "type": "string"
+          },
+          "routedFromCalculator": {
+            "description": "Routed here from an instant calculation (D-102)",
+            "example": false,
+            "type": "boolean"
           },
           "slaDueAt": {
             "description": "First-response due time (null while no SLA is set)",
@@ -48455,6 +48527,14 @@
             "format": "date-time",
             "type": [
               "string",
+              "null"
+            ]
+          },
+          "slaTargetHours": {
+            "description": "First-response target of the category in business hours (`rfq.sla_business_hours`); null while not set",
+            "example": 8,
+            "type": [
+              "integer",
               "null"
             ]
           },
@@ -48466,6 +48546,13 @@
               "print": "1 colour one side"
             },
             "type": "object"
+          },
+          "specLines": {
+            "description": "The specification rendered from the category form",
+            "items": {
+              "$ref": "#/components/schemas/SpecLineDto"
+            },
+            "type": "array"
           },
           "status": {
             "allOf": [
@@ -48523,7 +48610,13 @@
           "assignedTo",
           "firstResponseAt",
           "overdue",
-          "consultations"
+          "consultations",
+          "customerCode",
+          "contact",
+          "slaTargetHours",
+          "routedFromCalculator",
+          "specLines",
+          "quoteDefaults"
         ],
         "type": "object"
       },
@@ -48586,6 +48679,18 @@
           "body": {
             "example": "Can the handles be flat? (fake)",
             "type": "string"
+          },
+          "fileIds": {
+            "description": "Files I uploaded (purpose `artwork`), ≤ 10",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000f003"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
           },
           "visibility": {
             "allOf": [
@@ -54324,6 +54429,28 @@
         "required": [
           "key",
           "records"
+        ],
+        "type": "object"
+      },
+      "UnmetDemandReasonDto": {
+        "properties": {
+          "code": {
+            "example": "price_too_high",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Price too high",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ราคาสูงเกินไป",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -209099,15 +209226,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -209170,13 +209306,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -209376,6 +209526,9 @@
             }
           },
           {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -209405,15 +209558,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -209476,13 +209638,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -209495,6 +209671,9 @@
             },
             "description": "Request",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -209504,6 +209683,26 @@
               "X-RateLimit-Reset": {
                 "$ref": "#/components/headers/RateLimitReset"
               },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`",
+            "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
               }
@@ -209573,6 +209772,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
                   "rfq.closed": {
                     "$ref": "#/components/examples/problem.rfq.closed"
                   },
@@ -209585,7 +209787,7 @@
                 }
               }
             },
-            "description": "Problem: `rfq.closed`, `rfq.quote_not_draft`",
+            "description": "Problem: `idempotency.in_progress`, `rfq.closed`, `rfq.quote_not_draft`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -209596,6 +209798,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
                   "rfq.quote_empty": {
                     "$ref": "#/components/examples/problem.rfq.quote_empty"
                   },
@@ -209608,7 +209813,7 @@
                 }
               }
             },
-            "description": "Problem: `rfq.quote_empty`, `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `rfq.quote_empty`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -209675,7 +209880,7 @@
     },
     "/v1/admin/rfqs": {
       "get": {
-        "description": "`q` matches the RFQ code; filter by status, assignee or overdue first response (D-100).\n\nImplements: D-100, D-043, D-102.",
+        "description": "`q` matches the RFQ code; filter by status, assignee, overdue first response, product type, channel, submission dates (Bangkok) or an open factory consultation (`awaitingFactory`) (D-100).\n\nImplements: D-100, D-043, D-102.",
         "operationId": "admin.rfqs.list",
         "parameters": [
           {
@@ -209757,6 +209962,56 @@
             }
           },
           {
+            "in": "query",
+            "name": "productTypeCode",
+            "required": false,
+            "schema": {
+              "example": "paper_bag",
+              "pattern": "^[a-z][a-z0-9_]{0,59}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesChannel"
+            }
+          },
+          {
+            "description": "Submitted on or after (Bangkok)",
+            "in": "query",
+            "name": "submittedFrom",
+            "required": false,
+            "schema": {
+              "example": "2026-10-01",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Submitted on or before (Bangkok)",
+            "in": "query",
+            "name": "submittedTo",
+            "required": false,
+            "schema": {
+              "example": "2026-10-31",
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only requests with a factory consultation still open",
+            "in": "query",
+            "name": "awaitingFactory",
+            "required": false,
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -209788,15 +210043,24 @@
                             }
                           ],
                           "note": "Please quote the three tiers (fake)",
+                          "requestedBy": {
+                            "displayName": "Dev CS",
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                          },
                           "respondedAt": "2026-10-02T11:00:00+07:00",
                           "responseNote": "Price valid 30 days (fake)",
                           "status": "responded"
                         }
                       ],
+                      "contact": {
+                        "email": "someone@example.test",
+                        "phone": "+66800000001"
+                      },
                       "customer": {
                         "displayName": "Fake Customer",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                       },
+                      "customerCode": "CU-000042",
                       "declineReasonCode": null,
                       "deliveryPostcode": "10110",
                       "files": [
@@ -209859,13 +210123,27 @@
                           "versionNo": 1
                         }
                       ],
+                      "quoteDefaults": {
+                        "validUntil": "2026-10-16T10:00:00+07:00"
+                      },
                       "rfqCode": "RFQ-2610-00001",
+                      "routedFromCalculator": false,
                       "slaDueAt": null,
+                      "slaTargetHours": 8,
                       "spec": {
                         "handles": "twisted paper",
                         "material": "kraft 150 gsm (fake)",
                         "print": "1 colour one side"
                       },
+                      "specLines": [
+                        {
+                          "key": "material",
+                          "labelEn": "Material",
+                          "labelTh": "วัสดุ",
+                          "valueEn": "kraft 150 gsm (fake)",
+                          "valueTh": "kraft 150 gsm (fake)"
+                        }
+                      ],
                       "status": "quoted",
                       "submittedAt": "2026-09-30T15:00:00+07:00",
                       "targetDate": "2026-11-15",
@@ -210102,15 +210380,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -210173,13 +210460,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "submitted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -210446,15 +210747,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -210517,13 +210827,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -210749,15 +211073,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -210820,13 +211153,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -211052,6 +211399,9 @@
             }
           },
           {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -211099,15 +211449,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": "capability_missing",
                   "deliveryPostcode": "10110",
                   "files": [
@@ -211170,13 +211529,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "declined",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -211189,6 +211562,9 @@
             },
             "description": "Declined",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -211212,6 +211588,9 @@
                   },
                   "http.malformed_json": {
                     "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
                   }
                 },
                 "schema": {
@@ -211219,7 +211598,7 @@
                 }
               }
             },
-            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -211290,6 +211669,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
                   "rfq.closed": {
                     "$ref": "#/components/examples/problem.rfq.closed"
                   }
@@ -211299,7 +211681,7 @@
                 }
               }
             },
-            "description": "Problem: `rfq.closed`",
+            "description": "Problem: `idempotency.in_progress`, `rfq.closed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -211310,6 +211692,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -211319,7 +211704,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -211445,15 +211830,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -211516,13 +211910,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "need_info",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -211748,6 +212156,9 @@
             }
           },
           {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -211796,15 +212207,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -211867,13 +212287,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -211886,6 +212320,9 @@
             },
             "description": "Request",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -211909,6 +212346,9 @@
                   },
                   "http.malformed_json": {
                     "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
                   }
                 },
                 "schema": {
@@ -211916,7 +212356,7 @@
                 }
               }
             },
-            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -211987,6 +212427,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
                   "rfq.closed": {
                     "$ref": "#/components/examples/problem.rfq.closed"
                   },
@@ -211999,7 +212442,7 @@
                 }
               }
             },
-            "description": "Problem: `rfq.closed`, `rfq.consultation_open`",
+            "description": "Problem: `idempotency.in_progress`, `rfq.closed`, `rfq.consultation_open`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -212010,6 +212453,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -212019,7 +212465,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -212146,15 +212592,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -212217,13 +212672,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -212446,6 +212915,9 @@
             }
           },
           {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -212501,15 +212973,24 @@
                         }
                       ],
                       "note": "Please quote the three tiers (fake)",
+                      "requestedBy": {
+                        "displayName": "Dev CS",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e706"
+                      },
                       "respondedAt": "2026-10-02T11:00:00+07:00",
                       "responseNote": "Price valid 30 days (fake)",
                       "status": "responded"
                     }
                   ],
+                  "contact": {
+                    "email": "someone@example.test",
+                    "phone": "+66800000001"
+                  },
                   "customer": {
                     "displayName": "Fake Customer",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e705"
                   },
+                  "customerCode": "CU-000042",
                   "declineReasonCode": null,
                   "deliveryPostcode": "10110",
                   "files": [
@@ -212572,13 +213053,27 @@
                       "versionNo": 1
                     }
                   ],
+                  "quoteDefaults": {
+                    "validUntil": "2026-10-16T10:00:00+07:00"
+                  },
                   "rfqCode": "RFQ-2610-00001",
+                  "routedFromCalculator": false,
                   "slaDueAt": null,
+                  "slaTargetHours": 8,
                   "spec": {
                     "handles": "twisted paper",
                     "material": "kraft 150 gsm (fake)",
                     "print": "1 colour one side"
                   },
+                  "specLines": [
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "kraft 150 gsm (fake)",
+                      "valueTh": "kraft 150 gsm (fake)"
+                    }
+                  ],
                   "status": "quoted",
                   "submittedAt": "2026-09-30T15:00:00+07:00",
                   "targetDate": "2026-11-15",
@@ -212591,6 +213086,9 @@
             },
             "description": "Request",
             "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -212614,6 +213112,9 @@
                   },
                   "http.malformed_json": {
                     "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
                   }
                 },
                 "schema": {
@@ -212621,7 +213122,7 @@
                 }
               }
             },
-            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -212692,6 +213193,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
                   "rfq.closed": {
                     "$ref": "#/components/examples/problem.rfq.closed"
                   },
@@ -212704,7 +213208,7 @@
                 }
               }
             },
-            "description": "Problem: `rfq.closed`, `rfq.draft_open`",
+            "description": "Problem: `idempotency.in_progress`, `rfq.closed`, `rfq.draft_open`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -212715,6 +213219,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -212724,7 +213231,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -226372,6 +226879,168 @@
         ],
         "x-required-permissions": [
           "banking.manage"
+        ]
+      }
+    },
+    "/v1/admin/unmet-demand-reasons": {
+      "get": {
+        "description": "The active reasons a declined request records (D-102), for the decline dialog.\n\nImplements: D-102.",
+        "operationId": "admin.rfqs.listUnmetDemandReasons",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "code": "price_too_high",
+                    "nameEn": "Price too high",
+                    "nameTh": "ราคาสูงเกินไป"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UnmetDemandReasonDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Reasons",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the unmet-demand reasons",
+        "tags": [
+          "admin.rfqs"
+        ],
+        "x-required-permissions": [
+          "rfqs.read"
         ]
       }
     },
