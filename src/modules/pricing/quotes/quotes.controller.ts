@@ -50,7 +50,9 @@ import {
   INPUT_DATA_EXAMPLE,
   LABEL_INPUT_DATA_EXAMPLE,
   LabelInputDataDto,
+  TAG_SLEEVE_INPUT_DATA_EXAMPLE,
 } from './quotes.io.dto';
+import { TAG_SLEEVE_CONFIGURATION_EXAMPLE, TagSleeveConfigurationDto } from './tag-sleeve.dto';
 
 const CALCULATION = ['D-100', 'D-043', 'D-050', 'D-051', 'D-101'];
 
@@ -105,7 +107,12 @@ async function adminView(
 }
 
 @ApiTags('store.quotes')
-@ApiExtraModels(FoldingConfigurationDto, CorrugateConfigurationDto, LabelConfigurationDto)
+@ApiExtraModels(
+  FoldingConfigurationDto,
+  CorrugateConfigurationDto,
+  LabelConfigurationDto,
+  TagSleeveConfigurationDto,
+)
 @Controller('quotes')
 export class StoreQuotesController {
   constructor(
@@ -123,7 +130,7 @@ export class StoreQuotesController {
       'Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, ' +
       'lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an ' +
       'instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator ' +
-      '(folding, corrugate). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
+      '(folding, corrugate, label, tag & sleeve). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
       '(D-050). Works signed in or anonymously.',
     implements: CALCULATION,
   })
@@ -132,6 +139,9 @@ export class StoreQuotesController {
     examples: {
       folding: { value: { productTypeCode: 'folding_carton', configuration: CONFIGURATION_EXAMPLE } },
       corrugate: { value: { productTypeCode: 'corrugated', configuration: CORRUGATE_CONFIGURATION_EXAMPLE } },
+      tagSleeve: {
+        value: { productTypeCode: 'tag_sleeve', configuration: TAG_SLEEVE_CONFIGURATION_EXAMPLE },
+      },
     },
   })
   @ApiSuccess(200, {
@@ -505,5 +515,124 @@ export class PartnerLabelPricingController {
   ): Promise<FactoryQuoteDto> {
     const factory = await this.access.factory(actor, factoryId);
     return this.engine.priceForFactory('label', body, factory);
+  }
+}
+
+@ApiSurface('admin', 'csTagSleeve')
+@Controller('cs/tag-sleeve')
+export class AdminCsTagSleeveController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly inputData: FoldingInputDataService,
+    private readonly permissions: PermissionResolver,
+  ) {}
+
+  @Get('input-data')
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csTagSleeve.inputData',
+    summary: 'Catalogue choices of the CS tag & sleeve calculator',
+    description:
+      'Active tag & sleeve patterns (flat blanks), papers, ink colours, finishes 1 and 2, die-cuts, assemblies (hole, ' +
+      'corner cut, string…), difficulty levels and the tag catalogue products (legacy `cs/tag/get-input-data`, D-100).',
+    implements: ['D-100'],
+  })
+  @ApiSuccess(200, {
+    description: 'Input data',
+    type: FoldingInputDataDto,
+    example: TAG_SLEEVE_INPUT_DATA_EXAMPLE,
+  })
+  @ApiStandardErrors()
+  get(): Promise<FoldingInputDataDto> {
+    return this.inputData.get('tag_sleeve');
+  }
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csTagSleeve.calculate',
+    summary: 'Price a tag & sleeve configuration for a customer (CS)',
+    description:
+      'The store calculation plus the staff view (selected factory and print type, price-list version, production ' +
+      'run, margin-floor flag, each option’s reason when it has no price). A tag or sleeve is a flat blank priced on ' +
+      'the folding engine with the factory’s tag & sleeve price list; finish 2 is offset only (U-B6 tag & sleeve, ' +
+      'quirk T9). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is ' +
+      'switched to instant, for checks.',
+    implements: [...CALCULATION, 'D-012', 'D-141'],
+  })
+  @ApiBody({
+    type: TagSleeveConfigurationDto,
+    examples: { default: { value: TAG_SLEEVE_CONFIGURATION_EXAMPLE } },
+  })
+  @ApiSuccess(200, {
+    description: 'Prices per quantity with the staff view',
+    type: AdminQuoteCalculationDto,
+    example: ADMIN_CALCULATION_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'pricing.vat_rate_missing',
+  )
+  @ApiQuery({
+    name: 'deliveryPostcode',
+    required: false,
+    schema: { type: 'string', pattern: '^[0-9]{5}$', example: '10110' },
+    description: 'Prices shipping on the customer rate card (D-013)',
+  })
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Body() body: TagSleeveConfigurationDto,
+    @Query('deliveryPostcode', new ParseOptionalPostcodePipe()) deliveryPostcode?: string,
+  ): Promise<AdminQuoteCalculationDto> {
+    const view = await this.engine.price('tag_sleeve', body, {
+      deliveryPostcode,
+      channel: 'cs',
+      actorUserId: actor.type === 'user' ? actor.userId : undefined,
+      ip: RequestContext.current()?.ip,
+    });
+    return adminView(view, actor, this.permissions);
+  }
+}
+
+@ApiSurface('partner', 'pricingTagSleeve')
+@Controller('factories/:factoryId/pricing/tag-sleeve')
+export class PartnerTagSleevePricingController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly access: FactoryAccess,
+  ) {}
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('factory_prices.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.pricingTagSleeve.calculate',
+    summary: 'Price a tag & sleeve configuration on my own price list',
+    description:
+      'The buy side only, on the factory’s own tag & sleeve price list in force: cost, buy price, lay-out, sheets, lead ' +
+      'time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
+    implements: ['D-044', 'D-042', 'D-040'],
+  })
+  @ApiBody({
+    type: TagSleeveConfigurationDto,
+    examples: { default: { value: TAG_SLEEVE_CONFIGURATION_EXAMPLE } },
+  })
+  @ApiSuccess(200, {
+    description: 'Buy side per print type',
+    type: FactoryQuoteDto,
+    example: FACTORY_QUOTE_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: TagSleeveConfigurationDto,
+  ): Promise<FactoryQuoteDto> {
+    const factory = await this.access.factory(actor, factoryId);
+    return this.engine.priceForFactory('tag_sleeve', body, factory);
   }
 }

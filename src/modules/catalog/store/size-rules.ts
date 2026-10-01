@@ -47,7 +47,7 @@ export interface SizeViolation {
 export function sizeViolation(
   rules: SizeRules,
   size: { w: number; l: number; d: number },
-  opts: { corrugate: boolean },
+  opts: { corrugate: boolean; flat?: boolean },
 ): SizeViolation | null {
   const at = (path: string, message: string): SizeViolation => ({ path, code: 'size', message });
   if (rules.minWMm !== null && size.w < rules.minWMm)
@@ -58,6 +58,8 @@ export function sizeViolation(
     return at('configuration.l', `the length must be at least ${rules.minLMm} mm`);
   if (rules.maxLMm !== null && size.l > rules.maxLMm)
     return at('configuration.l', `the length must be at most ${rules.maxLMm} mm`);
+  // A flat blank (tag & sleeve) has no depth and no orientation rule (legacy `validateInput`, packaging 5).
+  if (opts.flat) return null;
   if (rules.lengthMustExceedWidth && size.l < size.w)
     return at('configuration.l', 'the length must be at least the width');
   if (rules.minHMm !== null && size.d < rules.minHMm)

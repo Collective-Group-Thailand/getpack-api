@@ -5,9 +5,11 @@ import {
   AdminCsCorrugateController,
   AdminCsFoldingController,
   AdminCsLabelController,
+  AdminCsTagSleeveController,
   PartnerCorrugatePricingController,
   PartnerFoldingPricingController,
   PartnerLabelPricingController,
+  PartnerTagSleevePricingController,
   StoreQuotesController,
 } from './quotes/quotes.controller';
 import { SellMarginTablesController } from './sell-margins/sell-margins.controller';
@@ -20,6 +22,7 @@ export const PRICING_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminCsFoldingController,
   AdminCsCorrugateController,
   AdminCsLabelController,
+  AdminCsTagSleeveController,
   SellMarginTablesController,
 ];
 
@@ -28,4 +31,5 @@ export const PRICING_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerFoldingPricingController,
   PartnerCorrugatePricingController,
   PartnerLabelPricingController,
+  PartnerTagSleevePricingController,
 ];

@@ -244,11 +244,12 @@ export class CalculateQuoteDto {
       { $ref: getSchemaPath(FoldingConfigurationDto) },
       { $ref: getSchemaPath('CorrugateConfigurationDto') },
       { $ref: getSchemaPath('LabelConfigurationDto') },
+      { $ref: getSchemaPath('TagSleeveConfigurationDto') },
     ],
     description:
       "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, " +
-      '`CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels (validated against it; ' +
-      'paths under `configuration`)',
+      '`CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, ' +
+      '`TagSleeveConfigurationDto` for tags & sleeves (validated against it; paths under `configuration`)',
   })
   @IsObject()
   configuration!: Record<string, unknown>;

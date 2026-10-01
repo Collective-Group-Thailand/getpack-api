@@ -7371,6 +7371,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/LabelConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TagSleeveConfigurationDto"
                   }
                 ]
               },
@@ -11856,9 +11859,12 @@
               },
               {
                 "$ref": "#/components/schemas/LabelConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/TagSleeveConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -50378,9 +50384,12 @@
               },
               {
                 "$ref": "#/components/schemas/LabelConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/TagSleeveConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -50445,6 +50454,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/LabelConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TagSleeveConfigurationDto"
                   }
                 ]
               },
@@ -55097,9 +55109,12 @@
               },
               {
                 "$ref": "#/components/schemas/LabelConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/TagSleeveConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves (validated against it; paths under `configuration`)"
           },
           "customerUserId": {
             "description": "The customer the quote is for",
@@ -59185,6 +59200,128 @@
           "handoff"
         ],
         "type": "string"
+      },
+      "TagSleeveConfigurationDto": {
+        "properties": {
+          "assemblies": {
+            "description": "Hole, corner cut, string, eyelet…",
+            "items": {
+              "$ref": "#/components/schemas/QuoteAssemblyInputDto"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "catalogProductId": {
+            "description": "The catalogue product (required on the store, where the difficulty level must be the product’s own); staff may price without one",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "design": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignOptionsDto"
+              }
+            ],
+            "description": "Graphic design only (tags and sleeves have no structure fee)"
+          },
+          "diecutTypeId": {
+            "description": "The die-cut (a tag is always die-cut)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+            "format": "uuid",
+            "type": "string"
+          },
+          "difficultyLevelId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "finish1BackId": {
+            "description": "Coating or lamination, back",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "finish1FrontId": {
+            "description": "Coating or lamination, front",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+            "format": "uuid",
+            "type": "string"
+          },
+          "finish2": {
+            "description": "Foil, spot UV, emboss or deboss — printed offset only (legacy, port map T9)",
+            "items": {
+              "$ref": "#/components/schemas/Finish2Dto"
+            },
+            "maxItems": 4,
+            "type": "array"
+          },
+          "l": {
+            "description": "Tag or sleeve length (flat, no glue flap) Unit: mm.",
+            "example": 90,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialId": {
+            "description": "The paper or board",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "patternId": {
+            "description": "A tag & sleeve pattern (one flat blank)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "printBack": {
+            "description": "Colours printed on the back",
+            "items": {
+              "$ref": "#/components/schemas/PrintColourDto"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "printFront": {
+            "description": "Colours printed on the front; a process set is its colour four times",
+            "items": {
+              "$ref": "#/components/schemas/PrintColourDto"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "quantities": {
+            "description": "Quantities to price, 1 to 10",
+            "example": [
+              500,
+              1000,
+              3000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "w": {
+            "description": "Tag or sleeve width (flat) Unit: mm.",
+            "example": 50,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "patternId",
+          "w",
+          "l",
+          "materialId",
+          "difficultyLevelId",
+          "quantities",
+          "diecutTypeId"
+        ],
+        "type": "object"
       },
       "TaxCalendarItemDto": {
         "properties": {
@@ -141618,6 +141755,566 @@
         "summary": "Catalogue choices of the CS label calculator",
         "tags": [
           "admin.csLabel"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/tag-sleeve/calculate": {
+      "post": {
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, production run, margin-floor flag, each option’s reason when it has no price). A tag or sleeve is a flat blank priced on the folding engine with the factory’s tag & sleeve price list; finish 2 is offset only (U-B6 tag & sleeve, quirk T9). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "operationId": "admin.csTagSleeve.calculate",
+        "parameters": [
+          {
+            "description": "Prices shipping on the customer rate card (D-013)",
+            "in": "query",
+            "name": "deliveryPostcode",
+            "required": false,
+            "schema": {
+              "example": "10110",
+              "pattern": "^[0-9]{5}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "assemblies": [
+                      {
+                        "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d103"
+                      },
+                      {
+                        "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d104"
+                      }
+                    ],
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                    "l": 90,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000d102",
+                    "printFront": [
+                      {
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                        "percent": 100
+                      },
+                      {
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                        "percent": 100
+                      },
+                      {
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                        "percent": 100
+                      },
+                      {
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                        "percent": 100
+                      }
+                    ],
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 50
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/TagSleeveConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "optionKey": "0192f3a0-7c1e-7d2a-9b1f-00000000f001:0192f3a0-7c1e-7d2a-9b1f-00000000a107"
+                    }
+                  ],
+                  "steps": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "instant": true,
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "shippingAmount": "128.40",
+                      "shippingNetAmount": "120.00",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": "8.40",
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuoteCalculationDto"
+                }
+              }
+            },
+            "description": "Prices per quantity with the staff view",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a tag & sleeve configuration for a customer (CS)",
+        "tags": [
+          "admin.csTagSleeve"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/tag-sleeve/input-data": {
+      "get": {
+        "description": "Active tag & sleeve patterns (flat blanks), papers, ink colours, finishes 1 and 2, die-cuts, assemblies (hole, corner cut, string…), difficulty levels and the tag catalogue products (legacy `cs/tag/get-input-data`, D-100).\n\nImplements: D-100.",
+        "operationId": "admin.csTagSleeve.inputData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assemblies": [
+                    {
+                      "code": "hole-3mm",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d103",
+                      "nameEn": "Hole 3 mm",
+                      "nameTh": "เจาะรู 3 มม.",
+                      "requiresAmount": false,
+                      "requiresLength": false,
+                      "requiresWidth": false
+                    }
+                  ],
+                  "catalogProducts": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                      "nameEn": "Hang tag",
+                      "nameTh": "ป้ายแท็กห้อยสินค้า",
+                      "quantity": {
+                        "default": 1000,
+                        "max": 100000,
+                        "maxTiers": 10,
+                        "min": 500,
+                        "presets": [
+                          500,
+                          1000,
+                          3000
+                        ]
+                      },
+                      "slug": "hang-tag",
+                      "standardSizes": []
+                    }
+                  ],
+                  "diecutTypes": [
+                    {
+                      "code": "standard",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                      "nameEn": "Standard die-cut",
+                      "nameTh": "ไดคัททั่วไป"
+                    }
+                  ],
+                  "difficultyLevels": [
+                    {
+                      "code": "normal",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "nameEn": "Normal",
+                      "nameTh": "ปกติ"
+                    }
+                  ],
+                  "discountPolicy": {
+                    "directLimitPct": "5"
+                  },
+                  "finishes": [
+                    {
+                      "code": "matt-lamination",
+                      "finishKind": "lamination",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                      "nameEn": "Matt lamination",
+                      "nameTh": "เคลือบด้าน",
+                      "requiresAmount": false,
+                      "requiresLength": false,
+                      "requiresWidth": false,
+                      "slot": "finish1"
+                    }
+                  ],
+                  "inkColours": [
+                    {
+                      "code": "cmyk",
+                      "colourKind": "process",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                      "name": "CMYK"
+                    }
+                  ],
+                  "materials": [
+                    {
+                      "code": "art-350",
+                      "gsm": 350,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "nameEn": "Art card 350 gsm",
+                      "nameTh": "อาร์ตการ์ด 350 แกรม"
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "code": "TAG-CUT",
+                      "geometryFormula": "flat",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d102",
+                      "name": "ป้ายกระดาษ Tag ตัดมุม",
+                      "rules": {
+                        "lengthMustExceedHeight": false,
+                        "lengthMustExceedWidth": false,
+                        "maxHMm": null,
+                        "maxLMm": 400,
+                        "maxWMm": 300,
+                        "minHMm": null,
+                        "minLMm": 20,
+                        "minWMm": 20,
+                        "widthMustExceedHeight": false
+                      },
+                      "subPatterns": []
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FoldingInputDataDto"
+                }
+              }
+            },
+            "description": "Input data",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Catalogue choices of the CS tag & sleeve calculator",
+        "tags": [
+          "admin.csTagSleeve"
         ],
         "x-required-permissions": [
           "quotes.calculate"
@@ -268727,6 +269424,295 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/pricing/tag-sleeve/calculate": {
+      "post": {
+        "description": "The buy side only, on the factory’s own tag & sleeve price list in force: cost, buy price, lay-out, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
+        "operationId": "partner.pricingTagSleeve.calculate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "assemblies": [
+                      {
+                        "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d103"
+                      },
+                      {
+                        "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d104"
+                      }
+                    ],
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                    "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                    "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                    "l": 90,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000d102",
+                    "printFront": [
+                      {
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                        "percent": 100
+                      },
+                      {
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                        "percent": 100
+                      },
+                      {
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                        "percent": 100
+                      },
+                      {
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                        "percent": 100
+                      }
+                    ],
+                    "quantities": [
+                      1000
+                    ],
+                    "w": 50
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/TagSleeveConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                      "steps": [
+                        {
+                          "buyPrice": "10123.45",
+                          "leadTimeDays": 7,
+                          "parts": [
+                            {
+                              "buyPrice": "10123.45",
+                              "layoutAmount": 10,
+                              "layoutStandard": false,
+                              "partKey": "main",
+                              "sheets": 225,
+                              "totalCost": "9111.11"
+                            }
+                          ],
+                          "productionRun": 1000,
+                          "quantity": 1000
+                        }
+                      ]
+                    }
+                  ],
+                  "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryQuoteDto"
+                }
+              }
+            },
+            "description": "Buy side per print type",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Price a tag & sleeve configuration on my own price list",
+        "tags": [
+          "partner.pricingTagSleeve"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/references": {
       "get": {
         "description": "The product types and catalogue rows (materials, print types, finishes…) my own price lines and capabilities refer to, with their codes and names — to label the ids a price line carries. Never a price; own factory only (U-B0.3, D-040, D-044).\n\nImplements: D-040, D-044.",
@@ -321783,7 +322769,7 @@
     },
     "/v1/store/quotes/actions/calculate": {
       "post": {
-        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
+        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
         "operationId": "store.quotes.calculate",
         "parameters": [
           {
@@ -321867,6 +322853,54 @@
                       "w": 60
                     },
                     "productTypeCode": "folding_carton"
+                  }
+                },
+                "tagSleeve": {
+                  "value": {
+                    "configuration": {
+                      "assemblies": [
+                        {
+                          "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d103"
+                        },
+                        {
+                          "assemblyId": "0192f3a0-7c1e-7d2a-9b1f-00000000d104"
+                        }
+                      ],
+                      "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000d101",
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                      "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                      "l": 90,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000d102",
+                      "printFront": [
+                        {
+                          "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                          "percent": 100
+                        },
+                        {
+                          "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                          "percent": 100
+                        },
+                        {
+                          "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                          "percent": 100
+                        },
+                        {
+                          "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                          "percent": 100
+                        }
+                      ],
+                      "quantities": [
+                        1000
+                      ],
+                      "w": 50
+                    },
+                    "productTypeCode": "tag_sleeve"
                   }
                 }
               },
@@ -331366,6 +332400,10 @@
       "name": "admin.csLabel"
     },
     {
+      "description": "The CS tag & sleeve calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
+      "name": "admin.csTagSleeve"
+    },
+    {
       "description": "Tax invoices, invoices, receipts, credit and debit notes issued by the entity under the Packio brand (D-010, D-092): PDFs, voids, credit notes under maker-checker (D-169).",
       "name": "admin.customerDocuments"
     },
@@ -331708,6 +332746,10 @@
     {
       "description": "A factory prices a label configuration on its own price list (D-044).",
       "name": "partner.pricingLabel"
+    },
+    {
+      "description": "A factory prices a tag & sleeve configuration on its own price list (D-044).",
+      "name": "partner.pricingTagSleeve"
     },
     {
       "description": "My factory’s jobs: accept / reject, milestones with photos and quantities, QC, issues, capacity and scorecard (D-074…D-076, D-142, D-155).",

@@ -51,4 +51,12 @@ describe('size rules', () => {
       'the length must be at least the height',
     );
   });
+
+  it('checks a flat blank (tag & sleeve) on width and length only', () => {
+    const tall = sizeRulesOf({ lMustExceedW: true, lMustExceedH: true });
+    expect(sizeViolation(tall, { w: 300, l: 200, d: 0 }, { corrugate: false, flat: true })).toBeNull();
+    expect(sizeViolation(rules, { w: 99, l: 400, d: 0 }, { corrugate: false, flat: true })?.path).toBe(
+      'configuration.w',
+    );
+  });
 });

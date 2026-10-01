@@ -468,6 +468,52 @@ export const INPUT_DATA_EXAMPLE: FoldingInputDataDto = {
   difficultyLevels: [{ id: IDS.difficulty, code: 'normal', nameTh: 'ปกติ', nameEn: 'Normal' }],
 };
 
+/** The CS tag & sleeve choices (U-B6 tag & sleeve): the folding input data over the flat tag patterns. */
+export const TAG_SLEEVE_INPUT_DATA_EXAMPLE: FoldingInputDataDto = {
+  ...INPUT_DATA_EXAMPLE,
+  catalogProducts: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000d101',
+      slug: 'hang-tag',
+      nameTh: 'ป้ายแท็กห้อยสินค้า',
+      nameEn: 'Hang tag',
+      standardSizes: [],
+      quantity: { min: 500, max: 100000, default: 1000, presets: [500, 1000, 3000], maxTiers: 10 },
+    },
+  ],
+  patterns: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000d102',
+      code: 'TAG-CUT',
+      name: 'ป้ายกระดาษ Tag ตัดมุม',
+      geometryFormula: 'flat',
+      subPatterns: [],
+      rules: {
+        minWMm: 20,
+        maxWMm: 300,
+        minLMm: 20,
+        maxLMm: 400,
+        minHMm: null,
+        maxHMm: null,
+        lengthMustExceedWidth: false,
+        lengthMustExceedHeight: false,
+        widthMustExceedHeight: false,
+      },
+    },
+  ],
+  assemblies: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000d103',
+      code: 'hole-3mm',
+      nameTh: 'เจาะรู 3 มม.',
+      nameEn: 'Hole 3 mm',
+      requiresAmount: false,
+      requiresWidth: false,
+      requiresLength: false,
+    },
+  ],
+};
+
 export const FACTORY_QUOTE_EXAMPLE: FactoryQuoteDto = {
   calculatorVersion: '1.0.0',
   priceListVersionId: IDS.pattern,

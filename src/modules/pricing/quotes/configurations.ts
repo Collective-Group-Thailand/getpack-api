@@ -8,6 +8,7 @@ import { type Type } from '@nestjs/common';
 import { CorrugateConfigurationDto, CsCorrugateConfigurationDto } from './corrugate.dto';
 import { LabelConfigurationDto } from './label.dto';
 import { FoldingConfigurationDto } from './quote.dto';
+import { TagSleeveConfigurationDto } from './tag-sleeve.dto';
 
 /**
  * The configuration DTO of each ported calculator (B2.3, U-B6): a quote's `configuration` is validated against
@@ -19,12 +20,14 @@ export const CALCULATOR_SALES_UNIT: Partial<Record<CalculatorKey, ProductUnit>> 
   folding: 'piece',
   corrugate: 'piece',
   label: 'piece',
+  tag_sleeve: 'piece',
 };
 
 const DTOS: Partial<Record<CalculatorKey, { store: Type<object>; staff: Type<object> }>> = {
   folding: { store: FoldingConfigurationDto, staff: FoldingConfigurationDto },
   corrugate: { store: CorrugateConfigurationDto, staff: CsCorrugateConfigurationDto },
   label: { store: LabelConfigurationDto, staff: LabelConfigurationDto },
+  tag_sleeve: { store: TagSleeveConfigurationDto, staff: TagSleeveConfigurationDto },
 };
 
 export async function validateConfiguration(
@@ -42,7 +45,8 @@ export async function validateConfiguration(
 
 /**
  * The rules a customer request follows on top of the DTO (CS is not checked):
- * - the pattern's size rules (legacy `Calculator::validateInput:471-518`, customer path only);
+ * - the pattern's size rules (legacy `Calculator::validateInput:471-518`, customer path only; a tag or sleeve is a
+ *   flat blank: width and length only, legacy skips the height and `l ≥ w` checks for packaging 5);
  * - the catalogue product's fixed difficulty level (legacy's customer path hard-coded it, port map quirk C9): a
  *   product with a default difficulty is priced at that level only; a corrugate request names its catalogue product,
  *   which the configurator gives.
@@ -71,7 +75,7 @@ export async function assertStoreRules(
         'the catalogue product is priced at its own difficulty level',
       );
     }
-  } else if (key === 'corrugate' || key === 'label') {
+  } else if (key === 'corrugate' || key === 'label' || key === 'tag_sleeve') {
     fail('configuration.catalogProductId', 'required', 'the catalogue product is required');
   }
   if (typeof configuration['patternId'] !== 'string') return;
@@ -83,7 +87,7 @@ export async function assertStoreRules(
   const violation = sizeViolation(
     sizeRulesOf(pattern.constraints),
     { w: Number(configuration['w']), l: Number(configuration['l']), d: Number(configuration['d']) },
-    { corrugate: key === 'corrugate' },
+    { corrugate: key === 'corrugate', flat: key === 'tag_sleeve' },
   );
   if (violation) throw new DomainException('validation.failed', { errors: [violation] });
 }
