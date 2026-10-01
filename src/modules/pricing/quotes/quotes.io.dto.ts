@@ -395,6 +395,42 @@ export class PouchInputDataDto {
   options!: InputAssemblyDto[];
 }
 
+// --- standard product CS input data (U-B6 standard product, legacy `cs/standard-products/get-products`) ----------
+
+class StandardProductInputItemDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000e201' })
+  id!: string;
+
+  @ApiProperty({ example: 'BTL-PET-100' })
+  sku!: string;
+
+  @ApiProperty({ example: 'ขวด PET 100 มล.' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'PET bottle 100 ml' })
+  nameEn!: string;
+
+  @ApiProperty({ example: 'piece', description: 'The unit the quantities count' })
+  unit!: string;
+
+  @ApiProperty({ example: 100, description: 'Minimum order, in the unit' })
+  minOrderQty!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: 18, description: 'Weight per unit, g (delivery)' })
+  weightG!: number | null;
+}
+
+export class StandardProductInputDataDto {
+  @ApiProperty({ type: CsDiscountPolicyDto })
+  discountPolicy!: CsDiscountPolicyDto;
+
+  @ApiProperty({
+    type: [StandardProductInputItemDto],
+    description: 'Active standard products (stock products)',
+  })
+  stockProducts!: StandardProductInputItemDto[];
+}
+
 class FactoryQuotePartDto {
   @ApiProperty({ example: 'main' })
   partKey!: string;
@@ -747,6 +783,21 @@ export const POUCH_INPUT_DATA_EXAMPLE: PouchInputDataDto = {
       requiresAmount: false,
       requiresWidth: false,
       requiresLength: false,
+    },
+  ],
+};
+
+export const STANDARD_PRODUCT_INPUT_DATA_EXAMPLE: StandardProductInputDataDto = {
+  discountPolicy: { directLimitPct: '5' },
+  stockProducts: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000e201',
+      sku: 'BTL-PET-100',
+      nameTh: 'ขวด PET 100 มล.',
+      nameEn: 'PET bottle 100 ml',
+      unit: 'piece',
+      minOrderQty: 100,
+      weightG: 18,
     },
   ],
 };

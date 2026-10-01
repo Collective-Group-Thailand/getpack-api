@@ -54,8 +54,15 @@ import {
   LabelInputDataDto,
   POUCH_INPUT_DATA_EXAMPLE,
   PouchInputDataDto,
+  STANDARD_PRODUCT_INPUT_DATA_EXAMPLE,
+  StandardProductInputDataDto,
   TAG_SLEEVE_INPUT_DATA_EXAMPLE,
 } from './quotes.io.dto';
+import {
+  STANDARD_PRODUCT_CONFIGURATION_EXAMPLE,
+  StandardProductConfigurationDto,
+} from './standard-product.dto';
+import { StandardProductInputDataService } from './standard-product-input-data.service';
 import { TAG_SLEEVE_CONFIGURATION_EXAMPLE, TagSleeveConfigurationDto } from './tag-sleeve.dto';
 
 const CALCULATION = ['D-100', 'D-043', 'D-050', 'D-051', 'D-101'];
@@ -117,6 +124,7 @@ async function adminView(
   LabelConfigurationDto,
   TagSleeveConfigurationDto,
   PouchConfigurationDto,
+  StandardProductConfigurationDto,
 )
 @Controller('quotes')
 export class StoreQuotesController {
@@ -135,7 +143,7 @@ export class StoreQuotesController {
       'Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, ' +
       'lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an ' +
       'instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator ' +
-      '(folding, corrugate, label, tag & sleeve, pouch). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
+      '(folding, corrugate, label, tag & sleeve, pouch, standard product). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
       '(D-050). Works signed in or anonymously.',
     implements: CALCULATION,
   })
@@ -748,5 +756,123 @@ export class PartnerPouchPricingController {
   ): Promise<FactoryQuoteDto> {
     const factory = await this.access.factory(actor, factoryId);
     return this.engine.priceForFactory('pouch', body, factory);
+  }
+}
+
+@ApiSurface('admin', 'csStandardProduct')
+@Controller('cs/standard-product')
+export class AdminCsStandardProductController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly inputData: StandardProductInputDataService,
+    private readonly permissions: PermissionResolver,
+  ) {}
+
+  @Get('input-data')
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csStandardProduct.inputData',
+    summary: 'Catalogue choices of the CS standard-product calculator',
+    description:
+      'Active standard products (stock products) with their unit, minimum order and weight (legacy ' +
+      '`cs/standard-products/get-products`, D-100).',
+    implements: ['D-100'],
+  })
+  @ApiSuccess(200, {
+    description: 'Input data',
+    type: StandardProductInputDataDto,
+    example: STANDARD_PRODUCT_INPUT_DATA_EXAMPLE,
+  })
+  @ApiStandardErrors()
+  get(): Promise<StandardProductInputDataDto> {
+    return this.inputData.get();
+  }
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csStandardProduct.calculate',
+    summary: 'Price a standard product for a customer (CS)',
+    description:
+      'The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor ' +
+      'flag, each option’s reason when it has no price). A standard product is priced from the factory’s buy-price ' +
+      'tiers with Packio’s margin and VAT (legacy `CalculatePrice`); delivery is its own line (D-013). Buy prices need ' +
+      '`factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.',
+    implements: [...CALCULATION, 'D-012', 'D-141'],
+  })
+  @ApiBody({
+    type: StandardProductConfigurationDto,
+    examples: { default: { value: STANDARD_PRODUCT_CONFIGURATION_EXAMPLE } },
+  })
+  @ApiSuccess(200, {
+    description: 'Prices per quantity with the staff view',
+    type: AdminQuoteCalculationDto,
+    example: ADMIN_CALCULATION_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'pricing.vat_rate_missing',
+  )
+  @ApiQuery({
+    name: 'deliveryPostcode',
+    required: false,
+    schema: { type: 'string', pattern: '^[0-9]{5}$', example: '10110' },
+    description: 'Prices shipping on the customer rate card (D-013)',
+  })
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Body() body: StandardProductConfigurationDto,
+    @Query('deliveryPostcode', new ParseOptionalPostcodePipe()) deliveryPostcode?: string,
+  ): Promise<AdminQuoteCalculationDto> {
+    const view = await this.engine.price('standard_product', body, {
+      deliveryPostcode,
+      channel: 'cs',
+      actorUserId: actor.type === 'user' ? actor.userId : undefined,
+      ip: RequestContext.current()?.ip,
+    });
+    return adminView(view, actor, this.permissions);
+  }
+}
+
+@ApiSurface('partner', 'pricingStandardProduct')
+@Controller('factories/:factoryId/pricing/standard-product')
+export class PartnerStandardProductPricingController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly access: FactoryAccess,
+  ) {}
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('factory_prices.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.pricingStandardProduct.calculate',
+    summary: 'Price a standard product on my own price list',
+    description:
+      'The buy side only, on the factory’s own standard-product price list in force: buy price per quantity, lead ' +
+      'time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
+    implements: ['D-044', 'D-042', 'D-040'],
+  })
+  @ApiBody({
+    type: StandardProductConfigurationDto,
+    examples: { default: { value: STANDARD_PRODUCT_CONFIGURATION_EXAMPLE } },
+  })
+  @ApiSuccess(200, {
+    description: 'Buy side per print type',
+    type: FactoryQuoteDto,
+    example: FACTORY_QUOTE_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: StandardProductConfigurationDto,
+  ): Promise<FactoryQuoteDto> {
+    const factory = await this.access.factory(actor, factoryId);
+    return this.engine.priceForFactory('standard_product', body, factory);
   }
 }

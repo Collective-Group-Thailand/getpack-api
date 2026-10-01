@@ -344,6 +344,39 @@ export async function pouchSpecLines(db: Tx, cfg: PouchSpecConfiguration): Promi
   return lines;
 }
 
+/** A standard-product configuration (U-B6 standard product): the stock product and the design service. */
+export interface StandardProductSpecConfiguration {
+  stockProductId: string;
+  design?: { graphic?: boolean };
+}
+
+export async function standardProductSpecLines(
+  db: Tx,
+  cfg: StandardProductSpecConfiguration,
+): Promise<SpecLineDto[]> {
+  const product = await db.stockProduct.findUnique({ where: { publicId: cfg.stockProductId } });
+  const lines: SpecLineDto[] = [];
+  if (product) {
+    lines.push({
+      key: 'product',
+      labelTh: 'สินค้า',
+      labelEn: 'Product',
+      valueTh: `${product.nameTh} (${product.sku})`,
+      valueEn: `${product.nameEn} (${product.sku})`,
+    });
+  }
+  if (cfg.design?.graphic) {
+    lines.push({
+      key: 'design_service',
+      labelTh: 'บริการออกแบบ',
+      labelEn: 'Design service',
+      valueTh: 'กราฟิก',
+      valueEn: 'Graphic',
+    });
+  }
+  return lines;
+}
+
 type SchemaProperty = { title?: unknown; 'x-title-en'?: unknown };
 
 function text(value: unknown): string {

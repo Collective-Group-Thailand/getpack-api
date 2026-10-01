@@ -32,6 +32,8 @@ import {
   labelSpecLines,
   type PouchSpecConfiguration,
   pouchSpecLines,
+  type StandardProductSpecConfiguration,
+  standardProductSpecLines,
   SUMMARY_INCLUDE,
   type TagSleeveSpecConfiguration,
   tagSleeveSpecLines,
@@ -135,7 +137,12 @@ export class SavedQuotesService {
           ? await tagSleeveSpecLines(this.prisma, configuration as unknown as TagSleeveSpecConfiguration)
           : calculatorKey === 'pouch'
             ? await pouchSpecLines(this.prisma, configuration as unknown as PouchSpecConfiguration)
-            : null;
+            : calculatorKey === 'standard_product'
+              ? await standardProductSpecLines(
+                  this.prisma,
+                  configuration as unknown as StandardProductSpecConfiguration,
+                )
+              : null;
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {
@@ -148,6 +155,7 @@ export class SavedQuotesService {
           anonymousId: owner.kind === 'anonymous' ? owner.anonymousId : null,
           productTypeId: type.id,
           catalogProductId: await this.catalogProductId(configuration),
+          stockProductId: await this.stockProductId(configuration),
           input: snapshotInput as unknown as Prisma.InputJsonValue,
           inputSchemaVersion: 1,
           specSummary: specSummary ? (specSummary as unknown as Prisma.InputJsonValue) : Prisma.DbNull,
@@ -451,6 +459,16 @@ export class SavedQuotesService {
       select: { id: true, publicId: true },
     });
     return new Map(rows.map((r) => [r.publicId, r.id]));
+  }
+
+  /** The stock product of a standard-product quote (U-B6): checkout and the order read it (`quote.stockProductId`). */
+  private async stockProductId(cfg: Record<string, unknown>): Promise<bigint | null> {
+    if (typeof cfg['stockProductId'] !== 'string') return null;
+    const row = await this.prisma.stockProduct.findUnique({
+      where: { publicId: cfg['stockProductId'] },
+      select: { id: true },
+    });
+    return row?.id ?? null;
   }
 
   private async catalogProductId(cfg: Record<string, unknown>): Promise<bigint | null> {

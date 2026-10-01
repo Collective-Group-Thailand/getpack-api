@@ -601,6 +601,7 @@ export class QuoteEngineService {
           channel: ctx.channel,
           productTypeId: resolved.productTypeId,
           catalogProductId: resolved.catalogProductId,
+          stockProductId: resolved.stockProductId ?? null,
           actorUserId: ctx.actorUserId ?? null,
           anonymousId: ctx.anonymousId ?? null,
           quantities: input.quantities,

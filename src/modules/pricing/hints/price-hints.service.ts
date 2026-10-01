@@ -175,7 +175,8 @@ export class PriceHintsService {
           computedAt: h ? toBangkokIso(h.computedAt) : null,
         };
       }),
-      // The standard-product calculator is not ported yet (U-B6): no stock price is published before it.
+      // Stock products: the standard-product calculator prices them (U-B6), but the published "starting from" figure
+      // waits for the summary's delivery basis (`stock_product_price_summaries`, PROGRESS U-B6 standard product).
       ...stock.map((s): PriceHintDto => ({
         key: s.sku,
         kind: 'stock_product',

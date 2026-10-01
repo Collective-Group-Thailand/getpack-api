@@ -7377,6 +7377,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/PouchConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/StandardProductConfigurationDto"
                   }
                 ]
               },
@@ -11868,9 +11871,12 @@
               },
               {
                 "$ref": "#/components/schemas/PouchConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/StandardProductConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -50653,9 +50659,12 @@
               },
               {
                 "$ref": "#/components/schemas/PouchConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/StandardProductConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -50726,6 +50735,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/PouchConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/StandardProductConfigurationDto"
                   }
                 ]
               },
@@ -55384,9 +55396,12 @@
               },
               {
                 "$ref": "#/components/schemas/PouchConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/StandardProductConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products (validated against it; paths under `configuration`)"
           },
           "customerUserId": {
             "description": "The customer the quote is for",
@@ -55661,6 +55676,111 @@
           "actor",
           "body",
           "mentions"
+        ],
+        "type": "object"
+      },
+      "StandardProductConfigurationDto": {
+        "properties": {
+          "design": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignOptionsDto"
+              }
+            ],
+            "description": "Graphic design only (printable standard products; no structure fee)"
+          },
+          "quantities": {
+            "description": "Quantities to price in the product’s unit, 1 to 10",
+            "example": [
+              500,
+              1000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "stockProductId": {
+            "description": "The stock product (a standard product SKU)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e201",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stockProductId",
+          "quantities"
+        ],
+        "type": "object"
+      },
+      "StandardProductInputDataDto": {
+        "properties": {
+          "discountPolicy": {
+            "$ref": "#/components/schemas/CsDiscountPolicyDto"
+          },
+          "stockProducts": {
+            "description": "Active standard products (stock products)",
+            "items": {
+              "$ref": "#/components/schemas/StandardProductInputItemDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "discountPolicy",
+          "stockProducts"
+        ],
+        "type": "object"
+      },
+      "StandardProductInputItemDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e201",
+            "format": "uuid",
+            "type": "string"
+          },
+          "minOrderQty": {
+            "description": "Minimum order, in the unit",
+            "example": 100,
+            "type": "number"
+          },
+          "nameEn": {
+            "example": "PET bottle 100 ml",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ขวด PET 100 มล.",
+            "type": "string"
+          },
+          "sku": {
+            "example": "BTL-PET-100",
+            "type": "string"
+          },
+          "unit": {
+            "description": "The unit the quantities count",
+            "example": "piece",
+            "type": "string"
+          },
+          "weightG": {
+            "description": "Weight per unit, g (delivery)",
+            "example": 18,
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "nameTh",
+          "nameEn",
+          "unit",
+          "minOrderQty",
+          "weightG"
         ],
         "type": "object"
       },
@@ -142619,6 +142739,448 @@
         "summary": "Catalogue choices of the CS pouch calculator",
         "tags": [
           "admin.csPouch"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/standard-product/calculate": {
+      "post": {
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). A standard product is priced from the factory’s buy-price tiers with Packio’s margin and VAT (legacy `CalculatePrice`); delivery is its own line (D-013). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "operationId": "admin.csStandardProduct.calculate",
+        "parameters": [
+          {
+            "description": "Prices shipping on the customer rate card (D-013)",
+            "in": "query",
+            "name": "deliveryPostcode",
+            "required": false,
+            "schema": {
+              "example": "10110",
+              "pattern": "^[0-9]{5}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "quantities": [
+                      500,
+                      1000
+                    ],
+                    "stockProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e201"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StandardProductConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "optionKey": "0192f3a0-7c1e-7d2a-9b1f-00000000f001:0192f3a0-7c1e-7d2a-9b1f-00000000a107"
+                    }
+                  ],
+                  "steps": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "instant": true,
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "shippingAmount": "128.40",
+                      "shippingNetAmount": "120.00",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": "8.40",
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuoteCalculationDto"
+                }
+              }
+            },
+            "description": "Prices per quantity with the staff view",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a standard product for a customer (CS)",
+        "tags": [
+          "admin.csStandardProduct"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/standard-product/input-data": {
+      "get": {
+        "description": "Active standard products (stock products) with their unit, minimum order and weight (legacy `cs/standard-products/get-products`, D-100).\n\nImplements: D-100.",
+        "operationId": "admin.csStandardProduct.inputData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "discountPolicy": {
+                    "directLimitPct": "5"
+                  },
+                  "stockProducts": [
+                    {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e201",
+                      "minOrderQty": 100,
+                      "nameEn": "PET bottle 100 ml",
+                      "nameTh": "ขวด PET 100 มล.",
+                      "sku": "BTL-PET-100",
+                      "unit": "piece",
+                      "weightG": 18
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StandardProductInputDataDto"
+                }
+              }
+            },
+            "description": "Input data",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Catalogue choices of the CS standard-product calculator",
+        "tags": [
+          "admin.csStandardProduct"
         ],
         "x-required-permissions": [
           "quotes.calculate"
@@ -270554,6 +271116,263 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/pricing/standard-product/calculate": {
+      "post": {
+        "description": "The buy side only, on the factory’s own standard-product price list in force: buy price per quantity, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
+        "operationId": "partner.pricingStandardProduct.calculate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "quantities": [
+                      500,
+                      1000
+                    ],
+                    "stockProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e201"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/StandardProductConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                      "steps": [
+                        {
+                          "buyPrice": "10123.45",
+                          "leadTimeDays": 7,
+                          "parts": [
+                            {
+                              "buyPrice": "10123.45",
+                              "layoutAmount": 10,
+                              "layoutStandard": false,
+                              "partKey": "main",
+                              "sheets": 225,
+                              "totalCost": "9111.11"
+                            }
+                          ],
+                          "productionRun": 1000,
+                          "quantity": 1000
+                        }
+                      ]
+                    }
+                  ],
+                  "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryQuoteDto"
+                }
+              }
+            },
+            "description": "Buy side per print type",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Price a standard product on my own price list",
+        "tags": [
+          "partner.pricingStandardProduct"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/pricing/tag-sleeve/calculate": {
       "post": {
         "description": "The buy side only, on the factory’s own tag & sleeve price list in force: cost, buy price, lay-out, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
@@ -323900,7 +324719,7 @@
     },
     "/v1/store/quotes/actions/calculate": {
       "post": {
-        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
+        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch, standard product). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
         "operationId": "store.quotes.calculate",
         "parameters": [
           {
@@ -333535,6 +334354,10 @@
       "name": "admin.csPouch"
     },
     {
+      "description": "The CS standard-product calculator: stock products and pricing with the staff view (D-100, D-141).",
+      "name": "admin.csStandardProduct"
+    },
+    {
       "description": "The CS tag & sleeve calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
       "name": "admin.csTagSleeve"
     },
@@ -333885,6 +334708,10 @@
     {
       "description": "A factory prices a pouch configuration on its own price list (D-044).",
       "name": "partner.pricingPouch"
+    },
+    {
+      "description": "A factory prices a standard product on its own price list (D-044).",
+      "name": "partner.pricingStandardProduct"
     },
     {
       "description": "A factory prices a tag & sleeve configuration on its own price list (D-044).",

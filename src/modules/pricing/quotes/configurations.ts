@@ -9,6 +9,7 @@ import { CorrugateConfigurationDto, CsCorrugateConfigurationDto } from './corrug
 import { LabelConfigurationDto } from './label.dto';
 import { PouchConfigurationDto } from './pouch.dto';
 import { FoldingConfigurationDto } from './quote.dto';
+import { StandardProductConfigurationDto } from './standard-product.dto';
 import { TagSleeveConfigurationDto } from './tag-sleeve.dto';
 
 /**
@@ -25,8 +26,11 @@ export const CALCULATOR_SALES_UNIT: Partial<Record<CalculatorKey, ProductUnit>> 
   pouch: 'pouch',
 };
 
-/** Calculators priced without a difficulty level (legacy pouch prices have none, U-B6 pouch). */
-export const CALCULATORS_WITHOUT_DIFFICULTY: ReadonlySet<CalculatorKey> = new Set<CalculatorKey>(['pouch']);
+/** Calculators priced without a difficulty level (legacy pouch and standard-product prices have none, U-B6). */
+export const CALCULATORS_WITHOUT_DIFFICULTY: ReadonlySet<CalculatorKey> = new Set<CalculatorKey>([
+  'pouch',
+  'standard_product',
+]);
 
 const DTOS: Partial<Record<CalculatorKey, { store: Type<object>; staff: Type<object> }>> = {
   folding: { store: FoldingConfigurationDto, staff: FoldingConfigurationDto },
@@ -34,6 +38,7 @@ const DTOS: Partial<Record<CalculatorKey, { store: Type<object>; staff: Type<obj
   label: { store: LabelConfigurationDto, staff: LabelConfigurationDto },
   tag_sleeve: { store: TagSleeveConfigurationDto, staff: TagSleeveConfigurationDto },
   pouch: { store: PouchConfigurationDto, staff: PouchConfigurationDto },
+  standard_product: { store: StandardProductConfigurationDto, staff: StandardProductConfigurationDto },
 };
 
 export async function validateConfiguration(

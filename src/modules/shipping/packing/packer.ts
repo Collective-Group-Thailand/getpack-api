@@ -13,7 +13,9 @@ export type ShipmentPart =
   | ({ kind: 'folding' } & Omit<FoldingPackInput, 'qty'>)
   | ({ kind: 'corrugate' } & Omit<CorrugatePackInput, 'qty'>)
   | ({ kind: 'label' } & Omit<LabelPackInput, 'qty'>)
-  | { kind: 'pouch' };
+  | { kind: 'pouch' }
+  /** A ready-made stock product (U-B6 standard product): its weight; a product sold by the pouch packs as pouches. */
+  | { kind: 'stock'; unit: string; weightG: number };
 
 /** Packs `qty` pieces of a part: weight always, cartons when the carton spec is set. */
 export function packPart(part: ShipmentPart, qty: number, carton: CartonSpec | null): PackedPart {
@@ -32,5 +34,10 @@ export function packPart(part: ShipmentPart, qty: number, carton: CartonSpec | n
     }
     case 'pouch':
       return packPouch({ qty }, carton);
+    case 'stock':
+      // Legacy `CalculateDelivery::ByPouch` for pouches; otherwise the rate cards read the weight (D-013).
+      return part.unit === 'pouch'
+        ? packPouch({ qty }, carton)
+        : { weightAllKg: Math.ceil((part.weightG * qty) / 1000), carton: null };
   }
 }

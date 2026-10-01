@@ -16,6 +16,8 @@ import { type PricingError } from './shared/pricing-error';
 export interface ResolvedBase {
   productTypeId: bigint;
   catalogProductId: bigint | null;
+  /** The stock product priced (standard product calculator, U-B6); absent for the made-to-order calculators. */
+  stockProductId?: bigint | null;
   quantities: readonly number[];
 }
 

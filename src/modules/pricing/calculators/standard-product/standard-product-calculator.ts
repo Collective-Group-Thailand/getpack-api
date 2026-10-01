@@ -16,6 +16,8 @@ export const STANDARD_PRODUCT_CALCULATOR_VERSION = '1.0.0';
 
 export interface StandardProductInput {
   quantities: readonly number[];
+  /** The stock product's minimum order (`stock_products.min_order_qty`); absent = 1. */
+  minOrderQty?: number;
   design: { graphic: boolean };
 }
 
@@ -181,6 +183,9 @@ function optionResult(
   const stepErrors: StandardProductOptionResult['stepErrors'] = [];
   const steps = input.quantities.map((qty): StandardProductStep | null => {
     try {
+      if (input.minOrderQty !== undefined && qty < input.minOrderQty) {
+        throw new PricingError('process_not_possible', `minimum order ${input.minOrderQty}`);
+      }
       const target = quantityMargin(option.sell, qty);
       const table = tierTable(option.rows, option.sell, target);
       tiers ??= table;

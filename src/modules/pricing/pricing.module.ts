@@ -14,6 +14,8 @@ import { PouchQuoteAdapter } from './calculators/pouch/pouch.adapter';
 import { PouchSnapshotLoader } from './calculators/pouch/pouch-snapshot.loader';
 import { PouchPriceComponentsRegistrar } from './calculators/pouch/price-components.registrar';
 import { StandardProductPriceComponentsRegistrar } from './calculators/standard-product/price-components.registrar';
+import { StandardProductQuoteAdapter } from './calculators/standard-product/standard-product.adapter';
+import { StandardProductSnapshotLoader } from './calculators/standard-product/standard-product-snapshot.loader';
 import { TagSleeveQuoteAdapter } from './calculators/tag-sleeve/tag-sleeve.adapter';
 import { PriceHintsService } from './hints/price-hints.service';
 import { CorrugateInputDataService } from './quotes/corrugate-input-data.service';
@@ -21,6 +23,7 @@ import { FoldingInputDataService } from './quotes/folding-input-data.service';
 import { LabelInputDataService } from './quotes/label-input-data.service';
 import { PouchInputDataService } from './quotes/pouch-input-data.service';
 import { QuoteEngineService } from './quotes/quote-engine.service';
+import { StandardProductInputDataService } from './quotes/standard-product-input-data.service';
 import { SellMarginsService } from './sell-margins/sell-margins.service';
 
 const SERVICES = [
@@ -34,11 +37,14 @@ const SERVICES = [
   TagSleeveQuoteAdapter,
   PouchSnapshotLoader,
   PouchQuoteAdapter,
+  StandardProductSnapshotLoader,
+  StandardProductQuoteAdapter,
   QuoteEngineService,
   FoldingInputDataService,
   CorrugateInputDataService,
   LabelInputDataService,
   PouchInputDataService,
+  StandardProductInputDataService,
   SellMarginsService,
   PriceHintsService,
 ];
