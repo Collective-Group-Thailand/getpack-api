@@ -93,23 +93,23 @@ Dead or unreachable: `setData` in the API controller; `diecutCost` / `printCost`
 | # | Legacy behaviour (file:line) | Port |
 |---|---|---|
 | L1 | `paper_type_id` re-converted inside the quantity loop (`:400`): 2nd quantity priced on the wrong paper or throws; a cheaper wrong-paper result can replace the right one | every quantity priced on the requested material |
-| L2 | Offset (print type 3) always throws: `cost.finish_front/back` undefined unless both finishes are on (`:1065-1073`); `print_back.amount` read when unchecked (`:1394`) | offset ported with absent processes = 0 (the formulas unchanged); flagged — it never priced in production |
+| L2 | Offset (print type 3) always throws: `cost.finish_front/back` undefined unless both finishes are on (`:1065-1073`); `print_back.amount` read when unchecked (`:1394`); the offset branch also passes one lay-out row through list code (`groupArrayByKey((array) $tempLayouts…)`, `:1027-1030`) | **not priced** (`process_not_possible`): porting would invent numbers no one ever saw; the business decides at sign-off |
 | L3 | Minimum order per quantity, but `calculate` prices all quantities (`:394-406`) | the minimum applies to each quantity (refused step) |
 | L4 | CS keeps per factory the cheapest **factory cost**; SME the cheapest per piece | one option per factory × print type; the quote engine ranks (D-043, D-101) |
 | L5 | SME reports the **last** print type iterated; `cs_data` appended on every improvement (`:117,164`) | the option's own print type |
 | L6 | SME `waste.total` on a roll row → throws (`:103`) | rolls have no sheet waste; the minimum-sheets rule applies to sheets |
-| L7 | Factories 13 / 14 never die-cut (`:277`); gloss / matt only for factories 3/6/10/11/PFO (`Converter.php:256-270`) | term `diecutAvailable` (a die-cut request on such an option is refused); finishes priced only where the factory has a finish price line (no price line → not priced) |
+| L7 | Factories 13 / 14 never die-cut (`:277`, priced without the die-cut process); gloss / matt only for factories 3/6/10/11/PFO (`Converter.php:256-270`) | term `diecutAvailable` (false = priced without the die-cut process, as legacy); finishes priced only where the factory has a finish price line (no price line → `price_line_missing`) |
 | L8 | `edge_trim` inches for rolls, mm for sheets (`:672,675-685`, `helpers.php:753`) | kept (same numbers), flagged |
 | L9 | Rotated roll-to-sheet corrects with `(dl+gap)` instead of `(dw+gap)` (`helpers.php:796-799`) | kept (same numbers), flagged |
 | L10 | Roll-to-sheet lay-out = number of sheets (float); `layLcut = 0` divides by zero | kept; `layLcut = 0` → the sheet is skipped |
 | L11 | Offset 4-colour rule counts special colours in `amount >= 4`; per-colour rows matched with `percent_color` NULL / 0 | kept (same numbers), flagged |
-| L12 | String-concatenated `usort` comparator (`:1304-1316`) | explicit order: cost, layout desc, standard first, then the offset tie-breaks; stable (as folding Q10) |
+| L12 | String-concatenated `usort` comparator (`:1304-1316`) | explicit order: cost, layout desc, the rotated lay-out first (`a.layout_standard <=> b`), stable on the sheet order (as folding Q10) |
 | L13 | Short rolls unset then partly re-created (`:456-457,541,595`) | short rolls dropped |
 | L14 | `diecut.blockPrice` never written: `summary.diecut_block = 0`, finish half-block 0 | kept (same numbers): no half-block, no tooling line |
 | L15 | Digital print sums **distinct** price rows (repeated colours priced once); missing print row → 0, missing finish / die-cut row → throws, missing waste band → 0 waste | distinct colours kept (flagged); a missing price row → not priced (`price_line_missing`), as folding Q14; a missing waste band → 0 waste (parity) |
 | L16 | Lookups ignore schema keys (finish waste by finish, print waste by colour, die-cut by type on offset / roll); `first()` without ORDER BY | same keys ignored (same numbers); explicit order (price-list line order) |
 | L17 | 4-colour offset row taken without the `percent_color` filter | kept |
-| L18 | No sheet fits → throws; other patterns → division by zero | `layout_not_possible` / the label pattern only |
+| L18 | No sheet fits → throws; other patterns → division by zero | `geometry_no_layout` / the label pattern only |
 | L19 | `fromOrder` and `storev2` broken for labels | not ported (orders re-price through the quote engine) |
 | L20 | `selectedFactory` / `custom_cost` with `!==` | not ported (CS picks the option in the response) |
 | L21 | Missing base tier with a price tier → throws; half-open price bound | shared sell side, half-open bound (as folding) |
@@ -117,4 +117,6 @@ Dead or unreachable: `setData` in the API controller; `diecutCost` / `printCost`
 | L23 | Setup waste on the first **process flag**, not the first waste step (`:986-993`) | kept (same numbers), flagged |
 | L24 | `convertNumberFloat` rounds the factory per-piece price to 2 decimals before × qty and the sell side | kept |
 
-## 6. Port — see the slices in `docs/update-2026-09-29-gap.md` §U-B6 label and the per-slice notes in `docs/PROGRESS.md`.
+## 6. Port
+- Slice 2: price components (`src/modules/pricing/calculators/label/price-components.ts`, migration A-71).
+- Slices 3–4: `layout.ts` (`labelLayouts` on the shared `calLayoutAmount` — its roll and roll-to-sheet branches checked line by line against `helpers.php:745-857`; `labelWaste`), `digital.ts` (`labelDigitalCost`), `label-calculator.ts` (options, minimum order, colours, die-cut availability, short rolls, factory margin, shared `SaleMargin` with the half-open tier, lead time). Golden cases: `test/golden/label/cases.py` → `golden.json` with the expected values from `reference/label_reference.py` (an independent Python transcription of the PHP); `test/unit/label-golden.spec.ts` compares every number within 1e-6 and writes `docs/pricing-validation-label.md`.

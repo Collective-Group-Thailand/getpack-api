@@ -1,0 +1,5569 @@
+[
+  {
+    "key": "01-sheet-cmyk-diecut",
+    "title": "Sheet, CMYK front, kiss cut, two quantities",
+    "input": {
+      "quantities": [300, 1200],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 300,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 23,
+            "costTotal": 540.58800592,
+            "factoryPricePerPcs": 2.12,
+            "buyPrice": 636.0,
+            "perPcs": 3.49,
+            "sum": 1047.0,
+            "vatPrice": 68.4923076923078,
+            "designFee": 0,
+            "total": 1047.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.002865329512886
+          },
+          {
+            "qty": 1200,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 51,
+            "costTotal": 470.41454304,
+            "factoryPricePerPcs": 0.46,
+            "buyPrice": 552.0,
+            "perPcs": 0.71,
+            "sum": 852.0,
+            "vatPrice": 55.200000000000045,
+            "designFee": 0,
+            "total": 852.0,
+            "leadTimeDays": 5,
+            "marginPct": 30.67605633802816
+          }
+        ],
+        "errors": [null, null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "02-gloss-front",
+    "title": "Sheet with gloss coating on the front",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": "gloss",
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 500,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 34,
+            "costTotal": 708.80279136,
+            "factoryPricePerPcs": 1.67,
+            "buyPrice": 835.0,
+            "perPcs": 2.75,
+            "sum": 1375.0,
+            "vatPrice": 89.9230769230769,
+            "designFee": 0,
+            "total": 1375.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.021818181818176
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "03-front-and-back",
+    "title": "Front CMYK, back white, matt on both sides",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": ["white"],
+      "finishFrontId": "matt",
+      "finishBackId": "matt",
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 500,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 49,
+            "costTotal": 1119.76249792,
+            "factoryPricePerPcs": 2.63,
+            "buyPrice": 1315.0,
+            "perPcs": 4.33,
+            "sum": 2165.0,
+            "vatPrice": 141.61538461538476,
+            "designFee": 0,
+            "total": 2165.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.009237875288676
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "04-roll-wins",
+    "title": "A roll is cheaper at a long run",
+    "input": {
+      "quantities": [20000],
+      "size": {
+        "w": 40,
+        "l": 30
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": null,
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            },
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 0,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 0,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 20000,
+            "layoutAmount": 20000,
+            "standard": false,
+            "roll": true,
+            "sheetWIn": 13,
+            "sheetLIn": 0,
+            "sheets": null,
+            "costTotal": 1419.8864159999998,
+            "factoryPricePerPcs": 0.08,
+            "buyPrice": 1600.0,
+            "perPcs": 0.12,
+            "sum": 2400.0,
+            "vatPrice": 147.36842105263167,
+            "designFee": 0,
+            "total": 2400.0,
+            "leadTimeDays": 5,
+            "marginPct": 28.666666666666664
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "05-roll-to-sheet",
+    "title": "Roll cut to sheets",
+    "input": {
+      "quantities": [3000],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 0,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 0,
+              "sheetCutLengthIn": 19
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 3000,
+            "layoutAmount": 120.0,
+            "standard": true,
+            "roll": true,
+            "sheetWIn": 13,
+            "sheetLIn": 0,
+            "sheets": null,
+            "costTotal": 4562.198532,
+            "factoryPricePerPcs": 1.79,
+            "buyPrice": 5370.0,
+            "perPcs": 2.63,
+            "sum": 7890.0,
+            "vatPrice": 514.9315068493152,
+            "designFee": 0,
+            "total": 7890.0,
+            "leadTimeDays": 5,
+            "marginPct": 27.174904942965778
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "06-short-roll-dropped",
+    "title": "The roll is shorter than the factory runs: the sheet is kept",
+    "input": {
+      "quantities": [800],
+      "size": {
+        "w": 40,
+        "l": 30
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": null,
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": 300
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            },
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 0,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 0,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 800,
+            "layoutAmount": 99,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 15,
+            "costTotal": 124.2965256,
+            "factoryPricePerPcs": 0.18,
+            "buyPrice": 144.0,
+            "perPcs": 0.3,
+            "sum": 240.0,
+            "vatPrice": 15.50769230769231,
+            "designFee": 0,
+            "total": 240.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.8
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "07-rotated",
+    "title": "The rotated lay-out holds more labels",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 110,
+        "l": 150
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 500,
+            "layoutAmount": 8,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 84,
+            "costTotal": 785.69746086,
+            "factoryPricePerPcs": 1.85,
+            "buyPrice": 925.0,
+            "perPcs": 3.05,
+            "sum": 1525.0,
+            "vatPrice": 99.61538461538476,
+            "designFee": 0,
+            "total": 1525.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.09836065573771
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "08-min-sheets",
+    "title": "The minimum sheets per job raise the waste",
+    "input": {
+      "quantities": [100],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 40,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 100,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 57,
+            "costTotal": 476.31066028,
+            "factoryPricePerPcs": 5.6,
+            "buyPrice": 560.0,
+            "perPcs": 9.22,
+            "sum": 922.0000000000001,
+            "vatPrice": 60.30769230769238,
+            "designFee": 0,
+            "total": 922.0000000000001,
+            "leadTimeDays": 5,
+            "marginPct": 35.01084598698482
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "09-waste-method-2",
+    "title": "Setup waste on the first process only",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": ["white"],
+      "finishFrontId": "gloss",
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 2,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 500,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 25,
+            "costTotal": 670.11146648,
+            "factoryPricePerPcs": 1.58,
+            "buyPrice": 790.0,
+            "perPcs": 2.61,
+            "sum": 1305.0,
+            "vatPrice": 85.0769230769231,
+            "designFee": 0,
+            "total": 1305.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.22605363984673
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "10-min-order",
+    "title": "Below the minimum order the quantity is refused",
+    "input": {
+      "quantities": [200, 1000],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": 500,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          null,
+          {
+            "qty": 1000,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 44,
+            "costTotal": 714.60314176,
+            "factoryPricePerPcs": 0.84,
+            "buyPrice": 840.0,
+            "perPcs": 1.29,
+            "sum": 1290.0,
+            "vatPrice": 84.0,
+            "designFee": 0,
+            "total": 1290.0,
+            "leadTimeDays": 5,
+            "marginPct": 30.325581395348827
+          }
+        ],
+        "errors": ["process_not_possible", null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "11-diecut-per-m2",
+    "title": "Die-cut by m² from 50 sheets",
+    "input": {
+      "quantities": [5000],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 5000,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 164,
+            "costTotal": 1558.16849656,
+            "factoryPricePerPcs": 0.37,
+            "buyPrice": 1850.0,
+            "perPcs": 0.53,
+            "sum": 2650.0,
+            "vatPrice": 170.39473684210543,
+            "designFee": 0,
+            "total": 2650.0,
+            "leadTimeDays": 5,
+            "marginPct": 25.301886792452827
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "12-roll-diecut-block",
+    "title": "Roll die-cut by m² plus the die block",
+    "input": {
+      "quantities": [30000],
+      "size": {
+        "w": 30,
+        "l": 30
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 0,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 0,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 30000,
+            "layoutAmount": 30000,
+            "standard": false,
+            "roll": true,
+            "sheetWIn": 13,
+            "sheetLIn": 0,
+            "sheets": null,
+            "costTotal": 2370.5567888,
+            "factoryPricePerPcs": 0.09,
+            "buyPrice": 2700.0,
+            "perPcs": 0.13,
+            "sum": 3900.0,
+            "vatPrice": 248.68421052631584,
+            "designFee": 0,
+            "total": 3900.0,
+            "leadTimeDays": 5,
+            "marginPct": 25.92307692307692
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "13-no-diecut-factory",
+    "title": "A factory that runs no die-cut",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": false,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 500,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 21,
+            "costTotal": 174.01513584,
+            "factoryPricePerPcs": 0.41,
+            "buyPrice": 205.0,
+            "perPcs": 0.68,
+            "sum": 340.0,
+            "vatPrice": 22.076923076923094,
+            "designFee": 0,
+            "total": 340.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.48529411764705
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "14-offset-refused",
+    "title": "Offset label printing is not priced",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:offset",
+        "factoryId": "F1",
+        "printTypeId": "offset",
+        "tables": {
+          "terms": {
+            "engine": "offset",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:offset",
+        "steps": [null],
+        "errors": ["process_not_possible"],
+        "error": "process_not_possible"
+      }
+    ]
+  },
+  {
+    "key": "15-colour-not-printed",
+    "title": "The factory does not print white",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": ["white"],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [null],
+        "errors": ["process_not_possible"],
+        "error": "process_not_possible"
+      }
+    ]
+  },
+  {
+    "key": "16-finish-missing",
+    "title": "No price line for the coating",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": "foil",
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [null],
+        "errors": ["price_line_missing"],
+        "error": "price_line_missing"
+      }
+    ]
+  },
+  {
+    "key": "17-bulk-lead-time",
+    "title": "Bulk lead time from 1,000 pieces",
+    "input": {
+      "quantities": [500, 1000],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": {
+              "minQty": 1000,
+              "days": 10
+            },
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 500,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 29,
+            "costTotal": 590.30661616,
+            "factoryPricePerPcs": 1.39,
+            "buyPrice": 695.0,
+            "perPcs": 2.29,
+            "sum": 1145.0,
+            "vatPrice": 74.84615384615381,
+            "designFee": 0,
+            "total": 1145.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.05240174672489
+          },
+          {
+            "qty": 1000,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 44,
+            "costTotal": 714.60314176,
+            "factoryPricePerPcs": 0.84,
+            "buyPrice": 840.0,
+            "perPcs": 1.29,
+            "sum": 1290.0,
+            "vatPrice": 84.0,
+            "designFee": 0,
+            "total": 1290.0,
+            "leadTimeDays": 10,
+            "marginPct": 30.325581395348827
+          }
+        ],
+        "errors": [null, null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "18-tier-bound",
+    "title": "A buy price on a half-open tier bound",
+    "input": {
+      "quantities": [1000],
+      "size": {
+        "w": 60,
+        "l": 60
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 850,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 850,
+              "priceMax": null,
+              "valuePct": 27
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 1000,
+            "layoutAmount": 35,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 45,
+            "costTotal": 722.8895768,
+            "factoryPricePerPcs": 0.85,
+            "buyPrice": 850.0,
+            "perPcs": 1.25,
+            "sum": 1250.0,
+            "vatPrice": 81.50684931506862,
+            "designFee": 0,
+            "total": 1250.0,
+            "leadTimeDays": 5,
+            "marginPct": 27.239999999999988
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "19-design-fee",
+    "title": "With graphic design",
+    "input": {
+      "quantities": [500],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": true
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 500,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 29,
+            "costTotal": 590.30661616,
+            "factoryPricePerPcs": 1.39,
+            "buyPrice": 695.0,
+            "perPcs": 2.29,
+            "sum": 1145.0,
+            "vatPrice": 74.84615384615381,
+            "designFee": 800,
+            "total": 1945.0,
+            "leadTimeDays": 5,
+            "marginPct": 61.76606683804627
+          }
+        ],
+        "errors": [null],
+        "error": null
+      }
+    ]
+  },
+  {
+    "key": "20-two-factories",
+    "title": "Two factories; one has no material price",
+    "input": {
+      "quantities": [500, 2000],
+      "size": {
+        "w": 50,
+        "l": 70
+      },
+      "printFront": ["cmyk"],
+      "printBack": [],
+      "finishFrontId": null,
+      "finishBackId": null,
+      "diecutTypeId": "kiss",
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:digital",
+        "factoryId": "F1",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 15,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": 14
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      },
+      {
+        "optionKey": "F2:digital",
+        "factoryId": "F2",
+        "printTypeId": "digital",
+        "tables": {
+          "terms": {
+            "engine": "digital",
+            "factoryMarginPct": 10,
+            "minOrderAmount": null,
+            "minSheetPerJob": 0,
+            "leadTimeDays": 4.5,
+            "bulkLeadTime": null,
+            "wasteMethod": 1,
+            "diecutAvailable": true,
+            "minRollLengthM": null
+          },
+          "trim": {
+            "gapMm": 3,
+            "trimWMm": 5,
+            "trimLMm": 5,
+            "edgeTrimMm": 2,
+            "endJobTrimMm": 10
+          },
+          "sheets": [
+            {
+              "sizeWIn": 13,
+              "sizeLIn": 19,
+              "sheetCut": 1,
+              "sheetWIn": 13,
+              "sheetLIn": 19,
+              "sheetCutLengthIn": 0
+            }
+          ],
+          "material": {
+            "costPerKg": null,
+            "costPerM2": null
+          },
+          "printWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": 99,
+              "percentWaste": 10,
+              "setupWaste": 5,
+              "minPercent": null,
+              "maxPercent": null
+            },
+            {
+              "minSheets": 100,
+              "maxSheets": null,
+              "percentWaste": 4,
+              "setupWaste": 10,
+              "minPercent": null,
+              "maxPercent": null
+            }
+          ],
+          "finishWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 3,
+              "setupWaste": 4,
+              "finishId": null
+            }
+          ],
+          "diecutWastes": [
+            {
+              "minSheets": 0,
+              "maxSheets": null,
+              "percentWaste": 2,
+              "setupWaste": 6,
+              "diecutTypeId": "kiss",
+              "minBox": null,
+              "maxBox": null
+            }
+          ],
+          "printPrices": [
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": 199,
+              "priceInkPerM2": 38
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "cmyk",
+              "percentColor": null,
+              "minSheets": 200,
+              "maxSheets": null,
+              "priceInkPerM2": 31
+            },
+            {
+              "machineId": "press",
+              "inkColourId": "white",
+              "percentColor": null,
+              "minSheets": 0,
+              "maxSheets": null,
+              "priceInkPerM2": 22
+            }
+          ],
+          "rollPrintPrices": [
+            {
+              "inkColourId": "cmyk",
+              "pricePerM2": 26
+            },
+            {
+              "inkColourId": "white",
+              "pricePerM2": 18
+            }
+          ],
+          "finishPrices": [
+            {
+              "finishId": "gloss",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.012
+            },
+            {
+              "finishId": "matt",
+              "machineId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "priceByAreaPerIn2": 0.015
+            }
+          ],
+          "diecutPrices": [
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 0,
+              "maxSheets": 49,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 350,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": "kiss",
+              "minSheets": 50,
+              "maxSheets": null,
+              "minBox": null,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 9
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 0,
+              "maxBox": 1999,
+              "diecutPrice": 600,
+              "pricePerM2": null
+            },
+            {
+              "diecutTypeId": null,
+              "minSheets": null,
+              "maxSheets": null,
+              "minBox": 2000,
+              "maxBox": null,
+              "diecutPrice": 0,
+              "pricePerM2": 7
+            }
+          ],
+          "dieBlocks": [
+            {
+              "machineId": "cutter",
+              "wMin": 0,
+              "wMax": 99,
+              "lMin": 0,
+              "lMax": 99,
+              "layMin": null,
+              "layMax": null,
+              "diecutPrice": 450,
+              "pricePerDrawing": 0
+            }
+          ]
+        },
+        "inkColours": ["cmyk", "white"],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 0,
+              "priceMax": 3000,
+              "valuePct": 30
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": 4999,
+              "priceMin": 3000,
+              "priceMax": null,
+              "valuePct": 27
+            },
+            {
+              "qtyMin": 5000,
+              "qtyMax": null,
+              "priceMin": 0,
+              "priceMax": null,
+              "valuePct": 24
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 800,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:digital",
+        "steps": [
+          {
+            "qty": 500,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 29,
+            "costTotal": 590.30661616,
+            "factoryPricePerPcs": 1.39,
+            "buyPrice": 695.0,
+            "perPcs": 2.29,
+            "sum": 1145.0,
+            "vatPrice": 74.84615384615381,
+            "designFee": 0,
+            "total": 1145.0,
+            "leadTimeDays": 5,
+            "marginPct": 35.05240174672489
+          },
+          {
+            "qty": 2000,
+            "layoutAmount": 36,
+            "standard": false,
+            "roll": false,
+            "sheetWIn": 13,
+            "sheetLIn": 19,
+            "sheets": 76,
+            "costTotal": 709.44632304,
+            "factoryPricePerPcs": 0.42,
+            "buyPrice": 840.0,
+            "perPcs": 0.65,
+            "sum": 1300.0,
+            "vatPrice": 84.0,
+            "designFee": 0,
+            "total": 1300.0,
+            "leadTimeDays": 5,
+            "marginPct": 30.86153846153846
+          }
+        ],
+        "errors": [null, null],
+        "error": null
+      },
+      {
+        "optionKey": "F2:digital",
+        "steps": [null, null],
+        "errors": ["price_line_missing", "price_line_missing"],
+        "error": "price_line_missing"
+      }
+    ]
+  }
+]
