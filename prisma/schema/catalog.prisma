@@ -345,6 +345,7 @@ model PrintType {
   plPouchMinQuantitys       PlPouchMinQuantity[]       @relation("PlPouchMinQuantityPrintType")
   plPouchFactoryMargins     PlPouchFactoryMargin[]     @relation("PlPouchFactoryMarginPrintType")
   plPouchOptionRules        PlPouchOptionRule[]        @relation("PlPouchOptionRulePrintType")
+  plStockProductPrices      PlStockProductPrice[]      @relation("PlStockProductPricePrintType")
   // --- end Corrugate price components
 
   @@index([productTypeId], map: "ix_print_types__product_type_id")
@@ -1181,6 +1182,7 @@ model StockProduct {
   levels        StockLevel[]
   movements     StockMovement[]
   priceSummary  StockProductPriceSummary[]
+  plPrices      PlStockProductPrice[]      @relation("PlStockProductPriceStockProduct")
   createdBy     User?                      @relation("StockProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__created_by")
   updatedBy     User?                      @relation("StockProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__updated_by")
   // --- Pricing (generated back-relations)
