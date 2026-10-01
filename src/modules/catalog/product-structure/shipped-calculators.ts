@@ -12,4 +12,8 @@ export const SHIPPED_CALCULATORS: ReadonlySet<CalculatorKey> = new Set<Calculato
   // validation docs/pricing-validation-corrugate.md (signed off 2026-09-30). The type stays seeded `rfq` (A-16)
   // until the business switches it to instant (D-100).
   'corrugate',
+  // U-B6 label: golden cases test/golden/label (expected values from an independent Python transcription of the PHP),
+  // validation docs/pricing-validation-label.md (pending sign-off). The type stays seeded `rfq` (A-16) until the
+  // business signs off the cases and the launch factory's label price list (D-100).
+  'label',
 ]);

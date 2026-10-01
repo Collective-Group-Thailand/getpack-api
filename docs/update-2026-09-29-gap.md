@@ -319,6 +319,8 @@ Legacy traced from `legacy/locopack-web` (port map `docs/legacy/05-label-port-ma
 
 **Plan (slices):** 1 port map + this analysis (docs) · 2 price components + catalogue (migration, descriptors, registrar) · 3 geometry, lay-outs, waste (pure, Python-verified vectors) · 4 cost engines + factory margin (pure) · 5 orchestration, sell side, adapter, loader, packer · 6 DTOs, CS / partner / store endpoints, configurator, dev fixture, e2e · 7 golden cases, validation doc, shipped, release `v0.7.0`.
 
+**Outcome (2026-10-01, U-B6 label complete, branch `feat/u-b6-label-calculator`, tag `v0.7.0`):** L.1–L.4 the pure port (`src/modules/pricing/calculators/label/`: lay-outs on the shared `calLayoutAmount` — its roll / roll-to-sheet branches checked against the PHP —, waste, the digital cost, factory margin, shared `SaleMargin`; offset refused, decision (2)), L.5 four label price components (A-71) and roll paper sizes (A-72), L.7 loader + adapter, L.8 label packer, L.9–L.11 `admin.csLabel.*`, `partner.pricingLabel.calculate`, `LabelConfigurationDto` in the configuration union, configurator, spec lines for saved quotes and price hints, L.12 log input, L.13 golden cases (`test/golden/label/`, 20 cases, Python reference) and `docs/pricing-validation-label.md` (**pending business sign-off**), L.14 port map, L.15 `label` in `SHIPPED_CALCULATORS` with the type still seeded `rfq`, L.16 tag `v0.7.0`. Not built: the offset label engine (decision 2), a shape model (decision 4).
+
 ## U-B6 corrugate — re-check (2026-10-01, after `v0.6.0`)
 
 The user asked to run the U-B6 corrugate session after U-B0.3. Gap analysis against `v0.6.0` (`18a675d`): the session was completed on 2026-09-30 (outcome above, tag `v0.3.0`), and nothing it delivered has regressed.
