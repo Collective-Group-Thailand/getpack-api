@@ -386,6 +386,243 @@ export class BankingService {
     return this.line(linePublicId);
   }
 
+  /**
+   * Candidates for an unmatched line (U-B0.3), by the rule of `autoMatch` (`banking.auto_match`: amount within the
+   * tolerance, date window, reference): slip / bank payments and gateway settlements for money in, payout runs and
+   * bank-transfer refunds for money out, never a target already matched. Best first: a reference hit, then the
+   * closest amount.
+   */
+  async suggestions(linePublicId: string) {
+    const line = await this.prisma.bankStatementLine.findUnique({ where: { publicId: linePublicId } });
+    if (!line) throw new DomainException('http.not_found');
+    if (line.matchStatus !== 'unmatched') return [];
+    const rule = (await this.settings.at('banking.auto_match')).value;
+    const tolerance = D(rule.amountTolerance);
+    const amount = D(line.amount);
+    const window = {
+      gte: new Date(line.txnDate.getTime() - rule.dateWindowDays * DAY_MS - 7 * 3_600_000),
+      lte: new Date(line.txnDate.getTime() + (rule.dateWindowDays + 1) * DAY_MS),
+    };
+    const gap = (v: { toString(): string }) => D(v).sub(amount.abs()).abs();
+    const out: {
+      targetType: BankMatchTarget;
+      targetId: string;
+      label: string;
+      amount: string;
+      date: string;
+      reasons: ('amount' | 'reference' | 'date_window')[];
+      gap: MoneyValue;
+    }[] = [];
+    const free = async (type: BankMatchTarget, ids: string[]) => {
+      const taken = await this.prisma.bankMatch.findMany({
+        where: { targetType: type, targetPublicId: { in: ids } },
+        select: { targetPublicId: true },
+      });
+      return new Set(ids.filter((id) => !taken.some((t) => t.targetPublicId === id)));
+    };
+    if (amount.gt(0)) {
+      const payments = (
+        await this.prisma.payment.findMany({
+          where: {
+            provider: { in: ['slip', 'bank'] },
+            status: { in: ['succeeded', 'partially_refunded', 'refunded'] },
+            paidAt: window,
+          },
+        })
+      ).filter((p) => gap(p.cashAmount).lte(tolerance));
+      const open = await free(
+        'payment',
+        payments.map((p) => p.publicId),
+      );
+      for (const p of payments.filter((x) => open.has(x.publicId))) {
+        const byRef =
+          (line.reference?.includes(p.referenceCode) ?? false) || line.description.includes(p.referenceCode);
+        out.push({
+          targetType: 'payment',
+          targetId: p.publicId,
+          label: p.referenceCode,
+          amount: p.cashAmount.toFixed(2),
+          date: dayOf(p.paidAt!),
+          reasons: byRef ? ['reference', 'amount', 'date_window'] : ['amount', 'date_window'],
+          gap: gap(p.cashAmount),
+        });
+      }
+      const settlements = await this.prisma.gatewaySettlement.findMany({
+        where: {
+          companyBankAccountId: line.companyBankAccountId,
+          status: 'imported',
+          settlementDate: {
+            gte: dateOnly(dayOf(new Date(line.txnDate.getTime() - rule.dateWindowDays * DAY_MS))),
+            lte: dateOnly(dayOf(new Date(line.txnDate.getTime() + rule.dateWindowDays * DAY_MS))),
+          },
+        },
+      });
+      for (const st of settlements.filter((x) => gap(x.netAmount).lte(tolerance)))
+        out.push({
+          targetType: 'gateway_settlement',
+          targetId: st.publicId,
+          label: `${st.provider} ${dayOf(st.settlementDate)}`,
+          amount: st.netAmount.toFixed(2),
+          date: dayOf(st.settlementDate),
+          reasons: ['amount', 'date_window'],
+          gap: gap(st.netAmount),
+        });
+    } else {
+      const runs = await this.prisma.payoutRun.findMany({
+        where: {
+          companyBankAccountId: line.companyBankAccountId,
+          status: { in: ['confirmed', 'partially_failed'] },
+          payOn: { gte: dateOnly(dayOf(window.gte)), lte: dateOnly(dayOf(window.lte)) },
+        },
+      });
+      const openRuns = await free(
+        'payout_run',
+        runs.map((r) => r.publicId),
+      );
+      for (const run of runs.filter((r) => openRuns.has(r.publicId))) {
+        const paid = await this.prisma.payoutItem.aggregate({
+          where: { runId: run.id, status: 'paid' },
+          _sum: { cashAmount: true },
+        });
+        const total = D(paid._sum.cashAmount ?? 0);
+        if (gap(total).gt(tolerance)) continue;
+        out.push({
+          targetType: 'payout_run',
+          targetId: run.publicId,
+          label: run.runNo,
+          amount: total.toFixed(2),
+          date: dayOf(run.payOn),
+          reasons: ['amount', 'date_window'],
+          gap: gap(total),
+        });
+      }
+      const refunds = (
+        await this.prisma.refund.findMany({
+          where: { status: 'succeeded', channel: 'bank_transfer', completedAt: window },
+        })
+      ).filter((r) => gap(r.amount).lte(tolerance));
+      const openRefunds = await free(
+        'refund',
+        refunds.map((r) => r.publicId),
+      );
+      for (const r of refunds.filter((x) => openRefunds.has(x.publicId)))
+        out.push({
+          targetType: 'refund',
+          targetId: r.publicId,
+          label: r.publicId,
+          amount: r.amount.toFixed(2),
+          date: dayOf(r.completedAt!),
+          reasons: ['amount', 'date_window'],
+          gap: gap(r.amount),
+        });
+    }
+    return out
+      .sort(
+        (a, b) =>
+          Number(b.reasons.includes('reference')) - Number(a.reasons.includes('reference')) ||
+          a.gap.comparedTo(b.gap),
+      )
+      .map(({ gap: _gap, ...rest }) => rest);
+  }
+
+  /**
+   * One line to several targets in one transaction (U-B0.3, §6): the parts add up to the line, each part equals its
+   * payment (P05 per payment, like a manual match); payout runs, refunds, unidentified receipts and tax payments
+   * take the part as stated. A gateway settlement is matched whole (`admin.banking.matchLine`).
+   */
+  async split(
+    actor: UserActor,
+    linePublicId: string,
+    parts: { targetType: BankMatchTarget; targetId: string; amount: string }[],
+  ) {
+    const invalid = (path: string, message: string): never => {
+      throw new DomainException('validation.failed', { errors: [{ path, code: 'split', message }] });
+    };
+    const keys = parts.map((p) => `${p.targetType}:${p.targetId}`);
+    if (new Set(keys).size !== keys.length) invalid('parts', 'each target once');
+    await this.prisma.withTx(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM bank_statement_lines WHERE public_id = ${linePublicId}::uuid FOR UPDATE`;
+      const line = await tx.bankStatementLine.findUnique({
+        where: { publicId: linePublicId },
+        include: { companyBankAccount: { include: { glAccount: true } } },
+      });
+      if (!line) throw new DomainException('http.not_found');
+      if (line.matchStatus !== 'unmatched')
+        throw new DomainException('banking.line_already_matched', { params: { status: line.matchStatus } });
+      const total = parts.reduce((a, p) => a.add(p.amount), D(0));
+      if (!total.eq(D(line.amount).abs()))
+        throw new DomainException('banking.match_amount_mismatch', {
+          params: { line: D(line.amount).abs().toFixed(2), target: total.toFixed(2) },
+        });
+      for (const [i, part] of parts.entries()) {
+        if (part.targetType === 'gateway_settlement')
+          invalid(`parts.${i}.targetType`, 'match a settlement whole');
+        const signed = D(line.amount).isNegative() ? D(part.amount).neg() : D(part.amount);
+        if (part.targetType === 'payment') {
+          const p = await tx.payment.findUnique({ where: { publicId: part.targetId } });
+          if (!p || !['slip', 'bank'].includes(p.provider)) throw new DomainException('http.not_found');
+          if (!D(p.cashAmount).eq(part.amount))
+            throw new DomainException('banking.match_amount_mismatch', {
+              params: { line: D(part.amount).toFixed(2), target: p.cashAmount.toFixed(2) },
+            });
+          await this.match(tx, line, 'payment', p.publicId, signed, false, actor.userId);
+          await this.events.record(
+            tx,
+            {
+              type: 'bank_match.recorded',
+              aggregateType: 'bank_statement_line',
+              aggregateId: line.publicId,
+              entityId: p.entityId,
+              payload: {
+                statementLineId: line.publicId,
+                matchKind: 'slip',
+                reference: p.referenceCode,
+                txnDate: dayOf(line.txnDate),
+                amount: D(part.amount).toFixed(2),
+                bankAccountCode: line.companyBankAccount.glAccount.code,
+                paymentId: p.publicId,
+              },
+            },
+            actor,
+          );
+        } else {
+          await this.match(tx, line, part.targetType, part.targetId, signed, false, actor.userId);
+        }
+      }
+      await this.audit.record(tx, {
+        category: 'finance',
+        action: 'bank_line.split_matched',
+        actor,
+        resourceType: 'bank_statement_line',
+        resourcePublicId: line.publicId,
+        data: { parts: parts.map((p) => ({ target: p.targetType, amount: D(p.amount).toFixed(2) })) },
+      });
+    });
+    return this.line(linePublicId);
+  }
+
+  async settlementAccount(companyBankAccountId: bigint): Promise<string | null> {
+    return (
+      (await this.prisma.companyBankAccount.findUnique({ where: { id: companyBankAccountId } }))?.publicId ??
+      null
+    );
+  }
+
+  /** Imported gateway settlements, newest first (U-B0.3). */
+  async settlements(where: Prisma.GatewaySettlementWhereInput, page: number, perPage: number) {
+    const [rows, total] = await Promise.all([
+      this.prisma.gatewaySettlement.findMany({
+        where,
+        include: { lines: true, companyBankAccount: { select: { publicId: true } } },
+        orderBy: [{ settlementDate: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * perPage,
+        take: perPage,
+      }),
+      this.prisma.gatewaySettlement.count({ where }),
+    ]);
+    return { rows, total };
+  }
+
   /** A line that is not a transaction to post (e.g. an internal transfer already journalised by hand). */
   async ignore(actor: UserActor, linePublicId: string, reason: string) {
     await this.prisma.withTx(async (tx) => {

@@ -3502,6 +3502,40 @@
         },
         "type": "object"
       },
+      "AccountRollForwardDto": {
+        "properties": {
+          "accountCode": {
+            "example": "2330",
+            "type": "string"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/RollForwardMonthDto"
+            },
+            "type": "array"
+          },
+          "nameTh": {
+            "example": "หนี้สินคะแนนสะสม",
+            "type": "string"
+          },
+          "normalSide": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LedgerSide"
+              }
+            ],
+            "description": "Amounts are in this direction (an increase raises the balance)",
+            "example": "credit"
+          }
+        },
+        "required": [
+          "accountCode",
+          "nameTh",
+          "normalSide",
+          "months"
+        ],
+        "type": "object"
+      },
       "AccountType": {
         "enum": [
           "asset",
@@ -10481,6 +10515,57 @@
         ],
         "type": "string"
       },
+      "BankLineSuggestionDto": {
+        "properties": {
+          "amount": {
+            "example": "5350.00",
+            "type": "string"
+          },
+          "date": {
+            "example": "2026-10-28",
+            "format": "date",
+            "type": "string"
+          },
+          "label": {
+            "description": "Payment reference, run number or settlement",
+            "example": "PKAB23CD45EF67GH",
+            "type": "string"
+          },
+          "reasons": {
+            "example": [
+              "reference",
+              "amount",
+              "date_window"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/BankSuggestionReason"
+            },
+            "type": "array"
+          },
+          "targetId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BankMatchTarget"
+              }
+            ],
+            "example": "payment"
+          }
+        },
+        "required": [
+          "targetType",
+          "targetId",
+          "label",
+          "amount",
+          "date",
+          "reasons"
+        ],
+        "type": "object"
+      },
       "BankMatchDto": {
         "properties": {
           "amount": {
@@ -10604,6 +10689,14 @@
           "matches"
         ],
         "type": "object"
+      },
+      "BankSuggestionReason": {
+        "enum": [
+          "reference",
+          "amount",
+          "date_window"
+        ],
+        "type": "string"
       },
       "BankVerificationOutcome": {
         "enum": [
@@ -23576,6 +23669,84 @@
           "straight_line"
         ],
         "type": "string"
+      },
+      "DepreciationPreviewDto": {
+        "properties": {
+          "alreadyRun": {
+            "description": "The month is already run (no lines then)",
+            "example": false,
+            "type": "boolean"
+          },
+          "assetCount": {
+            "example": 1,
+            "type": "integer"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/DepreciationPreviewLineDto"
+            },
+            "type": "array"
+          },
+          "period": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "periodStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodStatus"
+              }
+            ],
+            "example": "open"
+          },
+          "totalAmount": {
+            "example": "1250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "periodStatus",
+          "alreadyRun",
+          "assetCount",
+          "totalAmount",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "DepreciationPreviewLineDto": {
+        "properties": {
+          "accumulatedAfter": {
+            "example": "15000.00",
+            "type": "string"
+          },
+          "amount": {
+            "description": "This run, catch-up months included",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "assetId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000fa001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "assetNo": {
+            "example": "FA-26-0001",
+            "type": "string"
+          },
+          "name": {
+            "example": "เครื่องพิมพ์ทดสอบ (fake)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assetId",
+          "assetNo",
+          "name",
+          "amount",
+          "accumulatedAfter"
+        ],
+        "type": "object"
       },
       "DepreciationRunDto": {
         "properties": {
@@ -46737,6 +46908,68 @@
         ],
         "type": "object"
       },
+      "RollForwardMonthDto": {
+        "properties": {
+          "byRule": {
+            "items": {
+              "$ref": "#/components/schemas/RollForwardRuleDto"
+            },
+            "type": "array"
+          },
+          "closing": {
+            "example": "1000.00",
+            "type": "string"
+          },
+          "decreases": {
+            "example": "200.00",
+            "type": "string"
+          },
+          "increases": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "month": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "opening": {
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "opening",
+          "increases",
+          "decreases",
+          "closing",
+          "byRule"
+        ],
+        "type": "object"
+      },
+      "RollForwardRuleDto": {
+        "properties": {
+          "decrease": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "increase": {
+            "example": "1200.00",
+            "type": "string"
+          },
+          "ruleKey": {
+            "description": "Posting rule; `manual` for journals without one",
+            "example": "P11",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ruleKey",
+          "increase",
+          "decrease"
+        ],
+        "type": "object"
+      },
       "RollupQueuedDto": {
         "properties": {
           "queued": {
@@ -49326,6 +49559,12 @@
       },
       "SettlementDto": {
         "properties": {
+          "companyBankAccountId": {
+            "description": "The account the net amount arrives in",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000530103",
+            "format": "uuid",
+            "type": "string"
+          },
           "feeAmount": {
             "example": "85.60",
             "type": "string"
@@ -49389,7 +49628,8 @@
           "netAmount",
           "status",
           "lineCount",
-          "unmatchedLines"
+          "unmatchedLines",
+          "companyBankAccountId"
         ],
         "type": "object"
       },
@@ -51181,6 +51421,51 @@
         "required": [
           "destinationId",
           "quantity"
+        ],
+        "type": "object"
+      },
+      "SplitLineDto": {
+        "properties": {
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/SplitPartDto"
+            },
+            "maxItems": 20,
+            "minItems": 2,
+            "type": "array"
+          }
+        },
+        "required": [
+          "parts"
+        ],
+        "type": "object"
+      },
+      "SplitPartDto": {
+        "properties": {
+          "amount": {
+            "description": "Positive; the parts add up to the line",
+            "example": "2675.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "targetId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "targetType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BankMatchTarget"
+              }
+            ],
+            "example": "payment"
+          }
+        },
+        "required": [
+          "targetType",
+          "targetId",
+          "amount"
         ],
         "type": "object"
       },
@@ -55329,6 +55614,64 @@
           "corrugateFormula",
           "swapDimensions",
           "updatedAt"
+        ],
+        "type": "object"
+      },
+      "SubledgerReconciliationDto": {
+        "properties": {
+          "asOf": {
+            "example": "2026-10-31T18:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "period": {
+            "example": "2026-10",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/SubledgerRowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "asOf",
+          "period",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "SubledgerRowDto": {
+        "properties": {
+          "accounts": {
+            "example": "1210",
+            "type": "string"
+          },
+          "difference": {
+            "description": "GL − sub-ledger; 0 when reconciled (§7 step 8)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "gl": {
+            "example": "42800.00",
+            "type": "string"
+          },
+          "key": {
+            "example": "receivables",
+            "type": "string"
+          },
+          "subledger": {
+            "example": "42800.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "accounts",
+          "subledger",
+          "gl",
+          "difference"
         ],
         "type": "object"
       },
@@ -71970,6 +72313,496 @@
         ],
         "x-required-permissions": [
           "banking.manage"
+        ]
+      }
+    },
+    "/v1/admin/bank-statement-lines/{lineId}/actions/split": {
+      "post": {
+        "description": "One deposit or withdrawal covering several payments, runs or refunds, in one transaction (§6): the parts add up to the line (422 `banking.match_amount_mismatch` otherwise), each payment part equals its payment and posts P05 like a manual match. A gateway settlement is matched whole with `admin.banking.matchLine`. Requires `Idempotency-Key`. Audited.\n\nImplements: D-061, D-093.",
+        "operationId": "admin.banking.splitLine",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lineId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "parts": [
+                      {
+                        "amount": "2675.00",
+                        "targetId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "targetType": "payment"
+                      },
+                      {
+                        "amount": "2675.00",
+                        "targetId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                        "targetType": "payment"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SplitLineDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accountNoLast4": "1234",
+                  "amount": "-5504.40",
+                  "companyBankAccountId": "0192f3a0-7c1e-7d2a-9b1f-000000530103",
+                  "description": "TRF OUT PR20261027",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-000000530202",
+                  "matchStatus": "matched",
+                  "matches": [
+                    {
+                      "amount": "-5504.40",
+                      "auto": true,
+                      "targetId": "0192f3a0-7c1e-7d2a-9b1f-000000530101",
+                      "targetType": "payout_run"
+                    }
+                  ],
+                  "reference": "PR20261027-ABC",
+                  "runningBalance": "94495.60",
+                  "txnDate": "2026-10-27"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/BankStatementLineDto"
+                }
+              }
+            },
+            "description": "Line",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "banking.line_already_matched": {
+                    "$ref": "#/components/examples/problem.banking.line_already_matched"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `banking.line_already_matched`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "banking.match_amount_mismatch": {
+                    "$ref": "#/components/examples/problem.banking.match_amount_mismatch"
+                  },
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `banking.match_amount_mismatch`, `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Match a statement line to several targets",
+        "tags": [
+          "admin.banking"
+        ],
+        "x-required-permissions": [
+          "banking.manage"
+        ]
+      }
+    },
+    "/v1/admin/bank-statement-lines/{lineId}/suggestions": {
+      "get": {
+        "description": "What the automatic matcher would consider (`banking.auto_match`: amount within the tolerance, date window, reference): slip / bank payments and gateway settlements for money in, payout runs and bank-transfer refunds for money out, never a target already matched. Best first. Empty once the line is matched.\n\nImplements: D-061, D-093.",
+        "operationId": "admin.banking.suggestMatches",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "lineId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "amount": "5350.00",
+                    "date": "2026-10-28",
+                    "label": "PKAB23CD45EF67GH",
+                    "reasons": [
+                      "reference",
+                      "amount",
+                      "date_window"
+                    ],
+                    "targetId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                    "targetType": "payment"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BankLineSuggestionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Candidates",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Candidates for an unmatched line",
+        "tags": [
+          "admin.banking"
+        ],
+        "x-required-permissions": [
+          "banking.read"
         ]
       }
     },
@@ -145957,6 +146790,204 @@
         ]
       }
     },
+    "/v1/admin/depreciation-runs/preview": {
+      "get": {
+        "description": "Exactly what `admin.fixedAssets.run` would post for the month (same computation, catch-up months included), without writing anything; no lines once the month is run.\n\nImplements: D-150.",
+        "operationId": "admin.fixedAssets.previewRun",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "schema": {
+              "example": "2026-10",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "alreadyRun": false,
+                  "assetCount": 1,
+                  "lines": [
+                    {
+                      "accumulatedAfter": "15000.00",
+                      "amount": "1250.00",
+                      "assetId": "0192f3a0-7c1e-7d2a-9b1f-0000000fa001",
+                      "assetNo": "FA-26-0001",
+                      "name": "เครื่องพิมพ์ทดสอบ (fake)"
+                    }
+                  ],
+                  "period": "2026-10",
+                  "periodStatus": "open",
+                  "totalAmount": "1250.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DepreciationPreviewDto"
+                }
+              }
+            },
+            "description": "Preview",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Preview the month’s depreciation",
+        "tags": [
+          "admin.fixedAssets"
+        ],
+        "x-required-permissions": [
+          "fixed_assets.read"
+        ]
+      }
+    },
     "/v1/admin/design-services": {
       "get": {
         "description": "Earliest target date first, with the due state against 5 / 10 business days (D-071).\n\nImplements: D-071.",
@@ -166138,6 +167169,426 @@
         ]
       }
     },
+    "/v1/admin/financial-reports/roll-forward": {
+      "get": {
+        "description": "One account month by month in its normal direction — opening, increases and decreases by posting rule, closing — e.g. 2330 points liability or 2130 retention, computed server-side (D-031, D-033).\n\nImplements: D-031, D-033.",
+        "operationId": "admin.financialReports.accountRollForward",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "example": "2026-10",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "example": "2026-10",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A control account, e.g. 2330 (points) or 2130 (retention)",
+            "in": "query",
+            "name": "accountCode",
+            "required": true,
+            "schema": {
+              "example": "2330",
+              "pattern": "^[0-9A-Z][0-9A-Z.-]*$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accountCode": "2330",
+                  "months": [
+                    {
+                      "byRule": [
+                        {
+                          "decrease": "200.00",
+                          "increase": "1200.00",
+                          "ruleKey": "P11"
+                        }
+                      ],
+                      "closing": "1000.00",
+                      "decreases": "200.00",
+                      "increases": "1200.00",
+                      "month": "2026-10",
+                      "opening": "0.00"
+                    }
+                  ],
+                  "nameTh": "หนี้สินคะแนนสะสม",
+                  "normalSide": "credit"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AccountRollForwardDto"
+                }
+              }
+            },
+            "description": "Roll-forward",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Account roll-forward",
+        "tags": [
+          "admin.financialReports"
+        ],
+        "x-required-permissions": [
+          "ledger.read"
+        ]
+      }
+    },
+    "/v1/admin/financial-reports/subledger-reconciliation": {
+      "get": {
+        "description": "The §7 step 8 rows (receivables, factory and vendor payables, advances, retention, store credit, fixed assets): sub-ledger, GL and difference, computed now — the sub-ledgers hold what is open now, so the rows are as of the computation; `period` only places the fixed-asset rows (D-033, D-169).\n\nImplements: D-033, D-169.",
+        "operationId": "admin.financialReports.subledgerReconciliation",
+        "parameters": [
+          {
+            "description": "Month for the fixed-asset rows (default: this month); the other rows are as of now",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "example": "2026-10",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "asOf": "2026-10-31T18:00:00+07:00",
+                  "period": "2026-10",
+                  "rows": [
+                    {
+                      "accounts": "1210",
+                      "difference": "0.00",
+                      "gl": "42800.00",
+                      "key": "receivables",
+                      "subledger": "42800.00"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SubledgerReconciliationDto"
+                }
+              }
+            },
+            "description": "Reconciliation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Sub-ledgers against the general ledger",
+        "tags": [
+          "admin.financialReports"
+        ],
+        "x-required-permissions": [
+          "ledger.read"
+        ]
+      }
+    },
     "/v1/admin/financial-reports/trial-balance": {
       "get": {
         "description": "Per account: opening, debit, credit and closing balance for months `from`..`to` from the posted journals (D-031); `balanced` checks Σ debit = Σ credit.\n\nImplements: D-031, D-033.",
@@ -167798,6 +169249,259 @@
       }
     },
     "/v1/admin/gateway-settlements": {
+      "get": {
+        "description": "Imported SCB / 2C2P settlement reports, newest first; `posted` once matched to the bank line (P04).\n\nImplements: D-061, D-093.",
+        "operationId": "admin.banking.listSettlements",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SettlementStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SettlementProvider"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "companyBankAccountId": "0192f3a0-7c1e-7d2a-9b1f-000000530103",
+                      "feeAmount": "85.60",
+                      "grossAmount": "5350.00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-000000530205",
+                      "lineCount": 1,
+                      "netAmount": "5258.41",
+                      "provider": "scb",
+                      "settlementDate": "2026-10-28",
+                      "status": "imported",
+                      "unmatchedLines": 0,
+                      "vatOnFee": "5.99"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/SettlementDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List gateway settlements",
+        "tags": [
+          "admin.banking"
+        ],
+        "x-required-permissions": [
+          "banking.read"
+        ]
+      },
       "post": {
         "description": "The SCB / 2C2P settlement with its fees and VAT on fees; posted (P04: net to bank, fee to expense, VAT to input VAT with the gateway’s tax invoice) when matched to the bank line. A report already imported is refused. Requires `Idempotency-Key`.\n\nImplements: D-061, D-093.",
         "operationId": "admin.banking.importSettlement",
@@ -167842,6 +169546,7 @@
             "content": {
               "application/json": {
                 "example": {
+                  "companyBankAccountId": "0192f3a0-7c1e-7d2a-9b1f-000000530103",
                   "feeAmount": "85.60",
                   "grossAmount": "5350.00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-000000530205",

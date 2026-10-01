@@ -226,6 +226,77 @@ export class FinancialReportsService {
     };
   }
 
+  // --- account roll-forward (U-B0.3) ----------------------------------------------------------------------
+
+  /**
+   * Month by month for one account, in its normal direction: opening, increases and decreases split by posting
+   * rule (`manual` for journals without one), closing — so the screen never adds money up (§1.7).
+   */
+  async rollForward(accountCode: string, from: string, to: string) {
+    const { start, end } = this.range(from, to);
+    const entityId = await this.entities.defaultEntityId();
+    const account = await this.prisma.account.findUnique({
+      where: { entityId_code: { entityId, code: accountCode } },
+    });
+    if (!account) throw new DomainException('http.not_found');
+    const sign = account.normalSide === 'debit' ? 1 : -1;
+    const base: Prisma.JournalLineWhereInput = { accountId: account.id, journalEntry: { status: 'posted' } };
+    const before = await this.prisma.journalLine.aggregate({
+      where: { ...base, entryDate: { lt: dateOnly(start) } },
+      _sum: { debit: true, credit: true },
+    });
+    const lines = await this.prisma.journalLine.findMany({
+      where: { ...base, entryDate: { gte: dateOnly(start), lte: dateOnly(end) } },
+      select: {
+        entryDate: true,
+        debit: true,
+        credit: true,
+        journalEntry: { select: { postingRule: { select: { key: true } } } },
+      },
+    });
+    let balance = D(before._sum.debit).sub(D(before._sum.credit)).mul(sign);
+    const months: {
+      month: string;
+      opening: string;
+      increases: string;
+      decreases: string;
+      closing: string;
+      byRule: { ruleKey: string; increase: string; decrease: string }[];
+    }[] = [];
+    for (let month = from; month <= to; month = addMonths(`${month}-01`, 1).slice(0, 7)) {
+      const mine = lines.filter((l) => dayOf(l.entryDate).startsWith(month));
+      const rules = new Map<string, { inc: MoneyValue; dec: MoneyValue }>();
+      let inc = D(0);
+      let dec = D(0);
+      for (const l of mine) {
+        const net = D(l.debit).sub(D(l.credit)).mul(sign);
+        const key = l.journalEntry.postingRule?.key ?? 'manual';
+        const r = rules.get(key) ?? { inc: D(0), dec: D(0) };
+        if (net.gte(0)) {
+          inc = inc.add(net);
+          r.inc = r.inc.add(net);
+        } else {
+          dec = dec.add(net.neg());
+          r.dec = r.dec.add(net.neg());
+        }
+        rules.set(key, r);
+      }
+      const opening = balance;
+      balance = balance.add(inc).sub(dec);
+      months.push({
+        month,
+        opening: m(opening),
+        increases: m(inc),
+        decreases: m(dec),
+        closing: m(balance),
+        byRule: [...rules]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([ruleKey, r]) => ({ ruleKey, increase: m(r.inc), decrease: m(r.dec) })),
+      });
+    }
+    return { accountCode: account.code, nameTh: account.nameTh, normalSide: account.normalSide, months };
+  }
+
   // --- balance sheet --------------------------------------------------------------------------------------
 
   async balanceSheet(asOf: string) {

@@ -5,6 +5,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
+import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { ApiConcurrency, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { type Prisma } from '@generated/prisma/client';
@@ -31,7 +32,9 @@ import {
   AssetListQuery,
   CATEGORY_EXAMPLE,
   CreateAssetCategoryDto,
+  DEPRECIATION_PREVIEW_EXAMPLE,
   DepreciationLineDto,
+  DepreciationPreviewDto,
   DepreciationRunDto,
   DisposeAssetDto,
   FA_IDS,
@@ -299,6 +302,41 @@ export class AdminFixedAssetsController {
   @ApiStandardErrors()
   async runs(): Promise<DepreciationRunDto[]> {
     return (await this.assets.runs()).map(runDto);
+  }
+
+  @Get('depreciation-runs/preview')
+  @Can('fixed_assets.read')
+  @ApiEndpoint({
+    id: 'admin.fixedAssets.previewRun',
+    summary: 'Preview the month’s depreciation',
+    description:
+      'Exactly what `admin.fixedAssets.run` would post for the month (same computation, catch-up months included), ' +
+      'without writing anything; no lines once the month is run.',
+    implements: DOCS,
+  })
+  @ApiSuccess(200, {
+    description: 'Preview',
+    type: DepreciationPreviewDto,
+    example: DEPRECIATION_PREVIEW_EXAMPLE,
+  })
+  @ApiStandardErrors('validation.failed', 'http.not_found')
+  async preview(@Query() q: MonthDto): Promise<DepreciationPreviewDto> {
+    const { period, alreadyRun, lines } = await this.assets.preview(q.period);
+    const total = lines.reduce((a, l) => a.add(l.amount), new MoneyDecimal(0));
+    return {
+      period: q.period,
+      periodStatus: period.status,
+      alreadyRun,
+      assetCount: lines.length,
+      totalAmount: formatMoney(total),
+      lines: lines.map((l) => ({
+        assetId: l.asset.publicId,
+        assetNo: l.asset.assetNo,
+        name: l.asset.name,
+        amount: formatMoney(l.amount),
+        accumulatedAfter: formatMoney(l.accumulatedAfter),
+      })),
+    };
   }
 
   @Post('depreciation-runs')

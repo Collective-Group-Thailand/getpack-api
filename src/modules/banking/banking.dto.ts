@@ -432,6 +432,12 @@ export class SettlementDto {
 
   @ApiProperty({ type: 'integer', example: 0, description: 'Lines whose payment was not found' })
   unmatchedLines!: number;
+  @ApiProperty({
+    format: 'uuid',
+    example: BANK_IDS.account,
+    description: 'The account the net amount arrives in',
+  })
+  companyBankAccountId!: string;
 }
 
 export const SETTLEMENT_EXAMPLE: SettlementDto = {
@@ -443,6 +449,7 @@ export const SETTLEMENT_EXAMPLE: SettlementDto = {
   vatOnFee: '5.99',
   netAmount: '5258.41',
   status: 'imported',
+  companyBankAccountId: BANK_IDS.account,
   lineCount: 1,
   unmatchedLines: 0,
 };
@@ -514,3 +521,68 @@ export const CASH_EXAMPLE: CashPositionDto = {
   ],
   clearing: [{ accountCode: '1131', balance: '0.00' }],
 };
+
+// --- suggestions, split, settlement list (U-B0.3) -------------------------------------------------------------
+
+export const SUGGESTION_REASONS = ['reference', 'amount', 'date_window'] as const;
+
+export class BankLineSuggestionDto {
+  @ApiProperty({ enum: MATCH_TARGETS, enumName: 'BankMatchTarget', example: 'payment' })
+  targetType!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001' })
+  targetId!: string;
+
+  @ApiProperty({ example: 'PKAB23CD45EF67GH', description: 'Payment reference, run number or settlement' })
+  label!: string;
+
+  @ApiProperty({ example: '5350.00' })
+  amount!: string;
+
+  @ApiProperty({ format: 'date', example: '2026-10-28' })
+  date!: string;
+
+  @ApiProperty({
+    enum: SUGGESTION_REASONS,
+    enumName: 'BankSuggestionReason',
+    isArray: true,
+    example: ['reference', 'amount', 'date_window'],
+  })
+  reasons!: string[];
+}
+
+export class SplitPartDto {
+  @ApiProperty({ enum: MATCH_TARGETS, enumName: 'BankMatchTarget', example: 'payment' })
+  @IsIn(MATCH_TARGETS)
+  targetType!: (typeof MATCH_TARGETS)[number];
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001' })
+  @IsUUID()
+  targetId!: string;
+
+  @ApiProperty({ example: '2675.00', description: 'Positive; the parts add up to the line' })
+  @Matches(/^\d{1,12}(\.\d{1,2})?$/)
+  amount!: string;
+}
+
+export class SplitLineDto {
+  @ApiProperty({ type: [SplitPartDto], minItems: 2, maxItems: 20 })
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => SplitPartDto)
+  parts!: SplitPartDto[];
+}
+
+export class SettlementListQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: ['imported', 'posted'], enumName: 'SettlementStatus' })
+  @IsOptional()
+  @IsIn(['imported', 'posted'])
+  status?: 'imported' | 'posted';
+
+  @ApiPropertyOptional({ enum: ['scb', 'twoc2p'], enumName: 'SettlementProvider' })
+  @IsOptional()
+  @IsIn(['scb', 'twoc2p'])
+  provider?: 'scb' | 'twoc2p';
+}

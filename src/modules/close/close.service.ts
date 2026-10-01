@@ -760,6 +760,12 @@ export class CloseService implements PeriodCloseGate {
    * factories (1250: paid advances whose PO has no GR), retention (2130), store credit (2320); fixed assets at the
    * period end (register vs 15xx).
    */
+  /** The §7 step 8 rows as of now, outside a close (U-B0.3): read-only; `month` places the fixed-asset rows. */
+  async reconciliation(month: string) {
+    const period = await this.periods.periodOf(await this.entities.defaultEntityId(), `${month}-01`);
+    return this.subledgers(this.prisma, period);
+  }
+
   async subledgers(tx: Tx, period: FiscalPeriod) {
     const entityId = period.entityId;
     // The sub-ledgers hold what is open now, including documents dated ahead: compare with every posted line.

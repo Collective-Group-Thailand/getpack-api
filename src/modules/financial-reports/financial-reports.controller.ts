@@ -4,6 +4,8 @@ import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Controller, Get, Query } from '@nestjs/common';
 
 import {
+  AccountRollForwardDto,
+  AccountRollForwardQuery,
   AsOfQuery,
   BalanceSheetDto,
   BS_EXAMPLE,
@@ -57,6 +59,40 @@ export class AdminFinancialReportsController {
   @ApiStandardErrors('http.not_found', 'validation.failed')
   glDetail(@Query() q: GlDetailQuery): Promise<GlDetailDto> {
     return this.reports.glDetail(q.accountCode, q.from, q.to, q.page, q.perPage);
+  }
+
+  @Get('roll-forward')
+  @Can('ledger.read')
+  @ApiEndpoint({
+    id: 'admin.financialReports.accountRollForward',
+    summary: 'Account roll-forward',
+    description:
+      'One account month by month in its normal direction — opening, increases and decreases by posting rule, ' +
+      'closing — e.g. 2330 points liability or 2130 retention, computed server-side (D-031, D-033).',
+    implements: ['D-031', 'D-033'],
+  })
+  @ApiSuccess(200, {
+    description: 'Roll-forward',
+    type: AccountRollForwardDto,
+    example: {
+      accountCode: '2330',
+      nameTh: 'หนี้สินคะแนนสะสม',
+      normalSide: 'credit',
+      months: [
+        {
+          month: '2026-10',
+          opening: '0.00',
+          increases: '1200.00',
+          decreases: '200.00',
+          closing: '1000.00',
+          byRule: [{ ruleKey: 'P11', increase: '1200.00', decrease: '200.00' }],
+        },
+      ],
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  accountRollForward(@Query() q: AccountRollForwardQuery): Promise<AccountRollForwardDto> {
+    return this.reports.rollForward(q.accountCode, q.from, q.to);
   }
 
   @Get('balance-sheet')

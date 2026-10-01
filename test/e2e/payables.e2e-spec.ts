@@ -806,6 +806,17 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
     expect(out.matches[0]).toMatchObject({ targetType: 'payout_run', targetId: advanceRun.id });
     const stray = lines.find((l) => l.amount === unknown)!;
     expect(stray.matchStatus).toBe('unmatched');
+    // U-B0.3: candidates of the stray line (none fits) and the settlement in the list.
+    const suggested = await as(ctx, finance)
+      .get(`/v1/admin/bank-statement-lines/${stray.id}/suggestions`)
+      .expect(200);
+    expect(Array.isArray(suggested.body)).toBe(true);
+    const settlements = (await as(ctx, finance).get('/v1/admin/gateway-settlements?perPage=100').expect(200))
+      .body.data as { id: string; status: string; companyBankAccountId: string }[];
+    expect(settlements.find((x) => x.id === settlement.id)).toMatchObject({
+      status: 'posted',
+      companyBankAccountId: companyAccountId,
+    });
 
     // Parked in 1140 (P29), then identified as a payment of another order group (P02 on its receipt).
     await post(finance, `/v1/admin/bank-statement-lines/${stray.id}/actions/mark-unidentified`).expect(200);
@@ -851,6 +862,42 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
       banks: { companyBankAccountId: string; glBalance: string }[];
     };
     expect(cash.banks.map((b) => b.companyBankAccountId)).toContain(companyAccountId);
+  });
+
+  it('splits one deposit over several targets whose parts add up to the line (U-B0.3, §6)', async () => {
+    const amount = `${(2000 + (ctx.run % 900)).toString()}.50`;
+    await post(finance, '/v1/admin/bank-statements', {
+      companyBankAccountId: companyAccountId,
+      rows: [{ txnDate: today(), amount: `-${amount}`, description: `TAX PAYMENTS ${ctx.run}` }],
+    }).expect(201);
+    const line = (
+      (
+        await as(ctx, finance)
+          .get(`/v1/admin/bank-statement-lines?companyBankAccountId=${companyAccountId}&perPage=100`)
+          .expect(200)
+      ).body.data as { id: string; amount: string; matchStatus: string }[]
+    ).find((l) => l.amount === `-${amount}`)!;
+    const half = D(amount).div(2).toDecimalPlaces(2);
+    const parts = [
+      { targetType: 'tax_payment', targetId: randomUUID(), amount: half.toFixed(2) },
+      { targetType: 'tax_payment', targetId: randomUUID(), amount: D(amount).sub(half).toFixed(2) },
+    ];
+    expect(
+      (
+        await post(finance, `/v1/admin/bank-statement-lines/${line.id}/actions/split`, {
+          parts: [parts[0], { ...parts[1]!, amount: '1.00' }],
+        }).expect(422)
+      ).body.code,
+    ).toBe('banking.match_amount_mismatch');
+    await post(finance, `/v1/admin/bank-statement-lines/${line.id}/actions/split`, {
+      parts: [parts[0], { ...parts[1]!, targetType: 'gateway_settlement' }],
+    }).expect(422);
+    const split = await post(finance, `/v1/admin/bank-statement-lines/${line.id}/actions/split`, {
+      parts,
+    }).expect(200);
+    expect(split.body).toMatchObject({ matchStatus: 'matched' });
+    expect(split.body.matches).toHaveLength(2);
+    await post(finance, `/v1/admin/bank-statement-lines/${line.id}/actions/split`, { parts }).expect(409);
   });
 
   it('keeps the new surfaces behind their permissions', async () => {

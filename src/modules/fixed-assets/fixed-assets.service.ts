@@ -422,8 +422,9 @@ export class FixedAssetsService {
     });
   }
 
-  private async runIn(tx: Tx, actor: Actor, period: FiscalPeriod): Promise<string> {
-    const assets = await tx.fixedAsset.findMany({
+  /** What the month's run depreciates, catch-up included: shared by the run and its preview (U-B0.3). */
+  private async dueFor(db: Tx, period: FiscalPeriod) {
+    const assets = await db.fixedAsset.findMany({
       where: { entityId: period.entityId, status: 'active', depreciationStartOn: { lte: period.startDate } },
       include: {
         expenseAccount: { select: { code: true } },
@@ -432,12 +433,40 @@ export class FixedAssetsService {
       },
       orderBy: { id: 'asc' },
     });
-    const due = assets
+    return assets
       .map((a) => ({
         asset: a,
         amount: this.expectedAccumulated(a, period.startDate).sub(D(a.accumulatedDepreciation)),
       }))
       .filter((d) => d.amount.gt(0));
+  }
+
+  /** Dry run of the month (U-B0.3): exactly what `run` would post, nothing written. */
+  async preview(month: string) {
+    if (!/^\d{4}-\d{2}$/.test(month)) throw invalid('period', 'YYYY-MM');
+    const entityId = await this.entities.defaultEntityId();
+    const period = await this.periods.periodOf(entityId, `${month}-01`);
+    const [due, existing] = await Promise.all([
+      this.dueFor(this.prisma, period),
+      this.prisma.depreciationRun.findUnique({
+        where: { entityId_fiscalPeriodId: { entityId, fiscalPeriodId: period.id } },
+      }),
+    ]);
+    return {
+      period,
+      alreadyRun: existing !== null,
+      lines: existing
+        ? []
+        : due.map(({ asset, amount }) => ({
+            asset,
+            amount,
+            accumulatedAfter: D(asset.accumulatedDepreciation).add(amount),
+          })),
+    };
+  }
+
+  private async runIn(tx: Tx, actor: Actor, period: FiscalPeriod): Promise<string> {
+    const due = await this.dueFor(tx, period);
     const total = due.reduce((a, d) => a.add(d.amount), ZERO());
     const run = await tx.depreciationRun.create({
       data: {

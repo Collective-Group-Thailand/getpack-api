@@ -271,6 +271,19 @@ describe('period close & financial reports (e2e, B5.6)', () => {
     expect(gl.lines.length).toBeGreaterThan(0);
     await as(ctx, auditor).get(`/v1/admin/ledger/journals/${gl.lines[0]!.journalEntryId}`).expect(200);
     expect(gl.lines.at(-1)!.balance).toBe(gl.closing);
+    // U-B0.3: the account's roll-forward ends where the GL detail does (normal direction), rule by rule.
+    const rf = (
+      await as(ctx, auditor)
+        .get(`/v1/admin/financial-reports/roll-forward?accountCode=2410&from=${month}&to=${to}`)
+        .expect(200)
+    ).body as { normalSide: string; months: { closing: string; byRule: unknown[] }[] };
+    const sign = rf.normalSide === 'debit' ? 1 : -1;
+    expect(Number(rf.months.at(-1)!.closing)).toBeCloseTo(sign * Number(gl.closing), 2);
+    expect(rf.months.some((mo) => mo.byRule.length > 0)).toBe(true);
+    const recon = (
+      await as(ctx, auditor).get('/v1/admin/financial-reports/subledger-reconciliation').expect(200)
+    ).body as { rows: { key: string; difference: string }[] };
+    expect(recon.rows.map((r) => r.key)).toEqual(expect.arrayContaining(['receivables', 'factory_payables']));
     await as(ctx, auditor)
       .get('/v1/admin/financial-reports/trial-balance?from=2026-10&to=2026-01')
       .expect(422);

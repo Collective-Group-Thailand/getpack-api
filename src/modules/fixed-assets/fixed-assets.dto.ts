@@ -509,3 +509,63 @@ export const ROLL_EXAMPLE: RollForwardDto = {
     { accountCode: '1521', register: '-3000.00', gl: '-3000.00', difference: '0.00' },
   ],
 };
+
+// --- depreciation preview (U-B0.3) ------------------------------------------------------------------------
+
+export class DepreciationPreviewLineDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000fa001' })
+  assetId!: string;
+
+  @ApiProperty({ example: 'FA-26-0001' })
+  assetNo!: string;
+
+  @ApiProperty({ example: 'เครื่องพิมพ์ทดสอบ (fake)' })
+  name!: string;
+
+  @ApiProperty({ example: '1250.00', description: 'This run, catch-up months included' })
+  amount!: string;
+
+  @ApiProperty({ example: '15000.00' })
+  accumulatedAfter!: string;
+}
+
+export class DepreciationPreviewDto {
+  @ApiProperty({ example: '2026-10' })
+  period!: string;
+
+  @ApiProperty({
+    enum: ['open', 'soft_closed', 'closed', 'locked'],
+    enumName: 'PeriodStatus',
+    example: 'open',
+  })
+  periodStatus!: string;
+
+  @ApiProperty({ example: false, description: 'The month is already run (no lines then)' })
+  alreadyRun!: boolean;
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  assetCount!: number;
+
+  @ApiProperty({ example: '1250.00' })
+  totalAmount!: string;
+
+  @ApiProperty({ type: [DepreciationPreviewLineDto] })
+  lines!: DepreciationPreviewLineDto[];
+}
+
+export const DEPRECIATION_PREVIEW_EXAMPLE: DepreciationPreviewDto = {
+  period: '2026-10',
+  periodStatus: 'open',
+  alreadyRun: false,
+  assetCount: 1,
+  totalAmount: '1250.00',
+  lines: [
+    {
+      assetId: '0192f3a0-7c1e-7d2a-9b1f-0000000fa001',
+      assetNo: 'FA-26-0001',
+      name: 'เครื่องพิมพ์ทดสอบ (fake)',
+      amount: '1250.00',
+      accumulatedAfter: '15000.00',
+    },
+  ],
+};

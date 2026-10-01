@@ -556,3 +556,100 @@ export const CF_EXAMPLE: CashFlowDto = {
   cashMovement: '1900.00',
   difference: '0.00',
 };
+
+// --- account roll-forward, sub-ledger reconciliation (U-B0.3) ------------------------------------------------
+
+export class AccountRollForwardQuery extends MonthRangeQuery {
+  @ApiProperty({ example: '2330', description: 'A control account, e.g. 2330 (points) or 2130 (retention)' })
+  @Matches(/^[0-9A-Z][0-9A-Z.-]*$/)
+  accountCode!: string;
+}
+
+export class RollForwardRuleDto {
+  @ApiProperty({ example: 'P11', description: 'Posting rule; `manual` for journals without one' })
+  ruleKey!: string;
+
+  @ApiProperty({ example: '1200.00' })
+  increase!: string;
+
+  @ApiProperty({ example: '0.00' })
+  decrease!: string;
+}
+
+export class RollForwardMonthDto {
+  @ApiProperty({ example: '2026-10' })
+  month!: string;
+
+  @ApiProperty({ example: '0.00' })
+  opening!: string;
+
+  @ApiProperty({ example: '1200.00' })
+  increases!: string;
+
+  @ApiProperty({ example: '200.00' })
+  decreases!: string;
+
+  @ApiProperty({ example: '1000.00' })
+  closing!: string;
+
+  @ApiProperty({ type: [RollForwardRuleDto] })
+  byRule!: RollForwardRuleDto[];
+}
+
+export class AccountRollForwardDto {
+  @ApiProperty({ example: '2330' })
+  accountCode!: string;
+
+  @ApiProperty({ example: 'หนี้สินคะแนนสะสม' })
+  nameTh!: string;
+
+  @ApiProperty({
+    enum: ['debit', 'credit'],
+    enumName: 'LedgerSide',
+    example: 'credit',
+    description: 'Amounts are in this direction (an increase raises the balance)',
+  })
+  normalSide!: string;
+
+  @ApiProperty({ type: [RollForwardMonthDto] })
+  months!: RollForwardMonthDto[];
+}
+
+export class SubledgerReconciliationQuery {
+  @ApiPropertyOptional({
+    example: '2026-10',
+    pattern: MONTH.source,
+    description: 'Month for the fixed-asset rows (default: this month); the other rows are as of now',
+  })
+  @IsOptional()
+  @Matches(MONTH)
+  period?: string;
+}
+
+export class SubledgerRowDto {
+  @ApiProperty({ example: 'receivables' })
+  key!: string;
+
+  @ApiProperty({ example: '1210' })
+  accounts!: string;
+
+  @ApiProperty({ example: '42800.00' })
+  subledger!: string;
+
+  @ApiProperty({ example: '42800.00' })
+  gl!: string;
+
+  @ApiProperty({ example: '0.00', description: 'GL − sub-ledger; 0 when reconciled (§7 step 8)' })
+  difference!: string;
+}
+
+export class SubledgerReconciliationDto {
+  @ApiProperty({ format: 'date-time', example: '2026-10-31T18:00:00+07:00' })
+  asOf!: string;
+
+  @ApiProperty({ example: '2026-10' })
+  period!: string;
+
+  @ApiProperty({ type: [SubledgerRowDto] })
+  rows!: SubledgerRowDto[];
+}

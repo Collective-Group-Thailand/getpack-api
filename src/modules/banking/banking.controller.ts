@@ -14,6 +14,7 @@ import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import {
   BANK_IDS,
+  BankLineSuggestionDto,
   BankStatementLineDto,
   CASH_EXAMPLE,
   CashPositionDto,
@@ -30,6 +31,8 @@ import {
   RECEIPT_EXAMPLE,
   SETTLEMENT_EXAMPLE,
   SettlementDto,
+  SettlementListQuery,
+  SplitLineDto,
   StatementLineQuery,
   UnidentifiedQuery,
   UnidentifiedReceiptDto,
@@ -221,6 +224,75 @@ export class AdminBankingController {
     return lineDto(await this.banking.manualMatch(staff(actor), lineId, body));
   }
 
+  @Get('bank-statement-lines/:lineId/suggestions')
+  @Can('banking.read')
+  @lineParam
+  @ApiEndpoint({
+    id: 'admin.banking.suggestMatches',
+    summary: 'Candidates for an unmatched line',
+    description:
+      'What the automatic matcher would consider (`banking.auto_match`: amount within the tolerance, date window, ' +
+      'reference): slip / bank payments and gateway settlements for money in, payout runs and bank-transfer refunds ' +
+      'for money out, never a target already matched. Best first. Empty once the line is matched.',
+    implements: DOCS,
+  })
+  @ApiSuccess(200, {
+    description: 'Candidates',
+    type: [BankLineSuggestionDto],
+    example: [
+      {
+        targetType: 'payment',
+        targetId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001',
+        label: 'PKAB23CD45EF67GH',
+        amount: '5350.00',
+        date: '2026-10-28',
+        reasons: ['reference', 'amount', 'date_window'],
+      },
+    ],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async suggestions(@Param('lineId', ParseUUIDPipe) lineId: string): Promise<BankLineSuggestionDto[]> {
+    return this.banking.suggestions(lineId);
+  }
+
+  @Post('bank-statement-lines/:lineId/actions/split')
+  @HttpCode(200)
+  @Can('banking.manage')
+  @Idempotent()
+  @lineParam
+  @ApiEndpoint({
+    id: 'admin.banking.splitLine',
+    summary: 'Match a statement line to several targets',
+    description:
+      'One deposit or withdrawal covering several payments, runs or refunds, in one transaction (§6): the parts add ' +
+      'up to the line (422 `banking.match_amount_mismatch` otherwise), each payment part equals its payment and posts ' +
+      'P05 like a manual match. A gateway settlement is matched whole with `admin.banking.matchLine`. Requires ' +
+      '`Idempotency-Key`. Audited.',
+    implements: DOCS,
+  })
+  @ApiBody({
+    type: SplitLineDto,
+    examples: {
+      default: {
+        value: {
+          parts: [
+            { targetType: 'payment', targetId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001', amount: '2675.00' },
+            { targetType: 'payment', targetId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0002', amount: '2675.00' },
+          ],
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, { description: 'Line', type: BankStatementLineDto, example: LINE_EXAMPLE })
+  @ApiStandardErrors(...WRITE, 'banking.line_already_matched', 'banking.match_amount_mismatch')
+  async split(
+    @CurrentActor() actor: Actor,
+    @Param('lineId', ParseUUIDPipe) lineId: string,
+    @Body() body: SplitLineDto,
+  ): Promise<BankStatementLineDto> {
+    return lineDto(await this.banking.split(staff(actor), lineId, body.parts));
+  }
+
   @Post('bank-statement-lines/:lineId/actions/ignore')
   @HttpCode(200)
   @Can('banking.manage')
@@ -370,6 +442,46 @@ export class AdminBankingController {
       status: s.status,
       lineCount: s.lines.length,
       unmatchedLines: s.lines.filter((l) => l.paymentId === null).length,
+      companyBankAccountId: (await this.banking.settlementAccount(s.companyBankAccountId)) ?? '',
+    };
+  }
+
+  @Get('gateway-settlements')
+  @Can('banking.read')
+  @ApiEndpoint({
+    id: 'admin.banking.listSettlements',
+    summary: 'List gateway settlements',
+    description:
+      'Imported SCB / 2C2P settlement reports, newest first; `posted` once matched to the bank line (P04).',
+    implements: DOCS,
+  })
+  @ApiPaginated(SettlementDto, { example: SETTLEMENT_EXAMPLE })
+  @ApiStandardErrors('validation.failed')
+  async settlements(@Query() q: SettlementListQuery) {
+    const { rows, total } = await this.banking.settlements(
+      {
+        ...(q.status && { status: q.status }),
+        ...(q.provider && { provider: q.provider }),
+        ...(q.q && { feeTaxInvoiceNo: { contains: q.q } }),
+      },
+      q.page,
+      q.perPage,
+    );
+    return {
+      data: rows.map((s) => ({
+        id: s.publicId,
+        provider: s.provider,
+        settlementDate: bangkokDate(s.settlementDate),
+        grossAmount: s.grossAmount.toFixed(2),
+        feeAmount: s.feeAmount.toFixed(2),
+        vatOnFee: s.vatOnFee.toFixed(2),
+        netAmount: s.netAmount.toFixed(2),
+        status: s.status,
+        lineCount: s.lines.length,
+        unmatchedLines: s.lines.filter((l) => l.paymentId === null).length,
+        companyBankAccountId: s.companyBankAccount.publicId,
+      })),
+      meta: { page: q.page, perPage: q.perPage, total },
     };
   }
 

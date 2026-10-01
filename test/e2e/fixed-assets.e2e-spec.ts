@@ -201,12 +201,24 @@ describe('fixed assets (e2e, B5.5)', () => {
   });
 
   it('depreciates month by month (FA02), once per month, the last month taking the rounding', async () => {
+    // U-B0.3: the preview is what the run posts.
+    const preview = (
+      await as(ctx, auditor).get(`/v1/admin/depreciation-runs/preview?period=${month}`).expect(200)
+    ).body as { alreadyRun: boolean; totalAmount: string; assetCount: number };
+    expect(preview.alreadyRun).toBe(false);
     const run = (await post(finance, '/v1/admin/depreciation-runs', { period: month }).expect(201)).body as {
       id: string;
       totalAmount: string;
       assetCount: number;
     };
     await post(finance, '/v1/admin/depreciation-runs', { period: month }).expect(409);
+    expect({ total: preview.totalAmount, assets: preview.assetCount }).toEqual({
+      total: run.totalAmount,
+      assets: run.assetCount,
+    });
+    expect(
+      (await as(ctx, auditor).get(`/v1/admin/depreciation-runs/preview?period=${month}`).expect(200)).body,
+    ).toMatchObject({ alreadyRun: true, lines: [] });
     await ctx.pump();
     expect((await asset(laptop.id)).accumulatedDepreciation).toBe('1000.00');
     expect((await asset(small.id)).accumulatedDepreciation).toBe('333.33');
