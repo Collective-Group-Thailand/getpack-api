@@ -1,0 +1,631 @@
+[
+  {
+    "key": "01-design-1000",
+    "kind": "manual",
+    "title": "Graphic design sold at 1,000 (browser cost 873.83, PHP payable 873.84)",
+    "input": {
+      "basis": "sell_gross",
+      "amount": 1000,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 873.83,
+        "net": 934.58,
+        "margin": 60.75,
+        "vat": 65.41999999999996,
+        "gross": 1000
+      },
+      "freelancerPayable": 873.84
+    }
+  },
+  {
+    "key": "02-design-1500",
+    "kind": "manual",
+    "title": "Graphic design sold at 1,500",
+    "input": {
+      "basis": "sell_gross",
+      "amount": 1500,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 1310.75,
+        "net": 1401.87,
+        "margin": 91.11999999999989,
+        "vat": 98.13000000000011,
+        "gross": 1500
+      },
+      "freelancerPayable": 1310.75
+    }
+  },
+  {
+    "key": "03-design-2500",
+    "kind": "manual",
+    "title": "Graphic design sold at 2,500 (payable rounds up)",
+    "input": {
+      "basis": "sell_gross",
+      "amount": 2500,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 2184.58,
+        "net": 2336.45,
+        "margin": 151.8699999999999,
+        "vat": 163.55000000000018,
+        "gross": 2500
+      },
+      "freelancerPayable": 2184.59
+    }
+  },
+  {
+    "key": "04-design-3000",
+    "kind": "manual",
+    "title": "Graphic design sold at 3,000",
+    "input": {
+      "basis": "sell_gross",
+      "amount": 3000,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 2621.5,
+        "net": 2803.74,
+        "margin": 182.23999999999978,
+        "vat": 196.26000000000022,
+        "gross": 3000
+      },
+      "freelancerPayable": 2621.5
+    }
+  },
+  {
+    "key": "05-design-107",
+    "kind": "manual",
+    "title": "Graphic design sold at 107: net 100 exactly",
+    "input": {
+      "basis": "sell_gross",
+      "amount": 107,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 93.5,
+        "net": 100.0,
+        "margin": 6.5,
+        "vat": 7.0,
+        "gross": 107
+      },
+      "freelancerPayable": 93.5
+    }
+  },
+  {
+    "key": "06-design-999.99",
+    "kind": "manual",
+    "title": "Graphic design sold at 999.99",
+    "input": {
+      "basis": "sell_gross",
+      "amount": 999.99,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 873.82,
+        "net": 934.57,
+        "margin": 60.75,
+        "vat": 65.41999999999996,
+        "gross": 999.99
+      },
+      "freelancerPayable": 873.83
+    }
+  },
+  {
+    "key": "07-design-10000",
+    "kind": "manual",
+    "title": "Graphic design sold at 10,000 (PHP net 9,345.80)",
+    "input": {
+      "basis": "sell_gross",
+      "amount": 10000,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 8738.31,
+        "net": 9345.79,
+        "margin": 607.4800000000014,
+        "vat": 654.2099999999991,
+        "gross": 10000
+      },
+      "freelancerPayable": 8738.33
+    }
+  },
+  {
+    "key": "08-design-1",
+    "kind": "manual",
+    "title": "Graphic design sold at 1",
+    "input": {
+      "basis": "sell_gross",
+      "amount": 1,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 0.88,
+        "net": 0.94,
+        "margin": 0.05999999999999994,
+        "vat": 0.06000000000000005,
+        "gross": 1
+      },
+      "freelancerPayable": 0.88
+    }
+  },
+  {
+    "key": "09-plate-1000",
+    "kind": "manual",
+    "title": "Print plate at a cost of 1,000",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 1000,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 1000,
+        "net": 1069.52,
+        "margin": 69.51999999999998,
+        "vat": 74.87000000000012,
+        "gross": 1144.39
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "10-die-block-1500",
+    "kind": "manual",
+    "title": "Die block at a cost of 1,500",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 1500,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 1500,
+        "net": 1604.28,
+        "margin": 104.27999999999997,
+        "vat": 112.29999999999995,
+        "gross": 1716.58
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "11-mold-seal-2000",
+    "kind": "manual",
+    "title": "Seal mold at a cost of 2,000",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 2000,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 2000,
+        "net": 2139.04,
+        "margin": 139.03999999999996,
+        "vat": 149.73000000000002,
+        "gross": 2288.77
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "12-plate-935",
+    "kind": "manual",
+    "title": "Plate at a cost of 935: net 1,000 exactly",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 935,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 935,
+        "net": 1000.0,
+        "margin": 65.0,
+        "vat": 70.0,
+        "gross": 1070.0
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "13-mockup-450",
+    "kind": "manual",
+    "title": "Printed mockup at a cost of 450",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 450,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 450,
+        "net": 481.28,
+        "margin": 31.279999999999973,
+        "vat": 33.690000000000055,
+        "gross": 514.97
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "14-delivery-800",
+    "kind": "manual",
+    "title": "Delivery at a cost of 800",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 800,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 800,
+        "net": 855.61,
+        "margin": 55.610000000000014,
+        "vat": 59.889999999999986,
+        "gross": 915.5
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "15-mold-print-3333.33",
+    "kind": "manual",
+    "title": "Print mold at a cost of 3,333.33",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 3333.33,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 3333.33,
+        "net": 3565.06,
+        "margin": 231.73000000000002,
+        "vat": 249.55000000000018,
+        "gross": 3814.61
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "16-mold-diecut-500",
+    "kind": "manual",
+    "title": "Die-cut mold at a cost of 500",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 500,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 500,
+        "net": 534.76,
+        "margin": 34.75999999999999,
+        "vat": 37.430000000000064,
+        "gross": 572.19
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "17-plate-0.5",
+    "kind": "manual",
+    "title": "Plate at a cost of 0.50",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 0.5,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 0.5,
+        "net": 0.53,
+        "margin": 0.030000000000000027,
+        "vat": 0.039999999999999925,
+        "gross": 0.57
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "18-plate-margin-5.5",
+    "kind": "manual",
+    "title": "Plate at 1,000 with the margin of 2024-09-27 (5.5 %)",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 1000,
+      "marginPct": 5.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 1000,
+        "net": 1058.2,
+        "margin": 58.200000000000045,
+        "vat": 74.06999999999994,
+        "gross": 1132.27
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "19-plate-margin-0",
+    "kind": "manual",
+    "title": "Plate at 1,000 with no margin (before 2024-09-27)",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 1000,
+      "marginPct": 0,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": null,
+      "amounts": {
+        "cost": 1000,
+        "net": 1000.0,
+        "margin": 0.0,
+        "vat": 70.0,
+        "gross": 1070.0
+      },
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "20-refused",
+    "kind": "manual",
+    "title": "A cost of 0 is refused",
+    "input": {
+      "basis": "buy_cost_net",
+      "amount": 0,
+      "marginPct": 6.5,
+      "vatPct": 7
+    },
+    "expected": {
+      "error": "price_line_missing: a cost above 0",
+      "amounts": null,
+      "freelancerPayable": null
+    }
+  },
+  {
+    "key": "21-line-one",
+    "kind": "engine",
+    "title": "A factory line: 1,000 net, quantity 1, lead time 7",
+    "input": {
+      "quantities": [1]
+    },
+    "options": [
+      {
+        "optionKey": "F1:service",
+        "factoryId": "F1",
+        "printTypeId": "service",
+        "line": {
+          "unitCost": 1000,
+          "leadTimeDays": 7
+        },
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 6.5,
+          "fixCost": 0,
+          "designFee": null,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:service",
+        "error": null,
+        "errors": [null],
+        "steps": [
+          {
+            "qty": 1,
+            "targetMarginPct": 6.5,
+            "perPcs": 1144.39,
+            "net": 1069.52,
+            "buyPrice": 1000,
+            "total": 1144.39,
+            "vatPrice": 74.87000000000012,
+            "leadTimeDays": 7
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "22-line-three",
+    "kind": "engine",
+    "title": "The same line for 3 units",
+    "input": {
+      "quantities": [3]
+    },
+    "options": [
+      {
+        "optionKey": "F1:service",
+        "factoryId": "F1",
+        "printTypeId": "service",
+        "line": {
+          "unitCost": 1000,
+          "leadTimeDays": 7
+        },
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 6.5,
+          "fixCost": 0,
+          "designFee": null,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:service",
+        "error": null,
+        "errors": [null],
+        "steps": [
+          {
+            "qty": 3,
+            "targetMarginPct": 6.5,
+            "perPcs": 1144.39,
+            "net": 3208.56,
+            "buyPrice": 3000,
+            "total": 3433.17,
+            "vatPrice": 224.61000000000035,
+            "leadTimeDays": 7
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "23-no-line",
+    "kind": "engine",
+    "title": "A factory without a line for the item",
+    "input": {
+      "quantities": [1]
+    },
+    "options": [
+      {
+        "optionKey": "F1:service",
+        "factoryId": "F1",
+        "printTypeId": "service",
+        "line": null,
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 6.5,
+          "fixCost": 0,
+          "designFee": null,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:service",
+        "error": "price_line_missing: pl_service_prices",
+        "errors": ["price_line_missing: pl_service_prices"],
+        "steps": [null]
+      }
+    ]
+  },
+  {
+    "key": "24-margin-tier",
+    "kind": "engine",
+    "title": "Margin lines by quantity (6.5 % up to 4, 5 % from 5)",
+    "input": {
+      "quantities": [1, 5]
+    },
+    "options": [
+      {
+        "optionKey": "F1:service",
+        "factoryId": "F1",
+        "printTypeId": "service",
+        "line": {
+          "unitCost": 2000,
+          "leadTimeDays": 10.5
+        },
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 4,
+              "priceMin": null,
+              "priceMax": null,
+              "valuePct": 6.5
+            },
+            {
+              "qtyMin": 5,
+              "qtyMax": null,
+              "priceMin": null,
+              "priceMax": null,
+              "valuePct": 5
+            }
+          ],
+          "marginFallbackPct": 6.5,
+          "fixCost": 0,
+          "designFee": null,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:service",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 1,
+            "targetMarginPct": 6.5,
+            "perPcs": 2288.77,
+            "net": 2139.04,
+            "buyPrice": 2000,
+            "total": 2288.77,
+            "vatPrice": 149.73000000000002,
+            "leadTimeDays": 11
+          },
+          {
+            "qty": 5,
+            "targetMarginPct": 5,
+            "perPcs": 2252.63,
+            "net": 10526.300000000001,
+            "buyPrice": 10000,
+            "total": 11263.150000000001,
+            "vatPrice": 736.8499999999995,
+            "leadTimeDays": 11
+          }
+        ]
+      }
+    ]
+  }
+]
