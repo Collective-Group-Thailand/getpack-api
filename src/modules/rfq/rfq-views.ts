@@ -1,3 +1,4 @@
+import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 import { rfqSpecLines } from '@modules/quotes/line-summary';
@@ -42,6 +43,8 @@ function quotation(q: QuoteRow): RfqQuotationDto {
   };
 }
 
+import { ADMIN_RFQ_ACTIONS, STORE_RFQ_ACTIONS } from './rfq-actions';
+
 /** The customer view: customer-visible messages, sent quotations, no factory or buy price (D-050). */
 const NO_FILES: RfqFiles = { rfq: [], messages: new Map() };
 
@@ -76,13 +79,18 @@ export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
     declineReasonCode: r.declineReason?.code ?? null,
     submittedAt: toBangkokIso(r.submittedAt),
     closedAt: iso(r.closedAt),
+    nextActions: nextActions(
+      { status: r.status, quotes: r.quotes, now: new Date() },
+      STORE_RFQ_ACTIONS,
+      NO_PERMISSIONS,
+    ),
   };
 }
 
 /** The staff view; buy prices need `factory_cost.read`, margins `margin.read` (D-141). */
 export function staffRfqDto(
   r: RfqRow,
-  grants: { cost: boolean; margin: boolean },
+  grants: { cost: boolean; margin: boolean; perms?: ReadonlySet<string> },
   now = new Date(),
   files: RfqFiles = NO_FILES,
   ctx: StaffRfqContext = { slaTargetHours: null, validUntil: now, schema: null },
@@ -140,6 +148,11 @@ export function staffRfqDto(
       heightMm: num(r.heightMm),
     }),
     quoteDefaults: { validUntil: toBangkokIso(ctx.validUntil) },
+    nextActions: nextActions(
+      { status: r.status, quotes: r.quotes, now },
+      ADMIN_RFQ_ACTIONS,
+      grants.perms ?? NO_PERMISSIONS,
+    ),
   };
 }
 

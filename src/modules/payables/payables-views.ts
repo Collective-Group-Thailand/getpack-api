@@ -1,4 +1,5 @@
 import { MoneyDecimal } from '@common/money/money';
+import { type ActionRule, nextActions } from '@common/next-actions/next-actions';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { type Vendor } from '@generated/prisma/client';
 
@@ -18,6 +19,7 @@ import {
   type PoRow,
   type StatementMoney,
 } from './payables-query.service';
+import { type StatementFacts } from './statement-actions';
 import { type InvoiceRow } from './vendor-invoices.service';
 
 type Amount = { toFixed(dp: number): string };
@@ -81,7 +83,11 @@ const lineKind = (l: BsRow['lines'][number]) => {
 const NONE: StatementMoney = { deductions: ZERO, advanceOffset: ZERO, alreadyPaid: ZERO, remaining: ZERO };
 
 /** A statement with its line kinds, money by kind and what is paid / owed on its jobs (U-B0.3). */
-export const bsDto = (r: BsRow, money: StatementMoney = NONE): BillingStatementDto => {
+export const bsDto = (
+  r: BsRow,
+  money: StatementMoney = NONE,
+  actions: { rules: ActionRule<StatementFacts>[]; perms: ReadonlySet<string> } | null = null,
+): BillingStatementDto => {
   const lines = r.lines.map((l) => ({
     lineNo: l.lineNo,
     ...lineKind(l),
@@ -130,6 +136,13 @@ export const bsDto = (r: BsRow, money: StatementMoney = NONE): BillingStatementD
     taxInvoiceStatus: latest?.status ?? 'none',
     inputVatStatus: latest?.inputVatStatus ?? null,
     taxInvoices: r.vendorInvoices.map(invoiceDto),
+    nextActions: actions
+      ? nextActions(
+          { status: r.status, invoiceStatuses: r.vendorInvoices.map((i) => i.status) },
+          actions.rules,
+          actions.perms,
+        )
+      : [],
   };
 };
 

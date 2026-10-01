@@ -15,6 +15,7 @@ import {
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
+import { permissionsOf } from '@modules/iam/actor-permissions';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { orderDto, orderViewContext } from '@modules/orders/order-views';
 import { ORDER_EXAMPLE, OrderDto } from '@modules/orders/orders.dto';
@@ -107,18 +108,20 @@ export class PartnerShipmentsController {
     private readonly shipments: ShipmentsService,
     private readonly delivery: DeliveryService,
     private readonly query: ShipmentsQueryService,
+    private readonly permissions: PermissionResolver,
   ) {}
 
-  private async dtos(rows: ShipmentRow[]) {
-    const [photos, blocked] = await Promise.all([
+  private async dtos(actor: Actor, rows: ShipmentRow[]) {
+    const [photos, blocked, perms] = await Promise.all([
       this.query.podPhotos(rows),
       this.shipments.blockedByPayment(rows),
+      permissionsOf(this.permissions, actor),
     ]);
-    return rows.map((r) => partnerShipmentDto(r, photos.get(r.id), blocked.has(r.id)));
+    return rows.map((r) => partnerShipmentDto(r, photos.get(r.id), blocked.has(r.id), perms));
   }
 
   private async dto(actor: Actor, publicId: string) {
-    return (await this.dtos([await this.query.get(actor, publicId)]))[0]!;
+    return (await this.dtos(actor, [await this.query.get(actor, publicId)]))[0]!;
   }
 
   @Get('shipments')
@@ -136,7 +139,7 @@ export class PartnerShipmentsController {
   async list(@CurrentActor() actor: Actor, @Query() q: PartnerShipmentListQuery) {
     const where: Prisma.ShipmentWhereInput = { AND: [listWhere(q), q.view ? PARTNER_VIEWS[q.view] : {}] };
     const [rows, total] = await this.query.list(actor, where, q.page, q.perPage);
-    return { data: await this.dtos(rows), meta: { page: q.page, perPage: q.perPage, total } };
+    return { data: await this.dtos(actor, rows), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get('shipments/:shipmentId')
@@ -490,12 +493,13 @@ export class AdminShipmentsController {
   }
 
   private async dtos(actor: Actor, rows: ShipmentRow[]) {
-    const [cost, photos, blocked] = await Promise.all([
-      this.canSeeCost(actor),
+    const [perms, photos, blocked] = await Promise.all([
+      permissionsOf(this.permissions, actor),
       this.query.podPhotos(rows),
       this.shipments.blockedByPayment(rows),
     ]);
-    return rows.map((r) => adminShipmentDto(r, { cost }, photos.get(r.id), blocked.has(r.id)));
+    const cost = perms.has('factory_cost.read');
+    return rows.map((r) => adminShipmentDto(r, { cost }, photos.get(r.id), blocked.has(r.id), perms));
   }
 
   private async dto(actor: Actor, publicId: string, res?: Response) {

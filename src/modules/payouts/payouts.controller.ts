@@ -7,6 +7,8 @@ import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/deco
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok';
+import { permissionsOf } from '@modules/iam/actor-permissions';
+import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { PAYABLE_EXAMPLE, PayableDto } from '@modules/payables/payables.dto';
 import { PayablesQueryService } from '@modules/payables/payables-query.service';
 import { payableDto } from '@modules/payables/payables-views';
@@ -39,7 +41,7 @@ import {
   StatementOfAccountDto,
   StatementOfAccountQuery,
 } from './payouts.dto';
-import { PayoutsService } from './payouts.service';
+import { PayoutsService, type RunRow } from './payouts.service';
 import {
   exceptionDto,
   partnerPayoutDetailDto,
@@ -96,7 +98,12 @@ export class AdminPayoutsController {
   constructor(
     private readonly payouts: PayoutsService,
     private readonly files: DocumentFilesService,
+    private readonly permissions: PermissionResolver,
   ) {}
+
+  private async run(actor: Actor, row: Promise<RunRow> | RunRow) {
+    return runDto(await row, await permissionsOf(this.permissions, actor));
+  }
 
   @Get('payouts/eligible')
   @Can('payables.read')
@@ -123,9 +130,10 @@ export class AdminPayoutsController {
   })
   @ApiPaginated(PayoutRunDto, { example: RUN_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async list(@Query() q: PageQuery) {
+  async list(@CurrentActor() actor: Actor, @Query() q: PageQuery) {
     const { rows, total } = await this.payouts.list(q.page, q.perPage);
-    return { data: rows.map(runDto), meta: { page: q.page, perPage: q.perPage, total } };
+    const perms = await permissionsOf(this.permissions, actor);
+    return { data: rows.map((r) => runDto(r, perms)), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get('payout-runs/:runId')
@@ -139,8 +147,11 @@ export class AdminPayoutsController {
   })
   @ApiSuccess(200, { description: 'Payout run', type: PayoutRunDto, example: RUN_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async get(@Param('runId', ParseUUIDPipe) runId: string): Promise<PayoutRunDto> {
-    return runDto(await this.payouts.get(runId));
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('runId', ParseUUIDPipe) runId: string,
+  ): Promise<PayoutRunDto> {
+    return this.run(actor, this.payouts.get(runId));
   }
 
   @Post('payout-runs')
@@ -164,7 +175,7 @@ export class AdminPayoutsController {
   })
   @ApiStandardErrors(...WRITE, 'payouts.nothing_eligible', 'payouts.bank_account_missing')
   async create(@CurrentActor() actor: Actor, @Body() body: CreatePayoutRunDto): Promise<PayoutRunDto> {
-    return runDto(await this.payouts.create(staff(actor), body));
+    return this.run(actor, this.payouts.create(staff(actor), body));
   }
 
   @Post('payout-runs/:runId/actions/propose')
@@ -192,7 +203,7 @@ export class AdminPayoutsController {
     @CurrentActor() actor: Actor,
     @Param('runId', ParseUUIDPipe) runId: string,
   ): Promise<PayoutRunDto> {
-    return runDto(await this.payouts.propose(staff(actor), runId));
+    return this.run(actor, this.payouts.propose(staff(actor), runId));
   }
 
   @Post('payout-runs/:runId/actions/cancel')
@@ -218,7 +229,7 @@ export class AdminPayoutsController {
     @Param('runId', ParseUUIDPipe) runId: string,
     @Body() body: ReasonDto,
   ): Promise<PayoutRunDto> {
-    return runDto(await this.payouts.cancel(staff(actor), runId, body.reason));
+    return this.run(actor, this.payouts.cancel(staff(actor), runId, body.reason));
   }
 
   @Post('payout-runs/:runId/actions/generate-bank-file')
@@ -243,7 +254,7 @@ export class AdminPayoutsController {
     @CurrentActor() actor: Actor,
     @Param('runId', ParseUUIDPipe) runId: string,
   ): Promise<PayoutRunDto> {
-    return runDto(await this.payouts.bankFile(staff(actor), runId));
+    return this.run(actor, this.payouts.bankFile(staff(actor), runId));
   }
 
   @Get('payout-runs/:runId/bank-file')
@@ -301,8 +312,9 @@ export class AdminPayoutsController {
       throw new DomainException('validation.failed', {
         errors: [{ path: 'confirmations', code: 'required', message: 'confirmations or fileId' }],
       });
-    return runDto(
-      await this.payouts.confirm(staff(actor), runId, {
+    return this.run(
+      actor,
+      this.payouts.confirm(staff(actor), runId, {
         ...(body.fileId && { fileId: body.fileId }),
         ...(body.confirmations && {
           confirmations: body.confirmations.map((c) => ({

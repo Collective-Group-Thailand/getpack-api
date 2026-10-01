@@ -1,3 +1,4 @@
+import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type DeliveryReconciliation, type Prisma } from '@generated/prisma/client';
 
@@ -8,6 +9,7 @@ import {
   type ProofOfDeliveryDto,
   type StoreShipmentDto,
 } from './logistics.dto';
+import { ADMIN_SHIPMENT_ACTIONS, PARTNER_SHIPMENT_ACTIONS, type ShipmentFacts } from './shipment-actions';
 
 export const SHIPMENT_INCLUDE = {
   factory: { select: { publicId: true, code: true } },
@@ -81,10 +83,20 @@ function podDto(row: ShipmentRow, photos: string[]): ProofOfDeliveryDto | null {
 }
 
 /** The factory's projection (D-142): where to deliver and what, no price. */
+const shipmentFacts = (row: ShipmentRow, blockedByPayment: boolean): ShipmentFacts => ({
+  status: row.status,
+  carrier: row.carrier.code,
+  carrierRequested: row.carrierRequestedAt !== null,
+  blockedByPayment,
+  podReview: row.proofOfDelivery ? (row.proofOfDelivery.reviews[0]?.decision ?? 'pending') : null,
+  exceptionResolved: row.exceptionResolvedAt !== null,
+});
+
 export function partnerShipmentDto(
   row: ShipmentRow,
   podPhotos: string[] = [],
   blockedByPayment = false,
+  perms: ReadonlySet<string> = NO_PERMISSIONS,
 ): PartnerShipmentDto {
   return {
     id: row.publicId,
@@ -133,6 +145,7 @@ export function partnerShipmentDto(
       row.carrierRequestedAt && row.carrierRequestReason
         ? { requestedAt: toBangkokIso(row.carrierRequestedAt), reason: row.carrierRequestReason }
         : null,
+    nextActions: nextActions(shipmentFacts(row, blockedByPayment), PARTNER_SHIPMENT_ACTIONS, perms),
   };
 }
 
@@ -141,6 +154,7 @@ export function adminShipmentDto(
   grants: { cost: boolean },
   podPhotos: string[] = [],
   blockedByPayment = false,
+  perms: ReadonlySet<string> = NO_PERMISSIONS,
 ): AdminShipmentDto {
   const review = row.proofOfDelivery?.reviews[0];
   return {
@@ -163,6 +177,7 @@ export function adminShipmentDto(
         }
       : null,
     splitFrom: row.splitFrom ? { id: row.splitFrom.publicId, shipmentNo: row.splitFrom.shipmentNo } : null,
+    nextActions: nextActions(shipmentFacts(row, blockedByPayment), ADMIN_SHIPMENT_ACTIONS, perms),
   };
 }
 

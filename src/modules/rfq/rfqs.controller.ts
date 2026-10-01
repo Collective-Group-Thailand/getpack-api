@@ -122,6 +122,7 @@ const RFQ_EXAMPLE: RfqDto = {
   declineReasonCode: null,
   submittedAt: '2026-09-30T15:00:00+07:00',
   closedAt: null,
+  nextActions: [{ key: 'rfq.post_message', irreversible: false, disabledReason: null }],
 };
 const STAFF_EXAMPLE: StaffRfqDto = {
   ...RFQ_EXAMPLE,
@@ -910,7 +911,7 @@ export class AdminRfqsController {
   private async grants(actor: Actor) {
     const granted =
       actor.type === 'user' ? (await this.permissions.forUser(actor.userId)).permissions : new Set<string>();
-    return { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read') };
+    return { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read'), perms: granted };
   }
 }
 

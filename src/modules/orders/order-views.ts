@@ -1,9 +1,11 @@
+import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 import { lineSummary, SUMMARY_INCLUDE } from '@modules/quotes/line-summary';
 import { type SettingsService } from '@platform/settings/settings.service';
 
 import { type AddressSnapshotDto } from '../carts/carts.dto';
+import { ADMIN_ORDER_ACTIONS, STORE_ORDER_ACTIONS } from './order-actions';
 import {
   type AdminOrderDto,
   type AdminOrderGroupDto,
@@ -42,6 +44,8 @@ export type OrderGroupRow = Prisma.OrderGroupGetPayload<{ include: typeof GROUP_
 export interface CostGrants {
   cost: boolean;
   margin: boolean;
+  /** The reader's permissions, for the staff `nextActions` (U-B0.3). */
+  perms?: ReadonlySet<string>;
 }
 
 type Money = Prisma.Decimal;
@@ -194,6 +198,7 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     receipt: receipt(row, ctx),
     toleranceOutcome: toleranceOutcome(row),
     createdAt: toBangkokIso(row.createdAt),
+    nextActions: nextActions(row, STORE_ORDER_ACTIONS, NO_PERMISSIONS),
   };
 }
 
@@ -207,6 +212,7 @@ export function adminOrderDto(row: OrderRow, grants: CostGrants): AdminOrderDto 
       marginPct: grants.margin ? (row.marginPct?.toFixed(4) ?? null) : null,
       belowMarginFloor: row.belowMarginFloor,
     },
+    nextActions: nextActions(row, ADMIN_ORDER_ACTIONS, grants.perms ?? NO_PERMISSIONS),
   };
 }
 

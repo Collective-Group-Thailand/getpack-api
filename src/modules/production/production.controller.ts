@@ -66,6 +66,7 @@ export class AdminProductionController {
         photos,
         { cost: granted.has('factory_cost.read'), margin: granted.has('margin.read') },
         extras,
+        granted,
       ),
     );
   }

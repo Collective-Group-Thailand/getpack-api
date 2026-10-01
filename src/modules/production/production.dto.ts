@@ -1,4 +1,5 @@
 import { FactoryRefDto } from '@common/dto/factory-ref.dto';
+import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { FACTORY_ROLES } from '@modules/auth/me.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -478,6 +479,12 @@ export class PartnerJobDto {
 
   @ApiProperty({ type: [MilestoneDto] })
   milestones!: MilestoneDto[];
+
+  @ApiProperty({
+    type: [NextActionDto],
+    description: 'What the signed-in user may do on the job now (U-B0.3)',
+  })
+  nextActions!: NextActionDto[];
 }
 
 export class AdminJobDto extends PartnerJobDto {
@@ -597,6 +604,7 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
     },
   ],
   milestones: [MILESTONE_EXAMPLE],
+  nextActions: [{ key: 'job.update_milestone', irreversible: false, disabledReason: null }],
 };
 
 export const ADMIN_JOB_EXAMPLE: AdminJobDto = {

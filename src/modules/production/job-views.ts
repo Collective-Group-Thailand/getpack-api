@@ -1,6 +1,8 @@
+import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 
+import { ADMIN_JOB_ACTIONS, PARTNER_JOB_ACTIONS } from './job-actions';
 import {
   type AdminJobDto,
   type JobIssueDto,
@@ -79,6 +81,7 @@ export function partnerJobDto(
   row: JobRow,
   photos: Map<bigint, string[]>,
   extras: JobExtras = NO_EXTRAS,
+  perms: ReadonlySet<string> = NO_PERMISSIONS,
 ): PartnerJobDto {
   const spec = row.specSnapshot as Record<string, unknown>;
   const proofId = (spec['approvedProofId'] as string | null | undefined) ?? null;
@@ -145,6 +148,7 @@ export function partnerJobDto(
       shippedQuantity: extras.shipped.get(d.id) ?? 0,
     })),
     milestones: milestoneDtos(row, photos),
+    nextActions: nextActions(row, PARTNER_JOB_ACTIONS, perms),
   };
 }
 
@@ -167,6 +171,7 @@ export function adminJobDto(
   photos: Map<bigint, string[]>,
   grants: { cost: boolean; margin: boolean },
   extras: JobExtras = NO_EXTRAS,
+  perms: ReadonlySet<string> = NO_PERMISSIONS,
 ): AdminJobDto {
   const buy = row.buyPriceSnapshot as { buyCostNet?: string | null };
   return {
@@ -190,6 +195,7 @@ export function adminJobDto(
       note: a.note,
       decidedAt: toBangkokIso(a.decidedAt),
     })),
+    nextActions: nextActions(row, ADMIN_JOB_ACTIONS, perms),
   };
 }
 

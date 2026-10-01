@@ -10,6 +10,8 @@ import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { CompaniesService } from '@modules/companies/companies.service';
 import { CustomersService } from '@modules/customers/customers.service';
+import { permissionsOf } from '@modules/iam/actor-permissions';
+import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { dateOnly } from '@modules/ledger/ledger-dates';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
@@ -17,7 +19,7 @@ import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { DownloadUrlDto } from '@platform/files/files.dto';
 
 import { CreditNotesService } from './credit-notes.service';
-import { CustomerDocumentsService } from './customer-documents.service';
+import { CustomerDocumentsService, type DocumentRow } from './customer-documents.service';
 import { DocumentFilesService } from './document-files.service';
 import {
   AGING_EXAMPLE,
@@ -97,7 +99,12 @@ export class AdminCustomerDocumentsController {
     private readonly files: DocumentFilesService,
     private readonly creditNotes: CreditNotesService,
     private readonly prisma: PrismaService,
+    private readonly permissions: PermissionResolver,
   ) {}
+
+  private async doc(actor: Actor, row: DocumentRow | Promise<DocumentRow>) {
+    return documentDto(await row, await permissionsOf(this.permissions, actor));
+  }
 
   @Get('customer-documents')
   @Can('receivables.read')
@@ -110,7 +117,7 @@ export class AdminCustomerDocumentsController {
   })
   @ApiPaginated(CustomerDocumentDto, { example: DOCUMENT_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async list(@Query() q: DocumentListQuery) {
+  async list(@CurrentActor() actor: Actor, @Query() q: DocumentListQuery) {
     const where: Prisma.CustomerDocumentWhereInput = {
       ...(q.docType && { docType: q.docType }),
       ...(q.status && { status: q.status }),
@@ -124,7 +131,11 @@ export class AdminCustomerDocumentsController {
       ...(q.q && { docNumber: { contains: q.q } }),
     };
     const { rows, total } = await this.documents.list(where, q.page, q.perPage);
-    return { data: rows.map(documentDto), meta: { page: q.page, perPage: q.perPage, total } };
+    const perms = await permissionsOf(this.permissions, actor);
+    return {
+      data: rows.map((r) => documentDto(r, perms)),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get('credit-note-reasons')
@@ -293,8 +304,11 @@ export class AdminCustomerDocumentsController {
   })
   @ApiSuccess(200, { description: 'Document', type: CustomerDocumentDto, example: DOCUMENT_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  async get(@Param('documentId', ParseUUIDPipe) documentId: string): Promise<CustomerDocumentDto> {
-    return documentDto(await this.documents.get(documentId));
+  async get(
+    @CurrentActor() actor: Actor,
+    @Param('documentId', ParseUUIDPipe) documentId: string,
+  ): Promise<CustomerDocumentDto> {
+    return this.doc(actor, this.documents.get(documentId));
   }
 
   @Get('customer-documents/:documentId/pdf')
@@ -338,7 +352,7 @@ export class AdminCustomerDocumentsController {
     @Param('documentId', ParseUUIDPipe) documentId: string,
     @Body() body: ReasonDto,
   ): Promise<CustomerDocumentDto> {
-    return documentDto(await this.documents.void(staff(actor), documentId, body.reason));
+    return this.doc(actor, this.documents.void(staff(actor), documentId, body.reason));
   }
 
   @Post('orders/:orderId/debit-notes')
@@ -375,7 +389,7 @@ export class AdminCustomerDocumentsController {
     @Body() body: IssueDebitNoteDto,
   ): Promise<CustomerDocumentDto> {
     const doc = await this.creditNotes.issueDebitNote(staff(actor), orderId, body);
-    return documentDto(await this.documents.get(doc.publicId));
+    return this.doc(actor, this.documents.get(doc.publicId));
   }
 
   @Post('orders/:orderId/credit-notes')
@@ -726,7 +740,7 @@ export class StoreDocumentsController {
       q.page,
       q.perPage,
     );
-    return { data: rows.map(documentDto), meta: { page: q.page, perPage: q.perPage, total } };
+    return { data: rows.map((r) => documentDto(r)), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get('documents/:documentId/pdf')

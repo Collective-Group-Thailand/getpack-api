@@ -12,6 +12,8 @@ import { cartDto } from '@modules/carts/cart-views';
 import { CART_EXAMPLE, CartDto } from '@modules/carts/carts.dto';
 import { cartEtag } from '@modules/carts/carts.service';
 import { CompaniesService } from '@modules/companies/companies.service';
+import { permissionsOf } from '@modules/iam/actor-permissions';
+import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
@@ -85,22 +87,35 @@ const adminListWhere = (q: AdminClaimListQuery): Prisma.ClaimWhereInput => ({
   ...(q.factoryId && { factory: { publicId: q.factoryId } }),
 });
 
+type Photos = { product: string[]; carton: string[] };
+
 abstract class ClaimViews {
-  constructor(protected readonly claims: ClaimsService) {}
+  constructor(
+    protected readonly claims: ClaimsService,
+    protected readonly permissions: PermissionResolver,
+  ) {}
   protected async one<T>(
     actor: Actor,
     id: string,
-    view: (c: ClaimRow, p: { product: string[]; carton: string[] }) => T,
+    view: (c: ClaimRow, p: Photos, perms: ReadonlySet<string>) => T,
   ) {
     const row = await this.claims.get(actor, id);
-    return view(row, (await this.claims.photos([row.id])).get(row.id)!);
+    return view(
+      row,
+      (await this.claims.photos([row.id])).get(row.id)!,
+      await permissionsOf(this.permissions, actor),
+    );
   }
   protected async many<T>(
+    actor: Actor,
     rows: ClaimRow[],
-    view: (c: ClaimRow, p: { product: string[]; carton: string[] }) => T,
+    view: (c: ClaimRow, p: Photos, perms: ReadonlySet<string>) => T,
   ) {
-    const photos = await this.claims.photos(rows.map((r) => r.id));
-    return rows.map((r) => view(r, photos.get(r.id)!));
+    const [photos, perms] = await Promise.all([
+      this.claims.photos(rows.map((r) => r.id)),
+      permissionsOf(this.permissions, actor),
+    ]);
+    return rows.map((r) => view(r, photos.get(r.id)!, perms));
   }
 }
 
@@ -113,9 +128,10 @@ abstract class ClaimViews {
 export class StoreClaimsController extends ClaimViews {
   constructor(
     claims: ClaimsService,
+    permissions: PermissionResolver,
     private readonly reorders: ReorderService,
   ) {
-    super(claims);
+    super(claims, permissions);
   }
 
   @Get('orders/:orderId/claim-form')
@@ -184,7 +200,10 @@ export class StoreClaimsController extends ClaimViews {
   async list(@CurrentActor() actor: Actor, @Query() q: ClaimListQuery) {
     customer(actor);
     const [rows, total] = await this.claims.list(actor, listWhere(q), q.page, q.perPage);
-    return { data: await this.many(rows, storeClaimDto), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: await this.many(actor, rows, storeClaimDto),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get('claims/:claimId')
@@ -392,8 +411,8 @@ export class StoreBulkReorderController {
 @ApiSurface('partner', 'claims')
 @Controller()
 export class PartnerClaimsController extends ClaimViews {
-  constructor(claims: ClaimsService) {
-    super(claims);
+  constructor(claims: ClaimsService, permissions: PermissionResolver) {
+    super(claims, permissions);
   }
 
   @Get('claims')
@@ -409,7 +428,7 @@ export class PartnerClaimsController extends ClaimViews {
   async list(@CurrentActor() actor: Actor, @Query() q: ClaimListQuery) {
     const [rows, total] = await this.claims.list(actor, listWhere(q), q.page, q.perPage);
     return {
-      data: await this.many(rows, partnerClaimDto),
+      data: await this.many(actor, rows, partnerClaimDto),
       meta: { page: q.page, perPage: q.perPage, total },
     };
   }
@@ -469,8 +488,8 @@ export class PartnerClaimsController extends ClaimViews {
 @ApiSurface('admin', 'claims')
 @Controller()
 export class AdminClaimsController extends ClaimViews {
-  constructor(claims: ClaimsService) {
-    super(claims);
+  constructor(claims: ClaimsService, permissions: PermissionResolver) {
+    super(claims, permissions);
   }
 
   @Get('claims')
@@ -487,7 +506,10 @@ export class AdminClaimsController extends ClaimViews {
   @ApiStandardErrors('validation.failed')
   async list(@CurrentActor() actor: Actor, @Query() q: AdminClaimListQuery) {
     const [rows, total] = await this.claims.list(actor, adminListWhere(q), q.page, q.perPage);
-    return { data: await this.many(rows, adminClaimDto), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: await this.many(actor, rows, adminClaimDto),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get('claims/:claimId')
@@ -512,7 +534,11 @@ export class AdminClaimsController extends ClaimViews {
   ) {
     const row = await this.claims.get(actor, claimId);
     res.setHeader('ETag', etagOf(row.publicId, row.rowVersion));
-    return adminClaimDto(row, (await this.claims.photos([row.id])).get(row.id));
+    return adminClaimDto(
+      row,
+      (await this.claims.photos([row.id])).get(row.id),
+      await permissionsOf(this.permissions, actor),
+    );
   }
 
   @Post('orders/:orderId/claims')

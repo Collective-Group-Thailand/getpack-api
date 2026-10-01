@@ -1,3 +1,4 @@
+import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { LINE_SUMMARY_EXAMPLE, LineSummaryDto } from '@modules/quotes/line-summary.dto';
@@ -333,6 +334,14 @@ export class OrderDto {
 
   @ApiProperty({ type: String, format: 'date-time', example: '2026-10-01T09:00:00+07:00' })
   createdAt!: string;
+
+  @ApiProperty({
+    type: [NextActionDto],
+    description:
+      'What the signed-in user may do on the order now, from the actions’ own checks (U-B0.3); paying an ' +
+      'instalment is on the payment schedule (`payable`)',
+  })
+  nextActions!: NextActionDto[];
 }
 
 export class OrderGroupDto {
@@ -547,6 +556,7 @@ export const ORDER_EXAMPLE: OrderDto = {
   },
   toleranceOutcome: null,
   createdAt: '2026-10-01T09:00:00+07:00',
+  nextActions: [{ key: 'order.upload_artwork', irreversible: false, disabledReason: null }],
 };
 
 export const ORDER_GROUP_EXAMPLE: OrderGroupDto = {

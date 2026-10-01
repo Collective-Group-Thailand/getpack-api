@@ -1,4 +1,5 @@
 import { OptionalNoteDto } from '@common/dto/optional-note.dto';
+import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
 import { SpecLineDto } from '@modules/quotes/line-summary.dto';
@@ -668,6 +669,12 @@ export class RfqDto {
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   closedAt!: string | null;
+
+  @ApiProperty({
+    type: [NextActionDto],
+    description: 'What the signed-in user may do on the RFQ now (U-B0.3)',
+  })
+  nextActions!: NextActionDto[];
 }
 
 export class StaffRfqDto extends RfqDto {

@@ -810,6 +810,8 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
       inputVatStatus: 'claimable',
     });
     expect(bs.taxInvoices.map((i) => i.status)).toEqual(['validated', 'rejected']);
+    // Confirmed with a validated invoice: nothing left for the factory to do on it (U-B0.3).
+    expect((bs as unknown as { nextActions: unknown[] }).nextActions).toEqual([]);
 
     // The schedule: the advance and the balance paid by their payouts, the retention waiting for its date.
     const schedule = (await as(ctx, owner).get(`${f}/payout-schedule?perPage=100`).expect(200)).body.data as {

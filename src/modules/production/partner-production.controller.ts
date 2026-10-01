@@ -6,6 +6,8 @@ import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/deco
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
+import { permissionsOf } from '@modules/iam/actor-permissions';
+import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
@@ -47,11 +49,16 @@ export class PartnerProductionController {
     private readonly production: ProductionService,
     private readonly jobs: JobsQueryService,
     private readonly milestones: MilestonesService,
+    private readonly permissions: PermissionResolver,
   ) {}
 
-  private async dtos(rows: JobRow[]) {
-    const [photos, extras] = await Promise.all([this.jobs.photos(rows), this.jobs.extras(rows)]);
-    return rows.map((r) => partnerJobDto(r, photos, extras));
+  private async dtos(actor: Actor, rows: JobRow[]) {
+    const [photos, extras, perms] = await Promise.all([
+      this.jobs.photos(rows),
+      this.jobs.extras(rows),
+      permissionsOf(this.permissions, actor),
+    ]);
+    return rows.map((r) => partnerJobDto(r, photos, extras, perms));
   }
 
   @Get('production-jobs')
@@ -81,7 +88,7 @@ export class PartnerProductionController {
       ],
     };
     const [rows, total] = await this.jobs.list(actor, where, q.page, q.perPage);
-    return { data: await this.dtos(rows), meta: { page: q.page, perPage: q.perPage, total } };
+    return { data: await this.dtos(actor, rows), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
   @Get('production-jobs/lookup')
@@ -117,7 +124,7 @@ export class PartnerProductionController {
   @ApiSuccess(200, { description: 'Job', type: PartnerJobDto, example: PARTNER_JOB_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(@CurrentActor() actor: Actor, @Param('jobId', ParseUUIDPipe) jobId: string) {
-    return (await this.dtos([await this.jobs.get(actor, jobId)]))[0]!;
+    return (await this.dtos(actor, [await this.jobs.get(actor, jobId)]))[0]!;
   }
 
   @Post('production-jobs/:jobId/actions/accept')
@@ -141,7 +148,7 @@ export class PartnerProductionController {
   async accept(@CurrentActor() actor: Actor, @Param('jobId', ParseUUIDPipe) jobId: string) {
     const job = await this.jobs.get(actor, jobId);
     await this.production.accept(actor, job.id);
-    return (await this.dtos([await this.jobs.get(actor, jobId)]))[0]!;
+    return (await this.dtos(actor, [await this.jobs.get(actor, jobId)]))[0]!;
   }
 
   @Post('production-jobs/:jobId/actions/reject')
@@ -180,7 +187,7 @@ export class PartnerProductionController {
   ) {
     const job = await this.jobs.get(actor, jobId);
     await this.production.reject(actor, job.id, body.reasonCode, body.note ?? null);
-    return (await this.dtos([await this.jobs.get(actor, jobId)]))[0]!;
+    return (await this.dtos(actor, [await this.jobs.get(actor, jobId)]))[0]!;
   }
 
   @Post('production-jobs/:jobId/milestones/:milestoneId')
@@ -248,7 +255,7 @@ export class PartnerProductionController {
       ...body,
       clientReportedAt: body.clientReportedAt ? new Date(body.clientReportedAt) : undefined,
     });
-    return { ...outcome, job: (await this.dtos([await this.jobs.get(actor, jobId)]))[0]! };
+    return { ...outcome, job: (await this.dtos(actor, [await this.jobs.get(actor, jobId)]))[0]! };
   }
 
   @Post('production-jobs/:jobId/qc-checks')
@@ -416,6 +423,7 @@ export class PartnerShopFloorController {
   constructor(
     private readonly jobs: JobsQueryService,
     private readonly access: FactoryAccess,
+    private readonly permissions: PermissionResolver,
   ) {}
 
   @Get('today')
@@ -460,11 +468,15 @@ export class PartnerShopFloorController {
   ): Promise<FactoryTodayDto> {
     const factory = await this.access.factory(actor, factoryId);
     const { counters, alerts, queue } = await this.jobs.today(factory.id);
-    const [photos, extras] = await Promise.all([this.jobs.photos(queue), this.jobs.extras(queue)]);
+    const [photos, extras, perms] = await Promise.all([
+      this.jobs.photos(queue),
+      this.jobs.extras(queue),
+      permissionsOf(this.permissions, actor),
+    ]);
     return {
       counters,
       alerts: alerts.map((a) => ({ ...a, dueAt: a.dueAt ? toBangkokIso(a.dueAt) : null })),
-      queue: queue.map((r) => partnerJobDto(r, photos, extras)),
+      queue: queue.map((r) => partnerJobDto(r, photos, extras, perms)),
     };
   }
 }

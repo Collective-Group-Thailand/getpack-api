@@ -3,8 +3,11 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
+import { type ActionRule } from '@common/next-actions/next-actions';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { permissionsOf } from '@modules/iam/actor-permissions';
+import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { BankAccountDto, ProposeBankAccountDto } from '@modules/partners/bank-accounts/bank-accounts.dto';
 import { BankAccountsService } from '@modules/partners/bank-accounts/bank-accounts.service';
 import { staffOrPartner } from '@modules/partners/partner-actor';
@@ -38,6 +41,7 @@ import {
 } from './payables.dto';
 import { type BsRow, PayablesQueryService } from './payables-query.service';
 import { bsDto, grDto, invoiceDto, payableDto, poDto, vendorDto } from './payables-views';
+import { ADMIN_STATEMENT_ACTIONS, PARTNER_STATEMENT_ACTIONS, type StatementFacts } from './statement-actions';
 import { VendorInvoicesService } from './vendor-invoices.service';
 
 const DOCS = ['D-090', 'D-022', 'D-165'];
@@ -75,10 +79,14 @@ function staff(actor: Actor): UserActor {
 // Admin
 // =====================================================================================================
 
-/** Statements with the money of their jobs (U-B0.3). */
-async function statementViews(query: PayablesQueryService, rows: BsRow[]): Promise<BillingStatementDto[]> {
+/** Statements with the money of their jobs and what the reader may do on them (U-B0.3). */
+async function statementViews(
+  query: PayablesQueryService,
+  rows: BsRow[],
+  actions: { rules: ActionRule<StatementFacts>[]; perms: ReadonlySet<string> },
+): Promise<BillingStatementDto[]> {
   const money = await query.statementMoney(rows);
-  return rows.map((r) => bsDto(r, money.get(r.id)));
+  return rows.map((r) => bsDto(r, money.get(r.id), actions));
 }
 
 @ApiSurface('admin', 'payables')
@@ -88,7 +96,15 @@ export class AdminPayablesController {
     private readonly query: PayablesQueryService,
     private readonly invoices: VendorInvoicesService,
     private readonly bankAccounts: BankAccountsService,
+    private readonly permissions: PermissionResolver,
   ) {}
+
+  private async views(actor: Actor, rows: BsRow[]) {
+    return statementViews(this.query, rows, {
+      rules: ADMIN_STATEMENT_ACTIONS,
+      perms: await permissionsOf(this.permissions, actor),
+    });
+  }
 
   @Get('purchase-orders')
   @Can('payables.read')
@@ -154,7 +170,7 @@ export class AdminPayablesController {
   async statements(@CurrentActor() actor: Actor, @Query() q: StatementListQuery) {
     const { rows, total } = await this.query.statements(actor, q);
     return {
-      data: await statementViews(this.query, rows),
+      data: await this.views(actor, rows),
       meta: { page: q.page, perPage: q.perPage, total },
     };
   }
@@ -174,7 +190,7 @@ export class AdminPayablesController {
     @CurrentActor() actor: Actor,
     @Param('statementId', ParseUUIDPipe) statementId: string,
   ): Promise<BillingStatementDto> {
-    return (await statementViews(this.query, [await this.query.statement(actor, statementId)]))[0]!;
+    return (await this.views(actor, [await this.query.statement(actor, statementId)]))[0]!;
   }
 
   @Post('billing-statements/:statementId/tax-invoices')
@@ -445,7 +461,15 @@ export class PartnerPayablesController {
   constructor(
     private readonly query: PayablesQueryService,
     private readonly invoices: VendorInvoicesService,
+    private readonly permissions: PermissionResolver,
   ) {}
+
+  private async views(actor: Actor, rows: BsRow[]) {
+    return statementViews(this.query, rows, {
+      rules: PARTNER_STATEMENT_ACTIONS,
+      perms: await permissionsOf(this.permissions, actor),
+    });
+  }
 
   @Get('purchase-orders')
   @Can('factory_payables.read')
@@ -508,7 +532,7 @@ export class PartnerPayablesController {
   async statements(@CurrentActor() actor: Actor, @Query() q: StatementListQuery) {
     const { rows, total } = await this.query.statements(actor, q);
     return {
-      data: await statementViews(this.query, rows),
+      data: await this.views(actor, rows),
       meta: { page: q.page, perPage: q.perPage, total },
     };
   }
@@ -528,7 +552,7 @@ export class PartnerPayablesController {
     @CurrentActor() actor: Actor,
     @Param('statementId', ParseUUIDPipe) statementId: string,
   ): Promise<BillingStatementDto> {
-    return (await statementViews(this.query, [await this.query.statement(actor, statementId)]))[0]!;
+    return (await this.views(actor, [await this.query.statement(actor, statementId)]))[0]!;
   }
 
   @Post('billing-statements/:statementId/actions/confirm')
@@ -555,7 +579,7 @@ export class PartnerPayablesController {
   ): Promise<BillingStatementDto> {
     const row = await this.query.statement(actor, statementId);
     await this.invoices.decideStatement(staffOrPartner(actor), statementId, row.factoryId, { confirm: true });
-    return (await statementViews(this.query, [await this.query.statement(actor, statementId)]))[0]!;
+    return (await this.views(actor, [await this.query.statement(actor, statementId)]))[0]!;
   }
 
   @Post('billing-statements/:statementId/actions/dispute')
@@ -591,7 +615,7 @@ export class PartnerPayablesController {
       note: body.note,
       ...(body.lineNos && { lineNos: body.lineNos }),
     });
-    return (await statementViews(this.query, [await this.query.statement(actor, statementId)]))[0]!;
+    return (await this.views(actor, [await this.query.statement(actor, statementId)]))[0]!;
   }
 
   @Post('billing-statements/:statementId/tax-invoices')

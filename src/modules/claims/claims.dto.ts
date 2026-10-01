@@ -1,3 +1,4 @@
+import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { DECISION_CHANNELS } from '@modules/artwork/proofs.dto';
 import { OrderCustomerRefDto } from '@modules/orders/orders.dto';
@@ -486,6 +487,12 @@ export class StoreClaimDto {
 
   @ApiProperty({ type: [ClaimResolutionDto] })
   resolutions!: ClaimResolutionDto[];
+
+  @ApiProperty({
+    type: [NextActionDto],
+    description: 'What the signed-in user may do on the claim now, from the actions’ own checks (U-B0.3)',
+  })
+  nextActions!: NextActionDto[];
 }
 
 /** What Packio recovers from the factory for a claim (D-083): against its payables, else as a receivable. */
@@ -648,6 +655,7 @@ const BASE = {
   decisionNote: null,
   photos: { product: [CLAIM_IDS.photo], carton: [CLAIM_IDS.carton] },
   resolutions: [],
+  nextActions: [] as NextActionDto[],
 };
 export const STORE_CLAIM_EXAMPLE = BASE;
 export const PARTNER_CLAIM_EXAMPLE = {

@@ -1,9 +1,11 @@
+import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type CompanyStatement } from '@generated/prisma/client';
 import { dayOf } from '@modules/ledger/ledger-dates';
 
 import { type CreditNoteRequestRow } from './credit-notes.service';
 import { type BuyerSnapshot, type DocumentRow, type SellerSnapshot } from './customer-documents.service';
+import { ADMIN_DOCUMENT_ACTIONS } from './document-actions';
 import {
   type AgingReportDto,
   type CompanyStatementDto,
@@ -17,7 +19,10 @@ import { type AGING_BUCKETS, type ItemRow, type ReceivablesService } from './rec
 import { type StoreCreditService } from './store-credit.service';
 import { type CertRow } from './wht-certificates.service';
 
-export function documentDto(d: DocumentRow): CustomerDocumentDto {
+export function documentDto(
+  d: DocumentRow,
+  perms: ReadonlySet<string> = NO_PERMISSIONS,
+): CustomerDocumentDto {
   const buyer = d.buyerSnapshot as unknown as BuyerSnapshot;
   const seller = d.sellerSnapshot as unknown as SellerSnapshot;
   return {
@@ -84,6 +89,7 @@ export function documentDto(d: DocumentRow): CustomerDocumentDto {
     pdfReady: d.pdfFileId !== null,
     voidReason: d.voidReason,
     issuedAt: toBangkokIso(d.issuedAt),
+    nextActions: nextActions(d, ADMIN_DOCUMENT_ACTIONS, perms),
   };
 }
 

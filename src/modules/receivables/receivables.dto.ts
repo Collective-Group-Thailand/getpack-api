@@ -1,4 +1,5 @@
 import { ReasonDto } from '@common/dto/reason.dto';
+import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
@@ -250,6 +251,12 @@ export class CustomerDocumentDto {
 
   @ApiProperty({ format: 'date-time', example: '2026-10-05T10:00:00+07:00' })
   issuedAt!: string;
+
+  @ApiProperty({
+    type: [NextActionDto],
+    description: 'What the signed-in staff member may do on it now; empty for customers (U-B0.3)',
+  })
+  nextActions!: NextActionDto[];
 }
 
 export const DOCUMENT_EXAMPLE: CustomerDocumentDto = {
@@ -305,6 +312,7 @@ export const DOCUMENT_EXAMPLE: CustomerDocumentDto = {
   pdfReady: true,
   voidReason: null,
   issuedAt: '2026-10-05T10:00:00+07:00',
+  nextActions: [{ key: 'customer_document.resend', irreversible: false, disabledReason: null }],
 };
 
 export class DocumentListQuery extends PageQuery {

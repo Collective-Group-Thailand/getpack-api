@@ -1,3 +1,4 @@
+import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
@@ -381,6 +382,9 @@ export class BillingStatementDto {
     description: 'The factory tax invoices submitted for the statement, newest first (void ones left out)',
   })
   taxInvoices!: VendorInvoiceDto[];
+
+  @ApiProperty({ type: [NextActionDto], description: 'What the signed-in user may do on it now (U-B0.3)' })
+  nextActions!: NextActionDto[];
 }
 
 export const BS_EXAMPLE: BillingStatementDto = {
@@ -426,6 +430,10 @@ export const BS_EXAMPLE: BillingStatementDto = {
   taxInvoiceStatus: 'none',
   inputVatStatus: null,
   taxInvoices: [],
+  nextActions: [
+    { key: 'billing_statement.confirm', irreversible: true, disabledReason: null },
+    { key: 'billing_statement.dispute', irreversible: false, disabledReason: null },
+  ],
 };
 
 export class DisputeStatementDto {

@@ -195,6 +195,28 @@ describe('claims and reorder (e2e, B4.5)', () => {
       .body as Claim;
     await as(ctx, owner).get(`/v1/partner/files/${forFactory.photos.carton[0]}/download`).expect(200);
     const operator = await factoryToken(ctx, fixture.factoryPublicId, 'factory_operator', 52);
+    // U-B0.3: the actions offered are the endpoints' own checks and the reader's permissions.
+    expect(
+      (forFactory as unknown as { nextActions: { key: string }[] }).nextActions.map((a) => a.key),
+    ).toEqual(['claim.respond']);
+    expect(
+      (
+        (
+          await as(ctx, await factoryToken(ctx, fixture.factoryPublicId, 'factory_planner', 53))
+            .get(`/v1/partner/claims/${submitted.id}`)
+            .expect(200)
+        ).body as {
+          nextActions: unknown[];
+        }
+      ).nextActions,
+    ).toEqual([]);
+    expect(
+      (
+        (await as(ctx, cs).get(`/v1/admin/claims/${submitted.id}`).expect(200)).body as {
+          nextActions: { key: string }[];
+        }
+      ).nextActions.map((a) => a.key),
+    ).toEqual(['claim.review']);
     await post(operator, `/v1/partner/claims/${submitted.id}/actions/respond`, {
       response: 'accepted',
     }).expect(403);

@@ -1,4 +1,5 @@
 import { MoneyDecimal } from '@common/money/money';
+import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { type PayablesQueryService } from '@modules/payables/payables-query.service';
 import { type PolicySnapshot } from '@modules/payables/purchasing.service';
@@ -13,6 +14,7 @@ import {
   type StatementOfAccountDto,
 } from './payouts.dto';
 import { type PartnerPayoutRow, type PayoutsService, type RunRow } from './payouts.service';
+import { RUN_ACTIONS } from './run-actions';
 
 type Amount = { toFixed(dp: number): string };
 const m = (v: Amount) => v.toFixed(2);
@@ -38,7 +40,7 @@ const itemDto = (i: RunRow['items'][number]): PayoutItemDto => ({
   paidOn: i.paidOn ? bangkokDate(i.paidOn) : null,
 });
 
-export const runDto = (r: RunRow): PayoutRunDto => ({
+export const runDto = (r: RunRow, perms: ReadonlySet<string> = NO_PERMISSIONS): PayoutRunDto => ({
   id: r.publicId,
   runNo: r.runNo,
   status: r.status,
@@ -59,6 +61,7 @@ export const runDto = (r: RunRow): PayoutRunDto => ({
   cashAmount: m(r.cashAmount),
   currency: 'THB',
   items: r.items.map(itemDto),
+  nextActions: nextActions(r, RUN_ACTIONS, perms),
 });
 
 export const exceptionDto = (

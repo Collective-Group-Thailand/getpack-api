@@ -1,6 +1,8 @@
 import { MoneyDecimal } from '@common/money/money';
+import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 import { toBangkokIso } from '@common/time/bangkok';
 
+import { ADMIN_CLAIM_ACTIONS, PARTNER_CLAIM_ACTIONS, STORE_CLAIM_ACTIONS } from './claim-actions';
 import { type AdminClaimDto, type PartnerClaimDto, type StoreClaimDto } from './claims.dto';
 import { type ClaimRow } from './claims.service';
 import { liabilityRule } from './liability';
@@ -32,6 +34,7 @@ export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carto
     // The customer sees what was done for them, not which job made it (D-050) nor what Packio
     // recovers from the factory or the carrier (D-083, D-044).
     resolutions: c.resolutions.filter((r) => !INTERNAL_ACTIONS.has(r.action)).map(resolutionView),
+    nextActions: nextActions(c, STORE_CLAIM_ACTIONS, NO_PERMISSIONS),
   };
 }
 
@@ -51,7 +54,11 @@ function resolutionView(r: Resolution) {
   };
 }
 
-export function partnerClaimDto(c: ClaimRow, photos?: Photos): PartnerClaimDto {
+export function partnerClaimDto(
+  c: ClaimRow,
+  photos?: Photos,
+  perms: ReadonlySet<string> = NO_PERMISSIONS,
+): PartnerClaimDto {
   const base = storeClaimDto(c, photos);
   return {
     ...base,
@@ -67,6 +74,7 @@ export function partnerClaimDto(c: ClaimRow, photos?: Photos): PartnerClaimDto {
     factoryResponse: c.factoryResponse,
     factoryResponseNote: c.factoryResponseNote,
     ...factoryFields(c, photos),
+    nextActions: nextActions(c, PARTNER_CLAIM_ACTIONS, perms),
   };
 }
 
@@ -91,7 +99,11 @@ function factoryFields(c: ClaimRow, photos?: Photos) {
   };
 }
 
-export function adminClaimDto(c: ClaimRow, photos?: Photos): AdminClaimDto {
+export function adminClaimDto(
+  c: ClaimRow,
+  photos?: Photos,
+  perms: ReadonlySet<string> = NO_PERMISSIONS,
+): AdminClaimDto {
   const base = storeClaimDto(c, photos);
   const proof = c.order.proofs[0];
   return {
@@ -106,6 +118,7 @@ export function adminClaimDto(c: ClaimRow, photos?: Photos): AdminClaimDto {
     factoryResponse: c.factoryResponse,
     factoryResponseNote: c.factoryResponseNote,
     ...factoryFields(c, photos),
+    nextActions: nextActions(c, ADMIN_CLAIM_ACTIONS, perms),
     liabilityByRule: c.liabilityByRule,
     overrideReason: c.overrideReason,
     factoryId: c.factory?.publicId ?? null,

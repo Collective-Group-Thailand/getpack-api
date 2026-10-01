@@ -262,6 +262,7 @@ function checkoutController(surface: 'store' | 'admin'): Type<unknown> {
       return adminOrderGroupDto(group, {
         cost: granted.has('factory_cost.read'),
         margin: granted.has('margin.read'),
+        perms: granted,
       });
     }
   }

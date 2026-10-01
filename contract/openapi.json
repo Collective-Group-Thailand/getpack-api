@@ -4567,6 +4567,13 @@
             "description": "The D-083 rule behind `liabilityByRule`: factory_production (wrong spec, print defect), factory_short_delivery, factory_fleet_transit / carrier_transit (damage by who shipped), staff_decides (late, other)",
             "example": "factory_production"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the claim now, from the actions’ own checks (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "PK-2610-0001-01",
             "type": "string"
@@ -4675,6 +4682,7 @@
           "decisionNote",
           "photos",
           "resolutions",
+          "nextActions",
           "jobId",
           "jobNo",
           "liability",
@@ -5659,6 +5667,13 @@
             },
             "type": "array"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the job now (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "DEVOR-2609-00001",
             "type": "string"
@@ -5845,6 +5860,7 @@
           "inspection",
           "destinations",
           "milestones",
+          "nextActions",
           "orderId",
           "orderCode",
           "factoryId",
@@ -6118,6 +6134,13 @@
             ],
             "example": "none"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the order now, from the actions’ own checks (U-B0.3); paying an instalment is on the payment schedule (`payable`)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "OR-2610-00042",
             "type": "string"
@@ -6224,6 +6247,7 @@
           "receipt",
           "toleranceOutcome",
           "createdAt",
+          "nextActions",
           "internal"
         ],
         "type": "object"
@@ -7796,6 +7820,13 @@
               "null"
             ]
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the trip now (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "note": {
             "example": null,
             "type": [
@@ -7936,6 +7967,7 @@
           "cartons",
           "blockedByPayment",
           "carrierRequest",
+          "nextActions",
           "factoryId",
           "factoryCode",
           "carrierBookingRef",
@@ -11198,6 +11230,13 @@
             "example": "7960.00",
             "type": "string"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on it now (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "periodFrom": {
             "example": "2026-10-05",
             "format": "date",
@@ -11259,7 +11298,8 @@
           "disputedLineNos",
           "taxInvoiceStatus",
           "inputVatStatus",
-          "taxInvoices"
+          "taxInvoices",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -23196,6 +23236,13 @@
             "example": "1000.00",
             "type": "string"
           },
+          "nextActions": {
+            "description": "What the signed-in staff member may do on it now; empty for customers (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "O2610-00001",
             "type": [
@@ -23357,7 +23404,8 @@
           "receivable",
           "pdfReady",
           "voidReason",
-          "issuedAt"
+          "issuedAt",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -34791,6 +34839,34 @@
         ],
         "type": "string"
       },
+      "NextActionDto": {
+        "properties": {
+          "disabledReason": {
+            "description": "Set when the action is shown but blocked right now, with the reason (a message key)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "irreversible": {
+            "description": "Cannot be undone: the web asks for a typed confirmation and sends an `Idempotency-Key`",
+            "example": false,
+            "type": "boolean"
+          },
+          "key": {
+            "description": "`<entity>.<action>`; stable, machine-readable — the web maps it to a label and the endpoint",
+            "example": "claim.send_to_factory",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "irreversible",
+          "disabledReason"
+        ],
+        "type": "object"
+      },
       "NextInstalmentDto": {
         "properties": {
           "dueAt": {
@@ -35591,6 +35667,13 @@
             ],
             "example": "none"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the order now, from the actions’ own checks (U-B0.3); paying an instalment is on the payment schedule (`payable`)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "OR-2610-00042",
             "type": "string"
@@ -35696,7 +35779,8 @@
           "cancelReasonNameEn",
           "receipt",
           "toleranceOutcome",
-          "createdAt"
+          "createdAt",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -36778,6 +36862,13 @@
             ],
             "example": "factory"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the claim now, from the actions’ own checks (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "PK-2610-0001-01",
             "type": "string"
@@ -36870,6 +36961,7 @@
           "decisionNote",
           "photos",
           "resolutions",
+          "nextActions",
           "jobId",
           "jobNo",
           "liability",
@@ -36994,6 +37086,13 @@
           "milestones": {
             "items": {
               "$ref": "#/components/schemas/MilestoneDto"
+            },
+            "type": "array"
+          },
+          "nextActions": {
+            "description": "What the signed-in user may do on the job now (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
             },
             "type": "array"
           },
@@ -37151,7 +37250,8 @@
           "artwork",
           "inspection",
           "destinations",
-          "milestones"
+          "milestones",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -37684,6 +37784,13 @@
               "null"
             ]
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the trip now (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "note": {
             "example": null,
             "type": [
@@ -37786,7 +37893,8 @@
           "note",
           "cartons",
           "blockedByPayment",
-          "carrierRequest"
+          "carrierRequest",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -39049,6 +39157,13 @@
             },
             "type": "array"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the run now (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "payOn": {
             "example": "2026-10-27",
             "format": "date",
@@ -39094,7 +39209,8 @@
           "retentionAmount",
           "cashAmount",
           "currency",
-          "items"
+          "items",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -48520,6 +48636,13 @@
             },
             "type": "array"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the RFQ now (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "notes": {
             "example": "Logo on both sides (fake)",
             "type": "string"
@@ -48622,7 +48745,8 @@
           "acceptedQuoteId",
           "declineReasonCode",
           "submittedAt",
-          "closedAt"
+          "closedAt",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -54391,6 +54515,13 @@
             },
             "type": "array"
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the RFQ now (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "notes": {
             "example": "Logo on both sides (fake)",
             "type": "string"
@@ -54523,6 +54654,7 @@
           "declineReasonCode",
           "submittedAt",
           "closedAt",
+          "nextActions",
           "channel",
           "customer",
           "assignedTo",
@@ -55990,6 +56122,13 @@
               "null"
             ]
           },
+          "nextActions": {
+            "description": "What the signed-in user may do on the claim now, from the actions’ own checks (U-B0.3)",
+            "items": {
+              "$ref": "#/components/schemas/NextActionDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "PK-2610-0001-01",
             "type": "string"
@@ -56074,7 +56213,8 @@
           "infoRequest",
           "decisionNote",
           "photos",
-          "resolutions"
+          "resolutions",
+          "nextActions"
         ],
         "type": "object"
       },
@@ -76623,6 +76763,18 @@
                         }
                       ],
                       "netAmount": "7960.00",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": true,
+                          "key": "billing_statement.confirm"
+                        },
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "billing_statement.dispute"
+                        }
+                      ],
                       "periodFrom": "2026-10-05",
                       "periodTo": "2026-10-20",
                       "status": "sent",
@@ -76850,6 +77002,18 @@
                     }
                   ],
                   "netAmount": "7960.00",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": true,
+                      "key": "billing_statement.confirm"
+                    },
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "billing_statement.dispute"
+                    }
+                  ],
                   "periodFrom": "2026-10-05",
                   "periodTo": "2026-10-20",
                   "status": "sent",
@@ -117270,6 +117434,7 @@
                       "liabilityByRule": "factory",
                       "liabilityOverriddenBy": null,
                       "liabilityRule": "factory_production",
+                      "nextActions": [],
                       "orderCode": "PK-2610-0001-01",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                       "origin": "customer",
@@ -117513,6 +117678,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -117760,6 +117926,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -118083,6 +118250,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -118406,6 +118574,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -118728,6 +118897,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -119052,6 +119222,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -119375,6 +119546,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -119671,6 +119843,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -140966,6 +141139,13 @@
                         }
                       ],
                       "netAmount": "1000.00",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "customer_document.resend"
+                        }
+                      ],
                       "orderCode": "O2610-00001",
                       "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
@@ -141208,6 +141388,13 @@
                     }
                   ],
                   "netAmount": "1000.00",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "customer_document.resend"
+                    }
+                  ],
                   "orderCode": "O2610-00001",
                   "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
@@ -141708,6 +141895,13 @@
                     }
                   ],
                   "netAmount": "1000.00",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "customer_document.resend"
+                    }
+                  ],
                   "orderCode": "O2610-00001",
                   "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
@@ -147851,6 +148045,13 @@
                         }
                       ],
                       "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
                       "orderCode": "OR-2610-00042",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
@@ -189889,6 +190090,13 @@
                             }
                           ],
                           "mockupOption": "none",
+                          "nextActions": [
+                            {
+                              "disabledReason": null,
+                              "irreversible": false,
+                              "key": "order.upload_artwork"
+                            }
+                          ],
                           "orderCode": "OR-2610-00042",
                           "productTypeCode": "folding_carton",
                           "promisedShipDate": "2026-10-12",
@@ -190231,6 +190439,13 @@
                         }
                       ],
                       "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
                       "orderCode": "OR-2610-00042",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
@@ -190592,6 +190807,13 @@
                         }
                       ],
                       "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
                       "orderCode": "OR-2610-00042",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
@@ -191021,6 +191243,13 @@
                         }
                       ],
                       "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
                       "orderCode": "OR-2610-00042",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
@@ -191479,6 +191708,13 @@
                         }
                       ],
                       "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
                       "orderCode": "OR-2610-00042",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
@@ -193637,6 +193873,13 @@
                     }
                   ],
                   "mockupOption": "none",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "order.upload_artwork"
+                    }
+                  ],
                   "orderCode": "OR-2610-00042",
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
@@ -194175,6 +194418,13 @@
                     }
                   ],
                   "mockupOption": "none",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "order.upload_artwork"
+                    }
+                  ],
                   "orderCode": "OR-2610-00042",
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
@@ -194553,6 +194803,13 @@
                     }
                   ],
                   "mockupOption": "none",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "order.upload_artwork"
+                    }
+                  ],
                   "orderCode": "OR-2610-00042",
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
@@ -195220,6 +195477,13 @@
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
                       "tracksQuantity": true
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "job.update_milestone"
                     }
                   ],
                   "orderCode": "DEVOR-2609-00001",
@@ -196074,6 +196338,7 @@
                   "liabilityByRule": "factory",
                   "liabilityOverriddenBy": null,
                   "liabilityRule": "factory_production",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "staff",
@@ -196676,6 +196941,13 @@
                     }
                   ],
                   "netAmount": "1000.00",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "customer_document.resend"
+                    }
+                  ],
                   "orderCode": "O2610-00001",
                   "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
@@ -202811,6 +203083,13 @@
                           "whtForm": "pnd53"
                         }
                       ],
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "payout_run.propose"
+                        }
+                      ],
                       "payOn": "2026-10-27",
                       "retentionAmount": "278.00",
                       "runNo": "PR261020-001",
@@ -203045,6 +203324,13 @@
                       "whtAmount": "166.80",
                       "whtBase": "5560.00",
                       "whtForm": "pnd53"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "payout_run.propose"
                     }
                   ],
                   "payOn": "2026-10-27",
@@ -203332,6 +203618,13 @@
                       "whtForm": "pnd53"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "payout_run.propose"
+                    }
+                  ],
                   "payOn": "2026-10-27",
                   "retentionAmount": "278.00",
                   "runNo": "PR261020-001",
@@ -203574,6 +203867,13 @@
                       "whtAmount": "166.80",
                       "whtBase": "5560.00",
                       "whtForm": "pnd53"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "payout_run.propose"
                     }
                   ],
                   "payOn": "2026-10-27",
@@ -203884,6 +204184,13 @@
                       "whtForm": "pnd53"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "payout_run.propose"
+                    }
+                  ],
                   "payOn": "2026-10-27",
                   "retentionAmount": "278.00",
                   "runNo": "PR261020-001",
@@ -204175,6 +204482,13 @@
                       "whtForm": "pnd53"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "payout_run.propose"
+                    }
+                  ],
                   "payOn": "2026-10-27",
                   "retentionAmount": "278.00",
                   "runNo": "PR261020-001",
@@ -204455,6 +204769,13 @@
                       "whtAmount": "166.80",
                       "whtBase": "5560.00",
                       "whtForm": "pnd53"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "payout_run.propose"
                     }
                   ],
                   "payOn": "2026-10-27",
@@ -209926,6 +210247,13 @@
                           "tracksQuantity": true
                         }
                       ],
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "job.update_milestone"
+                        }
+                      ],
                       "orderCode": "DEVOR-2609-00001",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                       "plannedFinishOn": "2026-10-09",
@@ -210207,6 +210535,13 @@
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
                       "tracksQuantity": true
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "job.update_milestone"
                     }
                   ],
                   "orderCode": "DEVOR-2609-00001",
@@ -210505,6 +210840,13 @@
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
                       "tracksQuantity": true
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "job.update_milestone"
                     }
                   ],
                   "orderCode": "DEVOR-2609-00001",
@@ -210849,6 +211191,13 @@
                       "tracksQuantity": true
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "job.update_milestone"
+                    }
+                  ],
                   "orderCode": "DEVOR-2609-00001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "plannedFinishOn": "2026-10-09",
@@ -211180,6 +211529,13 @@
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
                       "tracksQuantity": true
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "job.update_milestone"
                     }
                   ],
                   "orderCode": "DEVOR-2609-00001",
@@ -224977,6 +225333,13 @@
                       "visibility": "customer"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
                   "productTypeCode": "paper_bag",
@@ -225395,6 +225758,13 @@
                       "visibility": "customer"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
                   "productTypeCode": "paper_bag",
@@ -225745,6 +226115,13 @@
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
@@ -226115,6 +226492,13 @@
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
@@ -226602,6 +226986,13 @@
                           "visibility": "customer"
                         }
                       ],
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "rfq.post_message"
+                        }
+                      ],
                       "notes": "Logo on both sides (fake)",
                       "overdue": false,
                       "productTypeCode": "paper_bag",
@@ -226937,6 +227328,13 @@
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
@@ -227306,6 +227704,13 @@
                       "visibility": "customer"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
                   "productTypeCode": "paper_bag",
@@ -227633,6 +228038,13 @@
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
@@ -228009,6 +228421,13 @@
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
@@ -228392,6 +228811,13 @@
                       "visibility": "customer"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
                   "productTypeCode": "paper_bag",
@@ -228745,6 +229171,13 @@
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
@@ -229298,6 +229731,13 @@
                       "visibility": "customer"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
                   "productTypeCode": "paper_bag",
@@ -229683,6 +230123,13 @@
                       "visibility": "customer"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
                   "productTypeCode": "paper_bag",
@@ -230062,6 +230509,13 @@
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703",
                       "visibility": "customer"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
@@ -233700,6 +234154,7 @@
                         }
                       ],
                       "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                      "nextActions": [],
                       "note": null,
                       "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                       "payoutAmount": "120.00",
@@ -233963,6 +234418,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "payoutAmount": "120.00",
@@ -234251,6 +234707,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "payoutAmount": "120.00",
@@ -234642,6 +235099,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "payoutAmount": "120.00",
@@ -235008,6 +235466,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "payoutAmount": "120.00",
@@ -235363,6 +235822,7 @@
                       }
                     ],
                     "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                    "nextActions": [],
                     "note": null,
                     "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                     "payoutAmount": "120.00",
@@ -235430,6 +235890,7 @@
                       }
                     ],
                     "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                    "nextActions": [],
                     "note": null,
                     "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                     "payoutAmount": "120.00",
@@ -236017,6 +236478,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "payoutAmount": "120.00",
@@ -236364,6 +236826,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "payoutAmount": "120.00",
@@ -236741,6 +237204,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "payoutAmount": "120.00",
@@ -253939,6 +254403,18 @@
                         }
                       ],
                       "netAmount": "7960.00",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": true,
+                          "key": "billing_statement.confirm"
+                        },
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "billing_statement.dispute"
+                        }
+                      ],
                       "periodFrom": "2026-10-05",
                       "periodTo": "2026-10-20",
                       "status": "sent",
@@ -254166,6 +254642,18 @@
                     }
                   ],
                   "netAmount": "7960.00",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": true,
+                      "key": "billing_statement.confirm"
+                    },
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "billing_statement.dispute"
+                    }
+                  ],
                   "periodFrom": "2026-10-05",
                   "periodTo": "2026-10-20",
                   "status": "sent",
@@ -254394,6 +254882,18 @@
                     }
                   ],
                   "netAmount": "7960.00",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": true,
+                      "key": "billing_statement.confirm"
+                    },
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "billing_statement.dispute"
+                    }
+                  ],
                   "periodFrom": "2026-10-05",
                   "periodTo": "2026-10-20",
                   "status": "confirmed",
@@ -254697,6 +255197,18 @@
                     }
                   ],
                   "netAmount": "7960.00",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": true,
+                      "key": "billing_statement.confirm"
+                    },
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "billing_statement.dispute"
+                    }
+                  ],
                   "periodFrom": "2026-10-05",
                   "periodTo": "2026-10-20",
                   "status": "disputed",
@@ -255321,6 +255833,7 @@
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "DEVJOB-2610-00001",
                       "liability": "factory",
+                      "nextActions": [],
                       "orderCode": "PK-2610-0001-01",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                       "origin": "customer",
@@ -255541,6 +256054,7 @@
                   "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -255780,6 +256294,7 @@
                   "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                   "jobNo": "DEVJOB-2610-00001",
                   "liability": "factory",
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -270136,6 +270651,13 @@
                           "tracksQuantity": true
                         }
                       ],
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "job.update_milestone"
+                        }
+                      ],
                       "plannedFinishOn": "2026-10-09",
                       "plannedStartOn": "2026-09-28",
                       "productTypeCode": "folding_box",
@@ -274512,6 +275034,13 @@
                           "tracksQuantity": true
                         }
                       ],
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "job.update_milestone"
+                        }
+                      ],
                       "plannedFinishOn": "2026-10-09",
                       "plannedStartOn": "2026-09-28",
                       "productTypeCode": "folding_box",
@@ -274962,6 +275491,13 @@
                       "tracksQuantity": true
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "job.update_milestone"
+                    }
+                  ],
                   "plannedFinishOn": "2026-10-09",
                   "plannedStartOn": "2026-09-28",
                   "productTypeCode": "folding_box",
@@ -275223,6 +275759,13 @@
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
                       "tracksQuantity": true
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "job.update_milestone"
                     }
                   ],
                   "plannedFinishOn": "2026-10-09",
@@ -275556,6 +276099,13 @@
                       "startedAt": "2026-10-01T09:00:00+07:00",
                       "status": "in_progress",
                       "tracksQuantity": true
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "job.update_milestone"
                     }
                   ],
                   "plannedFinishOn": "2026-10-09",
@@ -276663,6 +277213,13 @@
                         "startedAt": "2026-10-01T09:00:00+07:00",
                         "status": "completed",
                         "tracksQuantity": true
+                      }
+                    ],
+                    "nextActions": [
+                      {
+                        "disabledReason": null,
+                        "irreversible": false,
+                        "key": "job.update_milestone"
                       }
                     ],
                     "plannedFinishOn": "2026-10-09",
@@ -278519,6 +279076,7 @@
                         }
                       ],
                       "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                      "nextActions": [],
                       "note": null,
                       "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                       "pickedUpAt": null,
@@ -278790,6 +279348,7 @@
                     }
                   ],
                   "labelFileId": null,
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": null,
                   "pickedUpAt": null,
@@ -279104,6 +279663,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "pickedUpAt": null,
@@ -279374,6 +279934,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "pickedUpAt": null,
@@ -279685,6 +280246,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "pickedUpAt": "2026-10-20T08:00:00+07:00",
@@ -279996,6 +280558,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "pickedUpAt": null,
@@ -280341,6 +280904,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "pickedUpAt": null,
@@ -280671,6 +281235,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "pickedUpAt": null,
@@ -281011,6 +281576,7 @@
                     }
                   ],
                   "labelFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2003",
+                  "nextActions": [],
                   "note": null,
                   "packingListFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2004",
                   "pickedUpAt": null,
@@ -290599,6 +291165,13 @@
                         }
                       ],
                       "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
                       "orderCode": "OR-2610-00042",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
@@ -291453,6 +292026,7 @@
                       "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
                       "infoRequest": null,
+                      "nextActions": [],
                       "orderCode": "PK-2610-0001-01",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                       "origin": "customer",
@@ -291660,6 +292234,7 @@
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
                   "infoRequest": null,
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -291888,6 +292463,7 @@
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
                   "infoRequest": null,
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -304661,6 +305237,13 @@
                         }
                       ],
                       "netAmount": "1000.00",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "customer_document.resend"
+                        }
+                      ],
                       "orderCode": "O2610-00001",
                       "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                       "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
@@ -304920,6 +305503,13 @@
                     }
                   ],
                   "netAmount": "1000.00",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "customer_document.resend"
+                    }
+                  ],
                   "orderCode": "O2610-00001",
                   "orderGroupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
@@ -309641,6 +310231,13 @@
                             }
                           ],
                           "mockupOption": "none",
+                          "nextActions": [
+                            {
+                              "disabledReason": null,
+                              "irreversible": false,
+                              "key": "order.upload_artwork"
+                            }
+                          ],
                           "orderCode": "OR-2610-00042",
                           "productTypeCode": "folding_carton",
                           "promisedShipDate": "2026-10-12",
@@ -309958,6 +310555,13 @@
                         }
                       ],
                       "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
                       "orderCode": "OR-2610-00042",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
@@ -310297,6 +310901,13 @@
                         }
                       ],
                       "mockupOption": "none",
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "order.upload_artwork"
+                        }
+                      ],
                       "orderCode": "OR-2610-00042",
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
@@ -311489,6 +312100,13 @@
                     }
                   ],
                   "mockupOption": "none",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "order.upload_artwork"
+                    }
+                  ],
                   "orderCode": "OR-2610-00042",
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
@@ -311760,6 +312378,13 @@
                     }
                   ],
                   "mockupOption": "none",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "order.upload_artwork"
+                    }
+                  ],
                   "orderCode": "OR-2610-00042",
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
@@ -312054,6 +312679,13 @@
                     }
                   ],
                   "mockupOption": "none",
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "order.upload_artwork"
+                    }
+                  ],
                   "orderCode": "OR-2610-00042",
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
@@ -314222,6 +314854,7 @@
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
                   "infoRequest": null,
+                  "nextActions": [],
                   "orderCode": "PK-2610-0001-01",
                   "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1002",
                   "origin": "customer",
@@ -323489,6 +324122,13 @@
                           "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
                         }
                       ],
+                      "nextActions": [
+                        {
+                          "disabledReason": null,
+                          "irreversible": false,
+                          "key": "rfq.post_message"
+                        }
+                      ],
                       "notes": "Logo on both sides (fake)",
                       "productTypeCode": "paper_bag",
                       "productTypeName": "ถุงกระดาษ",
@@ -323752,6 +324392,13 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e701",
                   "lengthMm": 250,
                   "messages": [],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
@@ -324034,6 +324681,13 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
@@ -324299,6 +324953,13 @@
                       "createdAt": "2026-10-01T09:00:00+07:00",
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
@@ -324640,6 +325301,13 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
                     }
                   ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
+                    }
+                  ],
                   "notes": "Logo on both sides (fake)",
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
@@ -324942,6 +325610,13 @@
                       "createdAt": "2026-10-01T09:00:00+07:00",
                       "files": [],
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e703"
+                    }
+                  ],
+                  "nextActions": [
+                    {
+                      "disabledReason": null,
+                      "irreversible": false,
+                      "key": "rfq.post_message"
                     }
                   ],
                   "notes": "Logo on both sides (fake)",

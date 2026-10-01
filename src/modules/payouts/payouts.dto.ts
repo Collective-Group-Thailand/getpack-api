@@ -1,3 +1,4 @@
+import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PAYOUT_TRIGGERS } from '@modules/partners/configuration/configuration.dto';
 import { PAYABLE_SOURCES, PAYABLE_STATUSES, PO_STATUSES } from '@modules/payables/payables.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -173,6 +174,12 @@ export class PayoutRunDto {
 
   @ApiProperty({ type: [PayoutItemDto] })
   items!: PayoutItemDto[];
+
+  @ApiProperty({
+    type: [NextActionDto],
+    description: 'What the signed-in user may do on the run now (U-B0.3)',
+  })
+  nextActions!: NextActionDto[];
 }
 
 const ITEM_EXAMPLE: PayoutItemDto = {
@@ -211,6 +218,7 @@ export const RUN_EXAMPLE: PayoutRunDto = {
   cashAmount: '5504.40',
   currency: 'THB',
   items: [ITEM_EXAMPLE],
+  nextActions: [{ key: 'payout_run.propose', irreversible: false, disabledReason: null }],
 };
 export const PAID_ITEM_EXAMPLE: PayoutItemDto = {
   ...ITEM_EXAMPLE,

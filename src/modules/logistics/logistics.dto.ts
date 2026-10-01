@@ -1,3 +1,4 @@
+import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { GeoRefDto } from '@modules/customers/customers.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -587,6 +588,12 @@ export class PartnerShipmentDto {
     description: 'The factory asked Packio for a fallback carrier (D-013, D-114)',
   })
   carrierRequest!: CarrierRequestDto | null;
+
+  @ApiProperty({
+    type: [NextActionDto],
+    description: 'What the signed-in user may do on the trip now (U-B0.3)',
+  })
+  nextActions!: NextActionDto[];
 }
 
 /** A failed or returned delivery and how staff resolved it (D-230). */
@@ -780,6 +787,7 @@ const SHIPMENT_BASE = {
   ],
   blockedByPayment: false,
   carrierRequest: null,
+  nextActions: [],
 };
 export const PARTNER_SHIPMENT_EXAMPLE = SHIPMENT_BASE;
 export const ADMIN_SHIPMENT_EXAMPLE = {
