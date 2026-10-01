@@ -9,6 +9,7 @@ export const SHIPPED_CALCULATORS: ReadonlySet<CalculatorKey> = new Set<Calculato
   // B2.3: golden cases test/golden/folding, validation docs/pricing-validation-folding.md (pending sign-off).
   'folding',
   // U-B6: golden cases test/golden/corrugate (expected values from an independent transcription of the PHP),
-  // validation docs/pricing-validation-corrugate.md (pending sign-off). The type stays seeded `rfq` (A-16).
+  // validation docs/pricing-validation-corrugate.md (signed off 2026-09-30). The type stays seeded `rfq` (A-16)
+  // until the business switches it to instant (D-100).
   'corrugate',
 ]);

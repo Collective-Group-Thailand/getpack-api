@@ -292,6 +292,21 @@ Legacy traced from `/Users/superball/Abbon/Loco_Pack/locopack-web`. Live paths: 
 
 **Outcome (2026-09-30, U-B6 corrugate complete, branch `feat/u-b6-corrugate-calculator`):** C.1 geometry (slice 3), C.2 engines (slices 4–5), C.3 orchestration (slice 6), C.4 sell side shared (slice 1), C.5 price components and C.6 catalogue data (slice 2), C.7 generic quote engine, saved quotes and checkout (slices 1, 7b), C.8 packer (slice 6), C.9 CS endpoints and C.10 factory breakdown (slice 7a), C.11 store calculate (slice 7a), C.12 store configurator (slice 7c), C.13 per-calculator log input (slice 1), C.15 port map (slice 1, §10 in slice 8), C.17 dev fixture (slice 6), C.20 geometry admin (slice 7d) — **met**. C.14 golden cases + `docs/pricing-validation-corrugate.md` — **met, signed off 2026-09-30** (replayed on Locopack staging). C.16 `corrugate` in `SHIPPED_CALCULATORS`, type still seeded `rfq` — **met**. C.19 tag `v0.3.0` — **local tag** (no git remote in this checkout). C.18 tier-B envelopes — out of scope.
 
+## U-B6 corrugate — re-check (2026-10-01, after `v0.6.0`)
+
+The user asked to run the U-B6 corrugate session after U-B0.3. Gap analysis against `v0.6.0` (`18a675d`): the session was completed on 2026-09-30 (outcome above, tag `v0.3.0`), and nothing it delivered has regressed.
+
+| # | Check | Status | Evidence |
+|---|---|---|---|
+| R.1 | Calculator, engines, orchestration, packer unchanged since sign-off | met | `git diff v0.3.0 HEAD -- src/modules/pricing/calculators/corrugate` empty; only `test/golden/corrugate/sign-off.json` added (the sign-off record) |
+| R.2 | Golden cases pass | met | `test/unit/corrugate-golden.spec.ts` in the unit run (733 green at `v0.6.0`) |
+| R.3 | Validation doc signed off | met | `docs/pricing-validation-corrugate.md` "signed off" (Pricing owner and Finance, 2026-09-30) |
+| R.4 | Shipped and switchable to instant | met | `corrugate` in `SHIPPED_CALCULATORS`; the type stays seeded `rfq` until the business switches it (D-100, A-16). The code comment still said "pending sign-off" — corrected |
+| R.5 | Endpoints published | met | `admin.csCorrugate.inputData` / `calculate`, `partner.pricingCorrugate.calculate`, store calculate / configurator (anyOf Folding \| Corrugate) in `v0.6.0` |
+| R.6 | Tier-B envelopes (D-043) | out of scope | after the last calculator (U-B6 tail, C.18) |
+
+**Outcome:** no work needed beyond the comment fix. The next U-B6 session per RUN-ORDER is **label** (then tag & sleeve, pouch, standard product, service, folding B, tier-B). Folding's validation doc is still *pending business sign-off* (`docs/pricing-validation-folding.md`) — a business action, not code.
+
 ## U-B0 steps 1–2 — contract release tag and contract-requests triage (2026-09-29)
 
 | # | Requirement | Before | Evidence | This session |
