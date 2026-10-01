@@ -27,7 +27,7 @@ import { SHIPPED_CALCULATORS } from './shipped-calculators';
  * parent's `row_version` (so its ETag changes), writes an audit row and a domain event.
  */
 /** Calculators whose configuration can be a price-hint reference (D-220): the ported ones. */
-const REFERENCE_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate', 'label']);
+const REFERENCE_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate', 'label', 'tag_sleeve']);
 
 @Injectable()
 export class ProductStructureService {

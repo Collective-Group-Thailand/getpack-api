@@ -31,6 +31,8 @@ import {
   type LabelSpecConfiguration,
   labelSpecLines,
   SUMMARY_INCLUDE,
+  type TagSleeveSpecConfiguration,
+  tagSleeveSpecLines,
 } from './line-summary';
 
 const BOX_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate']);
@@ -127,7 +129,9 @@ export class SavedQuotesService {
       ? await boxSpecLines(this.prisma, configuration as unknown as BoxConfiguration)
       : calculatorKey === 'label'
         ? await labelSpecLines(this.prisma, configuration as unknown as LabelSpecConfiguration)
-        : null;
+        : calculatorKey === 'tag_sleeve'
+          ? await tagSleeveSpecLines(this.prisma, configuration as unknown as TagSleeveSpecConfiguration)
+          : null;
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {

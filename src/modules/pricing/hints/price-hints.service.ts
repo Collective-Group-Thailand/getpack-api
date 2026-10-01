@@ -7,6 +7,8 @@ import {
   boxSpecLines,
   type LabelSpecConfiguration,
   labelSpecLines,
+  type TagSleeveSpecConfiguration,
+  tagSleeveSpecLines,
 } from '@modules/quotes/line-summary';
 import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { Injectable, Logger } from '@nestjs/common';
@@ -19,7 +21,7 @@ import { type PriceHintDto, type PriceHintQuery } from './price-hints.dto';
 
 const BOX = new Set(['folding', 'corrugate']);
 /** Every calculator a hint can be priced with (D-220). */
-const HINTED = new Set([...BOX, 'label']);
+const HINTED = new Set([...BOX, 'label', 'tag_sleeve']);
 
 /** Up to the next satang: a "starting from" figure never undercuts the price a quote gives (D-181). */
 const ceilMoney = (value: string) =>
@@ -108,7 +110,9 @@ export class PriceHintsService {
     if (!cheapest) return null;
     const specSummary = BOX.has(key)
       ? await boxSpecLines(this.prisma, cfg as unknown as BoxConfiguration)
-      : await labelSpecLines(this.prisma, cfg as unknown as LabelSpecConfiguration);
+      : key === 'tag_sleeve'
+        ? await tagSleeveSpecLines(this.prisma, cfg as unknown as TagSleeveSpecConfiguration)
+        : await labelSpecLines(this.prisma, cfg as unknown as LabelSpecConfiguration);
     return {
       quantity: cheapest.quantity,
       unitPrice: cheapest.unitPrice!,

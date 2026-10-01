@@ -106,11 +106,19 @@ export class FoldingSnapshotLoader {
 
   // --- configuration ---------------------------------------------------------------------------
 
-  async resolve(cfg: FoldingConfiguration, db: Tx = this.prisma): Promise<ResolvedFolding> {
+  /**
+   * `calculator` is the product type's calculator: folding, or tag & sleeve — flat folding blanks priced on the
+   * folding engine (U-B6 tag & sleeve, port map T2): a tag pattern has geometry `flat`, no parts and depth 0.
+   */
+  async resolve(
+    cfg: FoldingConfiguration,
+    db: Tx = this.prisma,
+    calculator: 'folding' | 'tag_sleeve' = 'folding',
+  ): Promise<ResolvedFolding> {
     const invalid = (path: string, message: string) =>
       new DomainException('validation.failed', { errors: [{ path, code: 'invalid', message }] });
     const pattern = await db.pattern.findFirst({
-      where: { publicId: cfg.patternId, status: 'active', productType: { calculatorKey: 'folding' } },
+      where: { publicId: cfg.patternId, status: 'active', productType: { calculatorKey: calculator } },
       include: {
         subPatterns: { orderBy: { seq: 'asc' } },
         geometryConditions: {
@@ -120,7 +128,21 @@ export class FoldingSnapshotLoader {
         standardBlanks: { include: { standardSize: true } },
       },
     });
-    if (!pattern) throw invalid('patternId', 'no active folding pattern with this id');
+    if (!pattern) {
+      throw invalid(
+        'patternId',
+        `no active ${calculator === 'folding' ? 'folding' : 'tag & sleeve'} pattern with this id`,
+      );
+    }
+    if (
+      calculator === 'tag_sleeve' &&
+      (pattern.geometryFormula !== 'flat' || pattern.subPatterns.length > 0 || cfg.d !== 0)
+    ) {
+      throw invalid(
+        'patternId',
+        'a tag & sleeve pattern is one flat blank (geometry flat, no parts, depth 0)',
+      );
+    }
     const material = await db.material.findFirst({ where: { publicId: cfg.materialId, status: 'active' } });
     if (!material) throw invalid('materialId', 'no active material with this id');
     const difficulty = await db.difficultyLevel.findFirst({

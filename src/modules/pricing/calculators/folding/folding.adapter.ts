@@ -10,7 +10,7 @@ import {
   type ResolvedBase,
 } from '../adapter';
 import { CalculatorRegistry } from '../calculator';
-import { FOLDING_CALCULATOR_VERSION, foldingCalculator } from './folding-calculator';
+import { FOLDING_CALCULATOR_VERSION, foldingCalculator, type FoldingResult } from './folding-calculator';
 import {
   type FoldingConfiguration,
   FoldingSnapshotLoader,
@@ -75,56 +75,11 @@ export class FoldingQuoteAdapter
       },
       { options: loaded.map((l) => l.option) },
     );
-    return result.options.map((o) => ({
-      optionKey: o.optionKey,
-      factoryId: o.factoryId,
-      printTypeId: o.printTypeId,
-      error: o.error,
-      steps: o.steps.map((s) =>
-        s
-          ? {
-              qty: s.qty,
-              productionRun: s.boxAmount,
-              buyPrice: s.buyPrice,
-              marginPct: s.marginPct,
-              leadTimeDays: s.leadTimeDays,
-              unitPrice: s.perPcsWithDelivery,
-              productAmount: s.sum,
-              designFee: s.designFee,
-              structureDesignFee: s.structureDesignFee,
-              toolingAmount: 0,
-              vatAmount: s.vatPrice,
-              total: s.total,
-              parts: s.parts.map((p) => ({
-                partKey: p.partKey,
-                buyPrice: p.buyPrice,
-                totalCost: p.layout.totalCost,
-                layoutAmount: p.layout.layout.layoutAmount,
-                sheets: p.layout.waste.totalSheets,
-                layoutStandard: p.layout.layout.layoutStandard,
-                blankAreaSqm: (p.layout.layout.dw * p.layout.layout.dl) / 1000000,
-              })),
-            }
-          : null,
-      ),
-    }));
+    return pricedOptions(result);
   }
 
   shipmentParts(resolved: ResolvedFoldingQuote): ShipmentPart[] {
-    return resolved.parts.map((p) => {
-      const blank = p.pattern.standardBlanks?.find(
-        (b) => b.wMm === p.geometry.w && b.lMm === p.geometry.l && b.dMm === p.geometry.d,
-      );
-      return {
-        kind: 'folding',
-        formula: p.pattern.formula,
-        w: p.geometry.w,
-        l: p.geometry.l,
-        d: p.geometry.d,
-        gsm: resolved.materialGsm,
-        standardBlank: blank ? { dw: blank.dwMm, dl: blank.dlMm } : null,
-      };
-    });
+    return foldingShipmentParts(resolved);
   }
 
   logInput(cfg: FoldingConfiguration): CalculationLogInput {
@@ -141,4 +96,59 @@ export class FoldingQuoteAdapter
   withQuantities(cfg: FoldingConfiguration, quantities: readonly number[]): FoldingConfiguration {
     return { ...cfg, quantities };
   }
+}
+
+/** A folding-engine result as the quote engine's priced options (folding, tag & sleeve). */
+export function pricedOptions(result: FoldingResult): PricedOption[] {
+  return result.options.map((o) => ({
+    optionKey: o.optionKey,
+    factoryId: o.factoryId,
+    printTypeId: o.printTypeId,
+    error: o.error,
+    steps: o.steps.map((s) =>
+      s
+        ? {
+            qty: s.qty,
+            productionRun: s.boxAmount,
+            buyPrice: s.buyPrice,
+            marginPct: s.marginPct,
+            leadTimeDays: s.leadTimeDays,
+            unitPrice: s.perPcsWithDelivery,
+            productAmount: s.sum,
+            designFee: s.designFee,
+            structureDesignFee: s.structureDesignFee,
+            toolingAmount: 0,
+            vatAmount: s.vatPrice,
+            total: s.total,
+            parts: s.parts.map((p) => ({
+              partKey: p.partKey,
+              buyPrice: p.buyPrice,
+              totalCost: p.layout.totalCost,
+              layoutAmount: p.layout.layout.layoutAmount,
+              sheets: p.layout.waste.totalSheets,
+              layoutStandard: p.layout.layout.layoutStandard,
+              blankAreaSqm: (p.layout.layout.dw * p.layout.layout.dl) / 1000000,
+            })),
+          }
+        : null,
+    ),
+  }));
+}
+
+/** The parts the folding packer ships (B2.4): one flat or formed blank per part. */
+export function foldingShipmentParts(resolved: ResolvedFolding): ShipmentPart[] {
+  return resolved.parts.map((p) => {
+    const blank = p.pattern.standardBlanks?.find(
+      (b) => b.wMm === p.geometry.w && b.lMm === p.geometry.l && b.dMm === p.geometry.d,
+    );
+    return {
+      kind: 'folding',
+      formula: p.pattern.formula,
+      w: p.geometry.w,
+      l: p.geometry.l,
+      d: p.geometry.d,
+      gsm: resolved.materialGsm,
+      standardBlank: blank ? { dw: blank.dwMm, dl: blank.dlMm } : null,
+    };
+  });
 }

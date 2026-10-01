@@ -52,6 +52,14 @@ const LABELS = {
   design_service: ['บริการออกแบบ', 'Design service'],
 } as const;
 type LineKey = keyof typeof LABELS;
+/** A flat blank (tag & sleeve): W × L, printed front and back. */
+const FLAT_LABELS: Partial<Record<LineKey, readonly [string, string]>> = {
+  size: ['ขนาด (กว้าง × ยาว)', 'Size (W × L)'],
+  print_front: ['พิมพ์ด้านหน้า', 'Print (front)'],
+  print_back: ['พิมพ์ด้านหลัง', 'Print (back)'],
+  coating_front: ['เคลือบด้านหน้า', 'Coating (front)'],
+  coating_back: ['เคลือบด้านหลัง', 'Coating (back)'],
+};
 
 const mm = (n: number) => String(Number(n));
 const uniq = (ids: (string | undefined)[]) => [...new Set(ids.filter((id): id is string => !!id))];
@@ -60,7 +68,11 @@ async function names(ids: string[], find: (ids: string[]) => Promise<Named[]>): 
   return new Map((ids.length ? await find(ids) : []).map((r) => [r.publicId, r]));
 }
 
-export async function boxSpecLines(db: Tx, cfg: BoxConfiguration): Promise<SpecLineDto[]> {
+export async function boxSpecLines(
+  db: Tx,
+  cfg: BoxConfiguration,
+  opts: { flat?: boolean } = {},
+): Promise<SpecLineDto[]> {
   const parts = cfg.parts ?? [];
   const colours = uniq(
     parts.flatMap((p) => [...(p.printFront ?? []), ...(p.printBack ?? [])].map((c) => c.inkColourId)),
@@ -103,7 +115,7 @@ export async function boxSpecLines(db: Tx, cfg: BoxConfiguration): Promise<SpecL
 
   const lines: SpecLineDto[] = [];
   const push = (key: LineKey, valueTh: string, valueEn: string, part?: { index: number; name: string }) => {
-    const [labelTh, labelEn] = LABELS[key];
+    const [labelTh, labelEn] = (opts.flat ? FLAT_LABELS[key] : undefined) ?? LABELS[key];
     lines.push({
       key: part ? `parts[${part.index}].${key}` : key,
       labelTh: part ? `${part.name} · ${labelTh}` : labelTh,
@@ -125,11 +137,8 @@ export async function boxSpecLines(db: Tx, cfg: BoxConfiguration): Promise<SpecL
 
   const pattern = patterns.get(cfg.patternId);
   if (pattern) push('style', pattern.th, pattern.en);
-  push(
-    'size',
-    `${mm(cfg.w)} × ${mm(cfg.l)} × ${mm(cfg.d)} มม.`,
-    `${mm(cfg.w)} × ${mm(cfg.l)} × ${mm(cfg.d)} mm`,
-  );
+  const size = opts.flat ? `${mm(cfg.w)} × ${mm(cfg.l)}` : `${mm(cfg.w)} × ${mm(cfg.l)} × ${mm(cfg.d)}`;
+  push('size', `${size} มม.`, `${size} mm`);
   const material = materials.get(cfg.materialId);
   if (material) push('material', material.th, material.en);
 
@@ -170,6 +179,14 @@ export async function boxSpecLines(db: Tx, cfg: BoxConfiguration): Promise<SpecL
     push('design_service', design.map((d) => d[0]).join(', '), design.map((d) => d[1]).join(', '));
   }
   return lines;
+}
+
+/** A tag & sleeve configuration (U-B6 tag & sleeve): one flat blank, W × L, the folding processes of one part. */
+export type TagSleeveSpecConfiguration = Omit<BoxConfiguration, 'd' | 'parts'> & BoxPart;
+
+export function tagSleeveSpecLines(db: Tx, cfg: TagSleeveSpecConfiguration): Promise<SpecLineDto[]> {
+  const { patternId, w, l, materialId, design, ...part } = cfg;
+  return boxSpecLines(db, { patternId, w, l, d: 0, materialId, parts: [part], design }, { flat: true });
 }
 
 /** A label configuration (U-B6 label): W × L, a label stock, print and coating per side, a die-cut. */

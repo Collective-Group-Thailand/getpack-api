@@ -46,6 +46,8 @@ export interface FoldingOption {
   sell: SellSnapshot;
   /** Price lines the factory lacks for this configuration (the loader's checks); non-empty = no price. */
   unavailable?: readonly string[];
+  /** A process the calling calculator does not offer on this option (e.g. tag finish 2 on digital); set = no price. */
+  refusal?: string;
   /**
    * Legacy parity only: carrier cost before VAT per part and quantity folded into the per-piece price
    * (`Calculator.php:335-359`). Packio prices delivery as its own quote line instead (B2.4, D-013), so the
@@ -103,6 +105,7 @@ export interface FoldingResult {
 type PartLayouts = { boxAmount: number; layouts: (PricedLayout | DigitalPricedLayout)[] }[];
 
 function priceParts(input: FoldingInput, option: FoldingOption): Map<string, PartLayouts> {
+  if (option.refusal) throw new PricingError('process_not_possible', option.refusal);
   if (option.unavailable?.length) throw new PricingError('price_line_missing', option.unavailable.join(', '));
   if (option.engine === 'b') {
     // Legacy prices type-B factories only in the factory tools (`FoldingCalculator.php:414`); engine B is
