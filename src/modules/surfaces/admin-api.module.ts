@@ -16,6 +16,7 @@ import { DESIGNS_ADMIN_CONTROLLERS } from '@modules/designs/designs.registry';
 import { DISCOUNT_MEMOS_ADMIN_CONTROLLERS } from '@modules/discount-memos/discount-memos.registry';
 import { FINANCIAL_REPORTS_ADMIN_CONTROLLERS } from '@modules/financial-reports/financial-reports.registry';
 import { FIXED_ASSETS_ADMIN_CONTROLLERS } from '@modules/fixed-assets/fixed-assets.registry';
+import { SodRulesController, StaffDirectoryController } from '@modules/iam/admin/directory.controller';
 import { RolesAdminController, UsersAdminController } from '@modules/iam/admin/users-admin.controller';
 import { UsersAdminService } from '@modules/iam/admin/users-admin.service';
 import { LEDGER_ADMIN_CONTROLLERS } from '@modules/ledger/ledger.registry';
@@ -71,6 +72,8 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     AdminMeController,
     UsersAdminController,
     RolesAdminController,
+    StaffDirectoryController,
+    SodRulesController,
     OutboxAdminController,
     ApprovalsController,
     ApprovalDelegationsController,

@@ -65,6 +65,7 @@ export const CREDIT_NOTE_REASONS = [
     nameTh: 'เพิ่มราคาสินค้า/บริการ',
     nameEn: 'Additional charge (debit note)',
     appliesTo: 'both',
+    direction: 'debit',
   },
   {
     code: 'price_increase',
@@ -72,6 +73,7 @@ export const CREDIT_NOTE_REASONS = [
     nameTh: 'ราคาเพิ่มตามข้อตกลง',
     nameEn: 'Agreed price increase (debit note)',
     appliesTo: 'both',
+    direction: 'debit',
   },
 ] as const;
 

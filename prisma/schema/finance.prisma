@@ -774,6 +774,14 @@ enum CnStatutoryCategory {
   @@map("cn_statutory_category")
 }
 
+/// Whether a reason lowers (credit note) or raises (debit note) what the customer owes (U-B0.3).
+enum CnDirection {
+  credit
+  debit
+
+  @@map("cn_direction")
+}
+
 enum CnAppliesTo {
   item
   service
@@ -1002,6 +1010,7 @@ model CreditNoteReason {
   nameTh            String              @map("name_th")
   nameEn            String              @map("name_en")
   appliesTo         CnAppliesTo         @map("applies_to")
+  direction         CnDirection         @default(credit)
   active            Boolean             @default(true)
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
 

@@ -26,6 +26,8 @@ import {
   CERT_EXAMPLE,
   CN_REQUEST_EXAMPLE,
   CompanyStatementDto,
+  CREDIT_NOTE_REASON_EXAMPLE,
+  CreditNoteReasonDto,
   CreditNoteRequestDto,
   CreditNoteRequestListQuery,
   CustomerDocumentDto,
@@ -90,6 +92,7 @@ export class AdminCustomerDocumentsController {
     private readonly documents: CustomerDocumentsService,
     private readonly files: DocumentFilesService,
     private readonly creditNotes: CreditNotesService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get('customer-documents')
@@ -98,7 +101,7 @@ export class AdminCustomerDocumentsController {
     id: 'admin.customerDocuments.list',
     summary: 'List customer documents',
     description:
-      'IV, TR, RC, CN and DN issued by the entity under the Packio brand (D-010, D-092), newest first; filter by type, status, order, customer, company and date.',
+      'IV, TR, RC, CN and DN issued by the entity under the Packio brand (D-010, D-092), newest first; filter by type, status, order, customer, company, payment and date.',
     implements: DOCS,
   })
   @ApiPaginated(CustomerDocumentDto, { example: DOCUMENT_EXAMPLE })
@@ -110,6 +113,7 @@ export class AdminCustomerDocumentsController {
       ...(q.orderId && { order: { publicId: q.orderId } }),
       ...(q.customerId && { customer: { publicId: q.customerId } }),
       ...(q.companyId && { company: { publicId: q.companyId } }),
+      ...(q.paymentId && { payment: { publicId: q.paymentId } }),
       ...((q.from || q.to) && {
         documentDate: { ...(q.from && { gte: dateOnly(q.from) }), ...(q.to && { lte: dateOnly(q.to) }) },
       }),
@@ -117,6 +121,37 @@ export class AdminCustomerDocumentsController {
     };
     const { rows, total } = await this.documents.list(where, q.page, q.perPage);
     return { data: rows.map(documentDto), meta: { page: q.page, perPage: q.perPage, total } };
+  }
+
+  @Get('credit-note-reasons')
+  @Can('receivables.read')
+  @ApiEndpoint({
+    id: 'admin.customerDocuments.listCreditNoteReasons',
+    summary: 'List credit- and debit-note reasons',
+    description:
+      'The active reasons with their statutory category (D-092); `direction` tells which ones a credit-note ' +
+      'request takes (`credit`) and which a debit note takes (`debit`).',
+    implements: ['D-092'],
+  })
+  @ApiSuccess(200, {
+    description: 'Reasons',
+    type: [CreditNoteReasonDto],
+    example: [CREDIT_NOTE_REASON_EXAMPLE],
+  })
+  @ApiStandardErrors()
+  async reasons(): Promise<CreditNoteReasonDto[]> {
+    const rows = await this.prisma.creditNoteReason.findMany({
+      where: { active: true },
+      orderBy: [{ direction: 'asc' }, { code: 'asc' }],
+    });
+    return rows.map((r) => ({
+      code: r.code,
+      statutoryCategory: r.statutoryCategory,
+      nameTh: r.nameTh,
+      nameEn: r.nameEn,
+      appliesTo: r.appliesTo,
+      direction: r.direction,
+    }));
   }
 
   @Get('customer-documents/:documentId')

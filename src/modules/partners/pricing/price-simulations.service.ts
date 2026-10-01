@@ -10,7 +10,7 @@ import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { type PriceSimulationDto } from './pricing.dto';
-import { QUOTE_REPRICER, type QuoteRepricer } from './quote-repricer.port';
+import { QUOTE_REPRICER, type QuoteRepricer, type RepriceResult } from './quote-repricer.port';
 
 const BATCH = 5;
 /** A claimed simulation is retried by another worker after this long (crash safety). */
@@ -24,7 +24,7 @@ const dto = (s: PriceImpactSimulation & { proposal: { publicId: string } }): Pri
   status: s.status,
   windowFrom: toBangkokIso(s.windowFrom),
   windowTo: toBangkokIso(s.windowTo),
-  result: s.result as Record<string, unknown> | null,
+  result: s.result as unknown as RepriceResult | null,
   error: s.error,
   createdAt: toBangkokIso(s.createdAt),
   completedAt: s.completedAt && toBangkokIso(s.completedAt),

@@ -227,6 +227,10 @@ describe('payments (e2e, B3.2)', () => {
 
     const queue = await as(ctx, finance).get('/v1/admin/slips?perPage=100').expect(200);
     expect((queue.body.data as { id: string }[]).map((s) => s.id)).toContain(slip.id);
+    // U-B0.3: the reviewer reaches the slip image through its file id.
+    const queued = (queue.body.data as { id: string; fileId: string }[]).find((s) => s.id === slip.id)!;
+    expect(queued.fileId).toBe(file3);
+    await as(ctx, finance).get(`/v1/admin/files/${file3}/download`).expect(200);
     await as(ctx, finance)
       .post(`/v1/admin/slips/${slip.id}/actions/review`, { approve: true, bankTransRef: transRef })
       .set('Idempotency-Key', randomUUID())

@@ -239,6 +239,13 @@ export function contractViolations(document: OpenAPIObject): string[] {
   };
   walk(document, '#');
 
+  // A component that references itself is how a DTO and an enum sharing one name surface (the enum's
+  // values are lost); the contract has no recursive schema, so any self-reference is a defect.
+  for (const [name, schema] of Object.entries(document.components?.schemas ?? {})) {
+    if (JSON.stringify(schema).includes(`"#/components/schemas/${name}"`))
+      problems.push(`schema ${name} references itself: an enum and a DTO probably share the name`);
+  }
+
   for (const [route, item] of Object.entries(document.paths)) {
     for (const method of HTTP_METHODS) {
       const operation = item[method];

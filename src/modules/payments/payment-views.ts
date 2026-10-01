@@ -21,6 +21,7 @@ export function slipDto(s: SlipRow | QueueRow): SlipDto {
     declaredTransferredAt: toBangkokIso(s.declaredTransferredAt),
     slaDueAt: s.slaDueAt ? toBangkokIso(s.slaDueAt) : null,
     lastCheck: s.verifications[0]?.result ?? null,
+    fileId: s.fileObject.publicId,
     createdAt: toBangkokIso(s.createdAt),
   };
 }

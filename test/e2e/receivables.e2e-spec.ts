@@ -396,6 +396,16 @@ describe('receivables & customer documents (e2e, B5.2)', () => {
   });
 
   it('adds a debit note, voids it with its journals reversed, and refuses to void a tax invoice', async () => {
+    // U-B0.3: a debit note takes a debit reason only.
+    expect(
+      (
+        await post(manager, `/v1/admin/orders/${paidOrder.orderId}/debit-notes`, {
+          net: '500.00',
+          reasonCode: 'price_reduction',
+          note: 'เหตุผลผิดประเภท (fake)',
+        }).expect(422)
+      ).body.code,
+    ).toBe('receivables.reason_invalid');
     const dn = (
       await post(manager, `/v1/admin/orders/${paidOrder.orderId}/debit-notes`, {
         net: '500.00',

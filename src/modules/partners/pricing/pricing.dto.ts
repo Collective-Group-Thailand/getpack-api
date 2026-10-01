@@ -316,7 +316,7 @@ export class RateCardLineResponse {
   @RefField({ example: IDS.line })
   lineId!: string;
 
-  @EnumField(['accept', 'counter'] as const, 'RateCardLineResponse', { example: 'counter' })
+  @EnumField(['accept', 'counter'] as const, 'CardLineAnswer', { example: 'counter' })
   response!: 'accept' | 'counter';
 
   @ApiPropertyOptional({
@@ -649,6 +649,36 @@ export class PriceSuggestionsDto {
   lines!: PriceLineSuggestionDto[];
 }
 
+/** What re-pricing the window's saved quotes with the proposed values gives (D-040 note); staff only (D-044). */
+export class PriceSimulationResultDto {
+  @ApiProperty({ type: 'integer', example: 0, description: 'Saved quotes re-priced' })
+  quotesInWindow!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Change of the average quoted price, percent; null without quotes',
+  })
+  priceChangePct!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Change of Packio’s average margin, percentage points; null without quotes',
+  })
+  marginChangePct!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Change in how often this factory would have been selected, percentage points',
+  })
+  selectionShareChangePct!: string | null;
+}
+
 export class PriceSimulationDto {
   @IdField('0192f3a0-7c1e-7d2a-9b1f-00000000f605')
   id!: string;
@@ -666,18 +696,12 @@ export class PriceSimulationDto {
   windowTo!: string;
 
   @ApiProperty({
-    type: 'object',
-    additionalProperties: true,
+    type: PriceSimulationResultDto,
     nullable: true,
-    description: 'Quotes re-priced, price and margin change, change in selection share (D-040 note)',
-    example: {
-      quotesInWindow: 0,
-      priceChangePct: null,
-      marginChangePct: null,
-      selectionShareChangePct: null,
-    },
+    description:
+      'Quotes re-priced, price and margin change, change in selection share (D-040 note); null until done',
   })
-  result!: Record<string, unknown> | null;
+  result!: PriceSimulationResultDto | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
   error!: string | null;

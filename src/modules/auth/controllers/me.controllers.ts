@@ -209,9 +209,19 @@ export class PartnerMeController {
       if (!factoryId || !me.scopes.includes(`factory:${factoryId}`)) continue;
       byFactory.set(factoryId, (byFactory.get(factoryId) ?? new Set()).add(role.key));
     }
+    const factories = await this.prisma.factory.findMany({
+      where: { publicId: { in: [...byFactory.keys()] } },
+      select: { publicId: true, code: true, tradeName: true, legalName: true },
+    });
+    const named = new Map(factories.map((f) => [f.publicId, f]));
     return {
       ...base,
-      factories: [...byFactory].map(([factoryId, roles]) => ({ factoryId, roles: [...roles].sort() })),
+      factories: [...byFactory].map(([factoryId, roles]) => ({
+        factoryId,
+        code: named.get(factoryId)?.code ?? '',
+        name: named.get(factoryId)?.tradeName ?? named.get(factoryId)?.legalName ?? '',
+        roles: [...roles].sort(),
+      })),
     };
   }
 

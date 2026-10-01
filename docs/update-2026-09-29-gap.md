@@ -2,6 +2,33 @@
 
 Session 0 of every U-B session (`docs/prompts/U1-update-2026-09-29.md`) and every U2 session (`docs/prompts/U2-benchmark-2026-09-29.md`): one row per requirement → `met | partial | missing`, the evidence, and what the session changes. Requirements already `met` are not touched. Newest session on top.
 
+## U-B0.3 — `admin.*` platform / finance / analytics, `partner.*`, cross-cutting, B6.3 launch gaps (2026-10-01, planning)
+
+Source: `docs/contract-requests-triage.md` §U-B0.3 (51 ids: 25 admin, 26 partner / cross-cutting), *Known contract defects* (two left: `RateCardLineResponse`, `PriceSimulationDto.result`) and *Also in U-B0.3: launch gaps from B6.3*. Status is against `v0.5.0`; each slice re-checks its rows in the code before changing anything. **Out of U-B0.3:** `admin.analytics-journeys` (built in U5.B6, D-219 — carried over), renaming the background `JobStatus` enum (contract-breaking; stays, documented), the partner-side write of factory hours / closures (U2.9, D-209), the five other CS calculators (U-B6). Business values come from settings or decisions; none is invented.
+
+| # | Requirement (triage id) | Status | Evidence | Slice |
+|---|---|---|---|---|
+| 1.1 | Defects: `RateCardLineResponse` enum / DTO name clash; `PriceSimulationDto.result` untyped; a guard against self-referencing schemas | missing | `pricing.dto.ts:315-319`, `:680` | S1 |
+| 1.2 | `admin.menu-entries` (business entries, any-of gate for `finance`), `partner.factory-name` (name, code, `FactoryRole`) | missing | `menu.catalog.ts`; `FactoryAccessDto` | S1 |
+| 1.3 | `admin.sod-rules`, `admin.staff-directory` reads | missing | `sod_rules` seeded, no read; `admin.users.list` needs `users.read` | S1 |
+| 1.4 | `admin.credit-note-reasons` (+ `direction`), `admin.document-payment-filter`, `admin.slip-file` | missing | `credit_note_reasons` seeded, unpublished; no `paymentId` filter; slip DTOs without file | S1 |
+| 2.1 | `notifications.unread-and-link` (unreadCount, url, read-all on three surfaces), `partner.notification-preferences`, `rum.web-vitals` | missing | `CursorMeta` only; store-only preferences; no RUM sink | S2 |
+| 3.1 | `admin.saved-views`, `admin.search` | missing | no resource | S3 |
+| 4.1 | `admin.dashboard` (queue counts, overdue via the business calendar, per permission) | missing | individual queues only | S4 |
+| 5.1 | `admin.document-resend` + deliveries, `admin.dunning-log`, `admin.payout-documents` (WHT + remittance advice) | missing | triage | S5 |
+| 6.1 | `admin.bank-line-suggestions`, `admin.bank-line-split`, `admin.gateway-settlements`, `admin.depreciation-preview`, `admin.account-roll-forward`, `admin.subledger-reconciliation` | missing | triage | S6 |
+| 7.1 | `admin.reports` (totals row, `generatedAt`, `group`), `admin.exports` (server lists), `admin.analytics` (`abandonedAfterPricePct`) | partial | B6.1 / B6.2 published | S7 |
+| 8.1 | Launch gaps: admin CRUD + Excel import for `business_calendar_days` (D-161, D-170, D-209 staff side); approval-policy versions draft → Superadmin approval → effective (D-063) | missing | B6.3 | S8 |
+| 9.1 | `partner.today`, `partner.jobs` (refs, risk, views, lookup, detail extras), `partner.job-qc` (performedBy, checklist), `partner.job-issues` (kind enum, idempotency, photos, resolve), `partner.scorecard` (months) | missing | triage | S9 |
+| 10.1 | `partner.shipments` (ship-plan, request-carrier, status filter, carton rows, blocked / tolerance) | missing | triage | S10 |
+| 11.1 | `partner.billing-statements` (totals breakdown, lines, tax invoices, confirmedBy, dispute lines), `partner.payouts` (schedule, status, detail, statement of account) | missing | triage | S11 |
+| 12.1 | `partner.claims` (shipmentNo, deductions, evidence, respondedAt), `partner.users` (status, lastSignInAt, isSelf, roles, change roles), `partner.references`, `partner.change-requests` (+ staff answer), `partner.site-visits`, `partner.proposal-evidence`, `partner.capacity-calendar` | missing | triage | S12 |
+| 13.1 | `entity.next-actions`: shared `NextActionDto` on orders, jobs, RFQs, shipments, claims, billing statements, payouts, documents (from the same state / permission checks as the actions) | missing | none | S13 |
+| 14 | Rows already met without code (frontend migrates): `admin.permissions`, `admin.prospectus`, `admin.imports`, `partner.job-milestones`, `partner.permissions`, `status.enums`, `analytics.events` | met | triage | S14 (triage only) |
+| 15 | Triage rows published, PROGRESS, tag `v0.6.0` | — | — | S14 |
+
+Plan: one slice per row group (S1–S14), each with tests (unit for pure rules, e2e per endpoint), `contract:build` + `contract:lint`, `test:int` when the schema changes, `format:check`, and a PROGRESS row. The user asked (2026-10-01) to run U-B0.3 after U-B0.2; decisions it needs are proposed and recorded (D-231…) as before. The open question in the triage — may a factory resolve its own job issue — is answered by a proposed decision in S9.
+
 ## U-B0.2 — `admin.*` commerce & operations contract requests (2026-10-01, planning)
 
 Source: `docs/contract-requests-triage.md` §U-B0.2 (34 ids, 18 `implement here` operations, 140 additive gaps; evidence per row in *Details*). Status is against `v0.4.0`. **Out of U-B0.2 by the triage:** menu entries and `/me` permissions (U-B0.3 rows `admin.menu-entries`, `admin.permissions`), `nextActions` / `allowedActions` on every entity (U-B0.3 cross-cutting), the five other CS calculators (U-B6), claim SLA `slaDueAt` (U2.5, D-199), claim message thread (D-225), tooling waiver (U2.F). Business values come from existing settings or decisions; none is invented.

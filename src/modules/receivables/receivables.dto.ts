@@ -342,7 +342,55 @@ export class DocumentListQuery extends PageQuery {
   @IsOptional()
   @Matches(DAY)
   to?: string;
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Documents issued for this payment (receipts, tax invoices)',
+  })
+  @IsOptional()
+  @IsUUID()
+  paymentId?: string;
 }
+
+export const CN_DIRECTIONS = ['credit', 'debit'] as const;
+
+/** Why a credit or debit note is issued, with its statutory category (D-092). */
+export class CreditNoteReasonDto {
+  @ApiProperty({ example: 'price_reduction' })
+  code!: string;
+
+  @ApiProperty({
+    enum: ['price_reduction', 'defective_or_short', 'returns', 'cancellation', 'post_sale_discount', 'other'],
+    enumName: 'CnStatutoryCategory',
+    example: 'price_reduction',
+  })
+  statutoryCategory!: string;
+
+  @ApiProperty({ example: 'ลดราคาสินค้า/บริการ' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Price reduction' })
+  nameEn!: string;
+
+  @ApiProperty({ enum: ['item', 'service', 'both'], enumName: 'CnAppliesTo', example: 'both' })
+  appliesTo!: string;
+
+  @ApiProperty({
+    enum: CN_DIRECTIONS,
+    enumName: 'CnDirection',
+    example: 'credit',
+    description: '`credit` for credit-note requests, `debit` for debit notes',
+  })
+  direction!: string;
+}
+
+export const CREDIT_NOTE_REASON_EXAMPLE: CreditNoteReasonDto = {
+  code: 'price_reduction',
+  statutoryCategory: 'price_reduction',
+  nameTh: 'ลดราคาสินค้า/บริการ',
+  nameEn: 'Price reduction',
+  appliesTo: 'both',
+  direction: 'credit',
+};
 
 export class StoreDocumentListQuery extends PageQuery {
   @ApiPropertyOptional({

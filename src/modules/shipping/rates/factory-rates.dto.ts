@@ -226,7 +226,7 @@ export class ShippingCardAnswerDto {
   @RefField({ example: IDS.rate })
   rateId!: string;
 
-  @EnumField(FACTORY_ANSWERS, 'ShippingCardAnswer', { example: 'counter' })
+  @EnumField(FACTORY_ANSWERS, 'CardLineAnswer', { example: 'counter' })
   decision!: (typeof FACTORY_ANSWERS)[number];
 
   @ApiPropertyOptional({ type: String, nullable: true, example: '105.00', pattern: MONEY.source })

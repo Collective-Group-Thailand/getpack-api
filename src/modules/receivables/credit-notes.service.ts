@@ -236,7 +236,8 @@ export class CreditNotesService {
           params: { reason: 'the order has no delivery document yet' },
         });
       const reason = await tx.creditNoteReason.findUnique({ where: { code: input.reasonCode } });
-      if (!reason?.active)
+      // A debit note raises what the customer owes: only a debit reason fits (U-B0.3).
+      if (!reason?.active || reason.direction !== 'debit')
         throw new DomainException('receivables.reason_invalid', { params: { code: input.reasonCode } });
       const net = D(input.net);
       const rate = D(original.vatRatePct);
@@ -316,7 +317,7 @@ export class CreditNotesService {
     const reason = await tx.creditNoteReason.findUnique({
       where: { code: input.reasonCode ?? REASON_OF_KIND[input.cnKind] },
     });
-    if (!reason?.active)
+    if (!reason?.active || reason.direction !== 'credit')
       throw new DomainException('receivables.reason_invalid', {
         params: { code: input.reasonCode ?? input.cnKind },
       });

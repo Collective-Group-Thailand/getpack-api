@@ -128,6 +128,13 @@ export class SlipDto {
   })
   lastCheck!: string | null;
 
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000a5101',
+    description: 'The slip image: download with `admin.files.download` (`payments.verify_slip`, D-061)',
+  })
+  fileId!: string;
+
   @TimestampField()
   createdAt!: string;
 }
@@ -250,6 +257,7 @@ export const SLIP_EXAMPLE: SlipDto = {
   declaredTransferredAt: '2026-10-01T10:30:00+07:00',
   slaDueAt: '2026-10-01T14:30:00+07:00',
   lastCheck: 'mismatch',
+  fileId: '0192f3a0-7c1e-7d2a-9b1f-0000000a5101',
   createdAt: '2026-10-01T10:31:00+07:00',
 };
 

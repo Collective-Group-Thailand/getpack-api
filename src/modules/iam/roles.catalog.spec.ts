@@ -1,3 +1,5 @@
+import { FACTORY_ROLES } from '@modules/auth/me.dto';
+
 import { PERMISSIONS } from './permissions.catalog';
 import { ROLES } from './roles.catalog';
 
@@ -87,5 +89,13 @@ describe('IAM catalogues (D-140, D-141)', () => {
     const keys = PERMISSIONS.map((p) => p.key);
     expect(new Set(keys).size).toBe(keys.length);
     for (const key of keys) expect(key).toMatch(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/);
+  });
+
+  it('publishes the factory-scoped roles as the FactoryRole enum (U-B0.3)', () => {
+    expect([...FACTORY_ROLES].sort()).toEqual(
+      ROLES.filter((r) => r.scopeType === 'factory')
+        .map((r) => r.key)
+        .sort(),
+    );
   });
 });

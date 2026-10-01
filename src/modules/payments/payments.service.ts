@@ -41,7 +41,13 @@ const TWOC2P_TOKEN_MINUTES = 30;
 export const PAYMENT_INCLUDE = {
   orderGroup: true,
   allocations: { include: { instalment: true } },
-  slips: { orderBy: { createdAt: 'desc' }, include: { verifications: { orderBy: { requestedAt: 'desc' } } } },
+  slips: {
+    orderBy: { createdAt: 'desc' },
+    include: {
+      verifications: { orderBy: { requestedAt: 'desc' } },
+      fileObject: { select: { publicId: true } },
+    },
+  },
   refunds: true,
 } as const satisfies Prisma.PaymentInclude;
 export type PaymentRow = Prisma.PaymentGetPayload<{ include: typeof PAYMENT_INCLUDE }>;
@@ -826,6 +832,7 @@ export class PaymentsService implements OnModuleInit {
         include: {
           payment: { include: { orderGroup: true } },
           verifications: { orderBy: { requestedAt: 'desc' }, take: 1 },
+          fileObject: { select: { publicId: true } },
         },
         orderBy: [{ slaDueAt: 'asc' }, { createdAt: 'asc' }],
         skip: (page - 1) * perPage,

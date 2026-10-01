@@ -84,8 +84,9 @@ describe('auth (e2e, ADR-0004)', () => {
       .expect(200);
     expect(me.body).toMatchObject({ email: 'finance@example.invalid', roles: ['finance'] });
     const menu = (me.body.menu as { key: string }[]).map((m) => m.key);
-    expect(menu).toEqual(expect.arrayContaining(['dashboard', 'approvals', 'audit_logs']));
+    expect(menu).toEqual(expect.arrayContaining(['dashboard', 'approvals', 'audit_logs', 'finance']));
     expect(menu).not.toContain('users');
+    expect(menu).not.toContain('prepress'); // U-B0.3: business entries follow the role's permissions
     expect(me.body.permissions).toContain('factory_cost.read'); // D-141: Finance sees cost
   });
 
@@ -348,7 +349,14 @@ describe('auth (e2e, ADR-0004)', () => {
       const token = login.body.accessToken as string;
 
       const me = await request(server).get('/v1/partner/me').auth(token, { type: 'bearer' }).expect(200);
-      expect(me.body.factories).toEqual([{ factoryId: FACTORY_PUBLIC_ID, roles: ['factory_owner'] }]);
+      expect(me.body.factories).toEqual([
+        {
+          factoryId: FACTORY_PUBLIC_ID,
+          code: expect.any(String),
+          name: expect.stringContaining('(fake)'),
+          roles: ['factory_owner'],
+        },
+      ]);
 
       await request(server)
         .post('/v1/partner/me/device-pins')

@@ -64,11 +64,27 @@ export class AdminMeDto extends MeBaseDto {
   featureFlags!: string[];
 }
 
+/** The factory-scoped roles (D-140, D-171): the owner is invited by Packio, the others by the owner. */
+export const FACTORY_ROLES = [
+  'factory_owner',
+  'factory_planner',
+  'factory_operator',
+  'factory_qc',
+  'factory_shipping',
+  'factory_accountant',
+] as const;
+
 export class FactoryAccessDto {
   @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-000000000f01' })
   factoryId!: string;
 
-  @ApiProperty({ type: [String], example: ['factory_owner'] })
+  @ApiProperty({ example: 'F-0001' })
+  code!: string;
+
+  @ApiProperty({ example: 'โรงงาน ทดสอบ', description: 'Trade name, else the legal name' })
+  name!: string;
+
+  @ApiProperty({ enum: FACTORY_ROLES, enumName: 'FactoryRole', isArray: true, example: ['factory_owner'] })
   roles!: string[];
 }
 
@@ -111,5 +127,12 @@ export const PARTNER_ME_EXAMPLE: PartnerMeDto = {
   locale: 'th',
   roles: ['factory_planner'],
   permissions: ['factory_profile.read'],
-  factories: [{ factoryId: '0192f3a0-7c1e-7d2a-9b1f-000000000f01', roles: ['factory_planner'] }],
+  factories: [
+    {
+      factoryId: '0192f3a0-7c1e-7d2a-9b1f-000000000f01',
+      code: 'F-0001',
+      name: 'โรงงาน ทดสอบ',
+      roles: ['factory_planner'],
+    },
+  ],
 };

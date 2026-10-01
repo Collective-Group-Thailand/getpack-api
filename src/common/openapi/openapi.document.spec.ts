@@ -39,6 +39,21 @@ describe('openapi document', () => {
     expect(contractViolations(document)).toEqual([]);
   });
 
+  it('reports a schema that references itself (an enum and a DTO sharing a name)', () => {
+    const document = doc(
+      {},
+      {
+        RateCardLineResponse: {
+          type: 'object',
+          properties: { response: { $ref: '#/components/schemas/RateCardLineResponse' } },
+        },
+      },
+    );
+    expect(contractViolations(document)).toEqual([
+      'schema RateCardLineResponse references itself: an enum and a DTO probably share the name',
+    ]);
+  });
+
   it('reports inline enums and unprefixed tags', () => {
     const document = doc({
       '/v1/admin/orders': {

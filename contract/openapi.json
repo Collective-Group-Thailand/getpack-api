@@ -12099,6 +12099,13 @@
         ],
         "type": "object"
       },
+      "CardLineAnswer": {
+        "enum": [
+          "accept",
+          "counter"
+        ],
+        "type": "string"
+      },
       "CarrierAccountDto": {
         "properties": {
           "active": {
@@ -14497,6 +14504,33 @@
           "blocked",
           "done",
           "waived"
+        ],
+        "type": "string"
+      },
+      "CnAppliesTo": {
+        "enum": [
+          "item",
+          "service",
+          "both"
+        ],
+        "type": "string"
+      },
+      "CnDirection": {
+        "description": "`credit` for credit-note requests, `debit` for debit notes",
+        "enum": [
+          "credit",
+          "debit"
+        ],
+        "type": "string"
+      },
+      "CnStatutoryCategory": {
+        "enum": [
+          "price_reduction",
+          "defective_or_short",
+          "returns",
+          "cancellation",
+          "post_sale_discount",
+          "other"
         ],
         "type": "string"
       },
@@ -21687,6 +21721,56 @@
         ],
         "type": "string"
       },
+      "CreditNoteReasonDto": {
+        "properties": {
+          "appliesTo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CnAppliesTo"
+              }
+            ],
+            "example": "both"
+          },
+          "code": {
+            "example": "price_reduction",
+            "type": "string"
+          },
+          "direction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CnDirection"
+              }
+            ],
+            "description": "`credit` for credit-note requests, `debit` for debit notes",
+            "example": "credit"
+          },
+          "nameEn": {
+            "example": "Price reduction",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "ลดราคาสินค้า/บริการ",
+            "type": "string"
+          },
+          "statutoryCategory": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CnStatutoryCategory"
+              }
+            ],
+            "example": "price_reduction"
+          }
+        },
+        "required": [
+          "code",
+          "statutoryCategory",
+          "nameTh",
+          "nameEn",
+          "appliesTo",
+          "direction"
+        ],
+        "type": "object"
+      },
       "CreditNoteRequestDto": {
         "properties": {
           "amount": {
@@ -25779,9 +25863,18 @@
       },
       "FactoryAccessDto": {
         "properties": {
+          "code": {
+            "example": "F-0001",
+            "type": "string"
+          },
           "factoryId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-000000000f01",
             "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "description": "Trade name, else the legal name",
+            "example": "โรงงาน ทดสอบ",
             "type": "string"
           },
           "roles": {
@@ -25789,13 +25882,15 @@
               "factory_owner"
             ],
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FactoryRole"
             },
             "type": "array"
           }
         },
         "required": [
           "factoryId",
+          "code",
+          "name",
           "roles"
         ],
         "type": "object"
@@ -26878,6 +26973,17 @@
           "decidedAt"
         ],
         "type": "object"
+      },
+      "FactoryRole": {
+        "enum": [
+          "factory_owner",
+          "factory_planner",
+          "factory_operator",
+          "factory_qc",
+          "factory_shipping",
+          "factory_accountant"
+        ],
+        "type": "string"
       },
       "FactoryScorecardDto": {
         "properties": {
@@ -38975,18 +39081,15 @@
             "type": "string"
           },
           "result": {
-            "additionalProperties": true,
-            "description": "Quotes re-priced, price and margin change, change in selection share (D-040 note)",
-            "example": {
-              "marginChangePct": null,
-              "priceChangePct": null,
-              "quotesInWindow": 0,
-              "selectionShareChangePct": null
-            },
-            "type": [
-              "object",
-              "null"
-            ]
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceSimulationResultDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Quotes re-priced, price and margin change, change in selection share (D-040 note); null until done"
           },
           "status": {
             "allOf": [
@@ -39017,6 +39120,46 @@
           "error",
           "createdAt",
           "completedAt"
+        ],
+        "type": "object"
+      },
+      "PriceSimulationResultDto": {
+        "properties": {
+          "marginChangePct": {
+            "description": "Change of Packio’s average margin, percentage points; null without quotes",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priceChangePct": {
+            "description": "Change of the average quoted price, percent; null without quotes",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quotesInWindow": {
+            "description": "Saved quotes re-priced",
+            "example": 0,
+            "type": "integer"
+          },
+          "selectionShareChangePct": {
+            "description": "Change in how often this factory would have been selected, percentage points",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "quotesInWindow",
+          "priceChangePct",
+          "marginChangePct",
+          "selectionShareChangePct"
         ],
         "type": "object"
       },
@@ -42136,7 +42279,7 @@
           "response": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/RateCardLineResponse"
+                "$ref": "#/components/schemas/CardLineAnswer"
               }
             ],
             "example": "counter"
@@ -49234,13 +49377,6 @@
         ],
         "type": "string"
       },
-      "ShippingCardAnswer": {
-        "enum": [
-          "accept",
-          "counter"
-        ],
-        "type": "string"
-      },
       "ShippingCardAnswerDto": {
         "properties": {
           "counterAmount": {
@@ -49262,7 +49398,7 @@
           "decision": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/ShippingCardAnswer"
+                "$ref": "#/components/schemas/CardLineAnswer"
               }
             ],
             "example": "counter"
@@ -49784,6 +49920,12 @@
             "format": "date-time",
             "type": "string"
           },
+          "fileId": {
+            "description": "The slip image: download with `admin.files.download` (`payments.verify_slip`, D-061)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a5101",
+            "format": "uuid",
+            "type": "string"
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002",
             "format": "uuid",
@@ -49826,6 +49968,7 @@
           "declaredTransferredAt",
           "slaDueAt",
           "lastCheck",
+          "fileId",
           "createdAt"
         ],
         "type": "object"
@@ -49849,6 +49992,12 @@
           "expectedAmount": {
             "description": "Cash the payment expects",
             "example": "7091.40",
+            "type": "string"
+          },
+          "fileId": {
+            "description": "The slip image: download with `admin.files.download` (`payments.verify_slip`, D-061)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a5101",
+            "format": "uuid",
             "type": "string"
           },
           "groupCode": {
@@ -49918,6 +50067,7 @@
           "declaredTransferredAt",
           "slaDueAt",
           "lastCheck",
+          "fileId",
           "createdAt",
           "paymentId",
           "groupId",
@@ -49990,6 +50140,104 @@
           "manual_review",
           "manual_approved",
           "manual_rejected"
+        ],
+        "type": "string"
+      },
+      "SodEnforcement": {
+        "enum": [
+          "block",
+          "warn"
+        ],
+        "type": "string"
+      },
+      "SodRuleDto": {
+        "properties": {
+          "decisions": {
+            "example": [
+              "D-168"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": {
+            "example": "Who proposes a payout run does not approve it",
+            "type": "string"
+          },
+          "enforcement": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SodEnforcement"
+              }
+            ],
+            "example": "block"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000000a02",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "payout_run_create_approve",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SodRuleKind"
+              }
+            ],
+            "example": "action_pair"
+          },
+          "left": {
+            "description": "Role key (role_pair) or permission key (action_pair)",
+            "example": "payout_runs.propose",
+            "type": "string"
+          },
+          "right": {
+            "example": "payout_runs.approve",
+            "type": "string"
+          },
+          "subjectMatch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SodSubjectMatch"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For action pairs: the two actions conflict only on the same subject, vendor or customer",
+            "example": "same_subject"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "kind",
+          "left",
+          "right",
+          "subjectMatch",
+          "enforcement",
+          "description",
+          "decisions"
+        ],
+        "type": "object"
+      },
+      "SodRuleKind": {
+        "enum": [
+          "role_pair",
+          "action_pair"
+        ],
+        "type": "string"
+      },
+      "SodSubjectMatch": {
+        "description": "For action pairs: the two actions conflict only on the same subject, vendor or customer",
+        "enum": [
+          "same_subject",
+          "same_vendor",
+          "same_customer"
         ],
         "type": "string"
       },
@@ -50462,6 +50710,35 @@
         },
         "required": [
           "reasonCode"
+        ],
+        "type": "object"
+      },
+      "StaffDirectoryEntryDto": {
+        "properties": {
+          "displayName": {
+            "example": "Dev CS Lead",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-000000000a01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "roles": {
+            "description": "Active platform role keys",
+            "example": [
+              "cs_lead"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "roles"
         ],
         "type": "object"
       },
@@ -133290,6 +133567,151 @@
         ]
       }
     },
+    "/v1/admin/credit-note-reasons": {
+      "get": {
+        "description": "The active reasons with their statutory category (D-092); `direction` tells which ones a credit-note request takes (`credit`) and which a debit note takes (`debit`).\n\nImplements: D-092.",
+        "operationId": "admin.customerDocuments.listCreditNoteReasons",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "appliesTo": "both",
+                    "code": "price_reduction",
+                    "direction": "credit",
+                    "nameEn": "Price reduction",
+                    "nameTh": "ลดราคาสินค้า/บริการ",
+                    "statutoryCategory": "price_reduction"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CreditNoteReasonDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Reasons",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List credit- and debit-note reasons",
+        "tags": [
+          "admin.customerDocuments"
+        ],
+        "x-required-permissions": [
+          "receivables.read"
+        ]
+      }
+    },
     "/v1/admin/credit-note-requests": {
       "get": {
         "description": "Requests with their approval and the credit note issued (§8 maker-checker).\n\nImplements: D-010, D-092, D-033, D-169.",
@@ -134645,7 +135067,7 @@
     },
     "/v1/admin/customer-documents": {
       "get": {
-        "description": "IV, TR, RC, CN and DN issued by the entity under the Packio brand (D-010, D-092), newest first; filter by type, status, order, customer, company and date.\n\nImplements: D-010, D-092, D-033.",
+        "description": "IV, TR, RC, CN and DN issued by the entity under the Packio brand (D-010, D-092), newest first; filter by type, status, order, customer, company, payment and date.\n\nImplements: D-010, D-092, D-033.",
         "operationId": "admin.customerDocuments.list",
         "parameters": [
           {
@@ -134761,6 +135183,16 @@
             "schema": {
               "example": "2026-10-31",
               "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Documents issued for this payment (receipts, tax invoices)",
+            "in": "query",
+            "name": "paymentId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -232339,6 +232771,7 @@
                       "declaredAmount": "7091.40",
                       "declaredTransferredAt": "2026-10-01T10:30:00+07:00",
                       "expectedAmount": "7091.40",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000a5101",
                       "groupCode": "OG-2610-00042",
                       "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0002",
@@ -232797,6 +233230,362 @@
         ],
         "x-required-permissions": [
           "payments.verify_slip"
+        ]
+      }
+    },
+    "/v1/admin/sod-rules": {
+      "get": {
+        "description": "The active rules role grants and maker-checker actions are checked against (D-168): role pairs nobody holds together and action pairs one person may not do on the same subject. A blocking rule answers 409 `iam.sod_conflict` where it applies.\n\nImplements: D-140, D-168.",
+        "operationId": "admin.sodRules.list",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "decisions": [
+                      "D-168"
+                    ],
+                    "description": "Who proposes a payout run does not approve it",
+                    "enforcement": "block",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000000a02",
+                    "key": "payout_run_create_approve",
+                    "kind": "action_pair",
+                    "left": "payout_runs.propose",
+                    "right": "payout_runs.approve",
+                    "subjectMatch": "same_subject"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SodRuleDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Rules",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the segregation-of-duties rules",
+        "tags": [
+          "admin.roles"
+        ],
+        "x-required-permissions": [
+          "users.read"
+        ]
+      }
+    },
+    "/v1/admin/staff-directory": {
+      "get": {
+        "description": "Active staff with their active platform roles, for pickers (assign an RFQ, delegate approvals, D-140). `permission` keeps the holders of a permission through their roles. Any staff member; no e-mail or phone (PDPA least privilege). At most `limit` (50) by name.\n\nImplements: D-140.",
+        "operationId": "admin.staffDirectory.list",
+        "parameters": [
+          {
+            "description": "Part of the display name",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "example": "สมชาย",
+              "maxLength": 100,
+              "minLength": 2,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Holders of this staff role",
+            "in": "query",
+            "name": "role",
+            "required": false,
+            "schema": {
+              "example": "cs_lead",
+              "pattern": "^[a-z][a-z_]{1,63}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Holders of this permission through their roles (e.g. who an RFQ can be assigned to)",
+            "in": "query",
+            "name": "permission",
+            "required": false,
+            "schema": {
+              "example": "rfqs.manage",
+              "pattern": "^[a-z][a-z_]*\\.[a-z][a-z_]*$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 50,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "displayName": "Dev CS Lead",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000000a01",
+                    "roles": [
+                      "cs_lead"
+                    ]
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StaffDirectoryEntryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Staff",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Find a colleague",
+        "tags": [
+          "admin.users"
         ]
       }
     },
@@ -257771,7 +258560,9 @@
                   "email": "planner@factory.example",
                   "factories": [
                     {
+                      "code": "F-0001",
                       "factoryId": "0192f3a0-7c1e-7d2a-9b1f-000000000f01",
+                      "name": "โรงงาน ทดสอบ",
                       "roles": [
                         "factory_planner"
                       ]
