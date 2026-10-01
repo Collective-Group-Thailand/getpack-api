@@ -223,6 +223,18 @@ export class FactoryClaimResponseDto {
   @IsString()
   @MaxLength(2000)
   note?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    format: 'uuid',
+    maxItems: MAX_CLAIM_PHOTOS,
+    description: 'The factory’s own evidence (uploaded files, purpose `evidence`), U-B0.3',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_CLAIM_PHOTOS)
+  @IsUUID('all', { each: true })
+  evidenceFileIds?: string[];
 }
 
 export class OverrideLiabilityDto {
@@ -476,6 +488,24 @@ export class StoreClaimDto {
   resolutions!: ClaimResolutionDto[];
 }
 
+/** What Packio recovers from the factory for a claim (D-083): against its payables, else as a receivable. */
+export class ClaimDeductionDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000f3007' })
+  id!: string;
+
+  @ApiProperty({ example: '500.00' })
+  amount!: string;
+
+  @ApiProperty({ enum: ['pending', 'applied', 'cancelled'], enumName: 'DeductionStatus', example: 'applied' })
+  status!: string;
+
+  @ApiProperty({ enum: ['payable', 'receivable'], enumName: 'DeductionOffset', example: 'payable' })
+  offsetAgainst!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-24T10:00:00+07:00' })
+  recordedAt!: string;
+}
+
 export class PartnerClaimDto extends StoreClaimDto {
   @ApiProperty({ format: 'uuid', nullable: true, example: CLAIM_IDS.job })
   jobId!: string | null;
@@ -496,6 +526,29 @@ export class PartnerClaimDto extends StoreClaimDto {
 
   @ApiProperty({ nullable: true, example: null })
   factoryResponseNote!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  factoryRespondedAt!: string | null;
+
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    example: [],
+    description: 'Files the factory attached to its response',
+  })
+  factoryEvidenceFileIds!: string[];
+
+  @ApiProperty({ type: String, nullable: true, example: 'SH-2610-0001' })
+  shipmentNo!: string | null;
+
+  @ApiProperty({
+    example: '0.00',
+    description: 'Recovered from the factory for this claim (cancelled ones left out)',
+  })
+  deductionAmount!: string;
+
+  @ApiProperty({ type: [ClaimDeductionDto] })
+  deductions!: ClaimDeductionDto[];
 }
 
 /** The proof the customer approved for the order: evidence for errors in approved artwork (D-083). */
@@ -551,9 +604,6 @@ export class AdminClaimDto extends PartnerClaimDto {
   @ApiProperty({ type: OrderCustomerRefDto })
   customer!: OrderCustomerRefDto;
 
-  @ApiProperty({ type: String, nullable: true, example: 'SH-2610-0001' })
-  shipmentNo!: string | null;
-
   @ApiProperty({
     enum: LIABILITY_RULES,
     enumName: 'ClaimLiabilityRule',
@@ -608,6 +658,11 @@ export const PARTNER_CLAIM_EXAMPLE = {
   liability: 'factory',
   factoryResponse: null,
   factoryResponseNote: null,
+  factoryRespondedAt: null,
+  factoryEvidenceFileIds: [],
+  shipmentNo: 'SH-2610-0001',
+  deductionAmount: '0.00',
+  deductions: [],
 };
 export const ADMIN_CLAIM_EXAMPLE = {
   ...PARTNER_CLAIM_EXAMPLE,
@@ -625,7 +680,6 @@ export const ADMIN_CLAIM_EXAMPLE = {
     displayName: 'สมชาย ทดสอบ',
     companyName: null,
   },
-  shipmentNo: 'SH-2610-0001',
   liabilityRule: 'factory_production',
   liabilityOverriddenBy: null,
   decidedBy: null,

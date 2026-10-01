@@ -4,17 +4,26 @@ import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import { FactoryUsersService } from './factory-users.service';
-import { CreateFactoryUserDto, FactoryUserDto, JOB_IDS } from './production.dto';
+import {
+  CreateFactoryUserDto,
+  FactoryUserDto,
+  FactoryUserListQuery,
+  JOB_IDS,
+  SetFactoryUserRolesDto,
+} from './production.dto';
 
 const USER_EXAMPLE: FactoryUserDto = {
   id: JOB_IDS.factory,
   email: 'planner@factory.example.invalid',
   displayName: 'ผู้วางแผน ทดสอบ',
   roles: ['factory_planner'],
+  status: 'active',
+  lastSignInAt: '2026-10-20T08:15:00+07:00',
+  isSelf: false,
 };
 const factoryParam = ApiParam({ name: 'factoryId', format: 'uuid' });
 
@@ -34,13 +43,19 @@ export class PartnerFactoryUsersController {
   @ApiEndpoint({
     id: 'partner.factoryUsers.list',
     summary: 'List my factory’s users',
-    description: 'Everyone with a role in the factory (D-140).',
+    description:
+      'Everyone with a role in the factory (D-140), with the last sign-in and whether it is the signed-in user; ' +
+      '`?status=deactivated` lists those whose roles were all revoked (U-B0.3).',
     implements: ['D-140'],
   })
   @ApiSuccess(200, { description: 'Users', type: [FactoryUserDto], example: [USER_EXAMPLE] })
   @ApiStandardErrors('http.not_found', 'validation.failed')
-  list(@CurrentActor() actor: Actor, @Param('factoryId', ParseUUIDPipe) factoryId: string) {
-    return this.users.list(partnerUser(actor), factoryId);
+  list(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: FactoryUserListQuery,
+  ) {
+    return this.users.list(partnerUser(actor), factoryId, q.status);
   }
 
   @Post()
@@ -81,6 +96,44 @@ export class PartnerFactoryUsersController {
     @Body() body: CreateFactoryUserDto,
   ) {
     return this.users.create(partnerUser(actor), factoryId, body);
+  }
+
+  @Put(':userId/roles')
+  @Can('factory_users.manage')
+  @factoryParam
+  @ApiParam({ name: 'userId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.factoryUsers.setRoles',
+    summary: 'Set a user’s roles in my factory',
+    description:
+      'Replaces a staff user’s factory roles (planner, operator, QC, shipping, accountant — never owner, D-171); ' +
+      'a deactivated user of the factory is reactivated this way. Not the owner, not oneself. Audited (U-B0.3, D-140).',
+    implements: ['D-140', 'D-171'],
+  })
+  @ApiBody({
+    type: SetFactoryUserRolesDto,
+    examples: { default: { value: { roles: ['factory_planner', 'factory_qc'] } } },
+  })
+  @ApiSuccess(200, {
+    description: 'The user',
+    type: FactoryUserDto,
+    example: { ...USER_EXAMPLE, roles: ['factory_planner', 'factory_qc'] },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'iam.self_grant',
+    'factory_users.role_not_allowed',
+  )
+  setRoles(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() body: SetFactoryUserRolesDto,
+  ) {
+    return this.users.setRoles(partnerUser(actor), factoryId, userId, body.roles);
   }
 
   @Post(':userId/actions/deactivate')

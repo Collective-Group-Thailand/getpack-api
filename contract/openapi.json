@@ -4412,6 +4412,17 @@
               "null"
             ]
           },
+          "deductionAmount": {
+            "description": "Recovered from the factory for this claim (cancelled ones left out)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "deductions": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimDeductionDto"
+            },
+            "type": "array"
+          },
           "description": {
             "example": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
             "type": "string"
@@ -4423,9 +4434,26 @@
               "null"
             ]
           },
+          "factoryEvidenceFileIds": {
+            "description": "Files the factory attached to its response",
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "factoryId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
             "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "factoryRespondedAt": {
+            "example": null,
+            "format": "date-time",
             "type": [
               "string",
               "null"
@@ -4633,6 +4661,11 @@
           "liability",
           "factoryResponse",
           "factoryResponseNote",
+          "factoryRespondedAt",
+          "factoryEvidenceFileIds",
+          "shipmentNo",
+          "deductionAmount",
+          "deductions",
           "liabilityByRule",
           "overrideReason",
           "factoryId",
@@ -4641,7 +4674,6 @@
           "infoResponse",
           "decidedAt",
           "customer",
-          "shipmentNo",
           "liabilityRule",
           "liabilityOverriddenBy",
           "decidedBy",
@@ -14277,6 +14309,48 @@
         ],
         "type": "string"
       },
+      "ClaimDeductionDto": {
+        "properties": {
+          "amount": {
+            "example": "500.00",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f3007",
+            "format": "uuid",
+            "type": "string"
+          },
+          "offsetAgainst": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeductionOffset"
+              }
+            ],
+            "example": "payable"
+          },
+          "recordedAt": {
+            "example": "2026-10-24T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeductionStatus"
+              }
+            ],
+            "example": "applied"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "status",
+          "offsetAgainst",
+          "recordedAt"
+        ],
+        "type": "object"
+      },
       "ClaimEvidenceRulesDto": {
         "properties": {
           "accept": {
@@ -23713,6 +23787,21 @@
         },
         "type": "object"
       },
+      "DeductionOffset": {
+        "enum": [
+          "payable",
+          "receivable"
+        ],
+        "type": "string"
+      },
+      "DeductionStatus": {
+        "enum": [
+          "pending",
+          "applied",
+          "cancelled"
+        ],
+        "type": "string"
+      },
       "DefectCountsDto": {
         "properties": {
           "critical": {
@@ -26922,6 +27011,15 @@
       },
       "FactoryClaimResponseDto": {
         "properties": {
+          "evidenceFileIds": {
+            "description": "The factory’s own evidence (uploaded files, purpose `evidence`), U-B0.3",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
           "note": {
             "example": "ยอมรับ จะผลิตทดแทนภายใน 5 วัน",
             "maxLength": 2000,
@@ -28150,23 +28248,55 @@
             "format": "uuid",
             "type": "string"
           },
+          "isSelf": {
+            "description": "The signed-in user",
+            "example": false,
+            "type": "boolean"
+          },
+          "lastSignInAt": {
+            "example": "2026-10-20T08:15:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "roles": {
+            "description": "The factory roles held; for a deactivated user, the roles it held when deactivated",
             "example": [
               "factory_planner"
             ],
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/FactoryRole"
             },
             "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FactoryUserStatus"
+              }
+            ],
+            "example": "active"
           }
         },
         "required": [
           "id",
           "email",
           "displayName",
-          "roles"
+          "roles",
+          "status",
+          "lastSignInAt",
+          "isSelf"
         ],
         "type": "object"
+      },
+      "FactoryUserStatus": {
+        "enum": [
+          "active",
+          "deactivated"
+        ],
+        "type": "string"
       },
       "FallbackCarrier": {
         "enum": [
@@ -36185,9 +36315,37 @@
               "null"
             ]
           },
+          "deductionAmount": {
+            "description": "Recovered from the factory for this claim (cancelled ones left out)",
+            "example": "0.00",
+            "type": "string"
+          },
+          "deductions": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimDeductionDto"
+            },
+            "type": "array"
+          },
           "description": {
             "example": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
             "type": "string"
+          },
+          "factoryEvidenceFileIds": {
+            "description": "Files the factory attached to its response",
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "factoryRespondedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "factoryResponse": {
             "anyOf": [
@@ -36282,6 +36440,13 @@
             },
             "type": "array"
           },
+          "shipmentNo": {
+            "example": "SH-2610-0001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "status": {
             "allOf": [
               {
@@ -36332,7 +36497,12 @@
           "jobNo",
           "liability",
           "factoryResponse",
-          "factoryResponseNote"
+          "factoryResponseNote",
+          "factoryRespondedAt",
+          "factoryEvidenceFileIds",
+          "shipmentNo",
+          "deductionAmount",
+          "deductions"
         ],
         "type": "object"
       },
@@ -50631,6 +50801,25 @@
         },
         "required": [
           "destinations"
+        ],
+        "type": "object"
+      },
+      "SetFactoryUserRolesDto": {
+        "properties": {
+          "roles": {
+            "example": [
+              "factory_planner",
+              "factory_qc"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FactoryStaffRole"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "roles"
         ],
         "type": "object"
       },
@@ -116551,9 +116740,13 @@
                       "decidedAt": null,
                       "decidedBy": null,
                       "decisionNote": null,
+                      "deductionAmount": "0.00",
+                      "deductions": [],
                       "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                       "factoryCode": "F-0001",
+                      "factoryEvidenceFileIds": [],
                       "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                      "factoryRespondedAt": null,
                       "factoryResponse": null,
                       "factoryResponseNote": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -116790,9 +116983,13 @@
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -117033,9 +117230,13 @@
                   "decidedAt": "2026-10-24T10:00:00+07:00",
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -117352,9 +117553,13 @@
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -117671,9 +117876,13 @@
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -117989,9 +118198,13 @@
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -118309,9 +118522,13 @@
                   "decidedAt": "2026-10-24T10:00:00+07:00",
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -118628,9 +118845,13 @@
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -118920,9 +119141,13 @@
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -194770,9 +194995,13 @@
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
                   "factoryCode": "F-0001",
+                  "factoryEvidenceFileIds": [],
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -253822,7 +254051,11 @@
                       "claimedAmount": null,
                       "claimedQuantity": 120,
                       "decisionNote": null,
+                      "deductionAmount": "0.00",
+                      "deductions": [],
                       "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
+                      "factoryEvidenceFileIds": [],
+                      "factoryRespondedAt": null,
                       "factoryResponse": null,
                       "factoryResponseNote": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -253844,6 +254077,7 @@
                       "receivedAt": "2026-10-21T14:05:00+07:00",
                       "requestedResolution": "reprint",
                       "resolutions": [],
+                      "shipmentNo": "SH-2610-0001",
                       "status": "factory_review",
                       "submittedAt": "2026-10-22T09:00:00+07:00",
                       "type": "damaged",
@@ -254037,7 +254271,11 @@
                   "claimedAmount": null,
                   "claimedQuantity": 120,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
+                  "factoryEvidenceFileIds": [],
+                  "factoryRespondedAt": null,
                   "factoryResponse": null,
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -254059,6 +254297,7 @@
                   "receivedAt": "2026-10-21T14:05:00+07:00",
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "shipmentNo": "SH-2610-0001",
                   "status": "factory_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -254225,7 +254464,7 @@
     },
     "/v1/partner/claims/{claimId}/actions/respond": {
       "post": {
-        "description": "While Packio asks for the factory’s review; Packio decides afterwards (D-083).\n\nImplements: D-083.",
+        "description": "While Packio asks for the factory’s review, with the factory’s own evidence files when it has them (U-B0.3); Packio decides afterwards (D-083).\n\nImplements: D-083.",
         "operationId": "partner.claims.respond",
         "parameters": [
           {
@@ -254271,7 +254510,11 @@
                   "claimedAmount": null,
                   "claimedQuantity": 120,
                   "decisionNote": null,
+                  "deductionAmount": "0.00",
+                  "deductions": [],
                   "description": "กล่องบุบ 2 ลัง สินค้าด้านในเสียหาย",
+                  "factoryEvidenceFileIds": [],
+                  "factoryRespondedAt": null,
                   "factoryResponse": "accepted",
                   "factoryResponseNote": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f3001",
@@ -254293,6 +254536,7 @@
                   "receivedAt": "2026-10-21T14:05:00+07:00",
                   "requestedResolution": "reprint",
                   "resolutions": [],
+                  "shipmentNo": "SH-2610-0001",
                   "status": "under_review",
                   "submittedAt": "2026-10-22T09:00:00+07:00",
                   "type": "damaged",
@@ -254438,6 +254682,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "artwork.file_not_usable": {
+                    "$ref": "#/components/examples/problem.artwork.file_not_usable"
+                  },
                   "idempotency.key_reused": {
                     "$ref": "#/components/examples/problem.idempotency.key_reused"
                   },
@@ -254450,7 +254697,7 @@
                 }
               }
             },
-            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "description": "Problem: `artwork.file_not_usable`, `idempotency.key_reused`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -267141,7 +267388,7 @@
     },
     "/v1/partner/factories/{factoryId}/users": {
       "get": {
-        "description": "Everyone with a role in the factory (D-140).\n\nImplements: D-140.",
+        "description": "Everyone with a role in the factory (D-140), with the last sign-in and whether it is the signed-in user; `?status=deactivated` lists those whose roles were all revoked (U-B0.3).\n\nImplements: D-140.",
         "operationId": "partner.factoryUsers.list",
         "parameters": [
           {
@@ -267151,6 +267398,15 @@
             "schema": {
               "format": "uuid",
               "type": "string"
+            }
+          },
+          {
+            "description": "Default `active`",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/FactoryUserStatus"
             }
           },
           {
@@ -267166,9 +267422,12 @@
                     "displayName": "ผู้วางแผน ทดสอบ",
                     "email": "planner@factory.example.invalid",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                    "isSelf": false,
+                    "lastSignInAt": "2026-10-20T08:15:00+07:00",
                     "roles": [
                       "factory_planner"
-                    ]
+                    ],
+                    "status": "active"
                   }
                 ],
                 "schema": {
@@ -267379,9 +267638,12 @@
                   "displayName": "ผู้วางแผน ทดสอบ",
                   "email": "planner@factory.example.invalid",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "isSelf": false,
+                  "lastSignInAt": "2026-10-20T08:15:00+07:00",
                   "roles": [
                     "factory_planner"
-                  ]
+                  ],
+                  "status": "active"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/FactoryUserDto"
@@ -267769,6 +268031,257 @@
           }
         ],
         "summary": "Remove a user from my factory",
+        "tags": [
+          "partner.factoryUsers"
+        ],
+        "x-required-permissions": [
+          "factory_users.manage"
+        ]
+      }
+    },
+    "/v1/partner/factories/{factoryId}/users/{userId}/roles": {
+      "put": {
+        "description": "Replaces a staff user’s factory roles (planner, operator, QC, shipping, accountant — never owner, D-171); a deactivated user of the factory is reactivated this way. Not the owner, not oneself. Audited (U-B0.3, D-140).\n\nImplements: D-140, D-171.",
+        "operationId": "partner.factoryUsers.setRoles",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "roles": [
+                      "factory_planner",
+                      "factory_qc"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetFactoryUserRolesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "displayName": "ผู้วางแผน ทดสอบ",
+                  "email": "planner@factory.example.invalid",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "isSelf": false,
+                  "lastSignInAt": "2026-10-20T08:15:00+07:00",
+                  "roles": [
+                    "factory_planner",
+                    "factory_qc"
+                  ],
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryUserDto"
+                }
+              }
+            },
+            "description": "The user",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "iam.self_grant": {
+                    "$ref": "#/components/examples/problem.iam.self_grant"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `iam.self_grant`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "factory_users.role_not_allowed": {
+                    "$ref": "#/components/examples/problem.factory_users.role_not_allowed"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `factory_users.role_not_allowed`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Set a user’s roles in my factory",
         "tags": [
           "partner.factoryUsers"
         ],

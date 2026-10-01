@@ -1,5 +1,6 @@
 import { FactoryRefDto } from '@common/dto/factory-ref.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { FACTORY_ROLES } from '@modules/auth/me.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
@@ -1125,6 +1126,9 @@ export class CreateFactoryUserDto {
   roles!: (typeof FACTORY_STAFF_ROLES)[number][];
 }
 
+/** A user's membership of the factory (U-B0.3): deactivated = every factory role revoked. */
+export const FACTORY_USER_STATUSES = ['active', 'deactivated'] as const;
+
 export class FactoryUserDto {
   @ApiProperty({ format: 'uuid', example: JOB_IDS.factory })
   id!: string;
@@ -1135,8 +1139,48 @@ export class FactoryUserDto {
   @ApiProperty({ example: 'ผู้วางแผน ทดสอบ' })
   displayName!: string;
 
-  @ApiProperty({ type: [String], example: ['factory_planner'] })
+  @ApiProperty({
+    enum: FACTORY_ROLES,
+    enumName: 'FactoryRole',
+    isArray: true,
+    example: ['factory_planner'],
+    description: 'The factory roles held; for a deactivated user, the roles it held when deactivated',
+  })
   roles!: string[];
+
+  @ApiProperty({ enum: FACTORY_USER_STATUSES, enumName: 'FactoryUserStatus', example: 'active' })
+  status!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-20T08:15:00+07:00' })
+  lastSignInAt!: string | null;
+
+  @ApiProperty({ example: false, description: 'The signed-in user' })
+  isSelf!: boolean;
+}
+
+export class FactoryUserListQuery {
+  @ApiPropertyOptional({
+    enum: FACTORY_USER_STATUSES,
+    enumName: 'FactoryUserStatus',
+    description: 'Default `active`',
+  })
+  @IsOptional()
+  @IsIn(FACTORY_USER_STATUSES)
+  status?: (typeof FACTORY_USER_STATUSES)[number];
+}
+
+export class SetFactoryUserRolesDto {
+  @ApiProperty({
+    enum: FACTORY_STAFF_ROLES,
+    enumName: 'FactoryStaffRole',
+    isArray: true,
+    example: ['factory_planner', 'factory_qc'],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(FACTORY_STAFF_ROLES.length)
+  @IsIn(FACTORY_STAFF_ROLES, { each: true })
+  roles!: (typeof FACTORY_STAFF_ROLES)[number][];
 }
 
 export const QC_EXAMPLE: QcCheckDto = {

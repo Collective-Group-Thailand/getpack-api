@@ -94,6 +94,10 @@ export const CLAIM_INCLUDE = {
       refund: { select: { publicId: true, status: true } },
     },
   },
+  vendorDeductions: {
+    orderBy: { id: 'asc' },
+    select: { publicId: true, amount: true, status: true, offsetAgainst: true, recordedAt: true },
+  },
 } satisfies Prisma.ClaimInclude;
 export type ClaimRow = Prisma.ClaimGetPayload<{ include: typeof CLAIM_INCLUDE }>;
 
@@ -173,7 +177,9 @@ export class ClaimsService implements OnModuleInit {
   }
 
   /** Evidence photos by role. */
-  async photos(claimIds: bigint[]): Promise<Map<bigint, { product: string[]; carton: string[] }>> {
+  async photos(
+    claimIds: bigint[],
+  ): Promise<Map<bigint, { product: string[]; carton: string[]; factory: string[] }>> {
     const rows = claimIds.length
       ? await this.prisma.attachment.findMany({
           where: { subjectType: 'claim', subjectId: { in: claimIds } },
@@ -181,12 +187,13 @@ export class ClaimsService implements OnModuleInit {
           orderBy: [{ sort: 'asc' }, { id: 'asc' }],
         })
       : [];
-    const map = new Map<bigint, { product: string[]; carton: string[] }>();
+    const map = new Map<bigint, { product: string[]; carton: string[]; factory: string[] }>();
     for (const id of claimIds) {
       const mine = rows.filter((r) => r.subjectId === id);
       map.set(id, {
         product: mine.filter((r) => r.role === 'claim.product_photo').map((r) => r.fileObject.publicId),
         carton: mine.filter((r) => r.role === 'claim.carton_photo').map((r) => r.fileObject.publicId),
+        factory: mine.filter((r) => r.role === 'claim.factory_evidence').map((r) => r.fileObject.publicId),
       });
     }
     return map;
@@ -511,12 +518,25 @@ export class ClaimsService implements OnModuleInit {
   async factoryRespond(
     actor: Actor,
     publicId: string,
-    input: { response: 'accepted' | 'disputed'; note?: string },
+    input: { response: 'accepted' | 'disputed'; note?: string; evidenceFileIds?: string[] },
   ) {
     await this.prisma.withTx(async (tx) => {
       const claim = await this.lock(tx, await this.get(actor, publicId, tx));
       if (claim.status !== 'factory_review')
         throw new DomainException('claims.invalid_status', { params: { status: claim.status } });
+      const evidence = await this.evidence(tx, actor, input.evidenceFileIds ?? []);
+      const existing = await tx.attachment.count({ where: { subjectType: 'claim', subjectId: claim.id } });
+      for (const [i, fileObjectId] of evidence.entries())
+        await tx.attachment.create({
+          data: {
+            subjectType: 'claim',
+            subjectId: claim.id,
+            fileObjectId,
+            role: 'claim.factory_evidence',
+            sort: existing + i,
+            createdById: actor.type === 'user' ? actor.userId : null,
+          },
+        });
       await this.update(
         tx,
         claim,
@@ -529,10 +549,14 @@ export class ClaimsService implements OnModuleInit {
         },
         actor,
       );
-      await this.record(tx, claim, 'claim.factory_responded', { response: input.response }, actor, [
-        'internal',
-        'partner',
-      ]);
+      await this.record(
+        tx,
+        claim,
+        'claim.factory_responded',
+        { response: input.response, evidenceCount: evidence.length },
+        actor,
+        ['internal', 'partner'],
+      );
     });
   }
 

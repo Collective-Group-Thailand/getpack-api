@@ -200,8 +200,54 @@ describe('claims and reorder (e2e, B4.5)', () => {
     }).expect(403);
     await post(owner, `/v1/partner/claims/${submitted.id}/actions/respond`, {
       response: 'accepted',
-      note: 'ยอมรับ',
-    }).expect(200);
+      evidenceFileIds: [await photo(o.token)],
+    }).expect(422);
+    const evidence = await photo(owner, 'partner');
+    const responded = (
+      await post(owner, `/v1/partner/claims/${submitted.id}/actions/respond`, {
+        response: 'accepted',
+        note: 'ยอมรับ',
+        evidenceFileIds: [evidence],
+      }).expect(200)
+    ).body as Record<string, unknown>;
+    // U-B0.3: the factory's response time and evidence, the shipment, what is recovered from it.
+    expect(responded).toMatchObject({
+      factoryRespondedAt: expect.any(String),
+      factoryEvidenceFileIds: [evidence],
+      deductionAmount: '0.00',
+      deductions: [],
+    });
+    expect(responded['shipmentNo']).toEqual(expect.any(String));
+    // A recovery recorded against the claim (fixture row: the B5 subscriber is covered by the payables suite).
+    const claimRow = await ctx.prisma.claim.findUniqueOrThrow({
+      where: { publicId: submitted.id },
+      include: { factory: true },
+    });
+    await ctx.prisma.vendorDeduction.create({
+      data: {
+        entityId: claimRow.entityId,
+        vendorId: claimRow.factory!.vendorId,
+        factoryId: claimRow.factoryId,
+        claimId: claimRow.id,
+        amount: '100.00',
+        offsetAgainst: 'receivable',
+        status: 'pending',
+      },
+    });
+    expect(
+      (
+        (await as(ctx, owner).get('/v1/partner/claims?perPage=100').expect(200)).body.data as { id: string }[]
+      ).find((c) => c.id === submitted.id),
+    ).toMatchObject({
+      deductionAmount: '100.00',
+      deductions: [
+        expect.objectContaining({ amount: '100.00', status: 'pending', offsetAgainst: 'receivable' }),
+      ],
+    });
+    const customerView = (await as(ctx, o.token).get(`/v1/store/claims/${submitted.id}`).expect(200))
+      .body as Record<string, unknown>;
+    expect(customerView['photos']).not.toHaveProperty('factory');
+    expect(customerView).not.toHaveProperty('deductions');
 
     // Override needs its permission; CS decides; resolving needs `claims.resolve`.
     await post(cs, `/v1/admin/claims/${submitted.id}/actions/override-liability`, {

@@ -1,3 +1,4 @@
+import { MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
 
 import { type AdminClaimDto, type PartnerClaimDto, type StoreClaimDto } from './claims.dto';
@@ -7,7 +8,7 @@ import { liabilityRule } from './liability';
 const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
 const userRef = (u: { publicId: string; displayName: string } | null) =>
   u ? { id: u.publicId, displayName: u.displayName } : null;
-type Photos = { product: string[]; carton: string[] };
+type Photos = { product: string[]; carton: string[]; factory?: string[] };
 
 export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carton: [] }): StoreClaimDto {
   return {
@@ -27,7 +28,7 @@ export function storeClaimDto(c: ClaimRow, photos: Photos = { product: [], carto
     submittedAt: toBangkokIso(c.submittedAt),
     infoRequest: c.infoRequest,
     decisionNote: c.decisionNote,
-    photos,
+    photos: { product: photos.product, carton: photos.carton },
     // The customer sees what was done for them, not which job made it (D-050) nor what Packio
     // recovers from the factory or the carrier (D-083, D-044).
     resolutions: c.resolutions.filter((r) => !INTERNAL_ACTIONS.has(r.action)).map(resolutionView),
@@ -65,6 +66,28 @@ export function partnerClaimDto(c: ClaimRow, photos?: Photos): PartnerClaimDto {
     liability: c.liability,
     factoryResponse: c.factoryResponse,
     factoryResponseNote: c.factoryResponseNote,
+    ...factoryFields(c, photos),
+  };
+}
+
+/** The factory's side of a claim (U-B0.3): its response, evidence, the shipment and what is recovered from it. */
+function factoryFields(c: ClaimRow, photos?: Photos) {
+  const deductions = c.vendorDeductions.map((d) => ({
+    id: d.publicId,
+    amount: d.amount.toFixed(2),
+    status: d.status,
+    offsetAgainst: d.offsetAgainst,
+    recordedAt: toBangkokIso(d.recordedAt),
+  }));
+  return {
+    factoryRespondedAt: iso(c.factoryRespondedAt),
+    factoryEvidenceFileIds: photos?.factory ?? [],
+    shipmentNo: c.shipment?.shipmentNo ?? null,
+    deductionAmount: c.vendorDeductions
+      .filter((d) => d.status !== 'cancelled')
+      .reduce((a, d) => a.add(d.amount.toString()), new MoneyDecimal(0))
+      .toFixed(2),
+    deductions,
   };
 }
 
@@ -82,6 +105,7 @@ export function adminClaimDto(c: ClaimRow, photos?: Photos): AdminClaimDto {
     liability: c.liability,
     factoryResponse: c.factoryResponse,
     factoryResponseNote: c.factoryResponseNote,
+    ...factoryFields(c, photos),
     liabilityByRule: c.liabilityByRule,
     overrideReason: c.overrideReason,
     factoryId: c.factory?.publicId ?? null,

@@ -437,7 +437,9 @@ export class PartnerClaimsController extends ClaimViews {
   @ApiEndpoint({
     id: 'partner.claims.respond',
     summary: 'Accept or dispute a claim',
-    description: 'While Packio asks for the factory’s review; Packio decides afterwards (D-083).',
+    description:
+      'While Packio asks for the factory’s review, with the factory’s own evidence files when it has them ' +
+      '(U-B0.3); Packio decides afterwards (D-083).',
     implements: ['D-083'],
   })
   @ApiBody({
@@ -449,7 +451,7 @@ export class PartnerClaimsController extends ClaimViews {
     type: PartnerClaimDto,
     example: { ...PARTNER_CLAIM_EXAMPLE, status: 'under_review', factoryResponse: 'accepted' },
   })
-  @ApiStandardErrors(...WRITE, 'claims.invalid_status')
+  @ApiStandardErrors(...WRITE, 'claims.invalid_status', 'artwork.file_not_usable')
   async respond(
     @CurrentActor() actor: Actor,
     @Param('claimId', ParseUUIDPipe) claimId: string,

@@ -432,6 +432,45 @@ describe('production milestones and the partner surface (e2e, B4.2)', () => {
       ),
     ).toBe(false);
 
+    // U-B0.3: deactivated users are listed apart with the roles they held; setting roles reactivates them.
+    type FactoryUser = {
+      id: string;
+      roles: string[];
+      status: string;
+      isSelf: boolean;
+      lastSignInAt: string | null;
+    };
+    const plannerId = created.body.id as string;
+    const gone = (
+      (await as(ctx, owner).get(`${factoryUrl}/users?status=deactivated`).expect(200)).body as FactoryUser[]
+    ).find((u) => u.id === plannerId);
+    expect(gone).toMatchObject({ status: 'deactivated', roles: ['factory_planner'], isSelf: false });
+    expect(gone!.lastSignInAt).toEqual(expect.any(String));
+    await as(ctx, owner)
+      .put(`${factoryUrl}/users/${plannerId}/roles`, { roles: ['factory_owner'] })
+      .expect(422);
+    await as(ctx, owner)
+      .put(`${factoryUrl}/users/${randomUUID()}/roles`, { roles: ['factory_qc'] })
+      .expect(404);
+    const back = (
+      await as(ctx, owner)
+        .put(`${factoryUrl}/users/${plannerId}/roles`, { roles: ['factory_planner', 'factory_qc'] })
+        .expect(200)
+    ).body as FactoryUser;
+    expect(back).toMatchObject({ status: 'active', roles: ['factory_planner', 'factory_qc'] });
+    await as(ctx, owner)
+      .put(`${factoryUrl}/users/${plannerId}/roles`, { roles: ['factory_qc'] })
+      .expect(200);
+    const active = (await as(ctx, owner).get(`${factoryUrl}/users`).expect(200)).body as FactoryUser[];
+    expect(active.find((u) => u.id === plannerId)?.roles).toEqual(['factory_qc']);
+    const self = active.find((u) => u.isSelf)!;
+    expect(self.roles).toContain('factory_owner');
+    const selfGrant = await as(ctx, owner).put(`${factoryUrl}/users/${self.id}/roles`, {
+      roles: ['factory_qc'],
+    });
+    expect(selfGrant.body.code).toBe('iam.self_grant');
+    await as(ctx, owner).post(`${factoryUrl}/users/${plannerId}/actions/deactivate`).expect(204);
+
     const folding = await ctx.prisma.productType.findUniqueOrThrow({ where: { code: 'folding_carton' } });
     const override = {
       productTypeId: folding.publicId,

@@ -57,6 +57,8 @@ const claim = {
   shipment: null,
   infoResponse: null,
   decidedAt: at,
+  factoryRespondedAt: null,
+  vendorDeductions: [],
 } as unknown as ClaimRow;
 
 describe('claim views', () => {
