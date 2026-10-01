@@ -504,7 +504,16 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
     await post(owner, `/v1/partner/billing-statements/${bs.id}/actions/dispute`, {}).expect(422);
     await post(owner, `/v1/partner/billing-statements/${bs.id}/actions/dispute`, {
       note: 'ยอดขนส่งไม่ตรง (fake)',
-    }).expect(200);
+      lineNos: [99],
+    }).expect(422);
+    expect(
+      (
+        await post(owner, `/v1/partner/billing-statements/${bs.id}/actions/dispute`, {
+          note: 'ยอดขนส่งไม่ตรง (fake)',
+          lineNos: [1, 1],
+        }).expect(200)
+      ).body,
+    ).toMatchObject({ status: 'disputed', disputedLineNos: [1] });
     expect(
       (await post(owner, `/v1/partner/billing-statements/${bs.id}/actions/confirm`).expect(200)).body.status,
     ).toBe('confirmed');
@@ -729,6 +738,148 @@ describe('payables, payouts & banking (e2e, B5.3)', () => {
     const again = (await as(ctx, finance).get(`/v1/admin/payables?vendorId=${carrier.id}`).expect(200)).body
       .data as { status: string }[];
     expect(again.map((p) => p.status)).toContain('eligible');
+  });
+
+  it('shows the factory its statement totals, payout schedule, payouts and statement of account (U-B0.3)', async () => {
+    const f = `/v1/partner/factories/${fixture.factoryPublicId}`;
+    const po = await ctx.prisma.purchaseOrder.findFirstOrThrow({
+      where: { order: { publicId: order.orderId } },
+      include: { goodsReceipts: true },
+    });
+    const gr = po.goodsReceipts[0]!;
+    const paid = await ctx.prisma.payoutItem.findMany({
+      where: { status: 'paid', allocations: { some: { payableItem: { purchaseOrderId: po.id } } } },
+    });
+    const advance = paid.find((i) => i.kind === 'advance')!;
+    const balance = paid.find((i) => i.kind === 'balance')!;
+    const gross = (i: { apNetAmount: unknown; vatAmount: unknown }) =>
+      D(i.apNetAmount as string).add(D(i.vatAmount as string));
+
+    // The statement: line kinds and references, money by kind, paid and still owed (retention held), tax invoices.
+    await as(ctx, owner).get('/v1/partner/billing-statements?status=bogus').expect(422);
+    const listed = (
+      await as(ctx, owner).get('/v1/partner/billing-statements?status=confirmed&perPage=100').expect(200)
+    ).body.data as { id: string; lines: { reference: string | null }[] }[];
+    const bsId = listed.find((s) => s.lines.some((l) => l.reference === gr.grNumber))!.id;
+    const bs = (await as(ctx, owner).get(`/v1/partner/billing-statements/${bsId}`).expect(200)).body as {
+      bsNumber: string;
+      netAmount: string;
+      lines: { kind: string; reference: string | null; quantity: number | null }[];
+      totals: Record<string, string>;
+      confirmedBy: { displayName: string } | null;
+      disputedLineNos: number[];
+      taxInvoiceStatus: string;
+      inputVatStatus: string | null;
+      taxInvoices: { status: string }[];
+    };
+    expect(bs.lines[0]).toMatchObject({ kind: 'production', reference: gr.grNumber, quantity: 1000 });
+    for (const l of bs.lines.filter((x) => x.kind === 'shipping')) expect(l.reference).toMatch(/\S/);
+    expect(D(bs.totals.production!).add(bs.totals.shipping!).add(bs.totals.other!).toFixed(2)).toBe(
+      bs.netAmount,
+    );
+    expect(bs.totals.advanceOffset).toBe(gross(advance).toFixed(2));
+    expect(bs.totals.alreadyPaid).toBe(
+      gross(advance).add(gross(balance)).sub(D(balance.retentionAmount)).toFixed(2),
+    );
+    expect(bs.totals.remaining).toBe(D(balance.retentionAmount).toFixed(2));
+    expect(bs).toMatchObject({
+      confirmedBy: { displayName: expect.any(String) },
+      disputedLineNos: [1],
+      taxInvoiceStatus: 'validated',
+      inputVatStatus: 'claimable',
+    });
+    expect(bs.taxInvoices.map((i) => i.status)).toEqual(['validated', 'rejected']);
+
+    // The schedule: the advance and the balance paid by their payouts, the retention waiting for its date.
+    const schedule = (await as(ctx, owner).get(`${f}/payout-schedule?perPage=100`).expect(200)).body.data as {
+      poNumber: string;
+      balancePending: boolean;
+      terms: { retentionPct: string };
+      items: { source: string; status: string; waitingFor: string | null; payoutId: string | null }[];
+    }[];
+    const job = schedule.find((j) => j.poNumber === po.poNumber)!;
+    expect(job.balancePending).toBe(false);
+    expect(job.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          source: 'advance',
+          status: 'paid',
+          waitingFor: null,
+          payoutId: advance.publicId,
+        }),
+        expect.objectContaining({ source: 'goods_receipt', status: 'paid', payoutId: balance.publicId }),
+      ]),
+    );
+    if (D(balance.retentionAmount).gt(0))
+      expect(job.items.find((i) => i.source === 'retention')).toMatchObject({
+        status: 'open',
+        waitingFor: 'eligibility_date',
+        payoutId: null,
+      });
+
+    // Payouts: status, run date and claim deductions; one payout with what it settles and its documents.
+    await as(ctx, owner).get(`${f}/payouts?status=excluded`).expect(422);
+    const listedPayout = (
+      (await as(ctx, owner).get(`${f}/payouts`).expect(200)).body as { id: string }[]
+    ).find((p) => p.id === balance.publicId);
+    expect(listedPayout).toMatchObject({ status: 'paid', claimDeductionAmount: '0.00', currency: 'THB' });
+    const detail = (await as(ctx, owner).get(`${f}/payouts/${balance.publicId}`).expect(200)).body as {
+      remittanceAdviceAvailable: boolean;
+      allocations: { poNumber: string; grNumber: string; bsNumber: string; source: string }[];
+      claimDeductions: unknown[];
+    };
+    expect(detail.remittanceAdviceAvailable).toBe(true);
+    expect(detail.allocations).toEqual([
+      expect.objectContaining({
+        source: 'goods_receipt',
+        poNumber: po.poNumber,
+        grNumber: gr.grNumber,
+        bsNumber: bs.bsNumber,
+      }),
+    ]);
+    expect(detail.claimDeductions).toEqual([]);
+    const others = await ctx.prisma.payoutItem.findFirstOrThrow({
+      where: { vendorId: { not: balance.vendorId } },
+    });
+    await as(ctx, owner).get(`${f}/payouts/${others.publicId}`).expect(404);
+    await as(ctx, owner).get(`${f}/payouts/${others.publicId}/documents`).expect(404);
+    const docs = (await as(ctx, owner).get(`${f}/payouts/${balance.publicId}/documents`).expect(200))
+      .body as {
+      remittanceAdvice: { url: string };
+    };
+    expect(docs.remittanceAdvice.url).toEqual(expect.any(String));
+
+    // The statement of account: the GR and the payouts in the ledger, a running balance that closes the period.
+    await as(ctx, owner).get(`${f}/statement-of-account?from=2026-12-01&to=2026-11-01`).expect(422);
+    const soa = (await as(ctx, owner).get(`${f}/statement-of-account`).expect(200)).body as {
+      opening: string;
+      totalDebit: string;
+      totalCredit: string;
+      closing: string;
+      entries: { kind: string; reference: string | null; balance: string }[];
+    };
+    expect(soa.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: 'goods_receipt', reference: gr.grNumber }),
+        expect.objectContaining({ kind: 'payout', reference: balance.pvNumber }),
+        expect.objectContaining({ kind: 'advance_offset', reference: po.poNumber }),
+      ]),
+    );
+    expect(D(soa.opening).add(soa.totalCredit).sub(soa.totalDebit).toFixed(2)).toBe(soa.closing);
+    expect(soa.entries.at(-1)!.balance).toBe(soa.closing);
+    const ledger = await ctx.prisma.journalLine.aggregate({
+      where: {
+        vendorId: balance.vendorId,
+        account: { code: { in: ['2110', '2130', '1250', '1260'] } },
+        journalEntry: { status: 'posted' },
+      },
+      _sum: { debit: true, credit: true },
+    });
+    expect(soa.closing).toBe(
+      D(ledger._sum.credit ?? 0)
+        .sub(D(ledger._sum.debit ?? 0))
+        .toFixed(2),
+    );
   });
 
   it('matches a statement to the payout and a gateway settlement, parks and identifies an unknown receipt (P04, P29, P02)', async () => {

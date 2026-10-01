@@ -6,6 +6,7 @@ import { type MigratedDatabase, startMigratedDatabase, stopMigratedDatabase } fr
  */
 
 const CHECKS = [
+  'ck_billing_statements__disputed_line_nos',
   'ck_activity_logs__actor',
   'ck_approval_delegations__distinct',
   'ck_approval_delegations__window',

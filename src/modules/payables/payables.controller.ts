@@ -27,6 +27,7 @@ import {
   PO_EXAMPLE,
   PurchaseOrderDto,
   RecordBillDto,
+  StatementListQuery,
   ValidateInvoiceDto,
   VENDOR_EXAMPLE,
   VendorDto,
@@ -35,7 +36,7 @@ import {
   VendorListQuery,
   VI_EXAMPLE,
 } from './payables.dto';
-import { PayablesQueryService } from './payables-query.service';
+import { type BsRow, PayablesQueryService } from './payables-query.service';
 import { bsDto, grDto, invoiceDto, payableDto, poDto, vendorDto } from './payables-views';
 import { VendorInvoicesService } from './vendor-invoices.service';
 
@@ -73,6 +74,12 @@ function staff(actor: Actor): UserActor {
 // =====================================================================================================
 // Admin
 // =====================================================================================================
+
+/** Statements with the money of their jobs (U-B0.3). */
+async function statementViews(query: PayablesQueryService, rows: BsRow[]): Promise<BillingStatementDto[]> {
+  const money = await query.statementMoney(rows);
+  return rows.map((r) => bsDto(r, money.get(r.id)));
+}
 
 @ApiSurface('admin', 'payables')
 @Controller()
@@ -144,9 +151,12 @@ export class AdminPayablesController {
   })
   @ApiPaginated(BillingStatementDto, { example: BS_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async statements(@CurrentActor() actor: Actor, @Query() q: ApListQuery) {
+  async statements(@CurrentActor() actor: Actor, @Query() q: StatementListQuery) {
     const { rows, total } = await this.query.statements(actor, q);
-    return { data: rows.map(bsDto), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: await statementViews(this.query, rows),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get('billing-statements/:statementId')
@@ -164,7 +174,7 @@ export class AdminPayablesController {
     @CurrentActor() actor: Actor,
     @Param('statementId', ParseUUIDPipe) statementId: string,
   ): Promise<BillingStatementDto> {
-    return bsDto(await this.query.statement(actor, statementId));
+    return (await statementViews(this.query, [await this.query.statement(actor, statementId)]))[0]!;
   }
 
   @Post('billing-statements/:statementId/tax-invoices')
@@ -495,9 +505,12 @@ export class PartnerPayablesController {
   })
   @ApiPaginated(BillingStatementDto, { example: BS_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async statements(@CurrentActor() actor: Actor, @Query() q: ApListQuery) {
+  async statements(@CurrentActor() actor: Actor, @Query() q: StatementListQuery) {
     const { rows, total } = await this.query.statements(actor, q);
-    return { data: rows.map(bsDto), meta: { page: q.page, perPage: q.perPage, total } };
+    return {
+      data: await statementViews(this.query, rows),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
   }
 
   @Get('billing-statements/:statementId')
@@ -515,7 +528,7 @@ export class PartnerPayablesController {
     @CurrentActor() actor: Actor,
     @Param('statementId', ParseUUIDPipe) statementId: string,
   ): Promise<BillingStatementDto> {
-    return bsDto(await this.query.statement(actor, statementId));
+    return (await statementViews(this.query, [await this.query.statement(actor, statementId)]))[0]!;
   }
 
   @Post('billing-statements/:statementId/actions/confirm')
@@ -542,7 +555,7 @@ export class PartnerPayablesController {
   ): Promise<BillingStatementDto> {
     const row = await this.query.statement(actor, statementId);
     await this.invoices.decideStatement(staffOrPartner(actor), statementId, row.factoryId, { confirm: true });
-    return bsDto(await this.query.statement(actor, statementId));
+    return (await statementViews(this.query, [await this.query.statement(actor, statementId)]))[0]!;
   }
 
   @Post('billing-statements/:statementId/actions/dispute')
@@ -576,8 +589,9 @@ export class PartnerPayablesController {
     await this.invoices.decideStatement(staffOrPartner(actor), statementId, row.factoryId, {
       confirm: false,
       note: body.note,
+      ...(body.lineNos && { lineNos: body.lineNos }),
     });
-    return bsDto(await this.query.statement(actor, statementId));
+    return (await statementViews(this.query, [await this.query.statement(actor, statementId)]))[0]!;
   }
 
   @Post('billing-statements/:statementId/tax-invoices')

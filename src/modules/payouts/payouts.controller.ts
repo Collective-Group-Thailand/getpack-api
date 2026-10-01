@@ -6,7 +6,7 @@ import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
-import { toBangkokIso } from '@common/time/bangkok';
+import { addCalendarDays, bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PAYABLE_EXAMPLE, PayableDto } from '@modules/payables/payables.dto';
 import { PayablesQueryService } from '@modules/payables/payables-query.service';
 import { payableDto } from '@modules/payables/payables-views';
@@ -23,17 +23,31 @@ import {
   EligibleQuery,
   EXCEPTION_EXAMPLE,
   PAID_ITEM_EXAMPLE,
+  PARTNER_PAYOUT_DETAIL_EXAMPLE,
   PARTNER_PAYOUT_EXAMPLE,
+  PartnerPayoutDetailDto,
   PartnerPayoutDto,
   PAYOUT_IDS,
+  PAYOUT_SCHEDULE_EXAMPLE,
   PayoutExceptionDto,
   PayoutItemDocumentsDto,
   PayoutRunDto,
+  PayoutScheduleJobDto,
   PayoutStatementQuery,
   RUN_EXAMPLE,
+  STATEMENT_OF_ACCOUNT_EXAMPLE,
+  StatementOfAccountDto,
+  StatementOfAccountQuery,
 } from './payouts.dto';
 import { PayoutsService } from './payouts.service';
-import { exceptionDto, partnerPayoutDto, runDto } from './payouts-views';
+import {
+  exceptionDto,
+  partnerPayoutDetailDto,
+  partnerPayoutDto,
+  payoutScheduleDto,
+  runDto,
+  statementOfAccountDto,
+} from './payouts-views';
 
 const DOCS = ['D-022', 'D-093', 'D-164', 'D-166'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed'] as const;
@@ -52,6 +66,29 @@ const download = (d: { url: string; expiresAt: Date }): DownloadUrlDto => ({
   url: d.url,
   expiresAt: toBangkokIso(d.expiresAt),
 });
+
+/** The remittance advice and 50 ทวิ of a paid item as short-lived signed URLs (U-B0.3). */
+async function documentsDto(
+  files: DocumentFilesService,
+  docs: Awaited<ReturnType<PayoutsService['itemDocuments']>>,
+): Promise<PayoutItemDocumentsDto> {
+  return {
+    remittanceAdvice: download(await files.downloadUrl(docs.remittanceFileId)),
+    whtCertificates: await Promise.all(
+      docs.certificates.map(async (c) => ({
+        id: c.publicId,
+        wtNumber: c.wtNumber,
+        form: c.form,
+        paidOn: c.paidOn.toISOString().slice(0, 10),
+        paidAmount: c.paidAmount.toFixed(2),
+        whtRatePct: c.whtRatePct.toFixed(4),
+        whtAmount: c.whtAmount.toFixed(2),
+        pdfReady: c.fileObjectId !== null,
+        download: c.fileObjectId ? download(await files.downloadUrl(c.fileObjectId)) : null,
+      })),
+    ),
+  };
+}
 
 @ApiSurface('admin', 'payouts')
 @Controller()
@@ -304,23 +341,7 @@ export class AdminPayoutsController {
     @Param('runId', ParseUUIDPipe) runId: string,
     @Param('itemId', ParseUUIDPipe) itemId: string,
   ): Promise<PayoutItemDocumentsDto> {
-    const { remittanceFileId, certificates } = await this.payouts.itemDocuments(runId, itemId);
-    return {
-      remittanceAdvice: download(await this.files.downloadUrl(remittanceFileId)),
-      whtCertificates: await Promise.all(
-        certificates.map(async (c) => ({
-          id: c.publicId,
-          wtNumber: c.wtNumber,
-          form: c.form,
-          paidOn: c.paidOn.toISOString().slice(0, 10),
-          paidAmount: c.paidAmount.toFixed(2),
-          whtRatePct: c.whtRatePct.toFixed(4),
-          whtAmount: c.whtAmount.toFixed(2),
-          pdfReady: c.fileObjectId !== null,
-          download: c.fileObjectId ? download(await this.files.downloadUrl(c.fileObjectId)) : null,
-        })),
-      ),
-    };
+    return documentsDto(this.files, await this.payouts.itemDocuments(itemId, { runPublicId: runId }));
   }
 
   @Get('payout-exceptions')
@@ -365,7 +386,129 @@ export class PartnerPayoutsController {
     @Query() q: PayoutStatementQuery,
   ): Promise<PartnerPayoutDto[]> {
     const vendorId = await this.query.vendorOfFactory(actor, factoryId);
-    return (await this.payouts.statementOf(vendorId, q.from, q.to)).map(partnerPayoutDto);
+    return (await this.payouts.statementOf(vendorId, q.from, q.to, q.status)).map(partnerPayoutDto);
+  }
+
+  @Get('payouts/:payoutId')
+  @Can('factory_payables.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiParam({ name: 'payoutId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.payables.getPayout',
+    summary: 'One of my payouts',
+    description:
+      'A payout with the payables it settles (job, PO, goods receipt, billing statement), the claim deductions taken ' +
+      'from them, retention held, withholding with its 50 ทวิ, the bank reference or why the transfer failed ' +
+      '(U-B0.3, D-022, D-164, D-166). Another factory’s payout is 404.',
+    implements: DOCS,
+  })
+  @ApiSuccess(200, {
+    description: 'Payout',
+    type: PartnerPayoutDetailDto,
+    example: PARTNER_PAYOUT_DETAIL_EXAMPLE,
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async payout(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('payoutId', ParseUUIDPipe) payoutId: string,
+  ): Promise<PartnerPayoutDetailDto> {
+    const vendorId = await this.query.vendorOfFactory(actor, factoryId);
+    return partnerPayoutDetailDto(await this.payouts.partnerPayout(vendorId, payoutId));
+  }
+
+  @Get('payouts/:payoutId/documents')
+  @Can('factory_payables.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiParam({ name: 'payoutId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.payables.payoutDocuments',
+    summary: 'Documents of one of my payouts',
+    description:
+      'The remittance advice (rendered and kept on first request) and the 50 ทวิ of a paid payout, as 5-minute ' +
+      'signed URLs (U-B0.3, D-022, D-166). 409 before the payout is paid.',
+    implements: DOCS,
+  })
+  @ApiSuccess(200, {
+    description: 'Documents',
+    type: PayoutItemDocumentsDto,
+    example: {
+      remittanceAdvice: DOWNLOAD_EXAMPLE,
+      whtCertificates: [{ ...PARTNER_PAYOUT_EXAMPLE.whtCertificates[0]!, download: DOWNLOAD_EXAMPLE }],
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'payouts.run_invalid_status')
+  async payoutDocuments(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Param('payoutId', ParseUUIDPipe) payoutId: string,
+  ): Promise<PayoutItemDocumentsDto> {
+    const vendorId = await this.query.vendorOfFactory(actor, factoryId);
+    await this.payouts.partnerPayout(vendorId, payoutId);
+    return documentsDto(this.files, await this.payouts.itemDocuments(payoutId, { vendorId }));
+  }
+
+  @Get('payout-schedule')
+  @Can('factory_payables.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.payables.payoutSchedule',
+    summary: 'My payout schedule',
+    description:
+      'Per job (purchase order), newest first: the payout terms the PO keeps and its advance, balance and retention ' +
+      'payables — status, when each becomes payable, what it waits for and the payout that paid it (U-B0.3, D-022, ' +
+      'D-164). The balance opens with the goods receipt at proof of delivery (`balancePending`).',
+    implements: DOCS,
+  })
+  @ApiPaginated(PayoutScheduleJobDto, { example: PAYOUT_SCHEDULE_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async schedule(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: PageQuery,
+  ) {
+    const factory = await this.query.factoryOf(actor, factoryId);
+    const { rows, total } = await this.query.payoutSchedule(factory.id, q);
+    const now = new Date();
+    return {
+      data: rows.map((r) => payoutScheduleDto(r, now)),
+      meta: { page: q.page, perPage: q.perPage, total },
+    };
+  }
+
+  @Get('statement-of-account')
+  @Can('factory_payables.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.payables.statementOfAccount',
+    summary: 'My statement of account',
+    description:
+      'The factory’s account with Packio between two days (default: this month to today, at most 366 days): the ' +
+      'opening balance, every posted entry — goods received, advances applied, payouts, claim deductions, ' +
+      'adjustments — with a running balance, and the closing balance. Excluding VAT (booked at payment, §2); a ' +
+      'positive balance is what Packio owes the factory (U-B0.3, D-022, D-083, D-164).',
+    implements: DOCS,
+  })
+  @ApiSuccess(200, {
+    description: 'Statement of account',
+    type: StatementOfAccountDto,
+    example: STATEMENT_OF_ACCOUNT_EXAMPLE,
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async statementOfAccount(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Query() q: StatementOfAccountQuery,
+  ): Promise<StatementOfAccountDto> {
+    const vendorId = await this.query.vendorOfFactory(actor, factoryId);
+    const today = bangkokDate(new Date());
+    const to = q.to ?? today;
+    const from = q.from ?? `${to.slice(0, 7)}-01`;
+    if (from > to || addCalendarDays(from, 366) < to)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'from', code: 'range', message: 'from ≤ to, at most 366 days' }],
+      });
+    return statementOfAccountDto(factoryId, from, to, await this.query.accountEntries(vendorId, from, to));
   }
 
   @Get('wht-certificates/:certificateId/pdf')

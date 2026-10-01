@@ -1,5 +1,6 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -211,9 +212,38 @@ export const GR_EXAMPLE: GoodsReceiptDto = {
   lines: [LINE_EXAMPLE],
 };
 
+/** What a statement line bills (U-B0.3): the goods-receipt line type, or a claim deduction (D-083). */
+export const BS_LINE_KINDS = [
+  'production',
+  'shipping',
+  'mockup',
+  'design',
+  'reproduction',
+  'deduction',
+] as const;
+
 export class BillingStatementLineDto {
-  @ApiProperty({ type: 'integer', example: 1 })
+  @ApiProperty({ type: 'integer', example: 1, description: 'The line id within the statement' })
   lineNo!: number;
+
+  @ApiProperty({ enum: BS_LINE_KINDS, enumName: 'BillingStatementLineKind', example: 'production' })
+  kind!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'DEVGR-26-00001',
+    description: 'The goods receipt (production) or shipment (shipping) or claim (deduction) the line bills',
+  })
+  reference!: string | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 1000,
+    description: 'Billed quantity: min(delivered, ordered) for production (D-165); null for a deduction',
+  })
+  quantity!: number | null;
 
   @ApiProperty({ example: 'DEVGR-26-00001 กล่องพับ' })
   description!: string;
@@ -227,6 +257,50 @@ export class BillingStatementLineDto {
   @ApiProperty({ example: '8474.40' })
   grossAmount!: string;
 }
+
+/**
+ * The money of a statement (U-B0.3, D-022). Net amounts by line kind; `advanceOffset` is the advance Packio already
+ * paid and applied to this job (P16); `alreadyPaid` what Packio paid on the statement's jobs (advance, balance and
+ * released retention, tax withheld included — the factory holds the 50 ทวิ); `remaining` what Packio still owes
+ * on them (open, eligible and in-run payables, retention held included), VAT included.
+ */
+export class BillingStatementTotalsDto {
+  @ApiProperty({ example: '7920.00' })
+  production!: string;
+
+  @ApiProperty({ example: '40.00' })
+  shipping!: string;
+
+  @ApiProperty({ example: '0.00', description: 'Mock-up, design and reproduction lines' })
+  other!: string;
+
+  @ApiProperty({
+    example: '0.00',
+    description: 'Claim deductions applied to the statement’s payables (D-083)',
+  })
+  deductions!: string;
+
+  @ApiProperty({ example: '7960.00' })
+  net!: string;
+
+  @ApiProperty({ example: '557.20' })
+  vat!: string;
+
+  @ApiProperty({ example: '8517.20' })
+  gross!: string;
+
+  @ApiProperty({ example: '2555.16' })
+  advanceOffset!: string;
+
+  @ApiProperty({ example: '2555.16' })
+  alreadyPaid!: string;
+
+  @ApiProperty({ example: '5962.04' })
+  remaining!: string;
+}
+
+/** Where the factory tax invoice for a statement stands: `none` until one is submitted, else the latest one’s status. */
+export const BS_TAX_INVOICE_STATUSES = ['none', 'recorded', 'validated', 'rejected'] as const;
 
 export class BillingStatementDto {
   @ApiProperty({ format: 'uuid', example: AP_IDS.bs })
@@ -264,6 +338,49 @@ export class BillingStatementDto {
 
   @ApiProperty({ type: [BillingStatementLineDto] })
   lines!: BillingStatementLineDto[];
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-20T10:00:00+07:00' })
+  generatedAt!: string;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+
+  @ApiProperty({ type: BillingStatementTotalsDto })
+  totals!: BillingStatementTotalsDto;
+
+  @ApiProperty({ type: UserRefDto, nullable: true, example: null, description: 'Who confirmed it' })
+  confirmedBy!: UserRefDto | null;
+
+  @ApiProperty({
+    type: 'integer',
+    isArray: true,
+    example: [],
+    description: 'Line numbers the factory named in its latest dispute (empty when none were named)',
+  })
+  disputedLineNos!: number[];
+
+  @ApiProperty({
+    enum: BS_TAX_INVOICE_STATUSES,
+    enumName: 'BillingStatementTaxInvoiceStatus',
+    example: 'none',
+  })
+  taxInvoiceStatus!: string;
+
+  @ApiProperty({
+    enum: INPUT_VAT_STATUSES,
+    enumName: 'InputVatStatus',
+    nullable: true,
+    example: null,
+    description: 'Input VAT status of the latest tax invoice (§2); null before one is submitted',
+  })
+  inputVatStatus!: string | null;
+
+  @ApiProperty({
+    type: () => VendorInvoiceDto,
+    isArray: true,
+    description: 'The factory tax invoices submitted for the statement, newest first (void ones left out)',
+  })
+  taxInvoices!: VendorInvoiceDto[];
 }
 
 export const BS_EXAMPLE: BillingStatementDto = {
@@ -281,12 +398,34 @@ export const BS_EXAMPLE: BillingStatementDto = {
   lines: [
     {
       lineNo: 1,
+      kind: 'production',
+      reference: 'DEVGR-26-00001',
+      quantity: 1000,
       description: 'DEVGR-26-00001 กล่องพับ',
       netAmount: '7920.00',
       vatAmount: '554.40',
       grossAmount: '8474.40',
     },
   ],
+  generatedAt: '2026-10-20T10:00:00+07:00',
+  currency: 'THB',
+  totals: {
+    production: '7920.00',
+    shipping: '40.00',
+    other: '0.00',
+    deductions: '0.00',
+    net: '7960.00',
+    vat: '557.20',
+    gross: '8517.20',
+    advanceOffset: '2555.16',
+    alreadyPaid: '2555.16',
+    remaining: '5962.04',
+  },
+  confirmedBy: null,
+  disputedLineNos: [],
+  taxInvoiceStatus: 'none',
+  inputVatStatus: null,
+  taxInvoices: [],
 };
 
 export class DisputeStatementDto {
@@ -295,6 +434,31 @@ export class DisputeStatementDto {
   @MinLength(3)
   @MaxLength(1000)
   note!: string;
+
+  @ApiPropertyOptional({
+    type: 'integer',
+    isArray: true,
+    example: [2],
+    description: 'The disputed lines (`lineNo` of the statement), when the factory can name them (U-B0.3)',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  lineNos?: number[];
+}
+
+export class StatementListQuery extends PageQuery {
+  @ApiPropertyOptional({ format: 'uuid', description: 'Factory (staff only; factories see their own)' })
+  @IsOptional()
+  @IsUUID()
+  factoryId?: string;
+
+  @ApiPropertyOptional({ enum: BS_STATUSES, enumName: 'BillingStatementStatus' })
+  @IsOptional()
+  @IsIn(BS_STATUSES)
+  status?: (typeof BS_STATUSES)[number];
 }
 
 export class CaptureTaxInvoiceDto {
@@ -328,7 +492,12 @@ export class CaptureTaxInvoiceDto {
   @IsIn(['e_tax', 'pdf_upload'])
   source!: 'e_tax' | 'pdf_upload';
 
-  @ApiPropertyOptional({ format: 'uuid', description: 'The uploaded PDF / e-Tax file (purpose `document`)' })
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description:
+      'The uploaded PDF / e-Tax file (purpose `document`). For `e_tax` this file is the e-Tax document itself; its ' +
+      'reference is `vendorInvoiceNo` — there is no separate e-Tax reference field (U-B0.3).',
+  })
   @IsOptional()
   @IsUUID()
   fileId?: string;

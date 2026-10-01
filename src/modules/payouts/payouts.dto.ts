@@ -1,3 +1,5 @@
+import { PAYOUT_TRIGGERS } from '@modules/partners/configuration/configuration.dto';
+import { PAYABLE_SOURCES, PAYABLE_STATUSES, PO_STATUSES } from '@modules/payables/payables.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { DownloadUrlDto } from '@platform/files/files.dto';
 import { Type } from 'class-transformer';
@@ -31,6 +33,8 @@ export const RUN_STATUSES = [
 export const PAYOUT_KINDS = ['advance', 'balance', 'retention_release', 'vendor_bill'] as const;
 export const ITEM_STATUSES = ['included', 'paid', 'failed', 'excluded'] as const;
 export const WHT_FORMS = ['pnd3', 'pnd53'] as const;
+/** What a factory sees of its payout items (U-B0.3): an excluded item never reaches it. */
+export const PARTNER_ITEM_STATUSES = ['included', 'paid', 'failed'] as const;
 
 export const PAYOUT_IDS = {
   run: '0192f3a0-7c1e-7d2a-9b1f-000000530101',
@@ -412,6 +416,28 @@ export class PartnerPayoutDto {
 
   @ApiProperty({ type: [IssuedWhtCertificateDto] })
   whtCertificates!: IssuedWhtCertificateDto[];
+
+  @ApiProperty({
+    enum: PARTNER_ITEM_STATUSES,
+    enumName: 'PartnerPayoutStatus',
+    example: 'paid',
+    description:
+      '`included`: in a payout run not yet confirmed by the bank; `failed`: the transfer failed (U-B0.3)',
+  })
+  status!: string;
+
+  @ApiProperty({ format: 'date', example: '2026-10-27', description: 'The run’s planned transfer date' })
+  payOn!: string;
+
+  @ApiProperty({
+    example: '0.00',
+    description:
+      'Claim deductions (D-083) applied to the payables this payout settles; not part of `retentionAmount`',
+  })
+  claimDeductionAmount!: string;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
 }
 
 export const PARTNER_PAYOUT_EXAMPLE: PartnerPayoutDto = {
@@ -437,6 +463,10 @@ export const PARTNER_PAYOUT_EXAMPLE: PartnerPayoutDto = {
       pdfReady: true,
     },
   ],
+  status: 'paid',
+  payOn: '2026-10-27',
+  claimDeductionAmount: '0.00',
+  currency: 'THB',
 };
 
 export class PayoutStatementQuery {
@@ -446,6 +476,360 @@ export class PayoutStatementQuery {
   from?: string;
 
   @ApiPropertyOptional({ format: 'date', example: '2026-10-31' })
+  @IsOptional()
+  @Matches(DAY)
+  to?: string;
+
+  @ApiPropertyOptional({
+    enum: PARTNER_ITEM_STATUSES,
+    enumName: 'PartnerPayoutStatus',
+    description:
+      'Default `paid`; dates filter the paid date of paid items, the planned date of the others (U-B0.3)',
+  })
+  @IsOptional()
+  @IsIn(PARTNER_ITEM_STATUSES)
+  status?: (typeof PARTNER_ITEM_STATUSES)[number];
+}
+
+/** One payable a payout settles (U-B0.3). */
+export class PayoutAllocationDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-000000530201' })
+  payableId!: string;
+
+  @ApiProperty({ enum: PAYABLE_SOURCES, enumName: 'PayableSource', example: 'goods_receipt' })
+  source!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'DEVPO-26-00001' })
+  poNumber!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'J-2610-0001' })
+  jobNo!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'DEV-2610-0001' })
+  orderCode!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'DEVGR-26-00001' })
+  grNumber!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'DEVBS-26-00001' })
+  bsNumber!: string | null;
+
+  @ApiProperty({ example: '5560.00' })
+  netAmount!: string;
+
+  @ApiProperty({ example: '389.20' })
+  vatAmount!: string;
+}
+
+export class PayoutClaimDeductionDto {
+  @ApiProperty({ type: String, nullable: true, example: 'DEVCL-26-00001' })
+  claimNo!: string | null;
+
+  @ApiProperty({ example: '500.00' })
+  amount!: string;
+}
+
+/** One payout of the factory with what it settles (U-B0.3, D-022, D-164, D-166). */
+export class PartnerPayoutDetailDto extends PartnerPayoutDto {
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'B123456',
+    description: 'The bank’s transfer reference',
+  })
+  bankRef!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Why the transfer failed' })
+  failureReason!: string | null;
+
+  @ApiProperty({
+    example: true,
+    description: 'A paid payout has a remittance advice: `partner.payables.payoutDocuments` downloads it',
+  })
+  remittanceAdviceAvailable!: boolean;
+
+  @ApiProperty({ type: [PayoutAllocationDto] })
+  allocations!: PayoutAllocationDto[];
+
+  @ApiProperty({ type: [PayoutClaimDeductionDto] })
+  claimDeductions!: PayoutClaimDeductionDto[];
+}
+
+export const PARTNER_PAYOUT_DETAIL_EXAMPLE: PartnerPayoutDetailDto = {
+  ...PARTNER_PAYOUT_EXAMPLE,
+  bankRef: 'B123456',
+  failureReason: null,
+  remittanceAdviceAvailable: true,
+  allocations: [
+    {
+      payableId: '0192f3a0-7c1e-7d2a-9b1f-000000530201',
+      source: 'goods_receipt',
+      poNumber: 'DEVPO-26-00001',
+      jobNo: 'J-2610-0001',
+      orderCode: 'DEV-2610-0001',
+      grNumber: 'DEVGR-26-00001',
+      bsNumber: 'DEVBS-26-00001',
+      netAmount: '5560.00',
+      vatAmount: '389.20',
+    },
+  ],
+  claimDeductions: [],
+};
+
+/** What a payable item still waits for before the factory is paid (U-B0.3). */
+export const PAYOUT_WAITING_FOR = ['eligibility_date', 'payout_run', 'bank_confirmation'] as const;
+
+export class PayoutScheduleItemDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-000000530201' })
+  id!: string;
+
+  @ApiProperty({
+    enum: PAYABLE_SOURCES,
+    enumName: 'PayableSource',
+    example: 'goods_receipt',
+    description: '`advance`, `goods_receipt` (the balance) or `retention` (D-022, D-164)',
+  })
+  source!: string;
+
+  @ApiProperty({ enum: PAYABLE_STATUSES, enumName: 'PayableStatus', example: 'open' })
+  status!: string;
+
+  @ApiProperty({ example: '5560.00' })
+  netAmount!: string;
+
+  @ApiProperty({ example: '389.20' })
+  vatAmount!: string;
+
+  @ApiProperty({ example: '5560.00', description: 'Still to pay (after claim deductions)' })
+  openNetAmount!: string;
+
+  @ApiProperty({ example: '389.20' })
+  openVatAmount!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-20T10:00:00+07:00' })
+  eligibleAt!: string | null;
+
+  @ApiProperty({
+    enum: PAYOUT_WAITING_FOR,
+    enumName: 'PayoutWaitingFor',
+    nullable: true,
+    example: 'eligibility_date',
+    description: 'null once paid or cancelled',
+  })
+  waitingFor!: string | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true, example: null })
+  paidOn!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'The payout that paid it (`partner.payables.getPayout`)',
+  })
+  payoutId!: string | null;
+}
+
+/** The payout terms a job's PO keeps (D-022, D-164): the factory's approved policy, else the platform defaults. */
+export class PayoutTermsDto {
+  @ApiProperty({ example: '30.0000' })
+  advancePct!: string;
+
+  @ApiProperty({ enum: PAYOUT_TRIGGERS, enumName: 'PayoutTrigger', example: 'job_accepted' })
+  advanceTrigger!: string;
+
+  @ApiProperty({ enum: PAYOUT_TRIGGERS, enumName: 'PayoutTrigger', example: 'after_pod_and_claim_window' })
+  balanceTrigger!: string;
+
+  @ApiProperty({ type: 'integer', example: 7 })
+  claimWindowDays!: number;
+
+  @ApiProperty({ example: '5.0000' })
+  retentionPct!: string;
+
+  @ApiProperty({ type: 'integer', example: 30 })
+  retentionReleaseDays!: number;
+
+  @ApiProperty({ type: 'integer', example: 30 })
+  paymentTermsDays!: number;
+}
+
+export class PayoutScheduleJobDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-000000530301' })
+  purchaseOrderId!: string;
+
+  @ApiProperty({ example: 'DEVPO-26-00001' })
+  poNumber!: string;
+
+  @ApiProperty({ enum: PO_STATUSES, enumName: 'PoStatus', example: 'accepted' })
+  poStatus!: string;
+
+  @ApiProperty({ example: 'J-2610-0001' })
+  jobNo!: string;
+
+  @ApiProperty({ example: 'DEV-2610-0001' })
+  orderCode!: string;
+
+  @ApiProperty({ type: PayoutTermsDto })
+  terms!: PayoutTermsDto;
+
+  @ApiProperty({
+    example: true,
+    description:
+      'The balance is not payable yet: it opens with the goods receipt at proof of delivery (D-165)',
+  })
+  balancePending!: boolean;
+
+  @ApiProperty({ type: [PayoutScheduleItemDto] })
+  items!: PayoutScheduleItemDto[];
+}
+
+export const PAYOUT_SCHEDULE_EXAMPLE: PayoutScheduleJobDto = {
+  purchaseOrderId: '0192f3a0-7c1e-7d2a-9b1f-000000530301',
+  poNumber: 'DEVPO-26-00001',
+  poStatus: 'accepted',
+  jobNo: 'J-2610-0001',
+  orderCode: 'DEV-2610-0001',
+  terms: {
+    advancePct: '30.0000',
+    advanceTrigger: 'job_accepted',
+    balanceTrigger: 'after_pod_and_claim_window',
+    claimWindowDays: 7,
+    retentionPct: '5.0000',
+    retentionReleaseDays: 30,
+    paymentTermsDays: 30,
+  },
+  balancePending: true,
+  items: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-000000530201',
+      source: 'advance',
+      status: 'paid',
+      netAmount: '2388.00',
+      vatAmount: '167.16',
+      openNetAmount: '0.00',
+      openVatAmount: '0.00',
+      eligibleAt: '2026-10-06T10:00:00+07:00',
+      waitingFor: null,
+      paidOn: '2026-10-07',
+      payoutId: PAYOUT_IDS.item,
+    },
+  ],
+};
+
+/** What moves the factory's balance with Packio (U-B0.3): the journal source of each entry. */
+export const ACCOUNT_ENTRY_KINDS = [
+  'goods_receipt',
+  'advance_offset',
+  'payout',
+  'deduction',
+  'adjustment',
+] as const;
+
+export class StatementOfAccountEntryDto {
+  @ApiProperty({ format: 'date', example: '2026-10-20' })
+  date!: string;
+
+  @ApiProperty({ enum: ACCOUNT_ENTRY_KINDS, enumName: 'AccountEntryKind', example: 'goods_receipt' })
+  kind!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'DEVGR-26-00001',
+    description: 'GR, PO (advance applied), PV or claim number',
+  })
+  reference!: string | null;
+
+  @ApiProperty({ example: '0.00', description: 'Lowers what Packio owes the factory (payments, deductions)' })
+  debit!: string;
+
+  @ApiProperty({ example: '7960.00', description: 'Raises what Packio owes the factory (goods received)' })
+  credit!: string;
+
+  @ApiProperty({ example: '5404.84', description: 'Running balance after the entry' })
+  balance!: string;
+}
+
+/**
+ * The factory's account with Packio (U-B0.3): Packio's posted ledger lines for the factory — factory payables, retention
+ * held, advances and claim receivables (accounting-design §5) — excluding VAT, which Packio books at payment (§2).
+ * A positive balance is what Packio owes the factory.
+ */
+export class StatementOfAccountDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-000000000f01' })
+  factoryId!: string;
+
+  @ApiProperty({ format: 'date', example: '2026-10-01' })
+  from!: string;
+
+  @ApiProperty({ format: 'date', example: '2026-10-31' })
+  to!: string;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+
+  @ApiProperty({ example: '-2388.00', description: 'Balance before `from`' })
+  opening!: string;
+
+  @ApiProperty({ example: '2388.00' })
+  totalDebit!: string;
+
+  @ApiProperty({ example: '7960.00' })
+  totalCredit!: string;
+
+  @ApiProperty({ example: '3184.00' })
+  closing!: string;
+
+  @ApiProperty({ type: [StatementOfAccountEntryDto] })
+  entries!: StatementOfAccountEntryDto[];
+}
+
+export const STATEMENT_OF_ACCOUNT_EXAMPLE: StatementOfAccountDto = {
+  factoryId: '0192f3a0-7c1e-7d2a-9b1f-000000000f01',
+  from: '2026-10-01',
+  to: '2026-10-31',
+  currency: 'THB',
+  opening: '-2388.00',
+  totalDebit: '2388.00',
+  totalCredit: '7960.00',
+  closing: '3184.00',
+  entries: [
+    {
+      date: '2026-10-20',
+      kind: 'goods_receipt',
+      reference: 'DEVGR-26-00001',
+      debit: '0.00',
+      credit: '7960.00',
+      balance: '5572.00',
+    },
+    {
+      date: '2026-10-20',
+      kind: 'advance_offset',
+      reference: 'DEVPO-26-00001',
+      debit: '2388.00',
+      credit: '2388.00',
+      balance: '5572.00',
+    },
+  ],
+};
+
+export class StatementOfAccountQuery {
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-01',
+    description: 'Default: the first day of this month',
+  })
+  @IsOptional()
+  @Matches(DAY)
+  from?: string;
+
+  @ApiPropertyOptional({
+    format: 'date',
+    example: '2026-10-31',
+    description: 'Default: today (Asia/Bangkok)',
+  })
   @IsOptional()
   @Matches(DAY)
   to?: string;

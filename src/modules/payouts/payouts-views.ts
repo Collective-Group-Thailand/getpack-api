@@ -1,12 +1,18 @@
-import { bangkokDate } from '@common/time/bangkok';
+import { MoneyDecimal } from '@common/money/money';
+import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
+import { type PayablesQueryService } from '@modules/payables/payables-query.service';
+import { type PolicySnapshot } from '@modules/payables/purchasing.service';
 
 import {
+  type PartnerPayoutDetailDto,
   type PartnerPayoutDto,
   type PayoutExceptionDto,
   type PayoutItemDto,
   type PayoutRunDto,
+  type PayoutScheduleJobDto,
+  type StatementOfAccountDto,
 } from './payouts.dto';
-import { type PayoutsService, type RunRow } from './payouts.service';
+import { type PartnerPayoutRow, type PayoutsService, type RunRow } from './payouts.service';
 
 type Amount = { toFixed(dp: number): string };
 const m = (v: Amount) => v.toFixed(2);
@@ -67,9 +73,12 @@ export const exceptionDto = (
   failureReason: i.failureReason,
 });
 
-export const partnerPayoutDto = (
-  i: Awaited<ReturnType<PayoutsService['statementOf']>>[number],
-): PartnerPayoutDto => ({
+const deductionsOf = (i: PartnerPayoutRow) =>
+  i.allocations.flatMap((a) =>
+    a.payableItem.deductions.map((d) => ({ claimNo: d.claim?.claimNo ?? null, amount: m(d.amount) })),
+  );
+
+export const partnerPayoutDto = (i: PartnerPayoutRow): PartnerPayoutDto => ({
   id: i.publicId,
   kind: i.kind,
   pvNumber: i.pvNumber,
@@ -92,4 +101,113 @@ export const partnerPayoutDto = (
       whtAmount: m(c.whtAmount),
       pdfReady: c.fileObjectId !== null,
     })),
+  status: i.status,
+  payOn: bangkokDate(i.run.payOn),
+  claimDeductionAmount: deductionsOf(i)
+    .reduce((a, d) => a.add(d.amount), new MoneyDecimal(0))
+    .toFixed(2),
+  currency: 'THB',
 });
+
+/** One payout with the payables it settles and the claim deductions taken from them (U-B0.3). */
+export const partnerPayoutDetailDto = (i: PartnerPayoutRow): PartnerPayoutDetailDto => ({
+  ...partnerPayoutDto(i),
+  bankRef: i.bankRef,
+  failureReason: i.failureReason,
+  remittanceAdviceAvailable: i.status === 'paid' && i.pvNumber !== null,
+  allocations: i.allocations.map((a) => ({
+    payableId: a.payableItem.publicId,
+    source: a.payableItem.source,
+    poNumber: a.payableItem.purchaseOrder?.poNumber ?? null,
+    jobNo: a.payableItem.purchaseOrder?.productionJob.jobNo ?? null,
+    orderCode: a.payableItem.order?.orderCode ?? null,
+    grNumber: a.payableItem.goodsReceipt?.grNumber ?? null,
+    bsNumber: a.payableItem.goodsReceipt?.statementLines[0]?.statement.bsNumber ?? null,
+    netAmount: m(a.netAmount),
+    vatAmount: m(a.vatAmount),
+  })),
+  claimDeductions: deductionsOf(i),
+});
+
+type ScheduleRow = Awaited<ReturnType<PayablesQueryService['payoutSchedule']>>['rows'][number];
+
+const waitingFor = (p: ScheduleRow['payableItems'][number], now: Date) => {
+  if (p.status === 'in_run') return 'bank_confirmation';
+  if (p.status === 'eligible') return 'payout_run';
+  if (p.status === 'open') return p.eligibleAt && p.eligibleAt <= now ? 'payout_run' : 'eligibility_date';
+  return null;
+};
+
+/** A job's payables with the terms its PO keeps (U-B0.3, D-022, D-164). */
+export const payoutScheduleDto = (r: ScheduleRow, now = new Date()): PayoutScheduleJobDto => {
+  const policy = r.payoutPolicy as unknown as PolicySnapshot;
+  return {
+    purchaseOrderId: r.publicId,
+    poNumber: r.poNumber,
+    poStatus: r.status,
+    jobNo: r.productionJob.jobNo,
+    orderCode: r.order.orderCode,
+    terms: {
+      advancePct: new MoneyDecimal(policy.advancePct).toFixed(4),
+      advanceTrigger: policy.advanceTrigger,
+      balanceTrigger: policy.balanceTrigger,
+      claimWindowDays: policy.claimWindowDays,
+      retentionPct: new MoneyDecimal(policy.retentionPct).toFixed(4),
+      retentionReleaseDays: policy.retentionReleaseDays,
+      paymentTermsDays: policy.paymentTermsDays,
+    },
+    balancePending: r.status !== 'cancelled' && r._count.goodsReceipts === 0,
+    items: r.payableItems.map((p) => {
+      const paid = p.allocations[0]?.payoutItem;
+      return {
+        id: p.publicId,
+        source: p.source,
+        status: p.status,
+        netAmount: m(p.netAmount),
+        vatAmount: m(p.vatAmount),
+        openNetAmount: m(p.openNetAmount),
+        openVatAmount: m(p.openVatAmount),
+        eligibleAt: p.eligibleAt ? toBangkokIso(p.eligibleAt) : null,
+        waitingFor: waitingFor(p, now),
+        paidOn: p.status === 'paid' && paid?.paidOn ? bangkokDate(paid.paidOn) : null,
+        payoutId: p.status === 'paid' ? (paid?.publicId ?? null) : null,
+      };
+    }),
+  };
+};
+
+/** The factory's account between two days, with a running balance (U-B0.3). */
+export const statementOfAccountDto = (
+  factoryId: string,
+  from: string,
+  to: string,
+  account: Awaited<ReturnType<PayablesQueryService['accountEntries']>>,
+): StatementOfAccountDto => {
+  let balance = account.opening;
+  let debit = new MoneyDecimal(0);
+  let credit = new MoneyDecimal(0);
+  const entries = account.entries.map((e) => {
+    balance = balance.add(e.credit).sub(e.debit);
+    debit = debit.add(e.debit);
+    credit = credit.add(e.credit);
+    return {
+      date: bangkokDate(e.date),
+      kind: e.kind,
+      reference: e.reference,
+      debit: m(e.debit),
+      credit: m(e.credit),
+      balance: m(balance),
+    };
+  });
+  return {
+    factoryId,
+    from,
+    to,
+    currency: 'THB',
+    opening: m(account.opening),
+    totalDebit: m(debit),
+    totalCredit: m(credit),
+    closing: m(balance),
+    entries,
+  };
+};

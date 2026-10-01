@@ -1646,6 +1646,8 @@ model BillingStatement {
   confirmedByUserId BigInt?                @map("confirmed_by_user_id")
   confirmedAt       DateTime?              @map("confirmed_at") @db.Timestamptz(6)
   disputeNote       String?                @map("dispute_note")
+  /// Lines the factory named in its latest dispute (U-B0.3).
+  disputedLineNos   Int[]                  @default([]) @map("disputed_line_nos") @db.SmallInt
   netAmount         Decimal                @map("net_amount") @db.Decimal(14, 2)
   vatAmount         Decimal                @map("vat_amount") @db.Decimal(14, 2)
   grossAmount       Decimal                @map("gross_amount") @db.Decimal(14, 2)

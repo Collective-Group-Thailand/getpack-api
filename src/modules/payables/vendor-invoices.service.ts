@@ -270,10 +270,13 @@ export class VendorInvoicesService {
     actor: UserActor,
     statementPublicId: string,
     factoryId: bigint | null,
-    decision: { confirm: boolean; note?: string },
+    decision: { confirm: boolean; note?: string; lineNos?: number[] },
   ) {
     return this.prisma.withTx(async (tx) => {
-      const statement = await tx.billingStatement.findUnique({ where: { publicId: statementPublicId } });
+      const statement = await tx.billingStatement.findUnique({
+        where: { publicId: statementPublicId },
+        include: { lines: { select: { lineNo: true } } },
+      });
       if (!statement || (factoryId !== null && statement.factoryId !== factoryId))
         throw new DomainException('http.not_found');
       if (!['generated', 'sent', 'disputed'].includes(statement.status))
@@ -284,6 +287,14 @@ export class VendorInvoicesService {
         throw new DomainException('validation.failed', {
           errors: [{ path: 'note', code: 'required', message: 'a dispute needs a note' }],
         });
+      const lineNos = [...new Set(decision.lineNos ?? [])].sort((a, b) => a - b);
+      const unknown = lineNos.filter((n) => !statement.lines.some((l) => l.lineNo === n));
+      if (unknown.length)
+        throw new DomainException('validation.failed', {
+          errors: [
+            { path: 'lineNos', code: 'unknown_line', message: `not on the statement: ${unknown.join(', ')}` },
+          ],
+        });
       const updated = await tx.billingStatement.update({
         where: { id: statement.id },
         data: decision.confirm
@@ -293,7 +304,12 @@ export class VendorInvoicesService {
               confirmedByUserId: actor.userId,
               rowVersion: { increment: 1 },
             }
-          : { status: 'disputed', disputeNote: decision.note!, rowVersion: { increment: 1 } },
+          : {
+              status: 'disputed',
+              disputeNote: decision.note!,
+              disputedLineNos: lineNos,
+              rowVersion: { increment: 1 },
+            },
       });
       await this.events.record(
         tx,
@@ -306,6 +322,7 @@ export class VendorInvoicesService {
             billingStatementId: statement.publicId,
             bsNumber: statement.bsNumber,
             note: decision.note ?? null,
+            ...(!decision.confirm && { lineNos }),
           },
         },
         actor,

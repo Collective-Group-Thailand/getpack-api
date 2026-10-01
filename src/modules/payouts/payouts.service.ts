@@ -63,6 +63,38 @@ export const RUN_INCLUDE = {
 } as const satisfies Prisma.PayoutRunInclude;
 export type RunRow = Prisma.PayoutRunGetPayload<{ include: typeof RUN_INCLUDE }>;
 
+/** A partner's view of a payout item (U-B0.3): certificates, the bank account, the run date, what it settles. */
+export const PARTNER_PAYOUT_INCLUDE = {
+  whtCertificates: true,
+  vendorBankAccount: { select: { accountNoLast4: true } },
+  run: { select: { payOn: true } },
+  allocations: {
+    orderBy: { id: 'asc' },
+    include: {
+      payableItem: {
+        select: {
+          publicId: true,
+          source: true,
+          purchaseOrder: { select: { poNumber: true, productionJob: { select: { jobNo: true } } } },
+          order: { select: { orderCode: true } },
+          goodsReceipt: {
+            select: {
+              grNumber: true,
+              statementLines: { select: { statement: { select: { bsNumber: true } } }, take: 1 },
+            },
+          },
+          deductions: {
+            where: { status: 'applied', offsetAgainst: 'payable' },
+            select: { amount: true, claim: { select: { claimNo: true } } },
+            orderBy: { id: 'asc' },
+          },
+        },
+      },
+    },
+  },
+} as const satisfies Prisma.PayoutItemInclude;
+export type PartnerPayoutRow = Prisma.PayoutItemGetPayload<{ include: typeof PARTNER_PAYOUT_INCLUDE }>;
+
 /**
  * Factory and vendor payouts (accounting-design §6, D-022, D-093, D-164, D-166): a run selects the payables
  * eligible by the pay date — advances on acceptance, balances after POD and the claim window, released
@@ -781,19 +813,40 @@ export class PayoutsService {
   }
 
   /** What a factory was paid (partner payout statement). */
-  async statementOf(vendorId: bigint, from?: string, to?: string) {
+  /**
+   * A vendor's payout items for its partner statement: paid by default (dates on the paid date), or the items in a
+   * run not yet confirmed / failed (dates on the run's planned date, U-B0.3). Excluded items are internal.
+   */
+  async statementOf(
+    vendorId: bigint,
+    from?: string,
+    to?: string,
+    status: 'included' | 'paid' | 'failed' = 'paid',
+  ) {
+    const range = (from || to) && {
+      ...(from && { gte: dateOnly(from) }),
+      ...(to && { lte: dateOnly(to) }),
+    };
     return this.prisma.payoutItem.findMany({
       where: {
         vendorId,
-        status: 'paid',
-        ...((from || to) && {
-          paidOn: { ...(from && { gte: dateOnly(from) }), ...(to && { lte: dateOnly(to) }) },
-        }),
+        status,
+        ...(range && (status === 'paid' ? { paidOn: range } : { run: { payOn: range } })),
       },
-      include: { whtCertificates: true, vendorBankAccount: { select: { accountNoLast4: true } } },
-      orderBy: { paidOn: 'desc' },
+      include: PARTNER_PAYOUT_INCLUDE,
+      orderBy: status === 'paid' ? [{ paidOn: 'desc' }, { id: 'desc' }] : [{ id: 'desc' }],
       take: 500,
     });
+  }
+
+  /** One payout item of a vendor (U-B0.3); an excluded item is internal (404). */
+  async partnerPayout(vendorId: bigint, publicId: string) {
+    const item = await this.prisma.payoutItem.findFirst({
+      where: { publicId, vendorId, status: { in: ['included', 'paid', 'failed'] } },
+      include: PARTNER_PAYOUT_INCLUDE,
+    });
+    if (!item) throw new DomainException('http.not_found');
+    return item;
   }
 
   /** A 50 ทวิ of a vendor (partner download: the vendor must be the actor's factory's). */
@@ -801,9 +854,12 @@ export class PayoutsService {
    * The documents of a paid payout item (U-B0.3): its 50 ทวิ and the factory remittance advice, rendered and kept
    * on first request (the paid item accepts only that change). 409 before the item is paid.
    */
-  async itemDocuments(runPublicId: string, itemPublicId: string) {
+  async itemDocuments(itemPublicId: string, scope: { runPublicId: string } | { vendorId: bigint }) {
     const item = await this.prisma.payoutItem.findFirst({
-      where: { publicId: itemPublicId, run: { publicId: runPublicId } },
+      where: {
+        publicId: itemPublicId,
+        ...('runPublicId' in scope ? { run: { publicId: scope.runPublicId } } : { vendorId: scope.vendorId }),
+      },
       include: {
         run: true,
         vendor: true,

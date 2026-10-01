@@ -1,9 +1,13 @@
 import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { ScopingService } from '@modules/iam/scoping.service';
+import { dateOnly } from '@modules/ledger/ledger-dates';
 import { Injectable } from '@nestjs/common';
+
+import { INVOICE_INCLUDE } from './vendor-invoices.service';
 
 export const PO_INCLUDE = {
   factory: { select: { publicId: true } },
@@ -21,7 +25,32 @@ export type GrRow = Prisma.GoodsReceiptGetPayload<{ include: typeof GR_INCLUDE }
 
 export const BS_INCLUDE = {
   factory: { select: { publicId: true } },
-  lines: { orderBy: { lineNo: 'asc' } },
+  confirmedBy: { select: { publicId: true, displayName: true } },
+  lines: {
+    orderBy: { lineNo: 'asc' },
+    include: {
+      goodsReceipt: {
+        select: {
+          grNumber: true,
+          poId: true,
+          lines: {
+            select: {
+              lineNo: true,
+              lineType: true,
+              quantity: true,
+              shipment: { select: { shipmentNo: true } },
+            },
+          },
+        },
+      },
+      vendorDeduction: { select: { claim: { select: { claimNo: true } } } },
+    },
+  },
+  vendorInvoices: {
+    where: { status: { not: 'void' } },
+    include: INVOICE_INCLUDE,
+    orderBy: { createdAt: 'desc' },
+  },
 } as const satisfies Prisma.BillingStatementInclude;
 export type BsRow = Prisma.BillingStatementGetPayload<{ include: typeof BS_INCLUDE }>;
 
@@ -33,6 +62,30 @@ export const PAYABLE_INCLUDE = {
 export type PayableRow = Prisma.PayableItemGetPayload<{ include: typeof PAYABLE_INCLUDE }>;
 
 type Page = { page: number; perPage: number };
+
+/** Money of a statement's jobs (U-B0.3), see `BillingStatementTotalsDto`. */
+export interface StatementMoney {
+  deductions: MoneyValue;
+  advanceOffset: MoneyValue;
+  alreadyPaid: MoneyValue;
+  remaining: MoneyValue;
+}
+
+const D = (v: { toString(): string } | null | undefined) => new MoneyDecimal(v ? v.toString() : 0);
+
+/**
+ * The factory's accounts in Packio's ledger (accounting-design §5, the default posting rules): factory payables,
+ * retention held, advances paid and claim receivables. A factory's statement of account reads these lines.
+ */
+export const FACTORY_ACCOUNTS = ['2110', '2130', '1250', '1260'] as const;
+/** Journal source document → statement-of-account entry kind; anything else (manual, reversal) is an adjustment. */
+const ACCOUNT_ENTRY_KIND: Record<string, 'goods_receipt' | 'advance_offset' | 'payout' | 'deduction'> = {
+  goods_receipt: 'goods_receipt',
+  purchase_order: 'advance_offset',
+  payout_item: 'payout',
+  vendor_deduction: 'deduction',
+};
+const round2 = (v: MoneyValue) => v.toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_UP);
 
 /**
  * Reads of the factory AP documents (§6): POs, goods receipts, billing statements and payables. Factory
@@ -117,6 +170,52 @@ export class PayablesQueryService {
     return row;
   }
 
+  /**
+   * What was deducted, offset, paid and is still owed on the jobs (purchase orders) a statement bills (U-B0.3,
+   * D-022, D-164). Paid = paid payout allocations, less the retention held on a balance (paid later as its own
+   * payable, D-164); owed = open, eligible and in-run payables; the advance offset = advances counted against the
+   * balance (P16).
+   */
+  async statementMoney(rows: BsRow[]): Promise<Map<bigint, StatementMoney>> {
+    const posOf = (r: BsRow) => [
+      ...new Set(r.lines.flatMap((l) => (l.goodsReceipt ? [l.goodsReceipt.poId] : []))),
+    ];
+    const poIds = [...new Set(rows.flatMap(posOf))];
+    const payables = poIds.length
+      ? await this.prisma.payableItem.findMany({
+          where: { purchaseOrderId: { in: poIds } },
+          include: {
+            allocations: { include: { payoutItem: { select: { status: true } } } },
+            deductions: { where: { status: 'applied', offsetAgainst: 'payable' }, select: { amount: true } },
+          },
+        })
+      : [];
+    const out = new Map<bigint, StatementMoney>();
+    for (const r of rows) {
+      const mine = new Set(posOf(r));
+      const money: StatementMoney = {
+        deductions: D(0),
+        advanceOffset: D(0),
+        alreadyPaid: D(0),
+        remaining: D(0),
+      };
+      for (const p of payables.filter((x) => x.purchaseOrderId !== null && mine.has(x.purchaseOrderId))) {
+        for (const d of p.deductions) money.deductions = money.deductions.add(D(d.amount));
+        if (p.source === 'advance' && (p.status === 'paid' || p.status === 'in_run'))
+          money.advanceOffset = money.advanceOffset.add(D(p.netAmount)).add(D(p.vatAmount));
+        if (['open', 'eligible', 'in_run'].includes(p.status))
+          money.remaining = money.remaining.add(D(p.openNetAmount)).add(D(p.openVatAmount));
+        for (const a of p.allocations.filter((x) => x.payoutItem.status === 'paid')) {
+          const gross = D(a.netAmount).add(D(a.vatAmount));
+          const held = p.source === 'goods_receipt' ? round2(gross.mul(D(p.retentionPct)).div(100)) : D(0);
+          money.alreadyPaid = money.alreadyPaid.add(gross.sub(held));
+        }
+      }
+      out.set(r.id, money);
+    }
+    return out;
+  }
+
   async payables(q: Page & { status?: Prisma.PayableItemWhereInput['status']; vendorId?: string }) {
     const where: Prisma.PayableItemWhereInput = {
       ...(q.status && { status: q.status }),
@@ -133,6 +232,130 @@ export class PayablesQueryService {
       this.prisma.payableItem.count({ where }),
     ]);
     return { rows, total };
+  }
+
+  /**
+   * The payables of a factory's jobs (U-B0.3, D-022, D-164): one row per purchase order, newest first, with each
+   * advance / balance / retention payable and the payout that paid it.
+   */
+  async payoutSchedule(factoryId: bigint, q: Page) {
+    const where: Prisma.PurchaseOrderWhereInput = { factoryId };
+    const [rows, total] = await Promise.all([
+      this.prisma.purchaseOrder.findMany({
+        where,
+        include: {
+          productionJob: { select: { jobNo: true } },
+          order: { select: { orderCode: true } },
+          _count: { select: { goodsReceipts: true } },
+          payableItems: {
+            where: { source: { in: ['advance', 'goods_receipt', 'retention'] } },
+            orderBy: { id: 'asc' },
+            include: {
+              allocations: {
+                where: { payoutItem: { status: 'paid' } },
+                include: { payoutItem: { select: { publicId: true, paidOn: true } } },
+                orderBy: { id: 'desc' },
+              },
+            },
+          },
+        },
+        orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
+        skip: (q.page - 1) * q.perPage,
+        take: q.perPage,
+      }),
+      this.prisma.purchaseOrder.count({ where }),
+    ]);
+    return { rows, total };
+  }
+
+  /**
+   * The factory's posted ledger lines between two days (U-B0.3): factory payables, retention held, advances and claim
+   * receivables (accounting-design §5), one entry per journal, with the balance before `from`.
+   */
+  async accountEntries(vendorId: bigint, from: string, to: string) {
+    const base: Prisma.JournalLineWhereInput = {
+      vendorId,
+      account: { code: { in: [...FACTORY_ACCOUNTS] } },
+      journalEntry: { status: 'posted' },
+    };
+    const [before, lines] = await Promise.all([
+      this.prisma.journalLine.aggregate({
+        where: { ...base, entryDate: { lt: dateOnly(from) } },
+        _sum: { debit: true, credit: true },
+      }),
+      this.prisma.journalLine.findMany({
+        where: { ...base, entryDate: { gte: dateOnly(from), lte: dateOnly(to) } },
+        include: {
+          journalEntry: {
+            select: {
+              sourceDocumentType: true,
+              sourceDocumentNo: true,
+              sourceDocumentPublicId: true,
+              reversesEntryId: true,
+            },
+          },
+        },
+        orderBy: [{ entryDate: 'asc' }, { journalEntryId: 'asc' }, { lineNo: 'asc' }],
+        take: 5000,
+      }),
+    ]);
+    const deductionIds = [
+      ...new Set(
+        lines.flatMap((l) =>
+          l.journalEntry.sourceDocumentType === 'vendor_deduction' && l.journalEntry.sourceDocumentPublicId
+            ? [l.journalEntry.sourceDocumentPublicId]
+            : [],
+        ),
+      ),
+    ];
+    const claims = deductionIds.length
+      ? await this.prisma.vendorDeduction.findMany({
+          where: { publicId: { in: deductionIds } },
+          select: { publicId: true, claim: { select: { claimNo: true } } },
+        })
+      : [];
+    const claimNo = new Map(claims.map((c) => [c.publicId, c.claim?.claimNo ?? null]));
+    const entries: {
+      journalEntryId: bigint;
+      date: Date;
+      kind: (typeof ACCOUNT_ENTRY_KIND)[keyof typeof ACCOUNT_ENTRY_KIND] | 'adjustment';
+      reference: string | null;
+      debit: MoneyValue;
+      credit: MoneyValue;
+    }[] = [];
+    for (const l of lines) {
+      let e = entries.at(-1);
+      if (e?.journalEntryId !== l.journalEntryId) {
+        const j = l.journalEntry;
+        const type = j.sourceDocumentType ?? '';
+        e = {
+          journalEntryId: l.journalEntryId,
+          date: l.entryDate,
+          kind:
+            j.reversesEntryId === null && Object.hasOwn(ACCOUNT_ENTRY_KIND, type)
+              ? ACCOUNT_ENTRY_KIND[type]!
+              : 'adjustment',
+          reference:
+            type === 'vendor_deduction'
+              ? (claimNo.get(j.sourceDocumentPublicId ?? '') ?? null)
+              : (j.sourceDocumentNo ?? null),
+          debit: D(0),
+          credit: D(0),
+        };
+        entries.push(e);
+      }
+      e.debit = e.debit.add(D(l.debit));
+      e.credit = e.credit.add(D(l.credit));
+    }
+    return { opening: D(before._sum.credit).sub(D(before._sum.debit)), entries };
+  }
+
+  /** A factory the actor may see (U-B0.3). */
+  async factoryOf(actor: Actor, factoryPublicId: string) {
+    const factory = await this.prisma.factory.findUnique({ where: { publicId: factoryPublicId } });
+    if (!factory) throw new DomainException('http.not_found');
+    await this.scoping.assertInScope(actor, 'factory', factory.id);
+    return factory;
   }
 
   /** The vendor behind a factory the actor may see (partner payout statements, 50 ทวิ). */
