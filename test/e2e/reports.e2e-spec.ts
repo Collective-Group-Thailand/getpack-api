@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { MoneyDecimal } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
 import { readObject } from '@modules/payouts/read-object';
@@ -138,6 +139,46 @@ describe('operational reports (e2e, B6.2)', () => {
       rows: { groupCode: string; gross: string; groupStatus: string }[];
     };
     expect(preview.filters.from).toBe(`${month}-01`);
+    // U-B0.3: the totals row is computed over every row; the catalogue carries the menu group.
+    const totalled = (
+      await as(ctx, admin).get(`/v1/admin/reports/sales/preview?period=month_to_date`).expect(200)
+    ).body as {
+      columns: { key: string; type: string; total: boolean }[];
+      rows: Record<string, string | number | null>[];
+      totals: Record<string, string | number>;
+      truncated: boolean;
+      generatedAt: string;
+    };
+    expect(totalled.generatedAt).toMatch(/\+07:00$/);
+    const gross = totalled.columns.find((c) => c.key === 'gross')!;
+    expect(gross.total).toBe(true);
+    if (!totalled.truncated)
+      expect(totalled.totals['gross']).toBe(
+        totalled.rows.reduce((a, r) => a.add(String(r['gross'] ?? '0')), new MoneyDecimal(0)).toFixed(2),
+      );
+    expect(totalled.columns.filter((c) => c.type === 'text').every((c) => !c.total)).toBe(true);
+    expect(all.every((d) => typeof (d as unknown as { group: string }).group === 'string')).toBe(true);
+
+    // U-B0.3: a staff list exported as a file, behind the list's permission and reports.export.
+    const file = (
+      await as(ctx, admin)
+        .post('/v1/admin/exports', {
+          resource: 'orders',
+          format: 'csv',
+          query: { status: 'paid_for_production' },
+        })
+        .expect(200)
+    ).body as { fileId: string; url: string; rows: number; truncated: boolean };
+    expect(file).toMatchObject({ url: expect.any(String), truncated: false });
+    await as(ctx, admin)
+      .post('/v1/admin/exports', { resource: 'orders', format: 'csv', query: { status: 'nope' } })
+      .expect(422);
+    await as(ctx, await staffToken(ctx, 'cs'))
+      .post('/v1/admin/exports', { resource: 'orders', format: 'xlsx' })
+      .expect(403);
+    expect(
+      await ctx.prisma.auditLog.count({ where: { action: 'export.generated', resourceType: 'orders' } }),
+    ).toBeGreaterThan(0);
     const mine = preview.rows.find((r) => r.groupCode === groupCode)!;
     const order = await ctx.prisma.order.findFirstOrThrow({ where: { orderGroup: { groupCode } } });
     expect(mine).toMatchObject({ gross: order.grossAmount.toFixed(2), groupStatus: 'in_progress' });

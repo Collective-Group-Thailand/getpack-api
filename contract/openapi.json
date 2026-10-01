@@ -19553,6 +19553,41 @@
         ],
         "type": "object"
       },
+      "CreateListExportDto": {
+        "properties": {
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportFormat"
+              }
+            ],
+            "example": "xlsx"
+          },
+          "query": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The list’s filters (its URL parameters); unknown ones are ignored",
+            "example": {
+              "status": "in_production"
+            },
+            "type": "object"
+          },
+          "resource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListExportResource"
+              }
+            ],
+            "example": "orders"
+          }
+        },
+        "required": [
+          "resource",
+          "format"
+        ],
+        "type": "object"
+      },
       "CreateMachineDto": {
         "properties": {
           "details": {
@@ -32465,6 +32500,16 @@
         ],
         "type": "object"
       },
+      "ListExportResource": {
+        "enum": [
+          "orders",
+          "customers",
+          "companies",
+          "shipments",
+          "claims"
+        ],
+        "type": "string"
+      },
       "LocaleCode": {
         "enum": [
           "th",
@@ -44748,6 +44793,11 @@
             "example": "รวมทั้งสิ้น",
             "type": "string"
           },
+          "total": {
+            "description": "Added up in the totals row (money and counts)",
+            "example": true,
+            "type": "boolean"
+          },
           "type": {
             "allOf": [
               {
@@ -44761,7 +44811,8 @@
           "key",
           "labelTh",
           "labelEn",
-          "type"
+          "type",
+          "total"
         ],
         "type": "object"
       },
@@ -44816,6 +44867,14 @@
             },
             "type": "array"
           },
+          "group": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportGroup"
+              }
+            ],
+            "example": "sales"
+          },
           "key": {
             "allOf": [
               {
@@ -44835,6 +44894,7 @@
         },
         "required": [
           "key",
+          "group",
           "nameTh",
           "nameEn",
           "description",
@@ -44983,6 +45043,15 @@
         ],
         "type": "string"
       },
+      "ReportGroup": {
+        "enum": [
+          "sales",
+          "finance",
+          "marketing",
+          "operations"
+        ],
+        "type": "string"
+      },
       "ReportKey": {
         "enum": [
           "sales",
@@ -45010,6 +45079,11 @@
           },
           "filters": {
             "$ref": "#/components/schemas/ResolvedReportFiltersDto"
+          },
+          "generatedAt": {
+            "example": "2026-11-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
           },
           "reportKey": {
             "allOf": [
@@ -45041,6 +45115,20 @@
             },
             "type": "array"
           },
+          "totals": {
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number"
+              ]
+            },
+            "description": "Sum of every row of the report (not only the previewed ones) for the totalled columns",
+            "example": {
+              "gross": "10700.00",
+              "quantity": 1000
+            },
+            "type": "object"
+          },
           "truncated": {
             "description": "More rows than the preview limit (200): export the file for all of them",
             "example": false,
@@ -45052,7 +45140,9 @@
           "filters",
           "columns",
           "rows",
-          "truncated"
+          "truncated",
+          "totals",
+          "generatedAt"
         ],
         "type": "object"
       },
@@ -151595,6 +151685,209 @@
         ]
       }
     },
+    "/v1/admin/exports": {
+      "post": {
+        "description": "Orders, customers, companies, shipments or claims with the list’s filters as XLSX or CSV (formula-safe), up to 10000 rows, served by a 5-minute signed URL. Needs the list’s read permission and `reports.export`; contact details are left out of the file (PDPA). Audited (`export.generated`). Reports export through `admin.reports.export`.\n\nImplements: D-033, D-111.",
+        "operationId": "admin.exports.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "format": "xlsx",
+                    "query": {
+                      "status": "in_production"
+                    },
+                    "resource": "orders"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateListExportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-01T10:05:00+07:00",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000f11f",
+                  "rows": 1250,
+                  "truncated": false,
+                  "url": "https://packio-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuditExportDto"
+                }
+              }
+            },
+            "description": "Export ready",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export a staff list",
+        "tags": [
+          "admin.reports"
+        ],
+        "x-required-permissions": [
+          "reports.export"
+        ]
+      }
+    },
     "/v1/admin/factories": {
       "get": {
         "description": "Filter by status; `q` searches code, names and tax id.\n\nImplements: D-011, D-041, D-171.",
@@ -217731,6 +218024,7 @@
                         "key": "gross",
                         "labelEn": "Gross",
                         "labelTh": "รวมทั้งสิ้น",
+                        "total": true,
                         "type": "money"
                       }
                     ],
@@ -217751,6 +218045,7 @@
                       "xlsx",
                       "csv"
                     ],
+                    "group": "sales",
                     "key": "sales",
                     "nameEn": "Sales register",
                     "nameTh": "รายงานยอดขาย"
@@ -218240,6 +218535,7 @@
                       "key": "gross",
                       "labelEn": "Gross",
                       "labelTh": "รวมทั้งสิ้น",
+                      "total": true,
                       "type": "money"
                     }
                   ],
@@ -218247,6 +218543,7 @@
                     "from": "2026-10-01",
                     "to": "2026-10-31"
                   },
+                  "generatedAt": "2026-11-01T09:00:00+07:00",
                   "reportKey": "sales",
                   "rows": [
                     {
@@ -218255,6 +218552,10 @@
                       "quantity": 1000
                     }
                   ],
+                  "totals": {
+                    "gross": "10700.00",
+                    "quantity": 1000
+                  },
                   "truncated": false
                 },
                 "schema": {

@@ -1,5 +1,6 @@
 import { type Type } from '@nestjs/common';
 
+import { AdminListExportsController } from './list-exports.controller';
 import {
   AdminReportRunsController,
   AdminReportSchedulesController,
@@ -10,4 +11,5 @@ export const REPORTS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminReportsController,
   AdminReportRunsController,
   AdminReportSchedulesController,
+  AdminListExportsController,
 ];

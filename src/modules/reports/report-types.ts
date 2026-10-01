@@ -24,7 +24,31 @@ export interface ReportColumn {
   labelTh: string;
   labelEn: string;
   type: ColumnType;
+  /** Summed in the totals row; default: money and integer columns (U-B0.3). */
+  total?: boolean;
 }
+
+/** Whether a column is added up in the totals row: money and counts, unless the column says not to. */
+export const isTotalled = (c: ReportColumn): boolean =>
+  c.total ?? (c.type === 'money' || c.type === 'integer');
+
+/** The menu group of each report (U-B0.3); the frontend owns the label. */
+export const REPORT_GROUPS = ['sales', 'finance', 'marketing', 'operations'] as const;
+export type ReportGroup = (typeof REPORT_GROUPS)[number];
+export const GROUP_OF: Record<string, ReportGroup> = {
+  sales: 'sales',
+  orders: 'sales',
+  quotations: 'sales',
+  sales_tax: 'finance',
+  payments_by_channel: 'finance',
+  ar_aging: 'finance',
+  ap_aging: 'finance',
+  payout_history: 'finance',
+  points_liability: 'finance',
+  campaign_usage: 'marketing',
+  factory_scorecards: 'operations',
+  claims: 'operations',
+};
 
 export const FILTER_KINDS = ['range', 'as_of', 'month', 'enum', 'uuid'] as const;
 export type FilterKind = (typeof FILTER_KINDS)[number];

@@ -1,5 +1,6 @@
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import {
   type Prisma,
@@ -21,6 +22,7 @@ import { reportOf, REPORTS } from './definitions';
 import { type FilterError, resolveFilters } from './report-filters';
 import { nextRunAt, type ScheduleTiming } from './report-schedule';
 import {
+  isTotalled,
   type ReportContext,
   type ReportDefinition,
   type ReportRow,
@@ -106,14 +108,22 @@ export class ReportsService implements OnModuleInit {
     const filters = this.resolve(def, raw);
     const rows: ReportRow[] = [];
     let truncated = false;
+    // Totals cover every row of the report, not only the previewed ones (the screen never adds money up).
+    const summed = def.columns.filter(isTotalled);
+    const sums = new Map(summed.map((c) => [c.key, new MoneyDecimal(0)]));
     for await (const row of def.rows(this.context(filters))) {
-      if (rows.length === PREVIEW_MAX_ROWS) {
-        truncated = true;
-        break;
+      for (const c of summed) {
+        const v = row[c.key];
+        if (typeof v === 'number' || (typeof v === 'string' && v !== ''))
+          sums.set(c.key, sums.get(c.key)!.add(v));
       }
-      rows.push(row);
+      if (rows.length === PREVIEW_MAX_ROWS) truncated = true;
+      else rows.push(row);
     }
-    return { def, filters, rows, truncated };
+    const totals: ReportRow = {};
+    for (const c of summed)
+      totals[c.key] = c.type === 'money' ? formatMoney(sums.get(c.key)!) : sums.get(c.key)!.toNumber();
+    return { def, filters, rows, truncated, totals, generatedAt: new Date() };
   }
 
   // --- runs ------------------------------------------------------------------------------------------------

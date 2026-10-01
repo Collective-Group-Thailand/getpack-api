@@ -47,6 +47,8 @@ export class ReportColumnDto {
 
   @ApiProperty({ enum: COLUMN_TYPES, enumName: 'ReportColumnType', example: 'money' })
   type!: string;
+  @ApiProperty({ example: true, description: 'Added up in the totals row (money and counts)' })
+  total!: boolean;
 }
 
 export class ReportFilterDefDto {
@@ -82,6 +84,13 @@ export class ReportFilterDefDto {
 export class ReportDefinitionDto {
   @ApiProperty({ enum: REPORT_KEYS, enumName: 'ReportKey', example: 'sales' })
   key!: string;
+
+  @ApiProperty({
+    enum: ['sales', 'finance', 'marketing', 'operations'],
+    enumName: 'ReportGroup',
+    example: 'sales',
+  })
+  group!: string;
 
   @ApiProperty({ example: 'รายงานยอดขาย' })
   nameTh!: string;
@@ -274,6 +283,16 @@ export class ReportPreviewDto {
     description: 'More rows than the preview limit (200): export the file for all of them',
   })
   truncated!: boolean;
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: ['string', 'number'] },
+    example: { gross: '10700.00', quantity: 1000 },
+    description: 'Sum of every row of the report (not only the previewed ones) for the totalled columns',
+  })
+  totals!: Record<string, string | number>;
+
+  @ApiProperty({ format: 'date-time', example: '2026-11-01T09:00:00+07:00' })
+  generatedAt!: string;
 }
 
 export class CreateReportExportDto {

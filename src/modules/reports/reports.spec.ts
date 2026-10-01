@@ -1,7 +1,9 @@
 import ExcelJS from 'exceljs';
 
+import { REPORTS } from './definitions';
 import { periodRange, resolveFilters } from './report-filters';
 import { formatTimeOfDay, nextRunAt, parseTimeOfDay } from './report-schedule';
+import { GROUP_OF, isTotalled } from './report-types';
 import { type ReportFilter, type ReportRow } from './report-types';
 import { csvCell, writeReport } from './report-writer';
 
@@ -145,5 +147,15 @@ describe('report writer (B6.2)', () => {
     expect(ws.getRow(3).getCell(1).value).toBe(`'=HYPERLINK("http://x")`);
     const about = wb.getWorksheet('About')!;
     expect(about.getRow(3).values).toEqual([undefined, 'Filter: from', '2026-10-01']);
+  });
+});
+
+describe('report totals and groups (U-B0.3)', () => {
+  it('adds up money and counts unless a column opts out, never text, dates or percentages', () => {
+    expect(isTotalled({ key: 'gross', labelTh: '', labelEn: '', type: 'money' })).toBe(true);
+    expect(isTotalled({ key: 'quantity', labelTh: '', labelEn: '', type: 'integer' })).toBe(true);
+    expect(isTotalled({ key: 'seq', labelTh: '', labelEn: '', type: 'integer', total: false })).toBe(false);
+    expect(isTotalled({ key: 'rate', labelTh: '', labelEn: '', type: 'percent' })).toBe(false);
+    for (const r of REPORTS) expect(GROUP_OF[r.key]).toBeDefined();
   });
 });

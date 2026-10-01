@@ -23,7 +23,7 @@ export const SALES_TAX_REPORT: ReportDefinition = {
   permission: 'tax.read',
   filters: [{ key: 'period', kind: 'month', required: true }],
   columns: [
-    col('seq', 'ลำดับ', 'No.', 'integer'),
+    { ...col('seq', 'ลำดับ', 'No.', 'integer'), total: false },
     col('documentDate', 'วันที่', 'Date', 'date'),
     col('documentNo', 'เลขที่เอกสาร', 'Document no.'),
     col('partyName', 'ชื่อผู้ซื้อ', 'Buyer'),

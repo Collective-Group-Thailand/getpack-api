@@ -11,7 +11,13 @@ import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { DownloadUrlDto } from '@platform/files/files.dto';
 
 import { formatTimeOfDay, parseTimeOfDay } from './report-schedule';
-import { type ReportDefinition, type ResolvedFilters } from './report-types';
+import {
+  GROUP_OF,
+  isTotalled,
+  type ReportColumn,
+  type ReportDefinition,
+  type ResolvedFilters,
+} from './report-types';
 import {
   CreateReportExportDto,
   CreateReportScheduleDto,
@@ -32,8 +38,17 @@ function staff(actor: Actor): UserActor {
   return actor;
 }
 
+const columnDto = (c: ReportColumn) => ({
+  key: c.key,
+  labelTh: c.labelTh,
+  labelEn: c.labelEn,
+  type: c.type,
+  total: isTotalled(c),
+});
+
 const definitionDto = (d: ReportDefinition): ReportDefinitionDto => ({
   key: d.key,
+  group: GROUP_OF[d.key] ?? 'operations',
   nameTh: d.nameTh,
   nameEn: d.nameEn,
   description: d.description,
@@ -44,7 +59,7 @@ const definitionDto = (d: ReportDefinition): ReportDefinitionDto => ({
     required: f.required,
     values: f.values ? [...f.values] : null,
   })),
-  columns: d.columns.map((c) => ({ ...c })),
+  columns: d.columns.map(columnDto),
   formats: ['xlsx', 'csv'],
 });
 
@@ -135,12 +150,13 @@ export class AdminReportsController {
     example: [
       {
         key: 'sales',
+        group: 'sales',
         nameTh: 'รายงานยอดขาย',
         nameEn: 'Sales register',
         description: 'Every order of the order groups placed in the period…',
         decisions: ['D-010', 'D-020'],
         filters: [{ key: 'period', kind: 'range', required: true, values: null }],
-        columns: [{ key: 'gross', labelTh: 'รวมทั้งสิ้น', labelEn: 'Gross', type: 'money' }],
+        columns: [{ key: 'gross', labelTh: 'รวมทั้งสิ้น', labelEn: 'Gross', type: 'money', total: true }],
         formats: ['xlsx', 'csv'],
       },
     ],
@@ -165,9 +181,11 @@ export class AdminReportsController {
     example: {
       reportKey: 'sales',
       filters: { from: '2026-10-01', to: '2026-10-31' },
-      columns: [{ key: 'gross', labelTh: 'รวมทั้งสิ้น', labelEn: 'Gross', type: 'money' }],
+      columns: [{ key: 'gross', labelTh: 'รวมทั้งสิ้น', labelEn: 'Gross', type: 'money', total: true }],
       rows: [{ orderCode: 'ORD-2610-00012', gross: '10700.00', quantity: 1000 }],
       truncated: false,
+      totals: { gross: '10700.00', quantity: 1000 },
+      generatedAt: '2026-11-01T09:00:00+07:00',
     },
   })
   @ApiStandardErrors('http.not_found', 'validation.failed')
@@ -176,8 +194,20 @@ export class AdminReportsController {
     @Param('reportKey') reportKey: string,
     @Query() q: ReportFilterQuery,
   ): Promise<ReportPreviewDto> {
-    const { def, filters, rows, truncated } = await this.reports.preview(staff(actor), reportKey, sent(q));
-    return { reportKey: def.key, filters, columns: def.columns.map((c) => ({ ...c })), rows, truncated };
+    const { def, filters, rows, truncated, totals, generatedAt } = await this.reports.preview(
+      staff(actor),
+      reportKey,
+      sent(q),
+    );
+    return {
+      reportKey: def.key,
+      filters,
+      columns: def.columns.map(columnDto),
+      rows,
+      truncated,
+      totals: totals as Record<string, string | number>,
+      generatedAt: toBangkokIso(generatedAt),
+    };
   }
 
   @Post(':reportKey/exports')
