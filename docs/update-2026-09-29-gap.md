@@ -292,6 +292,23 @@ Legacy traced from `/Users/superball/Abbon/Loco_Pack/locopack-web`. Live paths: 
 
 **Outcome (2026-09-30, U-B6 corrugate complete, branch `feat/u-b6-corrugate-calculator`):** C.1 geometry (slice 3), C.2 engines (slices 4–5), C.3 orchestration (slice 6), C.4 sell side shared (slice 1), C.5 price components and C.6 catalogue data (slice 2), C.7 generic quote engine, saved quotes and checkout (slices 1, 7b), C.8 packer (slice 6), C.9 CS endpoints and C.10 factory breakdown (slice 7a), C.11 store calculate (slice 7a), C.12 store configurator (slice 7c), C.13 per-calculator log input (slice 1), C.15 port map (slice 1, §10 in slice 8), C.17 dev fixture (slice 6), C.20 geometry admin (slice 7d) — **met**. C.14 golden cases + `docs/pricing-validation-corrugate.md` — **met, signed off 2026-09-30** (replayed on Locopack staging). C.16 `corrugate` in `SHIPPED_CALCULATORS`, type still seeded `rfq` — **met**. C.19 tag `v0.3.0` — **local tag** (no git remote in this checkout). C.18 tier-B envelopes — out of scope.
 
+## U-B6 service — B2.3 Deliverable 2.3 for service (2026-10-01, planning)
+
+Legacy traced from `legacy/locopack-web` (port map `docs/legacy/05-service-port-map.md`). Legacy has **no service calculator** in the sense of the others: the only standalone service sale is the CS page `cs/service` (`ServiceOrderController`, `service-orders/cs.vue`) where CS types a cost (or, for design, the VAT-inclusive price) and the browser applies `service_locopack_margin` (6.5 %) and 7 % VAT; every other service-like charge is a fee on a product quote (design fees — ported with each calculator; in-order mockups — D-192–D-197 samples). D-100 lists services as instant "from the legacy calculator"; D-194 keeps CS-entered prices with no new formula.
+
+| # | Requirement | Before | Evidence | This session |
+|---|---|---|---|---|
+| V.1 | Service maths (cost → net → gross; gross → net → cost; designer payable) | missing | — | Pure port + Python reference + golden cases (slice 3) |
+| V.2 | Service items | partial | product type `service` (calculator key `service`) seeded `rfq`; catalogue products can be of any type | Catalogue products of type `service`; no rows invented (§8.3 lists legacy names for the business) |
+| V.3 | Factory price path for instant | missing | — | `pl_service_prices` (slice 2) |
+| V.4 | Adapter (no shipment), quote engine without a shipping line | partial | the engine always prepares a shipment | Engine skips shipping when nothing ships (slice 4) |
+| V.5 | `admin.csService.inputData` / `calculate` / `price` (CS amount), `partner.pricingService.calculate`, store calculate | missing | `artwork/mockups.service.ts` notes the calculator is not ported | Slice 4 |
+| V.6 | Validation doc, shipped, type stays `rfq`, release | — | — | Slice 5, `v0.11.0` |
+
+**Proposed decisions (accepted under the user's standing instruction, 2026-10-01):** port map §9 — (1) reproduce exactly legacy's service maths, nothing new (D-194); (2) service items are `service` catalogue products, none invented; (3) instant only through a factory's `pl_service_prices` line, none seeded; (4) a CS endpoint applies the maths server-side to the amount CS enters; (5) margin from Packio's `service` sell table (legacy 6.5 % is a business value to enter), dated VAT; (6) a service quote has no shipping line. Checkout's per-destination shipping of a service order is unchanged (a postcode would pack 0 kg) — recorded for B3.
+
+**Plan (slices):** 1 port map + this analysis (docs) · 2 migration `pl_service_prices`, descriptor · 3 pure port + Python reference + golden cases · 4 loader, adapter, engine "nothing to ship", DTOs, CS / partner / store endpoints, dev fixture, e2e · 5 validation doc, shipped, release `v0.11.0`.
+
 ## U-B6 standard product — B2.3 Deliverable 2.3 for standard product (2026-10-01, planning)
 
 Legacy traced from `legacy/locopack-web` (port map `docs/legacy/05-standard-product-port-map.md`). Live paths: customer `GET api/standard-products/{id}/zipcode/{zip}/step-prices`, `GET …/checkout`, `POST api/standard-products/create-order`; CS `GET cs/standard-products/{id}/get-prices` (`CalculatePrice::getSteps` / `findPrice`, `Utils::costToSalePrice`, `CalculateDelivery`). A standard product is a ready-made SKU of one factory with quantity tiers of **buy** prices; the sell price is a flat Packio margin and VAT, each rounded up to the satang, plus a delivery charge per piece folded into the tier price.
