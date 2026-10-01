@@ -29,6 +29,8 @@ Source: `docs/contract-requests-triage.md` §U-B0.3 (51 ids: 25 admin, 26 partne
 
 Plan: one slice per row group (S1–S14), each with tests (unit for pure rules, e2e per endpoint), `contract:build` + `contract:lint`, `test:int` when the schema changes, `format:check`, and a PROGRESS row. The user asked (2026-10-01) to run U-B0.3 after U-B0.2; decisions it needs are proposed and recorded (D-231…) as before. The open question in the triage — may a factory resolve its own job issue — is answered by a proposed decision in S9.
 
+**Outcome (2026-10-01, U-B0.3 complete, branch `feat/u-b0.3-platform-partner-contract`, tag `v0.6.0`):** rows 1.1–14 delivered in slices S1–S13 (S8 as 8a / 8b, S12 as 12a / 12b), S14 released `v0.6.0`. Decisions D-231 (factory notification channels) and D-232 (a factory resolves the issues it raised). Not built here by decision: `admin.analytics-journeys` (U5.B6, D-219). Per-slice evidence and assumptions are in `docs/PROGRESS.md`.
+
 ## U-B0.2 — `admin.*` commerce & operations contract requests (2026-10-01, planning)
 
 Source: `docs/contract-requests-triage.md` §U-B0.2 (34 ids, 18 `implement here` operations, 140 additive gaps; evidence per row in *Details*). Status is against `v0.4.0`. **Out of U-B0.2 by the triage:** menu entries and `/me` permissions (U-B0.3 rows `admin.menu-entries`, `admin.permissions`), `nextActions` / `allowedActions` on every entity (U-B0.3 cross-cutting), the five other CS calculators (U-B6), claim SLA `slaDueAt` (U2.5, D-199), claim message thread (D-225), tooling waiver (U2.F). Business values come from existing settings or decisions; none is invented.

@@ -40,7 +40,9 @@ No verdict became `reject`. Items moved out of U-B0 scope: `admin.analytics-jour
 
 **U-B0.1 shipped in `v0.4.0` (2026-10-01):** its 49 ids are published (47, most with the mapping in *Details*) or deferred by decision (2: guided help, sample kits — D-223); see *U-B0.1 shipped*. The table above keeps the counts of the triage.
 
-**U-B0.2 shipped in `v0.5.0` (2026-10-01):** its 34 ids are published (most with the mapping in *Details*); see *U-B0.2 shipped*. `allowedActions` / `nextActions` everywhere stay with U-B0.3.
+**U-B0.2 shipped in `v0.5.0` (2026-10-01):** its 34 ids are published (most with the mapping in *Details*); see *U-B0.2 shipped*.
+
+**U-B0.3 shipped in `v0.6.0` (2026-10-01):** 50 of its 51 ids are published (most with the mapping in *Details*); `admin.analytics-journeys` is built in U5.B6 (post-launch, D-219). The three known contract defects and the two B6.3 launch gaps are closed. See *U-B0.3 shipped*. Every row of the triage is now `published` except the three deferred by decision (guided help and sample kits, D-223; analytics journeys, D-219).
 
 Plus the three known contract defects and the two B6.3 launch gaps below (not frontend requests; counted separately).
 
@@ -238,6 +240,66 @@ Every U-B0.2 row below is now **published** (`v0.5.0`). "Published differently" 
 | `admin.company-credit` | `POST /v1/admin/companies/{companyId}/credit-limits`<br>`GET /v1/admin/companies/{companyId}/statements` | published differently | `admin.companyCredit.requestLimit`, `admin.receivables.companyStatement` | U-B0.2: 6 additive gap(s) | Credit-limit request and monthly statements exist; the request's basis enum differs (financial_statement vs financial_review), has no evidenceFileIds or Idempotency-Key and answers the credit summary; statements are one month per call (month required). |
 | `admin.shipments` | `GET /v1/admin/shipments`<br>`GET /v1/admin/shipments/{shipmentId}`<br>`POST /v1/admin/shipments/{shipmentId}/actions/book-carrier`<br>`POST /v1/admin/shipments/{shipmentId}/actions/resolve-exception`<br>`POST /v1/admin/shipments/{shipmentId}/actions/split`<br>`POST /v1/admin/shipments/{shipmentId}/carrier-quotes`<br>`POST /v1/admin/shipments/{shipmentId}/documents`<br>`POST /v1/admin/shipments/{shipmentId}/pod/actions/{decision}` | mixed: 4 published differently · 4 implement here | `admin.shipments.list`, `admin.shipments.get`, `admin.shipments.bookCarrier`, `admin.files.download` | U-B0.2: implement in `logistics`; 9 additive gap(s) | List, detail and fallback carrier booking exist (booking takes the carrier directly, not a quote id; no If-Match; no ETag on detail); split, per-shipment carrier quotes, exception resolution and POD review are not published; labels/packing list are file ids on the shipment downloaded via admin.files.download. |
 | `admin.claims` | `GET /v1/admin/claims`<br>`GET /v1/admin/claims/{claimId}`<br>`POST /v1/admin/claims/{claimId}/actions/{action}`<br>`POST /v1/admin/claims/{claimId}/liability`<br>`POST /v1/admin/claims/{claimId}/resolutions` | published differently | `admin.claims.list`, `admin.claims.get`, `admin.claims.decide`, `admin.claims.overrideLiability`, `admin.claims.resolve` | U-B0.2: 8 additive gap(s) | List, detail, every action, liability override and resolutions exist, but as one op per action (review, request-info, send-to-factory, decide approved\|rejected, close, override-liability, resolve with actions[]) guarded by Idempotency-Key rather than If-Match; detail lacks allowedActions/allowedResolutions, messages and refs. |
+
+## U-B0.3 shipped (`v0.6.0`, 2026-10-01)
+
+Every U-B0.3 row below is now **published** (`v0.6.0`), except `admin.analytics-journeys` (built in U5.B6, post-launch, D-219). "Published differently" keeps its mapping in *Details*; the table says what the group added. Nothing was removed or made required on the wire: new `Idempotency-Key` / `If-Match` headers are optional where the operation was already published, every new field is additive, every new query parameter optional. The three known contract defects and the two B6.3 launch gaps are fixed. Decisions: D-231 and D-232 (proposed in this group, accepted by the user).
+
+| Id | Now | Added in U-B0.3 (operationIds / fields) | Published differently / left out |
+|---|---|---|---|
+| `admin.menu-entries` | published | `admin.me.get` `menu[]`: 14 business entries + `finance` (any-of gate) | — |
+| `admin.permissions` | published differently | — (met: `admin.me.get` `permissions[]`) | Frontend adopts the `rbac.md` keys |
+| `admin.analytics` | published differently | `admin.analytics.*` reads as published; per-cell abandonment via `admin.analytics.sensitivity` | — |
+| `admin.analytics-journeys` | not yet | — | Built in U5.B6 (post-launch, D-219); setting `analytics.journey_drop_alert_pct` confirmed there |
+| `admin.prospectus` | published differently | — (met: `admin.analytics.requestProspectus`, asynchronous export) | — |
+| `admin.reports` | published differently | `admin.reports.preview` `columns[].total`, `totals`, `generatedAt`; `admin.reports.catalogue` `group` | — |
+| `admin.saved-views` | published | `admin.savedViews.list` / `create` / `delete` | — |
+| `admin.search` | published | `admin.search.find` (ten types, each behind its read permission) | E-mail / phone exact only (audited) |
+| `admin.dashboard` | published | `admin.dashboard.get` (21 queues with SLA state) | — |
+| `admin.staff-directory` | published | `admin.staffDirectory.list` | No contact details |
+| `admin.sod-rules` | published | `admin.sodRules.list` | — |
+| `admin.imports` | published differently | — (met: `admin.catalogImports.preview` / `confirm`; + kind `national_holidays`) | — |
+| `admin.exports` | published differently | `admin.exports.create` (orders, customers, companies, shipments, claims) | Contact details left out |
+| `admin.slip-file` | published differently | `SlipDto.fileId` (download through `admin.files.download`) | No slip-specific route |
+| `admin.document-resend` | published | `admin.customerDocuments.resend`, `deliveries` | — |
+| `admin.dunning-log` | published | `admin.customerDocuments.dunningLog` | — |
+| `admin.credit-note-reasons` | published | `admin.customerDocuments.listCreditNoteReasons` (+ `direction`) | — |
+| `admin.document-payment-filter` | published | `admin.customerDocuments.list?paymentId` | — |
+| `admin.payout-documents` | published | `admin.payouts.itemDocuments` | — |
+| `admin.bank-line-suggestions` | published | `admin.banking.suggestMatches` | — |
+| `admin.bank-line-split` | published | `admin.banking.splitLine` | — |
+| `admin.gateway-settlements` | published | `admin.banking.listSettlements` | — |
+| `admin.depreciation-preview` | published | `admin.fixedAssets.previewRun` | — |
+| `admin.account-roll-forward` | published | `admin.financialReports.accountRollForward` | — |
+| `admin.subledger-reconciliation` | published | `admin.financialReports.subledgerReconciliation` | — |
+| `partner.factory-name` | published | `partner.me.get` factories `code`, `name`, `roles` as `FactoryRole` | — |
+| `partner.references` | published differently | `partner.factories.priceReferences` (`/references`) | Names only, never a price (D-044) |
+| `partner.change-requests` | published | `partner.changeRequests.list` / `create`; staff `admin.factoryChangeRequests.list` / `answer` | — |
+| `partner.site-visits` | published | `partner.factories.listSiteVisits` | Date and result only |
+| `partner.proposal-evidence` | published | `partner.priceProposals.listEvidence` / `addEvidence`; `admin.priceProposals.listEvidence` | — |
+| `partner.today` | published | `partner.production.today` | — |
+| `partner.jobs` | published differently | `PartnerJobDto` product type, title, milestone, risk, reject fields, tolerance, artwork, inspection, destinations; `partner.production.lookup`; `?view` | Token-scoped path (D-044) |
+| `partner.job-milestones` | published differently | — (met: `partner.production.updateMilestone`) | — |
+| `partner.job-qc` | published differently | `QcCheckDto.performedBy` | No checklist invented |
+| `partner.job-issues` | published | `partner.production.resolveIssue` (D-232); issue kinds, raisedBy / resolvedBy, photos | — |
+| `partner.capacity-calendar` | published | `partner.factories.capacityCalendar` | Partner write of closures → U2.9 (D-209) |
+| `partner.shipments` | published differently | `partner.shipments.shipPlan`, `requestCarrier`, `?view`; cartons, `blockedByPayment`, `carrierRequest`, items `toleranceOutcome` | Per-carton public tracking URL (token stored hashed) |
+| `partner.permissions` | published differently | — (met: `partner.me.get` `permissions[]`) | Frontend adopts the `rbac.md` keys |
+| `partner.billing-statements` | published differently | line `kind` / `reference` / `quantity`, `totals`, `generatedAt`, `confirmedBy`, `taxInvoiceStatus` / `inputVatStatus` / `taxInvoices`, `disputedLineNos` (+ dispute `lineNos`), named status filter | Token-scoped path; no `eTaxReference` (the e-Tax file is `fileId`) |
+| `partner.payouts` | published | `partner.payables.payoutSchedule`, `getPayout`, `payoutDocuments`, `statementOfAccount`; list `status`, `payOn`, `claimDeductionAmount` | List stays `from` / `to` (no paging) |
+| `partner.claims` | published differently | `factoryRespondedAt`, `factoryEvidenceFileIds` (+ respond `evidenceFileIds`), `shipmentNo`, `deductionAmount`, `deductions` | No factory `responseDueAt` (no setting decided) |
+| `partner.scorecard` | published | `partner.production.scorecards?months` | — |
+| `partner.users` | published differently | `status`, `lastSignInAt`, `isSelf`, roles as `FactoryRole`; `?status`; `partner.factoryUsers.setRoles` (also reactivates) | No `invited` status (users are created active) |
+| `partner.notification-preferences` | published | `partner.me.notificationPreferences` / `setNotificationPreferences` (D-231) | — |
+| `status.enums` | published differently | — (met: every status is a named enum) | Frontend adopts the backend names |
+| `entity.next-actions` | published | Shared `NextActionDto` `{ key, irreversible, disabledReason }` — `nextActions` on orders (store / admin), production jobs (partner / admin), RFQs (store / admin), shipments (partner / admin), claims (store / partner / admin), billing statements (partner / admin), payout runs (admin), customer documents (admin; empty for customers), built from each endpoint's own state check and the reader's permissions | Paying an instalment stays `StoreInstalmentDto.payable`; no order-group actions (the paid amount is not on the group view) |
+| `rum.web-vitals` | published | `{store,admin,partner}.rum.recordWebVital`; `admin.ops.webVitals` | — |
+| `notifications.unread-and-link` | published | `meta.unreadCount`, item `url`, `{surface}.notifications.markAllRead` | — |
+| `analytics.events` | published differently | — (met: `store.analytics.ingest`) | — |
+| `contract.rate-card-line-response` | published | enum `CardLineAnswer` | — |
+| `admin.price-simulation-result` | published | `PriceSimulationResultDto` | — |
+
+**B6.3 launch gaps (closed):** national holidays and factory closures (`admin.calendar.*`, import kind `national_holidays`; D-161, D-170, D-209); approval-policy versions (`admin.approvalPolicies.*`, maker-checker, D-063).
 
 ## U-B0.3 — `admin.*` platform, finance & analytics
 
