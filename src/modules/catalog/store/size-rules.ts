@@ -1,3 +1,5 @@
+import { POUCH_FORMULA_NEEDS, type PouchFormula } from '@modules/pricing/calculators/pouch/geometry';
+
 /**
  * Size rules of a pattern (legacy `pattern.min_*` / `max_*`, `l_must_more_than_w`, `l_must_more_than_h`,
  * `w_must_more_than_h`), read from the pattern's `constraints` JSON and checked on customer requests like legacy
@@ -72,4 +74,48 @@ export function sizeViolation(
     return at('configuration.d', 'the height must be at most 0.95 × the width');
   }
   return null;
+}
+
+/**
+ * Pouch gussets and centre seal (U-B6 pouch): the pattern's `minB` / `maxB`, `minS` / `maxS`, `minCs` / `maxCs`, mm
+ * (legacy `pattern.min_b … max_cs`, checked by the CS form `pouch/cs.vue:47-65`; the customer path never validated a
+ * pouch, port map P26). Only the parts given are checked; the shape decides which it needs.
+ */
+export function gussetViolation(
+  constraints: unknown,
+  size: { b?: unknown; s?: unknown; cs?: unknown },
+): SizeViolation | null {
+  const c = (constraints && typeof constraints === 'object' ? constraints : {}) as Record<string, unknown>;
+  for (const [key, suffix, name] of [
+    ['b', 'B', 'bottom gusset'],
+    ['s', 'S', 'side gusset'],
+    ['cs', 'Cs', 'centre seal'],
+  ] as const) {
+    const value = size[key];
+    if (typeof value !== 'number') continue;
+    const min = number(c[`min${suffix}`]);
+    const max = number(c[`max${suffix}`]);
+    const path = `configuration.${key}`;
+    if (min !== null && value < min)
+      return { path, code: 'size', message: `the ${name} must be at least ${min} mm` };
+    if (max !== null && value > max)
+      return { path, code: 'size', message: `the ${name} must be at most ${max} mm` };
+  }
+  return null;
+}
+
+/** A pouch pattern's shape for the configurators: the parts it needs and their limits (U-B6 pouch). */
+export function pouchShapeOf(formula: PouchFormula | null, constraints: unknown) {
+  if (formula === null) return null;
+  const c = (constraints && typeof constraints === 'object' ? constraints : {}) as Record<string, unknown>;
+  return {
+    formula,
+    needs: [...POUCH_FORMULA_NEEDS[formula]],
+    minBMm: number(c['minB']),
+    maxBMm: number(c['maxB']),
+    minSMm: number(c['minS']),
+    maxSMm: number(c['maxS']),
+    minCsMm: number(c['minCs']),
+    maxCsMm: number(c['maxCs']),
+  };
 }

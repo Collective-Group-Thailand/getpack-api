@@ -1,4 +1,5 @@
 import { DESIGN_OPTIONS } from '@modules/carts/carts.dto';
+import { POUCH_FORMULAS, type PouchFormula } from '@modules/pricing/calculators/pouch/geometry';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { CALCULATOR_KEYS } from '../product-structure/product-structure.dto';
@@ -36,6 +37,41 @@ export class StoreSizeRulesDto {
 
   @ApiProperty({ example: true, description: 'Corrugate: the height at most 0.95 × the width' })
   widthMustExceedHeight!: boolean;
+}
+
+export const POUCH_SIZE_PARTS = ['b', 's', 'cs'] as const;
+
+/** A pouch pattern's shape (U-B6 pouch): which gussets / centre seal it reads, and their limits. */
+export class StorePouchShapeDto {
+  @ApiProperty({ enum: POUCH_FORMULAS, enumName: 'PouchFormula', example: 'stand_up' })
+  formula!: PouchFormula;
+
+  @ApiProperty({
+    enum: POUCH_SIZE_PARTS,
+    enumName: 'PouchSizePart',
+    isArray: true,
+    example: ['b'],
+    description: 'Required in the configuration: `b` bottom gusset, `s` side gusset, `cs` centre seal',
+  })
+  needs!: (typeof POUCH_SIZE_PARTS)[number][];
+
+  @ApiProperty({ type: Number, nullable: true, example: 40, description: 'Unit: mm.' })
+  minBMm!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 120, description: 'Unit: mm.' })
+  maxBMm!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: null, description: 'Unit: mm.' })
+  minSMm!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: null, description: 'Unit: mm.' })
+  maxSMm!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: null, description: 'Unit: mm.' })
+  minCsMm!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: null, description: 'Unit: mm.' })
+  maxCsMm!: number | null;
 }
 
 export class StoreConfiguratorPartDto {
@@ -79,6 +115,13 @@ export class StoreConfiguratorPatternDto {
 
   @ApiProperty({ type: StoreSizeRulesDto })
   rules!: StoreSizeRulesDto;
+
+  @ApiProperty({
+    type: StorePouchShapeDto,
+    nullable: true,
+    description: 'Pouch patterns only: the shape and its gussets; null otherwise',
+  })
+  pouch!: StorePouchShapeDto | null;
 
   @ApiProperty({
     type: String,
@@ -251,6 +294,7 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
         lengthMustExceedHeight: false,
         widthMustExceedHeight: true,
       },
+      pouch: null,
       descriptionTh: 'กล่องลูกฟูกทรงมาตรฐาน ฝาบนล่างชนกัน',
       descriptionEn: 'Regular slotted carton, flaps meet in the middle',
       imageUrl: null,

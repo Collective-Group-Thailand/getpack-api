@@ -1,6 +1,7 @@
 import { type CorrugatePackInput, packCorrugate } from './corrugate-packing';
 import { type CartonSpec, type FoldingPackInput, packFolding } from './folding-packing';
 import { type LabelPackInput, packLabel } from './label-packing';
+import { packPouch } from './pouch-packing';
 import { type PackedPart } from './shipment';
 
 /**
@@ -11,7 +12,8 @@ import { type PackedPart } from './shipment';
 export type ShipmentPart =
   | ({ kind: 'folding' } & Omit<FoldingPackInput, 'qty'>)
   | ({ kind: 'corrugate' } & Omit<CorrugatePackInput, 'qty'>)
-  | ({ kind: 'label' } & Omit<LabelPackInput, 'qty'>);
+  | ({ kind: 'label' } & Omit<LabelPackInput, 'qty'>)
+  | { kind: 'pouch' };
 
 /** Packs `qty` pieces of a part: weight always, cartons when the carton spec is set. */
 export function packPart(part: ShipmentPart, qty: number, carton: CartonSpec | null): PackedPart {
@@ -28,5 +30,7 @@ export function packPart(part: ShipmentPart, qty: number, carton: CartonSpec | n
       const { kind: _kind, ...input } = part;
       return packLabel({ ...input, qty }, carton);
     }
+    case 'pouch':
+      return packPouch({ qty }, carton);
   }
 }

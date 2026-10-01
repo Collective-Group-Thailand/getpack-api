@@ -31,6 +31,8 @@ import { CorrugateInputDataService } from './corrugate-input-data.service';
 import { FoldingInputDataService } from './folding-input-data.service';
 import { LABEL_CONFIGURATION_EXAMPLE, LabelConfigurationDto } from './label.dto';
 import { LabelInputDataService } from './label-input-data.service';
+import { POUCH_CONFIGURATION_EXAMPLE, PouchConfigurationDto } from './pouch.dto';
+import { PouchInputDataService } from './pouch-input-data.service';
 import {
   ADMIN_CALCULATION_EXAMPLE,
   AdminQuoteCalculationDto,
@@ -50,6 +52,8 @@ import {
   INPUT_DATA_EXAMPLE,
   LABEL_INPUT_DATA_EXAMPLE,
   LabelInputDataDto,
+  POUCH_INPUT_DATA_EXAMPLE,
+  PouchInputDataDto,
   TAG_SLEEVE_INPUT_DATA_EXAMPLE,
 } from './quotes.io.dto';
 import { TAG_SLEEVE_CONFIGURATION_EXAMPLE, TagSleeveConfigurationDto } from './tag-sleeve.dto';
@@ -112,6 +116,7 @@ async function adminView(
   CorrugateConfigurationDto,
   LabelConfigurationDto,
   TagSleeveConfigurationDto,
+  PouchConfigurationDto,
 )
 @Controller('quotes')
 export class StoreQuotesController {
@@ -130,7 +135,7 @@ export class StoreQuotesController {
       'Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, ' +
       'lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an ' +
       'instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator ' +
-      '(folding, corrugate, label, tag & sleeve). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
+      '(folding, corrugate, label, tag & sleeve, pouch). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
       '(D-050). Works signed in or anonymously.',
     implements: CALCULATION,
   })
@@ -634,5 +639,114 @@ export class PartnerTagSleevePricingController {
   ): Promise<FactoryQuoteDto> {
     const factory = await this.access.factory(actor, factoryId);
     return this.engine.priceForFactory('tag_sleeve', body, factory);
+  }
+}
+
+@ApiSurface('admin', 'csPouch')
+@Controller('cs/pouch')
+export class AdminCsPouchController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly inputData: PouchInputDataService,
+    private readonly permissions: PermissionResolver,
+  ) {}
+
+  @Get('input-data')
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csPouch.inputData',
+    summary: 'Catalogue choices of the CS pouch calculator',
+    description:
+      'Active pouch patterns with their shape and gusset limits, laminated films, print colour sets, options (zipper, ' +
+      'valve, spout, tear notch, white base…) and the pouch catalogue products (legacy `cs/pouch/get-input-data`, D-100).',
+    implements: ['D-100'],
+  })
+  @ApiSuccess(200, { description: 'Input data', type: PouchInputDataDto, example: POUCH_INPUT_DATA_EXAMPLE })
+  @ApiStandardErrors()
+  get(): Promise<PouchInputDataDto> {
+    return this.inputData.get();
+  }
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('quotes.calculate')
+  @ApiEndpoint({
+    id: 'admin.csPouch.calculate',
+    summary: 'Price a pouch configuration for a customer (CS)',
+    description:
+      'The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor ' +
+      'flag, each option’s reason when it has no price). A pouch is priced on the film it takes on the factory’s web, ' +
+      'its print, lamination, making and options (legacy `PouchCalculator`); a quantity below the factory’s minimum is ' +
+      'refused, never raised (U-B6 pouch). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works ' +
+      'before the type is switched to instant, for checks.',
+    implements: [...CALCULATION, 'D-012', 'D-141'],
+  })
+  @ApiBody({ type: PouchConfigurationDto, examples: { default: { value: POUCH_CONFIGURATION_EXAMPLE } } })
+  @ApiSuccess(200, {
+    description: 'Prices per quantity with the staff view',
+    type: AdminQuoteCalculationDto,
+    example: ADMIN_CALCULATION_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'pricing.vat_rate_missing',
+  )
+  @ApiQuery({
+    name: 'deliveryPostcode',
+    required: false,
+    schema: { type: 'string', pattern: '^[0-9]{5}$', example: '10110' },
+    description: 'Prices shipping on the customer rate card (D-013)',
+  })
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Body() body: PouchConfigurationDto,
+    @Query('deliveryPostcode', new ParseOptionalPostcodePipe()) deliveryPostcode?: string,
+  ): Promise<AdminQuoteCalculationDto> {
+    const view = await this.engine.price('pouch', body, {
+      deliveryPostcode,
+      channel: 'cs',
+      actorUserId: actor.type === 'user' ? actor.userId : undefined,
+      ip: RequestContext.current()?.ip,
+    });
+    return adminView(view, actor, this.permissions);
+  }
+}
+
+@ApiSurface('partner', 'pricingPouch')
+@Controller('factories/:factoryId/pricing/pouch')
+export class PartnerPouchPricingController {
+  constructor(
+    private readonly engine: QuoteEngineService,
+    private readonly access: FactoryAccess,
+  ) {}
+
+  @Post('calculate')
+  @HttpCode(200)
+  @Can('factory_prices.read')
+  @ApiParam({ name: 'factoryId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'partner.pricingPouch.calculate',
+    summary: 'Price a pouch configuration on my own price list',
+    description:
+      'The buy side only, on the factory’s own pouch price list in force: cost, buy price, metres of film, lead time, ' +
+      'per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.',
+    implements: ['D-044', 'D-042', 'D-040'],
+  })
+  @ApiBody({ type: PouchConfigurationDto, examples: { default: { value: POUCH_CONFIGURATION_EXAMPLE } } })
+  @ApiSuccess(200, {
+    description: 'Buy side per print type',
+    type: FactoryQuoteDto,
+    example: FACTORY_QUOTE_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async calculate(
+    @CurrentActor() actor: Actor,
+    @Param('factoryId', ParseUUIDPipe) factoryId: string,
+    @Body() body: PouchConfigurationDto,
+  ): Promise<FactoryQuoteDto> {
+    const factory = await this.access.factory(actor, factoryId);
+    return this.engine.priceForFactory('pouch', body, factory);
   }
 }

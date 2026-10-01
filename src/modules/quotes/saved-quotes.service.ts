@@ -30,6 +30,8 @@ import {
   boxSpecLines,
   type LabelSpecConfiguration,
   labelSpecLines,
+  type PouchSpecConfiguration,
+  pouchSpecLines,
   SUMMARY_INCLUDE,
   type TagSleeveSpecConfiguration,
   tagSleeveSpecLines,
@@ -131,7 +133,9 @@ export class SavedQuotesService {
         ? await labelSpecLines(this.prisma, configuration as unknown as LabelSpecConfiguration)
         : calculatorKey === 'tag_sleeve'
           ? await tagSleeveSpecLines(this.prisma, configuration as unknown as TagSleeveSpecConfiguration)
-          : null;
+          : calculatorKey === 'pouch'
+            ? await pouchSpecLines(this.prisma, configuration as unknown as PouchSpecConfiguration)
+            : null;
     return this.prisma.withTx(async (tx) => {
       const quote = await tx.quote.create({
         data: {

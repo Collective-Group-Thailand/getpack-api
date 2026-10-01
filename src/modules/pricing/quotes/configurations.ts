@@ -2,11 +2,12 @@ import { DomainException } from '@common/errors/domain.exception';
 import { validateAs } from '@common/validation/validation';
 import { type Tx } from '@database/prisma.service';
 import { type CalculatorKey, type ProductUnit } from '@generated/prisma/client';
-import { sizeRulesOf, sizeViolation } from '@modules/catalog/store/size-rules';
+import { gussetViolation, sizeRulesOf, sizeViolation } from '@modules/catalog/store/size-rules';
 import { type Type } from '@nestjs/common';
 
 import { CorrugateConfigurationDto, CsCorrugateConfigurationDto } from './corrugate.dto';
 import { LabelConfigurationDto } from './label.dto';
+import { PouchConfigurationDto } from './pouch.dto';
 import { FoldingConfigurationDto } from './quote.dto';
 import { TagSleeveConfigurationDto } from './tag-sleeve.dto';
 
@@ -21,13 +22,18 @@ export const CALCULATOR_SALES_UNIT: Partial<Record<CalculatorKey, ProductUnit>> 
   corrugate: 'piece',
   label: 'piece',
   tag_sleeve: 'piece',
+  pouch: 'pouch',
 };
+
+/** Calculators priced without a difficulty level (legacy pouch prices have none, U-B6 pouch). */
+export const CALCULATORS_WITHOUT_DIFFICULTY: ReadonlySet<CalculatorKey> = new Set<CalculatorKey>(['pouch']);
 
 const DTOS: Partial<Record<CalculatorKey, { store: Type<object>; staff: Type<object> }>> = {
   folding: { store: FoldingConfigurationDto, staff: FoldingConfigurationDto },
   corrugate: { store: CorrugateConfigurationDto, staff: CsCorrugateConfigurationDto },
   label: { store: LabelConfigurationDto, staff: LabelConfigurationDto },
   tag_sleeve: { store: TagSleeveConfigurationDto, staff: TagSleeveConfigurationDto },
+  pouch: { store: PouchConfigurationDto, staff: PouchConfigurationDto },
 };
 
 export async function validateConfiguration(
@@ -68,14 +74,14 @@ export async function assertStoreRules(
     });
     if (!product) fail('configuration.catalogProductId', 'exists', 'no such catalogue product');
     const fixed = product?.defaultDifficultyLevel?.publicId;
-    if (fixed && configuration['difficultyLevelId'] !== fixed) {
+    if (fixed && !CALCULATORS_WITHOUT_DIFFICULTY.has(key) && configuration['difficultyLevelId'] !== fixed) {
       fail(
         'configuration.difficultyLevelId',
         'in',
         'the catalogue product is priced at its own difficulty level',
       );
     }
-  } else if (key === 'corrugate' || key === 'label' || key === 'tag_sleeve') {
+  } else if (key === 'corrugate' || key === 'label' || key === 'tag_sleeve' || key === 'pouch') {
     fail('configuration.catalogProductId', 'required', 'the catalogue product is required');
   }
   if (typeof configuration['patternId'] !== 'string') return;
@@ -87,7 +93,11 @@ export async function assertStoreRules(
   const violation = sizeViolation(
     sizeRulesOf(pattern.constraints),
     { w: Number(configuration['w']), l: Number(configuration['l']), d: Number(configuration['d']) },
-    { corrugate: key === 'corrugate', flat: key === 'tag_sleeve' },
+    { corrugate: key === 'corrugate', flat: key === 'tag_sleeve' || key === 'pouch' },
   );
   if (violation) throw new DomainException('validation.failed', { errors: [violation] });
+  if (key === 'pouch') {
+    const gusset = gussetViolation(pattern.constraints, configuration);
+    if (gusset) throw new DomainException('validation.failed', { errors: [gusset] });
+  }
 }

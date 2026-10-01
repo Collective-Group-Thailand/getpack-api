@@ -1,13 +1,16 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
 import { CalculatorRegistry } from '@modules/pricing/calculators/calculator';
-import { CALCULATOR_SALES_UNIT } from '@modules/pricing/quotes/configurations';
+import {
+  CALCULATOR_SALES_UNIT,
+  CALCULATORS_WITHOUT_DIFFICULTY,
+} from '@modules/pricing/quotes/configurations';
 import { MAX_QUANTITY_TIERS } from '@modules/pricing/quotes/quote.dto';
 import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { CONTENT_INCLUDE } from '../crud/option-content';
-import { sizeRulesOf } from './size-rules';
+import { pouchShapeOf, sizeRulesOf } from './size-rules';
 import { imageUrl, StoreCatalogService } from './store-catalog.service';
 import { type StoreConfiguratorDto } from './store-configurator.dto';
 
@@ -60,7 +63,9 @@ export class StoreConfiguratorService {
       catalogProductId: p.publicId,
       productTypeCode: p.productType.code,
       calculator,
-      instant: p.productType.quoteMode === 'instant' && difficulty !== null,
+      instant:
+        p.productType.quoteMode === 'instant' &&
+        (difficulty !== null || CALCULATORS_WITHOUT_DIFFICULTY.has(calculator)),
       difficultyLevelId: difficulty,
       patterns: p.patterns.map(({ pattern }) => ({
         id: pattern.publicId,
@@ -70,6 +75,7 @@ export class StoreConfiguratorService {
         parts: pattern.subPatterns.map((s) => ({ subPatternId: s.publicId, seq: s.seq, name: s.name })),
         fluteTypeIds: pattern.fluteTypes.map((f) => f.fluteType.publicId),
         rules: sizeRulesOf(pattern.constraints),
+        pouch: pouchShapeOf(pattern.pouchFormula, pattern.constraints),
         descriptionTh: pattern.descriptionTh,
         descriptionEn: pattern.descriptionEn,
         imageUrl: imageUrl(pattern.imageFile?.publicId),

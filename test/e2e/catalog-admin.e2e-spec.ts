@@ -158,8 +158,8 @@ describe('catalogue admin (e2e, B2.1)', () => {
   });
 
   it('keeps a new type on RFQ until its calculator ships (D-100)', async () => {
-    // Pouch has no calculator yet (folding ships in B2.3; the switch itself is covered in folding-quotes).
-    const type = await productType('pouch');
+    // Service has no calculator yet (the switch itself is covered in folding-quotes).
+    const type = await productType('service');
     const refused = await admin
       .post(`/v1/admin/catalog/product-types/${type.id}/actions/change-quote-mode`, {
         quoteMode: 'instant',

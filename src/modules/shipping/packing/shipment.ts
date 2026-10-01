@@ -15,6 +15,14 @@ export interface PalletSpec {
 export interface PackedPart {
   weightAllKg: number;
   carton: Carton | null;
+  /** Several carton sizes for one part (pouch, U-B6); when set it replaces `carton`. */
+  cartons?: readonly Carton[];
+}
+
+/** The carton groups of a packed part; null when it could not be put in cartons. */
+export function cartonsOf(part: PackedPart): readonly Carton[] | null {
+  if (part.cartons) return part.cartons;
+  return part.carton ? [part.carton] : null;
 }
 
 export interface ShipmentPack {
@@ -43,9 +51,9 @@ export function cartonsPerPallet(carton: Carton, pallet: PalletSpec): number {
 
 export function shipment(parts: readonly PackedPart[], pallet: PalletSpec | null): ShipmentPack {
   const weightG = parts.reduce((sum, p) => sum + p.weightAllKg * 1000, 0);
-  const cartons = parts.map((p) => p.carton);
-  if (cartons.some((c) => c === null)) return { weightG, cartons: null, volumeCm3: null, pallets: null };
-  const packed = cartons as Carton[];
+  const groups = parts.map(cartonsOf);
+  if (groups.some((c) => c === null)) return { weightG, cartons: null, volumeCm3: null, pallets: null };
+  const packed = (groups as (readonly Carton[])[]).flat();
   const perPallet = pallet ? packed.map((c) => cartonsPerPallet(c, pallet)) : [];
   return {
     weightG,

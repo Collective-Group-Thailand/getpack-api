@@ -10,12 +10,15 @@ import { FoldingPriceComponentsRegistrar } from './calculators/folding/price-com
 import { LabelQuoteAdapter } from './calculators/label/label.adapter';
 import { LabelSnapshotLoader } from './calculators/label/label-snapshot.loader';
 import { LabelPriceComponentsRegistrar } from './calculators/label/price-components.registrar';
+import { PouchQuoteAdapter } from './calculators/pouch/pouch.adapter';
+import { PouchSnapshotLoader } from './calculators/pouch/pouch-snapshot.loader';
 import { PouchPriceComponentsRegistrar } from './calculators/pouch/price-components.registrar';
 import { TagSleeveQuoteAdapter } from './calculators/tag-sleeve/tag-sleeve.adapter';
 import { PriceHintsService } from './hints/price-hints.service';
 import { CorrugateInputDataService } from './quotes/corrugate-input-data.service';
 import { FoldingInputDataService } from './quotes/folding-input-data.service';
 import { LabelInputDataService } from './quotes/label-input-data.service';
+import { PouchInputDataService } from './quotes/pouch-input-data.service';
 import { QuoteEngineService } from './quotes/quote-engine.service';
 import { SellMarginsService } from './sell-margins/sell-margins.service';
 
@@ -28,10 +31,13 @@ const SERVICES = [
   LabelSnapshotLoader,
   LabelQuoteAdapter,
   TagSleeveQuoteAdapter,
+  PouchSnapshotLoader,
+  PouchQuoteAdapter,
   QuoteEngineService,
   FoldingInputDataService,
   CorrugateInputDataService,
   LabelInputDataService,
+  PouchInputDataService,
   SellMarginsService,
   PriceHintsService,
 ];

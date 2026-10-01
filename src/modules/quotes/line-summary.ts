@@ -268,6 +268,82 @@ export async function labelSpecLines(db: Tx, cfg: LabelSpecConfiguration): Promi
   return lines;
 }
 
+/** A pouch configuration (U-B6 pouch): shape, W × L with its gussets, film, print colour set, options. */
+export interface PouchSpecConfiguration {
+  patternId: string;
+  w: number;
+  l: number;
+  b?: number;
+  s?: number;
+  cs?: number;
+  materialId: string;
+  printColourId?: string;
+  optionIds?: string[];
+  design?: { graphic?: boolean };
+}
+
+const POUCH_LINES = {
+  style: ['แบบซอง', 'Style'],
+  size: ['ขนาด (กว้าง × สูง)', 'Size (W × H)'],
+  gusset: ['ขยายข้าง / ก้น / ซีลกลาง', 'Gussets / centre seal'],
+  material: ['วัสดุ', 'Material'],
+  print: ['พิมพ์', 'Print'],
+  option: ['อุปกรณ์เสริม', 'Options'],
+  design_service: ['บริการออกแบบ', 'Design service'],
+} as const;
+
+export async function pouchSpecLines(db: Tx, cfg: PouchSpecConfiguration): Promise<SpecLineDto[]> {
+  const byIds = (ids: string[]) => ({ where: { publicId: { in: ids } } });
+  const pair = (r: { publicId: string; nameTh: string; nameEn: string }) => ({
+    publicId: r.publicId,
+    th: r.nameTh,
+    en: r.nameEn,
+  });
+  const single = (r: { publicId: string; name: string }) => ({
+    publicId: r.publicId,
+    th: r.name,
+    en: r.name,
+  });
+  const [patterns, materials, inks, options] = await Promise.all([
+    names([cfg.patternId], async (ids) => (await db.pattern.findMany(byIds(ids))).map(single)),
+    names([cfg.materialId], async (ids) => (await db.material.findMany(byIds(ids))).map(pair)),
+    names(uniq([cfg.printColourId]), async (ids) => (await db.inkColour.findMany(byIds(ids))).map(single)),
+    names(uniq(cfg.optionIds ?? []), async (ids) => (await db.assembly.findMany(byIds(ids))).map(pair)),
+  ]);
+  const lines: SpecLineDto[] = [];
+  const push = (key: keyof typeof POUCH_LINES, valueTh: string, valueEn: string) => {
+    const [labelTh, labelEn] = POUCH_LINES[key];
+    lines.push({ key, labelTh, labelEn, valueTh, valueEn });
+  };
+  const list = (map: Map<string, Named>, ids: (string | undefined)[], key: keyof typeof POUCH_LINES) => {
+    const found = uniq(ids)
+      .map((id) => map.get(id))
+      .filter((n): n is Named => !!n);
+    if (found.length) push(key, found.map((n) => n.th).join(', '), found.map((n) => n.en).join(', '));
+  };
+  list(patterns, [cfg.patternId], 'style');
+  push('size', `${mm(cfg.w)} × ${mm(cfg.l)} มม.`, `${mm(cfg.w)} × ${mm(cfg.l)} mm`);
+  const gussets = (
+    [
+      ['b', 'ก้น', 'bottom'],
+      ['s', 'ข้าง', 'side'],
+      ['cs', 'ซีลกลาง', 'centre seal'],
+    ] as const
+  ).filter(([k]) => cfg[k] !== undefined);
+  if (gussets.length) {
+    push(
+      'gusset',
+      gussets.map(([k, th]) => `${th} ${mm(cfg[k]!)} มม.`).join(', '),
+      gussets.map(([k, , en]) => `${en} ${mm(cfg[k]!)} mm`).join(', '),
+    );
+  }
+  list(materials, [cfg.materialId], 'material');
+  list(inks, [cfg.printColourId], 'print');
+  list(options, cfg.optionIds ?? [], 'option');
+  if (cfg.design?.graphic) push('design_service', 'กราฟิก', 'Graphic');
+  return lines;
+}
+
 type SchemaProperty = { title?: unknown; 'x-title-en'?: unknown };
 
 function text(value: unknown): string {

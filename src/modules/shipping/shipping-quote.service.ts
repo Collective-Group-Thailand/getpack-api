@@ -7,7 +7,7 @@ import { SettingNotFoundError, SettingsService } from '@platform/settings/settin
 import { CarriersService } from './carriers/carriers.service';
 import { type CartonSpec } from './packing/folding-packing';
 import { packPart, type ShipmentPart } from './packing/packer';
-import { type PalletSpec, shipment, type ShipmentPack } from './packing/shipment';
+import { cartonsOf, type PalletSpec, shipment, type ShipmentPack } from './packing/shipment';
 import { type RateMissReason } from './rates/customer-rates.dto';
 import { type RateResolution, ShippingRatesResolver } from './rates/shipping-rates.resolver';
 
@@ -63,16 +63,19 @@ export class ShippingQuoteService {
     const pallet = await this.optional<PalletSpec>('shipping.pallet_spec', at, settingVersionIds);
     const packed = parts.map((p) => packPart(p, qty, carton));
     const pack = shipment(packed, pallet);
-    const parcels: CarrierParcel[] = packed.flatMap((p) =>
-      p.carton
-        ? Array.from({ length: p.carton.count }, () => ({
-            weightG: p.carton!.weightKg * 1000,
-            lengthCm: p.carton!.lCm,
-            widthCm: p.carton!.wCm,
-            heightCm: p.carton!.hCm,
-          }))
-        : [{ weightG: p.weightAllKg * 1000 }],
-    );
+    const parcels: CarrierParcel[] = packed.flatMap((p) => {
+      const cartons = cartonsOf(p);
+      return cartons
+        ? cartons.flatMap((c) =>
+            Array.from({ length: c.count }, () => ({
+              weightG: c.weightKg * 1000,
+              lengthCm: c.lCm,
+              widthCm: c.wCm,
+              heightCm: c.hCm,
+            })),
+          )
+        : [{ weightG: p.weightAllKg * 1000 }];
+    });
     const customer = await this.rates.customerRate(
       postcode,
       { weightG: pack.weightG, volumeCm3: pack.volumeCm3 },

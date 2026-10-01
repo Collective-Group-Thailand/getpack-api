@@ -7374,6 +7374,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/TagSleeveConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PouchConfigurationDto"
                   }
                 ]
               },
@@ -11862,9 +11865,12 @@
               },
               {
                 "$ref": "#/components/schemas/TagSleeveConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/PouchConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -40438,6 +40444,255 @@
         ],
         "type": "object"
       },
+      "PouchConfigurationDto": {
+        "properties": {
+          "b": {
+            "description": "Bottom gusset (stand-up pouch), seal included Unit: mm.",
+            "example": 60,
+            "minimum": 0,
+            "type": "number"
+          },
+          "catalogProductId": {
+            "description": "The catalogue product (required on the store); staff may price without one",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "cs": {
+            "description": "Centre seal (pillow and centre-seal gusset pouches) Unit: mm.",
+            "example": 10,
+            "minimum": 0,
+            "type": "number"
+          },
+          "design": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DesignOptionsDto"
+              }
+            ],
+            "description": "Graphic design only (pouches have no structure fee)"
+          },
+          "l": {
+            "description": "Pouch height, seals included Unit: mm.",
+            "example": 200,
+            "minimum": 0,
+            "type": "number"
+          },
+          "materialId": {
+            "description": "The laminated film (a `film` material: structure and micron)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "optionIds": {
+            "description": "Options: zipper, valve, spout, tear notch, white base… (catalogue assemblies), each once",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000e105",
+              "0192f3a0-7c1e-7d2a-9b1f-00000000e106"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "patternId": {
+            "description": "A pouch pattern: its shape (3-side seal, stand-up…)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "printColourId": {
+            "description": "The print colour set (e.g. CMYK gloss, CMYK + matt OPV); omit for an unprinted pouch",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e104",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "Quantities to price, 1 to 10",
+            "example": [
+              3000,
+              5000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "s": {
+            "description": "Side gusset (centre-seal gusset and quad-seal pouches), seal included Unit: mm.",
+            "example": 30,
+            "minimum": 0,
+            "type": "number"
+          },
+          "w": {
+            "description": "Pouch width, seals included Unit: mm.",
+            "example": 140,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "patternId",
+          "w",
+          "l",
+          "materialId",
+          "quantities"
+        ],
+        "type": "object"
+      },
+      "PouchFormula": {
+        "enum": [
+          "three_side_seal",
+          "pillow_center_seal",
+          "center_seal_gusset",
+          "quad_seal",
+          "stand_up"
+        ],
+        "type": "string"
+      },
+      "PouchInputDataDto": {
+        "properties": {
+          "catalogProducts": {
+            "description": "The calculator’s catalogue products",
+            "items": {
+              "$ref": "#/components/schemas/CsCatalogProductDto"
+            },
+            "type": "array"
+          },
+          "discountPolicy": {
+            "$ref": "#/components/schemas/CsDiscountPolicyDto"
+          },
+          "films": {
+            "description": "Laminated films (`film` materials)",
+            "items": {
+              "$ref": "#/components/schemas/PouchInputFilmDto"
+            },
+            "type": "array"
+          },
+          "options": {
+            "description": "Options: zipper, valve, spout, tear notch, white base…",
+            "items": {
+              "$ref": "#/components/schemas/InputAssemblyDto"
+            },
+            "type": "array"
+          },
+          "patterns": {
+            "items": {
+              "$ref": "#/components/schemas/PouchInputPatternDto"
+            },
+            "type": "array"
+          },
+          "printColours": {
+            "description": "Print colour sets",
+            "items": {
+              "$ref": "#/components/schemas/InputInkColourDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "catalogProducts",
+          "discountPolicy",
+          "patterns",
+          "films",
+          "printColours",
+          "options"
+        ],
+        "type": "object"
+      },
+      "PouchInputFilmDto": {
+        "properties": {
+          "code": {
+            "example": "pet-mpet-lldpe-80",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e103",
+            "format": "uuid",
+            "type": "string"
+          },
+          "micron": {
+            "description": "Film thickness, micron",
+            "example": 80,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "nameEn": {
+            "example": "PET/MPET/LLDPE 80 micron",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "PET/MPET/LLDPE 80 ไมครอน",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nameTh",
+          "nameEn",
+          "micron"
+        ],
+        "type": "object"
+      },
+      "PouchInputPatternDto": {
+        "properties": {
+          "code": {
+            "example": "POUCH-STAND",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e102",
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "ซองตั้งได้",
+            "type": "string"
+          },
+          "pouch": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StorePouchShapeDto"
+              }
+            ],
+            "description": "The shape, the gussets it needs and their limits"
+          },
+          "rules": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreSizeRulesDto"
+              }
+            ],
+            "description": "Width and height limits (no depth)"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "pouch",
+          "rules"
+        ],
+        "type": "object"
+      },
+      "PouchSizePart": {
+        "description": "Required in the configuration: `b` bottom gusset, `s` side gusset, `cs` centre seal",
+        "enum": [
+          "b",
+          "s",
+          "cs"
+        ],
+        "type": "string"
+      },
       "PreflightCheck": {
         "enum": [
           "size_mismatch",
@@ -41298,7 +41553,15 @@
           "label_print_type_terms",
           "label_paper_sheets",
           "label_roll_print_prices",
-          "label_diecut_prices"
+          "label_diecut_prices",
+          "pouch_print_type_terms",
+          "pouch_material_prices",
+          "pouch_print_prices",
+          "pouch_option_prices",
+          "pouch_process_prices",
+          "pouch_min_quantities",
+          "pouch_factory_margins",
+          "pouch_option_rules"
         ],
         "type": "string"
       },
@@ -50387,9 +50650,12 @@
               },
               {
                 "$ref": "#/components/schemas/TagSleeveConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/PouchConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches (validated against it; paths under `configuration`)"
           },
           "deliveryPostcode": {
             "description": "Delivery postcode: prices shipping on the customer rate card (D-013)",
@@ -50457,6 +50723,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/TagSleeveConfigurationDto"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PouchConfigurationDto"
                   }
                 ]
               },
@@ -55112,9 +55381,12 @@
               },
               {
                 "$ref": "#/components/schemas/TagSleeveConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/PouchConfigurationDto"
               }
             ],
-            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves (validated against it; paths under `configuration`)"
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches (validated against it; paths under `configuration`)"
           },
           "customerUserId": {
             "description": "The customer the quote is for",
@@ -56651,6 +56923,17 @@
             },
             "type": "array"
           },
+          "pouch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorePouchShapeDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pouch patterns only: the shape and its gussets; null otherwise"
+          },
           "rules": {
             "$ref": "#/components/schemas/StoreSizeRulesDto"
           }
@@ -56663,6 +56946,7 @@
           "parts",
           "fluteTypeIds",
           "rules",
+          "pouch",
           "descriptionTh",
           "descriptionEn",
           "imageUrl"
@@ -57454,6 +57738,87 @@
           "subdistrict",
           "district",
           "province"
+        ],
+        "type": "object"
+      },
+      "StorePouchShapeDto": {
+        "properties": {
+          "formula": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PouchFormula"
+              }
+            ],
+            "example": "stand_up"
+          },
+          "maxBMm": {
+            "description": "Unit: mm.",
+            "example": 120,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxCsMm": {
+            "description": "Unit: mm.",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "maxSMm": {
+            "description": "Unit: mm.",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minBMm": {
+            "description": "Unit: mm.",
+            "example": 40,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minCsMm": {
+            "description": "Unit: mm.",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "minSMm": {
+            "description": "Unit: mm.",
+            "example": null,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "needs": {
+            "description": "Required in the configuration: `b` bottom gusset, `s` side gusset, `cs` centre seal",
+            "example": [
+              "b"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PouchSizePart"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "formula",
+          "needs",
+          "minBMm",
+          "maxBMm",
+          "minSMm",
+          "maxSMm",
+          "minCsMm",
+          "maxCsMm"
         ],
         "type": "object"
       },
@@ -141755,6 +142120,505 @@
         "summary": "Catalogue choices of the CS label calculator",
         "tags": [
           "admin.csLabel"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/pouch/calculate": {
+      "post": {
+        "description": "The store calculation plus the staff view (selected factory and print type, price-list version, margin-floor flag, each option’s reason when it has no price). A pouch is priced on the film it takes on the factory’s web, its print, lamination, making and options (legacy `PouchCalculator`); a quantity below the factory’s minimum is refused, never raised (U-B6 pouch). Buy prices need `factory_cost.read`, the margin `margin.read` (D-141). Works before the type is switched to instant, for checks.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-012, D-141.",
+        "operationId": "admin.csPouch.calculate",
+        "parameters": [
+          {
+            "description": "Prices shipping on the customer rate card (D-013)",
+            "in": "query",
+            "name": "deliveryPostcode",
+            "required": false,
+            "schema": {
+              "example": "10110",
+              "pattern": "^[0-9]{5}$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "b": 60,
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "l": 200,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000e103",
+                    "optionIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000e105",
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000e106"
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000e102",
+                    "printColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000e104",
+                    "quantities": [
+                      3000
+                    ],
+                    "w": 140
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PouchConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "optionKey": "0192f3a0-7c1e-7d2a-9b1f-00000000f001:0192f3a0-7c1e-7d2a-9b1f-00000000a107"
+                    }
+                  ],
+                  "steps": [
+                    {
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": "2026-10-10",
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13508.40",
+                      "instant": true,
+                      "internal": {
+                        "belowMarginFloor": false,
+                        "buyPrice": "10123.45",
+                        "factoryId": "0192f3a0-7c1e-7d2a-9b1f-00000000f001",
+                        "marginPct": "24.1234",
+                        "parts": [
+                          {
+                            "buyPrice": "10123.45",
+                            "layoutAmount": 10,
+                            "layoutStandard": false,
+                            "partKey": "main",
+                            "sheets": 225
+                          }
+                        ],
+                        "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                        "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                        "productionRun": 1000,
+                        "shipping": {
+                          "cartons": 2,
+                          "costAmount": "95.00",
+                          "customerRateVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d402",
+                          "factoryPayoutVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000d412",
+                          "marginAmount": "25.00",
+                          "method": "factory_fleet",
+                          "pallets": null,
+                          "volumeCm3": 61776,
+                          "weightG": 31000,
+                          "zoneCode": "bkk"
+                        }
+                      },
+                      "leadTimeDays": 7,
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "shippingAmount": "128.40",
+                      "shippingNetAmount": "120.00",
+                      "shippingPending": false,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": "8.40",
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "unitPrice": "13.38",
+                      "vatAmount": "883.73"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuoteCalculationDto"
+                }
+              }
+            },
+            "description": "Prices per quantity with the staff view",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.vat_rate_missing": {
+                    "$ref": "#/components/examples/problem.pricing.vat_rate_missing"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.vat_rate_missing`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Price a pouch configuration for a customer (CS)",
+        "tags": [
+          "admin.csPouch"
+        ],
+        "x-required-permissions": [
+          "quotes.calculate"
+        ]
+      }
+    },
+    "/v1/admin/cs/pouch/input-data": {
+      "get": {
+        "description": "Active pouch patterns with their shape and gusset limits, laminated films, print colour sets, options (zipper, valve, spout, tear notch, white base…) and the pouch catalogue products (legacy `cs/pouch/get-input-data`, D-100).\n\nImplements: D-100.",
+        "operationId": "admin.csPouch.inputData",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "catalogProducts": [],
+                  "discountPolicy": {
+                    "directLimitPct": "5"
+                  },
+                  "films": [
+                    {
+                      "code": "pet-mpet-lldpe-80",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e103",
+                      "micron": 80,
+                      "nameEn": "PET/MPET/LLDPE 80 micron",
+                      "nameTh": "PET/MPET/LLDPE 80 ไมครอน"
+                    }
+                  ],
+                  "options": [
+                    {
+                      "code": "zipper",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e105",
+                      "nameEn": "Zipper",
+                      "nameTh": "ซิป",
+                      "requiresAmount": false,
+                      "requiresLength": false,
+                      "requiresWidth": false
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "code": "POUCH-STAND",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e102",
+                      "name": "ซองตั้งได้",
+                      "pouch": {
+                        "formula": "stand_up",
+                        "maxBMm": 120,
+                        "maxCsMm": null,
+                        "maxSMm": null,
+                        "minBMm": 40,
+                        "minCsMm": null,
+                        "minSMm": null,
+                        "needs": [
+                          "b"
+                        ]
+                      },
+                      "rules": {
+                        "lengthMustExceedHeight": false,
+                        "lengthMustExceedWidth": false,
+                        "maxHMm": null,
+                        "maxLMm": 350,
+                        "maxWMm": 300,
+                        "minHMm": null,
+                        "minLMm": 100,
+                        "minWMm": 80,
+                        "widthMustExceedHeight": false
+                      }
+                    }
+                  ],
+                  "printColours": [
+                    {
+                      "code": "cmyk-gloss",
+                      "colourKind": "process",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e104",
+                      "name": "CMYK (เงา)"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PouchInputDataDto"
+                }
+              }
+            },
+            "description": "Input data",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Catalogue choices of the CS pouch calculator",
+        "tags": [
+          "admin.csPouch"
         ],
         "x-required-permissions": [
           "quotes.calculate"
@@ -269424,6 +270288,272 @@
         ]
       }
     },
+    "/v1/partner/factories/{factoryId}/pricing/pouch/calculate": {
+      "post": {
+        "description": "The buy side only, on the factory’s own pouch price list in force: cost, buy price, metres of film, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
+        "operationId": "partner.pricingPouch.calculate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "factoryId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "b": 60,
+                    "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
+                    "design": {
+                      "graphic": false,
+                      "structure": false
+                    },
+                    "l": 200,
+                    "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000e103",
+                    "optionIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000e105",
+                      "0192f3a0-7c1e-7d2a-9b1f-00000000e106"
+                    ],
+                    "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000e102",
+                    "printColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000e104",
+                    "quantities": [
+                      3000
+                    ],
+                    "w": 140
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PouchConfigurationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "calculatorVersion": "1.0.0",
+                  "options": [
+                    {
+                      "error": null,
+                      "printTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a107",
+                      "steps": [
+                        {
+                          "buyPrice": "10123.45",
+                          "leadTimeDays": 7,
+                          "parts": [
+                            {
+                              "buyPrice": "10123.45",
+                              "layoutAmount": 10,
+                              "layoutStandard": false,
+                              "partKey": "main",
+                              "sheets": 225,
+                              "totalCost": "9111.11"
+                            }
+                          ],
+                          "productionRun": 1000,
+                          "quantity": 1000
+                        }
+                      ]
+                    }
+                  ],
+                  "priceListVersionId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FactoryQuoteDto"
+                }
+              }
+            },
+            "description": "Buy side per print type",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "partner": []
+          }
+        ],
+        "summary": "Price a pouch configuration on my own price list",
+        "tags": [
+          "partner.pricingPouch"
+        ],
+        "x-required-permissions": [
+          "factory_prices.read"
+        ]
+      }
+    },
     "/v1/partner/factories/{factoryId}/pricing/tag-sleeve/calculate": {
       "post": {
         "description": "The buy side only, on the factory’s own tag & sleeve price list in force: cost, buy price, lay-out, sheets, lead time, per print type. Never Packio’s sell price or another factory (D-044, D-042); another factory is 404.\n\nImplements: D-044, D-042, D-040.",
@@ -291352,6 +292482,7 @@
                       "imageUrl": null,
                       "name": "กล่องฝาชน",
                       "parts": [],
+                      "pouch": null,
                       "rules": {
                         "lengthMustExceedHeight": false,
                         "lengthMustExceedWidth": false,
@@ -322769,7 +323900,7 @@
     },
     "/v1/store/quotes/actions/calculate": {
       "post": {
-        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
+        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously.\n\nImplements: D-100, D-043, D-050, D-051, D-101.",
         "operationId": "store.quotes.calculate",
         "parameters": [
           {
@@ -332400,6 +333531,10 @@
       "name": "admin.csLabel"
     },
     {
+      "description": "The CS pouch calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
+      "name": "admin.csPouch"
+    },
+    {
       "description": "The CS tag & sleeve calculator: catalogue choices and pricing with the staff view (D-100, D-141).",
       "name": "admin.csTagSleeve"
     },
@@ -332746,6 +333881,10 @@
     {
       "description": "A factory prices a label configuration on its own price list (D-044).",
       "name": "partner.pricingLabel"
+    },
+    {
+      "description": "A factory prices a pouch configuration on its own price list (D-044).",
+      "name": "partner.pricingPouch"
     },
     {
       "description": "A factory prices a tag & sleeve configuration on its own price list (D-044).",

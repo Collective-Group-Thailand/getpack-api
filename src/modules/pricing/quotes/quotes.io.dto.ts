@@ -2,6 +2,7 @@ import { CodeNameRefDto } from '@common/dto/code-name-ref.dto';
 import {
   StoreConfiguratorQuantityDto,
   StoreConfiguratorSizeDto,
+  StorePouchShapeDto,
   StoreSizeRulesDto,
 } from '@modules/catalog/store/store-configurator.dto';
 import { ApiProperty } from '@nestjs/swagger';
@@ -9,6 +10,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { CORRUGATE_FORMULAS } from '../calculators/corrugate/formulas';
 import { CORRUGATE_IDS, PRINT_AREAS } from './corrugate.dto';
 import { LABEL_IDS } from './label.dto';
+import { POUCH_IDS } from './pouch.dto';
 import { IDS } from './quote.dto';
 
 /** CS folding input data and the partner's buy-side calculation (B2.3). */
@@ -334,6 +336,65 @@ export class LabelInputDataDto {
   difficultyLevels!: CodeNameRefDto[];
 }
 
+// --- pouch CS input data (U-B6 pouch, legacy `PouchController@getInputData:15-59`) --------------------------------
+
+class PouchInputPatternDto {
+  @ApiProperty({ format: 'uuid', example: POUCH_IDS.pattern })
+  id!: string;
+
+  @ApiProperty({ example: 'POUCH-STAND' })
+  code!: string;
+
+  @ApiProperty({ example: 'ซองตั้งได้' })
+  name!: string;
+
+  @ApiProperty({ type: StorePouchShapeDto, description: 'The shape, the gussets it needs and their limits' })
+  pouch!: StorePouchShapeDto;
+
+  @ApiProperty({ type: StoreSizeRulesDto, description: 'Width and height limits (no depth)' })
+  rules!: StoreSizeRulesDto;
+}
+
+class PouchInputFilmDto {
+  @ApiProperty({ format: 'uuid', example: POUCH_IDS.film })
+  id!: string;
+
+  @ApiProperty({ example: 'pet-mpet-lldpe-80' })
+  code!: string;
+
+  @ApiProperty({ example: 'PET/MPET/LLDPE 80 ไมครอน' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'PET/MPET/LLDPE 80 micron' })
+  nameEn!: string;
+
+  @ApiProperty({ type: Number, nullable: true, example: 80, description: 'Film thickness, micron' })
+  micron!: number | null;
+}
+
+export class PouchInputDataDto {
+  @ApiProperty({ type: [CsCatalogProductDto], description: 'The calculator’s catalogue products' })
+  catalogProducts!: CsCatalogProductDto[];
+
+  @ApiProperty({ type: CsDiscountPolicyDto })
+  discountPolicy!: CsDiscountPolicyDto;
+
+  @ApiProperty({ type: [PouchInputPatternDto] })
+  patterns!: PouchInputPatternDto[];
+
+  @ApiProperty({ type: [PouchInputFilmDto], description: 'Laminated films (`film` materials)' })
+  films!: PouchInputFilmDto[];
+
+  @ApiProperty({ type: [InputInkColourDto], description: 'Print colour sets' })
+  printColours!: InputInkColourDto[];
+
+  @ApiProperty({
+    type: [InputAssemblyDto],
+    description: 'Options: zipper, valve, spout, tear notch, white base…',
+  })
+  options!: InputAssemblyDto[];
+}
+
 class FactoryQuotePartDto {
   @ApiProperty({ example: 'main' })
   partKey!: string;
@@ -632,4 +693,60 @@ export const LABEL_INPUT_DATA_EXAMPLE: LabelInputDataDto = {
   ],
   diecutTypes: [{ id: LABEL_IDS.diecut, code: 'kiss', nameTh: 'ไดคัทครึ่ง', nameEn: 'Kiss cut' }],
   difficultyLevels: [],
+};
+
+export const POUCH_INPUT_DATA_EXAMPLE: PouchInputDataDto = {
+  catalogProducts: [],
+  discountPolicy: { directLimitPct: '5' },
+  patterns: [
+    {
+      id: POUCH_IDS.pattern,
+      code: 'POUCH-STAND',
+      name: 'ซองตั้งได้',
+      pouch: {
+        formula: 'stand_up',
+        needs: ['b'],
+        minBMm: 40,
+        maxBMm: 120,
+        minSMm: null,
+        maxSMm: null,
+        minCsMm: null,
+        maxCsMm: null,
+      },
+      rules: {
+        minWMm: 80,
+        maxWMm: 300,
+        minLMm: 100,
+        maxLMm: 350,
+        minHMm: null,
+        maxHMm: null,
+        lengthMustExceedWidth: false,
+        lengthMustExceedHeight: false,
+        widthMustExceedHeight: false,
+      },
+    },
+  ],
+  films: [
+    {
+      id: POUCH_IDS.film,
+      code: 'pet-mpet-lldpe-80',
+      nameTh: 'PET/MPET/LLDPE 80 ไมครอน',
+      nameEn: 'PET/MPET/LLDPE 80 micron',
+      micron: 80,
+    },
+  ],
+  printColours: [
+    { id: POUCH_IDS.printColour, code: 'cmyk-gloss', name: 'CMYK (เงา)', colourKind: 'process' },
+  ],
+  options: [
+    {
+      id: POUCH_IDS.zipper,
+      code: 'zipper',
+      nameTh: 'ซิป',
+      nameEn: 'Zipper',
+      requiresAmount: false,
+      requiresWidth: false,
+      requiresLength: false,
+    },
+  ],
 };

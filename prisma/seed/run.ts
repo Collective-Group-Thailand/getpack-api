@@ -10,6 +10,7 @@ import { PrismaClient } from '../../src/generated/prisma/client';
 import { seedDevCorrugate } from './dev-corrugate';
 import { seedDevFolding } from './dev-folding';
 import { seedDevLabel } from './dev-label';
+import { seedDevPouch } from './dev-pouch';
 import { seedDev } from './dev-seed';
 import { seedDevTagSleeve } from './dev-tag-sleeve';
 import { type EntitySeedInput, seedReference } from './reference-seed';
@@ -65,6 +66,9 @@ async function main(): Promise<void> {
       // Its tag & sleeve price list (U-B6 tag & sleeve).
       const tagSleeve = await prisma.$transaction((tx) => seedDevTagSleeve(tx), { timeout: 60_000 });
       if (tagSleeve.created) report['dev_tag_sleeve_price_list'] = 1;
+      // Its pouch price list (U-B6 pouch).
+      const pouch = await prisma.$transaction((tx) => seedDevPouch(tx), { timeout: 60_000 });
+      if (pouch.created) report['dev_pouch_price_list'] = 1;
     }
     const created = Object.entries(report)
       .map(([what, n]) => `${what}=${n}`)
