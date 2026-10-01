@@ -1,0 +1,1793 @@
+[
+  {
+    "key": "01-single-tier",
+    "title": "One tier 1–99,999 at 10.00, margin 25 %, no fix cost",
+    "input": {
+      "quantities": [1, 500],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 1,
+            "maxQty": 99999,
+            "unitBuyPrice": 10,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 25,
+          "fixCost": 0,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 1,
+            "tierMin": 1,
+            "tierMax": 99999,
+            "targetMarginPct": 25,
+            "withMargin": 13.34,
+            "perPcs": 14.28,
+            "buyPrice": 10,
+            "sum": 14.28,
+            "designFee": 0,
+            "total": 14.28,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 500,
+            "tierMin": 1,
+            "tierMax": 99999,
+            "targetMarginPct": 25,
+            "withMargin": 13.34,
+            "perPcs": 14.28,
+            "buyPrice": 5000,
+            "sum": 7140.0,
+            "designFee": 0,
+            "total": 7140.0,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 1,
+            "max": 99999,
+            "perPcs": 14.28
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "02-three-tiers",
+    "title": "Three tiers, margin 30 %, fix cost 0.50 per piece",
+    "input": {
+      "quantities": [100, 750, 1000, 50000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null, null, null],
+        "steps": [
+          {
+            "qty": 100,
+            "tierMin": 100,
+            "tierMax": 499,
+            "targetMarginPct": 30,
+            "withMargin": 4.29,
+            "perPcs": 4.6,
+            "buyPrice": 250.0,
+            "sum": 459.99999999999994,
+            "designFee": 0,
+            "total": 459.99999999999994,
+            "leadTimeDays": 5
+          },
+          {
+            "qty": 750,
+            "tierMin": 500,
+            "tierMax": 999,
+            "targetMarginPct": 30,
+            "withMargin": 3.86,
+            "perPcs": 4.14,
+            "buyPrice": 1650.0000000000002,
+            "sum": 3104.9999999999995,
+            "designFee": 0,
+            "total": 3104.9999999999995,
+            "leadTimeDays": 5
+          },
+          {
+            "qty": 1000,
+            "tierMin": 999,
+            "tierMax": 99999,
+            "targetMarginPct": 30,
+            "withMargin": 3.58,
+            "perPcs": 3.84,
+            "buyPrice": 2000.0,
+            "sum": 3840.0,
+            "designFee": 0,
+            "total": 3840.0,
+            "leadTimeDays": 7
+          },
+          {
+            "qty": 50000,
+            "tierMin": 999,
+            "tierMax": 99999,
+            "targetMarginPct": 30,
+            "withMargin": 3.58,
+            "perPcs": 3.84,
+            "buyPrice": 100000.0,
+            "sum": 192000.0,
+            "designFee": 0,
+            "total": 192000.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 4.6
+          },
+          {
+            "min": 500,
+            "max": 999,
+            "perPcs": 4.14
+          },
+          {
+            "min": 999,
+            "max": 99999,
+            "perPcs": 3.84
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "03-shared-bound",
+    "title": "At 999 the second and the last tier both hold: the lower tier wins",
+    "input": {
+      "quantities": [999],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null],
+        "steps": [
+          {
+            "qty": 999,
+            "tierMin": 500,
+            "tierMax": 999,
+            "targetMarginPct": 30,
+            "withMargin": 3.86,
+            "perPcs": 4.14,
+            "buyPrice": 2197.8,
+            "sum": 4135.86,
+            "designFee": 0,
+            "total": 4135.86,
+            "leadTimeDays": 5
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 4.6
+          },
+          {
+            "min": 500,
+            "max": 999,
+            "perPcs": 4.14
+          },
+          {
+            "min": 999,
+            "max": 99999,
+            "perPcs": 3.84
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "04-outside-tiers",
+    "title": "Below the first and above the last tier: refused",
+    "input": {
+      "quantities": [99, 100000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": "process_not_possible: quantity 99 outside the price tiers",
+        "errors": [
+          "process_not_possible: quantity 99 outside the price tiers",
+          "process_not_possible: quantity 100000 outside the price tiers"
+        ],
+        "steps": [null, null],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 4.6
+          },
+          {
+            "min": 500,
+            "max": 999,
+            "perPcs": 4.14
+          },
+          {
+            "min": 999,
+            "max": 99999,
+            "perPcs": 3.84
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "05-absorbed-tier",
+    "title": "A later dearer tier absorbs the earlier range at its own price",
+    "input": {
+      "quantities": [600, 3000, 6000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 4999,
+            "unitBuyPrice": 2.3,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 5000,
+            "maxQty": 99999,
+            "unitBuyPrice": 1.8,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null, null],
+        "steps": [
+          {
+            "qty": 600,
+            "tierMin": 500,
+            "tierMax": 4999,
+            "targetMarginPct": 30,
+            "withMargin": 3.29,
+            "perPcs": 3.53,
+            "buyPrice": 1380.0,
+            "sum": 2118.0,
+            "designFee": 0,
+            "total": 2118.0,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 3000,
+            "tierMin": 500,
+            "tierMax": 4999,
+            "targetMarginPct": 30,
+            "withMargin": 3.29,
+            "perPcs": 3.53,
+            "buyPrice": 6899.999999999999,
+            "sum": 10590.0,
+            "designFee": 0,
+            "total": 10590.0,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 6000,
+            "tierMin": 4999,
+            "tierMax": 99999,
+            "targetMarginPct": 30,
+            "withMargin": 2.58,
+            "perPcs": 2.77,
+            "buyPrice": 10800.0,
+            "sum": 16620.0,
+            "designFee": 0,
+            "total": 16620.0,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 3.84
+          },
+          {
+            "min": 500,
+            "max": 4999,
+            "perPcs": 3.53
+          },
+          {
+            "min": 4999,
+            "max": 99999,
+            "perPcs": 2.77
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "06-non-adjacent",
+    "title": "A dearer middle tier absorbs the first; the cheaper last tier stands",
+    "input": {
+      "quantities": [150, 400, 700],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 299,
+            "unitBuyPrice": 5.0,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 300,
+            "maxQty": 599,
+            "unitBuyPrice": 6.0,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 600,
+            "maxQty": 9999,
+            "unitBuyPrice": 5.5,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null, null],
+        "steps": [
+          {
+            "qty": 150,
+            "tierMin": 100,
+            "tierMax": 599,
+            "targetMarginPct": 30,
+            "withMargin": 8.58,
+            "perPcs": 9.19,
+            "buyPrice": 900.0,
+            "sum": 1378.5,
+            "designFee": 0,
+            "total": 1378.5,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 400,
+            "tierMin": 100,
+            "tierMax": 599,
+            "targetMarginPct": 30,
+            "withMargin": 8.58,
+            "perPcs": 9.19,
+            "buyPrice": 2400.0,
+            "sum": 3676.0,
+            "designFee": 0,
+            "total": 3676.0,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 700,
+            "tierMin": 599,
+            "tierMax": 9999,
+            "targetMarginPct": 30,
+            "withMargin": 7.86,
+            "perPcs": 8.42,
+            "buyPrice": 3850.0,
+            "sum": 5894.0,
+            "designFee": 0,
+            "total": 5894.0,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 599,
+            "perPcs": 9.19
+          },
+          {
+            "min": 599,
+            "max": 9999,
+            "perPcs": 8.42
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "07-ieee-ceiling",
+    "title": "Buy 1.10, no margin, no fix cost: 1.1 × 100 ceils to 1.11, then VAT 1.19",
+    "input": {
+      "quantities": [10],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 1,
+            "maxQty": 999,
+            "unitBuyPrice": 1.1,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 0,
+          "fixCost": 0,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null],
+        "steps": [
+          {
+            "qty": 10,
+            "tierMin": 1,
+            "tierMax": 999,
+            "targetMarginPct": 0,
+            "withMargin": 1.11,
+            "perPcs": 1.19,
+            "buyPrice": 11.0,
+            "sum": 11.899999999999999,
+            "designFee": 0,
+            "total": 11.899999999999999,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 1,
+            "max": 999,
+            "perPcs": 1.19
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "08-legacy-g1",
+    "title": "Buy 2.50 + fix 0.50, margin 30 %: 4.29, VAT 4.60 (the trace example)",
+    "input": {
+      "quantities": [10],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 1,
+            "maxQty": 999,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null],
+        "steps": [
+          {
+            "qty": 10,
+            "tierMin": 1,
+            "tierMax": 999,
+            "targetMarginPct": 30,
+            "withMargin": 4.29,
+            "perPcs": 4.6,
+            "buyPrice": 25.0,
+            "sum": 46.0,
+            "designFee": 0,
+            "total": 46.0,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 1,
+            "max": 999,
+            "perPcs": 4.6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "09-no-vat",
+    "title": "The same with VAT 0 %: 4.29",
+    "input": {
+      "quantities": [10],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 1,
+            "maxQty": 999,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 0
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null],
+        "steps": [
+          {
+            "qty": 10,
+            "tierMin": 1,
+            "tierMax": 999,
+            "targetMarginPct": 30,
+            "withMargin": 4.29,
+            "perPcs": 4.29,
+            "buyPrice": 25.0,
+            "sum": 42.9,
+            "designFee": 0,
+            "total": 42.9,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 1,
+            "max": 999,
+            "perPcs": 4.29
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "10-margin-by-quantity",
+    "title": "Packio margin lines by quantity: 35 % below 1,000, 28 % from 1,000",
+    "input": {
+      "quantities": [500, 1000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "sell": {
+          "marginLines": [
+            {
+              "qtyMin": 1,
+              "qtyMax": 999,
+              "priceMin": null,
+              "priceMax": null,
+              "valuePct": 35
+            },
+            {
+              "qtyMin": 1000,
+              "qtyMax": null,
+              "priceMin": null,
+              "priceMax": null,
+              "valuePct": 28
+            }
+          ],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 500,
+            "tierMin": 500,
+            "tierMax": 999,
+            "targetMarginPct": 35,
+            "withMargin": 4.16,
+            "perPcs": 4.46,
+            "buyPrice": 1100.0,
+            "sum": 2230.0,
+            "designFee": 0,
+            "total": 2230.0,
+            "leadTimeDays": 5
+          },
+          {
+            "qty": 1000,
+            "tierMin": 999,
+            "tierMax": 99999,
+            "targetMarginPct": 28,
+            "withMargin": 3.48,
+            "perPcs": 3.73,
+            "buyPrice": 2000.0,
+            "sum": 3730.0,
+            "designFee": 0,
+            "total": 3730.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 4.95
+          },
+          {
+            "min": 500,
+            "max": 999,
+            "perPcs": 4.46
+          },
+          {
+            "min": 999,
+            "max": 99999,
+            "perPcs": 4.12
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "11-no-margin",
+    "title": "No margin line and no fallback: no price",
+    "input": {
+      "quantities": [500],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": null,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": "price_line_missing: sell margin",
+        "errors": ["price_line_missing: sell margin"],
+        "steps": [null],
+        "tiers": null
+      }
+    ]
+  },
+  {
+    "key": "12-design-fee",
+    "title": "Graphic design once per quote",
+    "input": {
+      "quantities": [500, 2000],
+      "design": {
+        "graphic": true
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 500,
+            "tierMin": 500,
+            "tierMax": 999,
+            "targetMarginPct": 30,
+            "withMargin": 3.86,
+            "perPcs": 4.14,
+            "buyPrice": 1100.0,
+            "sum": 2070.0,
+            "designFee": 900,
+            "total": 2970.0,
+            "leadTimeDays": 5
+          },
+          {
+            "qty": 2000,
+            "tierMin": 999,
+            "tierMax": 99999,
+            "targetMarginPct": 30,
+            "withMargin": 3.58,
+            "perPcs": 3.84,
+            "buyPrice": 4000.0,
+            "sum": 7680.0,
+            "designFee": 900,
+            "total": 8580.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 4.6
+          },
+          {
+            "min": 500,
+            "max": 999,
+            "perPcs": 4.14
+          },
+          {
+            "min": 999,
+            "max": 99999,
+            "perPcs": 3.84
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "13-lead-time",
+    "title": "Lead time per tier, rounded up",
+    "input": {
+      "quantities": [200, 800, 5000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 2.5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 3
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 10.2
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null, null],
+        "steps": [
+          {
+            "qty": 200,
+            "tierMin": 100,
+            "tierMax": 499,
+            "targetMarginPct": 30,
+            "withMargin": 4.29,
+            "perPcs": 4.6,
+            "buyPrice": 500.0,
+            "sum": 919.9999999999999,
+            "designFee": 0,
+            "total": 919.9999999999999,
+            "leadTimeDays": 3
+          },
+          {
+            "qty": 800,
+            "tierMin": 500,
+            "tierMax": 999,
+            "targetMarginPct": 30,
+            "withMargin": 3.86,
+            "perPcs": 4.14,
+            "buyPrice": 1760.0000000000002,
+            "sum": 3311.9999999999995,
+            "designFee": 0,
+            "total": 3311.9999999999995,
+            "leadTimeDays": 3
+          },
+          {
+            "qty": 5000,
+            "tierMin": 999,
+            "tierMax": 99999,
+            "targetMarginPct": 30,
+            "withMargin": 3.58,
+            "perPcs": 3.84,
+            "buyPrice": 10000.0,
+            "sum": 19200.0,
+            "designFee": 0,
+            "total": 19200.0,
+            "leadTimeDays": 11
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 4.6
+          },
+          {
+            "min": 500,
+            "max": 999,
+            "perPcs": 4.14
+          },
+          {
+            "min": 999,
+            "max": 99999,
+            "perPcs": 3.84
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "14-two-factories",
+    "title": "Two factories with their own tiers",
+    "input": {
+      "quantities": [300, 2000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      },
+      {
+        "optionKey": "F2:std",
+        "factoryId": "F2",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 200,
+            "maxQty": 1999,
+            "unitBuyPrice": 2.4,
+            "leadTimeDays": 4
+          },
+          {
+            "minQty": 2000,
+            "maxQty": null,
+            "unitBuyPrice": 1.9,
+            "leadTimeDays": 6
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 300,
+            "tierMin": 100,
+            "tierMax": 499,
+            "targetMarginPct": 30,
+            "withMargin": 4.29,
+            "perPcs": 4.6,
+            "buyPrice": 750.0,
+            "sum": 1380.0,
+            "designFee": 0,
+            "total": 1380.0,
+            "leadTimeDays": 5
+          },
+          {
+            "qty": 2000,
+            "tierMin": 999,
+            "tierMax": 99999,
+            "targetMarginPct": 30,
+            "withMargin": 3.58,
+            "perPcs": 3.84,
+            "buyPrice": 4000.0,
+            "sum": 7680.0,
+            "designFee": 0,
+            "total": 7680.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 4.6
+          },
+          {
+            "min": 500,
+            "max": 999,
+            "perPcs": 4.14
+          },
+          {
+            "min": 999,
+            "max": 99999,
+            "perPcs": 3.84
+          }
+        ]
+      },
+      {
+        "optionKey": "F2:std",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 300,
+            "tierMin": 200,
+            "tierMax": 1999,
+            "targetMarginPct": 30,
+            "withMargin": 4.15,
+            "perPcs": 4.45,
+            "buyPrice": 720.0,
+            "sum": 1335.0,
+            "designFee": 0,
+            "total": 1335.0,
+            "leadTimeDays": 4
+          },
+          {
+            "qty": 2000,
+            "tierMin": 1999,
+            "tierMax": null,
+            "targetMarginPct": 30,
+            "withMargin": 3.43,
+            "perPcs": 3.68,
+            "buyPrice": 3800.0,
+            "sum": 7360.0,
+            "designFee": 0,
+            "total": 7360.0,
+            "leadTimeDays": 6
+          }
+        ],
+        "tiers": [
+          {
+            "min": 200,
+            "max": 1999,
+            "perPcs": 4.45
+          },
+          {
+            "min": 1999,
+            "max": null,
+            "perPcs": 3.68
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "15-no-lines",
+    "title": "A factory without price lines for the product",
+    "input": {
+      "quantities": [500],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": "price_line_missing: pl_stock_product_prices",
+        "errors": ["price_line_missing: pl_stock_product_prices"],
+        "steps": [null],
+        "tiers": null
+      }
+    ]
+  },
+  {
+    "key": "16-open-last-tier",
+    "title": "The last tier has no maximum",
+    "input": {
+      "quantities": [5000, 2000000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 999,
+            "unitBuyPrice": 3.0,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 1000,
+            "maxQty": null,
+            "unitBuyPrice": 2.6,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 5000,
+            "tierMin": 999,
+            "tierMax": null,
+            "targetMarginPct": 30,
+            "withMargin": 4.43,
+            "perPcs": 4.75,
+            "buyPrice": 13000.0,
+            "sum": 23750.0,
+            "designFee": 0,
+            "total": 23750.0,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 2000000,
+            "tierMin": 999,
+            "tierMax": null,
+            "targetMarginPct": 30,
+            "withMargin": 4.43,
+            "perPcs": 4.75,
+            "buyPrice": 5200000.0,
+            "sum": 9500000.0,
+            "designFee": 0,
+            "total": 9500000.0,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 999,
+            "perPcs": 5.35
+          },
+          {
+            "min": 999,
+            "max": null,
+            "perPcs": 4.75
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "17-open-first-tier",
+    "title": "A single tier without a minimum",
+    "input": {
+      "quantities": [1, 50],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": null,
+            "maxQty": 100,
+            "unitBuyPrice": 4.0,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 1,
+            "tierMin": null,
+            "tierMax": 100,
+            "targetMarginPct": 30,
+            "withMargin": 6.43,
+            "perPcs": 6.89,
+            "buyPrice": 4.0,
+            "sum": 6.89,
+            "designFee": 0,
+            "total": 6.89,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 50,
+            "tierMin": null,
+            "tierMax": 100,
+            "targetMarginPct": 30,
+            "withMargin": 6.43,
+            "perPcs": 6.89,
+            "buyPrice": 200.0,
+            "sum": 344.5,
+            "designFee": 0,
+            "total": 344.5,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": null,
+            "max": 100,
+            "perPcs": 6.89
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "18-equal-minimums",
+    "title": "Two lines with the same minimum keep the line order",
+    "input": {
+      "quantities": [150],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 199,
+            "unitBuyPrice": 3.0,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 100,
+            "maxQty": 299,
+            "unitBuyPrice": 2.8,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 300,
+            "maxQty": 999,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.5,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null],
+        "steps": [
+          {
+            "qty": 150,
+            "tierMin": 100,
+            "tierMax": 199,
+            "targetMarginPct": 30,
+            "withMargin": 5.0,
+            "perPcs": 5.35,
+            "buyPrice": 450.0,
+            "sum": 802.5,
+            "designFee": 0,
+            "total": 802.5,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 199,
+            "perPcs": 5.35
+          },
+          {
+            "min": 100,
+            "max": 299,
+            "perPcs": 5.06
+          },
+          {
+            "min": 299,
+            "max": 999,
+            "perPcs": 4.6
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "19-high-margin",
+    "title": "Margin 50 % and fix cost 2.00 per piece",
+    "input": {
+      "quantities": [100, 5000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 499,
+            "unitBuyPrice": 2.5,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 500,
+            "maxQty": 999,
+            "unitBuyPrice": 2.2,
+            "leadTimeDays": 5
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 99999,
+            "unitBuyPrice": 2.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 50,
+          "fixCost": 2,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null],
+        "steps": [
+          {
+            "qty": 100,
+            "tierMin": 100,
+            "tierMax": 499,
+            "targetMarginPct": 50,
+            "withMargin": 9.0,
+            "perPcs": 9.64,
+            "buyPrice": 250.0,
+            "sum": 964.0,
+            "designFee": 0,
+            "total": 964.0,
+            "leadTimeDays": 5
+          },
+          {
+            "qty": 5000,
+            "tierMin": 999,
+            "tierMax": 99999,
+            "targetMarginPct": 50,
+            "withMargin": 8.0,
+            "perPcs": 8.56,
+            "buyPrice": 10000.0,
+            "sum": 42800.0,
+            "designFee": 0,
+            "total": 42800.0,
+            "leadTimeDays": 7
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 499,
+            "perPcs": 9.64
+          },
+          {
+            "min": 500,
+            "max": 999,
+            "perPcs": 8.99
+          },
+          {
+            "min": 999,
+            "max": 99999,
+            "perPcs": 8.56
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "key": "20-fractional-buy",
+    "title": "Buy prices with four decimals",
+    "input": {
+      "quantities": [100, 1000, 10000],
+      "design": {
+        "graphic": false
+      }
+    },
+    "options": [
+      {
+        "optionKey": "F1:std",
+        "factoryId": "F1",
+        "printTypeId": "std",
+        "rows": [
+          {
+            "minQty": 100,
+            "maxQty": 999,
+            "unitBuyPrice": 0.4567,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 1000,
+            "maxQty": 9999,
+            "unitBuyPrice": 0.3891,
+            "leadTimeDays": null
+          },
+          {
+            "minQty": 10000,
+            "maxQty": null,
+            "unitBuyPrice": 0.3125,
+            "leadTimeDays": null
+          }
+        ],
+        "sell": {
+          "marginLines": [],
+          "marginFallbackPct": 30,
+          "fixCost": 0.05,
+          "designFee": 900,
+          "structureDesignFee": null,
+          "vatPct": 7
+        }
+      }
+    ],
+    "expected": [
+      {
+        "optionKey": "F1:std",
+        "error": null,
+        "errors": [null, null, null],
+        "steps": [
+          {
+            "qty": 100,
+            "tierMin": 100,
+            "tierMax": 999,
+            "targetMarginPct": 30,
+            "withMargin": 0.73,
+            "perPcs": 0.79,
+            "buyPrice": 45.67,
+            "sum": 79.0,
+            "designFee": 0,
+            "total": 79.0,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 1000,
+            "tierMin": 1000,
+            "tierMax": 9999,
+            "targetMarginPct": 30,
+            "withMargin": 0.63,
+            "perPcs": 0.68,
+            "buyPrice": 389.1,
+            "sum": 680.0,
+            "designFee": 0,
+            "total": 680.0,
+            "leadTimeDays": 0
+          },
+          {
+            "qty": 10000,
+            "tierMin": 9999,
+            "tierMax": null,
+            "targetMarginPct": 30,
+            "withMargin": 0.52,
+            "perPcs": 0.56,
+            "buyPrice": 3125.0,
+            "sum": 5600.000000000001,
+            "designFee": 0,
+            "total": 5600.000000000001,
+            "leadTimeDays": 0
+          }
+        ],
+        "tiers": [
+          {
+            "min": 100,
+            "max": 999,
+            "perPcs": 0.79
+          },
+          {
+            "min": 1000,
+            "max": 9999,
+            "perPcs": 0.68
+          },
+          {
+            "min": 9999,
+            "max": null,
+            "perPcs": 0.56
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -112,3 +112,29 @@ export function roundUp(value: number, decimal: number, digit: number | null = n
   const multiples = Math.pow(10, digit === null || digit === 0 ? decimal : digit);
   return phpRound(Math.ceil(value * multiples) / multiples, decimal);
 }
+
+/**
+ * `calculateMargin($price, $margin_percent)` — the price with a gross margin, rounded up to the satang; null for a
+ * price ≤ 0, where legacy returns `[]` and the caller fails (legacy `app/Helpers/helpers.php:1733-1748`).
+ */
+export function calculateMargin(
+  price: number,
+  marginPercent: number,
+): { withMargin: number; marginPrice: number } | null {
+  if (!(price > 0)) return null;
+  const salePrice = price / (1 - marginPercent / 100);
+  return { withMargin: convertTo2Decimal(salePrice), marginPrice: convertTo2Decimal(salePrice - price) };
+}
+
+/**
+ * `calculateVat($price, $vat_percent)` — the price with VAT, rounded up to the satang; null for a price ≤ 0
+ * (legacy `app/Helpers/helpers.php:1750-1765`).
+ */
+export function calculateVat(
+  price: number,
+  vatPercent: number,
+): { vatPrice: number; withVat: number } | null {
+  if (!(price > 0)) return null;
+  const withVat = price * (1 + vatPercent / 100);
+  return { vatPrice: convertTo2Decimal(withVat - price), withVat: convertTo2Decimal(withVat) };
+}

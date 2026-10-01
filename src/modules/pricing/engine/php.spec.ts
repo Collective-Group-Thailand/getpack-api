@@ -1,6 +1,8 @@
 import fc from 'fast-check';
 
 import {
+  calculateMargin,
+  calculateVat,
   convertNumberFloat,
   convertTo2Decimal,
   convertTo2Decimal3Digit,
@@ -77,6 +79,18 @@ describe('PHP 7 numerics for the ported calculators (B2.3)', () => {
     expect(convertTo2Decimal(1.1)).toBe(1.11);
     expect(convertTo2Decimal3Digit(1.2341)).toBe(1.24);
     expect(convertTo2Decimal3Digit(1.2301)).toBe(1.23);
+  });
+
+  it('ports calculateMargin / calculateVat (helpers.php:1733-1765), each rounded up to the satang', () => {
+    // Standard product G1: (2.50 + 0.50) ÷ 0.7 = 4.2857 → 4.29; × 1.07 = 4.5903 → 4.60.
+    expect(calculateMargin(3, 30)).toEqual({ withMargin: 4.29, marginPrice: 1.29 });
+    expect(calculateVat(4.29, 7)?.withVat).toBe(4.6);
+    // G2: 1.1 × 100 = 110.00000000000001 → 1.11; × 1.07 → 1.19.
+    expect(calculateMargin(1.1, 0)?.withMargin).toBe(1.11);
+    expect(calculateVat(1.11, 7)?.withVat).toBe(1.19);
+    // Legacy returns [] for a price <= 0 (the caller then fails).
+    expect(calculateMargin(0, 30)).toBeNull();
+    expect(calculateVat(-1, 7)).toBeNull();
   });
 
   it('ports roundUp (helpers.php:1706-1711): ceiling to the digit, then round', () => {
