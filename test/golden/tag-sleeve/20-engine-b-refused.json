@@ -1,0 +1,42 @@
+{
+  "selection": ["F1:offset"],
+  "options": [
+    {
+      "optionKey": "F1:offset",
+      "error": null,
+      "steps": [
+        {
+          "qty": 1000,
+          "productionRun": 1000,
+          "buyPrice": 6755.1826461090905,
+          "perPcs": 9.86,
+          "sum": 9860,
+          "vatPrice": 644.4837136368496,
+          "designFee": 0,
+          "structureDesignFee": 0,
+          "total": 9860,
+          "leadTimeDays": 8,
+          "marginPct": 26.693251203481466,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "31x43/2",
+              "layoutStandard": false,
+              "layoutAmount": 70,
+              "pressSheets": 131,
+              "cost": 5944.560728576,
+              "buyPrice": 6755.1826461090905,
+              "targetMarginPct": 25,
+              "perPcs": 9.86
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "optionKey": "F1:typeB",
+      "error": "process_not_possible: engine B is not available for instant quotes",
+      "steps": [null]
+    }
+  ]
+}

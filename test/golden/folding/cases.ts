@@ -27,8 +27,8 @@ export interface GoldenCase {
   options: FoldingOption[];
 }
 
-const all = { minSheets: 0, maxSheets: 1000000 };
-const flat: PatternGeometry = { formula: 'flat', conditions: {} };
+export const all = { minSheets: 0, maxSheets: 1000000 };
+export const flat: PatternGeometry = { formula: 'flat', conditions: {} };
 const band = (value: number, determinant: 'w' | 'l' | 'd' = 'w', variable = 'f') => ({
   variable,
   determinant,
@@ -38,7 +38,7 @@ const band = (value: number, determinant: 'w' | 'l' | 'd' = 'w', variable = 'f')
   ],
 });
 
-const sheets = [
+export const sheets = [
   {
     sheetKey: '31x43/1',
     sizeWIn: 31,
@@ -74,7 +74,10 @@ const sheets = [
   },
 ];
 
-const geometry = (pattern: PatternGeometry, over: Partial<GeometrySnapshot> = {}): GeometrySnapshot => ({
+export const geometry = (
+  pattern: PatternGeometry,
+  over: Partial<GeometrySnapshot> = {},
+): GeometrySnapshot => ({
   pattern,
   paperTrim: { gap: 3, trimW: 10, trimL: 12, edgeTrim: 5, trimFoil: 4, trimFinishPlate: 6 },
   patternDelta: null,
@@ -83,7 +86,7 @@ const geometry = (pattern: PatternGeometry, over: Partial<GeometrySnapshot> = {}
   ...over,
 });
 
-const sell = (over: Partial<SellSnapshot> = {}): SellSnapshot => ({
+export const sell = (over: Partial<SellSnapshot> = {}): SellSnapshot => ({
   marginLines: [
     { qtyMin: 1, qtyMax: 999, priceMin: 0, priceMax: 20000, valuePct: 35 },
     { qtyMin: 1, qtyMax: 999, priceMin: 20000, priceMax: null, valuePct: 30 },
@@ -98,7 +101,7 @@ const sell = (over: Partial<SellSnapshot> = {}): SellSnapshot => ({
   ...over,
 });
 
-const offsetTerms = {
+export const offsetTerms = {
   wasteMethod: 1,
   finish2StepDownWaste: false,
   fourColourPriceByMaxPercent: false,
@@ -107,7 +110,7 @@ const offsetTerms = {
   factoryMarginPct: 12,
 };
 
-const printPrice = (
+export const printPrice = (
   inkColourId: string,
   percentColor: number,
   pricePerSheet: number,
@@ -126,7 +129,7 @@ const printPrice = (
   operationCost: 150,
 });
 
-const offsetTables = (over: Partial<OffsetTables> = {}): OffsetTables => ({
+export const offsetTables = (over: Partial<OffsetTables> = {}): OffsetTables => ({
   terms: offsetTerms,
   standardInkColours: new Set(['cmyk', 'black']),
   printWastes: [
@@ -226,7 +229,7 @@ const offsetTables = (over: Partial<OffsetTables> = {}): OffsetTables => ({
   ...over,
 });
 
-const digitalTables = (
+export const digitalTables = (
   over: Partial<DigitalTables['terms']> = {},
   rows: Partial<DigitalTables> = {},
 ): DigitalTables => ({
@@ -323,8 +326,8 @@ const digitalTables = (
   ...rows,
 });
 
-const cmyk = (percent = 100) => [1, 2, 3, 4].map(() => ({ inkColourId: 'cmyk', percent }));
-const req = (over: Partial<PartRequest> = {}): PartRequest => ({
+export const cmyk = (percent = 100) => [1, 2, 3, 4].map(() => ({ inkColourId: 'cmyk', percent }));
+export const req = (over: Partial<PartRequest> = {}): PartRequest => ({
   materialId: 'art350',
   difficultyLevelId: 'normal',
   printFront: cmyk(),
@@ -332,7 +335,9 @@ const req = (over: Partial<PartRequest> = {}): PartRequest => ({
   assemblies: [],
   ...over,
 });
-const option = (over: Partial<FoldingOption> & Pick<FoldingOption, 'tables' | 'parts'>): FoldingOption => ({
+export const option = (
+  over: Partial<FoldingOption> & Pick<FoldingOption, 'tables' | 'parts'>,
+): FoldingOption => ({
   optionKey: 'F1:offset',
   factoryId: 'F1',
   printTypeId: 'offset',
@@ -344,8 +349,8 @@ const option = (over: Partial<FoldingOption> & Pick<FoldingOption, 'tables' | 'p
   unavailable: [],
   ...over,
 });
-const one = (g: GeometrySnapshot) => ({ main: { geometry: g, exclusions: [] } });
-const input = (
+export const one = (g: GeometrySnapshot) => ({ main: { geometry: g, exclusions: [] } });
+export const input = (
   request: PartRequest,
   quantities: number[] = [1000],
   dims = { w: 200, l: 300, d: 50 },

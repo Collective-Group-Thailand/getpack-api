@@ -1,0 +1,42 @@
+{
+  "selection": ["F1:offset"],
+  "options": [
+    {
+      "optionKey": "F1:offset",
+      "error": null,
+      "steps": [
+        {
+          "qty": 500,
+          "productionRun": 500,
+          "buyPrice": 9132.235709070244,
+          "perPcs": 30.56,
+          "sum": 15280,
+          "vatPrice": 999.6253840537192,
+          "designFee": 0,
+          "structureDesignFee": 0,
+          "total": 15280,
+          "leadTimeDays": 8,
+          "marginPct": 36.05044366030653,
+          "parts": [
+            {
+              "partKey": "main",
+              "sheet": "31x43/2",
+              "layoutStandard": false,
+              "layoutAmount": 70,
+              "pressSheets": 153,
+              "cost": 8036.367423981815,
+              "buyPrice": 9132.235709070244,
+              "targetMarginPct": 35,
+              "perPcs": 30.56
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "optionKey": "F1:digital",
+      "error": "process_not_possible: special finishes (finish 2) are printed offset only (legacy CStoFactoryFolding:632-634, port map T9)",
+      "steps": [null]
+    }
+  ]
+}

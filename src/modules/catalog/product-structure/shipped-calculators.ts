@@ -16,4 +16,8 @@ export const SHIPPED_CALCULATORS: ReadonlySet<CalculatorKey> = new Set<Calculato
   // validation docs/pricing-validation-label.md (pending sign-off). The type stays seeded `rfq` (A-16) until the
   // business signs off the cases and the launch factory's label price list (D-100).
   'label',
+  // U-B6 tag & sleeve: the folding engine on flat blanks; golden cases test/golden/tag-sleeve (port snapshots over the
+  // folding engine's hand-derived vectors), validation docs/pricing-validation-tag-sleeve.md (pending sign-off). The
+  // type stays seeded `rfq` (A-16) until the business signs off the cases and the factory's tag price list (D-100).
+  'tag_sleeve',
 ]);
