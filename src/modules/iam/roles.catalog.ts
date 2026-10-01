@@ -151,6 +151,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'cms.manage',
       'seo.manage',
       'geography.manage',
+      'business_calendar.manage',
       'partners.read',
       'quotes.calculate',
       'shipping_rates.read',

@@ -224,4 +224,56 @@ describe('catalogue Excel import (e2e, B2.1)', () => {
     ).expect(403);
     await post('/v1/admin/catalog/imports/unknown/actions/preview', { fileId: randomUUID() }).expect(404);
   });
+
+  it('loads national holidays by Excel with preview → confirm, behind business_calendar.manage (U-B0.3, D-161, D-170)', async () => {
+    const n = Number(BigInt(`0x${randomUUID().slice(0, 6)}`) % 300n);
+    const day = (offset: number) => new Date(Date.UTC(2098, 0, 1 + n + offset)).toISOString().slice(0, 10);
+    const file = await upload([
+      {
+        name: 'holidays',
+        headers: ['day', 'kind', 'observance', 'name_th', 'name_en'],
+        rows: [
+          {
+            day: day(0),
+            kind: 'holiday',
+            observance: 'all',
+            name_th: 'วันหยุดทดสอบ',
+            name_en: 'Test holiday',
+          },
+          {
+            day: day(1),
+            kind: 'holiday',
+            observance: 'government_only',
+            name_th: 'วันราชการทดสอบ',
+            name_en: null,
+          },
+        ],
+      },
+    ]);
+    await post(
+      '/v1/admin/catalog/imports/national_holidays/actions/preview',
+      { fileId: file },
+      'marketing',
+    ).expect(403);
+    const preview = await post('/v1/admin/catalog/imports/national_holidays/actions/preview', {
+      fileId: file,
+    }).expect(200);
+    expect(preview.body).toMatchObject({ canConfirm: true, totals: { invalid: 0 } });
+    await post('/v1/admin/catalog/imports/national_holidays/actions/confirm', {
+      fileId: file,
+      previewSha256: preview.body.previewSha256,
+    })
+      .set('Idempotency-Key', randomUUID())
+      .expect(200);
+    const listed = await request(server)
+      .get('/v1/admin/business-calendar/holidays?year=2098')
+      .auth(auth().token, { type: 'bearer' })
+      .expect(200);
+    expect(
+      (listed.body as { day: string; observance: string }[]).filter((d) => [day(0), day(1)].includes(d.day)),
+    ).toEqual([
+      expect.objectContaining({ day: day(0), observance: 'all' }),
+      expect.objectContaining({ day: day(1), observance: 'government_only' }),
+    ]);
+  });
 });

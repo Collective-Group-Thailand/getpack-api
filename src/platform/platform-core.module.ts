@@ -5,6 +5,7 @@ import { Global, Module } from '@nestjs/common';
 import { ActivityLogService } from './activity/activity-log.service';
 import { AuditService } from './audit/audit.service';
 import { BusinessCalendarService } from './calendar/business-calendar.service';
+import { CalendarAdminService } from './calendar/calendar-admin.service';
 import { DomainEvents } from './domain-events/domain-events.service';
 import { OutboxAdminService } from './domain-events/outbox-admin.service';
 import { EntitiesService } from './entities/entities.service';
@@ -26,6 +27,7 @@ import { SettingsService } from './settings/settings.service';
     DomainEvents,
     EntitiesService,
     BusinessCalendarService,
+    CalendarAdminService,
     SettingsService,
     FeatureFlagsService,
     OutboxAdminService,
@@ -39,6 +41,7 @@ import { SettingsService } from './settings/settings.service';
     DomainEvents,
     EntitiesService,
     BusinessCalendarService,
+    CalendarAdminService,
     SettingsService,
     FeatureFlagsService,
     OutboxAdminService,

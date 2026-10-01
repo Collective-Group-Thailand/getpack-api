@@ -45,6 +45,7 @@ import { Module } from '@nestjs/common';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
 import { AuditLogsController } from '@platform/audit/audit.controller';
 import { AuditQueryService } from '@platform/audit/audit-query.service';
+import { AdminCalendarController } from '@platform/calendar/calendar-admin.controller';
 import { OutboxAdminController } from '@platform/domain-events/outbox-admin.controller';
 import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.controller';
 import { AdminFilesController } from '@platform/files/files.controllers';
@@ -77,6 +78,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     StaffDirectoryController,
     SodRulesController,
     SavedViewsController,
+    AdminCalendarController,
     AdminSearchController,
     OutboxAdminController,
     ApprovalsController,

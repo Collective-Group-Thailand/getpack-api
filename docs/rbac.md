@@ -41,6 +41,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `catalog.import` — Import and export catalogue tables with Excel (preview → confirm) (D-005) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `cms.manage` — Edit banners, home sections, articles, FAQs and videos | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
 | `seo.manage` — Edit SEO meta per page | ● |  |  |  | ● |  |  |  |  |  |  | ● |  |  |  |
+| `business_calendar.manage` — Key in the national holidays once a year, by form or Excel import (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `geography.manage` — Maintain provinces, districts, subdistricts and postcodes (D-161, D-170) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |
 | `partners.read` — Read partner factories and their onboarding | ● | ● | ● |  | ● |  |  |  | ● | ● |  |  | ● | ● |  |
 | `partners.manage` — Create factories, run onboarding, capability, tiers, capacity and status changes (D-011, D-041, D-171) | ● |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |

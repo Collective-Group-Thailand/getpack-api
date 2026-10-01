@@ -24,7 +24,10 @@ const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 /** Bulk writes of a whole country's subdistricts need more than Prisma's 5 s default. */
 const CONFIRM_TIMEOUT_MS = 120_000;
 /** Kinds that need a permission beyond `catalog.import`. */
-const EXTRA_PERMISSION: Record<string, string> = { geography: 'geography.manage' };
+const EXTRA_PERMISSION: Record<string, string> = {
+  geography: 'geography.manage',
+  national_holidays: 'business_calendar.manage',
+};
 
 /**
  * Excel import with preview → confirm, and export in the same layout (B2.1, D-005, D-170).

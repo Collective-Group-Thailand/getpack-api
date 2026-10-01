@@ -116,6 +116,12 @@ export const PERMISSIONS = [
   },
   { key: 'seo.manage', audience: 'staff', description: 'Edit SEO meta per page' },
   {
+    key: 'business_calendar.manage',
+    audience: 'staff',
+    description: 'Key in the national holidays once a year, by form or Excel import',
+    decisionRefs: ['D-161', 'D-170'],
+  },
+  {
     key: 'geography.manage',
     audience: 'staff',
     description: 'Maintain provinces, districts, subdistricts and postcodes',

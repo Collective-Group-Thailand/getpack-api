@@ -3,6 +3,7 @@ import { type Tx } from '@database/prisma.service';
 import { CATALOG_CODE, CATALOG_STATUSES, SLUG } from '../crud/dto-fields';
 import { FINISH_KINDS, INK_COLOUR_KINDS, MATERIAL_KINDS } from '../materials/materials.dto';
 import { PRODUCT_UNITS, STOCK_ATTRIBUTES } from '../stock/stock.dto';
+import { nationalHolidaysImport } from './calendar-import';
 import {
   type ColumnSpec,
   type ImportKind,
@@ -480,6 +481,7 @@ export const stockProductsImport: ImportKind = {
 
 export const IMPORT_KINDS: readonly ImportKind[] = [
   geographyImport,
+  nationalHolidaysImport,
   materialsImport,
   finishesImport,
   inkColoursImport,

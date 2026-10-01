@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
+import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import request from 'supertest';
 
 import { as, bootCommerceApp, type CommerceApp, staffToken } from '../support/commerce-e2e';
@@ -238,5 +239,85 @@ describe('admin platform reads (e2e, U-B0.3)', () => {
         .expect(200)
     ).body as Dashboard;
     for (const q of body.queues) expect(q.overdueCount).toBeLessThanOrEqual(q.count);
+  });
+
+  it('keeps the national holidays and a factory’s closures (D-161, D-209; U-B0.3)', async () => {
+    const admin = await staffToken(ctx, 'admin');
+    const partnerManager = await staffToken(ctx, 'partner_manager');
+    const year = 2097;
+    const day = new Date(Date.UTC(year, 0, 1 + (ctx.run % 300))).toISOString().slice(0, 10);
+    await as(ctx, await staffToken(ctx, 'cs'))
+      .put(`/v1/admin/business-calendar/holidays/${day}`, {
+        kind: 'holiday',
+        observance: 'all',
+        nameTh: 'ทดสอบ',
+      })
+      .expect(403);
+    await as(ctx, admin)
+      .put(`/v1/admin/business-calendar/holidays/${day}`, {
+        kind: 'holiday',
+        observance: 'all',
+        nameTh: 'วันหยุดทดสอบ',
+      })
+      .expect(200);
+    const working = await ctx.app.get(BusinessCalendarService).calendar();
+    expect(working.isWorkingDay(day)).toBe(false);
+    const listed = (await as(ctx, admin).get(`/v1/admin/business-calendar/holidays?year=${year}`).expect(200))
+      .body as { day: string }[];
+    expect(listed.map((d) => d.day)).toContain(day);
+    await as(ctx, admin).delete(`/v1/admin/business-calendar/holidays/${day}`).expect(204);
+    await as(ctx, admin).delete(`/v1/admin/business-calendar/holidays/${day}`).expect(404);
+
+    // A factory's own closure: from tomorrow on, by the Partner Manager (D-209).
+    const code = `CAL${ctx.run}`;
+    const vendor = await ctx.prisma.vendor.create({
+      data: {
+        kind: 'factory',
+        legalName: `Calendar ${code} (fake)`,
+        juristicType: 'company',
+        taxId: '0000000000019',
+      },
+    });
+    const national = await ctx.prisma.businessCalendar.findUniqueOrThrow({ where: { code: 'th_public' } });
+    const factory = await ctx.prisma.factory.create({
+      data: {
+        code,
+        vendorId: vendor.id,
+        legalName: `Calendar ${code} (fake)`,
+        juristicType: 'company',
+        taxId: '0000000000019',
+        branchCode: '00004',
+        status: 'applied',
+      },
+    });
+    const calendar = await ctx.prisma.businessCalendar.create({
+      data: {
+        code: `factory_${code.toLowerCase()}`,
+        name: `${code} closures`,
+        kind: 'factory',
+        factoryId: factory.id,
+        weekendDays: [0, 6],
+        baseCalendarId: national.id,
+      },
+    });
+    await ctx.prisma.factory.update({ where: { id: factory.id }, data: { calendarId: calendar.id } });
+    const today = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+    const later = new Date(Date.now() + 7 * 3_600_000 + 10 * 86_400_000).toISOString().slice(0, 10);
+    const base = `/v1/admin/factories/${factory.publicId}/closures`;
+    await as(ctx, partnerManager).put(`${base}/${today}`, { nameTh: 'ปิดวันนี้' }).expect(422);
+    await as(ctx, admin).put(`${base}/${later}`, { nameTh: 'ปิดซ่อม' }).expect(403);
+    const closed = await as(ctx, partnerManager).put(`${base}/${later}`, { nameTh: 'ปิดซ่อม' }).expect(200);
+    expect(closed.body).toMatchObject({ day: later, kind: 'closure' });
+    expect((await ctx.app.get(BusinessCalendarService).calendar(calendar.code)).isWorkingDay(later)).toBe(
+      false,
+    );
+    const closures = (await as(ctx, partnerManager).get(base).expect(200)).body as { day: string }[];
+    expect(closures.map((c) => c.day)).toEqual([later]);
+    await as(ctx, partnerManager).delete(`${base}/${later}`).expect(204);
+    expect(
+      await ctx.prisma.auditLog.count({
+        where: { action: 'business_calendar.day_set', resourcePublicId: calendar.publicId },
+      }),
+    ).toBe(1);
   });
 });
