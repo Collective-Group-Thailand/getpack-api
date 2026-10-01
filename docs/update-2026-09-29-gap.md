@@ -292,6 +292,33 @@ Legacy traced from `/Users/superball/Abbon/Loco_Pack/locopack-web`. Live paths: 
 
 **Outcome (2026-09-30, U-B6 corrugate complete, branch `feat/u-b6-corrugate-calculator`):** C.1 geometry (slice 3), C.2 engines (slices 4–5), C.3 orchestration (slice 6), C.4 sell side shared (slice 1), C.5 price components and C.6 catalogue data (slice 2), C.7 generic quote engine, saved quotes and checkout (slices 1, 7b), C.8 packer (slice 6), C.9 CS endpoints and C.10 factory breakdown (slice 7a), C.11 store calculate (slice 7a), C.12 store configurator (slice 7c), C.13 per-calculator log input (slice 1), C.15 port map (slice 1, §10 in slice 8), C.17 dev fixture (slice 6), C.20 geometry admin (slice 7d) — **met**. C.14 golden cases + `docs/pricing-validation-corrugate.md` — **met, signed off 2026-09-30** (replayed on Locopack staging). C.16 `corrugate` in `SHIPPED_CALCULATORS`, type still seeded `rfq` — **met**. C.19 tag `v0.3.0` — **local tag** (no git remote in this checkout). C.18 tier-B envelopes — out of scope.
 
+## U-B6 label — B2.3 Deliverable 2.3 for label (2026-10-01, planning)
+
+Legacy traced from `legacy/locopack-web` (port map `docs/legacy/05-label-port-map.md`). Live paths: CS `POST /api/cs/label` → `LabelCalculator::CSCalculate:374-434` → `calculate:436-643`; customer web `POST /api/products` → `Calculator::FromSME` → `LabelCalculator::nonCombinationCalculate:55-181`; factory tool `POST /api/calculate/label`. The user asked (2026-10-01) to run U-B6 label → tag & sleeve → pouch → standard product → service in sequence; decisions are proposed and recorded as before.
+
+| # | Requirement | Before | Evidence | This session |
+|---|---|---|---|---|
+| L.1 | Geometry and lay-outs: bounding box W × L (pattern 18 only), sheets / rolls / roll-to-sheet (`calLayoutAmount`), trims, gaps | missing | `src/modules/pricing/calculators/` has `folding/`, `corrugate/` | Port `calculateLayouts:658-822`, `helpers.php:598-878` (slice 3) |
+| L.2 | Waste chain (die-cut → finish back → print back → finish front → print front), setup waste rule, paper sheets and price | missing | — | Port `calculateWaste:895-1006`, `helpers.php:903-907,1076-1194` (slice 3) |
+| L.3 | Cost engines: offset (plates, 4-colour rule, die-cut block, finishes) and digital (sheet / roll / roll-to-sheet, ink per m², die-cut by m²), factory margin, layout order | missing | — | Port `calculateCost:1009-1319`, `printCost`, `diecutCost`, `finishCost` (slice 4) |
+| L.4 | Orchestration: options factory × print type, minimum order per quantity, die-cut availability, colours / finishes the factory prints, short-roll drop, sell side, lead time | missing | — | Port `CSCalculate` / `calculate:451-643` as a pure function; shared `SaleMargin` port (slice 5) |
+| L.5 | Price-list components | partial | folding components cover trims, paper sizes, material prices, plates, print prices (offset, digital ink), finish prices, die blocks, the three waste tables, ink colours; missing: roll-to-sheet cut length, roll print price, die-cut by type and per m², label terms | Reuse the folding components unchanged; new `label_paper_sheets`, `label_roll_print_prices`, `label_diecut_prices`, `label_print_type_terms` (folding line keys untouched) (slice 2) |
+| L.6 | Catalogue data | partial | product type `label_sticker` (`calculatorKey: label`, seeded `rfq`); `MaterialKind.label_stock`; no label pattern, papers, print types in any seed | One label pattern (bounding box), dev fixture with fake papers / finishes / print types (slice 2, 6) |
+| L.7 | Quote engine, saved quotes, checkout for a third calculator | met | generic `CalculatorAdapter` / `CalculatorRegistry` since U-B6 corrugate | Label adapter + snapshot loader (slice 5) |
+| L.8 | Shipping packer for labels | missing | packers for folding and corrugate only (`shipping/packing/packer.ts`) | Port the label part of `ShippingUtils::calCostLabel_WithShipping:158-290` (weight, sheet stacks, roll carton) (slice 5) |
+| L.9 | `GET /v1/admin/cs/label/input-data`, `POST /v1/admin/cs/label/calculate` | missing | only folding and corrugate CS endpoints | `admin.csLabel.*` (slice 6) |
+| L.10 | Factory-side breakdown | missing | — | `partner.pricingLabel.calculate` (slice 6) |
+| L.11 | Store calculate and configurator | missing | `validateConfiguration` knows folding / corrugate; configurator per calculator | `LabelConfigurationDto` in the configuration union; configurator data for label (slice 6) |
+| L.12 | Calculate / search logs | met | per-calculator `logInput` (adapter) | Label `logInput` (slice 5) |
+| L.13 | Golden tests + `docs/pricing-validation-label.md` (20 cases from the PHP) | missing | `test/fixtures/legacy/calculate_logs_*.sql` has label inputs only | Independent Python transcription → `test/golden/label/golden.json`, spec, generated validation doc (slice 7) |
+| L.14 | Port map | missing → written | `docs/legacy/05-label-port-map.md` | Slice 1 |
+| L.15 | Type stays `rfq` until sign-off; `label` in `SHIPPED_CALCULATORS` after the golden slice | partial | mechanism met (A-16) | Slice 7 |
+| L.16 | Contract release tag | needed | latest `v0.6.0` | `v0.7.0` after slice 7 |
+
+**Proposed decisions (accepted under the user's standing instruction, 2026-10-01):** (1) Treatment as folding / corrugate: maths exact, orchestration / state bugs fixed and listed (port map §5, L1–L24). (2) The offset engine, which never priced in production (L2), is ported with absent processes counted as 0 and flagged in the validation doc; the business decides at sign-off whether offset label print types are offered. (3) The short-roll minimum (legacy 300 m) and the no-die-cut factories become label print-type terms, never constants. (4) The quote's shape is the bounding box (legacy prices no shape); a shape label for display can come later without a price change.
+
+**Plan (slices):** 1 port map + this analysis (docs) · 2 price components + catalogue (migration, descriptors, registrar) · 3 geometry, lay-outs, waste (pure, Python-verified vectors) · 4 cost engines + factory margin (pure) · 5 orchestration, sell side, adapter, loader, packer · 6 DTOs, CS / partner / store endpoints, configurator, dev fixture, e2e · 7 golden cases, validation doc, shipped, release `v0.7.0`.
+
 ## U-B6 corrugate — re-check (2026-10-01, after `v0.6.0`)
 
 The user asked to run the U-B6 corrugate session after U-B0.3. Gap analysis against `v0.6.0` (`18a675d`): the session was completed on 2026-09-30 (outcome above, tag `v0.3.0`), and nothing it delivered has regressed.
